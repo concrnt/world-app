@@ -3610,6 +3610,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-biometric"
+version = "2.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "306175b744890b5e4aeb8add6aae7debec1b1504c5087bd0310ed7c9c6feae38"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "tauri-plugin-keychain"
+version = "2.0.2"
+source = "git+https://github.com/totegamma/tauri-plugin-keychain?rev=c81bf04b28921c403dbafb0bc8997db1e37f34b2#c81bf04b28921c403dbafb0bc8997db1e37f34b2"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "tauri-plugin-opener"
 version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4888,6 +4914,8 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-biometric",
+ "tauri-plugin-keychain",
  "tauri-plugin-opener",
 ]
 

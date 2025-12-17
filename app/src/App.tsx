@@ -4,17 +4,13 @@ import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const [authState, setAuthState] = useState("");
+  const [secret, setSecret] = useState("");
+  const [revealed, setRevealed] = useState("");
 
   return (
     <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+      <h1>Welcome to Tauri + React dayo</h1>
 
       <div className="row">
         <a href="https://vite.dev" target="_blank">
@@ -29,21 +25,39 @@ function App() {
       </div>
       <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
+      <hr/>
+      <p>Authentication State: {authState}</p>
+      <button onClick={async () => {
+        const state = await invoke<string>("auth_available");
+        setAuthState(state);
+      }}>Get Auth State</button>
+      <hr />
+
       <form
         className="row"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          greet();
+          const result = await invoke<string>("save_key", {key: "my_key", "value": secret});
+          setRevealed(result);
         }}
       >
         <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+          id="secret-input"
+          onChange={(e) => setSecret(e.currentTarget.value)}
+          placeholder="Enter a secret..."
         />
-        <button type="submit">Greet</button>
+        <button type="submit">Save Secret</button>
       </form>
-      <p>{greetMsg}</p>
+
+      <hr />
+
+      <button onClick={async () => {
+        const secret = await invoke<string>("get_key", {key: "my_key"});
+        setRevealed(secret);
+      }}>Reveal Secret</button>
+
+      <p>Revealed Secret: {revealed}</p>
+
     </main>
   );
 }
