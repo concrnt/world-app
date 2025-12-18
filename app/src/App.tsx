@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useClient } from "./contexts/Client";
+import { Button } from "./ui/Button";
+import { TextField } from "./ui/TextField";
+import { Text } from "./ui/Text";
+import { Divider } from "./ui/Divider";
 
 function App() {
 
@@ -10,50 +14,54 @@ function App() {
     const [secret, setSecret] = useState("");
     const [revealed, setRevealed] = useState("");
 
-    return (
-        <main className="container">
+    return <div
+        style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px" }}
+    >
+        <Text>Client Status: {client.uninitialized ? "Uninitialized" : "Initialized"}</Text>
 
-            <p>Client Status: {client.uninitialized ? "Uninitialized" : "Initialized"}</p>
-            <pre>
-                {JSON.stringify(client, null, 2)}
-            </pre>
+        <Divider />
 
-            <hr/>
-            <p>Authentication State: {authState}</p>
-            <button onClick={async () => {
-                const state = await invoke<string>("auth_available");
-                setAuthState(state);
-            }}>Get Auth State</button>
+        <Text>Authentication State: {authState}</Text>
 
-            <hr />
+        <Button onClick={async () => {
+            const state = await invoke<string>("auth_available");
+            setAuthState(state);
+        }}>
+            Get Auth State
+        </Button>
 
-            <form
-                className="row"
-                onSubmit={async (e) => {
-                e.preventDefault();
-                const result = await invoke<string>("save_key", {key: "my_key", "value": secret});
-                setRevealed(result);
-                }}
-            >
-                <input
-                id="secret-input"
+        <Divider />
+
+        <div
+            style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}
+        >
+            <TextField
+                value={secret}
                 onChange={(e) => setSecret(e.currentTarget.value)}
                 placeholder="Enter a secret..."
-                />
-                <button type="submit">Save Secret</button>
-            </form>
+            />
+            <Button
+                onClick={async () => {
+                    const result = await invoke<string>("save_key", {key: "my_key", "value": secret});
+                    setRevealed(result);
+                }}
+            >
+                Save Secret
+            </Button>
+        </div>
 
-            <hr />
+        <Divider />
 
-            <button onClick={async () => {
-                const secret = await invoke<string>("get_key", {key: "my_key"});
-                setRevealed(secret);
-            }}>Reveal Secret</button>
+        <Button onClick={async () => {
+            const secret = await invoke<string>("get_key", {key: "my_key"});
+            setRevealed(secret);
+        }}>
+            Reveal Secret
+        </Button>
 
-            <p>Revealed Secret: {revealed}</p>
+        <Text>Revealed Secret: {revealed}</Text>
 
-        </main>
-    );
+    </div>;
 }
 
 export default App;
