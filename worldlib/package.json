@@ -1,0 +1,25 @@
+{
+    "name": "@concrnt/worldlib",
+    "version": "0.2.0",
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/types/index.d.ts",
+    "dependencies": {
+        "@concrnt/client": "workspace:*"
+    },
+    "devDependencies": {
+        "json-schema-to-typescript": "^15.0.4",
+        "typescript": "^5.7.3"
+    },
+    "scripts": {
+        "build": "npm run build:cjs && npm run build:esm",
+        "build:cjs": "tsc -p tsconfig.cjs.json",
+        "build:esm": "tsc -p tsconfig.esm.json"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "exclude": [
+        "./collectSchemas.ts"
+    ]
+}
