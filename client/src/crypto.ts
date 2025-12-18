@@ -1,4 +1,3 @@
-import 'react-native-get-random-values'
 import { ec as Ec } from 'elliptic'
 import { v4 as uuidv4 } from 'uuid'
 import { LangEn, keccak256 } from 'ethers'
