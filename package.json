@@ -9,7 +9,7 @@
         "tauri": "tauri"
     },
     "devDependencies": {
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "^2.9.6"
     },
     "packageManager": "pnpm@8.6.1",
     "volta": {
