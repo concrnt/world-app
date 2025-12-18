@@ -10,7 +10,7 @@ export const Button = (props: Props) => {
         <button
             onClick={props.onClick}
             style={{
-                backgroundColor: "#e42279",
+                backgroundColor: "#E227A8",
                 border: "none",
                 color: "white",
                 padding: "15px 32px",
