@@ -1,67 +1,32 @@
-import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { Activity } from "react";
 import { useClient } from "./contexts/Client";
-import { Button } from "./ui/Button";
-import { TextField } from "./ui/TextField";
-import { Text } from "./ui/Text";
-import { Divider } from "./ui/Divider";
+import { WelcomeView } from "./views/Welcome";
+import { HomeView } from "./views/Home";
 
 function App() {
 
     const client = useClient();
 
-    const [authState, setAuthState] = useState("");
-    const [secret, setSecret] = useState("");
-    const [revealed, setRevealed] = useState("");
-
-    return <div
-        style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px" }}
-    >
-        <Text>Client Status: {client.uninitialized ? "Uninitialized" : "Initialized"}</Text>
-
-        <Divider />
-
-        <Text>Authentication State: {authState}</Text>
-
-        <Button onClick={async () => {
-            const state = await invoke<string>("auth_available");
-            setAuthState(state);
-        }}>
-            Get Auth State
-        </Button>
-
-        <Divider />
-
+    return <>
+        <Activity mode={client.uninitialized === true ? "visible" : "hidden"}>
+            <WelcomeView />
+        </Activity>
+        <Activity mode={client.client ? "visible" : "hidden"}>
+            <HomeView />
+        </Activity>
         <div
-            style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}
+            style={{
+                width: "100vw",
+                height: "100vh",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }}
         >
-            <TextField
-                value={secret}
-                onChange={(e) => setSecret(e.currentTarget.value)}
-                placeholder="Enter a secret..."
-            />
-            <Button
-                onClick={async () => {
-                    const result = await invoke<string>("save_key", {key: "my_key", "value": secret});
-                    setRevealed(result);
-                }}
-            >
-                Save Secret
-            </Button>
+            ~ background ~
         </div>
+    </>
 
-        <Divider />
-
-        <Button onClick={async () => {
-            const secret = await invoke<string>("get_key", {key: "my_key"});
-            setRevealed(secret);
-        }}>
-            Reveal Secret
-        </Button>
-
-        <Text>Revealed Secret: {revealed}</Text>
-
-    </div>;
 }
 
 export default App;
