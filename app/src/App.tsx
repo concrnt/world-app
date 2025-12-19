@@ -1,7 +1,6 @@
-import { Activity } from "react";
 import { useClient } from "./contexts/Client";
 import { WelcomeView } from "./views/Welcome";
-import { HomeView } from "./views/Home";
+import { MainView } from "./views/Main";
 
 function App() {
 
@@ -15,12 +14,10 @@ function App() {
             overflow: "hidden",
         }}
     >
-        <Activity mode={client.uninitialized === true ? "visible" : "hidden"}>
-            <WelcomeView />
-        </Activity>
-        <Activity mode={client.client ? "visible" : "hidden"}>
-            <HomeView />
-        </Activity>
+
+        {client.uninitialized === true && <WelcomeView /> }
+        {client.client && <MainView /> }
+
         <div
             style={{
                 width: "100vw",
@@ -37,8 +34,8 @@ function App() {
         >
             ~ background ~
         </div>
-    </div>
 
+    </div>
 }
 
 export default App;

@@ -102,4 +102,3 @@ export const HomeView = () => {
         </div>
     )
 }
-
