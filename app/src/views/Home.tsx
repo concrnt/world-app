@@ -1,9 +1,10 @@
-import { ChunklineItem } from "@concrnt/client";
+import { TimelineReader } from "@concrnt/client";
 import { useEffect, useState } from "react";
 import { useClient } from "../contexts/Client";
 import { Divider } from "../ui/Divider";
 import { TextField } from "../ui/TextField";
 import { Button } from "../ui/Button";
+import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 
 export const HomeView = () => {
 
@@ -11,23 +12,37 @@ export const HomeView = () => {
 
     const [draft, setDraft] = useState<string>("");
 
-    const [posts, setPosts] = useState<ChunklineItem[]>([]);
+    const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined);
 
-    const fetchPosts = async () => {
-        if (!client) return;
-        fetch(`http://cc2.tunnel.anthrotech.dev/api/v1/timeline/recent?uris=cc://${client.ccid}/world.concrnt.t-home`).then((response) => {
-            response.json().then((data) => {
-                if (!data || !Array.isArray(data)) return
-                setPosts(data);
-            })
-        }).catch((error) => {
-            console.error("Failed to fetch posts:", error);
-        });
-    };
+    const timelines = [`cc://${client?.ccid}/world.concrnt.t-home`];
 
     useEffect(() => {
-        fetchPosts();
-    }, []);
+        let isCancelled = false
+        const request = async () => {
+            if (!client) return
+
+            return client
+                .newTimelineReader()
+                .then((t) => {
+                    if (isCancelled) return
+                    t.onUpdate = () => {
+                        update()
+                    }
+
+                    reader.current = t
+                    t.listen(timelines)
+                    return t
+                })
+        }
+        const mt = request()
+        return () => {
+            isCancelled = true
+            mt.then((t) => {
+                t?.dispose()
+            })
+        }
+    }, [client]);
+
 
     return (
         <div
@@ -66,7 +81,7 @@ export const HomeView = () => {
                         };
                         client.api.commit(document).then(() => {
                             setDraft("");
-                            fetchPosts();
+                            // fetchPosts();
                         })
                     }}
                 >
@@ -76,7 +91,7 @@ export const HomeView = () => {
 
             <Divider />
 
-            {posts.map((item, index) => (
+            {reader.current?.body.map((item, index) => (
                 <div key={index} style={{ border: '1px solid #ccc', margin: '10px', padding: '10px' }}>
                     <p>{JSON.stringify(item)}</p>
                 </div>

@@ -3,6 +3,7 @@ import { KVS } from "./cache"
 import { AuthProvider } from "./auth"
 import { fetchWithTimeout } from "./util"
 import { CCID, CSID, FQDN, IsCCID, IsCSID, Document } from "./model"
+import { ChunklineItem } from "./chunkline"
 
 export class ServerOfflineError extends Error {
     constructor(server: string) {
@@ -425,6 +426,27 @@ export class Api {
             console.error("Error committing affiliation:", error);
         });
     }
+
+    // ---
+
+    async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {
+        const requestPath = `/api/v1/timeline/recent?uris=${timelines.join(',')}`
+        const resp = await this.fetchWithCredential<ChunklineItem[]>(this.defaultHost, requestPath)
+        return resp
+    }
+
+
+    async getTimelineRanged(timelines: string[], param: {until?: Date, since?: Date}, host?: string): Promise<ChunklineItem[]> {
+
+        const sinceQuery = !param.since ? '' : `&since=${Math.floor(param.since.getTime()/1000)}`
+        const untilQuery = !param.until ? '' : `&until=${Math.ceil(param.until.getTime()/1000)}`
+
+        const requestPath = `/api/v1/timeline/recent?uris=${timelines.join(',')}${sinceQuery}${untilQuery}`
+        const resp = await this.fetchWithCredential<ChunklineItem[]>(host ?? this.defaultHost, requestPath)
+        return resp
+
+    }
+
 }
 
 export interface ConcrntApiEndpoint {

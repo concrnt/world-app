@@ -3,7 +3,8 @@ import {
     type FQDN,
     MasterKeyAuthProvider,
     InMemoryKVS,
-    KVS
+    KVS,
+    TimelineReader
 } from '@concrnt/client'
 
 export class Client {
@@ -52,5 +53,15 @@ export class Client {
 
         return client
     }
+
+    async newTimelineReader(opts?: { withoutSocket: boolean; hostOverride?: string }): Promise<TimelineReader> {
+        if (opts?.withoutSocket) {
+            return new TimelineReader(this.api, undefined)
+        }
+        // const socket = await this.newSocket(opts?.hostOverride)
+        return new TimelineReader(this.api/*, socket, opts?.hostOverride*/)
+    }
+
+
 }
 

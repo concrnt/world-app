@@ -7,7 +7,14 @@ function App() {
 
     const client = useClient();
 
-    return <>
+    return <div
+        style={{ 
+            width: "100vw",
+            height: "100dvh",
+            position: "relative",
+            overflow: "hidden",
+        }}
+    >
         <Activity mode={client.uninitialized === true ? "visible" : "hidden"}>
             <WelcomeView />
         </Activity>
@@ -30,7 +37,7 @@ function App() {
         >
             ~ background ~
         </div>
-    </>
+    </div>
 
 }
 
