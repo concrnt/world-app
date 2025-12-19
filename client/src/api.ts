@@ -186,7 +186,7 @@ export class Api {
 
 
     async fetchWithCache<T>(
-        cls: new () => T extends (infer U)[] ? U : T,
+        cls: (new () => T extends (infer U)[] ? U : T) | null,
         host: string | undefined,
         path: string,
         cacheKey: string,
@@ -198,10 +198,12 @@ export class Api {
             const cachedEntry = await this.cache.get<T>(cacheKey)
             if (cachedEntry) {
                 if (cachedEntry.data) {
-                    if (Array.isArray(cachedEntry.data)) {
-                        cachedEntry.data.map((item) => Object.setPrototypeOf(item, cls.prototype))
-                    } else {
-                        Object.setPrototypeOf(cachedEntry.data, cls.prototype)
+                    if (cls) {
+                        if (Array.isArray(cachedEntry.data)) {
+                            cachedEntry.data.map((item) => Object.setPrototypeOf(item, cls.prototype))
+                        } else {
+                            Object.setPrototypeOf(cachedEntry.data, cls.prototype)
+                        }
                     }
                     opts?.expressGetter?.(cachedEntry.data)
                 }
@@ -271,10 +273,12 @@ export class Api {
                 opts?.expressGetter?.(data)
                 if (opts?.cache !== 'negative-only') this.cache.set(cacheKey, data)
 
-                if (Array.isArray(data)) {
-                    return data.map((item) => Object.setPrototypeOf(item, cls.prototype))
-                } else {
-                    return Object.setPrototypeOf(data, cls.prototype)
+                if (cls) {
+                    if (Array.isArray(data)) {
+                        return data.map((item) => Object.setPrototypeOf(item, cls.prototype))
+                    } else {
+                        return Object.setPrototypeOf(data, cls.prototype)
+                    }
                 }
 
             }).catch(async (err) => {
@@ -332,7 +336,7 @@ export class Api {
     }
 
     async getResource<T>(
-        cls: new () => T extends (infer U)[] ? U : T,
+        cls: (new () => T extends (infer U)[] ? U : T) | null,
         uri: string,
         domain?: string
     ): Promise<T> {

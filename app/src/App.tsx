@@ -17,10 +17,15 @@ function App() {
         <div
             style={{
                 width: "100vw",
-                height: "100vh",
+                height: "100dvh",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                backgroundColor: "#fff",
+                zIndex: -1,
             }}
         >
             ~ background ~

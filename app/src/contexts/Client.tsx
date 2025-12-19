@@ -1,11 +1,13 @@
 import { load } from '@tauri-apps/plugin-store';
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
+import { Api, GenerateIdentity, InMemoryKVS, MasterKeyAuthProvider } from '@concrnt/client';
 
 export interface ClientContextState {
     client?: Client
     uninitialized?: boolean
+    initialize: () => Promise<void>
 }
 
 export interface ClientProviderProps {
@@ -15,6 +17,7 @@ export interface ClientProviderProps {
 const ClientContext = createContext<ClientContextState>({
     client: undefined,
     uninitialized: undefined,
+    initialize: async () => { },
 })
 
 interface ClientInfo {
@@ -54,12 +57,74 @@ export const ClientProvider = (props: ClientProviderProps): ReactNode => {
         })
     }, [])
 
+    const initialize = useCallback(async () => {
+        const identity = GenerateIdentity()
+
+        const host = 'cc2.tunnel.anthrotech.dev'
+
+        const authProvider = new MasterKeyAuthProvider(identity.privateKey, host);
+        const cacheEngine = new InMemoryKVS();
+
+        const api = new Api(authProvider, cacheEngine)
+
+
+        const document = {
+            author: identity.CCID,
+            schema: 'https://schema.concrnt.net/affiliation.json',
+            value: {
+                'domain': host,
+            },
+            createdAt: new Date().toISOString(),
+        }
+
+        const docString = JSON.stringify(document);
+        const signature = authProvider.sign(docString);
+
+        const request = {
+            affiliationDocument: docString,
+            affiliationSignature: signature,
+            meta: {},
+        }
+
+        api.requestConcrntApi(
+            host,
+            'net.concrnt.world.register',
+            {},
+            {
+                method: 'POST',
+                body: JSON.stringify(request),
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        ).then(() => {
+            console.log("Registered");
+            load('clientInfo.json').then((store) => {
+                store.set('ClientInfo', {
+                    domain: host,
+                    privatekey: identity.privateKey,
+                })
+                store.save()
+            })
+            Client.create(identity.privateKey, host)
+                .then((client) => {
+                    setClient(client)
+                    setUninitialized(false)
+                })
+                .catch((e) => {
+                    console.error(e)
+                })
+        })
+
+    }, [])
+
     const value = useMemo(() => {
         return {
             client,
             uninitialized,
+            initialize,
         }
-    }, [client, uninitialized])
+    }, [client, uninitialized, initialize])
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
 }

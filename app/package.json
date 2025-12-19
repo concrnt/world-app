@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@concrnt/worldlib": "workspace:*",
+    "@concrnt/client": "workspace:*",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.1",

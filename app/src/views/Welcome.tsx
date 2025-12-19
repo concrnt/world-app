@@ -1,63 +1,45 @@
-import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { Button } from "../ui/Button";
-import { TextField } from "../ui/TextField";
 import { Text } from "../ui/Text";
-import { Divider } from "../ui/Divider";
+
+import ConcrntLogo from "/concrnt.svg";
+import { useClient } from "../contexts/Client";
 
 export const WelcomeView = () => {
 
-    const [authState, setAuthState] = useState("");
-    const [secret, setSecret] = useState("");
-    const [revealed, setRevealed] = useState("");
+    const { initialize } = useClient();
 
     return (
         <div
             style={{
                 width: '100vw',
-                height: '100vh',
-                backgroundColor: '#f0f0f0',
+                height: '100dvh',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '16px',
+                backgroundColor: '#fff',
             }}
         >
-            <Text>Welcome</Text>
-            <Text>Authentication State: {authState}</Text>
 
-            <Button onClick={async () => {
-                const state = await invoke<string>("auth_available");
-                setAuthState(state);
-            }}>
-                Get Auth State
-            </Button>
+            <img src={ConcrntLogo} alt="Concrnt Logo" style={{ width: '150px', height: '150px' }} />
+            
+            <Text>ようこそ</Text>
 
-            <Divider />
-            <TextField
-                value={secret}
-                onChange={(e) => setSecret(e.currentTarget.value)}
-                placeholder="Enter a secret..."
-            />
             <Button
-                onClick={async () => {
-                    const result = await invoke<string>("save_key", {key: "my_key", "value": secret});
-                    setRevealed(result);
+                onClick={() => {
+                    initialize();
                 }}
             >
-                Save Secret
-            </Button>
-            <Divider />
-
-            <Button onClick={async () => {
-                const secret = await invoke<string>("get_key", {key: "my_key"});
-                setRevealed(secret);
-            }}>
-                Reveal Secret
+                はじめる
             </Button>
 
-            <Text>Revealed Secret: {revealed}</Text>
+            <Button
+                variant="text"
+            >
+                ログイン
+            </Button>
+
         </div>
     )
 }

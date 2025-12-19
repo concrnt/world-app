@@ -9,9 +9,11 @@ import {
 export class Client {
 
     api: Api
+    ccid: string
 
     constructor(api: Api) {
         this.api = api
+        this.ccid = ''
     }
 
     static async create(
@@ -23,8 +25,32 @@ export class Client {
         let cacheEngine: KVS | undefined = new InMemoryKVS()
 
         const api = new Api(authProvider, cacheEngine)
-        return new Client(api)
+        const client = new Client(api)
 
+        client.ccid = authProvider.getCCID()
+
+        await api.getResource(null, `cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
+            .then((res) => {
+                if (res === null) {
+                    const document = {
+                        key: "world.concrnt.t-home",
+                        author: api.authProvider.getCCID(),
+                        schema: "https://schema.concrnt.world/t/empty.json",
+                        contentType: "application/chunkline+json",
+                        value: {},
+                        createdAt: new Date(),
+                    }
+                    api.commit(document);
+                    return document;
+                }
+                return res;
+            })
+            .catch((err) => {
+                console.error("Error fetching timeline:", err);
+                return null;
+            })
+
+        return client
     }
 }
 
