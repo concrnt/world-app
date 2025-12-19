@@ -5,8 +5,11 @@ import {
     InMemoryKVS,
     KVS,
     TimelineReader,
-    Document
+    Document,
+    CCID,
+    Entity
 } from '@concrnt/client'
+import { ProfileSchema } from './schemas/'
 
 export class Client {
 
@@ -80,6 +83,8 @@ export class Message<T> implements Document<T> {
     createdAt: Date
     memberOf?: string[]
 
+    authorUser?: User
+
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
         this.key = document.key
@@ -96,7 +101,48 @@ export class Message<T> implements Document<T> {
         if (!res) {
             return null
         }
-        return new Message<T>(uri, res)
+        const message = new Message<T>(uri, res)
+        message.authorUser = await User.load(client, message.author, hint).catch(() => undefined)
+
+        return message
+    }
+
+}
+
+export class User {
+
+    domain: FQDN
+    profile: Partial<ProfileSchema>
+
+    ccid: CCID
+    alias?: string
+    tag?: string
+    affiliationDocument?: string
+    affiliationSignature?: string
+
+    constructor(domain: FQDN, entity: Entity, profile?: ProfileSchema) {
+        this.domain = domain
+        this.profile = profile || {}
+        this.ccid = entity.ccid
+        this.alias = entity.alias
+        this.tag = entity.tag
+        this.affiliationDocument = entity.affiliationDocument
+        this.affiliationSignature = entity.affiliationSignature
+    }
+
+    static async load(
+        client: Client,
+        id: CCID,
+        hint?: string,
+    ): Promise<User> {
+
+        const entity = await client.api.getEntity(id, hint).catch((_e) => {
+            throw new Error('entity not found')
+        })
+
+        const profile = await client.api.getResource<Document<ProfileSchema>>(null, `cc://${entity.ccid}/world.concrnt.profile`)
+
+        return new User(entity.domain, entity, profile?.value)
     }
 
 }

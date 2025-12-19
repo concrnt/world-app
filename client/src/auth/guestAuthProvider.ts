@@ -25,10 +25,6 @@ export class GuestAuthProvider implements AuthProvider {
         throw new Error("Method not implemented.");
     }
 
-    getPassport(): never {
-        throw new Error("Method not implemented.");
-    }
-
     getHost(): string {
         return this.defaultHost
     }

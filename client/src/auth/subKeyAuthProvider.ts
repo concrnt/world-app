@@ -9,7 +9,6 @@ export class SubKeyAuthProvider implements AuthProvider {
     ccid: string
     ckid: string
 
-    passport?: Promise<string>
     tokens: Record<string, string> = {}
 
     constructor(subkey: string) {
@@ -45,30 +44,10 @@ export class SubKeyAuthProvider implements AuthProvider {
         return token
     }
 
-    async getPassport(): Promise<string> {
-
-        this.passport = fetch(`https://${this.host}/api/v1/auth/passport`, {
-            method: 'GET',
-            headers: { authorization: `Bearer ${this.getAuthToken(this.host)}` }
-        })
-            .then(async (res) => await res.json())
-            .then((data) => {
-                return data.content
-            })
-
-        return this.passport
-    }
-
     async getHeaders(domain: string) {
-
-        let passport = await this.passport
-        if (!passport) {
-            passport = await this.getPassport()
-        }
 
         return {
             authorization: `Bearer ${this.getAuthToken(domain)}`,
-            passport: passport
         };
     }
 

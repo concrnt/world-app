@@ -280,6 +280,8 @@ export class Api {
                     } else {
                         return Object.setPrototypeOf(data, cls.prototype)
                     }
+                } else {
+                    return data
                 }
 
             }).catch(async (err) => {

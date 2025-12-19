@@ -92,12 +92,21 @@ export const HomeView = () => {
 
             <Divider />
 
-            {reader.current?.body.map(item => (
-                <MessageContainer
-                    key={item.href}
-                    uri={item.href}
-                />
-            ))}
+            <div
+                style={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    padding: '8px',
+                }}
+            >
+                {reader.current?.body.map(item => (
+                    <MessageContainer
+                        key={item.href}
+                        uri={item.href}
+                    />
+                ))}
+            </div>
 
         </div>
     )
