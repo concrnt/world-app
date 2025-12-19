@@ -1,8 +1,6 @@
 import { TimelineReader } from "@concrnt/client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useClient } from "../contexts/Client";
-import { TextField } from "../ui/TextField";
-import { Button } from "../ui/Button";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 import { MessageContainer } from "../components/message";
 
@@ -10,7 +8,6 @@ export const HomeView = () => {
 
     const { client } = useClient();
 
-    const [draft, setDraft] = useState<string>("");
 
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined);
 
@@ -56,40 +53,6 @@ export const HomeView = () => {
                 flexDirection: 'column',
             }}
         >
-
-            <div
-                style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}
-            >
-                <TextField
-                    value={draft}
-                    placeholder="いま、なにしてる？"
-                    onChange={(e) => setDraft(e.target.value)}
-                />
-
-                <Button
-                    onClick={async () => {
-                        if (!client) return;
-                        const document = {
-                            schema: "https://schema.concrnt.world/m/markdown.json",
-                            value: {
-                                "body": draft
-                            },
-                            author: client.ccid,
-                            memberOf: [
-                                `cc://${client.ccid}/world.concrnt.t-home`,
-                            ],
-                            createdAt: new Date(),
-                        };
-                        client.api.commit(document).then(() => {
-                            setDraft("");
-                            reader.current?.reload();
-                        })
-                    }}
-                >
-                    投稿
-                </Button>
-            </div>
-
             <div
                 style={{ 
                     display: 'flex',
