@@ -10,12 +10,12 @@ interface Props {
 export const MessageContainer = memo<Props>((props: Props): ReactNode | null => {
 
     return <Suspense fallback={<div>Loading message...</div>}>
-        <Container {...props} />
+        <Message {...props} />
     </Suspense>
 
 })
 
-const Container = (props: Props) => {
+const Message = (props: Props) => {
     const { client } = useClient()
 
     const message = use(client!.getMessage<any>(props.uri, props.resolveHint))
@@ -62,7 +62,6 @@ const Container = (props: Props) => {
             </div>
         </div>
     </div>
-
 
 }
 

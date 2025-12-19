@@ -1,7 +1,6 @@
 import { TimelineReader } from "@concrnt/client";
 import { useEffect, useState } from "react";
 import { useClient } from "../contexts/Client";
-import { Divider } from "../ui/Divider";
 import { TextField } from "../ui/TextField";
 import { Button } from "../ui/Button";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
@@ -51,11 +50,12 @@ export const HomeView = () => {
                 width: '100vw',
                 height: '100dvh',
                 backgroundColor: '#fff',
+                padding: '8px',
+                gap: '16px',
+                display: 'flex',
+                flexDirection: 'column',
             }}
         >
-            Home View
-
-            <Divider />
 
             <div
                 style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}
@@ -90,14 +90,11 @@ export const HomeView = () => {
                 </Button>
             </div>
 
-            <Divider />
-
             <div
                 style={{ 
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '16px',
-                    padding: '8px',
                 }}
             >
                 {reader.current?.body.map(item => (
