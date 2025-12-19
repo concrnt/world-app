@@ -1,6 +1,5 @@
-import { ReactNode, useEffect, useState } from "react"
+import { memo, ReactNode, Suspense, use } from "react"
 import { useClient } from "../../contexts/Client"
-import { Message } from "@concrnt/worldlib"
 
 interface Props {
     uri: string
@@ -8,19 +7,20 @@ interface Props {
     lastUpdated?: number
 }
 
-export const MessageContainer = (props: Props): ReactNode | null => {
+export const MessageContainer = memo<Props>((props: Props): ReactNode | null => {
 
+    return <Suspense fallback={<div>Loading message...</div>}>
+        <Container {...props} />
+    </Suspense>
+
+})
+
+const Container = (props: Props) => {
     const { client } = useClient()
-    const [message, setMessage] = useState<Message<any> | null>()
 
-    useEffect(() => {
-        if (!client) return
-        client.getMessage<any>(props.uri, props.resolveHint).then((msg) => {
-            setMessage(msg)
-        })
-    }, [client, props.uri, props.lastUpdated])
+    const message = use(client!.getMessage<any>(props.uri, props.resolveHint))
 
-    if (!message) return <div>Loading message...</div>
+    if (!message) return <div>Message not found</div>
 
     return <div
         style={{ 
@@ -62,6 +62,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             </div>
         </div>
     </div>
+
 
 }
 

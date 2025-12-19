@@ -82,7 +82,7 @@ export const HomeView = () => {
                         };
                         client.api.commit(document).then(() => {
                             setDraft("");
-                            // fetchPosts();
+                            reader.current?.reload();
                         })
                     }}
                 >
