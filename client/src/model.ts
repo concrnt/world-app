@@ -19,7 +19,6 @@ export const IsCKID = (str: string): boolean => {
  
 export interface Document<T> {
     key?: string
-    contentType?: string
     schema: string
     value: T
     author: string

@@ -5,6 +5,7 @@ import { Divider } from "../ui/Divider";
 import { TextField } from "../ui/TextField";
 import { Button } from "../ui/Button";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
+import { MessageContainer } from "../components/message";
 
 export const HomeView = () => {
 
@@ -91,10 +92,11 @@ export const HomeView = () => {
 
             <Divider />
 
-            {reader.current?.body.map((item, index) => (
-                <div key={index} style={{ border: '1px solid #ccc', margin: '10px', padding: '10px' }}>
-                    <p>{JSON.stringify(item)}</p>
-                </div>
+            {reader.current?.body.map(item => (
+                <MessageContainer
+                    key={item.href}
+                    uri={item.href}
+                />
             ))}
 
         </div>

@@ -4,7 +4,8 @@ import {
     MasterKeyAuthProvider,
     InMemoryKVS,
     KVS,
-    TimelineReader
+    TimelineReader,
+    Document
 } from '@concrnt/client'
 
 export class Client {
@@ -62,6 +63,41 @@ export class Client {
         return new TimelineReader(this.api/*, socket, opts?.hostOverride*/)
     }
 
+    async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
+        return Message.load<T>(this, uri, hint)
+    }
+
+}
+
+export class Message<T> implements Document<T> {
+
+    uri: string
+    key?: string
+    schema: string
+    value: T
+    author: string
+    owner?: string
+    createdAt: Date
+    memberOf?: string[]
+
+    constructor(uri: string, document: Document<T>) {
+        this.uri = uri
+        this.key = document.key
+        this.schema = document.schema
+        this.value = document.value
+        this.author = document.author
+        this.owner = document.owner
+        this.createdAt = document.createdAt
+        this.memberOf = document.memberOf
+    }
+
+    static async load<T>(client: Client, uri: string, hint?: string): Promise<Message<T> | null> {
+        const res = await client.api.getResource<Document<T>>(null, uri, hint)
+        if (!res) {
+            return null
+        }
+        return new Message<T>(uri, res)
+    }
 
 }
 
