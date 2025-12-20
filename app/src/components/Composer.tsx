@@ -47,6 +47,7 @@ export const Composer = (props: Props) => {
         </div>
         <div>
             <TextField
+                autofocus
                 value={draft}
                 placeholder="いま、なにしてる？"
                 onChange={(e) => setDraft(e.target.value)}

@@ -1,8 +1,27 @@
 import { useClient } from "./contexts/Client";
 import { WelcomeView } from "./views/Welcome";
 import { MainView } from "./views/Main";
+import { useEffect } from "react";
 
 function App() {
+
+    // ios safari scroll fix
+    useEffect(() => {
+        let unmounted = false;
+
+        const frame = () => {
+            if (unmounted) return;
+            const html = document.querySelector('html');
+            if (html) {
+                html.scrollTop = 0;
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+        return () => {
+            unmounted = true;
+        }
+    }, []);
 
     const client = useClient();
 
