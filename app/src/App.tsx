@@ -7,19 +7,13 @@ function App() {
 
     // ios safari scroll fix
     useEffect(() => {
-        let unmounted = false;
-
-        const frame = () => {
-            if (unmounted) return;
-            const html = document.querySelector('html');
-            if (html) {
-                html.scrollTop = 0;
-            }
-            requestAnimationFrame(frame);
+        const preventScroll = () => {
+            document.documentElement.scrollTop = 0;
         }
-        requestAnimationFrame(frame);
+        document.addEventListener('scroll', preventScroll, { passive: false });
+
         return () => {
-            unmounted = true;
+            document.removeEventListener('scroll', preventScroll);
         }
     }, []);
 
