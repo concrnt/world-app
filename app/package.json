@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@concrnt/worldlib": "workspace:*",
     "@concrnt/client": "workspace:*",
+    "@concrnt/worldlib": "workspace:*",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.1",
+    "motion": "^12.23.26",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

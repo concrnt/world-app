@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "../ui/Button";
 import { TextField } from "../ui/TextField";
 import { useClient } from "../contexts/Client";
+import { AnimatePresence, motion } from 'motion/react';
 
 interface Props {
     onClose?: () => void;
@@ -10,25 +11,35 @@ interface Props {
 export const Composer = (props: Props) => {
 
     const { client } = useClient()
-
+    const [willClose, setWillClose] = useState<boolean>(false);
     const [draft, setDraft] = useState<string>("");
 
-    return <div
+    return <AnimatePresence
+        onExitComplete={() => {
+            setDraft("");
+            props.onClose?.();
+        }}
+    >
+        {!willClose &&
+    <motion.div
         style={{
             width: '100%',
             height: '100%',
             backgroundColor: '#fff',
             position: 'absolute',
-            top: 0,
             left: 0,
             zIndex: 1001,
         }}
+        initial={{ top: '100%' }}
+        animate={{ top: 0 }}
+        exit={{ top: '100%' }}
+        transition={{ duration: 0.1 }}
     >
         <div>
             <Button
                 variant="text"
                 onClick={() => {
-                    props.onClose?.();
+                    setWillClose(true);
                 }}
             >
                 cancel
@@ -57,14 +68,14 @@ export const Composer = (props: Props) => {
                         createdAt: new Date(),
                     };
                     client.api.commit(document).then(() => {
-                        setDraft("");
-                        props.onClose?.();
+                        setWillClose(true);
                     })
                 }}
             >
                 投稿
             </Button>
         </div>
-    </div>;
+    </motion.div>}
+    </AnimatePresence>
 }
 
