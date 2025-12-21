@@ -3,7 +3,7 @@ import { HomeView } from "./Home"
 import { SettingsView } from "./Settings"
 import { FAB } from "../ui/FAB"
 import { Composer } from "../components/Composer"
-import { TabLayout } from "../layouts/TabLayout"
+import { TabLayout } from "../layouts/Tab"
 import { DevView } from "./Dev"
 import { SidebarLayout } from "../layouts/Sidebar"
 

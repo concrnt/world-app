@@ -1,4 +1,4 @@
-import { useStack } from "../layouts/StackLayout";
+import { useStack } from "../layouts/Stack";
 import { Button } from "../ui/Button";
 import { Text } from "../ui/Text";
 

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useClient } from "../contexts/Client";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 import { MessageContainer } from "../components/message";
-import { StackLayout } from "../layouts/StackLayout";
+import { StackLayout } from "../layouts/Stack";
 
 export const HomeView = () => {
 
