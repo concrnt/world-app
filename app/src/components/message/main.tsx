@@ -1,6 +1,6 @@
 import { memo, ReactNode, Suspense, use } from "react"
 import { useClient } from "../../contexts/Client"
-import { useStack } from "../../layouts/StackLayout"
+import { useStack } from "../../layouts/Stack"
 import { ProfileView } from "../../views/Profile"
 import { PostView } from "../../views/Post"
 
