@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "motion/react";
 import { Activity, createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 
 interface Props {
@@ -56,24 +57,30 @@ export const StackLayout = (props: Props) => {
                 {props.children}
             </div>
 
+            <AnimatePresence>
             {stack.map((child, index) => (
                 <Activity
                     key={index}
                     mode={index === stack.length - 1 ? 'visible' : 'hidden'}
                 >
-                    <div
+                    <motion.div
                         style={{
                             position: 'absolute',
                             top: 0,
-                            left: 0,
+                            //left: 0,
                             width: '100%',
                             height: '100%'
                         }}
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%' }}
+                        transition={{ duration: 0.1 }}
                     >
                         {child}
-                    </div>
+                    </motion.div>
                 </Activity>
             ))}
+            </AnimatePresence>
 
         </div>
     </StackLayoutContext.Provider>;
