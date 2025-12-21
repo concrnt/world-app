@@ -5,6 +5,7 @@ import { FAB } from "../ui/FAB"
 import { Composer } from "../components/Composer"
 import { TabLayout } from "../layouts/TabLayout"
 import { DevView } from "./Dev"
+import { SidebarLayout } from "../layouts/Sidebar"
 
 export const MainView = () => {
 
@@ -38,9 +39,23 @@ export const MainView = () => {
         >
             +
         </FAB>
-        <TabLayout
-            tabs={tabs}
-        />
+        <SidebarLayout
+            content={
+                <div
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "purple",
+                    }}
+                >
+                    hogehoge
+                </div>
+            }
+        >
+            <TabLayout
+                tabs={tabs}
+            />
+        </SidebarLayout>
     </>
 
 }
