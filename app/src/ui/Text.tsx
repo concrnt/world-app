@@ -6,6 +6,13 @@ interface Props {
 
 export const Text = (props: Props) => {
     return (
-        <p>{props.children}</p>
+        <p
+            style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+            }}
+        >
+            {props.children}
+        </p>
     );
 }

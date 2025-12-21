@@ -1,4 +1,5 @@
 import { Activity, ReactNode, useState } from "react";
+import { StackLayout } from "./StackLayout";
 
 interface Tab {
     body: ReactNode
@@ -29,11 +30,13 @@ export const TabLayout = (props: Props) => {
                 position: "relative",
             }}
         >
-            {Object.entries(props.tabs).map(([key, tab]) => (
-                <Activity mode={key === selectedTab ? "visible" : "hidden"} key={key}>
-                    {tab.body}
-                </Activity>
-            ))}
+            <StackLayout>
+                {Object.entries(props.tabs).map(([key, tab]) => (
+                    <Activity mode={key === selectedTab ? "visible" : "hidden"} key={key}>
+                        {tab.body}
+                    </Activity>
+                ))}
+            </StackLayout>
         </div>
         <div style={{ 
             display: "flex", 
