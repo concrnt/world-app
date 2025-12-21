@@ -4,6 +4,7 @@ import { SettingsView } from "./Settings"
 import { FAB } from "../ui/FAB"
 import { Composer } from "../components/Composer"
 import { TabLayout } from "../layouts/TabLayout"
+import { DevView } from "./Dev"
 
 export const MainView = () => {
 
@@ -14,6 +15,10 @@ export const MainView = () => {
             home: {
                 body: <HomeView />,
                 icon: <span>🏠</span>,
+            },
+            dev: {
+                body: <DevView />,
+                icon: <span>👨‍💻</span>,
             },
             settings: {
                 body: <SettingsView />,

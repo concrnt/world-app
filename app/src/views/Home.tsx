@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useClient } from "../contexts/Client";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 import { MessageContainer } from "../components/message";
+import { StackLayout } from "../layouts/StackLayout";
 
 export const HomeView = () => {
 
@@ -53,21 +54,22 @@ export const HomeView = () => {
                 flexDirection: 'column',
             }}
         >
-            <div
-                style={{ 
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                }}
-            >
-                {reader.current?.body.map(item => (
-                    <MessageContainer
-                        key={item.href}
-                        uri={item.href}
-                    />
-                ))}
-            </div>
-
+            <StackLayout>
+                <div
+                    style={{ 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                    }}
+                >
+                    {reader.current?.body.map(item => (
+                        <MessageContainer
+                            key={item.href}
+                            uri={item.href}
+                        />
+                    ))}
+                </div>
+            </StackLayout>
         </div>
     )
 }
