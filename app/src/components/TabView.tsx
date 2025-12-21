@@ -22,16 +22,24 @@ export const TabView = (props: Props) => {
             backgroundColor: "yellow",
         }}
     >
-        {Object.entries(props.tabs).map(([key, tab]) => (
-            <Activity mode={key === selectedTab ? "visible" : "hidden"} key={key}>
-                {tab.body}
-            </Activity>
-        ))}
+        <div
+            style={{ 
+                display: "flex",
+                flex: 1,
+                position: "relative",
+            }}
+        >
+            {Object.entries(props.tabs).map(([key, tab]) => (
+                <Activity mode={key === selectedTab ? "visible" : "hidden"} key={key}>
+                    {tab.body}
+                </Activity>
+            ))}
+        </div>
         <div style={{ 
             display: "flex", 
             justifyContent: "space-around", 
-            marginTop: "1rem",
             backgroundColor: "red",
+            height: "3rem",
         }}>
             {Object.entries(props.tabs).map(([key, tab]) => (
                 <div

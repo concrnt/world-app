@@ -68,21 +68,21 @@ export const Composer = (props: Props) => {
                     flex: 1,
                 }}
             >
-                    <textarea
-                        autoFocus
-                        value={draft}
-                        placeholder="いま、なにしてる？"
-                        onChange={(e) => setDraft(e.target.value)}
-                        style={{
-                            width: '100%',
-                            fontSize: '16px',
-                            padding: '12px',
-                            boxSizing: 'border-box',
-                            border: 'none',
-                            outline: 'none',
-                            resize: 'none',
-                        }}
-                    />
+                <textarea
+                    autoFocus
+                    value={draft}
+                    placeholder="いま、なにしてる？"
+                    onChange={(e) => setDraft(e.target.value)}
+                    style={{
+                        width: '100%',
+                        fontSize: '16px',
+                        padding: '12px',
+                        boxSizing: 'border-box',
+                        border: 'none',
+                        outline: 'none',
+                        resize: 'none',
+                    }}
+                />
             </div>
             <div>
                 <Button
