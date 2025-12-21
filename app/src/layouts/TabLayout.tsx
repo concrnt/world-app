@@ -9,7 +9,7 @@ interface Props {
     tabs: Record<string, Tab>;
 }
 
-export const TabView = (props: Props) => {
+export const TabLayout = (props: Props) => {
 
     const [selectedTab, setSelectedTab] = useState<string>(Object.keys(props.tabs)[0]);
 

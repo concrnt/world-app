@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react"
-import { TabView } from "../components/TabView"
 import { HomeView } from "./Home"
 import { SettingsView } from "./Settings"
 import { FAB } from "../ui/FAB"
 import { Composer } from "../components/Composer"
+import { TabLayout } from "../layouts/TabLayout"
 
 export const MainView = () => {
 
@@ -33,7 +33,7 @@ export const MainView = () => {
         >
             +
         </FAB>
-        <TabView 
+        <TabLayout
             tabs={tabs}
         />
     </>
