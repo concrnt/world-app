@@ -6,6 +6,8 @@ import { Composer } from "../components/Composer"
 import { TabLayout } from "../layouts/Tab"
 import { DevView } from "./Dev"
 import { SidebarLayout } from "../layouts/Sidebar"
+import { ExplorerView } from "./Explorer"
+import { NotificationsView } from "./Notification"
 
 export const MainView = () => {
 
@@ -16,6 +18,14 @@ export const MainView = () => {
             home: {
                 body: <HomeView />,
                 icon: <span>🏠</span>,
+            },
+            explorer: {
+                body: <ExplorerView />,
+                icon: <span>🧭</span>,
+            },
+            notifications: {
+                body: <NotificationsView />,
+                icon: <span>🔔</span>,
             },
             dev: {
                 body: <DevView />,
