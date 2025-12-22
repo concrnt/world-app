@@ -1,8 +1,7 @@
-import { AuthProvider } from "./interface"
-import { CheckJwtIsValid, IssueJWT, JwtPayload, LoadSubKey, Sign } from "../crypto"
+import { AuthProvider } from './interface'
+import { CheckJwtIsValid, IssueJWT, JwtPayload, LoadSubKey, Sign } from '../crypto'
 
 export class SubKeyAuthProvider implements AuthProvider {
-
     privatekey: string
     host: string
 
@@ -12,7 +11,6 @@ export class SubKeyAuthProvider implements AuthProvider {
     tokens: Record<string, string> = {}
 
     constructor(subkey: string) {
-
         const parsedKey = LoadSubKey(subkey)
         if (!parsedKey) {
             throw new Error('Invalid key')
@@ -24,11 +22,10 @@ export class SubKeyAuthProvider implements AuthProvider {
     }
 
     generateApiToken(remote: string): string {
-
         const token = IssueJWT(this.privatekey, {
             aud: remote,
             iss: this.ckid,
-            sub: 'concrnt',
+            sub: 'concrnt'
         })
 
         this.tokens[remote] = token
@@ -45,10 +42,9 @@ export class SubKeyAuthProvider implements AuthProvider {
     }
 
     async getHeaders(domain: string) {
-
         return {
-            authorization: `Bearer ${this.getAuthToken(domain)}`,
-        };
+            authorization: `Bearer ${this.getAuthToken(domain)}`
+        }
     }
 
     getCCID() {
@@ -69,7 +65,6 @@ export class SubKeyAuthProvider implements AuthProvider {
 
     issueJWT(claims: JwtPayload): string {
         claims.iss ??= this.ccid
-        return IssueJWT(this.privatekey, claims, {keyID: this.ckid})
+        return IssueJWT(this.privatekey, claims, { keyID: this.ckid })
     }
-
 }

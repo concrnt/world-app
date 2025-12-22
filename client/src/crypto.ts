@@ -4,9 +4,9 @@ import { LangEn, keccak256 } from 'ethers'
 import { Mnemonic, randomBytes, HDNodeWallet } from 'ethers'
 
 import { LangJa } from './misc/lang-ja'
-import { ExtendedSecp256k1Signature, Secp256k1 } from "@cosmjs/crypto";
-import { toBech32 } from "@cosmjs/encoding";
-import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
+import { ExtendedSecp256k1Signature, Secp256k1 } from '@cosmjs/crypto'
+import { toBech32 } from '@cosmjs/encoding'
+import { rawSecp256k1PubkeyToRawAddress } from '@cosmjs/amino'
 
 const HDPath = "m/44'/118'/0'/0/0" // use Cosmos HD path
 
@@ -21,7 +21,8 @@ export interface Identity {
 const mnemonic_ja2en = (mnemonic_ja: string): string | null => {
     try {
         mnemonic_ja = mnemonic_ja.trim().normalize('NFKD')
-        const mnemonic_en = mnemonic_ja.split(' ')
+        const mnemonic_en = mnemonic_ja
+            .split(' ')
             .map((word) => {
                 const wordIndex = LangJa.wordlist().getWordIndex(word)
                 return LangEn.wordlist().getWord(wordIndex)
@@ -37,7 +38,8 @@ const mnemonic_ja2en = (mnemonic_ja: string): string | null => {
 const mnemonic_en2ja = (mnemonic_en: string): string | null => {
     try {
         mnemonic_en = mnemonic_en.trim().normalize('NFKD')
-        const mnemonic_ja = mnemonic_en.split(' ')
+        const mnemonic_ja = mnemonic_en
+            .split(' ')
             .map((word) => {
                 const wordIndex = LangEn.wordlist().getWordIndex(word)
                 return LangJa.wordlist().getWord(wordIndex)
@@ -104,11 +106,13 @@ export const LoadIdentity = (mnemonic: string): Identity | null => {
     let mnemonic_en = normalized
     let mnemonic_ja = normalized
 
-    if (normalized[0].match(/[a-z]/)) { // english mnemonic
+    if (normalized[0].match(/[a-z]/)) {
+        // english mnemonic
         const converted = mnemonic_en2ja(normalized)
         if (!converted) return null
         mnemonic_ja = converted
-    } else { // japanese mnemonic
+    } else {
+        // japanese mnemonic
         const converted = mnemonic_ja2en(normalized)
         if (!converted) return null
         mnemonic_en = converted
@@ -125,7 +129,7 @@ export const LoadIdentity = (mnemonic: string): Identity | null => {
         mnemonic_ja: mnemonic_ja,
         privateKey,
         publicKey,
-        CCID,
+        CCID
     }
 }
 
@@ -178,7 +182,7 @@ export const LoadKey = (privateKey: string): KeyPair | null => {
 
         return {
             privatekey,
-            publickey,
+            publickey
         }
     } catch (error) {
         return null
@@ -190,10 +194,9 @@ export const LoadKeyFromMnemonic = (mnemonic: string): KeyPair | null => {
     if (!identity) return null
     return {
         privatekey: identity.privateKey,
-        publickey: identity.publicKey,
+        publickey: identity.publicKey
     }
 }
-
 
 export interface SubKey {
     keypair: KeyPair
@@ -203,7 +206,7 @@ export interface SubKey {
 }
 
 export const LoadSubKey = (secret: string): SubKey | null => {
-    try  {
+    try {
         // format: concurrent-subkey <privatekey> <ccid>@<domain>
         const reg = /concurrent-subkey\s+([0-9a-f]{64})\s+([^@]+)@([^\s]+)/
         const match = secret.match(reg)
@@ -223,7 +226,6 @@ export const LoadSubKey = (secret: string): SubKey | null => {
             ccid,
             ckid
         }
-
     } catch (error) {
         return null
     }
@@ -286,10 +288,10 @@ const atob = (input: string): string => {
     return ''
 }
 
-export const SignJWT = (payload: string, privatekey: string, options?: {keyID?: string}): string => {
+export const SignJWT = (payload: string, privatekey: string, options?: { keyID?: string }): string => {
     const headerJson: Record<string, string> = {
         alg: 'CONCRNT',
-        typ: 'JWT',
+        typ: 'JWT'
     }
     if (options?.keyID) {
         headerJson['kid'] = options.keyID
@@ -310,13 +312,7 @@ export const SignJWT = (payload: string, privatekey: string, options?: {keyID?: 
     s_padded.set(s_raw, 32 - s_raw.length)
 
     const base64 = makeUrlSafe(
-        btoa(
-            String.fromCharCode.apply(null, [
-                ...r_padded,
-                ...s_padded,
-                signature.recoveryParam ?? 0
-            ])
-        )
+        btoa(String.fromCharCode.apply(null, [...r_padded, ...s_padded, signature.recoveryParam ?? 0]))
     )
     return body + '.' + base64
 }
@@ -325,9 +321,7 @@ export const ParseJWT = (jwt: string): JwtPayload => {
     const split = jwt.split('.')
     if (split.length !== 3) return {}
     const encoded = split[1]
-    const payload = atob(
-        encoded.replace('-', '+').replace('_', '/') + '=='.slice((2 - encoded.length * 3) & 3)
-    )
+    const payload = atob(encoded.replace('-', '+').replace('_', '/') + '=='.slice((2 - encoded.length * 3) & 3))
     try {
         return JSON.parse(payload)
     } catch (e) {
@@ -374,7 +368,7 @@ export const IsValid256k1PrivateKey = (key: string): boolean => {
     return privateKey > BigInt(0) && privateKey < n
 }
 
-export const IssueJWT = (key: string, claim?: JwtPayload, options?: {keyID?: string}): string => {
+export const IssueJWT = (key: string, claim?: JwtPayload, options?: { keyID?: string }): string => {
     if (!IsValid256k1PrivateKey(key)) return ''
     const payload = JSON.stringify({
         jti: uuidv4(),

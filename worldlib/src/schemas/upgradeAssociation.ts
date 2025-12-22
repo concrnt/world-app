@@ -6,5 +6,5 @@
  */
 
 export interface UpgradeAssociationSchema {
-  txhash: string;
+    txhash: string
 }

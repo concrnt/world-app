@@ -1,6 +1,4 @@
-
-
 export interface ChunklineItem {
-    href: string;
-    timestamp: Date;
+    href: string
+    timestamp: Date
 }

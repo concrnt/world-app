@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react'
 
 interface Props {
-    children: ReactNode;
+    children: ReactNode
 }
 
 export const Text = (props: Props) => {
@@ -9,10 +9,10 @@ export const Text = (props: Props) => {
         <p
             style={{
                 whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
+                wordBreak: 'break-word'
             }}
         >
             {props.children}
         </p>
-    );
+    )
 }

@@ -6,13 +6,13 @@
  */
 
 export interface ProfileSchema {
-  username?: string;
-  avatar?: string;
-  description?: string;
-  banner?: string;
-  subprofiles?: string[];
-  badges?: {
-    seriesId: string;
-    badgeId: string;
-  }[];
+    username?: string
+    avatar?: string
+    description?: string
+    banner?: string
+    subprofiles?: string[]
+    badges?: {
+        seriesId: string
+        badgeId: string
+    }[]
 }

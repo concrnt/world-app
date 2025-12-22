@@ -12,7 +12,6 @@ import {
 import { ProfileSchema } from './schemas/'
 
 export class Client {
-
     api: Api
     ccid: string
 
@@ -21,11 +20,7 @@ export class Client {
         this.ccid = ''
     }
 
-    static async create(
-        privatekey: string,
-        host: FQDN,
-    ): Promise<Client> {
-
+    static async create(privatekey: string, host: FQDN): Promise<Client> {
         const authProvider = new MasterKeyAuthProvider(privatekey, host)
         let cacheEngine: KVS | undefined = new InMemoryKVS()
 
@@ -34,25 +29,26 @@ export class Client {
 
         client.ccid = authProvider.getCCID()
 
-        await api.getResource(null, `cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
+        await api
+            .getResource(null, `cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
             .then((res) => {
                 if (res === null) {
                     const document = {
-                        key: "world.concrnt.t-home",
+                        key: 'world.concrnt.t-home',
                         author: api.authProvider.getCCID(),
-                        schema: "https://schema.concrnt.world/t/empty.json",
-                        contentType: "application/chunkline+json",
+                        schema: 'https://schema.concrnt.world/t/empty.json',
+                        contentType: 'application/chunkline+json',
                         value: {},
-                        createdAt: new Date(),
+                        createdAt: new Date()
                     }
-                    api.commit(document);
-                    return document;
+                    api.commit(document)
+                    return document
                 }
-                return res;
+                return res
             })
             .catch((err) => {
-                console.error("Error fetching timeline:", err);
-                return null;
+                console.error('Error fetching timeline:', err)
+                return null
             })
 
         return client
@@ -63,17 +59,15 @@ export class Client {
             return new TimelineReader(this.api, undefined)
         }
         // const socket = await this.newSocket(opts?.hostOverride)
-        return new TimelineReader(this.api/*, socket, opts?.hostOverride*/)
+        return new TimelineReader(this.api /*, socket, opts?.hostOverride*/)
     }
 
     async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
         return Message.load<T>(this, uri, hint)
     }
-
 }
 
 export class Message<T> implements Document<T> {
-
     uri: string
     key?: string
     schema: string
@@ -106,11 +100,9 @@ export class Message<T> implements Document<T> {
 
         return message
     }
-
 }
 
 export class User {
-
     domain: FQDN
     profile: Partial<ProfileSchema>
 
@@ -130,20 +122,16 @@ export class User {
         this.affiliationSignature = entity.affiliationSignature
     }
 
-    static async load(
-        client: Client,
-        id: CCID,
-        hint?: string,
-    ): Promise<User> {
-
+    static async load(client: Client, id: CCID, hint?: string): Promise<User> {
         const entity = await client.api.getEntity(id, hint).catch((_e) => {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getResource<Document<ProfileSchema>>(null, `cc://${entity.ccid}/world.concrnt.profile`)
+        const profile = await client.api.getResource<Document<ProfileSchema>>(
+            null,
+            `cc://${entity.ccid}/world.concrnt.profile`
+        )
 
         return new User(entity.domain, entity, profile?.value)
     }
-
 }
-

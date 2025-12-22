@@ -1,8 +1,4 @@
-export const fetchWithTimeout = async (
-    url: string,
-    init: RequestInit,
-    timeoutMs = 10 * 1000
-): Promise<Response> => {
+export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 10 * 1000): Promise<Response> => {
     const controller = new AbortController()
     const clientTimeout = setTimeout(() => {
         controller.abort()

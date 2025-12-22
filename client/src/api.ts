@@ -1,9 +1,8 @@
-
-import { KVS } from "./cache"
-import { AuthProvider } from "./auth"
-import { fetchWithTimeout } from "./util"
-import { CCID, CSID, FQDN, IsCCID, IsCSID, Document } from "./model"
-import { ChunklineItem } from "./chunkline"
+import { KVS } from './cache'
+import { AuthProvider } from './auth'
+import { fetchWithTimeout } from './util'
+import { CCID, CSID, FQDN, IsCCID, IsCSID, Document } from './model'
+import { ChunklineItem } from './chunkline'
 
 export class ServerOfflineError extends Error {
     constructor(server: string) {
@@ -40,7 +39,6 @@ export interface FetchOptions<T> {
 }
 
 export class Api {
-
     authProvider: AuthProvider
     cache: KVS
     defaultHost: string = ''
@@ -66,13 +64,15 @@ export class Api {
             }
         }
 
-        return await this.getServer(host, { cache: 'no-cache' }).then(() => {
-            this.cache.set(cacheKey, 1)
-            return true
-        }).catch(() => {
-            this.cache.invalidate(cacheKey)
-            return false
-        })
+        return await this.getServer(host, { cache: 'no-cache' })
+            .then(() => {
+                this.cache.set(cacheKey, 1)
+                return true
+            })
+            .catch(() => {
+                this.cache.invalidate(cacheKey)
+                return false
+            })
     }
 
     private isHostOnline = async (host: string): Promise<boolean> => {
@@ -99,13 +99,7 @@ export class Api {
         this.cache.set(cacheKey, failCount + 1)
     }
 
-    async fetchWithCredential<T>(
-        host: string,
-        path: string,
-        init: RequestInit = {},
-        timeoutms?: number
-    ): Promise<T> {
-
+    async fetchWithCredential<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
         const fetchHost = host || this.defaultHost
 
         try {
@@ -122,13 +116,7 @@ export class Api {
     }
 
     // Gets
-    async fetchHost<T>(
-        host: string,
-        path: string,
-        init: RequestInit = {},
-        timeoutms?: number
-    ): Promise<T> {
-
+    async fetchHost<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
         const fetchNetwork = async (): Promise<T> => {
             const fetchHost = host || this.defaultHost
             const url = `https://${fetchHost}${path}`
@@ -138,53 +126,52 @@ export class Api {
             }
 
             init.headers = {
-                'Accept': 'application/json',
-                ...init.headers,
+                Accept: 'application/json',
+                ...init.headers
             }
-            
-            const req = fetchWithTimeout(url, init, timeoutms).then(async (res) => {
 
-                switch (res.status) {
-                    case 403:
-                        throw new PermissionError(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                    case 404:
-                        throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                    case 502:
-                    case 503:
-                    case 504:
+            const req = fetchWithTimeout(url, init, timeoutms)
+                .then(async (res) => {
+                    switch (res.status) {
+                        case 403:
+                            throw new PermissionError(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                        case 404:
+                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                        case 502:
+                        case 503:
+                        case 504:
+                            await this.markHostOffline(fetchHost)
+                            throw new ServerOfflineError(fetchHost)
+                    }
+
+                    if (!res.ok) {
+                        return await Promise.reject(
+                            new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                        )
+                    }
+
+                    this.markHostOnline(fetchHost)
+
+                    return await res.json()
+                })
+                .catch(async (err) => {
+                    if (err instanceof ServerOfflineError) {
+                        return Promise.reject(err)
+                    }
+
+                    if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
                         await this.markHostOffline(fetchHost)
-                        throw new ServerOfflineError(fetchHost)
-                }
+                        return Promise.reject(new ServerOfflineError(fetchHost))
+                    }
 
-                if (!res.ok) {
-                    return await Promise.reject(new Error(`fetch failed on transport: ${res.status} ${await res.text()}`))
-                }
-
-                this.markHostOnline(fetchHost)
-
-                return await res.json()
-
-            }).catch(async (err) => {
-
-                if (err instanceof ServerOfflineError) {
                     return Promise.reject(err)
-                }
-
-                if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
-                    await this.markHostOffline(fetchHost)
-                    return Promise.reject(new ServerOfflineError(fetchHost))
-                }
-
-                return Promise.reject(err)
-
-            })
+                })
 
             return req
         }
 
         return await fetchNetwork()
     }
-
 
     async fetchWithCache<T>(
         cls: (new () => T extends (infer U)[] ? U : T) | null,
@@ -193,7 +180,6 @@ export class Api {
         cacheKey: string,
         opts?: FetchOptions<T>
     ): Promise<T> {
-
         let cached: T | null = null
         if (opts?.cache !== 'no-cache') {
             const cachedEntry = await this.cache.get<T>(cacheKey)
@@ -212,7 +198,8 @@ export class Api {
                 cached = cachedEntry.data
 
                 const age = Date.now() - cachedEntry.timestamp
-                if (age < (cachedEntry.data ? (opts?.TTL ?? this.defaultCacheTTL) : this.negativeCacheTTL)) { // return cached if TTL is not expired
+                if (age < (cachedEntry.data ? (opts?.TTL ?? this.defaultCacheTTL) : this.negativeCacheTTL)) {
+                    // return cached if TTL is not expired
                     if (!(opts?.cache === 'best-effort' && !cachedEntry.data)) return cachedEntry.data
                 }
             }
@@ -243,72 +230,72 @@ export class Api {
             const requestOptions = {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     ...authHeaders
                 }
             }
-            
-            const req = fetchWithTimeout(url, requestOptions, opts?.timeoutms).then(async (res) => {
 
-                if (res.status === 403) {
-                    return await Promise.reject(new PermissionError(await res.text()))
-                }
-
-                if ([502, 503, 504].includes(res.status)) {
-                    await this.markHostOffline(fetchHost)
-                    return await Promise.reject(new ServerOfflineError(fetchHost))
-                }
-
-                if (!res.ok) {
-                    if (res.status === 404) {
-                        this.cache.set(cacheKey, null)
-                        return null
+            const req = fetchWithTimeout(url, requestOptions, opts?.timeoutms)
+                .then(async (res) => {
+                    if (res.status === 403) {
+                        return await Promise.reject(new PermissionError(await res.text()))
                     }
-                    return await Promise.reject(new Error(`fetch failed on transport: ${res.status} ${await res.text()}`))
-                }
 
-                this.markHostOnline(fetchHost)
+                    if ([502, 503, 504].includes(res.status)) {
+                        await this.markHostOffline(fetchHost)
+                        return await Promise.reject(new ServerOfflineError(fetchHost))
+                    }
 
-                const data: T = await res.json()
-                
-                opts?.expressGetter?.(data)
-                if (opts?.cache !== 'negative-only') this.cache.set(cacheKey, data)
+                    if (!res.ok) {
+                        if (res.status === 404) {
+                            this.cache.set(cacheKey, null)
+                            return null
+                        }
+                        return await Promise.reject(
+                            new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                        )
+                    }
 
-                if (cls) {
-                    if (Array.isArray(data)) {
-                        return data.map((item) => Object.setPrototypeOf(item, cls.prototype))
+                    this.markHostOnline(fetchHost)
+
+                    const data: T = await res.json()
+
+                    opts?.expressGetter?.(data)
+                    if (opts?.cache !== 'negative-only') this.cache.set(cacheKey, data)
+
+                    if (cls) {
+                        if (Array.isArray(data)) {
+                            return data.map((item) => Object.setPrototypeOf(item, cls.prototype))
+                        } else {
+                            return Object.setPrototypeOf(data, cls.prototype)
+                        }
                     } else {
-                        return Object.setPrototypeOf(data, cls.prototype)
+                        return data
                     }
-                } else {
-                    return data
-                }
+                })
+                .catch(async (err) => {
+                    if (err instanceof ServerOfflineError) {
+                        return Promise.reject(err)
+                    }
 
-            }).catch(async (err) => {
+                    if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
+                        await this.markHostOffline(fetchHost)
+                        return Promise.reject(new ServerOfflineError(fetchHost))
+                    }
 
-                if (err instanceof ServerOfflineError) {
                     return Promise.reject(err)
-                }
-
-                if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
-                    await this.markHostOffline(fetchHost)
-                    return Promise.reject(new ServerOfflineError(fetchHost))
-                }
-
-                return Promise.reject(err)
-
-            }).finally(() => {
-
-                this.inFlightRequests.delete(cacheKey)
-
-            })
+                })
+                .finally(() => {
+                    this.inFlightRequests.delete(cacheKey)
+                })
 
             this.inFlightRequests.set(cacheKey, req)
 
             return req
         }
 
-        if (cached) { // swr
+        if (cached) {
+            // swr
             fetchNetwork()
             return cached
         }
@@ -367,21 +354,19 @@ export class Api {
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key)
 
-        const resource = this.fetchWithCache<T>(
-            cls,
-            fqdn,
-            endpoint,
-            uri,
-            {},
-        )
+        const resource = this.fetchWithCache<T>(cls, fqdn, endpoint, uri, {})
 
         return resource
     }
 
-    async requestConcrntApi<T>(host: string, api: string, opts: {params?: Record<string, string>, query?: string}, init?: RequestInit): Promise<T> {
-
+    async requestConcrntApi<T>(
+        host: string,
+        api: string,
+        opts: { params?: Record<string, string>; query?: string },
+        init?: RequestInit
+    ): Promise<T> {
         const server = await this.getServer(host)
-        
+
         let endpoint = server.endpoints[api]
         let template = endpoint.template
         if (opts.params) {
@@ -393,40 +378,41 @@ export class Api {
         if (opts.query) {
             template += opts.query
         }
-            
-        return this.fetchHost<T>(host, template, init)
 
+        return this.fetchHost<T>(host, template, init)
     }
 
     async commit<T>(document: Document<T>, domain?: string): Promise<void> {
-
         const docString = JSON.stringify(document)
         const signature = this.authProvider.sign(docString)
 
         const signedDoc = {
             document: docString,
             proof: {
-                type: "concrnt-ecrecover-direct",
+                type: 'concrnt-ecrecover-direct',
                 signature: signature
             }
         }
 
         return fetch(`https://${domain ?? this.defaultHost}/commit`, {
-            method: "POST",
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json"
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(signedDoc)
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error(`Server responded with ${response.status}`);
-            }
-            return response.json();
-        }).then(data => {
-            console.log("Affiliation committed successfully:", data);
-        }).catch(error => {
-            console.error("Error committing affiliation:", error);
-        });
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`)
+                }
+                return response.json()
+            })
+            .then((data) => {
+                console.log('Affiliation committed successfully:', data)
+            })
+            .catch((error) => {
+                console.error('Error committing affiliation:', error)
+            })
     }
 
     // ---
@@ -437,18 +423,18 @@ export class Api {
         return resp
     }
 
-
-    async getTimelineRanged(timelines: string[], param: {until?: Date, since?: Date}, host?: string): Promise<ChunklineItem[]> {
-
-        const sinceQuery = !param.since ? '' : `&since=${Math.floor(param.since.getTime()/1000)}`
-        const untilQuery = !param.until ? '' : `&until=${Math.ceil(param.until.getTime()/1000)}`
+    async getTimelineRanged(
+        timelines: string[],
+        param: { until?: Date; since?: Date },
+        host?: string
+    ): Promise<ChunklineItem[]> {
+        const sinceQuery = !param.since ? '' : `&since=${Math.floor(param.since.getTime() / 1000)}`
+        const untilQuery = !param.until ? '' : `&until=${Math.ceil(param.until.getTime() / 1000)}`
 
         const requestPath = `/api/v1/timeline/recent?uris=${timelines.join(',')}${sinceQuery}${untilQuery}`
         const resp = await this.fetchWithCredential<ChunklineItem[]>(host ?? this.defaultHost, requestPath)
         return resp
-
     }
-
 }
 
 export interface ConcrntApiEndpoint {
@@ -476,4 +462,3 @@ export class Entity {
 
     cdate: string = ''
 }
-

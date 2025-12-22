@@ -1,8 +1,8 @@
-import { memo, ReactNode, Suspense, use } from "react"
-import { useClient } from "../../contexts/Client"
-import { useStack } from "../../layouts/Stack"
-import { ProfileView } from "../../views/Profile"
-import { PostView } from "../../views/Post"
+import { memo, ReactNode, Suspense, use } from 'react'
+import { useClient } from '../../contexts/Client'
+import { useStack } from '../../layouts/Stack'
+import { ProfileView } from '../../views/Profile'
+import { PostView } from '../../views/Post'
 
 interface Props {
     uri: string
@@ -11,11 +11,11 @@ interface Props {
 }
 
 export const MessageContainer = memo<Props>((props: Props): ReactNode | null => {
-
-    return <Suspense fallback={<div>Loading message...</div>}>
-        <Message {...props} />
-    </Suspense>
-
+    return (
+        <Suspense fallback={<div>Loading message...</div>}>
+            <Message {...props} />
+        </Suspense>
+    )
 })
 
 const Message = (props: Props) => {
@@ -27,56 +27,51 @@ const Message = (props: Props) => {
 
     if (!message) return <div>Message not found</div>
 
-    return <div
-        style={{ 
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '8px',
-            backgroundColor: 'aqua'
-        }}
-        onClick={(e) => {
-            e.stopPropagation()
-            push(<PostView uri={message.uri} />)
-        }}
-    >
+    return (
         <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '8px',
+                backgroundColor: 'aqua'
+            }}
             onClick={(e) => {
                 e.stopPropagation()
-                push(<ProfileView id={message.author} />)
-            }}
-        >
-            <img 
-                src={message.authorUser?.profile.avatar} 
-                alt="avatar" 
-                style={{ 
-                    width: '40px', 
-                    height: '40px', 
-                    borderRadius: '4px', 
-                }} 
-            />
-        </div>
-        <div
-            style={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
+                push(<PostView uri={message.uri} />)
             }}
         >
             <div
-                style={{ 
-                    fontWeight: 'bold',
+                onClick={(e) => {
+                    e.stopPropagation()
+                    push(<ProfileView id={message.author} />)
                 }}
             >
-                {message.authorUser?.profile.username}
+                <img
+                    src={message.authorUser?.profile.avatar}
+                    alt="avatar"
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '4px'
+                    }}
+                />
             </div>
             <div
-                style={{ 
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
                 }}
             >
-                {message.value.body}
+                <div
+                    style={{
+                        fontWeight: 'bold'
+                    }}
+                >
+                    {message.authorUser?.profile.username}
+                </div>
+                <div style={{}}>{message.value.body}</div>
             </div>
         </div>
-    </div>
-
+    )
 }
-

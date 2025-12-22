@@ -6,9 +6,9 @@
  */
 
 export interface CommunityTimelineSchema {
-  name: string;
-  shortname?: string;
-  description?: string;
-  icon?: string;
-  banner?: string;
+    name: string
+    shortname?: string
+    description?: string
+    icon?: string
+    banner?: string
 }

@@ -6,5 +6,5 @@
  */
 
 export interface ReadAccessRequestAssociationSchema {
-  reason?: string;
+    reason?: string
 }

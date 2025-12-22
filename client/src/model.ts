@@ -1,4 +1,3 @@
-
 // -- core --
 export type FQDN = string
 
@@ -16,7 +15,7 @@ export type CKID = string
 export const IsCKID = (str: string): boolean => {
     return str.startsWith('cck1') && !str.includes('.') && str.length === 42
 }
- 
+
 export interface Document<T> {
     key?: string
     schema: string
@@ -28,17 +27,15 @@ export interface Document<T> {
 }
 
 export interface Proof {
-    "type": string
-    "signature": string
+    type: string
+    signature: string
 }
 
 export interface SignedDocument {
-    "document": string
-    "proof": Proof
+    document: string
+    proof: Proof
 }
 
 export interface Affiliation {
-    "domain": string
+    domain: string
 }
-
-

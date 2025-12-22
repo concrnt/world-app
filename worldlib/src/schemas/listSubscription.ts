@@ -6,7 +6,7 @@
  */
 
 export interface ListSubscriptionSchema {
-  name: string;
-  iconURL?: string;
-  description?: string;
+    name: string
+    iconURL?: string
+    description?: string
 }

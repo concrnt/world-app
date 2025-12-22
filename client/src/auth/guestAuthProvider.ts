@@ -1,28 +1,27 @@
-import { AuthProvider } from "./interface";
-import { type JwtPayload } from "../crypto";
+import { AuthProvider } from './interface'
+import { type JwtPayload } from '../crypto'
 
 export class GuestAuthProvider implements AuthProvider {
-
     defaultHost = ''
-    
+
     constructor(defaultHost: string) {
         this.defaultHost = defaultHost
     }
 
     async getHeaders(_domain: string) {
-        return {};
+        return {}
     }
 
     getAuthToken(_domain: string): string {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.')
     }
 
     getCCID(): never {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.')
     }
 
     getCKID(): never {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.')
     }
 
     getHost(): string {
@@ -30,10 +29,10 @@ export class GuestAuthProvider implements AuthProvider {
     }
 
     sign(_data: string): never {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.')
     }
 
     issueJWT(_claims: JwtPayload): never {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.')
     }
 }

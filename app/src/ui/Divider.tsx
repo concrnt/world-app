@@ -1,6 +1,3 @@
-
 export const Divider = () => {
-    return (
-        <hr />
-    );
+    return <hr />
 }

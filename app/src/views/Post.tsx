@@ -1,14 +1,13 @@
-import { useStack } from "../layouts/Stack";
-import { Header } from "../ui/Header";
-import { Text } from "../ui/Text";
-import { View } from "../ui/View";
+import { useStack } from '../layouts/Stack'
+import { Header } from '../ui/Header'
+import { Text } from '../ui/Text'
+import { View } from '../ui/View'
 
 interface Props {
     uri: string
 }
 
 export const PostView = (props: Props) => {
-
     const { pop } = useStack()
 
     return (
@@ -21,7 +20,7 @@ export const PostView = (props: Props) => {
                             height: '100%',
                             display: 'flex',
                             justifyContent: 'center',
-                            alignItems: 'center',
+                            alignItems: 'center'
                         }}
                         onClick={() => {
                             pop()
@@ -33,10 +32,7 @@ export const PostView = (props: Props) => {
             >
                 Post
             </Header>
-            <Text>
-                Post (URI: {props.uri})
-            </Text>
-
+            <Text>Post (URI: {props.uri})</Text>
         </View>
     )
 }

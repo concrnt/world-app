@@ -1,14 +1,12 @@
-import { ReactNode } from "react";
-import { useTheme } from "../contexts/Theme";
-
+import { ReactNode } from 'react'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
-    children?: ReactNode;
+    children?: ReactNode
 }
 
 export const View = (props: Props) => {
-
-    const theme = useTheme();
+    const theme = useTheme()
 
     return (
         <div
@@ -19,7 +17,7 @@ export const View = (props: Props) => {
                 flexDirection: 'column',
                 gap: '8px',
                 color: theme.content.text,
-                backgroundColor: theme.content.background,
+                backgroundColor: theme.content.background
             }}
         >
             {props.children}

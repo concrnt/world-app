@@ -6,5 +6,5 @@
  */
 
 export interface SubprofileTimelineSchema {
-  subprofile: string;
+    subprofile: string
 }

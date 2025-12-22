@@ -6,11 +6,11 @@
  */
 
 export interface LikeAssociationSchema {
-  profileOverride?: {
-    username?: string;
-    avatar?: string;
-    description?: string;
-    link?: string;
-    profileID?: string;
-  };
+    profileOverride?: {
+        username?: string
+        avatar?: string
+        description?: string
+        link?: string
+        profileID?: string
+    }
 }

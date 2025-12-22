@@ -1,8 +1,7 @@
-import { AuthProvider } from "./interface"
-import { ComputeCCID, LoadKey, IssueJWT, Sign, CheckJwtIsValid, type JwtPayload } from "../crypto";
+import { AuthProvider } from './interface'
+import { ComputeCCID, LoadKey, IssueJWT, Sign, CheckJwtIsValid, type JwtPayload } from '../crypto'
 
 export class MasterKeyAuthProvider implements AuthProvider {
-
     privatekey: string
     host: string
 
@@ -11,7 +10,6 @@ export class MasterKeyAuthProvider implements AuthProvider {
     tokens: Record<string, string> = {}
 
     constructor(privatekey: string, host: string) {
-
         this.privatekey = privatekey
         this.host = host
 
@@ -23,11 +21,10 @@ export class MasterKeyAuthProvider implements AuthProvider {
     }
 
     generateApiToken(remote: string): string {
-
         const token = IssueJWT(this.privatekey, {
             aud: remote,
             iss: this.ccid,
-            sub: 'concrnt',
+            sub: 'concrnt'
         })
 
         this.tokens[remote] = token
@@ -44,10 +41,9 @@ export class MasterKeyAuthProvider implements AuthProvider {
     }
 
     async getHeaders(domain: string) {
-
         return {
-            authorization: `Bearer ${this.getAuthToken(domain)}`,
-        };
+            authorization: `Bearer ${this.getAuthToken(domain)}`
+        }
     }
 
     getCCID() {
