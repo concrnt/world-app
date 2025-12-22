@@ -15,6 +15,7 @@ import { MdExplore } from 'react-icons/md'
 import { MdNotifications } from 'react-icons/md'
 import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
+import { MdCreate } from 'react-icons/md'
 
 export const MainView = () => {
     const [showComposer, setShowComposer] = useState(false)
@@ -49,7 +50,9 @@ export const MainView = () => {
             {showComposer && <Composer onClose={() => setShowComposer(false)} />}
             <SidebarLayout content={<Sidebar />}>
                 <TabLayout tabs={tabs} />
-                <FAB onClick={() => setShowComposer(true)}>+</FAB>
+                <FAB onClick={() => setShowComposer(true)}>
+                    <MdCreate size={24} />
+                </FAB>
             </SidebarLayout>
         </>
     )
