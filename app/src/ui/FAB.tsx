@@ -28,8 +28,7 @@ export const FAB = (props: Props) => {
                 fontSize: '24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000
+                justifyContent: 'center'
             }}
         >
             {props.children}

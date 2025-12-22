@@ -1,11 +1,12 @@
 import { TimelineReader } from '@concrnt/client'
-import { useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { MessageContainer } from '../components/message'
 import { Header } from '../ui/Header'
 import { useSidebar } from '../layouts/Sidebar'
 import { View } from '../ui/View'
+import { Divider } from '../ui/Divider'
 
 export const HomeView = () => {
     const { client } = useClient()
@@ -63,20 +64,19 @@ export const HomeView = () => {
             </Header>
             <div
                 style={{
-                    padding: '0 8px'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
-                    }}
-                >
-                    {reader.current?.body.map((item) => (
-                        <MessageContainer key={item.href} uri={item.href} />
-                    ))}
-                </div>
+                {reader.current?.body.map((item) => (
+                    <Fragment key={item.href}>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageContainer uri={item.href} />
+                        </div>
+                        <Divider />
+                    </Fragment>
+                ))}
             </div>
         </View>
     )

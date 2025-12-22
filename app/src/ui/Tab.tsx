@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
+import { motion } from 'motion/react'
 
 interface Props {
     selected?: boolean
@@ -16,11 +17,25 @@ export const Tab = (props: Props) => {
                 cursor: 'pointer',
                 padding: '0.5rem',
                 color: theme.ui.text,
-                borderBottom: props.selected ? `2px solid ${theme.ui.text}` : '2px solid transparent'
+                position: 'relative'
             }}
             onClick={props.onClick}
         >
             {props.children}
+            {props.selected && (
+                <motion.div
+                    layoutId="tab-underline"
+                    style={{
+                        position: 'absolute',
+                        height: '4px',
+                        backgroundColor: theme.ui.text,
+                        bottom: 0,
+                        left: 0,
+                        right: 0
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                />
+            )}
         </div>
     )
 }

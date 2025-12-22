@@ -8,6 +8,7 @@ import { DevView } from './Dev'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { ExplorerView } from './Explorer'
 import { NotificationsView } from './Notification'
+import { Sidebar } from '../components/Sidebar'
 
 export const MainView = () => {
     const [showComposer, setShowComposer] = useState(false)
@@ -40,21 +41,9 @@ export const MainView = () => {
     return (
         <>
             {showComposer && <Composer onClose={() => setShowComposer(false)} />}
-            <FAB onClick={() => setShowComposer(true)}>+</FAB>
-            <SidebarLayout
-                content={
-                    <div
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: 'purple'
-                        }}
-                    >
-                        hogehoge
-                    </div>
-                }
-            >
+            <SidebarLayout content={<Sidebar />}>
                 <TabLayout tabs={tabs} />
+                <FAB onClick={() => setShowComposer(true)}>+</FAB>
             </SidebarLayout>
         </>
     )

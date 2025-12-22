@@ -29,7 +29,15 @@ export const Header = (props: Props) => {
             >
                 {props.left}
             </div>
-            {props.children}
+            <div
+                style={{
+                    flexGrow: 1,
+                    textAlign: 'center',
+                    fontWeight: 'bold'
+                }}
+            >
+                {props.children}
+            </div>
             <div
                 style={{
                     height: '40px',
