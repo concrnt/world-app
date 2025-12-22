@@ -32,10 +32,16 @@ const Message = (props: Props) => {
             display: 'flex',
             flexDirection: 'row',
             gap: '8px',
+            backgroundColor: 'aqua'
+        }}
+        onClick={(e) => {
+            e.stopPropagation()
+            push(<PostView uri={message.uri} />)
         }}
     >
         <div
-            onClick={() => {
+            onClick={(e) => {
+                e.stopPropagation()
                 push(<ProfileView id={message.author} />)
             }}
         >
@@ -54,9 +60,6 @@ const Message = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '4px',
-            }}
-            onClick={() => {
-                push(<PostView uri={message.uri} />)
             }}
         >
             <div

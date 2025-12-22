@@ -51,7 +51,7 @@ export const HomeView = () => {
                 width: '100%',
                 height: '100%',
                 backgroundColor: '#fff',
-                gap: '16px',
+                gap: '8px',
                 display: 'flex',
                 flexDirection: 'column',
             }}
