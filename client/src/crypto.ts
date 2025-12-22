@@ -96,7 +96,7 @@ export const DeriveIdentity = (source: Uint8Array): Identity => {
 }
 
 export const LoadIdentity = (mnemonic: string): Identity | null => {
-    let normalized = mnemonic.trim().normalize('NFKD')
+    const normalized = mnemonic.trim().normalize('NFKD')
 
     const split = normalized.split(' ')
     if (split.length !== 12) {
@@ -176,7 +176,7 @@ export const LoadKey = (privateKey: string): KeyPair | null => {
         const keyPair = ellipsis.keyFromPrivate(privateKey)
         if (!keyPair.getPrivate()) return null
         let privatekey = keyPair.getPrivate().toString('hex')
-        let publickey = keyPair.getPublic().encode('hex', false)
+        const publickey = keyPair.getPublic().encode('hex', false)
 
         privatekey = '0'.repeat(64 - privatekey.length) + privatekey
 
@@ -184,7 +184,7 @@ export const LoadKey = (privateKey: string): KeyPair | null => {
             privatekey,
             publickey
         }
-    } catch (error) {
+    } catch (_error) {
         return null
     }
 }
@@ -226,22 +226,22 @@ export const LoadSubKey = (secret: string): SubKey | null => {
             ccid,
             ckid
         }
-    } catch (error) {
+    } catch (_error) {
         return null
     }
 }
 
 export const ComputeCCID = (publickey: string): string => {
     const bytes = parseHexString(publickey)
-    let compressedPubkey = Secp256k1.compressPubkey(bytes)
-    let address = toBech32('con', rawSecp256k1PubkeyToRawAddress(compressedPubkey))
+    const compressedPubkey = Secp256k1.compressPubkey(bytes)
+    const address = toBech32('con', rawSecp256k1PubkeyToRawAddress(compressedPubkey))
     return address
 }
 
 export const ComputeCKID = (publickey: string): string => {
     const bytes = parseHexString(publickey)
-    let compressedPubkey = Secp256k1.compressPubkey(bytes)
-    let address = toBech32('cck', rawSecp256k1PubkeyToRawAddress(compressedPubkey))
+    const compressedPubkey = Secp256k1.compressPubkey(bytes)
+    const address = toBech32('cck', rawSecp256k1PubkeyToRawAddress(compressedPubkey))
     return address
 }
 

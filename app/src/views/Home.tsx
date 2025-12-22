@@ -1,5 +1,5 @@
 import { TimelineReader } from '@concrnt/client'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { MessageContainer } from '../components/message'
@@ -12,7 +12,7 @@ export const HomeView = () => {
 
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
 
-    const timelines = [`cc://${client?.ccid}/world.concrnt.t-home`]
+    const timelines = useMemo(() => [`cc://${client?.ccid}/world.concrnt.t-home`], [client])
 
     useEffect(() => {
         let isCancelled = false
@@ -37,7 +37,7 @@ export const HomeView = () => {
                 t?.dispose()
             })
         }
-    }, [client])
+    }, [client, reader, timelines, update])
 
     const { open } = useSidebar()
 

@@ -312,14 +312,14 @@ export class Api {
     }
 
     async getServerByCSID(csid: CSID): Promise<Server> {
-        let uri = `cc://${csid}`
+        const uri = `cc://${csid}`
 
         const server = await this.getResource<Server>(Server, uri, this.defaultHost)
         return server
     }
 
     async getEntity(ccid: string, hint?: string): Promise<Entity> {
-        let uri = `cc://${ccid}`
+        const uri = `cc://${ccid}`
 
         const entity = await this.getResource<Entity>(Entity, uri, hint ?? this.defaultHost)
         return entity
@@ -349,7 +349,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        let endpoint = server.endpoints['net.concrnt.core.resource'].template
+        const endpoint = server.endpoints['net.concrnt.core.resource'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key)
@@ -367,7 +367,7 @@ export class Api {
     ): Promise<T> {
         const server = await this.getServer(host)
 
-        let endpoint = server.endpoints[api]
+        const endpoint = server.endpoints[api]
         let template = endpoint.template
         if (opts.params) {
             for (const [key, value] of Object.entries(opts.params)) {

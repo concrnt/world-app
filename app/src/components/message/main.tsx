@@ -75,3 +75,5 @@ const Message = (props: Props) => {
         </div>
     )
 }
+
+MessageContainer.displayName = 'MessageContainer'

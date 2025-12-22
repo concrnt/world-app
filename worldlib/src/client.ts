@@ -3,7 +3,6 @@ import {
     type FQDN,
     MasterKeyAuthProvider,
     InMemoryKVS,
-    KVS,
     TimelineReader,
     Document,
     CCID,
@@ -22,7 +21,7 @@ export class Client {
 
     static async create(privatekey: string, host: FQDN): Promise<Client> {
         const authProvider = new MasterKeyAuthProvider(privatekey, host)
-        let cacheEngine: KVS | undefined = new InMemoryKVS()
+        const cacheEngine = new InMemoryKVS()
 
         const api = new Api(authProvider, cacheEngine)
         const client = new Client(api)
