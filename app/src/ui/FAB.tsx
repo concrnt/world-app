@@ -24,7 +24,7 @@ export const FAB = (props: Props) => {
                 width: '60px',
                 height: '60px',
                 bottom: '60px',
-                right: '20px',
+                right: '14px',
                 fontSize: '24px',
                 display: 'flex',
                 alignItems: 'center',
