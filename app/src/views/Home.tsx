@@ -7,6 +7,7 @@ import { Header } from '../ui/Header'
 import { useSidebar } from '../layouts/Sidebar'
 import { View } from '../ui/View'
 import { Divider } from '../ui/Divider'
+import { MdMenu } from 'react-icons/md'
 
 export const HomeView = () => {
     const { client } = useClient()
@@ -56,7 +57,7 @@ export const HomeView = () => {
                         }}
                         onClick={() => open()}
                     >
-                        🍔
+                        <MdMenu size={24} />
                     </div>
                 }
             >

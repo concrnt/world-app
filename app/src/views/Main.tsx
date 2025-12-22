@@ -10,6 +10,12 @@ import { ExplorerView } from './Explorer'
 import { NotificationsView } from './Notification'
 import { Sidebar } from '../components/Sidebar'
 
+import { MdHome } from 'react-icons/md'
+import { MdExplore } from 'react-icons/md'
+import { MdNotifications } from 'react-icons/md'
+import { MdTerminal } from 'react-icons/md'
+import { MdSettings } from 'react-icons/md'
+
 export const MainView = () => {
     const [showComposer, setShowComposer] = useState(false)
 
@@ -17,23 +23,23 @@ export const MainView = () => {
         return {
             home: {
                 body: <HomeView />,
-                icon: <span>🏠</span>
+                icon: <MdHome size={24} />
             },
             explorer: {
                 body: <ExplorerView />,
-                icon: <span>🧭</span>
+                icon: <MdExplore size={24} />
             },
             notifications: {
                 body: <NotificationsView />,
-                icon: <span>🔔</span>
+                icon: <MdNotifications size={24} />
             },
             dev: {
                 body: <DevView />,
-                icon: <span>👨‍💻</span>
+                icon: <MdTerminal size={24} />
             },
             settings: {
                 body: <SettingsView />,
-                icon: <span>⚙️</span>
+                icon: <MdSettings size={24} />
             }
         }
     }, [])
