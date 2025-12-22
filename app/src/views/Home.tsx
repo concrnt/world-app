@@ -5,6 +5,7 @@ import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 import { MessageContainer } from "../components/message";
 import { Header } from "../ui/Header";
 import { useSidebar } from "../layouts/Sidebar";
+import { View } from "../ui/View";
 
 export const HomeView = () => {
 
@@ -46,16 +47,7 @@ export const HomeView = () => {
 
 
     return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#fff',
-                gap: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
+        <View>
             <Header
                 left={
                     <div
@@ -94,6 +86,6 @@ export const HomeView = () => {
                     ))}
                 </div>
             </div>
-        </div>
+        </View>
     )
 }

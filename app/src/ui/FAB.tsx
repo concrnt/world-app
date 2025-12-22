@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useTheme } from "../contexts/Theme";
 
 interface Props {
     onClick?: () => void;
@@ -7,13 +8,15 @@ interface Props {
 
 export const FAB = (props: Props) => {
 
+    const theme = useTheme();
+
     return (
         <button
             onClick={props.onClick}
             style={{
-                backgroundColor: "#E227A8",
+                backgroundColor: theme.ui.background,
                 border: "none",
-                color: "white",
+                color: theme.ui.text,
                 padding: "15px",
                 borderRadius: "50%",
                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",

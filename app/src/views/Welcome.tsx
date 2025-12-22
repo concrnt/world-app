@@ -3,25 +3,14 @@ import { Text } from "../ui/Text";
 
 import ConcrntLogo from "/concrnt.svg";
 import { useClient } from "../contexts/Client";
+import { View } from "../ui/View";
 
 export const WelcomeView = () => {
 
     const { initialize } = useClient();
 
     return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
-                backgroundColor: '#fff',
-            }}
-        >
-
+        <View>
             <img src={ConcrntLogo} alt="Concrnt Logo" style={{ width: '150px', height: '150px' }} />
             
             <Text>ようこそ</Text>
@@ -40,7 +29,7 @@ export const WelcomeView = () => {
                 ログイン
             </Button>
 
-        </div>
+        </View>
     )
 }
 

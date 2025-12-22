@@ -3,6 +3,7 @@ import { Text } from "../ui/Text";
 import { TextField } from "../ui/TextField";
 import { Button } from "../ui/Button";
 import { useClient } from "../contexts/Client";
+import { View } from "../ui/View";
 
 export const SettingsView = () => {
 
@@ -12,18 +13,7 @@ export const SettingsView = () => {
     const [avatar, setAvatar] = useState("");
 
     return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
-                backgroundColor: '#fff',
-            }}
-        >
+        <View>
             <Text>Settings</Text>
             <Text>Profile</Text>
             <TextField
@@ -57,6 +47,6 @@ export const SettingsView = () => {
                 Save
             </Button>
 
-        </div>
+        </View>
     )
 }

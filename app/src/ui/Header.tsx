@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useTheme } from "../contexts/Theme";
 
 interface Props {
     children?: ReactNode;
@@ -7,6 +8,9 @@ interface Props {
 }
 
 export const Header = (props: Props) => {
+
+    const theme = useTheme();
+
     return (
         <div
             style={{
@@ -14,7 +18,8 @@ export const Header = (props: Props) => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "4px",
-                backgroundColor: "#E227A8",
+                color: theme.ui.text,
+                backgroundColor: theme.ui.background,
             }}
         >
             <div

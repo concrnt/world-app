@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useTheme } from "../contexts/Theme";
 
 interface Props {
     onClick?: () => void;
@@ -8,19 +9,19 @@ interface Props {
 
 export const Button = (props: Props) => {
 
+    const theme = useTheme();
+
     switch (props.variant) {
         case "outlined":
             return (
                 <button
                     onClick={props.onClick}
                     style={{
-                        backgroundColor: "transparent",
-                        border: "2px solid #E227A8",
-                        color: "#E227A8",
+                        backgroundColor: theme.ui.text,
+                        border: `2px solid ${theme.ui.background}`,
+                        color: theme.ui.background,
                         padding: "15px 32px",
                         textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
                         fontSize: "16px",
                         margin: "4px 2px",
                     }}
@@ -35,11 +36,9 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: "transparent",
                         border: "none",
-                        color: "#E227A8",
+                        color: theme.content.link,
                         padding: "15px 32px",
                         textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
                         fontSize: "16px",
                         margin: "4px 2px",
                     }}
@@ -53,13 +52,11 @@ export const Button = (props: Props) => {
                 <button
                     onClick={props.onClick}
                     style={{
-                        backgroundColor: "#E227A8",
+                        backgroundColor: theme.ui.background,
                         border: "none",
-                        color: "white",
+                        color: theme.ui.text,
                         padding: "15px 32px",
                         textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
                         fontSize: "16px",
                         margin: "4px 2px",
                     }}
