@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import { Theme } from '../types/Theme'
 
 interface Props {
@@ -25,7 +25,13 @@ const defaultTheme: Theme = {
 const ThemeContext = createContext<Theme>(defaultTheme)
 
 export const ThemeProvider = (props: Props) => {
-    return <ThemeContext.Provider value={props.theme ?? defaultTheme}>{props.children}</ThemeContext.Provider>
+    const theme = props.theme ?? defaultTheme
+
+    useEffect(() => {
+        document.body.style.backgroundColor = theme.ui.background
+    }, [theme])
+
+    return <ThemeContext.Provider value={theme}>{props.children}</ThemeContext.Provider>
 }
 
 export const useTheme = () => {

@@ -1,5 +1,7 @@
 import { Activity, ReactNode, useState } from 'react'
 import { StackLayout } from './Stack'
+import { Tabs } from '../ui/Tabs'
+import { Tab } from '../ui/Tab'
 
 interface Tab {
     body: ReactNode
@@ -19,8 +21,7 @@ export const TabLayout = (props: Props) => {
                 width: '100%',
                 height: '100%',
                 display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: 'yellow'
+                flexDirection: 'column'
             }}
         >
             <div
@@ -36,28 +37,13 @@ export const TabLayout = (props: Props) => {
                     </Activity>
                 ))}
             </div>
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-around',
-                    backgroundColor: 'red',
-                    height: '3rem'
-                }}
-            >
+            <Tabs>
                 {Object.entries(props.tabs).map(([key, tab]) => (
-                    <div
-                        key={key}
-                        onClick={() => setSelectedTab(key)}
-                        style={{
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            borderBottom: key === selectedTab ? '2px solid blue' : '2px solid transparent'
-                        }}
-                    >
+                    <Tab key={key} onClick={() => setSelectedTab(key)} selected={key === selectedTab}>
                         {tab.icon}
-                    </div>
+                    </Tab>
                 ))}
-            </div>
+            </Tabs>
         </div>
     )
 }

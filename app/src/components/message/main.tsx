@@ -32,8 +32,7 @@ const Message = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px',
-                backgroundColor: 'aqua'
+                gap: '8px'
             }}
             onClick={(e) => {
                 e.stopPropagation()
