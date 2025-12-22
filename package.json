@@ -1,28 +1,36 @@
 {
-    "name": "world-app-workspace",
-    "private": true,
-    "version": "0.0.0",
-    "type": "module",
-    "scripts": {
-        "build": "pnpm -r build",
-        "dev": "pnpm --filter world-app dev",
-        "tauri": "tauri"
-    },
-    "devDependencies": {
-    "@tauri-apps/cli": "^2.9.6"
-    },
-    "packageManager": "pnpm@8.6.1",
-    "volta": {
-        "node": "22.12.0"
-    },
-    "lint-staged": {
-        "app/**/*.{js,jsx,ts,tsx}": [
-            "eslint --fix",
-            "prettier --write"
-        ],
-        "client/**/*.{js,jsx,ts,tsx}": [
-            "eslint --fix",
-            "prettier --write"
-        ]
-    }
+  "name": "world-app-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter world-app dev",
+    "tauri": "tauri",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
+    "@tauri-apps/cli": "^2.9.6",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4"
+  },
+  "packageManager": "pnpm@8.6.1",
+  "volta": {
+    "node": "22.12.0"
+  },
+  "lint-staged": {
+    "app/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "client/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
 }
