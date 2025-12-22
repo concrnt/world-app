@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import { useClient } from "../contexts/Client";
 import { useRefWithUpdate } from "../hooks/useRefWithUpdate";
 import { MessageContainer } from "../components/message";
-import { StackLayout } from "../layouts/Stack";
+import { Header } from "../ui/Header";
+import { useSidebar } from "../layouts/Sidebar";
 
 export const HomeView = () => {
 
@@ -41,6 +42,8 @@ export const HomeView = () => {
         }
     }, [client]);
 
+    const { open } = useSidebar()
+
 
     return (
         <div
@@ -48,18 +51,39 @@ export const HomeView = () => {
                 width: '100%',
                 height: '100%',
                 backgroundColor: '#fff',
-                padding: '8px',
                 gap: '16px',
                 display: 'flex',
                 flexDirection: 'column',
             }}
         >
-            <StackLayout>
+            <Header
+                left={
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                        onClick={() => open()}
+                    >
+                        🍔
+                    </div>
+                }
+            >
+                Home
+            </Header>
+            <div
+                style={{
+                    padding: '0 8px',
+                }}
+            >
                 <div
                     style={{ 
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '16px',
+                        gap: '8px',
                     }}
                 >
                     {reader.current?.body.map(item => (
@@ -69,7 +93,7 @@ export const HomeView = () => {
                         />
                     ))}
                 </div>
-            </StackLayout>
+            </div>
         </div>
     )
 }

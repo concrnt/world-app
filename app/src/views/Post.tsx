@@ -1,5 +1,5 @@
 import { useStack } from "../layouts/Stack";
-import { Button } from "../ui/Button";
+import { Header } from "../ui/Header";
 import { Text } from "../ui/Text";
 
 interface Props {
@@ -17,20 +17,29 @@ export const PostView = (props: Props) => {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
                 backgroundColor: '#fff',
             }}
         >
-            <Button
-                variant="text"
-                onClick={() => {
-                    pop()
-                }}
+            <Header
+                left={
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                        onClick={() => {
+                            pop()
+                        }}
+                    >
+                        🔙
+                    </div>
+                }
             >
-                Back
-            </Button>
+                Post
+            </Header>
             <Text>
                 Post (URI: {props.uri})
             </Text>
