@@ -8,6 +8,7 @@ export interface ClientContextState {
     client?: Client
     uninitialized?: boolean
     initialize: () => Promise<void>
+    logout: () => Promise<void>
 }
 
 export interface ClientProviderProps {
@@ -17,7 +18,8 @@ export interface ClientProviderProps {
 const ClientContext = createContext<ClientContextState>({
     client: undefined,
     uninitialized: undefined,
-    initialize: async () => {}
+    initialize: async () => {},
+    logout: async () => {}
 })
 
 interface ClientInfo {
@@ -120,13 +122,23 @@ export const ClientProvider = (props: ClientProviderProps): ReactNode => {
         })
     }, [])
 
+    const logout = useCallback(async () => {
+        load('clientInfo.json').then((store) => {
+            store.clear().then(() => {
+                setClient(undefined)
+                setUninitialized(true)
+            })
+        })
+    }, [])
+
     const value = useMemo(() => {
         return {
             client,
             uninitialized,
-            initialize
+            initialize,
+            logout
         }
-    }, [client, uninitialized, initialize])
+    }, [client, uninitialized, initialize, logout])
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
 }

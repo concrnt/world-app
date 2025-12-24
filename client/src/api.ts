@@ -349,7 +349,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.core.resource'].template
+        const endpoint = server.endpoints['net.concrnt.resource'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key)

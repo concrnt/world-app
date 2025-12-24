@@ -89,6 +89,7 @@ export const Composer = (props: Props) => {
                                 onClick={async () => {
                                     if (!client) return
                                     const document = {
+                                        key: '/concrnt.world/main/posts/{cdid}',
                                         schema: 'https://schema.concrnt.world/m/markdown.json',
                                         value: {
                                             body: draft

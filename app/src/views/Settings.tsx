@@ -6,7 +6,7 @@ import { useClient } from '../contexts/Client'
 import { View } from '../ui/View'
 
 export const SettingsView = () => {
-    const { client } = useClient()
+    const { client, logout } = useClient()
 
     const [username, setUsername] = useState('')
     const [avatar, setAvatar] = useState('')
@@ -36,6 +36,13 @@ export const SettingsView = () => {
                 }}
             >
                 Save
+            </Button>
+            <Button
+                onClick={() => {
+                    logout()
+                }}
+            >
+                Logout
             </Button>
         </View>
     )
