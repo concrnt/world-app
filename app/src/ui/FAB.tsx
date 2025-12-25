@@ -20,7 +20,7 @@ export const FAB = (props: Props) => {
                 borderRadius: '50%',
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
                 cursor: 'pointer',
-                position: 'fixed',
+                position: 'absolute',
                 width: '60px',
                 height: '60px',
                 bottom: '60px',
