@@ -12,4 +12,5 @@ export interface Theme {
         text: string
         background: string
     }
+    divider: string
 }

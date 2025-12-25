@@ -1,6 +1,6 @@
 export * from './client'
 // export * from './model'
 export * from './schemas'
-// export * from './schemas/'
+export * from './schemas/'
 // export * from './util'
 // export * from './policy/'

@@ -6,17 +6,20 @@ import {
     TimelineReader,
     Document,
     CCID,
-    Entity
+    Entity,
+    Server
 } from '@concrnt/client'
 import { ProfileSchema } from './schemas/'
 
 export class Client {
     api: Api
     ccid: string
+    server: Server
 
-    constructor(api: Api) {
+    constructor(api: Api, ccid: string, server: Server) {
         this.api = api
-        this.ccid = ''
+        this.ccid = ccid
+        this.server = server
     }
 
     static async create(privatekey: string, host: FQDN): Promise<Client> {
@@ -24,9 +27,11 @@ export class Client {
         const cacheEngine = new InMemoryKVS()
 
         const api = new Api(authProvider, cacheEngine)
-        const client = new Client(api)
 
-        client.ccid = authProvider.getCCID()
+        const server = await api.getServer(host)
+        const ccid = authProvider.getCCID()
+
+        const client = new Client(api, ccid, server)
 
         await api
             .getResource(null, `cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)

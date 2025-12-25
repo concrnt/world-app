@@ -19,7 +19,8 @@ const defaultTheme: Theme = {
     backdrop: {
         text: '#292e24',
         background: '#12a129'
-    }
+    },
+    divider: '#e6e2df'
 }
 
 const ThemeContext = createContext<Theme>(defaultTheme)

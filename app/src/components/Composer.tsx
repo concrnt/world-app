@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
+import { Schemas } from '@concrnt/worldlib'
 
 interface Props {
     onClose?: () => void
@@ -90,7 +91,7 @@ export const Composer = (props: Props) => {
                                     if (!client) return
                                     const document = {
                                         key: '/concrnt.world/main/posts/{cdid}',
-                                        schema: 'https://schema.concrnt.world/m/markdown.json',
+                                        schema: Schemas.markdownMessage,
                                         value: {
                                             body: draft
                                         },

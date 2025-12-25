@@ -5,6 +5,7 @@ interface Props {
     onClick?: () => void
     children: ReactNode
     variant?: 'contained' | 'outlined' | 'text'
+    disabled?: boolean
 }
 
 export const Button = (props: Props) => {
@@ -14,6 +15,7 @@ export const Button = (props: Props) => {
         case 'outlined':
             return (
                 <button
+                    disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
                         backgroundColor: theme.ui.text,
@@ -31,6 +33,7 @@ export const Button = (props: Props) => {
         case 'text':
             return (
                 <button
+                    disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
                         backgroundColor: 'transparent',
@@ -49,6 +52,7 @@ export const Button = (props: Props) => {
         default:
             return (
                 <button
+                    disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
                         backgroundColor: theme.ui.background,

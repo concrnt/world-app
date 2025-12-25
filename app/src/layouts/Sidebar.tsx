@@ -66,7 +66,7 @@ export const SidebarLayout = (props: Props) => {
 
     return (
         <>
-            {/* overlay */}
+            {/* backdrop */}
             <motion.div
                 style={{
                     position: 'fixed',
