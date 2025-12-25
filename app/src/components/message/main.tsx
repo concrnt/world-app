@@ -3,6 +3,7 @@ import { useClient } from '../../contexts/Client'
 import { useStack } from '../../layouts/Stack'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
+import { Avatar } from '../../ui/Avatar'
 
 interface Props {
     uri: string
@@ -45,15 +46,7 @@ const Message = (props: Props) => {
                     push(<ProfileView id={message.author} />)
                 }}
             >
-                <img
-                    src={message.authorUser?.profile.avatar}
-                    alt="avatar"
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '4px'
-                    }}
-                />
+                <Avatar ccid={message.author} />
             </div>
             <div
                 style={{

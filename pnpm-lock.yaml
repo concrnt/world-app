@@ -56,6 +56,9 @@ importers:
       '@tauri-apps/plugin-store':
         specifier: ^2.4.1
         version: 2.4.1
+      boring-avatars:
+        specifier: ^2.0.4
+        version: 2.0.4(react-dom@19.2.0)(react@19.2.0)
       motion:
         specifier: ^12.23.26
         version: 12.23.26(react-dom@19.2.0)(react@19.2.0)
@@ -1469,6 +1472,16 @@ packages:
 
   /bn.js@5.2.2:
     resolution: {integrity: sha512-v2YAxEmKaBLahNwE1mjp4WON6huMNeuDvagFZW+ASCuA/ku0bXR9hSMw0XpiqMoA3+rmnyck/tPRSFQkoC9Cuw==}
+    dev: false
+
+  /boring-avatars@2.0.4(react-dom@19.2.0)(react@19.2.0):
+    resolution: {integrity: sha512-xhZO/w/6aFmRfkaWohcl2NfyIy87gK5SBbys8kctZeTGF1Apjpv/10pfUuv+YEfVPkESU/h2Y6tt/Dwp+bIZPw==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
     dev: false
 
   /brace-expansion@1.1.12:
