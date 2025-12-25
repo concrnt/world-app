@@ -18,8 +18,10 @@ export const ExplorerView = () => {
     const createCommunity = (value: CommunityTimelineSchema) => {
         if (!client) return
 
+        const key = Date.now().toString()
+
         const document: Document<CommunityTimelineSchema> = {
-            key: '/concrnt.world/main/posts/{cdid}',
+            key: '/concrnt.world/communities/' + key,
             schema: Schemas.communityTimeline,
             owner: client.server.csid,
             value,
