@@ -1,5 +1,5 @@
 import { TimelineReader } from '@concrnt/client'
-import { Fragment, useEffect, useMemo } from 'react'
+import { Fragment, Suspense, useEffect, useMemo } from 'react'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { MessageContainer } from '../components/message'
@@ -73,7 +73,9 @@ export const HomeView = () => {
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.href}>
                         <div style={{ padding: '0 8px' }}>
-                            <MessageContainer uri={item.href} />
+                            <Suspense fallback={<div>Loading...</div>}>
+                                <MessageContainer uri={item.href} />
+                            </Suspense>
                         </div>
                         <Divider />
                     </Fragment>

@@ -1,4 +1,4 @@
-import { memo, ReactNode, Suspense, use } from 'react'
+import { ReactNode, use, useMemo } from 'react'
 import { useClient } from '../../contexts/Client'
 import { useStack } from '../../layouts/Stack'
 import { ProfileView } from '../../views/Profile'
@@ -11,20 +11,15 @@ interface Props {
     lastUpdated?: number
 }
 
-export const MessageContainer = memo<Props>((props: Props): ReactNode | null => {
-    return (
-        <Suspense fallback={<div>Loading message...</div>}>
-            <Message {...props} />
-        </Suspense>
-    )
-})
-
-const Message = (props: Props) => {
+export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
 
     const { push } = useStack()
 
-    const message = use(client!.getMessage<any>(props.uri, props.resolveHint))
+    const messagePromise = useMemo(() => {
+        return client!.getMessage<any>(props.uri, props.resolveHint)
+    }, [client, props.uri, props.resolveHint])
+    const message = use(messagePromise)
 
     if (!message) return <div>Message not found</div>
 
@@ -67,5 +62,3 @@ const Message = (props: Props) => {
         </div>
     )
 }
-
-MessageContainer.displayName = 'MessageContainer'
