@@ -359,6 +359,41 @@ export class Api {
         return resource
     }
 
+    async query<T>(
+        query: {
+            prefix?: string
+            schema?: string
+            since?: string
+            until?: string
+            limit?: string
+            order?: string
+        },
+        domain?: string
+    ): Promise<T> {
+        let fqdn = domain
+        if (!fqdn) {
+            fqdn = this.defaultHost
+        }
+
+        const server = await this.getServer(fqdn)
+
+        const endpoint = server.endpoints['net.concrnt.query'].template
+
+        const queries = []
+        if (query.prefix) queries.push(`prefix=${encodeURIComponent(query.prefix)}`)
+        if (query.schema) queries.push(`schema=${encodeURIComponent(query.schema)}`)
+        if (query.since) queries.push(`since=${encodeURIComponent(query.since)}`)
+        if (query.until) queries.push(`until=${encodeURIComponent(query.until)}`)
+        if (query.limit) queries.push(`limit=${encodeURIComponent(query.limit)}`)
+        if (query.order) queries.push(`order=${encodeURIComponent(query.order)}`)
+
+        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
+
+        const resource = this.fetchWithCredential<T>(fqdn, endpointWithQuery, {})
+
+        return resource
+    }
+
     async requestConcrntApi<T>(
         host: string,
         api: string,

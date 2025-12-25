@@ -5,7 +5,7 @@ import { View } from '../ui/View'
 import { Document } from '@concrnt/client'
 import { Button } from '../ui/Button'
 import { Drawer } from '../ui/Drawer'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TextField } from '../ui/TextField'
 
 export const ExplorerView = () => {
@@ -14,6 +14,24 @@ export const ExplorerView = () => {
     const [openEditor, setOpenEditor] = useState(false)
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
+
+    const [communities, setCommunities] = useState<any[]>([])
+
+    useEffect(() => {
+        if (!client) return
+        client.api
+            .query<any>({
+                prefix: `cc://${client.server.csid}/concrnt.world/communities/`,
+                schema: Schemas.communityTimeline
+            })
+            .then((results) => {
+                setCommunities(results)
+                console.log('Fetched communities:', results)
+            })
+            .catch((error) => {
+                console.error('Error fetching communities:', error)
+            })
+    }, [client])
 
     const createCommunity = (value: CommunityTimelineSchema) => {
         if (!client) return
@@ -46,6 +64,11 @@ export const ExplorerView = () => {
                 >
                     + Create Community
                 </Button>
+                {communities.map((community) => (
+                    <div key={community.key} style={{ border: '1px solid #ccc', padding: '8px', margin: '8px 0' }}>
+                        <pre>{JSON.stringify(community, null, 2)}</pre>
+                    </div>
+                ))}
             </View>
             <Drawer
                 open={openEditor}
