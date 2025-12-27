@@ -34,7 +34,7 @@ export class Client {
         const client = new Client(api, ccid, server)
 
         await api
-            .getResource(null, `cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
+            .getDocument(`cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
             .then((res) => {
                 if (res === null) {
                     const document = {
@@ -95,7 +95,7 @@ export class Message<T> implements Document<T> {
     }
 
     static async load<T>(client: Client, uri: string, hint?: string): Promise<Message<T> | null> {
-        const res = await client.api.getResource<Document<T>>(null, uri, hint)
+        const res = await client.api.getDocument<T>(uri, hint)
         if (!res) {
             return null
         }
@@ -131,10 +131,7 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getResource<Document<ProfileSchema>>(
-            null,
-            `cc://${entity.ccid}/world.concrnt.profile`
-        )
+        const profile = await client.api.getDocument<ProfileSchema>(`cc://${entity.ccid}/world.concrnt.profile`)
 
         return new User(entity.domain, entity, profile?.value)
     }

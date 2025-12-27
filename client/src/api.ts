@@ -1,7 +1,7 @@
 import { KVS } from './cache'
 import { AuthProvider } from './auth'
 import { fetchWithTimeout } from './util'
-import { CCID, CSID, FQDN, IsCCID, IsCSID, Document } from './model'
+import { CCID, CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument } from './model'
 import { ChunklineItem } from './chunkline'
 
 export class ServerOfflineError extends Error {
@@ -174,7 +174,6 @@ export class Api {
     }
 
     async fetchWithCache<T>(
-        cls: (new () => T extends (infer U)[] ? U : T) | null,
         host: string | undefined,
         path: string,
         cacheKey: string,
@@ -185,13 +184,6 @@ export class Api {
             const cachedEntry = await this.cache.get<T>(cacheKey)
             if (cachedEntry) {
                 if (cachedEntry.data) {
-                    if (cls) {
-                        if (Array.isArray(cachedEntry.data)) {
-                            cachedEntry.data.map((item) => Object.setPrototypeOf(item, cls.prototype))
-                        } else {
-                            Object.setPrototypeOf(cachedEntry.data, cls.prototype)
-                        }
-                    }
                     opts?.expressGetter?.(cachedEntry.data)
                 }
 
@@ -249,7 +241,7 @@ export class Api {
                     if (!res.ok) {
                         if (res.status === 404) {
                             this.cache.set(cacheKey, null)
-                            return null
+                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`)
                         }
                         return await Promise.reject(
                             new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
@@ -263,15 +255,7 @@ export class Api {
                     opts?.expressGetter?.(data)
                     if (opts?.cache !== 'negative-only') this.cache.set(cacheKey, data)
 
-                    if (cls) {
-                        if (Array.isArray(data)) {
-                            return data.map((item) => Object.setPrototypeOf(item, cls.prototype))
-                        } else {
-                            return Object.setPrototypeOf(data, cls.prototype)
-                        }
-                    } else {
-                        return data
-                    }
+                    return data
                 })
                 .catch(async (err) => {
                     if (err instanceof ServerOfflineError) {
@@ -306,7 +290,7 @@ export class Api {
     async getServer(remote: FQDN, opts?: FetchOptions<Server>): Promise<Server> {
         const cacheKey = `domain:${remote}`
         const path = '/.well-known/concrnt'
-        const data = await this.fetchWithCache<Server>(Server, remote, path, cacheKey, { ...opts, auth: 'no-auth' })
+        const data = await this.fetchWithCache<Server>(remote, path, cacheKey, { ...opts, auth: 'no-auth' })
         if (!data) throw new NotFoundError(`domain ${remote} not found`)
         return data
     }
@@ -314,22 +298,24 @@ export class Api {
     async getServerByCSID(csid: CSID): Promise<Server> {
         const uri = `cc://${csid}`
 
-        const server = await this.getResource<Server>(Server, uri, this.defaultHost)
+        const server = await this.getResource<Server>(uri, this.defaultHost)
         return server
     }
 
     async getEntity(ccid: string, hint?: string): Promise<Entity> {
         const uri = `cc://${ccid}`
 
-        const entity = await this.getResource<Entity>(Entity, uri, hint ?? this.defaultHost)
+        const entity = await this.getResource<Entity>(uri, hint ?? this.defaultHost)
         return entity
     }
 
-    async getResource<T>(
-        cls: (new () => T extends (infer U)[] ? U : T) | null,
-        uri: string,
-        domain?: string
-    ): Promise<T> {
+    async getDocument<T>(uri: string, domain?: string): Promise<Document<T>> {
+        const sd = await this.getResource<SignedDocument>(uri, domain)
+        const document: Document<T> = JSON.parse(sd.document)
+        return document
+    }
+
+    async getResource<T>(uri: string, domain?: string): Promise<T> {
         const parsed = new URL(uri)
         const owner = parsed.host
         const key = parsed.pathname
@@ -354,7 +340,7 @@ export class Api {
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key)
 
-        const resource = this.fetchWithCache<T>(cls, fqdn, endpoint, uri, {})
+        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {})
 
         return resource
     }
@@ -478,22 +464,22 @@ export interface ConcrntApiEndpoint {
     query?: string[]
 }
 
-export class Server {
-    version: string = ''
-    domain: string = ''
-    csid: CSID = ''
-    layer: string = ''
-    endpoints: Record<string, ConcrntApiEndpoint> = {}
+export interface Server {
+    version: string
+    domain: string
+    csid: CSID
+    layer: string
+    endpoints: Record<string, ConcrntApiEndpoint>
 }
 
-export class Entity {
-    ccid: CCID = ''
+export interface Entity {
+    ccid: CCID
     alias?: string
-    domain: FQDN = ''
-    tag: string = ''
+    domain: FQDN
+    tag: string
 
-    affiliationDocument: string = ''
-    affiliationSignature: string = ''
+    affiliationDocument: string
+    affiliationSignature: string
 
-    cdate: string = ''
+    cdate: string
 }
