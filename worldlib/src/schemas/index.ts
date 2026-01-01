@@ -19,4 +19,4 @@ export * from './communityTimeline'
 export * from './emptyTimeline'
 export * from './subprofileTimeline'
 
-export * from './listSubscription'
+export * from './list'

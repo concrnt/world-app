@@ -5,8 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface ListSubscriptionSchema {
-    name: string
-    iconURL?: string
-    description?: string
+export interface ListSchema {
+    title: string
+    items: string[]
+    meta?: unknown
 }

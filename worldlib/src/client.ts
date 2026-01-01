@@ -136,3 +136,52 @@ export class User {
         return new User(entity.domain, entity, profile?.value)
     }
 }
+
+export class List {
+    title: string
+    defaultPostHome: boolean
+    defaultPostTimelines: string[]
+    defaultProfile?: string
+
+    items: string[]
+
+    constructor(
+        title: string,
+        items: string[],
+        defaultPostHome: boolean,
+        defaultPostTimelines: string[],
+        defaultProfile?: string
+    ) {
+        this.title = title
+        this.items = items
+        this.defaultPostHome = defaultPostHome
+        this.defaultPostTimelines = defaultPostTimelines
+        this.defaultProfile = defaultProfile
+    }
+
+    static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
+        const res = await client.api.getDocument<{
+            title: string
+            items: string[]
+            defaultPostHome: boolean
+            defaultPostTimelines: string[]
+            defaultProfile?: string
+        }>(uri, hint)
+        if (!res) {
+            return null
+        }
+        const list = new List(
+            res.value.title,
+            res.value.items,
+            res.value.defaultPostHome,
+            res.value.defaultPostTimelines,
+            res.value.defaultProfile
+        )
+
+        return list
+    }
+
+    static async appendItem(client: Client, item: string): Promise<void> {}
+
+    static async removeItem(client: Client, item: string): Promise<void> {}
+}
