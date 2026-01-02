@@ -4,6 +4,7 @@ import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { Schemas } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
+import { Timeline } from '@concrnt/worldlib'
 
 interface Props {
     onClose?: () => void
@@ -71,11 +72,11 @@ export const Composer = (props: Props) => {
                             }}
                         >
                             <TimelinePicker
-                                items={[]}
+                                items={client?.home?.communities ?? []}
                                 selected={destinations}
                                 setSelected={setDestinations}
-                                keyFunc={(item) => item.id}
-                                labelFunc={(item) => item.label}
+                                keyFunc={(item: Timeline) => item.uri}
+                                labelFunc={(item: Timeline) => item.name}
                             />
                         </div>
                         <div

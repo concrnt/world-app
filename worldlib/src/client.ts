@@ -10,7 +10,9 @@ import {
     Server,
     NotFoundError
 } from '@concrnt/client'
-import { ListSchema, ProfileSchema } from './schemas/'
+import { Schemas } from './schemas'
+import { ListSchema, ProfileSchema, CommunityTimelineSchema } from './schemas/'
+import { isFulfilled, isNonNull } from './util'
 
 export class Client {
     api: Api
@@ -180,6 +182,7 @@ export class List {
     defaultProfile?: string
 
     items: string[]
+    communities: Timeline[] = []
 
     constructor(
         uri: string,
@@ -210,6 +213,18 @@ export class List {
             (res.value.meta?.defaultPostTimelines as string[]) || [],
             res.value.meta?.defaultProfile as string | undefined
         )
+
+        const itemsQuery = await Promise.allSettled(
+            res.value.items.map(async (item) => {
+                return Timeline.load(client, item)
+            })
+        )
+
+        const items: Timeline[] = itemsQuery
+            .filter(isFulfilled)
+            .map((r) => r.value)
+            .filter(isNonNull)
+        list.communities = items.filter((i) => i.schema === Schemas.communityTimeline)
 
         return list
     }
@@ -242,5 +257,37 @@ export class List {
         await client.api.commit(latestDocument)
 
         this.items = latestDocument.value.items
+    }
+}
+
+export class Timeline {
+    uri: string
+
+    schema: string
+
+    name: string
+    shortname?: string
+    description?: string
+    icon?: string
+    banner?: string
+
+    constructor(uri: string, schema: string, value: CommunityTimelineSchema) {
+        this.uri = uri
+        this.schema = schema
+        this.name = value.name
+        this.shortname = value.shortname
+        this.description = value.description
+        this.icon = value.icon
+        this.banner = value.banner
+    }
+
+    static async load(client: Client, uri: string, hint?: string): Promise<Timeline | null> {
+        const res = await client.api.getDocument<CommunityTimelineSchema>(uri, hint)
+        if (!res) {
+            return null
+        }
+        const timeline = new Timeline(uri, res.schema, res.value)
+
+        return timeline
     }
 }
