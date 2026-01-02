@@ -6,12 +6,13 @@ import { CCWallpaper } from '../ui/CCWallpaper'
 import { IconButton } from '../ui/IconButton'
 import { Text } from '../ui/Text'
 import { View } from '../ui/View'
+import { Button } from '../ui/Button'
+import { useClient } from '../contexts/Client'
 
 import { MdArrowBack } from 'react-icons/md'
 import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
-import { useClient } from '../contexts/Client'
-import { Button } from '../ui/Button'
+import { MdEdit } from 'react-icons/md'
 
 interface Props {
     id: string
@@ -25,6 +26,10 @@ export const ProfileView = (props: Props) => {
         return client!.getUser(props.id)
     }, [client, props.id])
     const user = use(profilePromise)
+
+    const isMe = useMemo(() => {
+        return client?.ccid === props.id
+    }, [client, props.id])
 
     return (
         <View>
@@ -84,7 +89,7 @@ export const ProfileView = (props: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
-                    padding: '0 4px'
+                    padding: '0 8px'
                 }}
             >
                 <div
@@ -95,7 +100,13 @@ export const ProfileView = (props: Props) => {
                         justifyContent: 'flex-end'
                     }}
                 >
-                    <Button>Follow</Button>
+                    {isMe ? (
+                        <Button variant="outlined" startIcon={<MdEdit size={20} />}>
+                            Edit Profile
+                        </Button>
+                    ) : (
+                        <Button>Follow</Button>
+                    )}
                 </div>
                 <div>
                     <Text

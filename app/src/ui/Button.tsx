@@ -6,6 +6,8 @@ interface Props {
     children: ReactNode
     variant?: 'contained' | 'outlined' | 'text'
     disabled?: boolean
+    startIcon?: ReactNode
+    endIcon?: ReactNode
 }
 
 export const Button = (props: Props) => {
@@ -18,16 +20,22 @@ export const Button = (props: Props) => {
                     disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
-                        backgroundColor: theme.ui.text,
-                        border: `2px solid ${theme.ui.background}`,
+                        backgroundColor: 'transparent',
+                        border: `1px solid ${theme.ui.background}`,
                         borderRadius: '4px',
                         color: theme.ui.background,
-                        padding: '4px 16px',
+                        padding: '8px 16px',
                         textAlign: 'center',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
                     }}
                 >
+                    {props.startIcon}
                     {props.children}
+                    {props.endIcon}
                 </button>
             )
         case 'text':
@@ -40,12 +48,18 @@ export const Button = (props: Props) => {
                         border: 'none',
                         borderRadius: '4px',
                         color: theme.content.link,
-                        padding: '4px 16px',
+                        padding: '8px 16px',
                         textAlign: 'center',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
                     }}
                 >
+                    {props.startIcon}
                     {props.children}
+                    {props.endIcon}
                 </button>
             )
         case 'contained':
@@ -59,12 +73,18 @@ export const Button = (props: Props) => {
                         border: 'none',
                         borderRadius: '4px',
                         color: theme.ui.text,
-                        padding: '4px 16px',
+                        padding: '8px 16px',
                         textAlign: 'center',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
                     }}
                 >
+                    {props.startIcon}
                     {props.children}
+                    {props.endIcon}
                 </button>
             )
     }
