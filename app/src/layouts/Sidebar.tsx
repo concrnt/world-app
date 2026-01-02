@@ -24,6 +24,7 @@ export const SidebarLayout = (props: Props) => {
     const edgeX = useMotionValue(0)
 
     const overlayOpacity = useTransform(x, [-SIDEBAR_W, 0], [0, 0.5])
+    const sidebarShadow = useTransform(x, [-SIDEBAR_W, 0], ['0 10px 30px rgba(0,0,0,0)', '0 10px 30px rgba(0,0,0,0.2)'])
 
     const snapTo = useCallback(
         (toOpen: boolean) => {
@@ -118,7 +119,7 @@ export const SidebarLayout = (props: Props) => {
                     zIndex: 60,
                     background: 'white',
                     touchAction: 'none',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                    boxShadow: sidebarShadow
                 }}
                 drag="x"
                 dragDirectionLock
