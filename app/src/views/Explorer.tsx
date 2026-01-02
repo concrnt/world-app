@@ -7,6 +7,8 @@ import { Button } from '../ui/Button'
 import { Drawer } from '../ui/Drawer'
 import { useEffect, useState } from 'react'
 import { TextField } from '../ui/TextField'
+import { MdPlaylistAdd } from 'react-icons/md'
+import { IconButton } from '../ui/IconButton'
 
 export const ExplorerView = () => {
     const { client } = useClient()
@@ -15,7 +17,7 @@ export const ExplorerView = () => {
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
 
-    const [communities, setCommunities] = useState<any[]>([])
+    const [communities, setCommunities] = useState<Record<string, any>>([])
 
     useEffect(() => {
         if (!client) return
@@ -64,9 +66,25 @@ export const ExplorerView = () => {
                 >
                     + Create Community
                 </Button>
-                {communities.map((community) => (
-                    <div key={community.key} style={{ border: '1px solid #ccc', padding: '8px', margin: '8px 0' }}>
-                        <pre>{JSON.stringify(community, null, 2)}</pre>
+                {Object.entries(communities).map(([key, community]) => (
+                    <div key={key} style={{ border: '1px solid #ccc', padding: '8px', margin: '8px 0' }}>
+                        <Text>{community.value.name}</Text>
+                        <Text>{community.value.description}</Text>
+                        <IconButton
+                            onClick={() => {
+                                if (!client) return
+                                client.home
+                                    ?.addItem(client, key)
+                                    .then(() => {
+                                        console.log('Community added to home')
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error adding community to home:', error)
+                                    })
+                            }}
+                        >
+                            <MdPlaylistAdd />
+                        </IconButton>
                     </div>
                 ))}
             </View>

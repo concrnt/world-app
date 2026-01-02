@@ -229,7 +229,7 @@ export class List {
         return list
     }
 
-    async appendItem(client: Client, item: string): Promise<void> {
+    async addItem(client: Client, item: string): Promise<void> {
         const latestDocument = await client.api.getDocument<ListSchema>(this.uri)
         if (!latestDocument) {
             throw new Error('List document not found')
