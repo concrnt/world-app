@@ -112,7 +112,10 @@ export const Composer = (props: Props) => {
                                             body: draft
                                         },
                                         author: client.ccid,
-                                        memberOf: [`cc://${client.ccid}/concrnt.world/main/home-timeline`],
+                                        memberOf: [
+                                            `cc://${client.ccid}/concrnt.world/main/home-timeline`,
+                                            ...destinations
+                                        ],
                                         createdAt: new Date()
                                     }
                                     client.api.commit(document).then(() => {

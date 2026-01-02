@@ -23,7 +23,7 @@ export const ExplorerView = () => {
         if (!client) return
         client.api
             .query<any>({
-                prefix: `cc://${client.server.csid}/concrnt.world/communities/`,
+                prefix: `cc://${client.server.domain}/concrnt.world/communities/`,
                 schema: Schemas.communityTimeline
             })
             .then((results) => {
@@ -43,7 +43,7 @@ export const ExplorerView = () => {
         const document: Document<CommunityTimelineSchema> = {
             key: '/concrnt.world/communities/' + key,
             schema: Schemas.communityTimeline,
-            owner: client.server.csid,
+            owner: client.server.domain,
             value,
             author: client.ccid,
             createdAt: new Date()
