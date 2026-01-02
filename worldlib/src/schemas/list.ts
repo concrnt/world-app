@@ -8,5 +8,7 @@
 export interface ListSchema {
     title: string
     items: string[]
-    meta?: unknown
+    meta?: {
+        [k: string]: unknown
+    }
 }

@@ -21,7 +21,7 @@ export const SettingsView = () => {
                 onClick={() => {
                     if (!client) return
                     const document = {
-                        key: 'world.concrnt.profile',
+                        key: '/concrnt.world/main/profile',
                         schema: 'https://schema.concrnt.world/p/main.json',
                         value: {
                             username,

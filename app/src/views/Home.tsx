@@ -14,7 +14,10 @@ export const HomeView = () => {
 
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
 
-    const timelines = useMemo(() => [`cc://${client?.ccid}/world.concrnt.t-home`], [client])
+    const timelines = useMemo(
+        () => [`cc://${client?.ccid}/concrnt.world/main/home-timeline`, ...(client?.home?.items ?? [])],
+        [client]
+    )
 
     useEffect(() => {
         let isCancelled = false

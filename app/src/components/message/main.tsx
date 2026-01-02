@@ -41,7 +41,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
                     push(<ProfileView id={message.author} />)
                 }}
             >
-                <Avatar ccid={message.author} />
+                <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
             </div>
             <div
                 style={{

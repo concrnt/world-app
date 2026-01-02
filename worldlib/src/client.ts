@@ -7,14 +7,17 @@ import {
     Document,
     CCID,
     Entity,
-    Server
+    Server,
+    NotFoundError
 } from '@concrnt/client'
-import { ProfileSchema } from './schemas/'
+import { ListSchema, ProfileSchema } from './schemas/'
 
 export class Client {
     api: Api
     ccid: string
     server: Server
+
+    home: List | null = null
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -33,27 +36,58 @@ export class Client {
 
         const client = new Client(api, ccid, server)
 
-        await api
-            .getDocument(`cc://${api.authProvider.getCCID()}/world.concrnt.t-home`)
-            .then((res) => {
-                if (res === null) {
-                    const document = {
-                        key: 'world.concrnt.t-home',
+        // ==== Default kit ====
+        await api.getDocument(`cc://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`).catch((err) => {
+            if (err instanceof NotFoundError) {
+                console.log('Home timeline not found, creating a new one...')
+                const document = {
+                    key: '/concrnt.world/main/home-timeline',
+                    author: api.authProvider.getCCID(),
+                    schema: 'https://schema.concrnt.world/t/empty.json',
+                    value: {},
+                    createdAt: new Date()
+                }
+                api.commit(document)
+                return document
+            }
+            throw err
+        })
+
+        client.home = await List.load(client, `cc://${api.authProvider.getCCID()}/concrnt.world/main/home-list`).catch(
+            (err) => {
+                if (err instanceof NotFoundError) {
+                    console.log('Home list not found, creating a new one...')
+                    const document: Document<ListSchema> = {
+                        key: '/concrnt.world/main/home-list',
                         author: api.authProvider.getCCID(),
-                        schema: 'https://schema.concrnt.world/t/empty.json',
-                        contentType: 'application/chunkline+json',
-                        value: {},
+                        schema: 'https://schema.concrnt.world/utils/list.json',
+                        value: {
+                            title: 'Home',
+                            items: [],
+                            meta: {
+                                defaultPostHome: true,
+                                defaultPostTimelines: []
+                            }
+                        },
                         createdAt: new Date()
                     }
                     api.commit(document)
-                    return document
+
+                    return new List(
+                        `cc://${api.authProvider.getCCID()}/concrnt.world/main/home-list`,
+                        document.value.title,
+                        document.value.items,
+                        (document.value.meta?.defaultPostHome as boolean) || false,
+                        (document.value.meta?.defaultPostTimelines as string[]) || [],
+                        document.value.meta?.defaultProfile as string | undefined
+                    )
+                } else {
+                    throw err
                 }
-                return res
-            })
-            .catch((err) => {
-                console.error('Error fetching timeline:', err)
-                return null
-            })
+            }
+        )
+
+        // =====================
 
         return client
     }
@@ -131,13 +165,15 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getDocument<ProfileSchema>(`cc://${entity.ccid}/world.concrnt.profile`)
+        const profile = await client.api.getDocument<ProfileSchema>(`cc://${entity.ccid}/concrnt.world/main/profile`)
 
         return new User(entity.domain, entity, profile?.value)
     }
 }
 
 export class List {
+    uri: string
+
     title: string
     defaultPostHome: boolean
     defaultPostTimelines: string[]
@@ -146,12 +182,14 @@ export class List {
     items: string[]
 
     constructor(
+        uri: string,
         title: string,
         items: string[],
         defaultPostHome: boolean,
         defaultPostTimelines: string[],
         defaultProfile?: string
     ) {
+        this.uri = uri
         this.title = title
         this.items = items
         this.defaultPostHome = defaultPostHome
@@ -160,28 +198,49 @@ export class List {
     }
 
     static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
-        const res = await client.api.getDocument<{
-            title: string
-            items: string[]
-            defaultPostHome: boolean
-            defaultPostTimelines: string[]
-            defaultProfile?: string
-        }>(uri, hint)
+        const res = await client.api.getDocument<ListSchema>(uri, hint)
         if (!res) {
             return null
         }
         const list = new List(
+            uri,
             res.value.title,
             res.value.items,
-            res.value.defaultPostHome,
-            res.value.defaultPostTimelines,
-            res.value.defaultProfile
+            (res.value.meta?.defaultPostHome as boolean) || false,
+            (res.value.meta?.defaultPostTimelines as string[]) || [],
+            res.value.meta?.defaultProfile as string | undefined
         )
 
         return list
     }
 
-    static async appendItem(client: Client, item: string): Promise<void> {}
+    async appendItem(client: Client, item: string): Promise<void> {
+        const latestDocument = await client.api.getDocument<ListSchema>(this.uri)
+        if (!latestDocument) {
+            throw new Error('List document not found')
+        }
 
-    static async removeItem(client: Client, item: string): Promise<void> {}
+        if (latestDocument.value.items.includes(item)) {
+            return
+        }
+
+        latestDocument.value.items.push(item)
+
+        await client.api.commit(latestDocument)
+
+        this.items = latestDocument.value.items
+    }
+
+    async removeItem(client: Client, item: string): Promise<void> {
+        const latestDocument = await client.api.getDocument<ListSchema>(this.uri)
+        if (!latestDocument) {
+            throw new Error('List document not found')
+        }
+
+        latestDocument.value.items = latestDocument.value.items.filter((i) => i !== item)
+
+        await client.api.commit(latestDocument)
+
+        this.items = latestDocument.value.items
+    }
 }
