@@ -105,6 +105,10 @@ export class Client {
     async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
         return Message.load<T>(this, uri, hint)
     }
+
+    async getUser(id: CCID, hint?: string): Promise<User> {
+        return User.load(this, id, hint)
+    }
 }
 
 export class Message<T> implements Document<T> {

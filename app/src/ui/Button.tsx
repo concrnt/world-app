@@ -20,11 +20,11 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: theme.ui.text,
                         border: `2px solid ${theme.ui.background}`,
+                        borderRadius: '4px',
                         color: theme.ui.background,
-                        padding: '15px 32px',
+                        padding: '4px 16px',
                         textAlign: 'center',
-                        fontSize: '16px',
-                        margin: '4px 2px'
+                        fontSize: '16px'
                     }}
                 >
                     {props.children}
@@ -38,11 +38,11 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: 'transparent',
                         border: 'none',
+                        borderRadius: '4px',
                         color: theme.content.link,
-                        padding: '15px 32px',
+                        padding: '4px 16px',
                         textAlign: 'center',
-                        fontSize: '16px',
-                        margin: '4px 2px'
+                        fontSize: '16px'
                     }}
                 >
                     {props.children}
@@ -57,11 +57,11 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: theme.ui.background,
                         border: 'none',
+                        borderRadius: '4px',
                         color: theme.ui.text,
-                        padding: '15px 32px',
+                        padding: '4px 16px',
                         textAlign: 'center',
-                        fontSize: '16px',
-                        margin: '4px 2px'
+                        fontSize: '16px'
                     }}
                 >
                     {props.children}

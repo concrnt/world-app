@@ -1,5 +1,16 @@
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
-import { Activity, createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+    Activity,
+    createContext,
+    ReactNode,
+    Suspense,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState
+} from 'react'
+import { View } from '../ui/View'
 
 interface Props {
     children: ReactNode
@@ -65,7 +76,7 @@ export const StackLayout = (props: Props) => {
                         return (
                             <Activity key={index} mode={isFrontmost ? 'visible' : 'hidden'}>
                                 <SwipableView enabled={isFrontmost} onPop={pop}>
-                                    {child}
+                                    <Suspense fallback={<View>Loading...</View>}>{child}</Suspense>
                                 </SwipableView>
                             </Activity>
                         )
