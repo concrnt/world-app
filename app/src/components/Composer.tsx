@@ -3,6 +3,7 @@ import { Button } from '../ui/Button'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { Schemas } from '@concrnt/worldlib'
+import { TimelinePicker } from './TimelinePicker'
 
 interface Props {
     onClose?: () => void
@@ -12,6 +13,7 @@ export const Composer = (props: Props) => {
     const { client } = useClient()
     const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>('')
+    const [destinations, setDestinations] = useState<string[]>([])
 
     const [viewportHeight, setViewportHeight] = useState<number>(visualViewport?.height ?? 0)
     useEffect(() => {
@@ -62,6 +64,19 @@ export const Composer = (props: Props) => {
                             >
                                 cancel
                             </Button>
+                        </div>
+                        <div
+                            style={{
+                                padding: '0 12px'
+                            }}
+                        >
+                            <TimelinePicker
+                                items={[]}
+                                selected={destinations}
+                                setSelected={setDestinations}
+                                keyFunc={(item) => item.id}
+                                labelFunc={(item) => item.label}
+                            />
                         </div>
                         <div
                             style={{
