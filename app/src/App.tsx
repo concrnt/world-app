@@ -1,21 +1,8 @@
 import { useClient } from './contexts/Client'
 import { WelcomeView } from './views/Welcome'
 import { MainView } from './views/Main'
-import { useEffect } from 'react'
 
 function App() {
-    // ios safari scroll fix
-    useEffect(() => {
-        const preventScroll = () => {
-            document.documentElement.scrollTop = 0
-        }
-        document.addEventListener('scroll', preventScroll, { passive: false })
-
-        return () => {
-            document.removeEventListener('scroll', preventScroll)
-        }
-    }, [])
-
     const client = useClient()
 
     return (

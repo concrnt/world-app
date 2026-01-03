@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Schemas } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
     onClose?: () => void
@@ -15,6 +16,8 @@ export const Composer = (props: Props) => {
     const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>('')
     const [destinations, setDestinations] = useState<string[]>([])
+
+    const theme = useTheme()
 
     const [viewportHeight, setViewportHeight] = useState<number>(visualViewport?.height ?? 0)
     useEffect(() => {
@@ -37,12 +40,13 @@ export const Composer = (props: Props) => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        backgroundColor: '#fff',
+                        backgroundColor: theme.ui.background,
                         position: 'absolute',
                         left: 0,
                         zIndex: 1001,
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        paddingTop: 'env(safe-area-inset-top)'
                     }}
                     initial={{ top: '100%' }}
                     animate={{ top: 0 }}
@@ -53,7 +57,9 @@ export const Composer = (props: Props) => {
                         style={{
                             height: viewportHeight,
                             display: 'flex',
-                            flexDirection: 'column'
+                            flexDirection: 'column',
+                            backgroundColor: theme.content.background,
+                            maxHeight: '50vh'
                         }}
                     >
                         <div>
@@ -86,7 +92,6 @@ export const Composer = (props: Props) => {
                             }}
                         >
                             <textarea
-                                autoFocus
                                 value={draft}
                                 placeholder="いま、なにしてる？"
                                 onChange={(e) => setDraft(e.target.value)}
@@ -101,7 +106,13 @@ export const Composer = (props: Props) => {
                                 }}
                             />
                         </div>
-                        <div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                padding: '0 12px 12px 12px'
+                            }}
+                        >
                             <Button
                                 onClick={async () => {
                                     if (!client) return
