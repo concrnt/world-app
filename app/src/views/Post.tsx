@@ -1,6 +1,7 @@
+import { MessageContainer } from '../components/message'
 import { useStack } from '../layouts/Stack'
+import { Divider } from '../ui/Divider'
 import { Header } from '../ui/Header'
-import { Text } from '../ui/Text'
 import { View } from '../ui/View'
 import { MdArrowBack } from 'react-icons/md'
 
@@ -33,7 +34,14 @@ export const PostView = (props: Props) => {
             >
                 Post
             </Header>
-            <Text>Post (URI: {props.uri})</Text>
+            <div
+                style={{
+                    padding: '8px'
+                }}
+            >
+                <MessageContainer uri={props.uri} />
+            </div>
+            <Divider />
         </View>
     )
 }
