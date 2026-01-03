@@ -28,14 +28,11 @@ export const Composer = (props: Props) => {
         return () => visualViewport?.removeEventListener('resize', handleResize)
     }, [])
 
-    const [opened, setOpened] = useState<boolean>(false)
-
     return (
         <AnimatePresence
             onExitComplete={() => {
                 setDraft('')
                 props.onClose?.()
-                setOpened(false)
             }}
         >
             {!willClose && (
@@ -51,13 +48,13 @@ export const Composer = (props: Props) => {
                         flexDirection: 'column',
                         paddingTop: 'env(safe-area-inset-top)'
                     }}
-                    initial={{ top: '100%' }}
-                    animate={{ top: 0 }}
-                    exit={{ top: '100%' }}
+                    //initial={{ top: '100%' }}
+                    //animate={{ top: 0 }}
+                    //exit={{ top: '100%' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={{ duration: 0.1 }}
-                    onAnimationComplete={() => {
-                        setOpened(true)
-                    }}
                 >
                     <div
                         style={{
@@ -106,24 +103,22 @@ export const Composer = (props: Props) => {
                                     flex: 1
                                 }}
                             >
-                                {opened && (
-                                    <textarea
-                                        autoFocus
-                                        value={draft}
-                                        placeholder="いま、なにしてる？"
-                                        onChange={(e) => setDraft(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            fontSize: '16px',
-                                            boxSizing: 'border-box',
-                                            border: 'none',
-                                            outline: 'none',
-                                            resize: 'none',
-                                            height: '100%',
-                                            background: 'transparent'
-                                        }}
-                                    />
-                                )}
+                                <textarea
+                                    autoFocus
+                                    value={draft}
+                                    placeholder="いま、なにしてる？"
+                                    onChange={(e) => setDraft(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        fontSize: '16px',
+                                        boxSizing: 'border-box',
+                                        border: 'none',
+                                        outline: 'none',
+                                        resize: 'none',
+                                        height: '100%',
+                                        background: 'transparent'
+                                    }}
+                                />
                             </div>
                             <div
                                 style={{

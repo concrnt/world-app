@@ -70,7 +70,8 @@ export const HomeView = () => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px'
+                    gap: '8px',
+                    overflowY: 'auto'
                 }}
             >
                 {reader.current?.body.map((item) => (

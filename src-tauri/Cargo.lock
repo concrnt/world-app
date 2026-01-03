@@ -3658,6 +3658,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-safari-scroll-killer"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-plugin-store"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4945,6 +4955,7 @@ dependencies = [
  "tauri-plugin-biometric",
  "tauri-plugin-keychain",
  "tauri-plugin-opener",
+ "tauri-plugin-safari-scroll-killer",
  "tauri-plugin-store",
 ]
 
