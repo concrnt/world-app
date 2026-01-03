@@ -40,6 +40,7 @@ export const ProfileView = (props: Props) => {
             >
                 <CCWallpaper
                     style={{
+                        paddingTop: 'env(safe-area-inset-top)',
                         height: '150px'
                     }}
                 >

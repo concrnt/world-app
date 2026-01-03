@@ -10,7 +10,6 @@ import {
     useMemo,
     useState
 } from 'react'
-import { View } from '../ui/View'
 
 interface Props {
     children: ReactNode
@@ -75,9 +74,11 @@ export const StackLayout = (props: Props) => {
                         const isFrontmost = index === stack.length - 1
                         return (
                             <Activity key={index} mode={isFrontmost ? 'visible' : 'hidden'}>
-                                <SwipableView enabled={isFrontmost} onPop={pop}>
-                                    <Suspense fallback={<View>Loading...</View>}>{child}</Suspense>
-                                </SwipableView>
+                                <Suspense fallback={<></>}>
+                                    <SwipableView enabled={isFrontmost} onPop={pop}>
+                                        {child}
+                                    </SwipableView>
+                                </Suspense>
                             </Activity>
                         )
                     })}
