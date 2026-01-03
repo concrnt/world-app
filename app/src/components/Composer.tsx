@@ -24,9 +24,6 @@ export const Composer = (props: Props) => {
         function handleResize(): void {
             setViewportHeight(visualViewport?.height ?? 0)
         }
-        if ('virtualKeyboard' in navigator) {
-            navigator.virtualKeyboard.overlaysContent = true
-        }
         visualViewport?.addEventListener('resize', handleResize)
         return () => visualViewport?.removeEventListener('resize', handleResize)
     }, [])
