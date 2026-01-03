@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
     disabled?: boolean
     startIcon?: ReactNode
     endIcon?: ReactNode
+    style?: CSSProperties
 }
 
 export const Button = (props: Props) => {
@@ -30,7 +31,8 @@ export const Button = (props: Props) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        ...props.style
                     }}
                 >
                     {props.startIcon}
@@ -54,7 +56,8 @@ export const Button = (props: Props) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        ...props.style
                     }}
                 >
                     {props.startIcon}
@@ -79,7 +82,8 @@ export const Button = (props: Props) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        ...props.style
                     }}
                 >
                     {props.startIcon}

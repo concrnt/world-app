@@ -36,7 +36,8 @@ export const TimelinePicker = (props: Props) => {
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '8px',
-                position: 'relative'
+                position: 'relative',
+                alignItems: 'center'
             }}
         >
             {props.selected.map((sel) => {
@@ -82,7 +83,8 @@ export const TimelinePicker = (props: Props) => {
                     border: 'none',
                     outline: 'none',
                     padding: '8px',
-                    borderRadius: '4px'
+                    borderRadius: '4px',
+                    background: 'transparent'
                 }}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}

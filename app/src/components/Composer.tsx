@@ -24,15 +24,21 @@ export const Composer = (props: Props) => {
         function handleResize(): void {
             setViewportHeight(visualViewport?.height ?? 0)
         }
+        if ('virtualKeyboard' in navigator) {
+            navigator.virtualKeyboard.overlaysContent = true
+        }
         visualViewport?.addEventListener('resize', handleResize)
         return () => visualViewport?.removeEventListener('resize', handleResize)
     }, [])
+
+    const [opened, setOpened] = useState<boolean>(false)
 
     return (
         <AnimatePresence
             onExitComplete={() => {
                 setDraft('')
                 props.onClose?.()
+                setOpened(false)
             }}
         >
             {!willClose && (
@@ -51,14 +57,16 @@ export const Composer = (props: Props) => {
                     initial={{ top: '100%' }}
                     animate={{ top: 0 }}
                     exit={{ top: '100%' }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.1 }}
+                    onAnimationComplete={() => {
+                        setOpened(true)
+                    }}
                 >
                     <div
                         style={{
-                            height: viewportHeight,
+                            height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
-                            backgroundColor: theme.content.background,
                             maxHeight: '50vh'
                         }}
                     >
@@ -68,74 +76,88 @@ export const Composer = (props: Props) => {
                                 onClick={() => {
                                     setWillClose(true)
                                 }}
+                                style={{
+                                    color: theme.ui.text
+                                }}
                             >
                                 cancel
                             </Button>
                         </div>
                         <div
                             style={{
-                                padding: '0 12px'
-                            }}
-                        >
-                            <TimelinePicker
-                                items={client?.home?.communities ?? []}
-                                selected={destinations}
-                                setSelected={setDestinations}
-                                keyFunc={(item: Timeline) => item.uri}
-                                labelFunc={(item: Timeline) => item.name}
-                            />
-                        </div>
-                        <div
-                            style={{
+                                backgroundColor: theme.content.background,
+                                width: '100%',
+                                height: '100%',
+                                flex: 1,
                                 display: 'flex',
-                                flex: 1
+                                flexDirection: 'column',
+                                padding: '8px',
+                                gap: '8px'
                             }}
                         >
-                            <textarea
-                                value={draft}
-                                placeholder="いま、なにしてる？"
-                                onChange={(e) => setDraft(e.target.value)}
+                            <div>
+                                <TimelinePicker
+                                    items={client?.home?.communities ?? []}
+                                    selected={destinations}
+                                    setSelected={setDestinations}
+                                    keyFunc={(item: Timeline) => item.uri}
+                                    labelFunc={(item: Timeline) => item.name}
+                                />
+                            </div>
+                            <div
                                 style={{
-                                    width: '100%',
-                                    fontSize: '16px',
-                                    padding: '12px',
-                                    boxSizing: 'border-box',
-                                    border: 'none',
-                                    outline: 'none',
-                                    resize: 'none'
-                                }}
-                            />
-                        </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                padding: '0 12px 12px 12px'
-                            }}
-                        >
-                            <Button
-                                onClick={async () => {
-                                    if (!client) return
-                                    const document = {
-                                        key: '/concrnt.world/main/posts/{cdid}',
-                                        schema: Schemas.markdownMessage,
-                                        value: {
-                                            body: draft
-                                        },
-                                        author: client.ccid,
-                                        memberOf: [
-                                            `cc://${client.ccid}/concrnt.world/main/home-timeline`,
-                                            ...destinations
-                                        ],
-                                        createdAt: new Date()
-                                    }
-                                    client.api.commit(document).then(() => {
-                                        setWillClose(true)
-                                    })
+                                    flex: 1
                                 }}
                             >
-                                投稿
-                            </Button>
+                                {opened && (
+                                    <textarea
+                                        autoFocus
+                                        value={draft}
+                                        placeholder="いま、なにしてる？"
+                                        onChange={(e) => setDraft(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            fontSize: '16px',
+                                            boxSizing: 'border-box',
+                                            border: 'none',
+                                            outline: 'none',
+                                            resize: 'none',
+                                            height: '100%',
+                                            background: 'transparent'
+                                        }}
+                                    />
+                                )}
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end'
+                                }}
+                            >
+                                <Button
+                                    onClick={async () => {
+                                        if (!client) return
+                                        const document = {
+                                            key: '/concrnt.world/main/posts/{cdid}',
+                                            schema: Schemas.markdownMessage,
+                                            value: {
+                                                body: draft
+                                            },
+                                            author: client.ccid,
+                                            memberOf: [
+                                                `cc://${client.ccid}/concrnt.world/main/home-timeline`,
+                                                ...destinations
+                                            ],
+                                            createdAt: new Date()
+                                        }
+                                        client.api.commit(document).then(() => {
+                                            setWillClose(true)
+                                        })
+                                    }}
+                                >
+                                    投稿
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
