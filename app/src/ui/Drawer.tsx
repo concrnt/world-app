@@ -7,6 +7,8 @@ interface Props {
     onClose?: () => void
     children?: ReactNode
     style?: React.CSSProperties
+    headerLeftElement?: ReactNode
+    headerRightElement?: ReactNode
 }
 
 export const Drawer = (props: Props) => {
@@ -114,27 +116,38 @@ export const Drawer = (props: Props) => {
                         {/* Handle: ここを触ったときだけ閉じる動きに追従 */}
                         <div
                             style={{
-                                display: 'flex',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr 1fr',
                                 margin: '7px 0',
-                                justifyContent: 'center',
-                                alignItems: 'center',
                                 width: '100%',
-                                padding: '6px 0',
-                                touchAction: 'none', // ここで pan を奪う（スクロールとの競合を避ける）
-                                cursor: 'grab'
+                                padding: '0 7px'
                             }}
                             onPointerDown={(e) => {
                                 dragControls.start(e)
                             }}
                         >
+                            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                {props.headerLeftElement}
+                            </div>
                             <div
                                 style={{
-                                    width: '30px',
-                                    height: '6px',
-                                    borderRadius: '3px',
-                                    backgroundColor: theme.divider
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center'
                                 }}
-                            />
+                            >
+                                <div
+                                    style={{
+                                        width: '30px',
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        backgroundColor: theme.divider
+                                    }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                {props.headerRightElement}
+                            </div>
                         </div>
 
                         {/* Content: 個別スクロールOK */}

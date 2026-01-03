@@ -19,6 +19,7 @@ export class Client {
     ccid: string
     server: Server
 
+    user: User | null = null
     home: List | null = null
 
     constructor(api: Api, ccid: string, server: Server) {
@@ -37,6 +38,8 @@ export class Client {
         const ccid = authProvider.getCCID()
 
         const client = new Client(api, ccid, server)
+
+        client.user = await client.getUser(ccid).catch(() => null)
 
         // ==== Default kit ====
         await api.getDocument(`cc://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`).catch((err) => {
