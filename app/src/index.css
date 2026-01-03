@@ -10,10 +10,9 @@ html {
     user-select: none;
     -webkit-user-select: none;
 
-    height: 100dvh;
+    height: 100vh;
     width: 100vw;
     overflow: hidden;
-    position: fixed;
     top: 0;
     left: 0;
 }
@@ -22,8 +21,10 @@ body {
     font-size: 16px;
     height: 100%;
     width: 100%;
+    /*
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    */
 }
 
 #root {

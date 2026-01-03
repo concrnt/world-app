@@ -1,9 +1,10 @@
-import { ReactNode } from 'react'
+import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 
 interface Props {
     onClick?: () => void
     children: ReactNode
+    style?: CSSProperties
 }
 
 export const FAB = (props: Props) => {
@@ -19,16 +20,13 @@ export const FAB = (props: Props) => {
                 padding: '15px',
                 borderRadius: '50%',
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                cursor: 'pointer',
-                position: 'absolute',
                 width: '60px',
                 height: '60px',
-                bottom: '60px',
-                right: '14px',
                 fontSize: '24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                ...props.style
             }}
         >
             {props.children}

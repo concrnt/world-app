@@ -66,7 +66,7 @@ export const ClientProvider = (props: ClientProviderProps): ReactNode => {
     const initialize = useCallback(async () => {
         const identity = GenerateIdentity()
 
-        const host = 'cc2.tunnel.anthrotech.dev'
+        const host = 'concrnt-dev.gammalab.net'
 
         const authProvider = new MasterKeyAuthProvider(identity.privateKey, host)
         const cacheEngine = new InMemoryKVS()

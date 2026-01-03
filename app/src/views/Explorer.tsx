@@ -9,9 +9,13 @@ import { useEffect, useState } from 'react'
 import { TextField } from '../ui/TextField'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { IconButton } from '../ui/IconButton'
+import { Header } from '../ui/Header'
+import { MdMenu } from 'react-icons/md'
+import { useSidebar } from '../layouts/Sidebar'
 
 export const ExplorerView = () => {
     const { client } = useClient()
+    const { open } = useSidebar()
 
     const [openEditor, setOpenEditor] = useState(false)
     const [communityName, setCommunityName] = useState('')
@@ -57,7 +61,24 @@ export const ExplorerView = () => {
     return (
         <>
             <View>
-                <Text>Explorer View</Text>
+                <Header
+                    left={
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}
+                            onClick={() => open()}
+                        >
+                            <MdMenu size={24} />
+                        </div>
+                    }
+                >
+                    Explorer
+                </Header>
 
                 <Button
                     onClick={() => {

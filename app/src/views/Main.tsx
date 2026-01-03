@@ -7,7 +7,7 @@ import { TabLayout } from '../layouts/Tab'
 import { DevView } from './Dev'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { ExplorerView } from './Explorer'
-import { NotificationsView } from './Notification'
+import { NotificationsView } from './Notifications'
 import { Sidebar } from '../components/Sidebar'
 
 import { MdHome } from 'react-icons/md'
@@ -49,10 +49,29 @@ export const MainView = () => {
         <>
             {showComposer && <Composer onClose={() => setShowComposer(false)} />}
             <SidebarLayout content={<Sidebar />}>
-                <TabLayout tabs={tabs} />
-                <FAB onClick={() => setShowComposer(true)}>
-                    <MdCreate size={24} />
-                </FAB>
+                <div
+                    style={{
+                        width: '100%',
+                        height: '100%'
+                    }}
+                >
+                    <TabLayout
+                        tabs={tabs}
+                        tabStyle={{
+                            paddingBottom: 'env(safe-area-inset-bottom)'
+                        }}
+                    />
+                    <FAB
+                        onClick={() => setShowComposer(true)}
+                        style={{
+                            position: 'absolute',
+                            bottom: `calc(4rem + env(safe-area-inset-bottom))`,
+                            right: '1rem'
+                        }}
+                    >
+                        <MdCreate size={24} />
+                    </FAB>
+                </div>
             </SidebarLayout>
         </>
     )

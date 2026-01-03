@@ -29,7 +29,7 @@ export const ThemeProvider = (props: Props) => {
     const theme = props.theme ?? defaultTheme
 
     useEffect(() => {
-        document.body.style.backgroundColor = theme.ui.background
+        //document.body.style.backgroundColor = theme.ui.background
     }, [theme])
 
     return <ThemeContext.Provider value={theme}>{props.children}</ThemeContext.Provider>

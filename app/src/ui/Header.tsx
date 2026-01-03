@@ -18,7 +18,8 @@ export const Header = (props: Props) => {
                 alignItems: 'center',
                 padding: '4px',
                 color: theme.ui.text,
-                backgroundColor: theme.ui.background
+                backgroundColor: theme.ui.background,
+                paddingTop: 'env(safe-area-inset-top)'
             }}
         >
             <div

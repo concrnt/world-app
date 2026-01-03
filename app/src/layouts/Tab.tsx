@@ -1,4 +1,4 @@
-import { Activity, ReactNode, useState } from 'react'
+import { Activity, CSSProperties, ReactNode, useState } from 'react'
 import { StackLayout } from './Stack'
 import { Tabs } from '../ui/Tabs'
 import { Tab } from '../ui/Tab'
@@ -10,6 +10,7 @@ interface Tab {
 
 interface Props {
     tabs: Record<string, Tab>
+    tabStyle?: CSSProperties
 }
 
 export const TabLayout = (props: Props) => {
@@ -37,7 +38,7 @@ export const TabLayout = (props: Props) => {
                     </Activity>
                 ))}
             </div>
-            <Tabs>
+            <Tabs style={props.tabStyle}>
                 {Object.entries(props.tabs).map(([key, tab]) => (
                     <Tab key={key} onClick={() => setSelectedTab(key)} selected={key === selectedTab}>
                         {tab.icon}

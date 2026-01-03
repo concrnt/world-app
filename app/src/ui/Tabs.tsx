@@ -1,8 +1,9 @@
-import { ReactNode } from 'react'
+import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 
 interface Props {
     children: ReactNode
+    style?: CSSProperties
 }
 
 export const Tabs = (props: Props) => {
@@ -13,8 +14,8 @@ export const Tabs = (props: Props) => {
             style={{
                 display: 'flex',
                 justifyContent: 'space-around',
-                height: '3rem',
-                backgroundColor: theme.ui.background
+                backgroundColor: theme.ui.background,
+                ...props.style
             }}
         >
             {props.children}
