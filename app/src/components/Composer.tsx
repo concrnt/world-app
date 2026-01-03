@@ -48,9 +48,6 @@ export const Composer = (props: Props) => {
                         flexDirection: 'column',
                         paddingTop: 'env(safe-area-inset-top)'
                     }}
-                    //initial={{ top: '100%' }}
-                    //animate={{ top: 0 }}
-                    //exit={{ top: '100%' }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -61,7 +58,8 @@ export const Composer = (props: Props) => {
                             height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
-                            maxHeight: '50vh'
+                            maxHeight: '50vh',
+                            transition: 'height 0.1s ease-in-out'
                         }}
                     >
                         <div>
