@@ -39,3 +39,9 @@ export interface SignedDocument {
 export interface Affiliation {
     domain: string
 }
+
+export interface RealtimeEvent {
+    type: string
+    uri: string
+    sd: SignedDocument
+}

@@ -1,5 +1,7 @@
 import { Api } from './api'
 import { ChunklineItem } from './chunkline'
+import { RealtimeEvent } from './model'
+import { Socket } from './socket'
 
 export interface TimelineItemWithUpdate extends ChunklineItem {
     lastUpdate: Date
@@ -9,15 +11,42 @@ export class TimelineReader {
     body: TimelineItemWithUpdate[] = []
     onUpdate?: () => void
     onNewItem?: (item: ChunklineItem) => void
+    socket?: Socket
     api: Api
     timelines: string[] = []
     haltUpdate: boolean = false
 
     hostOverride?: string
 
-    constructor(api: Api, hostOverride?: string) {
+    constructor(api: Api, socket?: Socket, hostOverride?: string) {
         this.api = api
+        this.socket = socket
         this.hostOverride = hostOverride
+    }
+
+    processEvent(event: RealtimeEvent) {
+        switch (event.type) {
+            case 'created':
+                {
+                    if (this.body.find((item) => item.href === event.uri)) return
+                    const item: ChunklineItem = {
+                        href: event.uri,
+                        timestamp: new Date()
+                    }
+                    this.onNewItem?.(item)
+                    if (this.haltUpdate) return
+                    const itemWithUpdate: TimelineItemWithUpdate = {
+                        ...item,
+                        lastUpdate: new Date()
+                    }
+                    this.body.unshift(itemWithUpdate)
+                    this.onUpdate?.()
+                }
+                break
+            default: {
+                console.log(`Unhandled event type: ${event.type}`)
+            }
+        }
     }
 
     async listen(timelines: string[]): Promise<boolean> {
@@ -33,6 +62,8 @@ export class TimelineReader {
             }
             this.onUpdate?.()
         })
+
+        this.socket?.listen(timelines, this.processEvent.bind(this))
 
         return hasMore
     }
@@ -64,6 +95,7 @@ export class TimelineReader {
     }
 
     dispose() {
+        this.socket?.unlisten(this.timelines, this.processEvent)
         this.onUpdate = undefined
     }
 }

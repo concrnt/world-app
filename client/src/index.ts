@@ -1,5 +1,5 @@
 export * from './api'
-//export * from './socket'
+export * from './socket'
 //export * from './socketListener'
 export * from './timelineReader'
 //export * from './queryTimelineReader';

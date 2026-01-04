@@ -8,7 +8,8 @@ import {
     CCID,
     Entity,
     Server,
-    NotFoundError
+    NotFoundError,
+    Socket
 } from '@concrnt/client'
 import { Schemas } from './schemas'
 import { ListSchema, ProfileSchema, CommunityTimelineSchema } from './schemas/'
@@ -21,6 +22,8 @@ export class Client {
 
     user: User | null = null
     home: List | null = null
+
+    sockets: Record<string, Socket> = {}
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -97,12 +100,21 @@ export class Client {
         return client
     }
 
+    async newSocket(host?: string): Promise<Socket> {
+        const targetHost = host ?? this.server.domain
+        if (!this.sockets[targetHost]) {
+            this.sockets[targetHost] = new Socket(this.api, host)
+            await this.sockets[targetHost].waitOpen()
+        }
+        return this.sockets[targetHost]
+    }
+
     async newTimelineReader(opts?: { withoutSocket: boolean; hostOverride?: string }): Promise<TimelineReader> {
         if (opts?.withoutSocket) {
             return new TimelineReader(this.api, undefined)
         }
-        // const socket = await this.newSocket(opts?.hostOverride)
-        return new TimelineReader(this.api /*, socket, opts?.hostOverride*/)
+        const socket = await this.newSocket(opts?.hostOverride)
+        return new TimelineReader(this.api, socket, opts?.hostOverride)
     }
 
     async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
