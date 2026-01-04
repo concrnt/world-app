@@ -19,16 +19,33 @@ export class Socket {
         this.hostOverride = hostOverride
 
         this.connect()
-        setInterval(() => {
-            this.checkConnection()
-        }, 1000)
-        setInterval(() => {
-            this.heartbeat()
-        }, 30000)
+            .then(() => {
+                setInterval(() => {
+                    this.checkConnection()
+                }, 1000)
+                setInterval(() => {
+                    this.heartbeat()
+                }, 30000)
+            })
+            .catch((err) => {
+                console.error('Failed to connect websocket:', err)
+            })
     }
 
-    connect() {
-        this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + '/api/v1/timelines/realtime')
+    async connect() {
+        const host = this.hostOverride ?? this.api.defaultHost
+        const server = await this.api.getServer(host)
+        if (!server) {
+            throw new Error(`Server not found for host: ${host}`)
+        }
+
+        const endpoint = server.endpoints['net.concrnt.realtime']
+
+        if (!endpoint) {
+            throw new Error(`Realtime endpoint not found for host: ${host}`)
+        }
+
+        this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + endpoint.template)
 
         this.ws.onmessage = async (rawevent: any) => {
             const event: RealtimeEvent = JSON.parse(rawevent.data)
@@ -49,7 +66,7 @@ export class Socket {
 
         this.ws.onopen = (event: any) => {
             console.info('socket open', event)
-            this.ws.send(JSON.stringify({ type: 'listen', channels: Array.from(this.subscriptions.keys()) }))
+            this.ws.send(JSON.stringify({ type: 'listen', prefixes: Array.from(this.subscriptions.keys()) }))
         }
     }
 
@@ -103,7 +120,7 @@ export class Socket {
         })
         const newtimelines = Array.from(this.subscriptions.keys())
         if (newtimelines.length > currenttimelines.length) {
-            this.ws.send(JSON.stringify({ type: 'listen', channels: newtimelines }))
+            this.ws.send(JSON.stringify({ type: 'listen', prefixes: newtimelines }))
         }
     }
 
@@ -120,12 +137,12 @@ export class Socket {
         })
         const newtimelines = Array.from(this.subscriptions.keys())
         if (newtimelines.length < currenttimelines.length) {
-            this.ws.send(JSON.stringify({ type: 'unlisten', channels: newtimelines }))
+            this.ws.send(JSON.stringify({ type: 'unlisten', prefixes: newtimelines }))
         }
     }
 
     ping() {
-        this.ws.send(JSON.stringify({ type: 'ping' }))
+        this.ws.send(JSON.stringify({ type: 'h' }))
     }
 
     waitOpen() {
