@@ -1,10 +1,12 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
 
 const SIDEBAR_W = 320
 const EDGE_W = 16
 
 interface Props {
+    opened: boolean
+    setOpen: (open: boolean) => void
     children: ReactNode
     content: ReactNode
 }
@@ -18,8 +20,6 @@ const SidebarLayoutContext = createContext<SidebarLayoutState>({
 })
 
 export const SidebarLayout = (props: Props) => {
-    const [opened, setOpen] = useState(false)
-
     const x = useMotionValue(-SIDEBAR_W)
     const edgeX = useMotionValue(0)
 
@@ -28,23 +28,23 @@ export const SidebarLayout = (props: Props) => {
 
     const snapTo = useCallback(
         (toOpen: boolean) => {
-            setOpen(toOpen)
+            props.setOpen(toOpen)
             animate(x, toOpen ? 0 : -SIDEBAR_W, {
                 type: 'spring',
                 stiffness: 450,
                 damping: 40
             })
         },
-        [x]
+        [x, props]
     )
 
     useEffect(() => {
-        animate(x, opened ? 0 : -SIDEBAR_W, {
+        animate(x, props.opened ? 0 : -SIDEBAR_W, {
             type: 'spring',
             stiffness: 450,
             damping: 40
         })
-    }, [opened, x])
+    }, [props.opened, x])
 
     const decideOpen = useCallback(
         (info: { offset: { x: number }; velocity: { x: number } }) => {
@@ -55,8 +55,8 @@ export const SidebarLayout = (props: Props) => {
     )
 
     const open = useCallback(() => {
-        setOpen(true)
-    }, [])
+        props.setOpen(true)
+    }, [props])
 
     const value = useMemo(
         () => ({
@@ -74,7 +74,7 @@ export const SidebarLayout = (props: Props) => {
                     inset: 0,
                     background: 'black',
                     opacity: overlayOpacity,
-                    pointerEvents: opened ? 'auto' : 'none',
+                    pointerEvents: props.opened ? 'auto' : 'none',
                     zIndex: 40
                 }}
                 onClick={() => snapTo(false)}

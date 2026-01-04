@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import {
     Activity,
@@ -7,13 +8,10 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useImperativeHandle,
     useMemo,
     useState
 } from 'react'
-
-interface Props {
-    children: ReactNode
-}
 
 interface StackLayoutContextState {
     push: (child: ReactNode) => void
@@ -24,6 +22,13 @@ const StackLayoutContext = createContext<StackLayoutContextState>({
     push: () => {},
     pop: () => {}
 })
+
+export type StackLayoutRef = StackLayoutContextState
+
+interface Props {
+    children: ReactNode
+    ref?: React.Ref<StackLayoutRef>
+}
 
 export const StackLayout = (props: Props) => {
     const [stack, setStack] = useState<ReactNode[]>([])
@@ -39,6 +44,11 @@ export const StackLayout = (props: Props) => {
             return newStack
         })
     }, [])
+
+    useImperativeHandle(props.ref, () => ({
+        push,
+        pop
+    }))
 
     const value = useMemo(
         () => ({
