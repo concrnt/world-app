@@ -89,7 +89,7 @@ export const MainView = () => {
                         onPush={(view) => {
                             console.log('pushing view to tab:', selectedTab)
                             const stackRef = stackRefs.current[selectedTab]
-                            stackRef?.push(view)
+                            stackRef?.set(view)
                             setOpen(false)
                         }}
                     />

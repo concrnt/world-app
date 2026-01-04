@@ -14,11 +14,13 @@ import {
 } from 'react'
 
 interface StackLayoutContextState {
+    set: (child: ReactNode) => void
     push: (child: ReactNode) => void
     pop: () => void
 }
 
 const StackLayoutContext = createContext<StackLayoutContextState>({
+    set: () => {},
     push: () => {},
     pop: () => {}
 })
@@ -45,17 +47,23 @@ export const StackLayout = (props: Props) => {
         })
     }, [])
 
+    const set = useCallback((child: ReactNode) => {
+        setStack([child])
+    }, [])
+
     useImperativeHandle(props.ref, () => ({
         push,
-        pop
+        pop,
+        set
     }))
 
     const value = useMemo(
         () => ({
             push,
-            pop
+            pop,
+            set
         }),
-        [push, pop]
+        [push, pop, set]
     )
 
     return (
