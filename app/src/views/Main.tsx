@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { FAB } from '../ui/FAB'
 import { Composer } from '../components/Composer'
 import { TabLayout } from '../layouts/Tab'
@@ -16,12 +16,14 @@ import { MdNotifications } from 'react-icons/md'
 import { MdContacts } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
+import { ScrollViewHandle } from '../types/ScrollView'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
     const [showComposer, setShowComposer] = useState(false)
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
+    const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
 
     const tabs = useMemo(() => {
         return {
@@ -32,7 +34,11 @@ export const MainView = () => {
                             stackRefs.current['home'] = el
                         }}
                     >
-                        <HomeView />
+                        <HomeView
+                            ref={(el) => {
+                                scrollRefs.current['home'] = el
+                            }}
+                        />
                     </StackLayout>
                 ),
                 icon: <MdHome size={24} />
@@ -78,6 +84,18 @@ export const MainView = () => {
 
     const [selectedTab, setSelectedTab] = useState<string>('home')
 
+    const selectTab = useCallback(
+        (tab: string) => {
+            if (tab === selectedTab) {
+                if (!stackRefs.current[tab]?.clear()) {
+                    scrollRefs.current[tab]?.scrollToTop()
+                }
+            }
+            setSelectedTab(tab)
+        },
+        [selectedTab]
+    )
+
     return (
         <>
             {showComposer && <Composer onClose={() => setShowComposer(false)} />}
@@ -103,7 +121,7 @@ export const MainView = () => {
                 >
                     <TabLayout
                         selectedTab={selectedTab}
-                        setSelectedTab={setSelectedTab}
+                        setSelectedTab={selectTab}
                         tabs={tabs}
                         tabStyle={{
                             paddingBottom: 'env(safe-area-inset-bottom)'

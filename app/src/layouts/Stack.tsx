@@ -16,13 +16,15 @@ import {
 interface StackLayoutContextState {
     set: (child: ReactNode) => void
     push: (child: ReactNode) => void
-    pop: () => void
+    pop: () => boolean
+    clear: () => boolean
 }
 
 const StackLayoutContext = createContext<StackLayoutContextState>({
     set: () => {},
     push: () => {},
-    pop: () => {}
+    pop: () => false,
+    clear: () => false
 })
 
 export type StackLayoutRef = StackLayoutContextState
@@ -35,35 +37,45 @@ interface Props {
 export const StackLayout = (props: Props) => {
     const [stack, setStack] = useState<ReactNode[]>([])
 
+    const set = useCallback((child: ReactNode) => {
+        setStack([child])
+    }, [])
+
     const push = useCallback((child: ReactNode) => {
         setStack((prev) => [...prev, child])
     }, [])
 
     const pop = useCallback(() => {
+        const hasPopped = stack.length > 0
         setStack((prev) => {
             const newStack = [...prev]
             newStack.pop()
             return newStack
         })
-    }, [])
+        return hasPopped
+    }, [stack.length])
 
-    const set = useCallback((child: ReactNode) => {
-        setStack([child])
-    }, [])
+    const clear = useCallback(() => {
+        const hasCleared = stack.length > 0
+        setStack([])
+        return hasCleared
+    }, [stack.length])
 
     useImperativeHandle(props.ref, () => ({
         push,
         pop,
-        set
+        set,
+        clear
     }))
 
     const value = useMemo(
         () => ({
             push,
             pop,
-            set
+            set,
+            clear
         }),
-        [push, pop, set]
+        [push, pop, set, clear]
     )
 
     return (

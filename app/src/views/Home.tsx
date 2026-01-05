@@ -1,5 +1,7 @@
+/* eslint-disable react-hooks/refs */
+
 import { TimelineReader } from '@concrnt/client'
-import { Fragment, Suspense, useEffect, useMemo } from 'react'
+import { Fragment, Suspense, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { MessageContainer } from '../components/message'
@@ -8,8 +10,9 @@ import { useSidebar } from '../layouts/Sidebar'
 import { View } from '../ui/View'
 import { Divider } from '../ui/Divider'
 import { MdMenu } from 'react-icons/md'
+import { ScrollViewProps } from '../types/ScrollView'
 
-export const HomeView = () => {
+export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
 
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
@@ -18,6 +21,16 @@ export const HomeView = () => {
         () => [`cc://${client?.ccid}/concrnt.world/main/home-timeline`, ...(client?.home?.items ?? [])],
         [client]
     )
+
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    useImperativeHandle(props.ref, () => ({
+        scrollToTop: () => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+        }
+    }))
 
     useEffect(() => {
         let isCancelled = false
@@ -73,6 +86,7 @@ export const HomeView = () => {
                     gap: '8px',
                     overflowY: 'auto'
                 }}
+                ref={scrollRef}
             >
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.href}>

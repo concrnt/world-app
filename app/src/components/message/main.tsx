@@ -17,7 +17,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     const { push } = useStack()
 
     const messagePromise = useMemo(() => {
-        return client!.getMessage<any>(props.uri, props.resolveHint)
+        return client!.getMessage<any>(props.uri, props.resolveHint).catch(() => null)
     }, [client, props.uri, props.resolveHint])
     const message = use(messagePromise)
 
