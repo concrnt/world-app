@@ -124,6 +124,10 @@ export class Client {
     async getUser(id: CCID, hint?: string): Promise<User> {
         return User.load(this, id, hint)
     }
+
+    async getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
+        return Timeline.load(this, uri, hint)
+    }
 }
 
 export class Message<T> implements Document<T> {

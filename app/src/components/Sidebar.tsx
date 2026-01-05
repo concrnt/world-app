@@ -19,6 +19,7 @@ import { MdTravelExplore } from 'react-icons/md'
 import { Dialog } from '../ui/Dialog'
 import { TextField } from '../ui/TextField'
 import { Button } from '../ui/Button'
+import { TimelineView } from '../views/Timeline'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -99,9 +100,9 @@ export const Sidebar = (props: Props) => {
                 <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cc://" />
                 <Button
                     onClick={() => {
-                        //props.onPush?.(<ProfileView id={query} />)
-                        //setOpen(false)
-                        //setQuery('')
+                        props.onPush?.(<TimelineView uri={query} />)
+                        setOpen(false)
+                        setQuery('')
                     }}
                 >
                     照会
