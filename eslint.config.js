@@ -46,6 +46,7 @@ export default defineConfig(
                     caughtErrorsIgnorePattern: "^_",
                 },
             ],
+            "react-hooks/refs": "off",
         }
     }
 );

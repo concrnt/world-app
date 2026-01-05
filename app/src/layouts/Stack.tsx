@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/refs */
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import {
     Activity,
