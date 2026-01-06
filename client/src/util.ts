@@ -13,3 +13,11 @@ export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs
             clearTimeout(clientTimeout)
         })
 }
+
+export const parseCCURI = (uri: string): { owner: string; key: string } => {
+    const parsed = new URL(uri)
+    const owner = parsed.host
+    const key = parsed.pathname
+
+    return { owner, key }
+}

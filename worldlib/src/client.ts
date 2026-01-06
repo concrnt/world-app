@@ -142,6 +142,8 @@ export class Message<T> implements Document<T> {
 
     authorUser?: User
 
+    isLegacyFormat = false
+
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
         this.key = document.key
@@ -151,6 +153,13 @@ export class Message<T> implements Document<T> {
         this.owner = document.owner
         this.createdAt = document.createdAt
         this.memberOf = document.memberOf
+
+        const legacy = document as any
+        if ('signer' in legacy) {
+            this.isLegacyFormat = true
+            this.author = legacy.signer
+            this.value = legacy.body
+        }
     }
 
     static async load<T>(client: Client, uri: string, hint?: string): Promise<Message<T> | null> {

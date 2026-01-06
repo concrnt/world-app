@@ -295,18 +295,28 @@ export class Api {
         return data
     }
 
-    async getServerByCSID(csid: CSID): Promise<Server> {
-        const uri = `cc://${csid}`
+    async getServerByCSID(csid: CSID, hint?: string): Promise<Server> {
+        const uri = hint ? `cc://${csid}@${hint}` : `cc://${csid}`
 
-        const server = await this.getResource<Server>(uri, this.defaultHost)
-        return server
+        const myServer = await this.getServer(this.defaultHost)
+
+        const endpoint = myServer.endpoints['net.concrnt.resource'].template
+            .replaceAll('{uri}', uri)
+            .replaceAll('{owner}', csid)
+
+        return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, {})
     }
 
     async getEntity(ccid: string, hint?: string): Promise<Entity> {
-        const uri = `cc://${ccid}`
+        const uri = hint ? `cc://${ccid}@${hint}` : `cc://${ccid}`
 
-        const entity = await this.getResource<Entity>(uri, hint ?? this.defaultHost)
-        return entity
+        const server = await this.getServer(this.defaultHost)
+
+        const endpoint = server.endpoints['net.concrnt.resource'].template
+            .replaceAll('{uri}', uri)
+            .replaceAll('{owner}', ccid)
+
+        return this.fetchWithCache<Entity>(this.defaultHost, endpoint, uri, {})
     }
 
     async getDocument<T>(uri: string, domain?: string): Promise<Document<T>> {
@@ -315,22 +325,19 @@ export class Api {
         return document
     }
 
-    async getResource<T>(uri: string, domain?: string): Promise<T> {
+    async getResource<T>(uri: string, hint?: string): Promise<T> {
         const parsed = new URL(uri)
         const owner = parsed.host
         const key = parsed.pathname
 
-        let fqdn = domain
-        if (!fqdn) {
-            fqdn = owner
-            if (IsCCID(owner)) {
-                const entity = await this.getEntity(owner)
-                fqdn = entity.domain
-            }
-            if (IsCSID(owner)) {
-                const server = await this.getServerByCSID(owner)
-                fqdn = server.domain
-            }
+        let fqdn = owner
+        if (IsCCID(fqdn)) {
+            const entity = await this.getEntity(owner, hint)
+            fqdn = entity.domain
+        }
+        if (IsCSID(fqdn)) {
+            const server = await this.getServerByCSID(owner, hint)
+            fqdn = server.domain
         }
 
         const server = await this.getServer(fqdn)
@@ -338,9 +345,11 @@ export class Api {
         const endpoint = server.endpoints['net.concrnt.resource'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', owner)
-            .replaceAll('{key}', key)
+            .replaceAll('{key}', key.replace(/^\/+|\/+$/g, ''))
 
-        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {})
+        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {
+            auth: 'no-auth'
+        })
 
         return resource
     }

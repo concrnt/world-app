@@ -64,7 +64,7 @@ export const RealtimeTimeline = (props: Props) => {
                 <Fragment key={item.href}>
                     <div style={{ padding: '0 8px' }}>
                         <Suspense fallback={<div>Loading...</div>}>
-                            <MessageContainer uri={item.href} />
+                            <MessageContainer uri={item.href} source={item.source} />
                         </Suspense>
                     </div>
                     <Divider />
