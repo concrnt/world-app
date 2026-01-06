@@ -14,6 +14,7 @@ import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
+import { TabLayout } from '../layouts/Tab'
 
 interface Props {
     id: string
@@ -33,6 +34,24 @@ export const ProfileView = (props: Props) => {
     const isMe = useMemo(() => {
         return client?.ccid === props.id
     }, [client, props.id])
+
+    const [selectedTab, setSelectedTab] = useState<string>('posts')
+    const tabs = useMemo(() => {
+        return {
+            posts: {
+                body: <div>Posts</div>,
+                icon: <div>カレント</div>
+            },
+            media: {
+                body: <div>Media</div>,
+                icon: <div>メディア</div>
+            },
+            activity: {
+                body: <div>Activity</div>,
+                icon: <div>アクティビティ</div>
+            }
+        }
+    }, [])
 
     return (
         <>
@@ -133,6 +152,12 @@ export const ProfileView = (props: Props) => {
                         <Text>{user?.profile?.description || '説明はまだありません'}</Text>
                     </div>
                 </div>
+                <TabLayout
+                    tabs={tabs}
+                    selectedTab={selectedTab}
+                    setSelectedTab={(tab) => setSelectedTab(tab)}
+                    placement="upper"
+                />
             </View>
             {isMe && <ProfileEditor open={openProfileEditor} onClose={() => setOpenProfileEditor(false)} />}
         </>

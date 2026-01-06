@@ -1,4 +1,4 @@
-import { Activity, CSSProperties, ReactNode } from 'react'
+import { Activity, CSSProperties, ReactNode, useId } from 'react'
 import { Tabs } from '../ui/Tabs'
 import { Tab } from '../ui/Tab'
 
@@ -12,9 +12,12 @@ interface Props {
     setSelectedTab: (tab: string) => void
     tabs: Record<string, Tab>
     tabStyle?: CSSProperties
+    placement?: 'upper' | 'lower'
 }
 
 export const TabLayout = (props: Props) => {
+    const tabId = useId()
+
     return (
         <div
             style={{
@@ -24,6 +27,21 @@ export const TabLayout = (props: Props) => {
                 flexDirection: 'column'
             }}
         >
+            {props.placement === 'upper' && (
+                <Tabs style={props.tabStyle}>
+                    {Object.entries(props.tabs).map(([key, tab]) => (
+                        <Tab
+                            key={key}
+                            groupId={tabId}
+                            onClick={() => props.setSelectedTab(key)}
+                            selected={key === props.selectedTab}
+                        >
+                            {tab.icon}
+                        </Tab>
+                    ))}
+                </Tabs>
+            )}
+
             <div
                 style={{
                     display: 'flex',
@@ -37,13 +55,15 @@ export const TabLayout = (props: Props) => {
                     </Activity>
                 ))}
             </div>
-            <Tabs style={props.tabStyle}>
-                {Object.entries(props.tabs).map(([key, tab]) => (
-                    <Tab key={key} onClick={() => props.setSelectedTab(key)} selected={key === props.selectedTab}>
-                        {tab.icon}
-                    </Tab>
-                ))}
-            </Tabs>
+            {props.placement !== 'upper' && (
+                <Tabs style={props.tabStyle}>
+                    {Object.entries(props.tabs).map(([key, tab]) => (
+                        <Tab key={key} onClick={() => props.setSelectedTab(key)} selected={key === props.selectedTab}>
+                            {tab.icon}
+                        </Tab>
+                    ))}
+                </Tabs>
+            )}
         </div>
     )
 }

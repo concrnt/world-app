@@ -6,6 +6,7 @@ interface Props {
     selected?: boolean
     children: ReactNode
     onClick?: () => void
+    groupId?: string
 }
 
 export const Tab = (props: Props) => {
@@ -24,7 +25,7 @@ export const Tab = (props: Props) => {
             {props.children}
             {props.selected && (
                 <motion.div
-                    layoutId="tab-underline"
+                    layoutId={'tab-underline-' + props.groupId}
                     style={{
                         position: 'absolute',
                         height: '4px',
