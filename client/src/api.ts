@@ -322,6 +322,13 @@ export class Api {
     async getDocument<T>(uri: string, domain?: string): Promise<Document<T>> {
         const sd = await this.getResource<SignedDocument>(uri, domain)
         const document: Document<T> = JSON.parse(sd.document)
+
+        const legacy = document as any
+        if ('signer' in legacy) {
+            document.author = legacy.signer
+            document.value = legacy.body
+        }
+
         return document
     }
 
