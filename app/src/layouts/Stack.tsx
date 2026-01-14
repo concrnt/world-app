@@ -1,6 +1,5 @@
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import {
-    Activity,
     createContext,
     ReactNode,
     useCallback,
@@ -101,11 +100,9 @@ export const StackLayout = (props: Props) => {
                     {stack.map((child, index) => {
                         const isFrontmost = index === stack.length - 1
                         return (
-                            <Activity key={index} mode={isFrontmost ? 'visible' : 'hidden'}>
-                                <SwipableView enabled={isFrontmost} onPop={pop}>
-                                    {child}
-                                </SwipableView>
-                            </Activity>
+                            <SwipableView key={index} enabled={isFrontmost} onPop={pop}>
+                                {child}
+                            </SwipableView>
                         )
                     })}
                 </AnimatePresence>
