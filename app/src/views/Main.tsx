@@ -43,18 +43,6 @@ export const MainView = () => {
                 ),
                 icon: <MdHome size={24} />
             },
-            notifications: {
-                body: (
-                    <StackLayout
-                        ref={(el) => {
-                            stackRefs.current['notifications'] = el
-                        }}
-                    >
-                        <NotificationsView />
-                    </StackLayout>
-                ),
-                icon: <MdNotifications size={24} />
-            },
             explorer: {
                 body: (
                     <StackLayout
@@ -66,6 +54,18 @@ export const MainView = () => {
                     </StackLayout>
                 ),
                 icon: <MdExplore size={24} />
+            },
+            notifications: {
+                body: (
+                    <StackLayout
+                        ref={(el) => {
+                            stackRefs.current['notifications'] = el
+                        }}
+                    >
+                        <NotificationsView />
+                    </StackLayout>
+                ),
+                icon: <MdNotifications size={24} />
             },
             contacts: {
                 body: (
