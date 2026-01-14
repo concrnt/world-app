@@ -2,7 +2,7 @@ import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 
 interface Props {
-    onClick?: () => void
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
     children: ReactNode
     disabled?: boolean
     style?: CSSProperties
@@ -26,6 +26,7 @@ export const IconButton = (props: Props) => {
                         padding: '4px',
                         fontSize: '16px',
                         margin: '4px',
+                        color: theme.content.text,
                         ...props.style
                     }}
                 >

@@ -1,8 +1,9 @@
 import { View } from '../ui/View'
 import { Header } from '../ui/Header'
+import { Text } from '../ui/Text'
 import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
-import { use, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 
@@ -17,7 +18,6 @@ export const TimelineView = (props: Props) => {
     const timelinePromise = useMemo(() => {
         return client!.getTimeline(props.uri).catch(() => null)
     }, [client, props.uri])
-    const timeline = use(timelinePromise)
 
     return (
         <View>
@@ -37,7 +37,7 @@ export const TimelineView = (props: Props) => {
                     </div>
                 }
             >
-                {timeline ? timeline.name : 'Timeline'}
+                <Text>{timelinePromise.then((t) => (t ? t.name : 'Timeline'))}</Text>
             </Header>
             <RealtimeTimeline timelines={[props.uri]} />
         </View>
