@@ -3,7 +3,6 @@ import {
     Activity,
     createContext,
     ReactNode,
-    Suspense,
     useCallback,
     useContext,
     useEffect,
@@ -103,11 +102,9 @@ export const StackLayout = (props: Props) => {
                         const isFrontmost = index === stack.length - 1
                         return (
                             <Activity key={index} mode={isFrontmost ? 'visible' : 'hidden'}>
-                                <Suspense fallback={<></>}>
-                                    <SwipableView enabled={isFrontmost} onPop={pop}>
-                                        {child}
-                                    </SwipableView>
-                                </Suspense>
+                                <SwipableView enabled={isFrontmost} onPop={pop}>
+                                    {child}
+                                </SwipableView>
                             </Activity>
                         )
                     })}

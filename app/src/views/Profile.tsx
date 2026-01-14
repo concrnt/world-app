@@ -1,4 +1,4 @@
-import { use, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStack } from '../layouts/Stack'
 import { Avatar } from '../ui/Avatar'
 import { CCWallpaper } from '../ui/CCWallpaper'
@@ -29,7 +29,6 @@ export const ProfileView = (props: Props) => {
     const profilePromise = useMemo(() => {
         return client!.getUser(props.id).catch(() => null)
     }, [client, props.id])
-    const user = use(profilePromise)
 
     const isMe = useMemo(() => {
         return client?.ccid === props.id
@@ -105,7 +104,7 @@ export const ProfileView = (props: Props) => {
                             transform: 'translateY(-50%)',
                             left: '8px'
                         }}
-                        src={user?.profile.avatar}
+                        src={profilePromise.then((user) => user?.profile.avatar)}
                     />
                 </div>
                 <div
@@ -144,12 +143,14 @@ export const ProfileView = (props: Props) => {
                                 fontSize: '1.2rem'
                             }}
                         >
-                            {user?.profile?.username || 'Anonymous'}
+                            {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
                         </Text>
-                        {user?.alias && <Text>@{user?.alias}</Text>}
+                        <Text>{profilePromise.then((user) => (user?.alias ? user.alias : null))}</Text>
                     </div>
                     <div>
-                        <Text>{user?.profile?.description || '説明はまだありません'}</Text>
+                        <Text>
+                            {profilePromise.then((user) => user?.profile?.description || '説明はまだありません')}
+                        </Text>
                     </div>
                 </div>
                 <TabLayout

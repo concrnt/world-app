@@ -1,16 +1,38 @@
 import BoringAvatar from 'boring-avatars'
+import { Suspense, use } from 'react'
 
 interface Props {
     ccid: string
-    src?: string
+    src?: string | Promise<string | undefined>
     style?: React.CSSProperties
 }
 
 export const Avatar = (props: Props) => {
-    if (props.src) {
+    return (
+        <Suspense
+            fallback={
+                <div
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '4px',
+                        backgroundColor: '#e0e0e0'
+                    }}
+                />
+            }
+        >
+            <Inner {...props} />
+        </Suspense>
+    )
+}
+
+const Inner = (props: Props) => {
+    const src = props.src instanceof Promise ? use(props.src) : props.src
+
+    if (src) {
         return (
             <img
-                src={props.src}
+                src={src}
                 alt="avatar"
                 style={{
                     width: '40px',

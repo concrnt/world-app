@@ -1,7 +1,7 @@
-import { CSSProperties, ReactNode } from 'react'
+import { CSSProperties, ReactNode, Suspense, use } from 'react'
 
 interface Props {
-    children: ReactNode
+    children: ReactNode | Promise<ReactNode>
     style?: CSSProperties
     variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'caption'
 }
@@ -45,6 +45,27 @@ const baseStyles: Record<NonNullable<Props['variant']>, CSSProperties> = {
 
 export const Text = (props: Props) => {
     return (
+        <Suspense
+            fallback={
+                <p
+                    style={{
+                        ...baseStyles[props.variant || 'body'],
+                        ...props.style,
+                        backgroundColor: '#e0e0e0',
+                        color: 'transparent'
+                    }}
+                />
+            }
+        >
+            <Inner {...props} />
+        </Suspense>
+    )
+}
+
+const Inner = (props: Props) => {
+    const children = props.children instanceof Promise ? use(props.children) : props.children
+
+    return (
         <p
             style={{
                 whiteSpace: 'pre-wrap',
@@ -53,7 +74,7 @@ export const Text = (props: Props) => {
                 ...props.style
             }}
         >
-            {props.children}
+            {children}
         </p>
     )
 }
