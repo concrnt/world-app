@@ -6,6 +6,7 @@ import { PostView } from '../../views/Post'
 import { Avatar } from '../../ui/Avatar'
 
 import { IsCCID, parseCCURI } from '@concrnt/client'
+import { CfmRenderer } from '../../ui/CfmRenderer'
 
 interface Props {
     uri: string
@@ -97,7 +98,7 @@ const MessageContainerInner = (props: InnerProps) => {
                 >
                     {message.authorUser?.profile.username}
                 </div>
-                <div style={{}}>{message.value.body}</div>
+                <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
             </div>
         </div>
     )
