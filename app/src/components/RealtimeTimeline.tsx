@@ -56,6 +56,7 @@ export const RealtimeTimeline = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
+                overflowX: 'hidden',
                 overflowY: 'auto'
             }}
             ref={scrollRef}
