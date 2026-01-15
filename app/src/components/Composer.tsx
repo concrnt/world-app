@@ -6,6 +6,7 @@ import { Schemas } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useTheme } from '../contexts/Theme'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 interface Props {
     onClose?: () => void
@@ -19,14 +20,17 @@ export const Composer = (props: Props) => {
 
     const theme = useTheme()
 
-    const [viewportHeight, setViewportHeight] = useState<number>(visualViewport?.height ?? 0)
+    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
+        'composerViewportHeight',
+        visualViewport?.height ?? 0
+    )
     useEffect(() => {
         function handleResize(): void {
             setViewportHeight(visualViewport?.height ?? 0)
         }
         visualViewport?.addEventListener('resize', handleResize)
         return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [])
+    }, [setViewportHeight])
 
     return (
         <AnimatePresence
