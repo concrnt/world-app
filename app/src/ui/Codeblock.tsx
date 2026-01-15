@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { ReactNode, Suspense, lazy } from 'react'
 
 // TODO: Load on plugin loaded
 // import abap from 'react-syntax-highlighter/dist/cjs/languages/prism/abap'
@@ -311,7 +311,7 @@ export interface CodeblockProps {
     children: string
 }
 
-export function Codeblock(props: CodeblockProps): JSX.Element {
+export function Codeblock(props: CodeblockProps): ReactNode {
     return (
         <div
             style={{

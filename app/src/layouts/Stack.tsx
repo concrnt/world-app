@@ -121,7 +121,7 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
     }, [controls])
 
     const popDistance = Math.max(80, width * 0.3) // 画面幅の30% or 80px
-    const popVelocity = 800 // px/s 目安
+    const popVelocity = 50 // px/s 目安
 
     return (
         <motion.div
