@@ -8,19 +8,41 @@ interface Props {
 export const View = (props: Props) => {
     const theme = useTheme()
 
-    return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                color: theme.content.text,
-                backgroundColor: theme.content.background
-            }}
-        >
-            {props.children}
-        </div>
-    )
+    if (theme.variant === 'classic') {
+        return (
+            <div
+                data-testid="view-classic"
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    color: theme.content.text,
+                    backgroundColor: theme.content.background
+                }}
+            >
+                {props.children}
+            </div>
+        )
+    } else {
+        return (
+            <div
+                data-testid="view-world"
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    color: theme.content.text,
+                    backgroundColor: theme.content.background,
+                    margin: 'env(safe-area-inset-top) 4px 4px 4px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    flex: 1
+                }}
+            >
+                {props.children}
+            </div>
+        )
+    }
 }

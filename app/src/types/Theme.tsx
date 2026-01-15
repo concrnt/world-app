@@ -13,4 +13,5 @@ export interface Theme {
         background: string
     }
     divider: string
+    variant: 'classic' | 'world'
 }

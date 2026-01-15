@@ -14,7 +14,7 @@ export const Tabs = (props: Props) => {
             style={{
                 display: 'flex',
                 justifyContent: 'space-around',
-                backgroundColor: theme.ui.background,
+                backgroundColor: theme.variant === 'classic' ? theme.ui.background : 'transparent',
                 ...props.style
             }}
         >

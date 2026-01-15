@@ -20,11 +20,13 @@ export const TabLayout = (props: Props) => {
 
     return (
         <div
+            data-testid="tab-layout"
             style={{
                 width: '100%',
                 height: '100%',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                overflow: 'hidden'
             }}
         >
             {props.placement === 'upper' && (
@@ -42,19 +44,12 @@ export const TabLayout = (props: Props) => {
                 </Tabs>
             )}
 
-            <div
-                style={{
-                    display: 'flex',
-                    flex: 1,
-                    position: 'relative'
-                }}
-            >
-                {Object.entries(props.tabs).map(([key, tab]) => (
-                    <Activity mode={key === props.selectedTab ? 'visible' : 'hidden'} key={key}>
-                        {tab.body}
-                    </Activity>
-                ))}
-            </div>
+            {Object.entries(props.tabs).map(([key, tab]) => (
+                <Activity mode={key === props.selectedTab ? 'visible' : 'hidden'} key={key}>
+                    {tab.body}
+                </Activity>
+            ))}
+
             {props.placement !== 'upper' && (
                 <Tabs style={props.tabStyle}>
                     {Object.entries(props.tabs).map(([key, tab]) => (

@@ -78,23 +78,16 @@ export const StackLayout = (props: Props) => {
     return (
         <StackLayoutContext.Provider value={value}>
             <div
+                data-test-id="stack-layout"
                 style={{
                     width: '100%',
-                    height: '100%',
-                    position: 'relative'
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flex: 1
                 }}
             >
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%'
-                    }}
-                >
-                    {props.children}
-                </div>
+                {props.children}
 
                 <AnimatePresence>
                     {stack.map((child, index) => {
@@ -130,7 +123,10 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
                 top: 0,
                 width: '100%',
                 height: '100%',
-                touchAction: 'pan-y'
+                touchAction: 'pan-y',
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1
             }}
             initial={{ x: width || '100%' }}
             animate={controls}

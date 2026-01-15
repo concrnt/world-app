@@ -19,7 +19,7 @@ export const Header = (props: Props) => {
                 padding: '4px',
                 color: theme.ui.text,
                 backgroundColor: theme.ui.background,
-                paddingTop: 'env(safe-area-inset-top)'
+                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined
             }}
         >
             <div

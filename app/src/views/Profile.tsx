@@ -15,12 +15,15 @@ import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { TabLayout } from '../layouts/Tab'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
     id: string
 }
 
 export const ProfileView = (props: Props) => {
+    const theme = useTheme()
+
     const { pop } = useStack()
     const { client } = useClient()
 
@@ -62,7 +65,7 @@ export const ProfileView = (props: Props) => {
                 >
                     <CCWallpaper
                         style={{
-                            paddingTop: 'env(safe-area-inset-top)',
+                            paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                             height: '150px'
                         }}
                     >

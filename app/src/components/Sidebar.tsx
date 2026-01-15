@@ -38,52 +38,60 @@ export const Sidebar = (props: Props) => {
                 style={{
                     width: '100%',
                     height: '100%',
-                    backgroundColor: theme.ui.background,
-                    color: theme.ui.text,
-                    display: 'flex',
-                    padding: '16px',
                     paddingTop: 'env(safe-area-inset-top)',
                     paddingBottom: 'env(safe-area-inset-bottom)',
-                    flexDirection: 'column',
-                    gap: '16px'
+                    backgroundColor: theme.variant === 'classic' ? theme.ui.background : 'transparent'
                 }}
             >
                 <div
                     style={{
+                        backgroundColor: theme.ui.background,
+                        color: theme.ui.text,
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                    }}
-                    onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
-                >
-                    <Avatar ccid={client?.ccid || ''} src={client?.user?.profile.avatar} />
-                    <Text variant="h2">{client?.user?.profile.username || 'Unknown User'}</Text>
-                    <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
-                </div>
-                <Divider />
-                <div
-                    style={{
-                        display: 'flex',
+                        padding: '16px',
                         flexDirection: 'column',
                         gap: '16px',
-                        overflowY: 'auto'
+                        height: '100%',
+                        borderRadius: '0 8px 8px 0'
                     }}
                 >
-                    <ListItem
-                        icon={<MdPerson size={24} />}
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center'
+                        }}
                         onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
                     >
-                        プロフィール
-                    </ListItem>
-                    <ListItem icon={<MdTravelExplore size={24} />} onClick={() => setOpen(true)}>
-                        照会
-                    </ListItem>
-                    <ListItem icon={<MdTerminal size={24} />} onClick={() => props.onPush?.(<DevView />)}>
-                        開発者ツール
-                    </ListItem>
-                    <ListItem icon={<MdSettings size={24} />} onClick={() => props.onPush?.(<SettingsView />)}>
-                        設定
-                    </ListItem>
+                        <Avatar ccid={client?.ccid || ''} src={client?.user?.profile.avatar} />
+                        <Text variant="h2">{client?.user?.profile.username || 'Unknown User'}</Text>
+                        <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
+                    </div>
+                    <Divider />
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px',
+                            overflowY: 'auto'
+                        }}
+                    >
+                        <ListItem
+                            icon={<MdPerson size={24} />}
+                            onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
+                        >
+                            プロフィール
+                        </ListItem>
+                        <ListItem icon={<MdTravelExplore size={24} />} onClick={() => setOpen(true)}>
+                            照会
+                        </ListItem>
+                        <ListItem icon={<MdTerminal size={24} />} onClick={() => props.onPush?.(<DevView />)}>
+                            開発者ツール
+                        </ListItem>
+                        <ListItem icon={<MdSettings size={24} />} onClick={() => props.onPush?.(<SettingsView />)}>
+                            設定
+                        </ListItem>
+                    </div>
                 </div>
             </div>
             <Dialog

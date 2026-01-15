@@ -17,6 +17,7 @@ import { MdContacts } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
+import { useTheme } from '../contexts/Theme'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
@@ -24,6 +25,8 @@ export const MainView = () => {
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
     const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
+
+    const theme = useTheme()
 
     const tabs = useMemo(() => {
         return {
@@ -116,7 +119,8 @@ export const MainView = () => {
                 <div
                     style={{
                         width: '100%',
-                        height: '100%'
+                        height: '100%',
+                        backgroundColor: theme.backdrop.background
                     }}
                 >
                     <TabLayout

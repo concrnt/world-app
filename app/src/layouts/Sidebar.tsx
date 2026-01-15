@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
+import { useTheme } from '../contexts/Theme'
 
 const SIDEBAR_W = 320
 
@@ -20,6 +21,8 @@ const SidebarLayoutContext = createContext<SidebarLayoutState>({
 })
 
 export const SidebarLayout = (props: Props) => {
+    const theme = useTheme()
+
     const width = props.width ?? SIDEBAR_W
 
     const x = useMotionValue(props.opened ? width : 0)
@@ -80,29 +83,37 @@ export const SidebarLayout = (props: Props) => {
                     props.setOpen(shouldOpen)
                 }}
             >
-                <aside
+                <div
+                    style={{
+                        position: 'absolute',
+                        width: '100vw',
+                        height: '100vh',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {props.children}
+                </div>
+
+                <div
                     style={{
                         position: 'absolute',
                         left: -width,
                         top: 0,
                         height: '100vh',
                         width,
-                        zIndex: 60,
-                        background: 'white',
-                        touchAction: 'none'
+                        pointerEvents: 'none',
+                        backgroundColor: theme.backdrop.background
                     }}
-                >
-                    {props.content}
-                </aside>
+                />
 
                 <motion.div
                     style={{
                         position: 'absolute',
                         top: 0,
-                        width: '100vw',
+                        left: -width,
+                        width: `calc(100vw + ${width}px)`,
                         height: '100vh',
                         background: 'black',
-                        zIndex: 50,
                         pointerEvents: props.opened ? 'auto' : 'none',
                         opacity: backdropOpacity
                     }}
@@ -111,15 +122,18 @@ export const SidebarLayout = (props: Props) => {
                     }}
                 />
 
-                <div
+                <aside
                     style={{
                         position: 'absolute',
-                        width: '100vw',
-                        height: '100vh'
+                        left: -width,
+                        top: 0,
+                        height: '100vh',
+                        width,
+                        touchAction: 'none'
                     }}
                 >
-                    {props.children}
-                </div>
+                    {props.content}
+                </aside>
             </motion.div>
         </SidebarLayoutContext.Provider>
     )
