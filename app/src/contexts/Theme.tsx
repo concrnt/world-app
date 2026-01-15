@@ -1,5 +1,7 @@
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 import { Theme } from '../types/Theme'
+import { usePreference } from './Preference'
+import { Themes } from '../data/themes'
 
 interface Props {
     theme?: Theme
@@ -27,7 +29,15 @@ const defaultTheme: Theme = {
 const ThemeContext = createContext<Theme>(defaultTheme)
 
 export const ThemeProvider = (props: Props) => {
-    const theme = props.theme ?? defaultTheme
+    const [themeName] = usePreference('themeName')
+    const [themeVariant] = usePreference('themeVariant')
+
+    const theme = useMemo(() => {
+        return {
+            ...(Themes[themeName] ?? props.theme ?? defaultTheme),
+            variant: themeVariant
+        }
+    }, [themeName, props.theme, themeVariant])
 
     return <ThemeContext.Provider value={theme}>{props.children}</ThemeContext.Provider>
 }

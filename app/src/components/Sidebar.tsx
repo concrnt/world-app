@@ -40,13 +40,13 @@ export const Sidebar = (props: Props) => {
                     height: '100%',
                     paddingTop: 'env(safe-area-inset-top)',
                     paddingBottom: 'env(safe-area-inset-bottom)',
-                    backgroundColor: theme.variant === 'classic' ? theme.ui.background : 'transparent'
+                    backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : 'transparent'
                 }}
             >
                 <div
                     style={{
-                        backgroundColor: theme.ui.background,
-                        color: theme.ui.text,
+                        backgroundColor: theme.backdrop.background,
+                        color: theme.backdrop.text,
                         display: 'flex',
                         padding: '16px',
                         flexDirection: 'column',

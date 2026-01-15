@@ -14,4 +14,5 @@ export interface Theme {
     }
     divider: string
     variant: 'classic' | 'world'
+    meta?: any
 }

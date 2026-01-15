@@ -1,0 +1,53 @@
+import { Theme } from '../types/Theme'
+import { ConcrntLogo } from '../ui/ConcrntLogo'
+import { Text } from '../ui/Text'
+
+interface Props {
+    theme: Theme
+    onClick?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void
+}
+
+export const ThemeCard = (props: Props) => {
+    return (
+        <div
+            style={{
+                borderRadius: '8px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: '12px',
+                backgroundColor: props.theme.content.background
+            }}
+            onClick={props.onClick}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    borderRadius: '50%',
+                    backgroundColor: props.theme.ui.text
+                }}
+            >
+                <ConcrntLogo
+                    size="40px"
+                    upperColor={props.theme.ui.background}
+                    lowerColor={props.theme.backdrop.background}
+                    frameColor={props.theme.backdrop.background}
+                />
+            </div>
+            <Text
+                style={{
+                    color: props.theme.content.text,
+                    flexGrow: 1,
+                    textTransform: 'none',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap'
+                }}
+            >
+                {props.theme.meta?.name || 'Unnamed Theme'}
+            </Text>
+        </div>
+    )
+}

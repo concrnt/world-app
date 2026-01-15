@@ -17,8 +17,8 @@ export const Header = (props: Props) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '4px',
-                color: theme.ui.text,
-                backgroundColor: theme.ui.background,
+                color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
+                backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : theme.ui.background,
                 paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined
             }}
         >

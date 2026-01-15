@@ -5,13 +5,16 @@ import './index.css'
 import { ThemeProvider } from './contexts/Theme'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
+import { PreferenceProvider } from './contexts/Preference'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <ClientProvider>
-            <ThemeProvider>
-                <App />
-            </ThemeProvider>
+            <PreferenceProvider>
+                <ThemeProvider>
+                    <App />
+                </ThemeProvider>
+            </PreferenceProvider>
         </ClientProvider>
     </ErrorBoundary>
 )
