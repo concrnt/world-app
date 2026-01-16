@@ -71,11 +71,7 @@ export class Client {
                         schema: 'https://schema.concrnt.world/utils/list.json',
                         value: {
                             title: 'Home',
-                            items: [],
-                            meta: {
-                                defaultPostHome: true,
-                                defaultPostTimelines: []
-                            }
+                            items: []
                         },
                         createdAt: new Date()
                     }
@@ -84,10 +80,7 @@ export class Client {
                     return new List(
                         `cc://${api.authProvider.getCCID()}/concrnt.world/main/home-list`,
                         document.value.title,
-                        document.value.items,
-                        (document.value.meta?.defaultPostHome as boolean) || false,
-                        (document.value.meta?.defaultPostTimelines as string[]) || [],
-                        document.value.meta?.defaultProfile as string | undefined
+                        document.value.items
                     )
                 } else {
                     throw err
@@ -127,6 +120,10 @@ export class Client {
 
     async getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
         return Timeline.load(this, uri, hint)
+    }
+
+    async getList(uri: string, hint?: string): Promise<List | null> {
+        return List.load(this, uri, hint)
     }
 }
 
@@ -200,27 +197,14 @@ export class List {
     uri: string
 
     title: string
-    defaultPostHome: boolean
-    defaultPostTimelines: string[]
-    defaultProfile?: string
 
     items: string[]
     communities: Timeline[] = []
 
-    constructor(
-        uri: string,
-        title: string,
-        items: string[],
-        defaultPostHome: boolean,
-        defaultPostTimelines: string[],
-        defaultProfile?: string
-    ) {
+    constructor(uri: string, title: string, items: string[]) {
         this.uri = uri
         this.title = title
         this.items = items
-        this.defaultPostHome = defaultPostHome
-        this.defaultPostTimelines = defaultPostTimelines
-        this.defaultProfile = defaultProfile
     }
 
     static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
@@ -228,14 +212,7 @@ export class List {
         if (!res) {
             return null
         }
-        const list = new List(
-            uri,
-            res.value.title,
-            res.value.items,
-            (res.value.meta?.defaultPostHome as boolean) || false,
-            (res.value.meta?.defaultPostTimelines as string[]) || [],
-            res.value.meta?.defaultProfile as string | undefined
-        )
+        const list = new List(uri, res.value.title, res.value.items)
 
         const itemsQuery = await Promise.allSettled(
             res.value.items.map(async (item) => {

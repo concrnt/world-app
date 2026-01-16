@@ -1,14 +1,23 @@
 import { createContext, ReactNode, useCallback, useContext } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
+export interface PinnedList {
+    uri: string
+    defaultPostHome: boolean
+    defaultPostTimelines: string[]
+    defaultProfile?: string
+}
+
 export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
+    pinnedLists: PinnedList[]
 }
 
 export const defaultPreference: Preference = {
     themeName: 'blue',
-    themeVariant: 'classic'
+    themeVariant: 'classic',
+    pinnedLists: []
 }
 
 interface PreferenceState {

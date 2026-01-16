@@ -11,12 +11,14 @@ import { Avatar } from '../ui/Avatar'
 import { SettingsView } from '../views/Settings'
 import { DevView } from '../views/Dev'
 import { ProfileView } from '../views/Profile'
+import { QueryView } from '../views/Query'
+import { ListsView } from '../views/Lists'
 
 import { MdPerson } from 'react-icons/md'
 import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
-import { QueryView } from '../views/Query'
+import { MdList } from 'react-icons/md'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -75,6 +77,9 @@ export const Sidebar = (props: Props) => {
                             onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
                         >
                             プロフィール
+                        </ListItem>
+                        <ListItem icon={<MdList size={24} />} onClick={() => props.onPush?.(<ListsView />)}>
+                            リスト
                         </ListItem>
                         <ListItem icon={<MdTravelExplore size={24} />} onClick={() => props.onPush?.(<QueryView />)}>
                             照会
