@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo }
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
 import { useTheme } from '../contexts/Theme'
 
-const SIDEBAR_W = 320
+const SIDEBAR_W = 220
 
 interface Props {
     opened: boolean
