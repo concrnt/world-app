@@ -69,7 +69,8 @@ const MessageContainerInner = (props: InnerProps) => {
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px'
+                gap: '8px',
+                contentVisibility: 'auto'
             }}
             onClick={(e) => {
                 e.stopPropagation()

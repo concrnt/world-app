@@ -1,4 +1,4 @@
-import { Fragment, Suspense, useEffect, useImperativeHandle, useRef } from 'react'
+import { Fragment, useEffect, useImperativeHandle, useRef } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -64,9 +64,7 @@ export const RealtimeTimeline = (props: Props) => {
             {reader.current?.body.map((item) => (
                 <Fragment key={item.href}>
                     <div style={{ padding: '0 8px' }}>
-                        <Suspense fallback={<div>Loading...</div>}>
-                            <MessageContainer uri={item.href} source={item.source} />
-                        </Suspense>
+                        <MessageContainer uri={item.href} source={item.source} />
                     </div>
                     <Divider />
                 </Fragment>
