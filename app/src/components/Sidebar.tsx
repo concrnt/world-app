@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode } from 'react'
 
 import { useTheme } from '../contexts/Theme'
 import { useClient } from '../contexts/Client'
@@ -16,10 +16,7 @@ import { MdPerson } from 'react-icons/md'
 import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
-import { Dialog } from '../ui/Dialog'
-import { TextField } from '../ui/TextField'
-import { Button } from '../ui/Button'
-import { TimelineView } from '../views/Timeline'
+import { QueryView } from '../views/Query'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -28,9 +25,6 @@ interface Props {
 export const Sidebar = (props: Props) => {
     const theme = useTheme()
     const { client } = useClient()
-
-    const [open, setOpen] = useState(false)
-    const [query, setQuery] = useState('')
 
     return (
         <>
@@ -82,7 +76,7 @@ export const Sidebar = (props: Props) => {
                         >
                             プロフィール
                         </ListItem>
-                        <ListItem icon={<MdTravelExplore size={24} />} onClick={() => setOpen(true)}>
+                        <ListItem icon={<MdTravelExplore size={24} />} onClick={() => props.onPush?.(<QueryView />)}>
                             照会
                         </ListItem>
                         <ListItem icon={<MdTerminal size={24} />} onClick={() => props.onPush?.(<DevView />)}>
@@ -94,28 +88,6 @@ export const Sidebar = (props: Props) => {
                     </div>
                 </div>
             </div>
-            <Dialog
-                open={open}
-                onClose={() => setOpen(false)}
-                style={{
-                    padding: '8px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
-                }}
-            >
-                <Text variant="h3">照会</Text>
-                <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cc://" />
-                <Button
-                    onClick={() => {
-                        props.onPush?.(<TimelineView uri={query} />)
-                        setOpen(false)
-                        setQuery('')
-                    }}
-                >
-                    照会
-                </Button>
-            </Dialog>
         </>
     )
 }
