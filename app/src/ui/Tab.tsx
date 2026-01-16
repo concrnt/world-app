@@ -17,7 +17,7 @@ export const Tab = (props: Props) => {
             style={{
                 cursor: 'pointer',
                 padding: '0.5rem',
-                color: theme.variant === 'classic' ? theme.ui.text : theme.backdrop.text,
+                color: theme.backdrop.text,
                 position: 'relative'
             }}
             onClick={props.onClick}
@@ -29,7 +29,7 @@ export const Tab = (props: Props) => {
                     style={{
                         position: 'absolute',
                         height: '4px',
-                        backgroundColor: theme.variant === 'classic' ? theme.ui.text : theme.backdrop.text,
+                        backgroundColor: theme.backdrop.text,
                         bottom: 0,
                         left: 0,
                         right: 0

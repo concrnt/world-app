@@ -30,14 +30,8 @@ const ThemeContext = createContext<Theme>(defaultTheme)
 
 export const ThemeProvider = (props: Props) => {
     const [themeName] = usePreference('themeName')
-    const [themeVariant] = usePreference('themeVariant')
 
-    const theme = useMemo(() => {
-        return {
-            ...(Themes[themeName] ?? props.theme ?? defaultTheme),
-            variant: themeVariant
-        }
-    }, [themeName, props.theme, themeVariant])
+    const theme = useMemo(() => Themes[themeName] ?? props.theme ?? defaultTheme, [themeName, props.theme])
 
     return <ThemeContext.Provider value={theme}>{props.children}</ThemeContext.Provider>
 }

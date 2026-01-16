@@ -44,7 +44,7 @@ export const Composer = (props: Props) => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        backgroundColor: theme.ui.background,
+                        backgroundColor: theme.backdrop.background,
                         position: 'absolute',
                         left: 0,
                         zIndex: 1001,
@@ -82,13 +82,13 @@ export const Composer = (props: Props) => {
                         <div
                             style={{
                                 backgroundColor: theme.content.background,
-                                width: '100%',
-                                height: '100%',
                                 flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 padding: '8px',
-                                gap: '8px'
+                                gap: '8px',
+                                borderRadius: theme.variant === 'classic' ? undefined : '8px',
+                                margin: theme.variant === 'classic' ? undefined : '0 8px'
                             }}
                         >
                             <div>

@@ -8,6 +8,11 @@ interface Props {
 }
 
 export const ThemeCard = (props: Props) => {
+    const bgColor =
+        props.theme.backdrop.background === props.theme.ui.text
+            ? props.theme.ui.background
+            : props.theme.backdrop.background
+
     return (
         <div
             style={{
@@ -17,7 +22,8 @@ export const ThemeCard = (props: Props) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: '12px',
-                backgroundColor: props.theme.content.background
+                backgroundColor: props.theme.content.background,
+                border: `1px solid ${props.theme.divider}`
             }}
             onClick={props.onClick}
         >
@@ -31,8 +37,8 @@ export const ThemeCard = (props: Props) => {
                 <ConcrntLogo
                     size="40px"
                     upperColor={props.theme.ui.background}
-                    lowerColor={props.theme.backdrop.background}
-                    frameColor={props.theme.backdrop.background}
+                    lowerColor={bgColor}
+                    frameColor={bgColor}
                 />
             </div>
             <Text

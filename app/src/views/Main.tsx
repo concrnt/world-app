@@ -128,7 +128,8 @@ export const MainView = () => {
                         setSelectedTab={selectTab}
                         tabs={tabs}
                         tabStyle={{
-                            paddingBottom: 'env(safe-area-inset-bottom)'
+                            paddingBottom: 'env(safe-area-inset-bottom)',
+                            borderTop: theme.variant === 'classic' ? `1px solid ${theme.divider}` : undefined
                         }}
                     />
                     <FAB

@@ -15,7 +15,6 @@ export const SettingsView = () => {
     const { open } = useSidebar()
 
     const [_themeName, setThemeName] = usePreference('themeName')
-    const [themeVariant, setThemeVariant] = usePreference('themeVariant')
 
     return (
         <View>
@@ -54,31 +53,6 @@ export const SettingsView = () => {
                     }}
                 >
                     <Text variant="h3">Theme</Text>
-                    <fieldset>
-                        <legend>Variant</legend>
-                        <label>
-                            <input
-                                type="radio"
-                                name="theme-variant"
-                                value="classic"
-                                checked={themeVariant === 'classic'}
-                                onChange={() => setThemeVariant('classic')}
-                            />
-                            Classic
-                        </label>
-                        <br />
-                        <label>
-                            <input
-                                type="radio"
-                                name="theme-variant"
-                                value="modern"
-                                checked={themeVariant === 'world'}
-                                onChange={() => setThemeVariant('world')}
-                            />
-                            World
-                        </label>
-                    </fieldset>
-
                     <div
                         style={{
                             display: 'grid',
