@@ -18,10 +18,11 @@ export const ListSettings = (props: Props) => {
     const { client } = useClient()
 
     const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
+    const pin = pinnedLists.find((pin) => pin.uri === props.uri)
 
     const [list, setList] = useState<List | null>(null)
     const [listName, setListName] = useState<string>('')
-    const [postTimelines, setPostTimelines] = useState<string[]>([])
+    const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 
@@ -31,7 +32,6 @@ export const ListSettings = (props: Props) => {
         client.getList(props.uri).then((data) => {
             setList(data)
             setListName(data?.title ?? '')
-            setPostTimelines(data?.communities.map((c) => c.uri) ?? [])
         })
     }, [props.uri, client])
 

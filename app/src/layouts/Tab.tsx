@@ -1,6 +1,7 @@
-import { Activity, CSSProperties, ReactNode, useId } from 'react'
+import { CSSProperties, ReactNode, useId } from 'react'
 import { Tabs } from '../ui/Tabs'
 import { Tab } from '../ui/Tab'
+import { ActivityProvider } from '../contexts/Activity'
 
 interface Tab {
     body: ReactNode
@@ -45,9 +46,9 @@ export const TabLayout = (props: Props) => {
             )}
 
             {Object.entries(props.tabs).map(([key, tab]) => (
-                <Activity mode={key === props.selectedTab ? 'visible' : 'hidden'} key={key}>
+                <ActivityProvider mode={key === props.selectedTab ? 'visible' : 'hidden'} key={key}>
                     {tab.body}
-                </Activity>
+                </ActivityProvider>
             ))}
 
             {props.placement !== 'upper' && (

@@ -140,7 +140,7 @@ export const HomeView = (props: ScrollViewProps) => {
             </View>
             <FAB
                 onClick={() => {
-                    composer.open()
+                    composer.open(pinnedLists.find((pin) => pin.uri === selectedTabUri)?.defaultPostTimelines ?? [])
                 }}
             >
                 <MdCreate size={24} />

@@ -2,7 +2,7 @@ import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 interface ComposerContextState {
-    open: () => void
+    open: (destinations: string[]) => void
     close: () => void
 }
 
@@ -11,15 +11,16 @@ interface Props {
 }
 
 const ComposerContext = createContext<ComposerContextState>({
-    open: () => {},
+    open: (_destinations: string[]) => {},
     close: () => {}
 })
 
 export const ComposerProvider = (props: Props) => {
     const [showComposer, setShowComposer] = useState(false)
+    const [destinations, setDestinations] = useState<string[]>([])
 
-    const open = useCallback(() => {
-        console.log('Opening composer')
+    const open = useCallback((destinations: string[]) => {
+        setDestinations(destinations)
         setShowComposer(true)
     }, [])
 
@@ -67,7 +68,11 @@ export const ComposerProvider = (props: Props) => {
                             left: 0
                         }}
                     >
-                        <Composer onClose={() => setShowComposer(false)} />
+                        <Composer
+                            onClose={() => setShowComposer(false)}
+                            destinations={destinations}
+                            setDestinations={setDestinations}
+                        />
                     </div>
                 )}
             </div>

@@ -10,13 +10,14 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 
 interface Props {
     onClose?: () => void
+    destinations: string[]
+    setDestinations: (destinations: string[]) => void
 }
 
 export const Composer = (props: Props) => {
     const { client } = useClient()
     const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>('')
-    const [destinations, setDestinations] = useState<string[]>([])
 
     const theme = useTheme()
 
@@ -91,8 +92,8 @@ export const Composer = (props: Props) => {
                             <div>
                                 <TimelinePicker
                                     items={client?.home?.communities ?? []}
-                                    selected={destinations}
-                                    setSelected={setDestinations}
+                                    selected={props.destinations}
+                                    setSelected={props.setDestinations}
                                     keyFunc={(item: Timeline) => item.uri}
                                     labelFunc={(item: Timeline) => item.name}
                                 />
@@ -137,7 +138,7 @@ export const Composer = (props: Props) => {
                                             author: client.ccid,
                                             memberOf: [
                                                 `cc://${client.ccid}/concrnt.world/main/home-timeline`,
-                                                ...destinations
+                                                ...props.destinations
                                             ],
                                             createdAt: new Date()
                                         }

@@ -11,8 +11,8 @@ import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
 import { TimelineCard } from '../components/TimelineCard'
 import { useDrawer } from '../contexts/Drawer'
-// import { FAB } from '../ui/FAB'
-// import { MdAdd } from 'react-icons/md'
+import { FAB } from '../ui/FAB'
+import { MdAdd } from 'react-icons/md'
 
 export const ExplorerView = () => {
     const { client } = useClient()
@@ -82,47 +82,42 @@ export const ExplorerView = () => {
                     Explorer
                 </Header>
 
-                <Button
-                    onClick={() => {
-                        drawer.open(
-                            <div>
-                                <Text>コミュニティを作成</Text>
-
-                                <Text>名前</Text>
-                                <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
-                                <Text>説明</Text>
-                                <TextField
-                                    value={communityDescription}
-                                    onChange={(e) => setCommunityDescription(e.target.value)}
-                                />
-
-                                <Button
-                                    disabled={!communityName}
-                                    onClick={() => {
-                                        createCommunity({
-                                            name: communityName,
-                                            description: communityDescription
-                                        })
-                                        drawer.close()
-                                    }}
-                                >
-                                    作成
-                                </Button>
-                            </div>
-                        )
-                    }}
-                >
-                    + Create Community
-                </Button>
                 {Object.entries(communities).map(([uri, community]) => (
                     <TimelineCard key={uri} uri={uri} document={community} />
                 ))}
             </View>
-            {/*
-        <FAB>
-            <MdAdd size={24} />
-        </FAB>
-        */}
+            <FAB
+                onClick={() => {
+                    drawer.open(
+                        <div>
+                            <Text>コミュニティを作成</Text>
+
+                            <Text>名前</Text>
+                            <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
+                            <Text>説明</Text>
+                            <TextField
+                                value={communityDescription}
+                                onChange={(e) => setCommunityDescription(e.target.value)}
+                            />
+
+                            <Button
+                                disabled={!communityName}
+                                onClick={() => {
+                                    createCommunity({
+                                        name: communityName,
+                                        description: communityDescription
+                                    })
+                                    drawer.close()
+                                }}
+                            >
+                                作成
+                            </Button>
+                        </div>
+                    )
+                }}
+            >
+                <MdAdd size={24} />
+            </FAB>
         </>
     )
 }
