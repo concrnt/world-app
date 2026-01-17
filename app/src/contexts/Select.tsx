@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
+import { animate, AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { useTheme } from './Theme'
 import { Text } from '../ui/Text'
@@ -64,9 +64,6 @@ export const SelectProvider = (props: Props) => {
                                 background: 'black',
                                 opacity: backdropOpacity
                             }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
                             onClick={() => {
                                 close()
                             }}
@@ -90,6 +87,7 @@ export const SelectProvider = (props: Props) => {
                             dragMomentum={false}
                             initial={{ y: height }}
                             animate={{ y: 0 }}
+                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
                             exit={{ y: height }}
                             onDragEnd={(_, info) => {
                                 const current = y.get()
@@ -111,7 +109,7 @@ export const SelectProvider = (props: Props) => {
                                 if (shouldClose) {
                                     close()
                                 } else {
-                                    y.set(0)
+                                    animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
                                 }
                             }}
                         >

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { useTheme } from './Theme'
+import { animate } from 'motion'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -27,9 +28,13 @@ export const DrawerProvider = (props: Props) => {
     const height = window.innerHeight * 0.8
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
 
-    const open = useCallback((c: ReactNode) => {
-        setContent(c)
-    }, [])
+    const open = useCallback(
+        (c: ReactNode) => {
+            y.set(height)
+            setContent(c)
+        },
+        [height, y]
+    )
 
     const close = useCallback(() => {
         setContent(null)
@@ -56,9 +61,6 @@ export const DrawerProvider = (props: Props) => {
                                 background: 'black',
                                 opacity: backdropOpacity
                             }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
                             onClick={() => {
                                 close()
                             }}
@@ -83,6 +85,7 @@ export const DrawerProvider = (props: Props) => {
                             dragMomentum={false}
                             initial={{ y: height }}
                             animate={{ y: 0 }}
+                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
                             exit={{ y: height }}
                             onDragEnd={(_, info) => {
                                 const current = y.get()
@@ -104,7 +107,7 @@ export const DrawerProvider = (props: Props) => {
                                 if (shouldClose) {
                                     close()
                                 } else {
-                                    y.set(0)
+                                    animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
                                 }
                             }}
                         >
