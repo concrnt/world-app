@@ -25,6 +25,8 @@ export const ListSettings = (props: Props) => {
     const [listName, setListName] = useState<string>('')
     const [postTimelines, setPostTimelines] = useState<string[]>([])
 
+    const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
+
     useEffect(() => {
         if (!client) return
 
@@ -77,17 +79,33 @@ export const ListSettings = (props: Props) => {
             <Text>リスト設定</Text>
             <Text>リスト名</Text>
             <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
-            <Text>デフォルト投稿先</Text>
-            <TimelinePicker
-                items={list?.communities ?? []}
-                selected={postTimelines}
-                setSelected={setPostTimelines}
-                keyFunc={(item: Timeline) => item.uri}
-                labelFunc={(item: Timeline) => item.name}
-            />
+            {isPinned && (
+                <>
+                    <Text>デフォルト投稿先</Text>
+                    <TimelinePicker
+                        items={list?.communities ?? []}
+                        selected={postTimelines}
+                        setSelected={setPostTimelines}
+                        keyFunc={(item: Timeline) => item.uri}
+                        labelFunc={(item: Timeline) => item.name}
+                    />
+                </>
+            )}
             <Button onClick={saveSettings}>設定を保存</Button>
 
-            <Button>リストを削除</Button>
+            {isPinned ? (
+                <Button
+                    onClick={() => {
+                        const newPins = pinnedLists.filter((p) => p.uri !== props.uri)
+                        setPinnedLists(newPins)
+                        props.onClose?.()
+                    }}
+                >
+                    ピン留め解除
+                </Button>
+            ) : (
+                <Button>リストを削除</Button>
+            )}
         </Drawer>
     )
 }

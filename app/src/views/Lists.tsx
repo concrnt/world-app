@@ -104,14 +104,6 @@ export const ListsView = () => {
                                     }}
                                 >
                                     <Text>{lists[pinned.uri]?.value.title ?? pinned.uri}</Text>
-                                    <IconButton
-                                        onClick={() => {
-                                            const newPins = pinnedLists.filter((p) => p.uri !== pinned.uri)
-                                            setPinnedLists(newPins)
-                                        }}
-                                    >
-                                        <RiUnpinFill />
-                                    </IconButton>
                                 </div>
                             </Reorder.Item>
                         ))}
@@ -119,11 +111,16 @@ export const ListsView = () => {
 
                     <Text variant="h3">すべてのリスト</Text>
                     {Object.entries(lists).map(([uri, list]) => (
-                        <div key={uri} style={{ border: '1px solid #ccc', padding: 10, marginBottom: 10 }}>
+                        <div
+                            key={uri}
+                            style={{ border: '1px solid #ccc', padding: 10, marginBottom: 10 }}
+                            onClick={() => setEditingURI(uri)}
+                        >
                             <Text variant="h4">{list.value.title}</Text>
                             <Text>アイテム数: {list.value.items.length}</Text>
                             <IconButton
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation()
                                     const isPinned = pinnedLists.some((p) => p.uri === uri)
                                     if (isPinned) {
                                         const newPins = pinnedLists.filter((p) => p.uri !== uri)
@@ -136,7 +133,7 @@ export const ListsView = () => {
                                     }
                                 }}
                             >
-                                {list.value.meta?.pinned ? <RiUnpinFill /> : <RiPushpinFill />}
+                                {pinnedLists.some((p) => p.uri === uri) ? <RiUnpinFill /> : <RiPushpinFill />}
                             </IconButton>
                         </div>
                     ))}
