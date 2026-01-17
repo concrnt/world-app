@@ -431,7 +431,7 @@ export class Api {
             }
         }
 
-        return fetch(`https://${domain ?? this.defaultHost}/commit`, {
+        const result = fetch(`https://${domain ?? this.defaultHost}/commit`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -446,10 +446,16 @@ export class Api {
             })
             .then((data) => {
                 console.log('Affiliation committed successfully:', data)
+                const key = document.key?.startsWith('/') ? document.key.slice(1) : document.key
+                const uri = `cc://${document.owner ?? document.author}/${key}`
+
+                this.cache.invalidate(uri)
             })
             .catch((error) => {
                 console.error('Error committing affiliation:', error)
             })
+
+        return result
     }
 
     // ---

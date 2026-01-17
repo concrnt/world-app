@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Header } from '../ui/Header'
 import { View } from '../ui/View'
 import { MdMenu } from 'react-icons/md'
@@ -9,7 +9,6 @@ import { Text } from '../ui/Text'
 import { Document } from '@concrnt/client'
 
 import { RiPushpinFill } from 'react-icons/ri'
-import { RiUnpinFill } from 'react-icons/ri'
 import { IconButton } from '../ui/IconButton'
 import { Reorder } from 'motion/react'
 import { usePreference } from '../contexts/Preference'
@@ -20,6 +19,8 @@ export const ListsView = () => {
     const { client } = useClient()
     const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
     const [lists, setLists] = useState<Record<string, Document<ListSchema>>>({})
+
+    const hiddenLists = Object.keys(lists).filter((uri) => !pinnedLists.find((pinned) => pinned.uri === uri))
 
     const drawer = useDrawer()
 
@@ -41,7 +42,7 @@ export const ListsView = () => {
         })
     }
 
-    useEffect(() => {
+    const fetchLists = useCallback(() => {
         if (!client) return
         client.api
             .query<any>({
@@ -56,6 +57,10 @@ export const ListsView = () => {
                 console.error('Error fetching communities:', error)
             })
     }, [client])
+
+    useEffect(() => {
+        fetchLists()
+    }, [fetchLists])
 
     return (
         <View>
@@ -77,7 +82,7 @@ export const ListsView = () => {
             >
                 Lists
             </Header>
-            <div>
+            <div style={{ padding: '8px' }}>
                 <Button
                     onClick={() => {
                         createList({ title: '新しいリスト', items: [], meta: {} })
@@ -85,7 +90,7 @@ export const ListsView = () => {
                 >
                     新規作成
                 </Button>
-                <Text variant="h3">ピン留め</Text>
+                <Text variant="h3">ピン留め中のリスト</Text>
                 <Reorder.Group values={pinnedLists} onReorder={setPinnedLists}>
                     {pinnedLists.map((pinned) => (
                         <Reorder.Item
@@ -93,7 +98,15 @@ export const ListsView = () => {
                             value={pinned}
                             style={{}}
                             onClick={() =>
-                                drawer.open(<ListSettings uri={pinned.uri} onComplete={() => drawer.close()} />)
+                                drawer.open(
+                                    <ListSettings
+                                        uri={pinned.uri}
+                                        onComplete={() => {
+                                            drawer.close()
+                                            fetchLists()
+                                        }}
+                                    />
+                                )
                             }
                         >
                             <div
@@ -112,34 +125,48 @@ export const ListsView = () => {
                     ))}
                 </Reorder.Group>
 
-                <Text variant="h3">すべてのリスト</Text>
-                {Object.entries(lists).map(([uri, list]) => (
-                    <div
-                        key={uri}
-                        style={{ border: '1px solid #ccc', padding: 10, marginBottom: 10 }}
-                        onClick={() => drawer.open(<ListSettings uri={uri} onComplete={() => drawer.close()} />)}
-                    >
-                        <Text variant="h4">{list.value.title}</Text>
-                        <Text>アイテム数: {list.value.items.length}</Text>
-                        <IconButton
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                const isPinned = pinnedLists.some((p) => p.uri === uri)
-                                if (isPinned) {
-                                    const newPins = pinnedLists.filter((p) => p.uri !== uri)
-                                    setPinnedLists(newPins)
-                                } else {
+                <Text variant="h3">非表示中のリスト</Text>
+                {hiddenLists.map((uri) => {
+                    const list = lists[uri]
+                    return (
+                        <div
+                            key={uri}
+                            style={{
+                                border: '1px solid #ccc',
+                                padding: 10,
+                                marginBottom: 10,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}
+                            onClick={() =>
+                                drawer.open(
+                                    <ListSettings
+                                        uri={uri}
+                                        onComplete={() => {
+                                            drawer.close()
+                                            fetchLists()
+                                        }}
+                                    />
+                                )
+                            }
+                        >
+                            <Text variant="h4">{list.value.title}</Text>
+                            <Text>アイテム数: {list.value.items.length}</Text>
+                            <IconButton
+                                onClick={(e) => {
+                                    e.stopPropagation()
                                     setPinnedLists([
                                         ...pinnedLists,
                                         { uri: uri, defaultPostHome: false, defaultPostTimelines: [] }
                                     ])
-                                }
-                            }}
-                        >
-                            {pinnedLists.some((p) => p.uri === uri) ? <RiUnpinFill /> : <RiPushpinFill />}
-                        </IconButton>
-                    </div>
-                ))}
+                                }}
+                            >
+                                <RiPushpinFill />
+                            </IconButton>
+                        </div>
+                    )
+                })}
             </div>
         </View>
     )

@@ -68,7 +68,8 @@ export const ListSettings = (props: Props) => {
         }
 
         client.api.commit(document).then(() => {
-            console.log('Community updated')
+            console.log('list updated')
+            props.onComplete?.()
         })
     }
 

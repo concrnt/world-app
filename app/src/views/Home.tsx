@@ -23,16 +23,17 @@ export const HomeView = (props: ScrollViewProps) => {
     const { open } = useSidebar()
     const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
 
+    const [, setUnused] = useState(0)
+
     const drawer = useDrawer()
 
     const tabs = useMemo(
         () =>
             pinnedLists.map((pin) => ({
                 uri: pin.uri,
-                pinData: pin,
-                list: client?.getList(pin.uri).catch(() => null)
+                pinData: pin
             })),
-        [pinnedLists, client]
+        [pinnedLists]
     )
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0]?.uri ?? '')
@@ -42,7 +43,7 @@ export const HomeView = (props: ScrollViewProps) => {
         setTimelines([])
         const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
         if (selectedTab) {
-            selectedTab.list?.then((list) => {
+            client?.getList(selectedTab.uri).then((list) => {
                 setTimelines(list?.items ?? [])
             })
         } else {
@@ -86,7 +87,15 @@ export const HomeView = (props: ScrollViewProps) => {
                             alignItems: 'center'
                         }}
                         onClick={() =>
-                            drawer.open(<ListSettings uri={selectedTabUri} onComplete={() => drawer.close()} />)
+                            drawer.open(
+                                <ListSettings
+                                    uri={selectedTabUri}
+                                    onComplete={() => {
+                                        drawer.close()
+                                        setUnused((u) => u + 1)
+                                    }}
+                                />
+                            )
                         }
                     >
                         <MdTune size={24} />
@@ -111,7 +120,7 @@ export const HomeView = (props: ScrollViewProps) => {
                             width: '120px'
                         }}
                     >
-                        <Text>{tab.list?.then((l) => l?.title)}</Text>
+                        <Text>{client?.getList(tab.uri).then((l) => l?.title)}</Text>
                     </Tab>
                 ))}
             </Tabs>
