@@ -8,6 +8,8 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { PreferenceProvider } from './contexts/Preference'
 import { SelectProvider } from './contexts/Select'
 import { DrawerProvider } from './contexts/Drawer'
+import { OverlayProvider } from './contexts/Overlay'
+import { ComposerProvider } from './contexts/Composer'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
@@ -16,7 +18,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                 <ThemeProvider>
                     <DrawerProvider>
                         <SelectProvider>
-                            <App />
+                            <ComposerProvider>
+                                <OverlayProvider>
+                                    <App />
+                                </OverlayProvider>
+                            </ComposerProvider>
                         </SelectProvider>
                     </DrawerProvider>
                 </ThemeProvider>

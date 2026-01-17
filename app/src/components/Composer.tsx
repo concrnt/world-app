@@ -45,9 +45,6 @@ export const Composer = (props: Props) => {
                         width: '100%',
                         height: '100%',
                         backgroundColor: theme.backdrop.background,
-                        position: 'absolute',
-                        left: 0,
-                        zIndex: 1001,
                         display: 'flex',
                         flexDirection: 'column',
                         paddingTop: 'env(safe-area-inset-top)'

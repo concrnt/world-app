@@ -1,5 +1,8 @@
 import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
+import { useOverlay } from '../contexts/Overlay'
+import { createPortal } from 'react-dom'
+import { motion } from 'motion/react'
 
 interface Props {
     onClick?: () => void
@@ -10,8 +13,12 @@ interface Props {
 export const FAB = (props: Props) => {
     const theme = useTheme()
 
-    return (
-        <button
+    const overlay = useOverlay()
+
+    if (!overlay.slot) return null
+
+    return createPortal(
+        <motion.button
             onClick={props.onClick}
             style={{
                 backgroundColor: theme.ui.background,
@@ -26,10 +33,18 @@ export const FAB = (props: Props) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                position: 'fixed',
+                bottom: `calc(4rem + env(safe-area-inset-bottom))`,
+                right: '1rem',
                 ...props.style
             }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
             {props.children}
-        </button>
+        </motion.button>,
+        overlay.slot
     )
 }

@@ -11,6 +11,8 @@ import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
 import { TimelineCard } from '../components/TimelineCard'
 import { useDrawer } from '../contexts/Drawer'
+import { FAB } from '../ui/FAB'
+import { MdAdd } from 'react-icons/md'
 
 export const ExplorerView = () => {
     const { client } = useClient()
@@ -116,6 +118,11 @@ export const ExplorerView = () => {
                     <TimelineCard key={uri} uri={uri} document={community} />
                 ))}
             </View>
+            {/*
+        <FAB>
+            <MdAdd size={24} />
+        </FAB>
+        */}
         </>
     )
 }

@@ -1,6 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { FAB } from '../ui/FAB'
-import { Composer } from '../components/Composer'
 import { TabLayout } from '../layouts/Tab'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { Sidebar } from '../components/Sidebar'
@@ -14,14 +12,12 @@ import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
 import { MdNotifications } from 'react-icons/md'
 import { MdContacts } from 'react-icons/md'
-import { MdCreate } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { useTheme } from '../contexts/Theme'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
-    const [showComposer, setShowComposer] = useState(false)
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
     const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
@@ -101,7 +97,6 @@ export const MainView = () => {
 
     return (
         <>
-            {showComposer && <Composer onClose={() => setShowComposer(false)} />}
             <SidebarLayout
                 opened={opened}
                 setOpen={setOpen}
@@ -132,16 +127,6 @@ export const MainView = () => {
                             borderTop: theme.variant === 'classic' ? `1px solid ${theme.divider}` : undefined
                         }}
                     />
-                    <FAB
-                        onClick={() => setShowComposer(true)}
-                        style={{
-                            position: 'absolute',
-                            bottom: `calc(4rem + env(safe-area-inset-bottom))`,
-                            right: '1rem'
-                        }}
-                    >
-                        <MdCreate size={24} />
-                    </FAB>
                 </div>
             </SidebarLayout>
         </>
