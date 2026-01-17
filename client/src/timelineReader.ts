@@ -54,14 +54,22 @@ export class TimelineReader {
 
         let hasMore = true
 
-        await this.api.getTimelineRecent(timelines).then((items: ChunklineItem[]) => {
-            const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
-            this.body = itemsWithUpdate
-            if (items.length < 16) {
+        await this.api
+            .getTimelineRecent(timelines)
+            .then((items: ChunklineItem[]) => {
+                const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
+                this.body = itemsWithUpdate
+                if (items.length < 16) {
+                    hasMore = false
+                }
+                this.onUpdate?.()
+            })
+            .catch((err) => {
+                console.error('Failed to load timeline:', err)
                 hasMore = false
-            }
-            this.onUpdate?.()
-        })
+                this.body = []
+                this.onUpdate?.()
+            })
 
         this.socket?.listen(timelines, this.processEvent.bind(this))
 
