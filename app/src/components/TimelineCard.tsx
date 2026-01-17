@@ -5,9 +5,10 @@ import { Text } from '../ui/Text'
 import { IconButton } from '../ui/IconButton'
 
 import { MdPlaylistAdd } from 'react-icons/md'
-import { useClient } from '../contexts/Client'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
+import { useDrawer } from '../contexts/Drawer'
+import { Subscription } from './Subscription'
 
 interface Props {
     uri: string
@@ -15,8 +16,9 @@ interface Props {
 }
 
 export const TimelineCard = (props: Props) => {
-    const { client } = useClient()
     const { push } = useStack()
+
+    const drawer = useDrawer()
 
     return (
         <div
@@ -53,15 +55,7 @@ export const TimelineCard = (props: Props) => {
                     <IconButton
                         onClick={(e) => {
                             e.stopPropagation()
-                            if (!client) return
-                            client.home
-                                ?.addItem(client, props.uri)
-                                .then(() => {
-                                    console.log('Community added to home')
-                                })
-                                .catch((error) => {
-                                    console.error('Error adding community to home:', error)
-                                })
+                            drawer.open(<Subscription target={props.uri} />)
                         }}
                     >
                         <MdPlaylistAdd size={24} />
