@@ -73,10 +73,10 @@ export const Composer = (props: Props) => {
                                     setWillClose(true)
                                 }}
                                 style={{
-                                    color: theme.ui.text
+                                    color: theme.backdrop.text
                                 }}
                             >
-                                cancel
+                                キャンセル
                             </Button>
                         </div>
                         <div
