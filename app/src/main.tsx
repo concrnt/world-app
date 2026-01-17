@@ -6,13 +6,16 @@ import { ThemeProvider } from './contexts/Theme'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
 import { PreferenceProvider } from './contexts/Preference'
+import { SelectProvider } from './contexts/Select'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <ClientProvider>
             <PreferenceProvider>
                 <ThemeProvider>
-                    <App />
+                    <SelectProvider>
+                        <App />
+                    </SelectProvider>
                 </ThemeProvider>
             </PreferenceProvider>
         </ClientProvider>

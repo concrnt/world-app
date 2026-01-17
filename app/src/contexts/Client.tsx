@@ -11,7 +11,7 @@ export interface ClientContextState {
     logout: () => Promise<void>
 }
 
-export interface ClientProviderProps {
+interface Props {
     children: ReactNode
 }
 
@@ -27,7 +27,7 @@ interface ClientInfo {
     privatekey: string
 }
 
-export const ClientProvider = (props: ClientProviderProps): ReactNode => {
+export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client>()
     const [uninitialized, setUninitialized] = useState<boolean>()
 

@@ -5,6 +5,8 @@ import { Header } from '../ui/Header'
 import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
 import { Reorder, useDragControls } from 'motion/react'
+import { useSelect } from '../contexts/Select'
+import { Button } from '../ui/Button'
 
 export const DevView = () => {
     const [selected, setSelected] = useState<string[]>(['1'])
@@ -13,6 +15,8 @@ export const DevView = () => {
     const [items, setItems] = useState([0, 1, 2, 3])
 
     const controls = useDragControls()
+
+    const { select } = useSelect()
 
     return (
         <View>
@@ -47,6 +51,23 @@ export const DevView = () => {
                     labelFunc={(item) => item.label}
                 />
             </div>
+            <Button
+                onClick={() => {
+                    select(
+                        'Choose an option',
+                        {
+                            option1: 'Option 1',
+                            option2: 'Option 2',
+                            option3: 'Option 3'
+                        },
+                        (selected) => {
+                            console.log('Selected:', selected)
+                        }
+                    )
+                }}
+            >
+                Open Select
+            </Button>
             <Reorder.Group values={items} onReorder={setItems}>
                 {items.map((item) => (
                     <Reorder.Item
