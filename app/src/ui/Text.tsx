@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, Suspense, use } from 'react'
+import { CSSProperties, ReactNode, Suspense, use, useDeferredValue } from 'react'
 
 interface Props {
     children: ReactNode | Promise<ReactNode>
@@ -61,7 +61,7 @@ export const Text = (props: Props) => {
                 </span>
             }
         >
-            <Inner {...props} />
+            {useDeferredValue(<Inner {...props} />)}
         </Suspense>
     )
 }

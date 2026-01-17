@@ -1,5 +1,5 @@
 import BoringAvatar from 'boring-avatars'
-import { Suspense, use } from 'react'
+import { Suspense, use, useDeferredValue } from 'react'
 
 interface Props {
     ccid: string
@@ -21,7 +21,7 @@ export const Avatar = (props: Props) => {
                 />
             }
         >
-            <Inner {...props} />
+            {useDeferredValue(<Inner {...props} />)}
         </Suspense>
     )
 }
