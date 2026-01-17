@@ -35,7 +35,7 @@ export const HomeView = (props: ScrollViewProps) => {
         [pinnedLists, client]
     )
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0].uri)
+    const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0]?.uri ?? '')
 
     const [timelines, setTimelines] = useState<string[]>([])
     useEffect(() => {
