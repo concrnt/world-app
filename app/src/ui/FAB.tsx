@@ -39,9 +39,8 @@ export const FAB = (props: Props) => {
                 ...props.style
             }}
             initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            animate={{ scale: 1, transition: { type: 'spring', stiffness: 260, damping: 20 } }}
+            exit={{ scale: 0, transition: { type: 'tween', duration: 0.2 } }}
         >
             {props.children}
         </motion.button>,
