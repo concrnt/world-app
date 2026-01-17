@@ -66,7 +66,7 @@ export const Drawer = (props: Props) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => {
-                            void close()
+                            close()
                         }}
                     />
 
@@ -103,7 +103,7 @@ export const Drawer = (props: Props) => {
                             const shouldClose = info.offset.y > h * 0.25 || info.velocity.y > 1000
 
                             if (shouldClose) {
-                                void close()
+                                close()
                             } else {
                                 animate(y, 0, { type: 'spring', stiffness: 380, damping: 36 })
                             }

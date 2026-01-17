@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { Header } from '../ui/Header'
 import { useSidebar } from '../layouts/Sidebar'
@@ -9,17 +9,54 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdMenu } from 'react-icons/md'
 import { MdTune } from 'react-icons/md'
 import { ListSettings } from '../components/ListSettings'
+import { Tabs } from '../ui/Tabs'
+import { usePreference } from '../contexts/Preference'
+import { Tab } from '../ui/Tab'
+import { Text } from '../ui/Text'
+import { useTheme } from '../contexts/Theme'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
-    const timelines = useMemo(
-        () => [`cc://${client?.ccid}/concrnt.world/main/home-timeline`, ...(client?.home?.items ?? [])],
-        [client]
-    )
+    const theme = useTheme()
 
     const { open } = useSidebar()
+    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
 
     const [openListSettings, setOpenListSettings] = useState(false)
+
+    const tabs = useMemo(
+        () =>
+            pinnedLists.map((pin) => ({
+                uri: pin.uri,
+                pinData: pin,
+                list: client?.getList(pin.uri).catch(() => null)
+            })),
+        [pinnedLists, client]
+    )
+
+    const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0].uri)
+
+    const [timelines, setTimelines] = useState<string[]>([])
+    useEffect(() => {
+        setTimelines([])
+        const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
+        if (selectedTab) {
+            selectedTab.list?.then((list) => {
+                setTimelines(list?.items ?? [])
+            })
+        } else {
+            setTimelines([])
+        }
+    }, [selectedTabUri, tabs, client])
+
+    // fix default settings
+    useEffect(() => {
+        if (!client) return
+        const homeURI = `cc://${client.ccid}/concrnt.world/main/home-list`
+        if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
+            setPinnedLists([{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...pinnedLists])
+        }
+    }, [client, pinnedLists, setPinnedLists])
 
     return (
         <>
@@ -56,13 +93,29 @@ export const HomeView = (props: ScrollViewProps) => {
                 >
                     Home
                 </Header>
+                <Tabs
+                    style={{
+                        color: theme.content.link
+                    }}
+                >
+                    {tabs.map((tab) => (
+                        <Tab
+                            key={tab.uri}
+                            selected={selectedTabUri === tab.uri}
+                            onClick={() => setSelectedTabUri(tab.uri)}
+                            groupId="home-timeline-tabs"
+                            style={{
+                                color: theme.content.text,
+                                width: '120px'
+                            }}
+                        >
+                            <Text>{tab.list?.then((l) => l?.title)}</Text>
+                        </Tab>
+                    ))}
+                </Tabs>
                 <RealtimeTimeline ref={props.ref} timelines={timelines} />
             </View>
-            <ListSettings
-                uri={`cc://${client?.ccid}/concrnt.world/main/home-timeline`}
-                open={openListSettings}
-                onClose={() => setOpenListSettings(false)}
-            />
+            <ListSettings uri={selectedTabUri} open={openListSettings} onClose={() => setOpenListSettings(false)} />
         </>
     )
 }

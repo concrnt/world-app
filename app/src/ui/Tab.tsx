@@ -7,6 +7,7 @@ interface Props {
     children: ReactNode
     onClick?: () => void
     groupId?: string
+    style?: React.CSSProperties
 }
 
 export const Tab = (props: Props) => {
@@ -15,10 +16,13 @@ export const Tab = (props: Props) => {
     return (
         <div
             style={{
-                cursor: 'pointer',
                 padding: '0.5rem',
                 color: theme.backdrop.text,
-                position: 'relative'
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                ...props.style
             }}
             onClick={props.onClick}
         >
@@ -29,7 +33,7 @@ export const Tab = (props: Props) => {
                     style={{
                         position: 'absolute',
                         height: '4px',
-                        backgroundColor: theme.backdrop.text,
+                        backgroundColor: props.style?.color ?? theme.backdrop.text,
                         bottom: 0,
                         left: 0,
                         right: 0

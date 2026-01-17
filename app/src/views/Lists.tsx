@@ -43,7 +43,7 @@ export const ListsView = () => {
         if (!client) return
         client.api
             .query<any>({
-                prefix: `cc://${client.ccid}/concrnt.world/lists/`,
+                prefix: `cc://${client.ccid}/concrnt.world/`,
                 schema: Schemas.list
             })
             .then((results) => {
@@ -103,7 +103,7 @@ export const ListsView = () => {
                                         alignItems: 'center'
                                     }}
                                 >
-                                    <Text>{lists[pinned.uri]?.value.title ?? pinned.uri}</Text>
+                                    <Text>{lists[pinned.uri]?.value.title ?? '無題のリスト'}</Text>
                                 </div>
                             </Reorder.Item>
                         ))}

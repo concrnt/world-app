@@ -47,14 +47,18 @@ export const Text = (props: Props) => {
     return (
         <Suspense
             fallback={
-                <p
+                <span
                     style={{
-                        ...baseStyles[props.variant || 'body'],
-                        ...props.style,
                         backgroundColor: '#e0e0e0',
-                        color: 'transparent'
+                        color: 'transparent',
+                        display: 'inline-block',
+                        width: '100%',
+                        ...baseStyles[props.variant || 'body'],
+                        ...props.style
                     }}
-                />
+                >
+                    {'loading...'}
+                </span>
             }
         >
             <Inner {...props} />

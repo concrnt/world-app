@@ -17,7 +17,6 @@ export const View = (props: Props) => {
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
                     color: theme.content.text,
                     backgroundColor: theme.content.background
                 }}
@@ -32,7 +31,6 @@ export const View = (props: Props) => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
                     color: theme.content.text,
                     backgroundColor: theme.content.background,
                     margin: 'env(safe-area-inset-top) 4px 4px 4px',
