@@ -11,8 +11,8 @@ import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
 import { TimelineCard } from '../components/TimelineCard'
 import { useDrawer } from '../contexts/Drawer'
-import { FAB } from '../ui/FAB'
-import { MdAdd } from 'react-icons/md'
+// import { FAB } from '../ui/FAB'
+// import { MdAdd } from 'react-icons/md'
 
 export const ExplorerView = () => {
     const { client } = useClient()
