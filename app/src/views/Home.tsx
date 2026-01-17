@@ -104,26 +104,28 @@ export const HomeView = (props: ScrollViewProps) => {
             >
                 Home
             </Header>
-            <Tabs
-                style={{
-                    color: theme.content.link
-                }}
-            >
-                {tabs.map((tab) => (
-                    <Tab
-                        key={tab.uri}
-                        selected={selectedTabUri === tab.uri}
-                        onClick={() => setSelectedTabUri(tab.uri)}
-                        groupId="home-timeline-tabs"
-                        style={{
-                            color: theme.content.text,
-                            width: '120px'
-                        }}
-                    >
-                        <Text>{client?.getList(tab.uri).then((l) => l?.title)}</Text>
-                    </Tab>
-                ))}
-            </Tabs>
+            {pinnedLists.length > 1 && (
+                <Tabs
+                    style={{
+                        color: theme.content.link
+                    }}
+                >
+                    {tabs.map((tab) => (
+                        <Tab
+                            key={tab.uri}
+                            selected={selectedTabUri === tab.uri}
+                            onClick={() => setSelectedTabUri(tab.uri)}
+                            groupId="home-timeline-tabs"
+                            style={{
+                                color: theme.content.text,
+                                width: '120px'
+                            }}
+                        >
+                            <Text>{client?.getList(tab.uri).then((l) => l?.title)}</Text>
+                        </Tab>
+                    ))}
+                </Tabs>
+            )}
             <RealtimeTimeline ref={props.ref} timelines={timelines} />
         </View>
     )
