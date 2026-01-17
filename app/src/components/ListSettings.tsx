@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
-import { Drawer } from '../ui/Drawer'
 import { Text } from '../ui/Text'
 import { TextField } from '../ui/TextField'
 import { TimelinePicker } from './TimelinePicker'
@@ -12,8 +11,7 @@ import { Document } from '@concrnt/client'
 
 interface Props {
     uri: string
-    open: boolean
-    onClose?: () => void
+    onComplete?: () => void
 }
 
 export const ListSettings = (props: Props) => {
@@ -75,7 +73,7 @@ export const ListSettings = (props: Props) => {
     }
 
     return (
-        <Drawer open={props.open} onClose={props.onClose}>
+        <div>
             <Text>リスト設定</Text>
             <Text>リスト名</Text>
             <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
@@ -98,7 +96,7 @@ export const ListSettings = (props: Props) => {
                     onClick={() => {
                         const newPins = pinnedLists.filter((p) => p.uri !== props.uri)
                         setPinnedLists(newPins)
-                        props.onClose?.()
+                        props.onComplete?.()
                     }}
                 >
                     ピン留め解除
@@ -106,6 +104,6 @@ export const ListSettings = (props: Props) => {
             ) : (
                 <Button>リストを削除</Button>
             )}
-        </Drawer>
+        </div>
     )
 }

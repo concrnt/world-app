@@ -4,6 +4,7 @@ import { useTheme } from './Theme'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
+    close: () => void
 }
 
 interface Props {
@@ -11,7 +12,8 @@ interface Props {
 }
 
 const DrawerContext = createContext<DrawerContextState>({
-    open: () => {}
+    open: () => {},
+    close: () => {}
 })
 
 export const DrawerProvider = (props: Props) => {
@@ -25,19 +27,20 @@ export const DrawerProvider = (props: Props) => {
     const height = window.innerHeight * 0.8
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
 
-    const close = () => {
-        setContent(null)
-    }
-
     const open = useCallback((c: ReactNode) => {
         setContent(c)
     }, [])
 
+    const close = useCallback(() => {
+        setContent(null)
+    }, [])
+
     const value = useMemo(
         () => ({
-            open
+            open,
+            close
         }),
-        [open]
+        [open, close]
     )
 
     return (

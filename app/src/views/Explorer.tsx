@@ -4,19 +4,20 @@ import { Text } from '../ui/Text'
 import { View } from '../ui/View'
 import { Document } from '@concrnt/client'
 import { Button } from '../ui/Button'
-import { Drawer } from '../ui/Drawer'
 import { useEffect, useState } from 'react'
 import { TextField } from '../ui/TextField'
 import { Header } from '../ui/Header'
 import { MdMenu } from 'react-icons/md'
 import { useSidebar } from '../layouts/Sidebar'
 import { TimelineCard } from '../components/TimelineCard'
+import { useDrawer } from '../contexts/Drawer'
 
 export const ExplorerView = () => {
     const { client } = useClient()
     const { open } = useSidebar()
 
-    const [openEditor, setOpenEditor] = useState(false)
+    const drawer = useDrawer()
+
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
 
@@ -81,7 +82,32 @@ export const ExplorerView = () => {
 
                 <Button
                     onClick={() => {
-                        setOpenEditor(true)
+                        drawer.open(
+                            <div>
+                                <Text>コミュニティを作成</Text>
+
+                                <Text>名前</Text>
+                                <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
+                                <Text>説明</Text>
+                                <TextField
+                                    value={communityDescription}
+                                    onChange={(e) => setCommunityDescription(e.target.value)}
+                                />
+
+                                <Button
+                                    disabled={!communityName}
+                                    onClick={() => {
+                                        createCommunity({
+                                            name: communityName,
+                                            description: communityDescription
+                                        })
+                                        drawer.close()
+                                    }}
+                                >
+                                    作成
+                                </Button>
+                            </div>
+                        )
                     }}
                 >
                     + Create Community
@@ -90,35 +116,6 @@ export const ExplorerView = () => {
                     <TimelineCard key={uri} uri={uri} document={community} />
                 ))}
             </View>
-            <Drawer
-                open={openEditor}
-                onClose={() => {
-                    setOpenEditor(false)
-                }}
-                style={{
-                    padding: '8px'
-                }}
-            >
-                <Text>コミュニティを作成</Text>
-
-                <Text>名前</Text>
-                <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
-                <Text>説明</Text>
-                <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
-
-                <Button
-                    disabled={!communityName}
-                    onClick={() => {
-                        createCommunity({
-                            name: communityName,
-                            description: communityDescription
-                        })
-                        setOpenEditor(false)
-                    }}
-                >
-                    作成
-                </Button>
-            </Drawer>
         </>
     )
 }

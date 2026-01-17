@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { Button } from '../ui/Button'
-import { Drawer } from '../ui/Drawer'
 import { Text } from '../ui/Text'
 import { TextField } from '../ui/TextField'
 import { useClient } from '../contexts/Client'
 
 interface Props {
-    open: boolean
-    onClose: () => void
+    onComplete?: () => void
 }
 
 export const ProfileEditor = (props: Props) => {
@@ -19,13 +17,8 @@ export const ProfileEditor = (props: Props) => {
     const [banner, setBanner] = useState<string>(client?.user?.profile?.banner || '')
 
     return (
-        <Drawer
-            open={props.open}
-            onClose={props.onClose}
-            style={{
-                padding: '8px'
-            }}
-            headerRightElement={
+        <div>
+            <div>
                 <Button
                     variant="text"
                     onClick={() => {
@@ -42,14 +35,14 @@ export const ProfileEditor = (props: Props) => {
                         }
                         client.api.commit(document).then(() => {
                             console.log('Profile updated')
-                            props.onClose()
+                            props.onComplete?.()
                         })
                     }}
                 >
                     保存
                 </Button>
-            }
-        >
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <Text variant="h3">Profile</Text>
                 <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -61,6 +54,6 @@ export const ProfileEditor = (props: Props) => {
                 />
                 <TextField placeholder="Banner URL" value={banner} onChange={(e) => setBanner(e.target.value)} />
             </div>
-        </Drawer>
+        </div>
     )
 }

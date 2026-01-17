@@ -16,6 +16,7 @@ import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { TabLayout } from '../layouts/Tab'
 import { useTheme } from '../contexts/Theme'
+import { useDrawer } from '../contexts/Drawer'
 
 interface Props {
     id: string
@@ -27,7 +28,7 @@ export const ProfileView = (props: Props) => {
     const { pop } = useStack()
     const { client } = useClient()
 
-    const [openProfileEditor, setOpenProfileEditor] = useState(false)
+    const drawer = useDrawer()
 
     const profilePromise = useMemo(() => {
         return client!.getUser(props.id).catch(() => null)
@@ -130,7 +131,7 @@ export const ProfileView = (props: Props) => {
                             <Button
                                 variant="outlined"
                                 startIcon={<MdEdit size={20} />}
-                                onClick={() => setOpenProfileEditor(true)}
+                                onClick={() => drawer.open(<ProfileEditor onComplete={() => drawer.close()} />)}
                             >
                                 Edit Profile
                             </Button>
@@ -163,7 +164,6 @@ export const ProfileView = (props: Props) => {
                     placement="upper"
                 />
             </View>
-            {isMe && <ProfileEditor open={openProfileEditor} onClose={() => setOpenProfileEditor(false)} />}
         </>
     )
 }
