@@ -1,5 +1,4 @@
 import { CSSProperties, ReactNode, Suspense, use, useDeferredValue } from 'react'
-import { useTheme } from '../contexts/Theme'
 
 interface Props {
     children: ReactNode | Promise<ReactNode>
@@ -40,7 +39,7 @@ const baseStyles: Record<NonNullable<Props['variant']>, CSSProperties> = {
     },
     caption: {
         fontSize: '0.875em',
-        color: 'gray'
+        opacity: 0.7
     }
 }
 
@@ -69,14 +68,12 @@ export const Text = (props: Props) => {
 
 const Inner = (props: Props) => {
     const children = props.children instanceof Promise ? use(props.children) : props.children
-    const theme = useTheme()
 
     return (
         <p
             style={{
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
-                color: theme.content.text,
                 ...baseStyles[props.variant || 'body'],
                 ...props.style
             }}

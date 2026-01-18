@@ -71,6 +71,7 @@ export const SelectProvider = (props: Props) => {
                         <motion.div
                             style={{
                                 backgroundColor: theme.content.background,
+                                color: theme.content.text,
                                 position: 'absolute',
                                 bottom: 0,
                                 left: 0,
