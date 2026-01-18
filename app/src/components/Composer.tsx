@@ -116,7 +116,8 @@ export const Composer = (props: Props) => {
                                         outline: 'none',
                                         resize: 'none',
                                         height: '100%',
-                                        background: 'transparent'
+                                        background: 'transparent',
+                                        color: theme.content.text
                                     }}
                                 />
                             </div>
