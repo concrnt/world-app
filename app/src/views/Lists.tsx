@@ -26,8 +26,6 @@ export const ListsView = () => {
 
     const drawer = useDrawer()
 
-    const [newListTitle, setNewListTitle] = useState('')
-
     const fetchLists = useCallback(() => {
         if (!client) return
         client.api
@@ -43,25 +41,6 @@ export const ListsView = () => {
                 console.error('Error fetching communities:', error)
             })
     }, [client])
-
-    const createList = (value: ListSchema) => {
-        if (!client) return
-
-        const key = Date.now().toString()
-
-        const document: Document<ListSchema> = {
-            key: '/concrnt.world/lists/' + key,
-            schema: Schemas.list,
-            value,
-            author: client.ccid,
-            createdAt: new Date()
-        }
-
-        client.api.commit(document).then(() => {
-            console.log('Community created')
-            fetchLists()
-        })
-    }
 
     useEffect(() => {
         fetchLists()
@@ -154,31 +133,58 @@ export const ListsView = () => {
             <FAB
                 onClick={() => {
                     drawer.open(
-                        <div>
-                            <Text>リストを作成</Text>
-
-                            <Text>タイトル</Text>
-                            <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
-
-                            <Button
-                                disabled={!newListTitle}
-                                onClick={() => {
-                                    createList({
-                                        title: newListTitle,
-                                        items: [],
-                                        meta: {}
-                                    })
-                                    drawer.close()
-                                }}
-                            >
-                                作成
-                            </Button>
-                        </div>
+                        <ListCreator
+                            onComplete={() => {
+                                drawer.close()
+                                fetchLists()
+                            }}
+                        />
                     )
                 }}
             >
                 <MdPlaylistAdd size={24} />
             </FAB>
         </>
+    )
+}
+
+const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
+    const { client } = useClient()
+    const [newListTitle, setNewListTitle] = useState('')
+
+    return (
+        <div>
+            <Text>リストを作成</Text>
+
+            <Text>タイトル</Text>
+            <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
+
+            <Button
+                disabled={!newListTitle}
+                onClick={() => {
+                    if (!client) return
+
+                    const key = Date.now().toString()
+
+                    const document: Document<ListSchema> = {
+                        key: '/concrnt.world/lists/' + key,
+                        schema: Schemas.list,
+                        value: {
+                            title: newListTitle,
+                            items: []
+                        },
+                        author: client.ccid,
+                        createdAt: new Date()
+                    }
+
+                    client.api.commit(document).then(() => {
+                        console.log('Community created')
+                        onComplete()
+                    })
+                }}
+            >
+                作成
+            </Button>
+        </div>
     )
 }

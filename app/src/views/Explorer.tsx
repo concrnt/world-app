@@ -17,9 +17,6 @@ export const ExplorerView = () => {
 
     const drawer = useDrawer()
 
-    const [communityName, setCommunityName] = useState('')
-    const [communityDescription, setCommunityDescription] = useState('')
-
     const [communities, setCommunities] = useState<Record<string, Document<CommunityTimelineSchema>>>({})
 
     useEffect(() => {
@@ -37,6 +34,39 @@ export const ExplorerView = () => {
                 console.error('Error fetching communities:', error)
             })
     }, [client])
+
+    return (
+        <>
+            <View>
+                <Header>Explorer</Header>
+
+                {Object.entries(communities).map(([uri, community]) => (
+                    <TimelineCard key={uri} uri={uri} document={community} />
+                ))}
+            </View>
+            <FAB
+                onClick={() => {
+                    drawer.open(
+                        <CommunityCreator
+                            onComplete={() => {
+                                drawer.close()
+                            }}
+                        />
+                    )
+                }}
+            >
+                <MdAdd size={24} />
+            </FAB>
+        </>
+    )
+}
+
+const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
+    const [communityName, setCommunityName] = useState('')
+
+    const [communityDescription, setCommunityDescription] = useState('')
+
+    const { client } = useClient()
 
     const createCommunity = (value: CommunityTimelineSchema) => {
         if (!client) return
@@ -58,46 +88,26 @@ export const ExplorerView = () => {
     }
 
     return (
-        <>
-            <View>
-                <Header>Explorer</Header>
+        <div>
+            <Text>コミュニティを作成</Text>
 
-                {Object.entries(communities).map(([uri, community]) => (
-                    <TimelineCard key={uri} uri={uri} document={community} />
-                ))}
-            </View>
-            <FAB
+            <Text>名前</Text>
+            <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
+            <Text>説明</Text>
+            <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
+
+            <Button
+                disabled={!communityName}
                 onClick={() => {
-                    drawer.open(
-                        <div>
-                            <Text>コミュニティを作成</Text>
-
-                            <Text>名前</Text>
-                            <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
-                            <Text>説明</Text>
-                            <TextField
-                                value={communityDescription}
-                                onChange={(e) => setCommunityDescription(e.target.value)}
-                            />
-
-                            <Button
-                                disabled={!communityName}
-                                onClick={() => {
-                                    createCommunity({
-                                        name: communityName,
-                                        description: communityDescription
-                                    })
-                                    drawer.close()
-                                }}
-                            >
-                                作成
-                            </Button>
-                        </div>
-                    )
+                    createCommunity({
+                        name: communityName,
+                        description: communityDescription
+                    })
+                    onComplete()
                 }}
             >
-                <MdAdd size={24} />
-            </FAB>
-        </>
+                作成
+            </Button>
+        </div>
     )
 }
