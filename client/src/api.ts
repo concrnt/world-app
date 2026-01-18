@@ -458,6 +458,17 @@ export class Api {
         return result
     }
 
+    async delete(uri: string, domain?: string): Promise<void> {
+        const documentObj: Document<string> = {
+            author: this.authProvider.getCCID(),
+            schema: 'https://schema.concrnt.net/delete.json',
+            value: uri,
+            createdAt: new Date()
+        }
+
+        return this.commit(documentObj, domain)
+    }
+
     // ---
 
     async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {

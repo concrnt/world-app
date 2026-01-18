@@ -132,14 +132,16 @@ export const SelectProvider = (props: Props) => {
                                     }}
                                 />
                             </div>
-                            <div
-                                style={{
-                                    height: '30px',
-                                    borderBottom: `1px solid ${theme.divider}`
-                                }}
-                            >
-                                <Text>{title}</Text>
-                            </div>
+                            {title && (
+                                <div
+                                    style={{
+                                        height: '30px',
+                                        borderBottom: `1px solid ${theme.divider}`
+                                    }}
+                                >
+                                    <Text>{title}</Text>
+                                </div>
+                            )}
                             <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
                                 {Object.keys(selection).map((key) => (
                                     <div

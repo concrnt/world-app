@@ -1,12 +1,20 @@
 import { ReactNode, Suspense, use, useMemo } from 'react'
+import { IsCCID, parseCCURI } from '@concrnt/client'
+
 import { useClient } from '../../contexts/Client'
+import { useSelect } from '../../contexts/Select'
+
 import { useStack } from '../../layouts/Stack'
+
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
-import { Avatar } from '../../ui/Avatar'
 
-import { IsCCID, parseCCURI } from '@concrnt/client'
 import { CfmRenderer } from '../../ui/CfmRenderer'
+import { Avatar } from '../../ui/Avatar'
+import { Text } from '../../ui/Text'
+
+import { MdMoreHoriz } from 'react-icons/md'
+import { IconButton } from '../../ui/IconButton'
 
 interface Props {
     uri: string
@@ -60,7 +68,10 @@ interface InnerProps {
 const MessageContainerInner = (props: InnerProps) => {
     const { push } = useStack()
 
+    const { client } = useClient()
     const message = use(props.messagePromise)
+
+    const { select } = useSelect()
 
     if (!message) return <div>Message not found</div>
 
@@ -89,15 +100,44 @@ const MessageContainerInner = (props: InnerProps) => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '4px'
+                    gap: '4px',
+                    flex: 1
                 }}
             >
                 <div
                     style={{
-                        fontWeight: 'bold'
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px'
                     }}
                 >
-                    {message.authorUser?.profile.username}
+                    <div
+                        style={{
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {message.authorUser?.profile.username}
+                    </div>
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            select(
+                                '',
+                                {
+                                    delete: <Text>投稿を削除</Text>
+                                },
+                                (key) => {
+                                    if (key === 'delete') {
+                                        client?.api.delete(message.uri)
+                                    }
+                                }
+                            )
+                        }}
+                    >
+                        <MdMoreHoriz size={20} />
+                    </IconButton>
                 </div>
                 <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
             </div>
