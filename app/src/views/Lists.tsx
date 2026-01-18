@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Header } from '../ui/Header'
 import { View } from '../ui/View'
-import { MdMenu } from 'react-icons/md'
 import { useClient } from '../contexts/Client'
 import { ListSchema, Schemas } from '@concrnt/worldlib'
 import { Button } from '../ui/Button'
@@ -64,24 +63,7 @@ export const ListsView = () => {
 
     return (
         <View>
-            <Header
-                left={
-                    <div
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}
-                        onClick={() => open()}
-                    >
-                        <MdMenu size={24} />
-                    </div>
-                }
-            >
-                Lists
-            </Header>
+            <Header>Lists</Header>
             <div style={{ padding: '8px' }}>
                 <Button
                     onClick={() => {

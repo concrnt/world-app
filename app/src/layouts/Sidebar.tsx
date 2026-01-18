@@ -2,6 +2,9 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo }
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
 import { useTheme } from '../contexts/Theme'
 
+import { MdMenu } from 'react-icons/md'
+import { NavigationProvider } from '../contexts/Navigation'
+
 const SIDEBAR_W = 220
 
 interface Props {
@@ -91,7 +94,24 @@ export const SidebarLayout = (props: Props) => {
                         overflow: 'hidden'
                     }}
                 >
-                    {props.children}
+                    <NavigationProvider
+                        backNode={
+                            <div
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center'
+                                }}
+                                onClick={() => open()}
+                            >
+                                <MdMenu size={24} />
+                            </div>
+                        }
+                    >
+                        {props.children}
+                    </NavigationProvider>
                 </div>
 
                 <div

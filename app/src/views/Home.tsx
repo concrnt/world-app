@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 
-import { useSidebar } from '../layouts/Sidebar'
-
 import { useClient } from '../contexts/Client'
 import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
@@ -18,7 +16,6 @@ import { FAB } from '../ui/FAB'
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 
-import { MdMenu } from 'react-icons/md'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
@@ -29,7 +26,6 @@ export const HomeView = (props: ScrollViewProps) => {
 
     const composer = useComposer()
 
-    const { open } = useSidebar()
     const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
 
     const [, setUnused] = useState(0)
@@ -73,20 +69,6 @@ export const HomeView = (props: ScrollViewProps) => {
         <>
             <View>
                 <Header
-                    left={
-                        <div
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}
-                            onClick={() => open()}
-                        >
-                            <MdMenu size={24} />
-                        </div>
-                    }
                     right={
                         <div
                             style={{

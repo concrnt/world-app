@@ -1,14 +1,17 @@
 import { ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
+import { useNavigation } from '../contexts/Navigation'
 
 interface Props {
     children?: ReactNode
-    left?: ReactNode
+    leftOverride?: ReactNode
     right?: ReactNode
 }
 
 export const Header = (props: Props) => {
     const theme = useTheme()
+
+    const nav = useNavigation()
 
     return (
         <div
@@ -29,7 +32,7 @@ export const Header = (props: Props) => {
                     width: '40px'
                 }}
             >
-                {props.left}
+                {props.leftOverride ?? nav.backNode}
             </div>
             <div
                 style={{

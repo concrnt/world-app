@@ -7,8 +7,6 @@ import { Button } from '../ui/Button'
 import { useEffect, useState } from 'react'
 import { TextField } from '../ui/TextField'
 import { Header } from '../ui/Header'
-import { MdMenu } from 'react-icons/md'
-import { useSidebar } from '../layouts/Sidebar'
 import { TimelineCard } from '../components/TimelineCard'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
@@ -16,7 +14,6 @@ import { MdAdd } from 'react-icons/md'
 
 export const ExplorerView = () => {
     const { client } = useClient()
-    const { open } = useSidebar()
 
     const drawer = useDrawer()
 
@@ -63,24 +60,7 @@ export const ExplorerView = () => {
     return (
         <>
             <View>
-                <Header
-                    left={
-                        <div
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}
-                            onClick={() => open()}
-                        >
-                            <MdMenu size={24} />
-                        </div>
-                    }
-                >
-                    Explorer
-                </Header>
+                <Header>Explorer</Header>
 
                 {Object.entries(communities).map(([uri, community]) => (
                     <TimelineCard key={uri} uri={uri} document={community} />

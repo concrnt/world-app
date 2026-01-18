@@ -9,6 +9,9 @@ import {
     useMemo,
     useState
 } from 'react'
+import { NavigationProvider } from '../contexts/Navigation'
+
+import { MdArrowBack } from 'react-icons/md'
 
 interface StackLayoutContextState {
     set: (child: ReactNode) => void
@@ -89,16 +92,35 @@ export const StackLayout = (props: Props) => {
             >
                 {props.children}
 
-                <AnimatePresence>
-                    {stack.map((child, index) => {
-                        const isFrontmost = index === stack.length - 1
-                        return (
-                            <SwipableView key={index} enabled={isFrontmost} onPop={pop}>
-                                {child}
-                            </SwipableView>
-                        )
-                    })}
-                </AnimatePresence>
+                <NavigationProvider
+                    backNode={
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}
+                            onClick={() => {
+                                pop()
+                            }}
+                        >
+                            <MdArrowBack size={24} />
+                        </div>
+                    }
+                >
+                    <AnimatePresence>
+                        {stack.map((child, index) => {
+                            const isFrontmost = index === stack.length - 1
+                            return (
+                                <SwipableView key={index} enabled={isFrontmost} onPop={pop}>
+                                    {child}
+                                </SwipableView>
+                            )
+                        })}
+                    </AnimatePresence>
+                </NavigationProvider>
             </div>
         </StackLayoutContext.Provider>
     )
