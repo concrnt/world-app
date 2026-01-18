@@ -123,6 +123,9 @@ export const ClientProvider = (props: Props): ReactNode => {
     }, [])
 
     const logout = useCallback(async () => {
+        for (const key in localStorage) {
+            localStorage.removeItem(key)
+        }
         load('clientInfo.json').then((store) => {
             store.clear().then(() => {
                 setClient(undefined)

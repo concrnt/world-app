@@ -111,19 +111,19 @@ export class Client {
     }
 
     async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
-        return Message.load<T>(this, uri, hint)
+        return Message.load<T>(this, uri, hint).catch(() => null)
     }
 
-    async getUser(id: CCID, hint?: string): Promise<User> {
-        return User.load(this, id, hint)
+    async getUser(id: CCID, hint?: string): Promise<User | null> {
+        return User.load(this, id, hint).catch(() => null)
     }
 
     async getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
-        return Timeline.load(this, uri, hint)
+        return Timeline.load(this, uri, hint).catch(() => null)
     }
 
     async getList(uri: string, hint?: string): Promise<List | null> {
-        return List.load(this, uri, hint)
+        return List.load(this, uri, hint).catch(() => null)
     }
 }
 
