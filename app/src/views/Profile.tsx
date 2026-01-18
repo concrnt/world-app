@@ -1,15 +1,12 @@
 import { useMemo, useState } from 'react'
-import { useStack } from '../layouts/Stack'
 import { Avatar } from '../ui/Avatar'
 import { CCWallpaper } from '../ui/CCWallpaper'
-// import { Header } from '../ui/Header'
 import { IconButton } from '../ui/IconButton'
 import { Text } from '../ui/Text'
 import { View } from '../ui/View'
 import { Button } from '../ui/Button'
 import { useClient } from '../contexts/Client'
 
-import { MdArrowBack } from 'react-icons/md'
 import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
@@ -17,6 +14,7 @@ import { ProfileEditor } from '../components/ProfileEditor'
 import { TabLayout } from '../layouts/Tab'
 import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
+import { useNavigation } from '../contexts/Navigation'
 
 interface Props {
     id: string
@@ -25,7 +23,7 @@ interface Props {
 export const ProfileView = (props: Props) => {
     const theme = useTheme()
 
-    const { pop } = useStack()
+    const navigation = useNavigation()
     const { client } = useClient()
 
     const drawer = useDrawer()
@@ -81,14 +79,15 @@ export const ProfileView = (props: Props) => {
                                 gap: '4px'
                             }}
                         >
-                            <IconButton
-                                variant="contained"
-                                onClick={() => {
-                                    pop()
+                            <div
+                                style={{
+                                    color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
+                                    height: '40px',
+                                    width: '40px'
                                 }}
                             >
-                                <MdArrowBack size={24} />
-                            </IconButton>
+                                {navigation.backNode}
+                            </div>
                             <div style={{ flex: 1 }} />
                             <IconButton variant="contained">
                                 <MdSearch size={24} />
