@@ -22,7 +22,7 @@ export const Header = (props: Props) => {
                 padding: '4px',
                 color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
                 backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : theme.ui.background,
-                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : '4px',
                 borderBottom: `1px solid ${theme.divider}`
             }}
         >
