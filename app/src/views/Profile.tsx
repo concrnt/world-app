@@ -15,6 +15,7 @@ import { TabLayout } from '../layouts/Tab'
 import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
+import { UnFab } from '../ui/UnFAB'
 
 interface Props {
     id: string
@@ -163,6 +164,7 @@ export const ProfileView = (props: Props) => {
                     placement="upper"
                 />
             </View>
+            <UnFab />
         </>
     )
 }

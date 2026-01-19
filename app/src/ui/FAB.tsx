@@ -2,7 +2,6 @@ import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 import { useOverlay } from '../contexts/Overlay'
 import { createPortal } from 'react-dom'
-import { motion } from 'motion/react'
 import { useActivity } from '../contexts/Activity'
 
 interface Props {
@@ -21,7 +20,7 @@ export const FAB = (props: Props) => {
 
     return createPortal(
         activity !== 'hidden' && (
-            <motion.button
+            <button
                 onClick={props.onClick}
                 style={{
                     backgroundColor: theme.ui.background,
@@ -41,12 +40,9 @@ export const FAB = (props: Props) => {
                     right: '1rem',
                     ...props.style
                 }}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1, transition: { type: 'spring', stiffness: 260, damping: 20 } }}
-                exit={{ scale: 0, transition: { type: 'tween', duration: 0.2 } }}
             >
                 {props.children}
-            </motion.button>
+            </button>
         ),
         overlay.slot
     )

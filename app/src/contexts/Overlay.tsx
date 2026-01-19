@@ -30,7 +30,15 @@ export const OverlayProvider = (props: Props) => {
     return (
         <OverlayContext.Provider value={value}>
             {props.children}
-            <div ref={slotRef} data-testid="overlay-slot" />
+            <div
+                className="only-last"
+                ref={slotRef}
+                data-testid="overlay-slot"
+                style={{
+                    width: '100%',
+                    height: '100%'
+                }}
+            />
         </OverlayContext.Provider>
     )
 }

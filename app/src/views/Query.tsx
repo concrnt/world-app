@@ -5,6 +5,7 @@ import { View } from '../ui/View'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useState } from 'react'
+import { UnFab } from '../ui/UnFAB'
 
 export const QueryView = () => {
     const { push } = useStack()
@@ -12,18 +13,21 @@ export const QueryView = () => {
     const [query, setQuery] = useState('')
 
     return (
-        <View>
-            <Header>照会</Header>
-            <div>
-                <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cc://" />
-                <Button
-                    onClick={() => {
-                        push?.(<TimelineView uri={query} />)
-                    }}
-                >
-                    照会
-                </Button>
-            </div>
-        </View>
+        <>
+            <View>
+                <Header>照会</Header>
+                <div>
+                    <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cc://" />
+                    <Button
+                        onClick={() => {
+                            push?.(<TimelineView uri={query} />)
+                        }}
+                    >
+                        照会
+                    </Button>
+                </div>
+            </View>
+            <UnFab />
+        </>
     )
 }
