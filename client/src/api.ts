@@ -371,7 +371,7 @@ export class Api {
             order?: string
         },
         domain?: string
-    ): Promise<T> {
+    ): Promise<Record<string, Document<T>>> {
         let fqdn = domain
         if (!fqdn) {
             fqdn = this.defaultHost
@@ -391,7 +391,7 @@ export class Api {
 
         const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
 
-        const resource = this.fetchWithCredential<T>(fqdn, endpointWithQuery, {})
+        const resource = this.fetchWithCredential<Record<string, Document<T>>>(fqdn, endpointWithQuery, {})
 
         return resource
     }

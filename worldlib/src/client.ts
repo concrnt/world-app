@@ -4,6 +4,7 @@ import {
     MasterKeyAuthProvider,
     InMemoryKVS,
     TimelineReader,
+    QueryTimelineReader,
     Document,
     CCID,
     Entity,
@@ -108,6 +109,10 @@ export class Client {
         }
         const socket = await this.newSocket(opts?.hostOverride)
         return new TimelineReader(this.api, socket, opts?.hostOverride)
+    }
+
+    async newQueryTimelineReader(): Promise<QueryTimelineReader> {
+        return new QueryTimelineReader(this.api)
     }
 
     async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
