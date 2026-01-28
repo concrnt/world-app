@@ -361,6 +361,70 @@ export class Api {
         return resource
     }
 
+    // net.concrnt.associations
+    async getAssociations<T>(
+        uri: string,
+        query: {
+            schema?: string
+            variant?: string
+            author?: string
+        },
+        hint?: string
+    ): Promise<Array<Document<T>>> {
+        const parsed = new URL(uri)
+        const owner = parsed.host
+
+        let fqdn = owner
+        if (IsCCID(fqdn)) {
+            const entity = await this.getEntity(owner, hint)
+            fqdn = entity.domain
+        }
+        if (IsCSID(fqdn)) {
+            const server = await this.getServerByCSID(owner, hint)
+            fqdn = server.domain
+        }
+
+        const server = await this.getServer(fqdn)
+
+        const endpoint = server.endpoints['net.concrnt.associations'].template
+        const queries = []
+        queries.push(`uri=${encodeURIComponent(uri)}`)
+        if (query.schema) queries.push(`schema=${encodeURIComponent(query.schema)}`)
+        if (query.variant) queries.push(`variant=${encodeURIComponent(query.variant)}`)
+        if (query.author) queries.push(`author=${encodeURIComponent(query.author)}`)
+
+        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
+
+        return await this.fetchWithCredential<Array<Document<T>>>(fqdn, endpointWithQuery, {})
+    }
+
+    // net.concrnt.association-counts
+    async getAssociationCounts(uri: string, schema?: string, hint?: string): Promise<Record<string, number>> {
+        const parsed = new URL(uri)
+        const owner = parsed.host
+
+        let fqdn = owner
+        if (IsCCID(fqdn)) {
+            const entity = await this.getEntity(owner, hint)
+            fqdn = entity.domain
+        }
+        if (IsCSID(fqdn)) {
+            const server = await this.getServerByCSID(owner, hint)
+            fqdn = server.domain
+        }
+
+        const server = await this.getServer(fqdn)
+
+        const endpoint = server.endpoints['net.concrnt.association-counts'].template
+        const queries = []
+        queries.push(`uri=${encodeURIComponent(uri)}`)
+        if (schema) queries.push(`schema=${encodeURIComponent(schema)}`)
+
+        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
+
+        return await this.fetchWithCredential<Record<string, number>>(fqdn, endpointWithQuery, {})
+    }
+
     async query<T>(
         query: {
             prefix?: string
