@@ -16,6 +16,9 @@ import { IconButton } from '../../ui/IconButton'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdStar } from 'react-icons/md'
+import { MdStarOutline } from 'react-icons/md'
+import { Message, Schemas } from '@concrnt/worldlib'
+import { Button } from '../../ui/Button'
 
 interface Props {
     uri: string
@@ -70,9 +73,13 @@ const MessageContainerInner = (props: InnerProps) => {
     const { push } = useStack()
 
     const { client } = useClient()
-    const message = use(props.messagePromise)
+    const message: Message<any> = use(props.messagePromise)
 
     const { select } = useSelect()
+
+    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
+
+    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
 
     if (!message) return <div>Message not found</div>
 
@@ -136,20 +143,32 @@ const MessageContainerInner = (props: InnerProps) => {
                                 }
                             )
                         }}
+                        style={{
+                            padding: 0,
+                            margin: 0
+                        }}
                     >
-                        <MdMoreHoriz size={20} />
+                        <MdMoreHoriz size={15} />
                     </IconButton>
                 </div>
                 <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
                 <div>
-                    <IconButton
+                    <Button
+                        variant="text"
                         onClick={(e) => {
                             e.stopPropagation()
-                            message.favorite(client)
+                            if (!client) return
+                            if (ownFavorite) {
+                                //client?.unfavorite(message)
+                            } else {
+                                message.favorite(client)
+                            }
                         }}
+                        style={{ display: 'flex', alignItems: 'center' }}
                     >
-                        <MdStar size={20} />
-                    </IconButton>
+                        {ownFavorite ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
+                        <span style={{ marginLeft: '4px' }}>{likeCount}</span>
+                    </Button>
                 </div>
             </div>
         </div>

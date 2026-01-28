@@ -2,7 +2,7 @@ import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 
 interface Props {
-    onClick?: () => void
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
     children: ReactNode
     variant?: 'contained' | 'outlined' | 'text'
     disabled?: boolean
