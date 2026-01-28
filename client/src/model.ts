@@ -24,6 +24,9 @@ export interface Document<T> {
     owner?: string
     createdAt: Date
     memberOf?: string[]
+
+    associate?: string
+    associationVariant?: string
 }
 
 export interface Proof {

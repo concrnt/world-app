@@ -12,9 +12,10 @@ import { PostView } from '../../views/Post'
 import { CfmRenderer } from '../../ui/CfmRenderer'
 import { Avatar } from '../../ui/Avatar'
 import { Text } from '../../ui/Text'
+import { IconButton } from '../../ui/IconButton'
 
 import { MdMoreHoriz } from 'react-icons/md'
-import { IconButton } from '../../ui/IconButton'
+import { MdStar } from 'react-icons/md'
 
 interface Props {
     uri: string
@@ -140,6 +141,16 @@ const MessageContainerInner = (props: InnerProps) => {
                     </IconButton>
                 </div>
                 <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+                <div>
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            message.favorite(client)
+                        }}
+                    >
+                        <MdStar size={20} />
+                    </IconButton>
+                </div>
             </div>
         </div>
     )

@@ -13,7 +13,7 @@ import {
     Socket
 } from '@concrnt/client'
 import { Schemas } from './schemas'
-import { ListSchema, ProfileSchema, CommunityTimelineSchema } from './schemas/'
+import { ListSchema, ProfileSchema, CommunityTimelineSchema, LikeAssociationSchema } from './schemas/'
 import { isFulfilled, isNonNull } from './util'
 
 export class Client {
@@ -174,6 +174,20 @@ export class Message<T> implements Document<T> {
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
 
         return message
+    }
+
+    async favorite(client: Client): Promise<void> {
+        const authorDomain = await client.getUser(this.author).then((user) => user?.domain)
+
+        const document: Document<LikeAssociationSchema> = {
+            author: client.ccid,
+            schema: Schemas.likeAssociation,
+            associate: this.uri,
+            value: {},
+            createdAt: new Date()
+        }
+
+        return client.api.commit(document, authorDomain)
     }
 }
 
