@@ -38,8 +38,34 @@ function App() {
                 overflow: 'hidden'
             }}
         >
-            {client.uninitialized === true && providers(<WelcomeView />)}
-            {client.client && providers(<MainView />)}
+            {(() => {
+                if (client.uninitialized === true) return providers(<WelcomeView />)
+                else if (client.client) return providers(<MainView />)
+                else
+                    return (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}
+                        >
+                            Loading Client...
+                            <button
+                                onClick={async () => {
+                                    client.logout().then(() => {
+                                        window.location.reload()
+                                    })
+                                }}
+                            >
+                                RESET
+                            </button>
+                        </div>
+                    )
+            })()}
         </div>
     )
 }
