@@ -296,7 +296,7 @@ export class Api {
     }
 
     async getServerByCSID(csid: CSID, hint?: string): Promise<Server> {
-        const uri = hint ? `cc://${csid}@${hint}` : `cc://${csid}`
+        const uri = hint ? `cckv://${csid}@${hint}` : `cckv://${csid}`
 
         const myServer = await this.getServer(this.defaultHost)
 
@@ -308,7 +308,7 @@ export class Api {
     }
 
     async getEntity(ccid: string, hint?: string): Promise<Entity> {
-        const uri = hint ? `cc://${ccid}@${hint}` : `cc://${ccid}`
+        const uri = hint ? `cckv://${ccid}@${hint}` : `cckv://${ccid}`
 
         const server = await this.getServer(this.defaultHost)
 
@@ -511,7 +511,7 @@ export class Api {
             .then((data) => {
                 console.log('Affiliation committed successfully:', data)
                 const key = document.key?.startsWith('/') ? document.key.slice(1) : document.key
-                const uri = `cc://${document.owner ?? document.author}/${key}`
+                const uri = `cckv://${document.owner ?? document.author}/${key}`
 
                 this.cache.invalidate(uri)
             })

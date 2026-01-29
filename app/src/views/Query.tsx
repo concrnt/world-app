@@ -15,7 +15,7 @@ export const QueryView = () => {
         <View>
             <Header>照会</Header>
             <div>
-                <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cc://" />
+                <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cckv://" />
                 <Button
                     onClick={() => {
                         push?.(<TimelineView uri={query} />)

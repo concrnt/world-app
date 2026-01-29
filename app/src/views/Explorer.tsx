@@ -23,7 +23,7 @@ export const ExplorerView = () => {
         if (!client) return
         client.api
             .query<any>({
-                prefix: `cc://${client.server.domain}/concrnt.world/communities/`,
+                prefix: `cckv://${client.server.domain}/concrnt.world/communities/`,
                 schema: Schemas.communityTimeline
             })
             .then((results) => {

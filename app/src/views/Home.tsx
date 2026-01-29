@@ -59,7 +59,7 @@ export const HomeView = (props: ScrollViewProps) => {
     // fix default settings
     useEffect(() => {
         if (!client) return
-        const homeURI = `cc://${client.ccid}/concrnt.world/main/home-list`
+        const homeURI = `cckv://${client.ccid}/concrnt.world/main/home-list`
         if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
             setPinnedLists([{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...pinnedLists])
         }

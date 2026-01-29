@@ -138,7 +138,7 @@ export const Composer = (props: Props) => {
                                             },
                                             author: client.ccid,
                                             memberOf: [
-                                                `cc://${client.ccid}/concrnt.world/main/home-timeline`,
+                                                `cckv://${client.ccid}/concrnt.world/main/home-timeline`,
                                                 ...props.destinations
                                             ],
                                             createdAt: new Date()

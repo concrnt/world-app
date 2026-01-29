@@ -46,7 +46,7 @@ export class Client {
         client.user = await client.getUser(ccid).catch(() => null)
 
         // ==== Default kit ====
-        await api.getDocument(`cc://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`).catch((err) => {
+        await api.getDocument(`cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
@@ -62,32 +62,33 @@ export class Client {
             throw err
         })
 
-        client.home = await List.load(client, `cc://${api.authProvider.getCCID()}/concrnt.world/main/home-list`).catch(
-            (err) => {
-                if (err instanceof NotFoundError) {
-                    console.log('Home list not found, creating a new one...')
-                    const document: Document<ListSchema> = {
-                        key: '/concrnt.world/main/home-list',
-                        author: api.authProvider.getCCID(),
-                        schema: 'https://schema.concrnt.world/utils/list.json',
-                        value: {
-                            title: 'Home',
-                            items: []
-                        },
-                        createdAt: new Date()
-                    }
-                    api.commit(document)
-
-                    return new List(
-                        `cc://${api.authProvider.getCCID()}/concrnt.world/main/home-list`,
-                        document.value.title,
-                        document.value.items
-                    )
-                } else {
-                    throw err
+        client.home = await List.load(
+            client,
+            `cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-list`
+        ).catch((err) => {
+            if (err instanceof NotFoundError) {
+                console.log('Home list not found, creating a new one...')
+                const document: Document<ListSchema> = {
+                    key: '/concrnt.world/main/home-list',
+                    author: api.authProvider.getCCID(),
+                    schema: 'https://schema.concrnt.world/utils/list.json',
+                    value: {
+                        title: 'Home',
+                        items: []
+                    },
+                    createdAt: new Date()
                 }
+                api.commit(document)
+
+                return new List(
+                    `cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-list`,
+                    document.value.title,
+                    document.value.items
+                )
+            } else {
+                throw err
             }
-        )
+        })
 
         // =====================
 
@@ -216,7 +217,7 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getDocument<ProfileSchema>(`cc://${entity.ccid}/concrnt.world/main/profile`)
+        const profile = await client.api.getDocument<ProfileSchema>(`cckv://${entity.ccid}/concrnt.world/main/profile`)
 
         return new User(entity.domain, entity, profile?.value)
     }

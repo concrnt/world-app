@@ -14,7 +14,7 @@ export const Subscription = ({ target }: { target: string }) => {
         if (!client) return
         client.api
             .query<any>({
-                prefix: `cc://${client.ccid}/concrnt.world/`,
+                prefix: `cckv://${client.ccid}/concrnt.world/`,
                 schema: Schemas.list
             })
             .then((results) => {
