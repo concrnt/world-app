@@ -151,6 +151,9 @@ export const ProfileView = (props: Props) => {
                         <Text>{profilePromise.then((user) => (user?.alias ? user.alias : null))}</Text>
                     </div>
                     <div>
+                        <Text variant="caption">{props.id}</Text>
+                    </div>
+                    <div>
                         <Text>
                             {profilePromise.then((user) => user?.profile?.description || '説明はまだありません')}
                         </Text>
