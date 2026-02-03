@@ -508,15 +508,15 @@ export class Api {
                 }
                 return response.json()
             })
-            .then((data) => {
-                console.log('Affiliation committed successfully:', data)
+            .then((_) => {
+                // TODO: use result
                 const key = document.key?.startsWith('/') ? document.key.slice(1) : document.key
                 const uri = `cckv://${document.owner ?? document.author}/${key}`
 
                 this.cache.invalidate(uri)
             })
             .catch((error) => {
-                console.error('Error committing affiliation:', error)
+                console.error('Error committing:', error)
             })
 
         return result

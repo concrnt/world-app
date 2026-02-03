@@ -54,13 +54,82 @@ export class Client {
                     author: api.authProvider.getCCID(),
                     schema: 'https://schema.concrnt.world/t/empty.json',
                     value: {},
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    policies: [
+                        {
+                            url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
+                            params: {
+                                readListMode: true,
+                                reader: [],
+                                writeListMode: false,
+                                writer: [api.authProvider.getCCID()]
+                            }
+                        }
+                    ]
                 }
                 api.commit(document)
                 return document
             }
             throw err
         })
+
+        await api
+            .getDocument(`cckv://${api.authProvider.getCCID()}/concrnt.world/main/notify-timeline`)
+            .catch((err) => {
+                if (err instanceof NotFoundError) {
+                    console.log('Notification timeline not found, creating a new one...')
+                    const document = {
+                        key: '/concrnt.world/main/notify-timeline',
+                        author: api.authProvider.getCCID(),
+                        schema: 'https://schema.concrnt.world/t/empty.json',
+                        value: {},
+                        createdAt: new Date(),
+                        policies: [
+                            {
+                                url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
+                                params: {
+                                    readListMode: false,
+                                    reader: [api.authProvider.getCCID()],
+                                    writeListMode: true,
+                                    writer: []
+                                }
+                            }
+                        ]
+                    }
+                    api.commit(document)
+                    return document
+                }
+                throw err
+            })
+
+        await api
+            .getDocument(`cckv://${api.authProvider.getCCID()}/concrnt.world/main/activity-timeline`)
+            .catch((err) => {
+                if (err instanceof NotFoundError) {
+                    console.log('Activity timeline not found, creating a new one...')
+                    const document = {
+                        key: '/concrnt.world/main/activity-timeline',
+                        author: api.authProvider.getCCID(),
+                        schema: 'https://schema.concrnt.world/t/empty.json',
+                        value: {},
+                        createdAt: new Date(),
+                        policies: [
+                            {
+                                url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
+                                params: {
+                                    readListMode: true,
+                                    reader: [],
+                                    writeListMode: false,
+                                    writer: [api.authProvider.getCCID()]
+                                }
+                            }
+                        ]
+                    }
+                    api.commit(document)
+                    return document
+                }
+                throw err
+            })
 
         client.home = await List.load(
             client,
