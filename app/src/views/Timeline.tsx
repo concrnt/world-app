@@ -30,7 +30,9 @@ export const TimelineView = (props: Props) => {
             </View>
             <FAB
                 onClick={() => {
-                    composer.open([props.uri])
+                    timelinePromise.then((timeline) => {
+                        composer.open([props.uri], timeline ? [timeline] : [])
+                    })
                 }}
             >
                 <MdCreate size={24} />

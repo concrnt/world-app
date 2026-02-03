@@ -12,6 +12,7 @@ interface Props {
     onClose?: () => void
     destinations: string[]
     setDestinations: (destinations: string[]) => void
+    options: any[]
 }
 
 export const Composer = (props: Props) => {
@@ -91,7 +92,7 @@ export const Composer = (props: Props) => {
                         >
                             <div>
                                 <TimelinePicker
-                                    items={client?.home?.communities ?? []}
+                                    items={props.options}
                                     selected={props.destinations}
                                     setSelected={props.setDestinations}
                                     keyFunc={(item: Timeline) => item.uri}

@@ -19,6 +19,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
+import { isFulfilled, isNonNull } from '@concrnt/worldlib'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
@@ -43,15 +44,26 @@ export const HomeView = (props: ScrollViewProps) => {
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0]?.uri ?? '')
 
-    const [timelines, setTimelines] = useState<string[]>([])
+    const [timelineIDs, setTimelineIDs] = useState<string[]>([])
+    const [timeliens, setTimelines] = useState<any[]>([])
     useEffect(() => {
+        setTimelineIDs([])
         setTimelines([])
         const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
         if (selectedTab) {
             client?.getList(selectedTab.uri).then((list) => {
-                setTimelines(list?.items ?? [])
+                setTimelineIDs(list?.items ?? [])
+                Promise.allSettled((list?.items ?? []).map((uri) => client.getTimeline(uri))).then((results) => {
+                    setTimelines(
+                        results
+                            .filter(isFulfilled)
+                            .map((res) => res.value)
+                            .filter(isNonNull)
+                    )
+                })
             })
         } else {
+            setTimelineIDs([])
             setTimelines([])
         }
     }, [selectedTabUri, tabs, client])
@@ -118,11 +130,14 @@ export const HomeView = (props: ScrollViewProps) => {
                         ))}
                     </Tabs>
                 )}
-                <RealtimeTimeline ref={props.ref} timelines={timelines} />
+                <RealtimeTimeline ref={props.ref} timelines={timelineIDs} />
             </View>
             <FAB
                 onClick={() => {
-                    composer.open(pinnedLists.find((pin) => pin.uri === selectedTabUri)?.defaultPostTimelines ?? [])
+                    composer.open(
+                        pinnedLists.find((pin) => pin.uri === selectedTabUri)?.defaultPostTimelines ?? [],
+                        timeliens
+                    )
                 }}
             >
                 <MdCreate size={24} />
