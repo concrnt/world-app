@@ -27,6 +27,14 @@ export interface Document<T> {
 
     associate?: string
     associationVariant?: string
+
+    policies?: Policy[]
+}
+
+export interface Policy {
+    url: string
+    params?: any
+    defaults?: Record<string, string>
 }
 
 export interface Proof {
