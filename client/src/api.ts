@@ -354,9 +354,7 @@ export class Api {
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key.replace(/^\/+|\/+$/g, ''))
 
-        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {
-            auth: 'no-auth'
-        })
+        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {})
 
         return resource
     }
