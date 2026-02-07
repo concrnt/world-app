@@ -79,7 +79,18 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
             owner: client.server.domain,
             value,
             author: client.ccid,
-            createdAt: new Date()
+            createdAt: new Date(),
+            policies: [
+                {
+                    url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
+                    params: {
+                        readListMode: true,
+                        reader: [],
+                        writeListMode: true,
+                        writer: []
+                    }
+                }
+            ]
         }
 
         client.api.commit(document).then(() => {
