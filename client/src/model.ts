@@ -54,5 +54,5 @@ export interface Affiliation {
 export interface RealtimeEvent {
     type: string
     uri: string
-    sd: SignedDocument
+    documents: Record<string, SignedDocument>
 }
