@@ -19,7 +19,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
-import { isFulfilled, isNonNull } from '@concrnt/worldlib'
+import { isFulfilled, isNonNull, Schemas } from '@concrnt/worldlib'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
@@ -45,26 +45,31 @@ export const HomeView = (props: ScrollViewProps) => {
     const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0]?.uri ?? '')
 
     const [timelineIDs, setTimelineIDs] = useState<string[]>([])
-    const [timeliens, setTimelines] = useState<any[]>([])
+    const [communities, setCommunities] = useState<any[]>([])
     useEffect(() => {
         setTimelineIDs([])
-        setTimelines([])
+        setCommunities([])
         const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
         if (selectedTab) {
             client?.getList(selectedTab.uri).then((list) => {
-                setTimelineIDs(list?.items ?? [])
+                const items = list?.items ?? []
+                if (!items.includes(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)) {
+                    items.unshift(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)
+                }
+                setTimelineIDs(items)
                 Promise.allSettled((list?.items ?? []).map((uri) => client.getTimeline(uri))).then((results) => {
-                    setTimelines(
+                    setCommunities(
                         results
                             .filter(isFulfilled)
                             .map((res) => res.value)
                             .filter(isNonNull)
+                            .filter((tl) => tl.schema === Schemas.communityTimeline)
                     )
                 })
             })
         } else {
             setTimelineIDs([])
-            setTimelines([])
+            setCommunities([])
         }
     }, [selectedTabUri, tabs, client])
 
@@ -136,7 +141,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 onClick={() => {
                     composer.open(
                         pinnedLists.find((pin) => pin.uri === selectedTabUri)?.defaultPostTimelines ?? [],
-                        timeliens
+                        communities
                     )
                 }}
             >

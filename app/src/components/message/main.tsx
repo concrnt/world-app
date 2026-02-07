@@ -77,11 +77,10 @@ const MessageContainerInner = (props: InnerProps) => {
 
     const { select } = useSelect()
 
-    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
-
-    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
-
     if (!message) return <div>Message not found</div>
+
+    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
+    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
 
     return (
         <div
