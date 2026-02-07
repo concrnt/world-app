@@ -84,9 +84,9 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
                 {
                     url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
                     params: {
-                        readListMode: true,
+                        readListMode: false,
                         reader: [],
-                        writeListMode: true,
+                        writeListMode: false,
                         writer: []
                     }
                 }

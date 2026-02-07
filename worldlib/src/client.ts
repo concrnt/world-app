@@ -59,9 +59,9 @@ export class Client {
                         {
                             url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
                             params: {
-                                readListMode: true,
+                                readListMode: false,
                                 reader: [],
-                                writeListMode: false,
+                                writeListMode: true,
                                 writer: [api.authProvider.getCCID()]
                             }
                         }
@@ -88,9 +88,9 @@ export class Client {
                             {
                                 url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
                                 params: {
-                                    readListMode: false,
+                                    readListMode: true,
                                     reader: [api.authProvider.getCCID()],
-                                    writeListMode: true,
+                                    writeListMode: false,
                                     writer: []
                                 }
                             }
@@ -117,9 +117,9 @@ export class Client {
                             {
                                 url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
                                 params: {
-                                    readListMode: true,
+                                    readListMode: false,
                                     reader: [],
-                                    writeListMode: false,
+                                    writeListMode: true,
                                     writer: [api.authProvider.getCCID()]
                                 }
                             }
