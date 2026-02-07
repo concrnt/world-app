@@ -39,7 +39,7 @@ export class Socket {
             throw new Error(`Server not found for host: ${host}`)
         }
 
-        const endpoint = server.endpoints['net.concrnt.realtime']
+        const endpoint = server.endpoints['net.concrnt.core.realtime']
 
         if (!endpoint) {
             throw new Error(`Realtime endpoint not found for host: ${host}`)

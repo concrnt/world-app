@@ -300,7 +300,7 @@ export class Api {
 
         const myServer = await this.getServer(this.defaultHost)
 
-        const endpoint = myServer.endpoints['net.concrnt.resource'].template
+        const endpoint = myServer.endpoints['net.concrnt.core.resolve'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', csid)
 
@@ -312,7 +312,7 @@ export class Api {
 
         const server = await this.getServer(this.defaultHost)
 
-        const endpoint = server.endpoints['net.concrnt.resource'].template
+        const endpoint = server.endpoints['net.concrnt.core.resolve'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', ccid)
 
@@ -349,7 +349,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.resource'].template
+        const endpoint = server.endpoints['net.concrnt.core.resolve'].template
             .replaceAll('{uri}', uri)
             .replaceAll('{owner}', owner)
             .replaceAll('{key}', key.replace(/^\/+|\/+$/g, ''))
@@ -384,7 +384,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.associations'].template
+        const endpoint = server.endpoints['net.concrnt.core.associations'].template
         const queries = []
         queries.push(`uri=${encodeURIComponent(uri)}`)
         if (query.schema) queries.push(`schema=${encodeURIComponent(query.schema)}`)
@@ -413,7 +413,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.association-counts'].template
+        const endpoint = server.endpoints['net.concrnt.core.association-counts'].template
         const queries = []
         queries.push(`uri=${encodeURIComponent(uri)}`)
         if (schema) queries.push(`schema=${encodeURIComponent(schema)}`)
@@ -441,7 +441,7 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.query'].template
+        const endpoint = server.endpoints['net.concrnt.core.query'].template
 
         const queries = []
         if (query.prefix) queries.push(`prefix=${encodeURIComponent(query.prefix)}`)
