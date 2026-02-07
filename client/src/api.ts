@@ -1,6 +1,6 @@
 import { KVS } from './cache'
 import { AuthProvider } from './auth'
-import { fetchWithTimeout } from './util'
+import { fetchWithTimeout, renderUriTemplate } from './util'
 import { CCID, CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument } from './model'
 import { ChunklineItem } from './chunkline'
 
@@ -300,9 +300,10 @@ export class Api {
 
         const myServer = await this.getServer(this.defaultHost)
 
-        const endpoint = myServer.endpoints['net.concrnt.core.resolve'].template
-            .replaceAll('{uri}', uri)
-            .replaceAll('{owner}', csid)
+        const endpoint = renderUriTemplate(myServer, 'net.concrnt.core.resolve', {
+            uri: uri,
+            owner: csid
+        })
 
         return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, {})
     }
@@ -312,9 +313,10 @@ export class Api {
 
         const server = await this.getServer(this.defaultHost)
 
-        const endpoint = server.endpoints['net.concrnt.core.resolve'].template
-            .replaceAll('{uri}', uri)
-            .replaceAll('{owner}', ccid)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.resolve', {
+            uri: uri,
+            owner: ccid
+        })
 
         return this.fetchWithCache<Entity>(this.defaultHost, endpoint, uri, {})
     }
@@ -349,10 +351,11 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.core.resolve'].template
-            .replaceAll('{uri}', uri)
-            .replaceAll('{owner}', owner)
-            .replaceAll('{key}', key.replace(/^\/+|\/+$/g, ''))
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.resolve', {
+            uri: uri,
+            owner: owner,
+            key: key.replace(/^\/+|\/+$/g, '')
+        })
 
         const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {})
 
@@ -384,16 +387,13 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.core.associations'].template
-        const queries = []
-        queries.push(`uri=${encodeURIComponent(uri)}`)
-        if (query.schema) queries.push(`schema=${encodeURIComponent(query.schema)}`)
-        if (query.variant) queries.push(`variant=${encodeURIComponent(query.variant)}`)
-        if (query.author) queries.push(`author=${encodeURIComponent(query.author)}`)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.associations', {
+            uri: uri,
+            schema: query.schema,
+            variant: query.variant
+        })
 
-        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
-
-        return await this.fetchWithCredential<Array<Document<T>>>(fqdn, endpointWithQuery, {})
+        return await this.fetchWithCredential<Array<Document<T>>>(fqdn, endpoint, {})
     }
 
     // net.concrnt.association-counts
@@ -413,14 +413,12 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.core.association-counts'].template
-        const queries = []
-        queries.push(`uri=${encodeURIComponent(uri)}`)
-        if (schema) queries.push(`schema=${encodeURIComponent(schema)}`)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.association-counts', {
+            uri: uri,
+            schema: schema
+        })
 
-        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
-
-        return await this.fetchWithCredential<Record<string, number>>(fqdn, endpointWithQuery, {})
+        return await this.fetchWithCredential<Record<string, number>>(fqdn, endpoint, {})
     }
 
     async query<T>(
@@ -441,19 +439,16 @@ export class Api {
 
         const server = await this.getServer(fqdn)
 
-        const endpoint = server.endpoints['net.concrnt.core.query'].template
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.query', {
+            prefix: query.prefix,
+            schema: query.schema,
+            since: query.since,
+            until: query.until,
+            limit: query.limit,
+            order: query.order
+        })
 
-        const queries = []
-        if (query.prefix) queries.push(`prefix=${encodeURIComponent(query.prefix)}`)
-        if (query.schema) queries.push(`schema=${encodeURIComponent(query.schema)}`)
-        if (query.since) queries.push(`since=${encodeURIComponent(query.since)}`)
-        if (query.until) queries.push(`until=${encodeURIComponent(query.until)}`)
-        if (query.limit) queries.push(`limit=${encodeURIComponent(query.limit)}`)
-        if (query.order) queries.push(`order=${encodeURIComponent(query.order)}`)
-
-        const endpointWithQuery = endpoint + (queries.length > 0 ? `?${queries.join('&')}` : '')
-
-        const resource = this.fetchWithCredential<Record<string, Document<T>>>(fqdn, endpointWithQuery, {})
+        const resource = this.fetchWithCredential<Record<string, Document<T>>>(fqdn, endpoint, {})
 
         return resource
     }
