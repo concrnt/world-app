@@ -46,6 +46,33 @@ export class Client {
         client.user = await client.getUser(ccid).catch(() => null)
 
         // ==== Default kit ====
+        await api.getDocument(`cckv://${api.authProvider.getCCID()}/concrnt.world/main/posts`).catch((err) => {
+            if (err instanceof NotFoundError) {
+                console.log('Home timeline not found, creating a new one...')
+                const document = {
+                    key: '/concrnt.world/main/posts',
+                    author: api.authProvider.getCCID(),
+                    schema: 'https://schema.concrnt.world/t/empty.json',
+                    value: {},
+                    createdAt: new Date(),
+                    policies: [
+                        {
+                            url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
+                            params: {
+                                readListMode: false,
+                                reader: [],
+                                writeListMode: true,
+                                writer: [api.authProvider.getCCID()]
+                            }
+                        }
+                    ]
+                }
+                api.commit(document)
+                return document
+            }
+            throw err
+        })
+
         await api.getDocument(`cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')

@@ -52,6 +52,7 @@ const Inner = (props: Props) => {
                     borderRadius: '4px',
                     ...props.style
                 }}
+                name={props.ccid}
             />
         )
     }
