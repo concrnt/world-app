@@ -237,7 +237,7 @@ export class Message<T> implements Document<T> {
     author: string
     owner?: string
     createdAt: Date
-    memberOf?: string[]
+    distributes?: string[]
 
     authorUser?: User
 
@@ -255,7 +255,7 @@ export class Message<T> implements Document<T> {
         this.author = document.author
         this.owner = document.owner
         this.createdAt = document.createdAt
-        this.memberOf = document.memberOf
+        this.distributes = document.distributes
     }
 
     static async load<T>(client: Client, uri: string, hint?: string): Promise<Message<T> | null> {

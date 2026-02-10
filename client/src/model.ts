@@ -23,7 +23,7 @@ export interface Document<T> {
     author: string
     owner?: string
     createdAt: Date
-    memberOf?: string[]
+    distributes?: string[]
 
     associate?: string
     associationVariant?: string
