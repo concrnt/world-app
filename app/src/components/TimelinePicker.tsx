@@ -98,11 +98,54 @@ export const TimelinePicker = (props: Props) => {
                     </Chip>
                 )
             })}
-            {!focused && (
+            {focused ? (
+                <input
+                    ref={inputRef}
+                    autoFocus
+                    type="text"
+                    style={{
+                        flex: '1',
+                        border: 'none',
+                        outline: 'none',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        background: 'transparent'
+                    }}
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => {
+                        setFocused(false)
+                        setFilter('')
+                        setFocusedIdx(0)
+                    }}
+                    onKeyDown={(e) => {
+                        switch (e.key) {
+                            case 'Escape':
+                                inputRef.current?.blur()
+                                break
+                            case 'Enter':
+                                if (options.length > 0 && focusedIdx >= 0 && focusedIdx < options.length) {
+                                    props.selected.push(props.keyFunc(options[focusedIdx]))
+                                    inputRef.current?.blur()
+                                }
+                                break
+                            case 'ArrowDown':
+                                e.preventDefault()
+                                setFocusedIdx((prev) => (prev + 1) % options.length)
+                                break
+                            case 'ArrowUp':
+                                e.preventDefault()
+                                setFocusedIdx((prev) => (prev - 1 + options.length) % options.length)
+                                break
+                        }
+                    }}
+                />
+            ) : (
                 <Chip
                     variant="outlined"
                     onClick={() => {
-                        inputRef.current?.focus()
+                        setFocused(true)
                     }}
                     style={{
                         color: theme.divider
@@ -112,48 +155,6 @@ export const TimelinePicker = (props: Props) => {
                     投稿先を追加
                 </Chip>
             )}
-            <input
-                ref={inputRef}
-                type="text"
-                style={{
-                    flex: '1',
-                    minWidth: '120px',
-                    border: 'none',
-                    outline: 'none',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    background: 'transparent'
-                }}
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => {
-                    setFocused(false)
-                    setFilter('')
-                    setFocusedIdx(0)
-                }}
-                onKeyDown={(e) => {
-                    switch (e.key) {
-                        case 'Escape':
-                            inputRef.current?.blur()
-                            break
-                        case 'Enter':
-                            if (options.length > 0 && focusedIdx >= 0 && focusedIdx < options.length) {
-                                props.selected.push(props.keyFunc(options[focusedIdx]))
-                                inputRef.current?.blur()
-                            }
-                            break
-                        case 'ArrowDown':
-                            e.preventDefault()
-                            setFocusedIdx((prev) => (prev + 1) % options.length)
-                            break
-                        case 'ArrowUp':
-                            e.preventDefault()
-                            setFocusedIdx((prev) => (prev - 1 + options.length) % options.length)
-                            break
-                    }
-                }}
-            />
             {focused && (
                 <div
                     style={{
