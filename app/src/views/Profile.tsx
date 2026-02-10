@@ -43,14 +43,14 @@ export const ProfileView = (props: Props) => {
     const tabs = useMemo(() => {
         return {
             posts: {
-                icon: <div>カレント</div>,
+                tab: <div>カレント</div>,
                 body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/home-timeline/`} />
             },
             media: {
-                icon: <div>メディア</div>,
+                tab: <div>メディア</div>,
                 body: (
                     <QueryTimeline
-                        prefix={`cckv://${props.id}/concrnt.world/main/home-timeline`}
+                        prefix={`cckv://${props.id}/concrnt.world/main/home-timeline/`}
                         query={{
                             schema: Schemas.mediaMessage
                         }}
@@ -58,8 +58,8 @@ export const ProfileView = (props: Props) => {
                 )
             },
             activity: {
-                icon: <div>アクティビティ</div>,
-                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/activity-timeline`} />
+                tab: <div>アクティビティ</div>,
+                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/activity-timeline/`} />
             }
         }
     }, [])
@@ -170,10 +170,14 @@ export const ProfileView = (props: Props) => {
                     </div>
                 </div>
                 <TabLayout
+                    divider
                     tabs={tabs}
                     selectedTab={selectedTab}
                     setSelectedTab={(tab) => setSelectedTab(tab)}
                     placement="upper"
+                    tabStyle={{
+                        color: theme.content.text
+                    }}
                 />
             </View>
         </>

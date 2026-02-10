@@ -5,7 +5,7 @@ import { ActivityProvider } from '../contexts/Activity'
 
 interface Tab {
     body: ReactNode
-    icon: ReactNode
+    tab: ReactNode
 }
 
 interface Props {
@@ -13,7 +13,9 @@ interface Props {
     setSelectedTab: (tab: string) => void
     tabs: Record<string, Tab>
     tabStyle?: CSSProperties
+    style?: CSSProperties
     placement?: 'upper' | 'lower'
+    divider?: boolean
 }
 
 export const TabLayout = (props: Props) => {
@@ -31,18 +33,22 @@ export const TabLayout = (props: Props) => {
             }}
         >
             {props.placement === 'upper' && (
-                <Tabs style={props.tabStyle}>
-                    {Object.entries(props.tabs).map(([key, tab]) => (
-                        <Tab
-                            key={key}
-                            groupId={tabId}
-                            onClick={() => props.setSelectedTab(key)}
-                            selected={key === props.selectedTab}
-                        >
-                            {tab.icon}
-                        </Tab>
-                    ))}
-                </Tabs>
+                <>
+                    <Tabs style={props.style}>
+                        {Object.entries(props.tabs).map(([key, tab]) => (
+                            <Tab
+                                key={key}
+                                groupId={tabId}
+                                onClick={() => props.setSelectedTab(key)}
+                                selected={key === props.selectedTab}
+                                style={props.tabStyle}
+                            >
+                                {tab.tab}
+                            </Tab>
+                        ))}
+                    </Tabs>
+                    {props.divider && <div style={{ height: '1px', backgroundColor: '#ccc', width: '100%' }} />}
+                </>
             )}
 
             {Object.entries(props.tabs).map(([key, tab]) => (
@@ -52,13 +58,21 @@ export const TabLayout = (props: Props) => {
             ))}
 
             {props.placement !== 'upper' && (
-                <Tabs style={props.tabStyle}>
-                    {Object.entries(props.tabs).map(([key, tab]) => (
-                        <Tab key={key} onClick={() => props.setSelectedTab(key)} selected={key === props.selectedTab}>
-                            {tab.icon}
-                        </Tab>
-                    ))}
-                </Tabs>
+                <>
+                    {props.divider && <div style={{ height: '1px', backgroundColor: '#ccc', width: '100%' }} />}
+                    <Tabs style={props.style}>
+                        {Object.entries(props.tabs).map(([key, tab]) => (
+                            <Tab
+                                style={props.tabStyle}
+                                key={key}
+                                onClick={() => props.setSelectedTab(key)}
+                                selected={key === props.selectedTab}
+                            >
+                                {tab.tab}
+                            </Tab>
+                        ))}
+                    </Tabs>
+                </>
             )}
         </div>
     )

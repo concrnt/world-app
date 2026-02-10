@@ -40,7 +40,7 @@ export const MainView = () => {
                         />
                     </StackLayout>
                 ),
-                icon: <MdHome size={24} />
+                tab: <MdHome size={24} />
             },
             explorer: {
                 body: (
@@ -52,7 +52,7 @@ export const MainView = () => {
                         <ExplorerView />
                     </StackLayout>
                 ),
-                icon: <MdExplore size={24} />
+                tab: <MdExplore size={24} />
             },
             notifications: {
                 body: (
@@ -64,7 +64,7 @@ export const MainView = () => {
                         <NotificationsView />
                     </StackLayout>
                 ),
-                icon: <MdNotifications size={24} />
+                tab: <MdNotifications size={24} />
             },
             contacts: {
                 body: (
@@ -76,7 +76,7 @@ export const MainView = () => {
                         <ContactsView />
                     </StackLayout>
                 ),
-                icon: <MdContacts size={24} />
+                tab: <MdContacts size={24} />
             }
         }
     }, [])
@@ -122,9 +122,12 @@ export const MainView = () => {
                         selectedTab={selectedTab}
                         setSelectedTab={selectTab}
                         tabs={tabs}
-                        tabStyle={{
+                        style={{
                             paddingBottom: 'env(safe-area-inset-bottom)',
                             borderTop: theme.variant === 'classic' ? `1px solid ${theme.divider}` : undefined
+                        }}
+                        tabStyle={{
+                            color: theme.backdrop.text
                         }}
                     />
                 </div>
