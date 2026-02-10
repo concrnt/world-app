@@ -136,7 +136,7 @@ export const Composer = (props: Props) => {
                                         if (!client) return
 
                                         const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
-                                        const memberOf = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+                                        const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
                                         const document = {
                                             key: '/concrnt.world/main/posts/{cdid}',
@@ -145,7 +145,7 @@ export const Composer = (props: Props) => {
                                                 body: draft
                                             },
                                             author: client.ccid,
-                                            memberOf,
+                                            distributes,
                                             createdAt: new Date()
                                         }
                                         client.api.commit(document).then(() => {
