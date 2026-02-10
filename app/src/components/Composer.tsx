@@ -19,6 +19,7 @@ export const Composer = (props: Props) => {
     const { client } = useClient()
     const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>('')
+    const [postHome, setPostHome] = useState<boolean>(true)
 
     const theme = useTheme()
 
@@ -97,6 +98,8 @@ export const Composer = (props: Props) => {
                                     setSelected={props.setDestinations}
                                     keyFunc={(item: Timeline) => item.uri}
                                     labelFunc={(item: Timeline) => item.name}
+                                    postHome={postHome}
+                                    setPostHome={setPostHome}
                                 />
                             </div>
                             <div
@@ -131,6 +134,10 @@ export const Composer = (props: Props) => {
                                 <Button
                                     onClick={async () => {
                                         if (!client) return
+
+                                        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+                                        const memberOf = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+
                                         const document = {
                                             key: '/concrnt.world/main/posts/{cdid}',
                                             schema: Schemas.markdownMessage,
@@ -138,10 +145,7 @@ export const Composer = (props: Props) => {
                                                 body: draft
                                             },
                                             author: client.ccid,
-                                            memberOf: [
-                                                `cckv://${client.ccid}/concrnt.world/main/home-timeline`,
-                                                ...props.destinations
-                                            ],
+                                            memberOf,
                                             createdAt: new Date()
                                         }
                                         client.api.commit(document).then(() => {

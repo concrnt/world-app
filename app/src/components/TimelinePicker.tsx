@@ -7,16 +7,23 @@ import { MdOutlineTag } from 'react-icons/md'
 import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
+import { useClient } from '../contexts/Client'
+import { Avatar } from '../ui/Avatar'
+
 interface Props {
     selected: string[]
     setSelected: (selected: string[]) => void
     items: any[]
     keyFunc: (item: any) => string
     labelFunc: (item: any) => string
+    postHome?: boolean
+    setPostHome?: (postHome: boolean) => void
 }
 
 export const TimelinePicker = (props: Props) => {
     const theme = useTheme()
+    const { client } = useClient()
+
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)
 
@@ -40,6 +47,37 @@ export const TimelinePicker = (props: Props) => {
                 alignItems: 'center'
             }}
         >
+            <Chip
+                headElement={
+                    <Avatar
+                        ccid={client?.ccid ?? ''}
+                        src={client?.user?.profile?.avatar}
+                        style={{
+                            width: 20,
+                            height: 20
+                        }}
+                    />
+                }
+                tailElement={
+                    <IoMdCloseCircle
+                        size={16}
+                        style={{
+                            transform: props.postHome === false ? 'rotate(45deg)' : 'none',
+                            transition: 'transform 0.2s'
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            props.setPostHome?.(!props.postHome)
+                        }}
+                    />
+                }
+                style={{
+                    textDecoration: props.postHome === false ? 'line-through' : 'none',
+                    opacity: props.postHome === false ? 0.5 : 1
+                }}
+            >
+                {client?.user?.profile?.username ?? 'Home'}
+            </Chip>
             {props.selected.map((sel) => {
                 const item = props.items.find((i) => props.keyFunc(i) === sel)
                 if (!item) return null
