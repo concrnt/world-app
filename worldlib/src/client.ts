@@ -276,11 +276,17 @@ export class Message<T> implements Document<T> {
     async favorite(client: Client): Promise<void> {
         const authorDomain = await client.getUser(this.author).then((user) => user?.domain)
 
+        const distributes = [
+            `cckv://${client.ccid}/concrnt.world/main/activity-timeline`,
+            `cckv://${this.author}/concrnt.world/main/notify-timeline`
+        ]
+
         const document: Document<LikeAssociationSchema> = {
             author: client.ccid,
             schema: Schemas.likeAssociation,
             associate: this.uri,
             value: {},
+            distributes,
             createdAt: new Date()
         }
 
