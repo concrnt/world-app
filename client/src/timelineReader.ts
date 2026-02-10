@@ -26,32 +26,42 @@ export class TimelineReader {
 
     processEvent(event: RealtimeEvent) {
         switch (event.type) {
-            case 'created':
-                {
-                    let href = event.uri
-                    for (const _ in event.documents) {
-                        const sd = event.documents[href]
-                        if (!sd) break
-                        const document = JSON.parse(sd.document)
-                        if (document.schema !== 'https://schema.concrnt.net/reference.json') break
-                        href = document.value.href
-                    }
-
-                    if (this.body.find((item) => item.href === href)) return
-                    const item: ChunklineItem = {
-                        href: href,
-                        timestamp: new Date()
-                    }
-                    this.onNewItem?.(item)
-                    if (this.haltUpdate) return
-                    const itemWithUpdate: TimelineItemWithUpdate = {
-                        ...item,
-                        lastUpdate: new Date()
-                    }
-                    this.body.unshift(itemWithUpdate)
-                    this.onUpdate?.()
+            case 'created': {
+                let href = event.uri
+                for (const _ in event.documents) {
+                    const sd = event.documents[href]
+                    if (!sd) break
+                    const document = JSON.parse(sd.document)
+                    if (document.schema !== 'https://schema.concrnt.net/reference.json') break
+                    href = document.value.href
                 }
+
+                if (this.body.find((item) => item.href === href)) return
+                const item: ChunklineItem = {
+                    href: href,
+                    timestamp: new Date()
+                }
+                this.onNewItem?.(item)
+                if (this.haltUpdate) return
+                const itemWithUpdate: TimelineItemWithUpdate = {
+                    ...item,
+                    lastUpdate: new Date()
+                }
+                this.body.unshift(itemWithUpdate)
+                this.onUpdate?.()
                 break
+            }
+            case 'associated': {
+                const target = this.body.find((item) => item.href === event.uri)
+                if (!target) {
+                    console.log('Associated event for unknown item:', event.uri)
+                    return
+                }
+                console.log('Item associated updated:', event.uri)
+                target.lastUpdate = new Date()
+                this.onUpdate?.()
+                break
+            }
             default: {
                 console.log(`Unhandled event type: ${event.type}`)
             }

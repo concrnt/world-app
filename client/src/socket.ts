@@ -53,7 +53,7 @@ export class Socket {
             // TODO: cache here
             // const document = JSON.parse(event.sd.document) as Document<any>
 
-            this.distribute(event.uri, event)
+            this.distribute(event.source, event)
         }
 
         this.ws.onerror = (event: any) => {
@@ -103,9 +103,12 @@ export class Socket {
     distribute(uri: string, event: RealtimeEvent) {
         for (const [prefix, callbacks] of this.subscriptions.entries()) {
             if (uri.startsWith(prefix)) {
+                console.log('distributing event for prefix:', prefix)
                 callbacks.forEach((callback) => {
                     callback(event)
                 })
+            } else {
+                console.log('not distributing event for prefix:', prefix)
             }
         }
     }

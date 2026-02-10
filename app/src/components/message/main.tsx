@@ -1,4 +1,4 @@
-import { ReactNode, Suspense, use, useMemo } from 'react'
+import { ReactNode, Suspense, use, useDeferredValue, useMemo } from 'react'
 import { IsCCID, parseCCURI } from '@concrnt/client'
 
 import { useClient } from '../../contexts/Client'
@@ -43,11 +43,11 @@ export const MessageContainer = (props: Props): ReactNode | null => {
         return fetchHint().then((hint) => {
             return client!.getMessage<any>(props.uri, hint).catch(() => undefined)
         })
-    }, [client, props.uri, props.source])
+    }, [client, props.uri, props.source, props.lastUpdated])
 
     return (
         <Suspense fallback={<div>Loading message...</div>}>
-            <MessageContainerInner messagePromise={messagePromise} />
+            {useDeferredValue(<MessageContainerInner messagePromise={messagePromise} />)}
         </Suspense>
     )
 }

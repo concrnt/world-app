@@ -65,7 +65,11 @@ export const RealtimeTimeline = (props: Props) => {
             {reader.current?.body.map((item) => (
                 <Fragment key={item.href}>
                     <div style={{ padding: '0 8px' }}>
-                        <MessageContainer uri={item.href} source={item.source} />
+                        <MessageContainer
+                            uri={item.href}
+                            source={item.source}
+                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
+                        />
                     </div>
                     <Divider />
                 </Fragment>
