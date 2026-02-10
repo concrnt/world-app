@@ -247,6 +247,8 @@ export class Message<T> implements Document<T> {
     associationCounts?: Record<string, number>
     reactionCounts?: Record<string, number>
 
+    associationTarget?: Message<any> | null
+
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
         this.key = document.key
@@ -269,6 +271,10 @@ export class Message<T> implements Document<T> {
         message.ownAssociations = await client.api.getAssociations<any>(uri, { author: client.ccid })
         message.associationCounts = await client.api.getAssociationCounts(uri)
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
+
+        if (res.associate) {
+            message.associationTarget = await Message.load<any>(client, res.associate).catch(() => undefined)
+        }
 
         return message
     }
