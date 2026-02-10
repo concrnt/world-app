@@ -1,6 +1,6 @@
 import { Api } from './api'
 import { ChunklineItem } from './chunkline'
-import { Document } from './model'
+import { Document, SignedDocument } from './model'
 
 export interface Query {
     schema?: string
@@ -30,11 +30,13 @@ export class QueryTimelineReader {
                 prefix: this.prefix,
                 ...query
             })
-            .then((items: Record<string, Document<any>>) => {
-                this.body = Object.keys(items).map((key) => {
+            .then((items: SignedDocument[]) => {
+                this.body = items.map((item) => {
+                    const doc: Document<any> = JSON.parse(item.document)
+
                     return {
-                        href: key,
-                        timestamp: new Date(items[key].createdAt),
+                        href: item.cckv,
+                        timestamp: new Date(doc.createdAt),
                         source: prefix
                     }
                 })
@@ -53,17 +55,19 @@ export class QueryTimelineReader {
         if (!this.prefix) return false
         if (this.body.length === 0) return false
         const last = this.body[this.body.length - 1]
-        const records = await this.api.query<Document<any>>({
+        const records = await this.api.query({
             prefix: this.prefix,
             until: last.timestamp.toISOString(),
             limit: `${this.batch}`,
             ...this.query
         })
 
-        const items = Object.keys(records).map((key) => {
+        const items = records.map((item) => {
+            const doc: Document<any> = JSON.parse(item.document)
+
             return {
-                href: key,
-                timestamp: new Date(records[key].createdAt),
+                href: item.cckv,
+                timestamp: new Date(doc.createdAt),
                 source: this.prefix!
             }
         })

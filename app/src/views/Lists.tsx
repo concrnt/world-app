@@ -29,12 +29,17 @@ export const ListsView = () => {
     const fetchLists = useCallback(() => {
         if (!client) return
         client.api
-            .query<any>({
+            .query({
                 prefix: `cckv://${client.ccid}/concrnt.world/`,
                 schema: Schemas.list
             })
             .then((results) => {
-                setLists(results)
+                const mapped: Record<string, Document<ListSchema>> = {}
+                results.forEach((sd) => {
+                    mapped[sd.cckv] = JSON.parse(sd.document)
+                })
+
+                setLists(mapped)
                 console.log('Fetched communities:', results)
             })
             .catch((error) => {

@@ -15,6 +15,8 @@ import { TabLayout } from '../layouts/Tab'
 import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
+import { QueryTimeline } from '../components/QueryTimeline'
+import { Schemas } from '@concrnt/worldlib'
 
 interface Props {
     id: string
@@ -37,19 +39,27 @@ export const ProfileView = (props: Props) => {
     }, [client, props.id])
 
     const [selectedTab, setSelectedTab] = useState<string>('posts')
+
     const tabs = useMemo(() => {
         return {
             posts: {
-                body: <div>Posts</div>,
-                icon: <div>カレント</div>
+                icon: <div>カレント</div>,
+                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/home-timeline/`} />
             },
             media: {
-                body: <div>Media</div>,
-                icon: <div>メディア</div>
+                icon: <div>メディア</div>,
+                body: (
+                    <QueryTimeline
+                        prefix={`cckv://${props.id}/concrnt.world/main/home-timeline`}
+                        query={{
+                            schema: Schemas.mediaMessage
+                        }}
+                    />
+                )
             },
             activity: {
-                body: <div>Activity</div>,
-                icon: <div>アクティビティ</div>
+                icon: <div>アクティビティ</div>,
+                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/activity-timeline`} />
             }
         }
     }, [])

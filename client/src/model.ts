@@ -43,6 +43,8 @@ export interface Proof {
 }
 
 export interface SignedDocument {
+    cckv: string
+    ccfs: string
     document: string
     proof: Proof
 }

@@ -421,7 +421,7 @@ export class Api {
         return await this.fetchWithCredential<Record<string, number>>(fqdn, endpoint, {})
     }
 
-    async query<T>(
+    async query(
         query: {
             prefix?: string
             schema?: string
@@ -431,7 +431,7 @@ export class Api {
             order?: string
         },
         domain?: string
-    ): Promise<Record<string, Document<T>>> {
+    ): Promise<SignedDocument[]> {
         let fqdn = domain
         if (!fqdn) {
             fqdn = this.defaultHost
@@ -448,7 +448,7 @@ export class Api {
             order: query.order
         })
 
-        const resource = this.fetchWithCredential<Record<string, Document<T>>>(fqdn, endpoint, {})
+        const resource = this.fetchWithCredential<SignedDocument[]>(fqdn, endpoint, {})
 
         return resource
     }

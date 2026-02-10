@@ -22,12 +22,17 @@ export const ExplorerView = () => {
     useEffect(() => {
         if (!client) return
         client.api
-            .query<any>({
+            .query({
                 prefix: `cckv://${client.server.domain}/concrnt.world/communities/`,
                 schema: Schemas.communityTimeline
             })
             .then((results) => {
-                setCommunities(results)
+                const mapped: Record<string, Document<CommunityTimelineSchema>> = {}
+                results.forEach((sd) => {
+                    mapped[sd.cckv] = JSON.parse(sd.document)
+                })
+
+                setCommunities(mapped)
                 console.log('Fetched communities:', results)
             })
             .catch((error) => {
