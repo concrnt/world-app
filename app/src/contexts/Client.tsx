@@ -66,8 +66,8 @@ export const ClientProvider = (props: Props): ReactNode => {
     const initialize = useCallback(async () => {
         const identity = GenerateIdentity()
 
-        const host = 'concrnt-dev.gammalab.net'
-        //const host = 'cc2.tunnel.anthrotech.dev'
+        //const host = 'concrnt-dev.gammalab.net'
+        const host = 'cc2.tunnel.anthrotech.dev'
 
         const authProvider = new MasterKeyAuthProvider(identity.privateKey, host)
         const cacheEngine = new InMemoryKVS()
@@ -124,9 +124,7 @@ export const ClientProvider = (props: Props): ReactNode => {
     }, [])
 
     const logout = useCallback(async () => {
-        for (const key in localStorage) {
-            localStorage.removeItem(key)
-        }
+        localStorage.clear()
         load('clientInfo.json').then((store) => {
             store.clear().then(() => {
                 setClient(undefined)

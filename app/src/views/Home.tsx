@@ -42,7 +42,7 @@ export const HomeView = (props: ScrollViewProps) => {
         [pinnedLists]
     )
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(tabs[0]?.uri ?? '')
+    const [selectedTabUri, setSelectedTabUri] = useState<string>(`cckv://${client?.ccid}/concrnt.world/main/home-list`)
 
     const [timelineIDs, setTimelineIDs] = useState<string[]>([])
     const [communities, setCommunities] = useState<any[]>([])
@@ -51,24 +51,30 @@ export const HomeView = (props: ScrollViewProps) => {
         setCommunities([])
         const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
         if (selectedTab) {
-            client?.getList(selectedTab.uri).then((list) => {
-                const items = list?.items ?? []
-                if (!items.includes(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)) {
-                    items.unshift(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)
-                }
-                setTimelineIDs(items)
-                Promise.allSettled((list?.items ?? []).map((uri) => client.getTimeline(uri))).then((results) => {
-                    setCommunities(
-                        results
-                            .filter(isFulfilled)
-                            .map((res) => res.value)
-                            .filter(isNonNull)
-                            .filter((tl) => tl.schema === Schemas.communityTimeline)
-                    )
+            client
+                ?.getList(selectedTab.uri)
+                .then((list) => {
+                    const items = list?.items ?? []
+                    if (!items.includes(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)) {
+                        items.unshift(`cckv://${client.ccid}/concrnt.world/main/home-timeline`)
+                    }
+                    setTimelineIDs(items)
+                    Promise.allSettled((list?.items ?? []).map((uri) => client.getTimeline(uri))).then((results) => {
+                        setCommunities(
+                            results
+                                .filter(isFulfilled)
+                                .map((res) => res.value)
+                                .filter(isNonNull)
+                                .filter((tl) => tl.schema === Schemas.communityTimeline)
+                        )
+                    })
                 })
-            })
+                .catch((e) => {
+                    console.error(e)
+                    setTimelineIDs([`cckv://${client?.ccid}/concrnt.world/main/home-timeline`])
+                })
         } else {
-            setTimelineIDs([])
+            setTimelineIDs([`cckv://${client?.ccid}/concrnt.world/main/home-timeline`])
             setCommunities([])
         }
     }, [selectedTabUri, tabs, client])
@@ -78,9 +84,9 @@ export const HomeView = (props: ScrollViewProps) => {
         if (!client) return
         const homeURI = `cckv://${client.ccid}/concrnt.world/main/home-list`
         if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
-            setPinnedLists([{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...pinnedLists])
+            setPinnedLists((old) => [{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...old])
         }
-    }, [client, pinnedLists, setPinnedLists])
+    }, [client])
 
     return (
         <>

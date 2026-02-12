@@ -6,12 +6,13 @@ import { Divider } from '../ui/Divider'
 import { Text } from '../ui/Text'
 import { ThemeCard } from '../components/ThemeCard'
 import { Themes } from '../data/themes'
-import { usePreference } from '../contexts/Preference'
+import { usePreference, useResetPreference } from '../contexts/Preference'
 
 export const SettingsView = () => {
     const { logout } = useClient()
 
     const [_themeName, setThemeName] = usePreference('themeName')
+    const reset = useResetPreference()
 
     return (
         <View>
@@ -51,6 +52,7 @@ export const SettingsView = () => {
                     <Button
                         onClick={() => {
                             logout()
+                            reset()
                         }}
                     >
                         Logout

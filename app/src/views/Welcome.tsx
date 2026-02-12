@@ -4,9 +4,11 @@ import { Text } from '../ui/Text'
 import ConcrntLogo from '/concrnt.svg'
 import { useClient } from '../contexts/Client'
 import { View } from '../ui/View'
+import { useResetPreference } from '../contexts/Preference'
 
 export const WelcomeView = () => {
     const { initialize } = useClient()
+    const reset = useResetPreference()
 
     return (
         <View>
@@ -17,6 +19,7 @@ export const WelcomeView = () => {
             <Button
                 onClick={() => {
                     initialize()
+                    reset()
                 }}
             >
                 はじめる
