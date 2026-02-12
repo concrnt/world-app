@@ -389,8 +389,7 @@ export class Api {
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.associations', {
             uri: uri,
-            schema: query.schema,
-            variant: query.variant
+            ...query
         })
 
         return await this.fetchWithCredential<Array<Document<T>>>(fqdn, endpoint, {})
