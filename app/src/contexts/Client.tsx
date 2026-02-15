@@ -66,7 +66,7 @@ export const ClientProvider = (props: Props): ReactNode => {
     const initialize = useCallback(async () => {
         const identity = GenerateIdentity()
 
-        const host = 'concrnt-dev.gammalab.net'
+        const host = 'v2dev.concrnt.net'
         //const host = 'cc2.tunnel.anthrotech.dev'
 
         const authProvider = new MasterKeyAuthProvider(identity.privateKey, host)
