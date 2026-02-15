@@ -4,50 +4,32 @@ import { Text } from '../ui/Text'
 import { View } from '../ui/View'
 import { Document } from '@concrnt/client'
 import { Button } from '../ui/Button'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { TextField } from '../ui/TextField'
 import { Header } from '../ui/Header'
-import { TimelineCard } from '../components/TimelineCard'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
+import { ClassicExplorer } from '../components/ClassicExplorer'
 
 export const ExplorerView = () => {
-    const { client } = useClient()
-
     const drawer = useDrawer()
-
-    const [communities, setCommunities] = useState<Record<string, Document<CommunityTimelineSchema>>>({})
-
-    useEffect(() => {
-        if (!client) return
-        client.api
-            .query({
-                prefix: `cckv://${client.server.domain}/concrnt.world/communities/`,
-                schema: Schemas.communityTimeline
-            })
-            .then((results) => {
-                const mapped: Record<string, Document<CommunityTimelineSchema>> = {}
-                results.forEach((sd) => {
-                    mapped[sd.cckv] = JSON.parse(sd.document)
-                })
-
-                setCommunities(mapped)
-                console.log('Fetched communities:', results)
-            })
-            .catch((error) => {
-                console.error('Error fetching communities:', error)
-            })
-    }, [client])
 
     return (
         <>
             <View>
                 <Header>Explorer</Header>
-
-                {Object.entries(communities).map(([uri, community]) => (
-                    <TimelineCard key={uri} uri={uri} document={community} />
-                ))}
+                <div
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        padding: '4px'
+                    }}
+                >
+                    <ClassicExplorer />
+                </div>
             </View>
             <FAB
                 onClick={() => {

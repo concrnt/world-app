@@ -99,6 +99,22 @@ export class Api {
         this.cache.set(cacheKey, failCount + 1)
     }
 
+    async callConcrntApi<T>(host: string, api: string, args: Record<string, string>, init?: RequestInit): Promise<T> {
+        const server = await this.getServer(host || this.defaultHost)
+
+        const endpoint = server.endpoints[api]
+        if (!endpoint) {
+            throw new Error(`API ${api} not found on server ${server.domain}`)
+        }
+
+        let template = endpoint.template
+        for (const [key, value] of Object.entries(args)) {
+            template = template.replaceAll(`{${key}}`, value)
+        }
+
+        return this.fetchWithCredential<T>(this.defaultHost, template, init)
+    }
+
     async fetchWithCredential<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
         const fetchHost = host || this.defaultHost
 
