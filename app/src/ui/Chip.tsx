@@ -32,10 +32,10 @@ export const Chip = (props: Props) => {
                 height: 'var(--control-chip-h)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 'var(--chip-icon-gap, 6px)',
+                gap: 'var(--chip-icon-gap)',
                 borderRadius: 'var(--radius-lg)',
-                paddingLeft: hasHead ? '2px' : basePad,
-                paddingRight: hasTail ? '2px' : basePad,
+                paddingLeft: hasHead ? 'var(--chip-pad-edge)' : basePad,
+                paddingRight: hasTail ? 'var(--chip-pad-edge)' : basePad,
                 ...props.style
             }}
         >
@@ -43,8 +43,8 @@ export const Chip = (props: Props) => {
                 (props.headIconRound ? (
                     <div
                         style={{
-                            width: 'var(--chip-icon-slot, 20px)',
-                            height: 'var(--chip-icon-slot, 20px)',
+                            width: 'var(--chip-icon-slot)',
+                            height: 'var(--chip-icon-slot)',
                             borderRadius: '50%',
                             overflow: 'hidden',
                             display: 'inline-flex',

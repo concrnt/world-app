@@ -1,3 +1,5 @@
+@import './tokens.css'; /* 全入口で CSS custom property defaults を保証 */
+
 * {
     margin: 0;
     padding: 0;
@@ -18,7 +20,7 @@ html {
 }
 
 body {
-    font-size: var(--font-base, 16px);
+    font-size: var(--font-base);
     height: 100%;
     width: 100%;
     /*

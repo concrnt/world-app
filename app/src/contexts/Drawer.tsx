@@ -74,7 +74,7 @@ export const DrawerProvider = (props: Props) => {
                                 left: 0,
                                 right: 0,
                                 paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: '16px 16px 0 0',
+                                borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
                                 height,
                                 y
                             }}
@@ -116,7 +116,8 @@ export const DrawerProvider = (props: Props) => {
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    padding: '12px 0'
+                                    alignItems: 'center',
+                                    height: 'var(--sheet-handle-area-h)'
                                 }}
                                 onPointerDown={(e) => {
                                     dragControls.start(e)
@@ -124,9 +125,9 @@ export const DrawerProvider = (props: Props) => {
                             >
                                 <div
                                     style={{
-                                        width: '30px',
-                                        height: '6px',
-                                        borderRadius: '3px',
+                                        width: 'var(--sheet-handle-bar-w)',
+                                        height: 'var(--sheet-handle-bar-h)',
+                                        borderRadius: 'var(--sheet-handle-bar-radius)',
                                         backgroundColor: theme.divider
                                     }}
                                 />

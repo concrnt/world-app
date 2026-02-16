@@ -324,7 +324,11 @@ export function Codeblock(props: CodeblockProps): ReactNode {
                     style={materialDark}
                     language={props.language}
                     PreTag="div"
-                    customStyle={{ margin: 0, padding: '10px 15px', overflow: 'auto' }}
+                    customStyle={{
+                        margin: 0,
+                        padding: 'var(--codeblock-pad-v) var(--codeblock-pad-h)',
+                        overflow: 'auto'
+                    }}
                     codeTagProps={{ style: { fontFamily: 'Source Code Pro, monospace' } }}
                 >
                     {props.children}

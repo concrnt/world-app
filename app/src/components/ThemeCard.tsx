@@ -21,7 +21,7 @@ export const ThemeCard = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: '12px',
+                gap: 'var(--space-3)',
                 backgroundColor: props.theme.content.background,
                 border: `1px solid ${props.theme.divider}`
             }}
@@ -35,7 +35,7 @@ export const ThemeCard = (props: Props) => {
                 }}
             >
                 <ConcrntLogo
-                    size="40px"
+                    size="md"
                     upperColor={props.theme.ui.background}
                     lowerColor={bgColor}
                     frameColor={bgColor}

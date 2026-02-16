@@ -60,7 +60,7 @@ export const SettingsView = () => {
                         style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                            gap: '12px'
+                            gap: 'var(--space-3)'
                         }}
                     >
                         {Object.entries(Themes).map(([name, theme]) => (

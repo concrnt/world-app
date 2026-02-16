@@ -1,5 +1,6 @@
 import BoringAvatar from 'boring-avatars'
 import { Suspense, use, useDeferredValue } from 'react'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
     ccid: string
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export const Avatar = (props: Props) => {
+    const theme = useTheme()
+
     return (
         <Suspense
             fallback={
@@ -16,7 +19,7 @@ export const Avatar = (props: Props) => {
                         width: 'var(--control-header)',
                         height: 'var(--control-header)',
                         borderRadius: 'var(--radius-sm)',
-                        backgroundColor: '#e0e0e0',
+                        backgroundColor: theme.divider /* TODO: theme.skeleton に昇格 */,
                         ...props.style
                     }}
                 />

@@ -21,7 +21,7 @@ interface Props {
 }
 
 const timelineIconStyle: React.CSSProperties = {
-    fontSize: 'var(--timeline-icon-size, 14px)'
+    fontSize: 'var(--timeline-icon-size)'
 }
 
 // close アイコンは icon より +2px 大きい (--timeline-close-size)。
@@ -29,13 +29,13 @@ const timelineIconStyle: React.CSSProperties = {
 // close 付きチップ → --timeline-close-size 基準
 // 追加チップ (IoMdAdd) → --timeline-icon-size 基準 (l.171)
 const timelineCloseStyle: React.CSSProperties = {
-    fontSize: 'var(--timeline-close-size, 16px)'
+    fontSize: 'var(--timeline-close-size)'
 }
 
 const timelineChipPad: React.CSSProperties = {
-    paddingTop: 'var(--timeline-chip-pad-v, 7px)',
-    paddingBottom: 'var(--timeline-chip-pad-v, 7px)',
-    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-close-size, 16px)) / 2)'
+    paddingTop: 'var(--timeline-chip-pad-v)',
+    paddingBottom: 'var(--timeline-chip-pad-v)',
+    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-close-size)) / 2)'
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -72,8 +72,8 @@ export const TimelinePicker = (props: Props) => {
                         ccid={client?.ccid ?? ''}
                         src={client?.user?.profile?.avatar}
                         style={{
-                            width: 'var(--timeline-avatar-size, 17px)',
-                            height: 'var(--timeline-avatar-size, 17px)',
+                            width: 'var(--timeline-avatar-size)',
+                            height: 'var(--timeline-avatar-size)',
                             borderRadius: '50%'
                         }}
                     />
@@ -172,7 +172,7 @@ export const TimelinePicker = (props: Props) => {
                     }}
                     style={{
                         ...timelineChipPad,
-                        paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size, 14px)) / 2)',
+                        paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size)) / 2)',
                         color: theme.divider
                     }}
                     tailElement={<IoMdAdd style={timelineIconStyle} />}
