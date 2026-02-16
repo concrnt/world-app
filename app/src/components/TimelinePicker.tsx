@@ -25,13 +25,13 @@ const timelineIconStyle: React.CSSProperties = {
 }
 
 const timelineCloseStyle: React.CSSProperties = {
-    fontSize: 'calc(var(--timeline-icon-size, 14px) + 2px)'
+    fontSize: 'var(--timeline-close-size, 16px)'
 }
 
 const timelineChipPad: React.CSSProperties = {
     paddingTop: 'var(--timeline-chip-pad-v, 7px)',
     paddingBottom: 'var(--timeline-chip-pad-v, 7px)',
-    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size, 14px) - 2px) / 2)'
+    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-close-size, 16px)) / 2)'
 }
 
 export const TimelinePicker = (props: Props) => {

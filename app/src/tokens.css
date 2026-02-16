@@ -24,6 +24,7 @@
   --timeline-avatar-size: 16px;
   --timeline-chip-pad-v: 7px;
   --timeline-chip-pad-h: 8px;
+  --timeline-close-size: calc(var(--timeline-icon-size, 14px) + 2px);
 }
 
 /* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
