@@ -11,21 +11,21 @@ import { ScaleSelector } from '../components/ScaleSelector'
 
 import type { FontScaleKey, UIScaleKey } from '../contexts/Preference'
 
-const fontScaleOptions: { key: FontScaleKey; label: string; description: string }[] = [
-    { key: 'xs', label: '極小', description: '極小' },
-    { key: 'sm', label: '小', description: '小' },
-    { key: 'md', label: '標準', description: '標準（推奨）' },
-    { key: 'lg', label: '大', description: '大' },
-    { key: 'xl', label: '特大', description: '特大' },
-    { key: 'xxl', label: '最大', description: '最大' }
+const fontScaleOptions = [
+    { key: 'xs', label: '極小' },
+    { key: 'sm', label: '小' },
+    { key: 'md', label: '標準' },
+    { key: 'lg', label: '大' },
+    { key: 'xl', label: '特大' },
+    { key: 'xxl', label: '最大' }
 ]
 
-const uiScaleOptions: { key: UIScaleKey; label: string; description: string }[] = [
-    { key: 'xs', label: 'コンパクト', description: 'コンパクト（情報量重視）' },
-    { key: 'sm', label: 'やや小', description: 'ややコンパクト' },
-    { key: 'md', label: '標準', description: '標準（推奨）' },
-    { key: 'lg', label: 'ゆとり', description: 'ゆとり（見やすさ重視）' },
-    { key: 'xl', label: '広め', description: '広め（大きめUI）' }
+const uiScaleOptions = [
+    { key: 'xs', label: 'コンパクト' },
+    { key: 'sm', label: 'やや小' },
+    { key: 'md', label: '標準' },
+    { key: 'lg', label: 'ゆとり' },
+    { key: 'xl', label: '広め' }
 ]
 
 export const SettingsView = () => {
@@ -35,9 +35,6 @@ export const SettingsView = () => {
     const [fontScaleKey, setFontScaleKey] = usePreference('fontScaleKey')
     const [uiScaleKey, setUIScaleKey] = usePreference('uiScaleKey')
     const reset = useResetPreference()
-
-    const currentFontDesc = fontScaleOptions.find((o) => o.key === fontScaleKey)?.description ?? '標準（推奨）'
-    const currentUIDesc = uiScaleOptions.find((o) => o.key === uiScaleKey)?.description ?? '標準（推奨）'
 
     return (
         <View>
@@ -88,15 +85,6 @@ export const SettingsView = () => {
                                 value={fontScaleKey}
                                 onChange={(v) => setFontScaleKey(v as FontScaleKey)}
                             />
-                            <Text
-                                style={{
-                                    fontSize: 'var(--text-xs)',
-                                    opacity: 0.7,
-                                    marginTop: 'var(--space-1)'
-                                }}
-                            >
-                                {currentFontDesc}
-                            </Text>
                         </div>
                         <div>
                             <Text style={{ marginBottom: 'var(--space-1)' }}>UI密度</Text>
@@ -105,15 +93,6 @@ export const SettingsView = () => {
                                 value={uiScaleKey}
                                 onChange={(v) => setUIScaleKey(v as UIScaleKey)}
                             />
-                            <Text
-                                style={{
-                                    fontSize: 'var(--text-xs)',
-                                    opacity: 0.7,
-                                    marginTop: 'var(--space-1)'
-                                }}
-                            >
-                                {currentUIDesc}
-                            </Text>
                         </div>
                     </div>
 
