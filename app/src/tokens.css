@@ -14,6 +14,8 @@
   --profile-avatar: 100px;
   --profile-avatar-overhang: calc(var(--profile-avatar) / 2);
   --profile-head-row-h: max(var(--control-header), var(--profile-avatar-overhang));
+  --text-lg: calc(1.2em * var(--font-scale));
+  --profile-username-size: var(--text-lg);
 }
 
 /* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
