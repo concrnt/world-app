@@ -8,11 +8,30 @@ interface Props {
     disabled?: boolean
     headElement?: ReactNode
     tailElement?: ReactNode
+    headIconRound?: boolean
     style?: React.CSSProperties
 }
 
 export const Chip = (props: Props) => {
     const theme = useTheme()
+
+    const wrapHead = (el: ReactNode) =>
+        props.headIconRound ? (
+            <div
+                style={{
+                    width: 'var(--chip-icon-slot, 24px)',
+                    height: 'var(--chip-icon-slot, 24px)',
+                    borderRadius: '50%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                {el}
+            </div>
+        ) : (
+            el
+        )
 
     switch (props.variant) {
         case 'outlined':
@@ -40,7 +59,7 @@ export const Chip = (props: Props) => {
                             justifyContent: 'center'
                         }}
                     >
-                        {props.headElement}
+                        {wrapHead(props.headElement)}
                     </div>
                     <div
                         style={{
@@ -88,7 +107,7 @@ export const Chip = (props: Props) => {
                             justifyContent: 'center'
                         }}
                     >
-                        {props.headElement}
+                        {wrapHead(props.headElement)}
                     </div>
                     <div
                         style={{
