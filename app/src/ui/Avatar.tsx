@@ -13,9 +13,9 @@ export const Avatar = (props: Props) => {
             fallback={
                 <div
                     style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '4px',
+                        width: 'var(--control-header)',
+                        height: 'var(--control-header)',
+                        borderRadius: 'var(--radius-sm)',
                         backgroundColor: '#e0e0e0'
                     }}
                 />
@@ -35,9 +35,9 @@ const Inner = (props: Props) => {
                 src={src}
                 alt="avatar"
                 style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '4px',
+                    width: 'var(--control-header)',
+                    height: 'var(--control-header)',
+                    borderRadius: 'var(--radius-sm)',
                     ...props.style
                 }}
             />
@@ -49,7 +49,9 @@ const Inner = (props: Props) => {
                 size={40}
                 variant="beam"
                 style={{
-                    borderRadius: '4px',
+                    width: 'var(--control-header)',
+                    height: 'var(--control-header)',
+                    borderRadius: 'var(--radius-sm)',
                     ...props.style
                 }}
                 name={props.ccid}

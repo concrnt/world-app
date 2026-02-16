@@ -16,8 +16,8 @@ export const ThemeCard = (props: Props) => {
     return (
         <div
             style={{
-                borderRadius: '8px',
-                padding: '16px',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',

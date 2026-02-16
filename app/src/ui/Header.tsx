@@ -19,17 +19,17 @@ export const Header = (props: Props) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '4px',
+                padding: 'var(--space-1)',
                 color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
                 backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : theme.ui.background,
-                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : '4px',
+                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : 'var(--space-1)',
                 borderBottom: `1px solid ${theme.divider}`
             }}
         >
             <div
                 style={{
-                    height: '40px',
-                    width: '40px'
+                    height: 'var(--control-header)',
+                    width: 'var(--control-header)'
                 }}
             >
                 {props.leftOverride ?? nav.backNode}
@@ -45,8 +45,8 @@ export const Header = (props: Props) => {
             </div>
             <div
                 style={{
-                    height: '40px',
-                    width: '40px'
+                    height: 'var(--control-header)',
+                    width: 'var(--control-header)'
                 }}
             >
                 {props.right}

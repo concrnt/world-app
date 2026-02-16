@@ -44,11 +44,11 @@ export const Sidebar = (props: Props) => {
                         backgroundColor: theme.backdrop.background,
                         color: theme.backdrop.text,
                         display: 'flex',
-                        padding: '16px',
+                        padding: 'var(--space-3)',
                         flexDirection: 'column',
-                        gap: '16px',
+                        gap: 'var(--space-3)',
                         height: '100%',
-                        borderRadius: '0 8px 8px 0'
+                        borderRadius: '0 var(--radius-md) var(--radius-md) 0'
                     }}
                 >
                     <div
@@ -68,7 +68,7 @@ export const Sidebar = (props: Props) => {
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '16px',
+                            gap: 'var(--space-3)',
                             overflowY: 'auto'
                         }}
                     >

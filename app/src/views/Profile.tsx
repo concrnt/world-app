@@ -85,15 +85,15 @@ export const ProfileView = (props: Props) => {
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 height: '50px',
-                                padding: '0 4px',
-                                gap: '4px'
+                                padding: '0 var(--space-1)',
+                                gap: 'var(--space-1)'
                             }}
                         >
                             <div
                                 style={{
                                     color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
-                                    height: '40px',
-                                    width: '40px'
+                                    height: 'var(--control-header)',
+                                    width: 'var(--control-header)'
                                 }}
                             >
                                 {navigation.backNode}
@@ -115,7 +115,7 @@ export const ProfileView = (props: Props) => {
                             height: '100px',
                             position: 'absolute',
                             transform: 'translateY(-50%)',
-                            left: '8px'
+                            left: 'var(--space-2)'
                         }}
                         src={profilePromise.then((user) => user?.profile.avatar)}
                     />
@@ -124,13 +124,13 @@ export const ProfileView = (props: Props) => {
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
-                        padding: '0 8px'
+                        gap: 'var(--space-1)',
+                        padding: '0 var(--space-2)'
                     }}
                 >
                     <div
                         style={{
-                            height: '40px',
+                            height: 'var(--control-header)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-end'

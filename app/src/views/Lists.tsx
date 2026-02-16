@@ -55,7 +55,7 @@ export const ListsView = () => {
         <>
             <View>
                 <Header>Lists</Header>
-                <div style={{ padding: '8px' }}>
+                <div style={{ padding: 'var(--space-2)' }}>
                     <Text variant="h3">ピン留め中のリスト</Text>
                     <Reorder.Group values={pinnedLists} onReorder={setPinnedLists}>
                         {pinnedLists.map((pinned) => (

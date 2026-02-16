@@ -77,7 +77,7 @@ export const SelectProvider = (props: Props) => {
                                 left: 0,
                                 right: 0,
                                 paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: '16px 16px 0 0',
+                                borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
                                 y
                             }}
                             drag="y"
@@ -148,7 +148,7 @@ export const SelectProvider = (props: Props) => {
                                     <div
                                         key={key}
                                         style={{
-                                            padding: '16px',
+                                            padding: 'var(--space-3)',
                                             height: '56px',
                                             borderBottom: `1px solid ${theme.divider}`
                                         }}

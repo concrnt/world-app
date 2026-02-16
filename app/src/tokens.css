@@ -1,0 +1,78 @@
+/* デフォルト (md) — data属性セット前のフラッシュ防止 */
+:root {
+  --font-scale: 1;
+  --ui-scale: 1;
+  --font-base: calc(16px * var(--font-scale));
+  --space-1: 4px;  --space-2: 8px;  --space-3: 16px;
+  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;
+  --control-icon: 24px;  --control-header: 40px;
+  --control-fab: 60px;  --control-chip-h: 24px;
+  --hit-min: 44px;  --dialog-w: 80vw;  --dialog-max-w: 600px;
+  --fab-padding: 15px;
+  --switch-pad-v: 10px;  --switch-pad-h: 20px;
+}
+
+/* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
+@media (pointer: coarse) {
+  html { --hit-min: 2.75rem; }
+}
+
+/* ----- Font Scale (6段階) ----- */
+html[data-font="xs"]  { --font-scale: 0.75; }
+html[data-font="sm"]  { --font-scale: 0.875; }
+html[data-font="md"]  { --font-scale: 1; }
+html[data-font="lg"]  { --font-scale: 1.125; }
+html[data-font="xl"]  { --font-scale: 1.25; }
+html[data-font="xxl"] { --font-scale: 1.5; }
+
+/* ----- UI Scale (5段階) ----- */
+html[data-ui="xs"] {
+  --ui-scale:0.5;
+  --space-1:2px; --space-2:4px; --space-3:8px;
+  --radius-sm:2px; --radius-md:4px; --radius-lg:10px;
+  --control-icon:18px; --control-header:32px;
+  --control-fab:48px; --control-chip-h:20px;
+  --dialog-w:85vw; --fab-padding:12px;
+  --switch-pad-v:6px; --switch-pad-h:12px;
+}
+html[data-ui="sm"] {
+  --ui-scale:0.75;
+  --space-1:3px; --space-2:6px; --space-3:12px;
+  --radius-sm:3px; --radius-md:6px; --radius-lg:13px;
+  --control-icon:20px; --control-header:36px;
+  --control-fab:54px; --control-chip-h:22px;
+  --dialog-w:82vw; --fab-padding:13px;
+  --switch-pad-v:8px; --switch-pad-h:16px;
+}
+html[data-ui="md"] {
+  --ui-scale:1;
+  --space-1:4px; --space-2:8px; --space-3:16px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+  --control-icon:24px; --control-header:40px;
+  --control-fab:60px; --control-chip-h:24px;
+  --dialog-w:80vw; --fab-padding:15px;
+  --switch-pad-v:10px; --switch-pad-h:20px;
+}
+html[data-ui="lg"] {
+  --ui-scale:1.25;
+  --space-1:6px; --space-2:10px; --space-3:20px;
+  --radius-sm:5px; --radius-md:10px; --radius-lg:20px;
+  --control-icon:28px; --control-header:44px;
+  --control-fab:66px; --control-chip-h:28px;
+  --dialog-w:75vw; --fab-padding:17px;
+  --switch-pad-v:12px; --switch-pad-h:24px;
+}
+html[data-ui="xl"] {
+  --ui-scale:1.5;
+  --space-1:8px; --space-2:12px; --space-3:24px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:24px;
+  --control-icon:32px; --control-header:48px;
+  --control-fab:72px; --control-chip-h:32px;
+  --dialog-w:600px; --fab-padding:20px;
+  --switch-pad-v:14px; --switch-pad-h:28px;
+}
+
+/* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */
+@media (pointer: coarse) {
+  html[data-ui] { --hit-min: 2.75rem; }
+}

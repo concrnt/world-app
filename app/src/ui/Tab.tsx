@@ -16,7 +16,7 @@ export const Tab = (props: Props) => {
     return (
         <div
             style={{
-                padding: '0.5rem',
+                padding: 'var(--space-2)',
                 position: 'relative',
                 display: 'flex',
                 justifyContent: 'center',

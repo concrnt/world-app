@@ -22,13 +22,13 @@ export const Chip = (props: Props) => {
                     style={{
                         border: `1px solid ${theme.divider}`,
                         color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
+                        fontSize: '1em',
+                        height: 'var(--control-chip-h)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 8px',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '0 var(--space-2)',
                         width: 'fit-content',
                         ...props.style
                     }}
@@ -44,7 +44,7 @@ export const Chip = (props: Props) => {
                     </div>
                     <div
                         style={{
-                            margin: '0 8px',
+                            margin: '0 var(--space-2)',
                             textAlign: 'center',
                             flex: 1
                         }}
@@ -70,13 +70,13 @@ export const Chip = (props: Props) => {
                     style={{
                         backgroundColor: 'rgba(0, 0, 0, 0.08)',
                         color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
+                        fontSize: '1em',
+                        height: 'var(--control-chip-h)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 4px',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '0 var(--space-1)',
                         width: 'fit-content',
                         ...props.style
                     }}
@@ -92,7 +92,7 @@ export const Chip = (props: Props) => {
                     </div>
                     <div
                         style={{
-                            margin: '0 8px',
+                            margin: '0 var(--space-2)',
                             textAlign: 'center',
                             flex: 1
                         }}

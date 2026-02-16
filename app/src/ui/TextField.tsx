@@ -18,9 +18,9 @@ export const TextField = (props: Props) => {
             placeholder={props.placeholder}
             onChange={props.onChange}
             style={{
-                padding: '8px',
-                fontSize: '16px',
-                borderRadius: '4px',
+                padding: 'var(--space-2)',
+                fontSize: '1em',
+                borderRadius: 'var(--radius-sm)',
                 borderColor: theme.divider,
                 backgroundColor: theme.content.background,
                 color: theme.content.text,

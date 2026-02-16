@@ -42,7 +42,7 @@ export const TimelinePicker = (props: Props) => {
             style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '8px',
+                gap: 'var(--space-2)',
                 position: 'relative',
                 alignItems: 'center'
             }}
@@ -107,8 +107,8 @@ export const TimelinePicker = (props: Props) => {
                         flex: '1',
                         border: 'none',
                         outline: 'none',
-                        padding: '8px',
-                        borderRadius: '4px',
+                        padding: 'var(--space-2)',
+                        borderRadius: 'var(--radius-sm)',
                         background: 'transparent'
                     }}
                     value={filter}
@@ -162,8 +162,8 @@ export const TimelinePicker = (props: Props) => {
                         width: '100%',
                         top: '100%',
                         left: 0,
-                        borderRadius: '4px',
-                        marginTop: '4px',
+                        borderRadius: 'var(--radius-sm)',
+                        marginTop: 'var(--space-1)',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                         zIndex: 1000,
                         backgroundColor: theme.content.background
@@ -173,7 +173,7 @@ export const TimelinePicker = (props: Props) => {
                         <div
                             key={props.keyFunc(opt)}
                             style={{
-                                padding: '8px',
+                                padding: 'var(--space-2)',
                                 cursor: 'pointer',
                                 borderBottom: `1px solid ${theme.divider}`,
                                 backgroundColor: focusedIdx === options.indexOf(opt) ? theme.divider : 'transparent'

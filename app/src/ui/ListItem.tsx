@@ -13,7 +13,7 @@ export const ListItem = (props: Props) => {
             style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: 'var(--space-2)'
             }}
         >
             <div
@@ -21,8 +21,9 @@ export const ListItem = (props: Props) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '24px',
-                    height: '24px'
+                    width: 'var(--control-icon)',
+                    height: 'var(--control-icon)',
+                    fontSize: 'var(--control-icon)'
                 }}
             >
                 {props.icon}

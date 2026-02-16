@@ -50,7 +50,7 @@ const ListItem = ({ list, target, reload }: { list: Document<ListSchema>; target
     return (
         <div
             style={{
-                padding: '8px',
+                padding: 'var(--space-2)',
                 borderBottom: '1px solid #ccc'
             }}
         >

@@ -1,5 +1,8 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+
+export type FontScaleKey = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'
+export type UIScaleKey = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 export interface PinnedList {
     uri: string
@@ -12,12 +15,16 @@ export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
     pinnedLists: PinnedList[]
+    fontScaleKey: FontScaleKey
+    uiScaleKey: UIScaleKey
 }
 
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
-    pinnedLists: []
+    pinnedLists: [],
+    fontScaleKey: 'md',
+    uiScaleKey: 'md'
 }
 
 interface PreferenceState {
@@ -38,6 +45,12 @@ interface PreferenceProviderProps {
 
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
     const [pref, setPref] = useLocalStorage<Preference>('preference', defaultPreference)
+
+    useEffect(() => {
+        const el = document.documentElement
+        el.dataset.font = pref.fontScaleKey ?? 'md'
+        el.dataset.ui = pref.uiScaleKey ?? 'md'
+    }, [pref.fontScaleKey, pref.uiScaleKey])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })

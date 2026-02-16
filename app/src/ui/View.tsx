@@ -33,8 +33,8 @@ export const View = (props: Props) => {
                     flexDirection: 'column',
                     color: theme.content.text,
                     backgroundColor: theme.content.background,
-                    margin: 'env(safe-area-inset-top) 4px 4px 4px',
-                    borderRadius: '8px',
+                    margin: 'env(safe-area-inset-top) var(--space-1) var(--space-1) var(--space-1)',
+                    borderRadius: 'var(--radius-md)',
                     overflow: 'hidden',
                     flex: 1
                 }}

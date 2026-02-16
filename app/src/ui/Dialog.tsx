@@ -40,7 +40,8 @@ export const Dialog = (props: Props) => {
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         backgroundColor: theme.content.background,
-                        width: '80vw',
+                        width: 'var(--dialog-w)',
+                        maxWidth: 'var(--dialog-max-w)',
                         ...props.style
                     }}
                     onClick={(e) => e.stopPropagation()}
