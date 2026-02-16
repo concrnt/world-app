@@ -24,9 +24,14 @@ const timelineIconStyle: React.CSSProperties = {
     fontSize: 'var(--timeline-icon-size, 14px)'
 }
 
-const timelineChipVPad: React.CSSProperties = {
+const timelineCloseStyle: React.CSSProperties = {
+    fontSize: 'calc(var(--timeline-icon-size, 14px) + 2px)'
+}
+
+const timelineChipPad: React.CSSProperties = {
     paddingTop: 'var(--timeline-chip-pad-v, 7px)',
-    paddingBottom: 'var(--timeline-chip-pad-v, 7px)'
+    paddingBottom: 'var(--timeline-chip-pad-v, 7px)',
+    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size, 14px) - 2px) / 2)'
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -72,7 +77,7 @@ export const TimelinePicker = (props: Props) => {
                 tailElement={
                     <IoMdCloseCircle
                         style={{
-                            ...timelineIconStyle,
+                            ...timelineCloseStyle,
                             transform: props.postHome === false ? 'rotate(45deg)' : 'none',
                             transition: 'transform 0.2s'
                         }}
@@ -83,7 +88,7 @@ export const TimelinePicker = (props: Props) => {
                     />
                 }
                 style={{
-                    ...timelineChipVPad,
+                    ...timelineChipPad,
                     textDecoration: props.postHome === false ? 'line-through' : 'none',
                     opacity: props.postHome === false ? 0.5 : 1
                 }}
@@ -97,11 +102,11 @@ export const TimelinePicker = (props: Props) => {
                     <Chip
                         key={sel}
                         headIconRound
-                        style={{ ...timelineChipVPad }}
+                        style={{ ...timelineChipPad }}
                         headElement={<MdOutlineTag style={timelineIconStyle} />}
                         tailElement={
                             <IoMdCloseCircle
-                                style={timelineIconStyle}
+                                style={timelineCloseStyle}
                                 onClick={() => {
                                     props.setSelected(props.selected.filter((s) => s !== sel))
                                 }}
@@ -162,7 +167,8 @@ export const TimelinePicker = (props: Props) => {
                         setFocused(true)
                     }}
                     style={{
-                        ...timelineChipVPad,
+                        ...timelineChipPad,
+                        paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size, 14px)) / 2)',
                         color: theme.divider
                     }}
                     tailElement={<IoMdAdd style={timelineIconStyle} />}
