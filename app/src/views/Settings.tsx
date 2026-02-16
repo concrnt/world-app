@@ -25,9 +25,9 @@ const fontScaleHints: Partial<Record<string, string>> = {
 }
 
 const uiScaleOptions = [
-    { key: 'xs', label: 'コンパクト' },
-    { key: 'sm', label: 'やや小' },
-    { key: 'md', label: '標準' }
+    { key: 'md', label: '標準' },
+    { key: 'sm', label: 'やや密' },
+    { key: 'xs', label: '高密度' }
 ]
 
 export const SettingsView = () => {
