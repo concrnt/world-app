@@ -1,7 +1,6 @@
 /* デフォルト (md) — data属性セット前のフラッシュ防止 */
 :root {
   --font-scale: 1;
-  --ui-scale: 1;
   --font-base: calc(16px * var(--font-scale));
   --space-1: 4px;  --space-2: 8px;  --space-3: 16px;
   --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;
@@ -12,19 +11,15 @@
   --switch-pad-v: 10px;  --switch-pad-h: 20px;
   --profile-head-gap: 8px;
   --profile-avatar: 100px;
-  --profile-avatar-overhang: calc(var(--profile-avatar) / 2);
-  --profile-head-row-h: max(var(--control-header), var(--profile-avatar-overhang));
+  --profile-head-row-h: max(var(--control-header), calc(var(--profile-avatar) / 2));
   --text-xs: calc(0.75rem * var(--font-scale));
-  --text-lg: calc(1.2rem * var(--font-scale));
-  --profile-username-size: var(--text-lg);
+  --profile-username-size: calc(1.2rem * var(--font-scale));
   --chip-icon-slot: 20px;
-  --chip-icon-size: 14px;
   --chip-icon-gap: 6px;
   --timeline-icon-size: 14px;
   --timeline-avatar-size: 16px;
   --timeline-chip-pad-v: 7px;
-  --timeline-chip-pad-h: 8px;
-  --timeline-close-size: calc(var(--timeline-icon-size, 14px) + 2px);
+  --timeline-close-size: calc(var(--timeline-icon-size) + 2px);
 }
 
 /* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
@@ -42,7 +37,6 @@ html[data-font="xxl"] { --font-scale: 1.5; }
 
 /* ----- UI Scale (5段階) ----- */
 html[data-ui="xs"] {
-  --ui-scale:0.5;
   --space-1:2px; --space-2:4px; --space-3:8px;
   --radius-sm:2px; --radius-md:4px; --radius-lg:10px;
   --control-icon:18px; --control-header:32px;
@@ -50,12 +44,11 @@ html[data-ui="xs"] {
   --dialog-w:85vw; --fab-padding:12px;
   --switch-pad-v:6px; --switch-pad-h:12px;
   --profile-head-gap:0.625rem;
-  --chip-icon-slot:16px; --chip-icon-size:11px; --chip-icon-gap:4px;
+  --chip-icon-slot:16px; --chip-icon-gap:4px;
   --timeline-icon-size:12px; --timeline-avatar-size:15px;
-  --timeline-chip-pad-v:6px; --timeline-chip-pad-h:6px;
+  --timeline-chip-pad-v:6px;
 }
 html[data-ui="sm"] {
-  --ui-scale:0.75;
   --space-1:3px; --space-2:6px; --space-3:12px;
   --radius-sm:3px; --radius-md:6px; --radius-lg:13px;
   --control-icon:20px; --control-header:36px;
@@ -63,12 +56,11 @@ html[data-ui="sm"] {
   --dialog-w:82vw; --fab-padding:13px;
   --switch-pad-v:8px; --switch-pad-h:16px;
   --profile-head-gap:6px;
-  --chip-icon-slot:18px; --chip-icon-size:12px; --chip-icon-gap:4px;
+  --chip-icon-slot:18px; --chip-icon-gap:4px;
   --timeline-icon-size:13px; --timeline-avatar-size:16px;
-  --timeline-chip-pad-v:6px; --timeline-chip-pad-h:7px;
+  --timeline-chip-pad-v:6px;
 }
 html[data-ui="md"] {
-  --ui-scale:1;
   --space-1:4px; --space-2:8px; --space-3:16px;
   --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
   --control-icon:24px; --control-header:40px;
@@ -76,12 +68,11 @@ html[data-ui="md"] {
   --dialog-w:80vw; --fab-padding:15px;
   --switch-pad-v:10px; --switch-pad-h:20px;
   --profile-head-gap:8px;
-  --chip-icon-slot:20px; --chip-icon-size:14px; --chip-icon-gap:6px;
+  --chip-icon-slot:20px; --chip-icon-gap:6px;
   --timeline-icon-size:14px; --timeline-avatar-size:17px;
-  --timeline-chip-pad-v:7px; --timeline-chip-pad-h:8px;
+  --timeline-chip-pad-v:7px;
 }
 html[data-ui="lg"] {
-  --ui-scale:1.25;
   --space-1:6px; --space-2:10px; --space-3:20px;
   --radius-sm:5px; --radius-md:10px; --radius-lg:20px;
   --control-icon:28px; --control-header:44px;
@@ -89,12 +80,11 @@ html[data-ui="lg"] {
   --dialog-w:75vw; --fab-padding:17px;
   --switch-pad-v:12px; --switch-pad-h:24px;
   --profile-head-gap:10px;
-  --chip-icon-slot:24px; --chip-icon-size:16px; --chip-icon-gap:6px;
+  --chip-icon-slot:24px; --chip-icon-gap:6px;
   --timeline-icon-size:15px; --timeline-avatar-size:18px;
-  --timeline-chip-pad-v:8px; --timeline-chip-pad-h:9px;
+  --timeline-chip-pad-v:8px;
 }
 html[data-ui="xl"] {
-  --ui-scale:1.5;
   --space-1:8px; --space-2:12px; --space-3:24px;
   --radius-sm:6px; --radius-md:12px; --radius-lg:24px;
   --control-icon:32px; --control-header:48px;
@@ -102,9 +92,9 @@ html[data-ui="xl"] {
   --dialog-w:600px; --fab-padding:20px;
   --switch-pad-v:14px; --switch-pad-h:28px;
   --profile-head-gap:12px;
-  --chip-icon-slot:28px; --chip-icon-size:18px; --chip-icon-gap:8px;
+  --chip-icon-slot:28px; --chip-icon-gap:8px;
   --timeline-icon-size:16px; --timeline-avatar-size:19px;
-  --timeline-chip-pad-v:8px; --timeline-chip-pad-h:10px;
+  --timeline-chip-pad-v:8px;
 }
 
 /* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */

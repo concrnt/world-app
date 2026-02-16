@@ -24,6 +24,10 @@ const timelineIconStyle: React.CSSProperties = {
     fontSize: 'var(--timeline-icon-size, 14px)'
 }
 
+// close アイコンは icon より +2px 大きい (--timeline-close-size)。
+// paddingRight は tail アイコンサイズに応じて角丸軸と揃える。
+// close 付きチップ → --timeline-close-size 基準
+// 追加チップ (IoMdAdd) → --timeline-icon-size 基準 (l.171)
 const timelineCloseStyle: React.CSSProperties = {
     fontSize: 'var(--timeline-close-size, 16px)'
 }
