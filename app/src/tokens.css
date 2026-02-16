@@ -22,7 +22,6 @@
   --chip-icon-gap: 6px;
   --timeline-icon-size: 14px;
   --timeline-avatar-size: 16px;
-  --timeline-icon-slot: 24px;
   --timeline-chip-pad-v: 7px;
   --timeline-chip-pad-h: 8px;
 }
@@ -50,9 +49,9 @@ html[data-ui="xs"] {
   --dialog-w:85vw; --fab-padding:12px;
   --switch-pad-v:6px; --switch-pad-h:12px;
   --profile-head-gap:0.625rem;
-  --chip-icon-slot:16px; --chip-icon-size:11px;
+  --chip-icon-slot:16px; --chip-icon-size:11px; --chip-icon-gap:4px;
   --timeline-icon-size:12px; --timeline-avatar-size:15px;
-  --timeline-icon-slot:20px; --timeline-chip-pad-v:6px; --timeline-chip-pad-h:6px;
+  --timeline-chip-pad-v:6px; --timeline-chip-pad-h:6px;
 }
 html[data-ui="sm"] {
   --ui-scale:0.75;
@@ -63,9 +62,9 @@ html[data-ui="sm"] {
   --dialog-w:82vw; --fab-padding:13px;
   --switch-pad-v:8px; --switch-pad-h:16px;
   --profile-head-gap:6px;
-  --chip-icon-slot:18px; --chip-icon-size:12px;
+  --chip-icon-slot:18px; --chip-icon-size:12px; --chip-icon-gap:4px;
   --timeline-icon-size:13px; --timeline-avatar-size:16px;
-  --timeline-icon-slot:22px; --timeline-chip-pad-v:6px; --timeline-chip-pad-h:7px;
+  --timeline-chip-pad-v:6px; --timeline-chip-pad-h:7px;
 }
 html[data-ui="md"] {
   --ui-scale:1;
@@ -76,9 +75,9 @@ html[data-ui="md"] {
   --dialog-w:80vw; --fab-padding:15px;
   --switch-pad-v:10px; --switch-pad-h:20px;
   --profile-head-gap:8px;
-  --chip-icon-slot:20px; --chip-icon-size:14px;
+  --chip-icon-slot:20px; --chip-icon-size:14px; --chip-icon-gap:6px;
   --timeline-icon-size:14px; --timeline-avatar-size:17px;
-  --timeline-icon-slot:24px; --timeline-chip-pad-v:7px; --timeline-chip-pad-h:8px;
+  --timeline-chip-pad-v:7px; --timeline-chip-pad-h:8px;
 }
 html[data-ui="lg"] {
   --ui-scale:1.25;
@@ -89,9 +88,9 @@ html[data-ui="lg"] {
   --dialog-w:75vw; --fab-padding:17px;
   --switch-pad-v:12px; --switch-pad-h:24px;
   --profile-head-gap:10px;
-  --chip-icon-slot:24px; --chip-icon-size:16px;
+  --chip-icon-slot:24px; --chip-icon-size:16px; --chip-icon-gap:6px;
   --timeline-icon-size:15px; --timeline-avatar-size:18px;
-  --timeline-icon-slot:24px; --timeline-chip-pad-v:8px; --timeline-chip-pad-h:9px;
+  --timeline-chip-pad-v:8px; --timeline-chip-pad-h:9px;
 }
 html[data-ui="xl"] {
   --ui-scale:1.5;
@@ -102,9 +101,9 @@ html[data-ui="xl"] {
   --dialog-w:600px; --fab-padding:20px;
   --switch-pad-v:14px; --switch-pad-h:28px;
   --profile-head-gap:12px;
-  --chip-icon-slot:28px; --chip-icon-size:18px;
+  --chip-icon-slot:28px; --chip-icon-size:18px; --chip-icon-gap:8px;
   --timeline-icon-size:16px; --timeline-avatar-size:19px;
-  --timeline-icon-slot:26px; --timeline-chip-pad-v:8px; --timeline-chip-pad-h:10px;
+  --timeline-chip-pad-v:8px; --timeline-chip-pad-h:10px;
 }
 
 /* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */

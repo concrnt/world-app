@@ -24,6 +24,8 @@ const timelineIconStyle: React.CSSProperties = {
     fontSize: 'var(--timeline-icon-size, 14px)'
 }
 
+const timelineChipPadding = 'var(--timeline-chip-pad-v, 7px) var(--timeline-chip-pad-h, 8px)'
+
 export const TimelinePicker = (props: Props) => {
     const theme = useTheme()
     const { client } = useClient()
@@ -78,6 +80,7 @@ export const TimelinePicker = (props: Props) => {
                     />
                 }
                 style={{
+                    padding: timelineChipPadding,
                     textDecoration: props.postHome === false ? 'line-through' : 'none',
                     opacity: props.postHome === false ? 0.5 : 1
                 }}
@@ -91,6 +94,7 @@ export const TimelinePicker = (props: Props) => {
                     <Chip
                         key={sel}
                         headIconRound
+                        style={{ padding: timelineChipPadding }}
                         headElement={<MdOutlineTag style={timelineIconStyle} />}
                         tailElement={
                             <IoMdCloseCircle
@@ -155,6 +159,7 @@ export const TimelinePicker = (props: Props) => {
                         setFocused(true)
                     }}
                     style={{
+                        padding: timelineChipPadding,
                         color: theme.divider
                     }}
                     tailElement={<IoMdAdd style={timelineIconStyle} />}

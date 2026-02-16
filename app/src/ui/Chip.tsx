@@ -19,12 +19,13 @@ export const Chip = (props: Props) => {
         props.headIconRound ? (
             <div
                 style={{
-                    width: 'var(--chip-icon-slot, 24px)',
-                    height: 'var(--chip-icon-slot, 24px)',
+                    width: 'var(--chip-icon-slot, 20px)',
+                    height: 'var(--chip-icon-slot, 20px)',
                     borderRadius: '50%',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    flex: '0 0 auto'
                 }}
             >
                 {el}
@@ -33,101 +34,54 @@ export const Chip = (props: Props) => {
             el
         )
 
-    switch (props.variant) {
-        case 'outlined':
-            return (
-                <div
-                    onClick={props.onClick}
-                    style={{
-                        border: `1px solid ${theme.divider}`,
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '1em',
-                        height: 'var(--control-chip-h)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 'var(--radius-lg)',
-                        padding: '0 var(--space-2)',
-                        width: 'fit-content',
-                        ...props.style
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {wrapHead(props.headElement)}
-                    </div>
-                    <div
-                        style={{
-                            margin: '0 var(--space-2)',
-                            textAlign: 'center',
-                            flex: 1
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {props.tailElement}
-                    </div>
-                </div>
-            )
-        case 'contained':
-        default:
-            return (
-                <div
-                    onClick={props.onClick}
-                    style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '1em',
-                        height: 'var(--control-chip-h)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 'var(--radius-lg)',
-                        padding: '0 var(--space-1)',
-                        width: 'fit-content',
-                        ...props.style
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {wrapHead(props.headElement)}
-                    </div>
-                    <div
-                        style={{
-                            margin: '0 var(--space-2)',
-                            textAlign: 'center',
-                            flex: 1
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {props.tailElement}
-                    </div>
-                </div>
-            )
-    }
+    const isOutlined = props.variant === 'outlined'
+
+    return (
+        <div
+            onClick={props.onClick}
+            style={{
+                border: isOutlined ? `1px solid ${theme.divider}` : undefined,
+                backgroundColor: isOutlined ? undefined : 'rgba(0, 0, 0, 0.08)',
+                color: 'rgb(41, 46, 36)',
+                fontSize: '1em',
+                height: 'var(--control-chip-h)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 'var(--chip-icon-gap, 6px)',
+                borderRadius: 'var(--radius-lg)',
+                padding: isOutlined ? '0 var(--space-2)' : '0 var(--space-1)',
+                ...props.style
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: '0 0 auto'
+                }}
+            >
+                {wrapHead(props.headElement)}
+            </div>
+            <div
+                style={{
+                    flex: '0 0 auto',
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap'
+                }}
+            >
+                {props.children}
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: '0 0 auto'
+                }}
+            >
+                {props.tailElement}
+            </div>
+        </div>
+    )
 }
