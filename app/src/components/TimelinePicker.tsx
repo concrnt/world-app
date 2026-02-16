@@ -20,8 +20,8 @@ interface Props {
     setPostHome?: (postHome: boolean) => void
 }
 
-const chipIconStyle: React.CSSProperties = {
-    fontSize: 'var(--chip-icon-size, 16px)'
+const timelineIconStyle: React.CSSProperties = {
+    fontSize: 'var(--timeline-icon-size, 14px)'
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -58,8 +58,8 @@ export const TimelinePicker = (props: Props) => {
                         ccid={client?.ccid ?? ''}
                         src={client?.user?.profile?.avatar}
                         style={{
-                            width: 'var(--chip-icon-slot, 24px)',
-                            height: 'var(--chip-icon-slot, 24px)',
+                            width: 'var(--timeline-avatar-size, 17px)',
+                            height: 'var(--timeline-avatar-size, 17px)',
                             borderRadius: '50%'
                         }}
                     />
@@ -67,7 +67,7 @@ export const TimelinePicker = (props: Props) => {
                 tailElement={
                     <IoMdCloseCircle
                         style={{
-                            ...chipIconStyle,
+                            ...timelineIconStyle,
                             transform: props.postHome === false ? 'rotate(45deg)' : 'none',
                             transition: 'transform 0.2s'
                         }}
@@ -91,10 +91,10 @@ export const TimelinePicker = (props: Props) => {
                     <Chip
                         key={sel}
                         headIconRound
-                        headElement={<MdOutlineTag style={chipIconStyle} />}
+                        headElement={<MdOutlineTag style={timelineIconStyle} />}
                         tailElement={
                             <IoMdCloseCircle
-                                style={chipIconStyle}
+                                style={timelineIconStyle}
                                 onClick={() => {
                                     props.setSelected(props.selected.filter((s) => s !== sel))
                                 }}
@@ -157,7 +157,7 @@ export const TimelinePicker = (props: Props) => {
                     style={{
                         color: theme.divider
                     }}
-                    tailElement={<IoMdAdd style={chipIconStyle} />}
+                    tailElement={<IoMdAdd style={timelineIconStyle} />}
                 >
                     投稿先を追加
                 </Chip>
