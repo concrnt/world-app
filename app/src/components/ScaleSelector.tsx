@@ -35,7 +35,7 @@ export const ScaleSelector = (props: Props) => {
                             borderRadius: 'var(--radius-sm)',
                             backgroundColor: selected ? theme.ui.background : 'transparent',
                             color: selected ? theme.ui.text : theme.content.text,
-                            fontSize: 'var(--text-xs)',
+                            fontSize: 'var(--text-s)',
                             fontWeight: selected ? 'bold' : 'normal',
                             cursor: 'pointer',
                             minHeight: 'var(--hit-min)',

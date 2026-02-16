@@ -15,17 +15,19 @@ const fontScaleOptions = [
     { key: 'xs', label: '極小' },
     { key: 'sm', label: '小' },
     { key: 'md', label: '標準' },
-    { key: 'lg', label: '大' },
-    { key: 'xl', label: '特大' },
+    { key: 'xl', label: '大' },
     { key: 'xxl', label: '最大' }
 ]
+
+const fontScaleHints: Partial<Record<string, string>> = {
+    xs: '投稿本文のみさらに縮小されます',
+    xxl: '投稿本文のみさらに拡大されます'
+}
 
 const uiScaleOptions = [
     { key: 'xs', label: 'コンパクト' },
     { key: 'sm', label: 'やや小' },
-    { key: 'md', label: '標準' },
-    { key: 'lg', label: 'ゆとり' },
-    { key: 'xl', label: '広め' }
+    { key: 'md', label: '標準' }
 ]
 
 export const SettingsView = () => {
@@ -85,6 +87,11 @@ export const SettingsView = () => {
                                 value={fontScaleKey}
                                 onChange={(v) => setFontScaleKey(v as FontScaleKey)}
                             />
+                            {fontScaleHints[fontScaleKey] && (
+                                <Text style={{ marginTop: 'var(--space-1)', fontSize: 'var(--text-xs)', opacity: 0.7 }}>
+                                    {fontScaleHints[fontScaleKey]}
+                                </Text>
+                            )}
                         </div>
                         <div>
                             <Text style={{ marginBottom: 'var(--space-1)' }}>UI密度</Text>

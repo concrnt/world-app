@@ -233,7 +233,8 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
     return (
         <div
             style={{
-                whiteSpace: 'pre-wrap'
+                whiteSpace: 'pre-wrap',
+                fontSize: 'var(--content-font-base)'
             }}
         >
             <RenderAst ast={ast} emojis={props.emojiDict} />
