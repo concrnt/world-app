@@ -11,7 +11,7 @@ interface Props {
     onChange: (v: string) => void
 }
 
-export const ScaleSelector = (props: Props) => {
+export const SegmentedControl = (props: Props) => {
     const theme = useTheme()
 
     return (

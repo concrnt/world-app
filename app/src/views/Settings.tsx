@@ -7,7 +7,7 @@ import { Text } from '../ui/Text'
 import { ThemeCard } from '../components/ThemeCard'
 import { Themes } from '../data/themes'
 import { usePreference, useResetPreference } from '../contexts/Preference'
-import { ScaleSelector } from '../components/ScaleSelector'
+import { SegmentedControl } from '../components/SegmentedControl'
 
 import type { FontScaleKey, UIScaleKey } from '../contexts/Preference'
 
@@ -82,7 +82,7 @@ export const SettingsView = () => {
                     >
                         <div>
                             <Text style={{ marginBottom: 'var(--space-1)' }}>文字サイズ</Text>
-                            <ScaleSelector
+                            <SegmentedControl
                                 options={fontScaleOptions}
                                 value={fontScaleKey}
                                 onChange={(v) => setFontScaleKey(v as FontScaleKey)}
@@ -95,7 +95,7 @@ export const SettingsView = () => {
                         </div>
                         <div>
                             <Text style={{ marginBottom: 'var(--space-1)' }}>UI密度</Text>
-                            <ScaleSelector
+                            <SegmentedControl
                                 options={uiScaleOptions}
                                 value={uiScaleKey}
                                 onChange={(v) => setUIScaleKey(v as UIScaleKey)}
