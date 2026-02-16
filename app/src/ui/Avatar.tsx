@@ -16,7 +16,8 @@ export const Avatar = (props: Props) => {
                         width: 'var(--control-header)',
                         height: 'var(--control-header)',
                         borderRadius: 'var(--radius-sm)',
-                        backgroundColor: '#e0e0e0'
+                        backgroundColor: '#e0e0e0',
+                        ...props.style
                     }}
                 />
             }
@@ -38,6 +39,8 @@ const Inner = (props: Props) => {
                     width: 'var(--control-header)',
                     height: 'var(--control-header)',
                     borderRadius: 'var(--radius-sm)',
+                    overflow: 'hidden',
+                    objectFit: 'cover',
                     ...props.style
                 }}
             />
@@ -52,6 +55,7 @@ const Inner = (props: Props) => {
                     width: 'var(--control-header)',
                     height: 'var(--control-header)',
                     borderRadius: 'var(--radius-sm)',
+                    overflow: 'hidden',
                     ...props.style
                 }}
                 name={props.ccid}

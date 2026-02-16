@@ -15,26 +15,11 @@ interface Props {
 export const Chip = (props: Props) => {
     const theme = useTheme()
 
-    const wrapHead = (el: ReactNode) =>
-        props.headIconRound ? (
-            <div
-                style={{
-                    width: 'var(--chip-icon-slot, 20px)',
-                    height: 'var(--chip-icon-slot, 20px)',
-                    borderRadius: '50%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: '0 0 auto'
-                }}
-            >
-                {el}
-            </div>
-        ) : (
-            el
-        )
-
+    const hasHead = !!props.headElement
+    const hasTail = !!props.tailElement
     const isOutlined = props.variant === 'outlined'
+
+    const basePad = isOutlined ? 'var(--space-2)' : 'var(--space-1)'
 
     return (
         <div
@@ -49,39 +34,39 @@ export const Chip = (props: Props) => {
                 alignItems: 'center',
                 gap: 'var(--chip-icon-gap, 6px)',
                 borderRadius: 'var(--radius-lg)',
-                padding: isOutlined ? '0 var(--space-2)' : '0 var(--space-1)',
+                paddingLeft: hasHead ? '2px' : basePad,
+                paddingRight: hasTail ? '2px' : basePad,
                 ...props.style
             }}
         >
-            <div
+            {hasHead &&
+                (props.headIconRound ? (
+                    <div
+                        style={{
+                            width: 'var(--chip-icon-slot, 20px)',
+                            height: 'var(--chip-icon-slot, 20px)',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flex: '0 0 auto'
+                        }}
+                    >
+                        {props.headElement}
+                    </div>
+                ) : (
+                    props.headElement
+                ))}
+            <span
                 style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: '0 0 auto'
-                }}
-            >
-                {wrapHead(props.headElement)}
-            </div>
-            <div
-                style={{
-                    flex: '0 0 auto',
                     lineHeight: 1,
                     whiteSpace: 'nowrap'
                 }}
             >
                 {props.children}
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: '0 0 auto'
-                }}
-            >
-                {props.tailElement}
-            </div>
+            </span>
+            {hasTail && props.tailElement}
         </div>
     )
 }
