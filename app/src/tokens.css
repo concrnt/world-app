@@ -26,7 +26,7 @@
   --hit-min: 44px;  --dialog-w: 80vw;  --dialog-max-w: 600px;
   --fab-padding: 15px;
   --switch-pad-v: 10px;  --switch-pad-h: 20px;
-  --profile-head-gap: 8px;
+  --profile-head-gap: var(--space-2);
   --profile-avatar: 100px;
   --profile-head-row-h: max(var(--control-header), calc(var(--profile-avatar) / 2));
   --text-xs: calc(0.75rem * var(--font-scale));
@@ -35,7 +35,7 @@
   --chip-icon-gap: 6px;
   --chip-pad-edge: 2px;
   --timeline-icon-size: 14px;
-  --timeline-avatar-size: 16px;
+  --timeline-avatar-size: 17px;
   --timeline-chip-pad-v: 7px;
   --timeline-close-size: calc(var(--timeline-icon-size) + 2px);
   /* sheet handle — bar */
@@ -55,7 +55,7 @@
 
 /* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
 @media (pointer: coarse) {
-  html { --hit-min: 2.75rem; }
+  html { --hit-min: max(44px, 2.75rem); }
 }
 
 /* ----- Font Scale (6段階) ----- */
@@ -74,7 +74,6 @@ html[data-ui="xs"] {
   --control-fab:48px; --control-chip-h:20px;
   --dialog-w:85vw; --fab-padding:12px;
   --switch-pad-v:6px; --switch-pad-h:12px;
-  --profile-head-gap:0.625rem;
   --chip-icon-slot:16px; --chip-icon-gap:4px; --chip-pad-edge:1px;
   --timeline-icon-size:12px; --timeline-avatar-size:15px;
   --timeline-chip-pad-v:6px;
@@ -90,7 +89,6 @@ html[data-ui="sm"] {
   --control-fab:54px; --control-chip-h:22px;
   --dialog-w:82vw; --fab-padding:13px;
   --switch-pad-v:8px; --switch-pad-h:16px;
-  --profile-head-gap:6px;
   --chip-icon-slot:18px; --chip-icon-gap:4px; --chip-pad-edge:2px;
   --timeline-icon-size:13px; --timeline-avatar-size:16px;
   --timeline-chip-pad-v:6px;
@@ -106,7 +104,6 @@ html[data-ui="md"] {
   --control-fab:60px; --control-chip-h:24px;
   --dialog-w:80vw; --fab-padding:15px;
   --switch-pad-v:10px; --switch-pad-h:20px;
-  --profile-head-gap:8px;
   --chip-icon-slot:20px; --chip-icon-gap:6px; --chip-pad-edge:2px;
   --timeline-icon-size:14px; --timeline-avatar-size:17px;
   --timeline-chip-pad-v:7px;
@@ -122,7 +119,6 @@ html[data-ui="lg"] {
   --control-fab:66px; --control-chip-h:28px;
   --dialog-w:75vw; --fab-padding:17px;
   --switch-pad-v:12px; --switch-pad-h:24px;
-  --profile-head-gap:10px;
   --chip-icon-slot:24px; --chip-icon-gap:6px; --chip-pad-edge:3px;
   --timeline-icon-size:15px; --timeline-avatar-size:18px;
   --timeline-chip-pad-v:8px;
@@ -138,7 +134,6 @@ html[data-ui="xl"] {
   --control-fab:72px; --control-chip-h:32px;
   --dialog-w:600px; --fab-padding:20px;
   --switch-pad-v:14px; --switch-pad-h:28px;
-  --profile-head-gap:12px;
   --chip-icon-slot:28px; --chip-icon-gap:8px; --chip-pad-edge:4px;
   --timeline-icon-size:16px; --timeline-avatar-size:19px;
   --timeline-chip-pad-v:8px;
@@ -150,5 +145,5 @@ html[data-ui="xl"] {
 
 /* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */
 @media (pointer: coarse) {
-  html[data-ui] { --hit-min: 2.75rem; }
+  html[data-ui] { --hit-min: max(44px, 2.75rem); }
 }
