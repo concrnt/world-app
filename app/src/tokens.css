@@ -10,6 +10,10 @@
   --hit-min: 44px;  --dialog-w: 80vw;  --dialog-max-w: 600px;
   --fab-padding: 15px;
   --switch-pad-v: 10px;  --switch-pad-h: 20px;
+  --profile-head-gap: 8px;
+  --profile-avatar: 100px;
+  --profile-avatar-overhang: calc(var(--profile-avatar) / 2);
+  --profile-head-row-h: max(var(--control-header), var(--profile-avatar-overhang));
 }
 
 /* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
@@ -34,6 +38,7 @@ html[data-ui="xs"] {
   --control-fab:48px; --control-chip-h:20px;
   --dialog-w:85vw; --fab-padding:12px;
   --switch-pad-v:6px; --switch-pad-h:12px;
+  --profile-head-gap:0.625rem;
 }
 html[data-ui="sm"] {
   --ui-scale:0.75;
@@ -43,6 +48,7 @@ html[data-ui="sm"] {
   --control-fab:54px; --control-chip-h:22px;
   --dialog-w:82vw; --fab-padding:13px;
   --switch-pad-v:8px; --switch-pad-h:16px;
+  --profile-head-gap:6px;
 }
 html[data-ui="md"] {
   --ui-scale:1;
@@ -52,6 +58,7 @@ html[data-ui="md"] {
   --control-fab:60px; --control-chip-h:24px;
   --dialog-w:80vw; --fab-padding:15px;
   --switch-pad-v:10px; --switch-pad-h:20px;
+  --profile-head-gap:8px;
 }
 html[data-ui="lg"] {
   --ui-scale:1.25;
@@ -61,6 +68,7 @@ html[data-ui="lg"] {
   --control-fab:66px; --control-chip-h:28px;
   --dialog-w:75vw; --fab-padding:17px;
   --switch-pad-v:12px; --switch-pad-h:24px;
+  --profile-head-gap:10px;
 }
 html[data-ui="xl"] {
   --ui-scale:1.5;
@@ -70,6 +78,7 @@ html[data-ui="xl"] {
   --control-fab:72px; --control-chip-h:32px;
   --dialog-w:600px; --fab-padding:20px;
   --switch-pad-v:14px; --switch-pad-h:28px;
+  --profile-head-gap:12px;
 }
 
 /* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */

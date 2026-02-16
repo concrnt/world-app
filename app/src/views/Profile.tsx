@@ -111,8 +111,8 @@ export const ProfileView = (props: Props) => {
                     <Avatar
                         ccid={props.id}
                         style={{
-                            width: '100px',
-                            height: '100px',
+                            width: 'var(--profile-avatar)',
+                            height: 'var(--profile-avatar)',
                             position: 'absolute',
                             transform: 'translateY(-50%)',
                             left: 'var(--space-2)'
@@ -124,13 +124,13 @@ export const ProfileView = (props: Props) => {
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 'var(--space-1)',
+                        gap: 'var(--profile-head-gap)',
                         padding: '0 var(--space-2)'
                     }}
                 >
                     <div
                         style={{
-                            height: 'var(--control-header)',
+                            minHeight: 'var(--profile-head-row-h)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-end'
@@ -153,7 +153,10 @@ export const ProfileView = (props: Props) => {
                             variant="h6"
                             style={{
                                 fontWeight: 'bold',
-                                fontSize: '1.2rem'
+                                fontSize: '1.2rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
                             }}
                         >
                             {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
