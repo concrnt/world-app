@@ -153,7 +153,7 @@ export const ProfileView = (props: Props) => {
                             variant="h6"
                             style={{
                                 fontWeight: 'bold',
-                                fontSize: '1.2rem',
+                                fontSize: '1.2em',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'
