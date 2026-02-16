@@ -61,7 +61,7 @@ export const Chip = (props: Props) => {
             <span
                 style={{
                     lineHeight: 1,
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'normal'
                 }}
             >
                 {props.children}
