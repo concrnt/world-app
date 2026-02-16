@@ -1,9 +1,14 @@
 import { useTheme } from '../contexts/Theme'
 
+interface Option {
+    key: string
+    label: string
+}
+
 interface Props {
-    options: string[]
+    options: Option[]
     value: string
-    onChange: (value: string) => void
+    onChange: (v: string) => void
 }
 
 export const ScaleSelector = (props: Props) => {
@@ -12,29 +17,37 @@ export const ScaleSelector = (props: Props) => {
     return (
         <div
             style={{
-                display: 'flex',
-                gap: 'var(--space-1)'
+                display: 'grid',
+                gridTemplateColumns: `repeat(${props.options.length}, 1fr)`,
+                gap: 'var(--space-1)',
+                width: '100%'
             }}
         >
-            {props.options.map((option) => (
-                <button
-                    key={option}
-                    onClick={() => props.onChange(option)}
-                    style={{
-                        padding: 'var(--space-1) var(--space-2)',
-                        border: 'none',
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: props.value === option ? theme.ui.background : 'transparent',
-                        color: props.value === option ? theme.ui.text : theme.content.text,
-                        fontSize: '1em',
-                        cursor: 'pointer',
-                        fontWeight: props.value === option ? 'bold' : 'normal',
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    {option}
-                </button>
-            ))}
+            {props.options.map((option) => {
+                const selected = props.value === option.key
+                return (
+                    <button
+                        key={option.key}
+                        onClick={() => props.onChange(option.key)}
+                        style={{
+                            padding: 'var(--space-1)',
+                            border: selected ? 'none' : `1px solid ${theme.divider}`,
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: selected ? theme.ui.background : 'transparent',
+                            color: selected ? theme.ui.text : theme.content.text,
+                            fontSize: 'var(--text-xs)',
+                            fontWeight: selected ? 'bold' : 'normal',
+                            cursor: 'pointer',
+                            minHeight: 'var(--hit-min)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}
+                    >
+                        {option.label}
+                    </button>
+                )
+            })}
         </div>
     )
 }

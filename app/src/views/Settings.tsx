@@ -11,6 +11,23 @@ import { ScaleSelector } from '../components/ScaleSelector'
 
 import type { FontScaleKey, UIScaleKey } from '../contexts/Preference'
 
+const fontScaleOptions: { key: FontScaleKey; label: string; description: string }[] = [
+    { key: 'xs', label: '極小', description: '極小' },
+    { key: 'sm', label: '小', description: '小' },
+    { key: 'md', label: '標準', description: '標準（推奨）' },
+    { key: 'lg', label: '大', description: '大' },
+    { key: 'xl', label: '特大', description: '特大' },
+    { key: 'xxl', label: '最大', description: '最大' }
+]
+
+const uiScaleOptions: { key: UIScaleKey; label: string; description: string }[] = [
+    { key: 'xs', label: 'コンパクト', description: 'コンパクト（情報量重視）' },
+    { key: 'sm', label: 'やや小', description: 'ややコンパクト' },
+    { key: 'md', label: '標準', description: '標準（推奨）' },
+    { key: 'lg', label: 'ゆとり', description: 'ゆとり（見やすさ重視）' },
+    { key: 'xl', label: '広め', description: '広め（大きめUI）' }
+]
+
 export const SettingsView = () => {
     const { logout } = useClient()
 
@@ -18,6 +35,9 @@ export const SettingsView = () => {
     const [fontScaleKey, setFontScaleKey] = usePreference('fontScaleKey')
     const [uiScaleKey, setUIScaleKey] = usePreference('uiScaleKey')
     const reset = useResetPreference()
+
+    const currentFontDesc = fontScaleOptions.find((o) => o.key === fontScaleKey)?.description ?? '標準（推奨）'
+    const currentUIDesc = uiScaleOptions.find((o) => o.key === uiScaleKey)?.description ?? '標準（推奨）'
 
     return (
         <View>
@@ -58,36 +78,42 @@ export const SettingsView = () => {
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 'var(--space-2)'
+                            gap: 'var(--space-3)'
                         }}
                     >
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <Text>文字サイズ</Text>
+                        <div>
+                            <Text style={{ marginBottom: 'var(--space-1)' }}>文字サイズ</Text>
                             <ScaleSelector
-                                options={['xs', 'sm', 'md', 'lg', 'xl', 'xxl']}
+                                options={fontScaleOptions}
                                 value={fontScaleKey}
                                 onChange={(v) => setFontScaleKey(v as FontScaleKey)}
                             />
+                            <Text
+                                style={{
+                                    fontSize: 'var(--text-xs)',
+                                    opacity: 0.7,
+                                    marginTop: 'var(--space-1)'
+                                }}
+                            >
+                                {currentFontDesc}
+                            </Text>
                         </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <Text>UI密度</Text>
+                        <div>
+                            <Text style={{ marginBottom: 'var(--space-1)' }}>UI密度</Text>
                             <ScaleSelector
-                                options={['xs', 'sm', 'md', 'lg', 'xl']}
+                                options={uiScaleOptions}
                                 value={uiScaleKey}
                                 onChange={(v) => setUIScaleKey(v as UIScaleKey)}
                             />
+                            <Text
+                                style={{
+                                    fontSize: 'var(--text-xs)',
+                                    opacity: 0.7,
+                                    marginTop: 'var(--space-1)'
+                                }}
+                            >
+                                {currentUIDesc}
+                            </Text>
                         </div>
                     </div>
 
