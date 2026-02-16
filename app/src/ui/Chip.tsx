@@ -66,7 +66,11 @@ export const Chip = (props: Props) => {
             >
                 {props.children}
             </span>
-            {hasTail && props.tailElement}
+            {hasTail && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', lineHeight: 0 }}>
+                    {props.tailElement}
+                </div>
+            )}
         </div>
     )
 }
