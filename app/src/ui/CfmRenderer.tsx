@@ -141,7 +141,7 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                     style={{
                         height: '1.25em',
                         verticalAlign: '-0.45em',
-                        marginBottom: '4px'
+                        marginBottom: 'var(--space-1)'
                     }}
                 />
             ) : (
@@ -182,7 +182,7 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                     alt={ast.alt}
                     style={{
                         maxHeight: '20vh',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-md)',
                         maxWidth: '100%'
                     }}
                     onClick={(e) => {
@@ -233,7 +233,8 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
     return (
         <div
             style={{
-                whiteSpace: 'pre-wrap'
+                whiteSpace: 'pre-wrap',
+                fontSize: 'var(--content-font-base)'
             }}
         >
             <RenderAst ast={ast} emojis={props.emojiDict} />

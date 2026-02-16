@@ -23,15 +23,15 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: 'transparent',
                         border: `1px solid ${theme.ui.background}`,
-                        borderRadius: '4px',
+                        borderRadius: 'var(--radius-sm)',
                         color: theme.ui.background,
-                        padding: '8px 16px',
+                        padding: 'var(--space-2) var(--space-3)',
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1em',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: 'var(--space-2)',
                         ...props.style
                     }}
                 >
@@ -48,15 +48,15 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: 'var(--radius-sm)',
                         color: theme.content.link,
-                        padding: '8px 16px',
+                        padding: 'var(--space-2) var(--space-3)',
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1em',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: 'var(--space-2)',
                         ...props.style
                     }}
                 >
@@ -74,15 +74,15 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: theme.ui.background,
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: 'var(--radius-sm)',
                         color: theme.ui.text,
-                        padding: '8px 16px',
+                        padding: 'var(--space-2) var(--space-3)',
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1em',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: 'var(--space-2)',
                         ...props.style
                     }}
                 >

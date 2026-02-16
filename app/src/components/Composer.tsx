@@ -85,10 +85,10 @@ export const Composer = (props: Props) => {
                                 flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                padding: '8px',
-                                gap: '8px',
-                                borderRadius: theme.variant === 'classic' ? undefined : '8px',
-                                margin: theme.variant === 'classic' ? undefined : '0 8px'
+                                padding: 'var(--space-2)',
+                                gap: 'var(--space-2)',
+                                borderRadius: theme.variant === 'classic' ? undefined : 'var(--radius-md)',
+                                margin: theme.variant === 'classic' ? undefined : '0 var(--space-2)'
                             }}
                         >
                             <div>
@@ -114,7 +114,7 @@ export const Composer = (props: Props) => {
                                     onChange={(e) => setDraft(e.target.value)}
                                     style={{
                                         width: '100%',
-                                        fontSize: '16px',
+                                        fontSize: '1em',
                                         boxSizing: 'border-box',
                                         border: 'none',
                                         outline: 'none',

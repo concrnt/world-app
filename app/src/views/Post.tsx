@@ -16,7 +16,7 @@ export const PostView = (props: Props) => {
                 <Header>Post</Header>
                 <div
                     style={{
-                        padding: '8px'
+                        padding: 'var(--space-2)'
                     }}
                 >
                     <MessageContainer uri={props.uri} />

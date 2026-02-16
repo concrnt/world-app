@@ -20,6 +20,24 @@ interface Props {
     setPostHome?: (postHome: boolean) => void
 }
 
+const timelineIconStyle: React.CSSProperties = {
+    fontSize: 'var(--timeline-icon-size)'
+}
+
+// close アイコンは icon より +2px 大きい (--timeline-close-size)。
+// paddingRight は tail アイコンサイズに応じて角丸軸と揃える。
+// close 付きチップ → --timeline-close-size 基準
+// 追加チップ (IoMdAdd) → --timeline-icon-size 基準 (l.171)
+const timelineCloseStyle: React.CSSProperties = {
+    fontSize: 'var(--timeline-close-size)'
+}
+
+const timelineChipPad: React.CSSProperties = {
+    paddingTop: 'var(--timeline-chip-pad-v)',
+    paddingBottom: 'var(--timeline-chip-pad-v)',
+    paddingRight: 'calc((var(--control-chip-h) - var(--timeline-close-size)) / 2)'
+}
+
 export const TimelinePicker = (props: Props) => {
     const theme = useTheme()
     const { client } = useClient()
@@ -42,26 +60,28 @@ export const TimelinePicker = (props: Props) => {
             style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '8px',
+                gap: 'var(--space-2)',
                 position: 'relative',
                 alignItems: 'center'
             }}
         >
             <Chip
+                headIconRound
                 headElement={
                     <Avatar
                         ccid={client?.ccid ?? ''}
                         src={client?.user?.profile?.avatar}
                         style={{
-                            width: 20,
-                            height: 20
+                            width: 'var(--timeline-avatar-size)',
+                            height: 'var(--timeline-avatar-size)',
+                            borderRadius: '50%'
                         }}
                     />
                 }
                 tailElement={
                     <IoMdCloseCircle
-                        size={16}
                         style={{
+                            ...timelineCloseStyle,
                             transform: props.postHome === false ? 'rotate(45deg)' : 'none',
                             transition: 'transform 0.2s'
                         }}
@@ -72,6 +92,7 @@ export const TimelinePicker = (props: Props) => {
                     />
                 }
                 style={{
+                    ...timelineChipPad,
                     textDecoration: props.postHome === false ? 'line-through' : 'none',
                     opacity: props.postHome === false ? 0.5 : 1
                 }}
@@ -84,10 +105,12 @@ export const TimelinePicker = (props: Props) => {
                 return (
                     <Chip
                         key={sel}
-                        headElement={<MdOutlineTag size={16} />}
+                        headIconRound
+                        style={{ ...timelineChipPad }}
+                        headElement={<MdOutlineTag style={timelineIconStyle} />}
                         tailElement={
                             <IoMdCloseCircle
-                                size={16}
+                                style={timelineCloseStyle}
                                 onClick={() => {
                                     props.setSelected(props.selected.filter((s) => s !== sel))
                                 }}
@@ -107,8 +130,8 @@ export const TimelinePicker = (props: Props) => {
                         flex: '1',
                         border: 'none',
                         outline: 'none',
-                        padding: '8px',
-                        borderRadius: '4px',
+                        padding: 'var(--space-2)',
+                        borderRadius: 'var(--radius-sm)',
                         background: 'transparent'
                     }}
                     value={filter}
@@ -148,9 +171,11 @@ export const TimelinePicker = (props: Props) => {
                         setFocused(true)
                     }}
                     style={{
+                        ...timelineChipPad,
+                        paddingRight: 'calc((var(--control-chip-h) - var(--timeline-icon-size)) / 2)',
                         color: theme.divider
                     }}
-                    tailElement={<IoMdAdd size={16} />}
+                    tailElement={<IoMdAdd style={timelineIconStyle} />}
                 >
                     投稿先を追加
                 </Chip>
@@ -162,8 +187,8 @@ export const TimelinePicker = (props: Props) => {
                         width: '100%',
                         top: '100%',
                         left: 0,
-                        borderRadius: '4px',
-                        marginTop: '4px',
+                        borderRadius: 'var(--radius-sm)',
+                        marginTop: 'var(--space-1)',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                         zIndex: 1000,
                         backgroundColor: theme.content.background
@@ -173,7 +198,7 @@ export const TimelinePicker = (props: Props) => {
                         <div
                             key={props.keyFunc(opt)}
                             style={{
-                                padding: '8px',
+                                padding: 'var(--space-2)',
                                 cursor: 'pointer',
                                 borderBottom: `1px solid ${theme.divider}`,
                                 backgroundColor: focusedIdx === options.indexOf(opt) ? theme.divider : 'transparent'

@@ -23,9 +23,9 @@ export const IconButton = (props: Props) => {
                         backgroundColor: 'transparent',
                         border: 'none',
                         cursor: props.disabled ? 'not-allowed' : 'pointer',
-                        padding: '4px',
-                        fontSize: '16px',
-                        margin: '4px',
+                        padding: 'var(--space-1)',
+                        fontSize: '1em',
+                        margin: 'var(--space-1)',
                         color: theme.content.text,
                         ...props.style
                     }}
@@ -43,11 +43,13 @@ export const IconButton = (props: Props) => {
                         color: theme.ui.text,
                         border: 'none',
                         borderRadius: '100%',
-                        padding: '8px',
-                        fontSize: '16px',
+                        padding: 'var(--space-2)',
+                        fontSize: '1em',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        minWidth: 'var(--hit-min)',
+                        minHeight: 'var(--hit-min)',
                         ...props.style
                     }}
                 >

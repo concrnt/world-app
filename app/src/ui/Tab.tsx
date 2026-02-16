@@ -16,7 +16,7 @@ export const Tab = (props: Props) => {
     return (
         <div
             style={{
-                padding: '0.5rem',
+                padding: 'var(--space-2)',
                 position: 'relative',
                 display: 'flex',
                 justifyContent: 'center',
@@ -31,7 +31,7 @@ export const Tab = (props: Props) => {
                     layoutId={'tab-underline-' + props.groupId}
                     style={{
                         position: 'absolute',
-                        height: '4px',
+                        height: 'var(--space-1)',
                         backgroundColor: props.style?.color ?? theme.backdrop.text,
                         bottom: 0,
                         left: 0,

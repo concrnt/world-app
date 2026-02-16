@@ -8,11 +8,11 @@ export const Switch = (props: Props) => {
         <button
             onClick={() => props.onChange(!props.checked)}
             style={{
-                padding: '10px 20px',
+                padding: 'var(--switch-pad-v) var(--switch-pad-h)',
                 backgroundColor: props.checked ? 'green' : 'red',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer'
             }}
         >

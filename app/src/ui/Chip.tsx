@@ -8,107 +8,69 @@ interface Props {
     disabled?: boolean
     headElement?: ReactNode
     tailElement?: ReactNode
+    headIconRound?: boolean
     style?: React.CSSProperties
 }
 
 export const Chip = (props: Props) => {
     const theme = useTheme()
 
-    switch (props.variant) {
-        case 'outlined':
-            return (
-                <div
-                    onClick={props.onClick}
-                    style={{
-                        border: `1px solid ${theme.divider}`,
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 8px',
-                        width: 'fit-content',
-                        ...props.style
-                    }}
-                >
+    const hasHead = !!props.headElement
+    const hasTail = !!props.tailElement
+    const isOutlined = props.variant === 'outlined'
+
+    const basePad = isOutlined ? 'var(--space-2)' : 'var(--space-1)'
+
+    return (
+        <div
+            onClick={props.onClick}
+            style={{
+                border: isOutlined ? `1px solid ${theme.divider}` : undefined,
+                backgroundColor: isOutlined ? undefined : 'rgba(0, 0, 0, 0.08)',
+                color: 'rgb(41, 46, 36)',
+                fontSize: '1em',
+                height: 'var(--control-chip-h)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 'var(--chip-icon-gap)',
+                borderRadius: 'var(--radius-lg)',
+                paddingLeft: hasHead ? 'var(--chip-pad-edge)' : basePad,
+                paddingRight: hasTail ? 'var(--chip-pad-edge)' : basePad,
+                ...props.style
+            }}
+        >
+            {hasHead &&
+                (props.headIconRound ? (
                     <div
                         style={{
-                            display: 'flex',
+                            width: 'var(--chip-icon-slot)',
+                            height: 'var(--chip-icon-slot)',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            flex: '0 0 auto'
                         }}
                     >
                         {props.headElement}
                     </div>
-                    <div
-                        style={{
-                            margin: '0 8px',
-                            textAlign: 'center',
-                            flex: 1
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {props.tailElement}
-                    </div>
+                ) : (
+                    props.headElement
+                ))}
+            <span
+                style={{
+                    lineHeight: 1,
+                    whiteSpace: 'normal'
+                }}
+            >
+                {props.children}
+            </span>
+            {hasTail && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', lineHeight: 0 }}>
+                    {props.tailElement}
                 </div>
-            )
-        case 'contained':
-        default:
-            return (
-                <div
-                    onClick={props.onClick}
-                    style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 4px',
-                        width: 'fit-content',
-                        ...props.style
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {props.headElement}
-                    </div>
-                    <div
-                        style={{
-                            margin: '0 8px',
-                            textAlign: 'center',
-                            flex: 1
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {props.tailElement}
-                    </div>
-                </div>
-            )
-    }
+            )}
+        </div>
+    )
 }

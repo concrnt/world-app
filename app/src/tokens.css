@@ -1,0 +1,120 @@
+/*
+ * Token boundary rules:
+ *
+ * トークン必須:
+ *   - spacing (margin, padding, gap) → --space-*
+ *   - border-radius → --radius-*
+ *   - control dimensions (interactive element の width, height) → --control-*
+ *   - component-scoped sizing (chip, timeline, sheet-handle, select, codeblock) → --{component}-*
+ *
+ * トークン不要:
+ *   - border の厚み (1px, 0.5px)。色はテーマ (theme.divider 等) に寄せる
+ *   - タイポグラフィの相対値 (em/rem) — font-size, line-height はトークンでなく相対単位で良い
+ *   - コンテンツ描画領域 (CfmRenderer) の装飾値 — ユーザ生成コンテンツの表示仕様であり UI 密度対象外
+ *   - box-shadow のオフセット/ブラー値
+ *   - サードパーティライブラリの内部 customStyle
+ */
+
+/* デフォルト (md) — data属性セット前のフラッシュ防止 */
+:root {
+  --ui-font-scale: 1;
+  --content-font-scale: 1;
+  --font-base: calc(16px * var(--ui-font-scale));
+  --content-font-base: calc(16px * var(--content-font-scale));
+  --space-1: 4px;  --space-2: 8px;  --space-3: 16px;
+  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;
+  --control-icon: 24px;  --control-header: 40px;
+  --control-fab: 60px;  --control-chip-h: 24px;
+  --hit-min: 44px;  --dialog-w: 80vw;  --dialog-max-w: 600px;
+  --fab-padding: 15px;
+  --switch-pad-v: 10px;  --switch-pad-h: 20px;
+  --profile-head-gap: var(--space-2);
+  --profile-avatar: 100px;
+  --profile-head-row-h: max(var(--control-header), calc(var(--profile-avatar) / 2));
+  --text-xs: calc(0.75rem * var(--ui-font-scale));
+  --profile-username-size: calc(1.2rem * var(--ui-font-scale));
+  --chip-icon-slot: 20px;
+  --chip-icon-gap: 6px;
+  --chip-pad-edge: 2px;
+  --timeline-icon-size: 14px;
+  --timeline-avatar-size: 17px;
+  --timeline-chip-pad-v: 7px;
+  --timeline-close-size: calc(var(--timeline-icon-size) + 2px);
+  /* sheet handle — bar */
+  --sheet-handle-bar-w: 30px;
+  --sheet-handle-bar-h: 6px;
+  --sheet-handle-bar-radius: 3px;
+  /* sheet handle — area */
+  --sheet-handle-area-pad: 12px;
+  --sheet-handle-area-h: calc(var(--sheet-handle-area-pad) * 2 + var(--sheet-handle-bar-h));
+  /* select / sheet */
+  --select-item-h: 56px;
+  --sheet-title-h: 48px;
+  /* codeblock */
+  --codeblock-pad-v: 10px;
+  --codeblock-pad-h: 15px;
+}
+
+/* coarse pointer ベース: data-ui 未設定の初回フレームでも 44px を保証 */
+@media (pointer: coarse) {
+  html { --hit-min: max(44px, 2.75rem); }
+}
+
+/* ----- Font Scale (5段階: UI/Content 分離) ----- */
+html[data-font="xs"]  { --ui-font-scale: 0.875; --content-font-scale: 0.75; }
+html[data-font="sm"]  { --ui-font-scale: 0.875; --content-font-scale: 0.875; }
+html[data-font="md"]  { --ui-font-scale: 1;     --content-font-scale: 1; }
+html[data-font="xl"]  { --ui-font-scale: 1.25;  --content-font-scale: 1.25; }
+html[data-font="xxl"] { --ui-font-scale: 1.25;  --content-font-scale: 1.5; }
+
+/* ----- UI Scale (5段階) ----- */
+html[data-ui="xs"] {
+  --space-1:2px; --space-2:4px; --space-3:8px;
+  --radius-sm:2px; --radius-md:4px; --radius-lg:10px;
+  --control-icon:18px; --control-header:32px;
+  --control-fab:48px; --control-chip-h:20px;
+  --dialog-w:85vw; --fab-padding:12px;
+  --switch-pad-v:6px; --switch-pad-h:12px;
+  --chip-icon-slot:16px; --chip-icon-gap:4px; --chip-pad-edge:1px;
+  --timeline-icon-size:12px; --timeline-avatar-size:15px;
+  --timeline-chip-pad-v:6px;
+  --sheet-handle-bar-w:24px; --sheet-handle-bar-h:4px; --sheet-handle-bar-radius:2px;
+  --sheet-handle-area-pad:8px;
+  --select-item-h:40px; --sheet-title-h:36px;
+  --codeblock-pad-v:6px; --codeblock-pad-h:10px;
+}
+html[data-ui="sm"] {
+  --space-1:3px; --space-2:6px; --space-3:12px;
+  --radius-sm:3px; --radius-md:6px; --radius-lg:13px;
+  --control-icon:20px; --control-header:36px;
+  --control-fab:54px; --control-chip-h:22px;
+  --dialog-w:82vw; --fab-padding:13px;
+  --switch-pad-v:8px; --switch-pad-h:16px;
+  --chip-icon-slot:18px; --chip-icon-gap:4px; --chip-pad-edge:2px;
+  --timeline-icon-size:13px; --timeline-avatar-size:16px;
+  --timeline-chip-pad-v:6px;
+  --sheet-handle-bar-w:26px; --sheet-handle-bar-h:5px; --sheet-handle-bar-radius:2px;
+  --sheet-handle-area-pad:10px;
+  --select-item-h:48px; --sheet-title-h:42px;
+  --codeblock-pad-v:8px; --codeblock-pad-h:12px;
+}
+html[data-ui="md"] {
+  --space-1:4px; --space-2:8px; --space-3:16px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+  --control-icon:24px; --control-header:40px;
+  --control-fab:60px; --control-chip-h:24px;
+  --dialog-w:80vw; --fab-padding:15px;
+  --switch-pad-v:10px; --switch-pad-h:20px;
+  --chip-icon-slot:20px; --chip-icon-gap:6px; --chip-pad-edge:2px;
+  --timeline-icon-size:14px; --timeline-avatar-size:17px;
+  --timeline-chip-pad-v:7px;
+  --sheet-handle-bar-w:30px; --sheet-handle-bar-h:6px; --sheet-handle-bar-radius:3px;
+  --sheet-handle-area-pad:12px;
+  --select-item-h:56px; --sheet-title-h:48px;
+  --codeblock-pad-v:10px; --codeblock-pad-h:15px;
+}
+
+/* coarse pointer: data-ui 設定後も 44px を強制（後続順序で勝つ） */
+@media (pointer: coarse) {
+  html[data-ui] { --hit-min: max(44px, 2.75rem); }
+}

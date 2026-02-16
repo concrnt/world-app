@@ -43,7 +43,7 @@ export const ProfileEditor = (props: Props) => {
                 </Button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <Text variant="h3">Profile</Text>
                 <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
                 <TextField placeholder="Avatar URL" value={avatar} onChange={(e) => setAvatar(e.target.value)} />

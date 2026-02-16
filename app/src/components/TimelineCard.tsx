@@ -24,7 +24,7 @@ export const TimelineCard = (props: Props) => {
         <div
             style={{
                 border: '1px solid #ccc',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 overflow: 'hidden',
                 height: '7rem'
@@ -39,7 +39,7 @@ export const TimelineCard = (props: Props) => {
             />
             <div
                 style={{
-                    padding: '8px',
+                    padding: 'var(--space-2)',
                     display: 'flex',
                     flexDirection: 'column',
                     flexGrow: 1

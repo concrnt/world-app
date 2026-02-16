@@ -1,4 +1,5 @@
 import { CSSProperties, ReactNode, Suspense, use, useDeferredValue } from 'react'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
     children: ReactNode | Promise<ReactNode>
@@ -44,12 +45,14 @@ const baseStyles: Record<NonNullable<Props['variant']>, CSSProperties> = {
 }
 
 export const Text = (props: Props) => {
+    const theme = useTheme()
+
     return (
         <Suspense
             fallback={
                 <span
                     style={{
-                        backgroundColor: '#e0e0e0',
+                        backgroundColor: theme.divider /* TODO: theme.skeleton に昇格 */,
                         color: 'transparent',
                         display: 'inline-block',
                         width: '100%',

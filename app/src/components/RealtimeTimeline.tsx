@@ -55,8 +55,8 @@ export const RealtimeTimeline = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '8px',
-                padding: '8px 0',
+                gap: 'var(--space-2)',
+                padding: 'var(--space-2) 0',
                 overflowX: 'hidden',
                 overflowY: 'auto'
             }}
@@ -64,7 +64,7 @@ export const RealtimeTimeline = (props: Props) => {
         >
             {reader.current?.body.map((item) => (
                 <Fragment key={item.href}>
-                    <div style={{ padding: '0 8px' }}>
+                    <div style={{ padding: '0 var(--space-2)' }}>
                         <MessageContainer
                             uri={item.href}
                             source={item.source}

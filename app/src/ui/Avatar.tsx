@@ -1,5 +1,6 @@
 import BoringAvatar from 'boring-avatars'
 import { Suspense, use, useDeferredValue } from 'react'
+import { useTheme } from '../contexts/Theme'
 
 interface Props {
     ccid: string
@@ -8,15 +9,18 @@ interface Props {
 }
 
 export const Avatar = (props: Props) => {
+    const theme = useTheme()
+
     return (
         <Suspense
             fallback={
                 <div
                     style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '4px',
-                        backgroundColor: '#e0e0e0'
+                        width: 'var(--control-header)',
+                        height: 'var(--control-header)',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: theme.divider /* TODO: theme.skeleton に昇格 */,
+                        ...props.style
                     }}
                 />
             }
@@ -35,9 +39,11 @@ const Inner = (props: Props) => {
                 src={src}
                 alt="avatar"
                 style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '4px',
+                    width: 'var(--control-header)',
+                    height: 'var(--control-header)',
+                    borderRadius: 'var(--radius-sm)',
+                    overflow: 'hidden',
+                    objectFit: 'cover',
                     ...props.style
                 }}
             />
@@ -49,7 +55,10 @@ const Inner = (props: Props) => {
                 size={40}
                 variant="beam"
                 style={{
-                    borderRadius: '4px',
+                    width: 'var(--control-header)',
+                    height: 'var(--control-header)',
+                    borderRadius: 'var(--radius-sm)',
+                    overflow: 'hidden',
                     ...props.style
                 }}
                 name={props.ccid}

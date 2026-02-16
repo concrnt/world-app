@@ -1,5 +1,8 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+
+export type FontScaleKey = 'xs' | 'sm' | 'md' | 'xl' | 'xxl'
+export type UIScaleKey = 'xs' | 'sm' | 'md'
 
 export interface PinnedList {
     uri: string
@@ -12,12 +15,16 @@ export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
     pinnedLists: PinnedList[]
+    fontScaleKey: FontScaleKey
+    uiScaleKey: UIScaleKey
 }
 
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
-    pinnedLists: []
+    pinnedLists: [],
+    fontScaleKey: 'md',
+    uiScaleKey: 'md'
 }
 
 interface PreferenceState {
@@ -38,6 +45,24 @@ interface PreferenceProviderProps {
 
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
     const [pref, setPref] = useLocalStorage<Preference>('preference', defaultPreference)
+
+    useEffect(() => {
+        const el = document.documentElement
+        let fontKey: FontScaleKey = pref.fontScaleKey ?? 'md'
+        const fontMigration: Record<string, FontScaleKey> = { lg: 'xl' }
+        if ((fontKey as string) in fontMigration) {
+            fontKey = fontMigration[fontKey as string]!
+            setPref({ ...pref, fontScaleKey: fontKey })
+        }
+        el.dataset.font = fontKey
+        let uiKey: UIScaleKey = pref.uiScaleKey ?? 'md'
+        const uiMigration: Record<string, UIScaleKey> = { lg: 'md', xl: 'md' }
+        if ((uiKey as string) in uiMigration) {
+            uiKey = uiMigration[uiKey as string]!
+            setPref({ ...pref, fontScaleKey: fontKey, uiScaleKey: uiKey })
+        }
+        el.dataset.ui = uiKey
+    }, [pref.fontScaleKey, pref.uiScaleKey])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })
