@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useContext, useEffect, useMemo } from 'react'
 import { Theme } from '../types/Theme'
 import { usePreference } from './Preference'
 import { Themes } from '../data/themes'
@@ -23,17 +23,40 @@ const defaultTheme: Theme = {
         background: '#12a129'
     },
     divider: '#e6e2df',
-    variant: 'classic'
+    variant: 'classic',
+    space: '4px',
+    round: '8px'
 }
 
-const ThemeContext = createContext<Theme>(defaultTheme)
+interface ThemeContextState {
+    variant: 'classic' | 'world'
+}
+
+const ThemeContext = createContext<ThemeContextState>({
+    variant: 'classic'
+})
 
 export const ThemeProvider = (props: Props) => {
     const [themeName] = usePreference('themeName')
 
     const theme = useMemo(() => Themes[themeName] ?? props.theme ?? defaultTheme, [themeName, props.theme])
 
-    return <ThemeContext.Provider value={theme}>{props.children}</ThemeContext.Provider>
+    useEffect(() => {
+        document.documentElement.style.setProperty('--content-text', theme.content.text)
+        document.documentElement.style.setProperty('--content-link', theme.content.link)
+        document.documentElement.style.setProperty('--content-background', theme.content.background)
+        document.documentElement.style.setProperty('--ui-text', theme.ui.text)
+        document.documentElement.style.setProperty('--ui-background', theme.ui.background)
+        document.documentElement.style.setProperty('--backdrop-text', theme.backdrop.text)
+        document.documentElement.style.setProperty('--backdrop-background', theme.backdrop.background)
+        document.documentElement.style.setProperty('--divider', theme.divider)
+        document.documentElement.style.setProperty('--space', theme.space)
+        document.documentElement.style.setProperty('--round', theme.round)
+    }, [theme])
+
+    const value = useMemo(() => ({ variant: theme.variant }), [theme.variant])
+
+    return <ThemeContext.Provider value={value}>{props.children}</ThemeContext.Provider>
 }
 
 export const useTheme = () => {

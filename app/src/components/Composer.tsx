@@ -7,6 +7,7 @@ import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useTheme } from '../contexts/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onClose?: () => void
@@ -47,7 +48,7 @@ export const Composer = (props: Props) => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        backgroundColor: theme.backdrop.background,
+                        backgroundColor: CssVar.backdropBackground,
                         display: 'flex',
                         flexDirection: 'column',
                         paddingTop: 'env(safe-area-inset-top)'
@@ -73,7 +74,7 @@ export const Composer = (props: Props) => {
                                     setWillClose(true)
                                 }}
                                 style={{
-                                    color: theme.backdrop.text
+                                    color: CssVar.backdropText
                                 }}
                             >
                                 キャンセル
@@ -81,14 +82,14 @@ export const Composer = (props: Props) => {
                         </div>
                         <div
                             style={{
-                                backgroundColor: theme.content.background,
+                                backgroundColor: CssVar.contentBackground,
                                 flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                padding: '8px',
-                                gap: '8px',
-                                borderRadius: theme.variant === 'classic' ? undefined : '8px',
-                                margin: theme.variant === 'classic' ? undefined : '0 8px'
+                                padding: CssVar.space(2),
+                                gap: CssVar.space(2),
+                                borderRadius: theme.variant === 'classic' ? undefined : CssVar.space(2),
+                                margin: theme.variant === 'classic' ? undefined : `0 ${CssVar.space(2)}`
                             }}
                         >
                             <div>
@@ -114,14 +115,14 @@ export const Composer = (props: Props) => {
                                     onChange={(e) => setDraft(e.target.value)}
                                     style={{
                                         width: '100%',
-                                        fontSize: '16px',
+                                        fontSize: '1.5rem',
                                         boxSizing: 'border-box',
                                         border: 'none',
                                         outline: 'none',
                                         resize: 'none',
                                         height: '100%',
                                         background: 'transparent',
-                                        color: theme.content.text
+                                        color: CssVar.contentText
                                     }}
                                 />
                             </div>

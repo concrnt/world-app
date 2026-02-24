@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
-import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { usePreference } from '../contexts/Preference'
 
@@ -20,10 +19,10 @@ import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
 import { isFulfilled, isNonNull, Schemas } from '@concrnt/worldlib'
+import { CssVar } from '../types/Theme'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
-    const theme = useTheme()
 
     const composer = useComposer()
 
@@ -122,7 +121,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 {pinnedLists.length > 1 && (
                     <Tabs
                         style={{
-                            color: theme.content.link
+                            color: CssVar.contentLink
                         }}
                     >
                         {tabs.map((tab) => (
@@ -132,7 +131,7 @@ export const HomeView = (props: ScrollViewProps) => {
                                 onClick={() => setSelectedTabUri(tab.uri)}
                                 groupId="home-timeline-tabs"
                                 style={{
-                                    color: theme.content.text,
+                                    color: CssVar.contentText,
                                     width: '120px'
                                 }}
                             >

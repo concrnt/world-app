@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode } from 'react'
 import Wallpaper from '../assets/cc-wallpaper-base.png'
-import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     src?: string
@@ -9,12 +9,10 @@ interface Props {
 }
 
 export const CCWallpaper = (props: Props) => {
-    const theme = useTheme()
-
     return (
         <div
             style={{
-                backgroundColor: theme.ui.background,
+                backgroundColor: CssVar.uiBackground,
                 position: 'relative',
                 ...props.style
             }}

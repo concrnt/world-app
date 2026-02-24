@@ -1,6 +1,5 @@
 import { Chip } from '../ui/Chip'
 
-import { useTheme } from '../contexts/Theme'
 import { useMemo, useRef, useState } from 'react'
 
 import { MdOutlineTag } from 'react-icons/md'
@@ -9,6 +8,7 @@ import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
 import { Avatar } from '../ui/Avatar'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     selected: string[]
@@ -21,7 +21,6 @@ interface Props {
 }
 
 export const TimelinePicker = (props: Props) => {
-    const theme = useTheme()
     const { client } = useClient()
 
     const [focused, setFocused] = useState(false)
@@ -148,7 +147,7 @@ export const TimelinePicker = (props: Props) => {
                         setFocused(true)
                     }}
                     style={{
-                        color: theme.divider
+                        color: CssVar.divider
                     }}
                     tailElement={<IoMdAdd size={16} />}
                 >
@@ -166,7 +165,7 @@ export const TimelinePicker = (props: Props) => {
                         marginTop: '4px',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                         zIndex: 1000,
-                        backgroundColor: theme.content.background
+                        backgroundColor: CssVar.contentBackground
                     }}
                 >
                     {options.map((opt) => (
@@ -175,8 +174,8 @@ export const TimelinePicker = (props: Props) => {
                             style={{
                                 padding: '8px',
                                 cursor: 'pointer',
-                                borderBottom: `1px solid ${theme.divider}`,
-                                backgroundColor: focusedIdx === options.indexOf(opt) ? theme.divider : 'transparent'
+                                borderBottom: `1px solid ${CssVar.divider}`,
+                                backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
                             }}
                             onMouseDown={() => {
                                 props.selected.push(props.keyFunc(opt))

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 import { useNavigation } from '../contexts/Navigation'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     children?: ReactNode
@@ -19,11 +20,11 @@ export const Header = (props: Props) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '4px',
-                color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
-                backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : theme.ui.background,
-                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : '4px',
-                borderBottom: `1px solid ${theme.divider}`
+                padding: CssVar.space(1),
+                color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
+                backgroundColor: theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.uiBackground,
+                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : CssVar.space(1),
+                borderBottom: `1px solid ${CssVar.divider}`
             }}
         >
             <div

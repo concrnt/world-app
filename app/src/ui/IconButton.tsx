@@ -1,5 +1,5 @@
 import { CSSProperties, ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -10,8 +10,6 @@ interface Props {
 }
 
 export const IconButton = (props: Props) => {
-    const theme = useTheme()
-
     switch (props.variant) {
         default:
         case 'transparent':
@@ -26,7 +24,7 @@ export const IconButton = (props: Props) => {
                         padding: '4px',
                         fontSize: '16px',
                         margin: '4px',
-                        color: theme.content.text,
+                        color: CssVar.contentText,
                         ...props.style
                     }}
                 >
@@ -39,8 +37,8 @@ export const IconButton = (props: Props) => {
                     disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
-                        backgroundColor: `rgb(from ${theme.ui.background} r g b / 0.8)`,
-                        color: theme.ui.text,
+                        backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.8)`,
+                        color: CssVar.uiText,
                         border: 'none',
                         borderRadius: '100%',
                         padding: '8px',

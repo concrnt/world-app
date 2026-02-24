@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react'
-import { useTheme } from '../contexts/Theme'
 import { AnimatePresence, motion } from 'motion/react'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     open: boolean
@@ -10,8 +10,6 @@ interface Props {
 }
 
 export const Dialog = (props: Props) => {
-    const theme = useTheme()
-
     if (!props.open) {
         return null
     }
@@ -39,7 +37,7 @@ export const Dialog = (props: Props) => {
                         top: '30%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        backgroundColor: theme.content.background,
+                        backgroundColor: CssVar.contentBackground,
                         width: '80vw',
                         ...props.style
                     }}

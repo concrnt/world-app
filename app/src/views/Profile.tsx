@@ -17,6 +17,7 @@ import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { Schemas } from '@concrnt/worldlib'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     id: string
@@ -91,7 +92,7 @@ export const ProfileView = (props: Props) => {
                         >
                             <div
                                 style={{
-                                    color: theme.variant === 'classic' ? theme.backdrop.text : theme.ui.text,
+                                    color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
                                     height: '40px',
                                     width: '40px'
                                 }}
@@ -176,7 +177,7 @@ export const ProfileView = (props: Props) => {
                     setSelectedTab={(tab) => setSelectedTab(tab)}
                     placement="upper"
                     tabStyle={{
-                        color: theme.content.text
+                        color: CssVar.contentText
                     }}
                 />
             </View>

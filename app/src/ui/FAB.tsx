@@ -1,9 +1,9 @@
 import { CSSProperties, ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
 import { useOverlay } from '../contexts/Overlay'
 import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
 import { useActivity } from '../contexts/Activity'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onClick?: () => void
@@ -12,8 +12,6 @@ interface Props {
 }
 
 export const FAB = (props: Props) => {
-    const theme = useTheme()
-
     const overlay = useOverlay()
     const activity = useActivity()
 
@@ -24,9 +22,9 @@ export const FAB = (props: Props) => {
             <motion.button
                 onClick={props.onClick}
                 style={{
-                    backgroundColor: theme.ui.background,
+                    backgroundColor: CssVar.uiBackground,
                     border: 'none',
-                    color: theme.ui.text,
+                    color: CssVar.uiText,
                     padding: '15px',
                     borderRadius: '50%',
                     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',

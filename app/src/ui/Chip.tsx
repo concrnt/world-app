@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onClick?: () => void
@@ -12,15 +12,13 @@ interface Props {
 }
 
 export const Chip = (props: Props) => {
-    const theme = useTheme()
-
     switch (props.variant) {
         case 'outlined':
             return (
                 <div
                     onClick={props.onClick}
                     style={{
-                        border: `1px solid ${theme.divider}`,
+                        border: `1px solid ${CssVar.divider}`,
                         color: 'rgb(41, 46, 36)',
                         fontSize: '16px',
                         height: '24px',

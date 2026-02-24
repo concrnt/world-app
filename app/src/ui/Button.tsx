@@ -1,5 +1,5 @@
 import { CSSProperties, ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -12,8 +12,6 @@ interface Props {
 }
 
 export const Button = (props: Props) => {
-    const theme = useTheme()
-
     switch (props.variant) {
         case 'outlined':
             return (
@@ -22,16 +20,16 @@ export const Button = (props: Props) => {
                     onClick={props.onClick}
                     style={{
                         backgroundColor: 'transparent',
-                        border: `1px solid ${theme.ui.background}`,
-                        borderRadius: '4px',
-                        color: theme.ui.background,
-                        padding: '8px 16px',
+                        border: `1px solid ${CssVar.uiBackground}`,
+                        borderRadius: CssVar.round(1),
+                        color: CssVar.uiBackground,
+                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1.2rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: CssVar.space(1),
                         ...props.style
                     }}
                 >
@@ -48,15 +46,15 @@ export const Button = (props: Props) => {
                     style={{
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
-                        color: theme.content.link,
-                        padding: '8px 16px',
+                        borderRadius: CssVar.round(1),
+                        color: CssVar.contentLink,
+                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1.2rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: CssVar.space(1),
                         ...props.style
                     }}
                 >
@@ -72,17 +70,17 @@ export const Button = (props: Props) => {
                     disabled={props.disabled}
                     onClick={props.onClick}
                     style={{
-                        backgroundColor: theme.ui.background,
+                        backgroundColor: CssVar.uiBackground,
                         border: 'none',
-                        borderRadius: '4px',
-                        color: theme.ui.text,
-                        padding: '8px 16px',
+                        borderRadius: CssVar.round(1),
+                        color: CssVar.uiText,
+                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
                         textAlign: 'center',
-                        fontSize: '16px',
+                        fontSize: '1.2rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: CssVar.space(1),
                         ...props.style
                     }}
                 >

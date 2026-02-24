@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
 import { motion } from 'motion/react'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     selected?: boolean
@@ -11,8 +11,6 @@ interface Props {
 }
 
 export const Tab = (props: Props) => {
-    const theme = useTheme()
-
     return (
         <div
             style={{
@@ -32,7 +30,7 @@ export const Tab = (props: Props) => {
                     style={{
                         position: 'absolute',
                         height: '4px',
-                        backgroundColor: props.style?.color ?? theme.backdrop.text,
+                        backgroundColor: props.style?.color ?? CssVar.backdropText,
                         bottom: 0,
                         left: 0,
                         right: 0

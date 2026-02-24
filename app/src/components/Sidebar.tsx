@@ -19,6 +19,7 @@ import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -36,13 +37,13 @@ export const Sidebar = (props: Props) => {
                     height: '100%',
                     paddingTop: 'env(safe-area-inset-top)',
                     paddingBottom: 'env(safe-area-inset-bottom)',
-                    backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : 'transparent'
+                    backgroundColor: theme.variant === 'classic' ? CssVar.backdropBackground : 'transparent'
                 }}
             >
                 <div
                     style={{
-                        backgroundColor: theme.backdrop.background,
-                        color: theme.backdrop.text,
+                        backgroundColor: CssVar.backdropBackground,
+                        color: CssVar.backdropText,
                         display: 'flex',
                         padding: '16px',
                         flexDirection: 'column',

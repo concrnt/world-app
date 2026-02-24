@@ -1,9 +1,9 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
-import { useTheme } from '../contexts/Theme'
 
 import { MdMenu } from 'react-icons/md'
 import { NavigationProvider } from '../contexts/Navigation'
+import { CssVar } from '../types/Theme'
 
 const SIDEBAR_W = 220
 
@@ -24,8 +24,6 @@ const SidebarLayoutContext = createContext<SidebarLayoutState>({
 })
 
 export const SidebarLayout = (props: Props) => {
-    const theme = useTheme()
-
     const width = props.width ?? SIDEBAR_W
 
     const x = useMotionValue(props.opened ? width : 0)
@@ -122,7 +120,7 @@ export const SidebarLayout = (props: Props) => {
                         height: '100vh',
                         width,
                         pointerEvents: 'none',
-                        backgroundColor: theme.backdrop.background
+                        backgroundColor: CssVar.backdropBackground
                     }}
                 />
 

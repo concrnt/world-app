@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { useTheme } from './Theme'
 import { animate } from 'motion'
+import { CssVar } from '../types/Theme'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -18,8 +18,6 @@ const DrawerContext = createContext<DrawerContextState>({
 })
 
 export const DrawerProvider = (props: Props) => {
-    const theme = useTheme()
-
     const y = useMotionValue(0)
     const dragControls = useDragControls()
 
@@ -67,14 +65,14 @@ export const DrawerProvider = (props: Props) => {
                         />
                         <motion.div
                             style={{
-                                backgroundColor: theme.content.background,
-                                color: theme.content.text,
+                                backgroundColor: CssVar.contentBackground,
+                                color: CssVar.contentText,
                                 position: 'absolute',
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
                                 paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: '16px 16px 0 0',
+                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                 height,
                                 y
                             }}
@@ -127,7 +125,7 @@ export const DrawerProvider = (props: Props) => {
                                         width: '30px',
                                         height: '6px',
                                         borderRadius: '3px',
-                                        backgroundColor: theme.divider
+                                        backgroundColor: CssVar.divider
                                     }}
                                 />
                             </div>

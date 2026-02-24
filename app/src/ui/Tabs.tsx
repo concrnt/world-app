@@ -1,5 +1,6 @@
 import { CSSProperties, ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     children: ReactNode
@@ -14,7 +15,7 @@ export const Tabs = (props: Props) => {
             style={{
                 display: 'flex',
                 justifyContent: 'space-around',
-                backgroundColor: theme.variant === 'classic' ? theme.backdrop.background : 'transparent',
+                backgroundColor: theme.variant === 'classic' ? CssVar.backdropBackground : 'transparent',
                 ...props.style
             }}
         >

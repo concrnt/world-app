@@ -15,6 +15,7 @@ import { MdContacts } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
@@ -115,7 +116,7 @@ export const MainView = () => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        backgroundColor: theme.backdrop.background
+                        backgroundColor: CssVar.backdropBackground
                     }}
                 >
                     <TabLayout
@@ -124,10 +125,10 @@ export const MainView = () => {
                         tabs={tabs}
                         style={{
                             paddingBottom: 'env(safe-area-inset-bottom)',
-                            borderTop: theme.variant === 'classic' ? `1px solid ${theme.divider}` : undefined
+                            borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined
                         }}
                         tabStyle={{
-                            color: theme.backdrop.text
+                            color: CssVar.backdropText
                         }}
                     />
                 </div>

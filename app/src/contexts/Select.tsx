@@ -1,7 +1,7 @@
 import { animate, AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { useTheme } from './Theme'
 import { Text } from '../ui/Text'
+import { CssVar } from '../types/Theme'
 
 interface SelectContextState {
     select: (title: string, options: Record<string, ReactNode>, callback: (selected: string) => void) => void
@@ -16,8 +16,6 @@ const SelectContext = createContext<SelectContextState>({
 })
 
 export const SelectProvider = (props: Props) => {
-    const theme = useTheme()
-
     const y = useMotionValue(0)
     const dragControls = useDragControls()
 
@@ -70,14 +68,14 @@ export const SelectProvider = (props: Props) => {
                         />
                         <motion.div
                             style={{
-                                backgroundColor: theme.content.background,
-                                color: theme.content.text,
+                                backgroundColor: CssVar.contentBackground,
+                                color: CssVar.contentText,
                                 position: 'absolute',
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
                                 paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: '16px 16px 0 0',
+                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                 y
                             }}
                             drag="y"
@@ -129,7 +127,7 @@ export const SelectProvider = (props: Props) => {
                                         width: '30px',
                                         height: '6px',
                                         borderRadius: '3px',
-                                        backgroundColor: theme.divider
+                                        backgroundColor: CssVar.divider
                                     }}
                                 />
                             </div>
@@ -137,7 +135,7 @@ export const SelectProvider = (props: Props) => {
                                 <div
                                     style={{
                                         height: '30px',
-                                        borderBottom: `1px solid ${theme.divider}`
+                                        borderBottom: `1px solid ${CssVar.divider}`
                                     }}
                                 >
                                     <Text>{title}</Text>
@@ -150,7 +148,7 @@ export const SelectProvider = (props: Props) => {
                                         style={{
                                             padding: '16px',
                                             height: '56px',
-                                            borderBottom: `1px solid ${theme.divider}`
+                                            borderBottom: `1px solid ${CssVar.divider}`
                                         }}
                                         onClick={() => {
                                             if (callback) {

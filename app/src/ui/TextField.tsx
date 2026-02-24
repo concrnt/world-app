@@ -1,4 +1,4 @@
-import { useTheme } from '../contexts/Theme'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     autofocus?: boolean
@@ -8,8 +8,6 @@ interface Props {
 }
 
 export const TextField = (props: Props) => {
-    const theme = useTheme()
-
     return (
         <input
             type="text"
@@ -21,9 +19,9 @@ export const TextField = (props: Props) => {
                 padding: '8px',
                 fontSize: '16px',
                 borderRadius: '4px',
-                borderColor: theme.divider,
-                backgroundColor: theme.content.background,
-                color: theme.content.text,
+                borderColor: CssVar.divider,
+                backgroundColor: CssVar.contentBackground,
+                color: CssVar.contentText,
                 width: '100%'
             }}
         />
