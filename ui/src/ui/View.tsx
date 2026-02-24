@@ -1,15 +1,15 @@
 import { ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
 import { CssVar } from '../types/Theme'
 
 interface Props {
     children?: ReactNode
+    variant?: 'classic' | 'world'
 }
 
 export const View = (props: Props) => {
-    const theme = useTheme()
+    const variant = props.variant ?? 'world'
 
-    if (theme.variant === 'classic') {
+    if (variant === 'classic') {
         return (
             <div
                 data-testid="view-classic"
