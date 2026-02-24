@@ -1,4 +1,4 @@
-import { Chip } from '../ui/Chip'
+import { Chip } from '@concrnt/ui'
 
 import { useMemo, useRef, useState } from 'react'
 
@@ -7,7 +7,7 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar } from '../ui/Avatar'
+import { Avatar } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 
 interface Props {

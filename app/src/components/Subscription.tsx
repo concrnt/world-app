@@ -2,8 +2,7 @@ import { Document } from '@concrnt/client'
 import { ListSchema, Schemas } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { useCallback, useEffect, useState } from 'react'
-import { Checkbox } from '../ui/Checkbox'
-import { Text } from '../ui/Text'
+import { Checkbox, Text } from '@concrnt/ui'
 
 export const Subscription = ({ target }: { target: string }) => {
     const { client } = useClient()

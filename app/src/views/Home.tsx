@@ -6,10 +6,7 @@ import { useDrawer } from '../contexts/Drawer'
 import { usePreference } from '../contexts/Preference'
 
 import { Header } from '../ui/Header'
-import { View } from '../ui/View'
-import { Tabs } from '../ui/Tabs'
-import { Tab } from '../ui/Tab'
-import { Text } from '../ui/Text'
+import { View, Tabs, Tab, Text } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
 
 import { ListSettings } from '../components/ListSettings'

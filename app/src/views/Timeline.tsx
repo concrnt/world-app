@@ -1,6 +1,5 @@
-import { View } from '../ui/View'
+import { View, Text } from '@concrnt/ui'
 import { Header } from '../ui/Header'
-import { Text } from '../ui/Text'
 import { useMemo } from 'react'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'

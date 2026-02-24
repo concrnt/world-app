@@ -6,15 +6,11 @@ import { MarkdownMessageSchema, Schemas } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { CfmRenderer } from '../../ui/CfmRenderer'
-import { Avatar } from '../../ui/Avatar'
-import { Text } from '../../ui/Text'
-import { IconButton } from '../../ui/IconButton'
+import { Avatar, Button, CfmRenderer, Text, IconButton } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdStar } from 'react-icons/md'
 import { MdStarOutline } from 'react-icons/md'
-import { Button } from '../../ui/Button'
 import { useSelect } from '../../contexts/Select'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {

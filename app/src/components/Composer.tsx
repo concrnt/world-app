@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button } from '../ui/Button'
+import { Button } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { Schemas } from '@concrnt/worldlib'

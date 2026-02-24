@@ -1,6 +1,5 @@
 import { CSSProperties, ReactNode, useId } from 'react'
-import { Tabs } from '../ui/Tabs'
-import { Tab } from '../ui/Tab'
+import { Tabs, Tab } from '@concrnt/ui'
 import { ActivityProvider } from '../contexts/Activity'
 
 interface Tab {

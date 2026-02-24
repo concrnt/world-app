@@ -1,6 +1,5 @@
 import { Theme } from '../types/Theme'
-import { ConcrntLogo } from '../ui/ConcrntLogo'
-import { Text } from '../ui/Text'
+import { ConcrntLogo, Text } from '@concrnt/ui'
 
 interface Props {
     theme: Theme

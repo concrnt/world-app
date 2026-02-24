@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@concrnt/ui": "workspace:*",
     "@concrnt/cfm": "^0.0.0",
     "@concrnt/client": "workspace:*",
     "@concrnt/worldlib": "workspace:*",

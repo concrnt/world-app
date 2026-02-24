@@ -1,6 +1,6 @@
 import { MessageProps } from './types'
 import { LikeAssociationSchema } from '@concrnt/worldlib'
-import { Text } from '../../ui/Text'
+import { Text } from '@concrnt/ui'
 
 export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
     return (

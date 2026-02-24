@@ -1,8 +1,7 @@
 import { MessageContainer } from '../components/message'
-import { Divider } from '../ui/Divider'
+import { Divider, View } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
 import { Header } from '../ui/Header'
-import { View } from '../ui/View'
 import { MdReply } from 'react-icons/md'
 
 interface Props {

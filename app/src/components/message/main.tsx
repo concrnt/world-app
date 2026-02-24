@@ -2,7 +2,7 @@ import { ReactNode, Suspense, use, useDeferredValue, useMemo } from 'react'
 import { IsCCID, parseCCURI } from '@concrnt/client'
 
 import { useClient } from '../../contexts/Client'
-import { Text } from '../../ui/Text'
+import { Text } from '@concrnt/ui'
 import { Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { LikeAssociation } from './LikeAssociation'

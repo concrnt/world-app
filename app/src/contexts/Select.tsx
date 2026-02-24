@@ -1,6 +1,6 @@
 import { animate, AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { Text } from '../ui/Text'
+import { Text } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 
 interface SelectContextState {

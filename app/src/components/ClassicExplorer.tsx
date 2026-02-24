@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { TimelineCard } from './TimelineCard'
 import { Document, Server } from '@concrnt/client'
-import { Text } from '../ui/Text'
+import { Text } from '@concrnt/ui'
 
 export const ClassicExplorer = () => {
     const { client } = useClient()

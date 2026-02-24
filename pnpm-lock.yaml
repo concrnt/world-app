@@ -47,6 +47,9 @@ importers:
       '@concrnt/client':
         specifier: workspace:*
         version: link:../client
+      '@concrnt/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@concrnt/worldlib':
         specifier: workspace:*
         version: link:../worldlib

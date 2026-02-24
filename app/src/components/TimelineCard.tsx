@@ -1,8 +1,6 @@
 import { Document } from '@concrnt/client'
 import { CommunityTimelineSchema } from '@concrnt/worldlib'
-import { CCWallpaper } from '../ui/CCWallpaper'
-import { Text } from '../ui/Text'
-import { IconButton } from '../ui/IconButton'
+import { CCWallpaper, Text, IconButton } from '@concrnt/ui'
 
 import { MdPlaylistAdd } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'

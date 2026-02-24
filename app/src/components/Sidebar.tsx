@@ -3,10 +3,8 @@ import { ReactNode } from 'react'
 import { useTheme } from '../contexts/Theme'
 import { useClient } from '../contexts/Client'
 
-import { ListItem } from '../ui/ListItem'
-import { Divider } from '../ui/Divider'
-import { Text } from '../ui/Text'
-import { Avatar } from '../ui/Avatar'
+import { ListItem, Divider, Text } from '@concrnt/ui'
+import { Avatar } from '@concrnt/ui'
 
 import { SettingsView } from '../views/Settings'
 import { DevView } from '../views/Dev'

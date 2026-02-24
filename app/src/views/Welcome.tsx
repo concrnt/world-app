@@ -1,9 +1,7 @@
-import { Button } from '../ui/Button'
-import { Text } from '../ui/Text'
+import { Button, Text, View } from '@concrnt/ui'
 
 import ConcrntLogo from '/concrnt.svg'
 import { useClient } from '../contexts/Client'
-import { View } from '../ui/View'
 import { useResetPreference } from '../contexts/Preference'
 
 export const WelcomeView = () => {

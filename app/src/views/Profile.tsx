@@ -1,10 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Avatar } from '../ui/Avatar'
-import { CCWallpaper } from '../ui/CCWallpaper'
-import { IconButton } from '../ui/IconButton'
-import { Text } from '../ui/Text'
-import { View } from '../ui/View'
-import { Button } from '../ui/Button'
+import { Avatar, CCWallpaper, IconButton, Text, View, Button } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
 import { MdSearch } from 'react-icons/md'

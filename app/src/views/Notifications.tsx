@@ -1,4 +1,4 @@
-import { View } from '../ui/View'
+import { View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { useClient } from '../contexts/Client'

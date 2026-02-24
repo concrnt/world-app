@@ -4,7 +4,7 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { Divider } from '../ui/Divider'
+import { Divider } from '@concrnt/ui'
 
 interface Props extends ScrollViewProps {
     timelines: string[]

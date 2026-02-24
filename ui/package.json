@@ -1,5 +1,5 @@
 {
-  "name": "ui",
+  "name": "@concrnt/ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -17,7 +17,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b && vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "storybook": "storybook dev -p 6006"
   },
   "peerDependencies": {

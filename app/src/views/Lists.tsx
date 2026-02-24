@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Header } from '../ui/Header'
-import { View } from '../ui/View'
+import { View, Text, IconButton, Button, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { ListSchema, Schemas } from '@concrnt/worldlib'
-import { Text } from '../ui/Text'
 import { Document } from '@concrnt/client'
 import { MdPlaylistAdd } from 'react-icons/md'
 
 import { RiPushpinFill } from 'react-icons/ri'
-import { IconButton } from '../ui/IconButton'
 import { Reorder } from 'motion/react'
 import { usePreference } from '../contexts/Preference'
 import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
-import { Button } from '../ui/Button'
-import { TextField } from '../ui/TextField'
 
 export const ListsView = () => {
     const { client } = useClient()

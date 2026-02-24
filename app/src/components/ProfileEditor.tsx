@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Button } from '../ui/Button'
-import { Text } from '../ui/Text'
-import { TextField } from '../ui/TextField'
+import { Button, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
 interface Props {

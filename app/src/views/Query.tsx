@@ -1,7 +1,5 @@
-import { TextField } from '../ui/TextField'
-import { Button } from '../ui/Button'
+import { TextField, Button, View } from '@concrnt/ui'
 import { TimelineView } from '../views/Timeline'
-import { View } from '../ui/View'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useState } from 'react'
