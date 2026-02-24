@@ -1,4 +1,5 @@
-import { CSSProperties, ReactNode, Suspense, use, useDeferredValue } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { Suspense, use, useDeferredValue } from 'react'
 
 interface Props {
     children: ReactNode | Promise<ReactNode>

@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react-vite'
-import type { Theme } from '../src/types/Theme';
+import type { Theme } from '../src/types/Theme'
 
 export const Themes: Record<string, Theme> = {
     light: {
@@ -97,8 +97,8 @@ const preview: Preview = {
         controls: {
             matchers: {
                 color: /(background|color)$/i,
-                date: /Date$/i,
-            },
+                date: /Date$/i
+            }
         },
 
         a11y: {
@@ -122,7 +122,7 @@ const preview: Preview = {
     },
     decorators: [
         (Story, context) => {
-            const themeName = context.globals.theme || 'All';
+            const themeName = context.globals.theme || 'All'
             let previewTargets: Theme[] = []
             if (themeName === 'All') {
                 previewTargets = Object.values(Themes)
@@ -130,38 +130,41 @@ const preview: Preview = {
                 previewTargets.push(Themes[themeName])
             }
 
-            return <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}
-            >
-                {previewTargets.map((themeData) => 
-                    <div
-                        style={{
-                            display: 'flex',
-                            flex: 1,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'var(--content-background)',
-                            "--content-text": themeData.content.text,
-                            "--content-link": themeData.content.link,
-                            "--content-background": themeData.content.background,
-                            "--ui-text": themeData.ui.text,
-                            "--ui-background": themeData.ui.background,
-                            "--backdrop-text": themeData.backdrop.text,
-                            "--backdrop-background": themeData.backdrop.background,
-                            "--divider": themeData.divider,
-                            "--space": themeData.space,
-                            "--round": themeData.round
-                        }}
-                    >
-                        <Story />
-                    </div>
-                )}
-            </div>
+            return (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
+                    {previewTargets.map((themeData) => (
+                        <div
+                            key={themeData.meta.name}
+                            style={{
+                                display: 'flex',
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'var(--content-background)',
+                                '--content-text': themeData.content.text,
+                                '--content-link': themeData.content.link,
+                                '--content-background': themeData.content.background,
+                                '--ui-text': themeData.ui.text,
+                                '--ui-background': themeData.ui.background,
+                                '--backdrop-text': themeData.backdrop.text,
+                                '--backdrop-background': themeData.backdrop.background,
+                                '--divider': themeData.divider,
+                                '--space': themeData.space,
+                                '--round': themeData.round
+                            }}
+                        >
+                            <Story />
+                        </div>
+                    ))}
+                </div>
+            )
         }
     ]
-};
+}
 
-export default preview;
+export default preview

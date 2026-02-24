@@ -1,4 +1,5 @@
-import { ReactNode, Suspense, lazy } from 'react'
+import type { ReactNode } from 'react'
+import { Suspense, lazy } from 'react'
 
 // TODO: Load on plugin loaded
 // import abap from 'react-syntax-highlighter/dist/cjs/languages/prism/abap'
@@ -320,6 +321,7 @@ export function Codeblock(props: CodeblockProps): ReactNode {
             }}
         >
             <Suspense fallback={<div>Loading...</div>}>
+                {/* @ts-expect-error: ? */}
                 <SyntaxHighlighter
                     style={materialDark}
                     language={props.language}

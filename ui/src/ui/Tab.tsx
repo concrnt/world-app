@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 
