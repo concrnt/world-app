@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "pnpm --filter world-app dev",
+    "dev": "pnpm --filter web dev",
     "tauri": "tauri",
     "prepare": "husky"
   },

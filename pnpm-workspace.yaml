@@ -3,3 +3,4 @@ packages:
   - 'client'
   - 'worldlib'
   - 'ui'
+  - 'web'
