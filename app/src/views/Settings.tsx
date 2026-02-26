@@ -4,6 +4,7 @@ import { Header } from '../ui/Header'
 import { ThemeCard } from '../components/ThemeCard'
 import { Themes } from '../data/themes'
 import { usePreference, useResetPreference } from '../contexts/Preference'
+import { CssVar } from '../types/Theme'
 
 export const SettingsView = () => {
     const { logout } = useClient()
@@ -16,45 +17,38 @@ export const SettingsView = () => {
             <Header>Settings</Header>
             <div
                 style={{
-                    width: '100%',
-                    height: '100%',
+                    flex: 1,
                     overflowY: 'auto',
-                    padding: '16px 0'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(4),
+                    padding: CssVar.space(4)
                 }}
             >
+                <Text variant="h3">Theme</Text>
                 <div
                     style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        padding: '0 8px'
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                        gap: CssVar.space(3)
                     }}
                 >
-                    <Text variant="h3">Theme</Text>
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                            gap: '12px'
-                        }}
-                    >
-                        {Object.entries(Themes).map(([name, theme]) => (
-                            <ThemeCard key={theme.meta?.name} theme={theme} onClick={() => setThemeName(name)} />
-                        ))}
-                    </div>
-
-                    <Divider />
-
-                    <Text variant="h3">Account</Text>
-                    <Button
-                        onClick={() => {
-                            logout()
-                            reset()
-                        }}
-                    >
-                        Logout
-                    </Button>
+                    {Object.entries(Themes).map(([name, theme]) => (
+                        <ThemeCard key={theme.meta?.name} theme={theme} onClick={() => setThemeName(name)} />
+                    ))}
                 </div>
+
+                <Divider />
+
+                <Text variant="h3">Account</Text>
+                <Button
+                    onClick={() => {
+                        logout()
+                        reset()
+                    }}
+                >
+                    Logout
+                </Button>
             </div>
         </View>
     )
