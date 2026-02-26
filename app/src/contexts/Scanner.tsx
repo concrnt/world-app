@@ -39,6 +39,8 @@ export const ScannerProvider = (props: Props) => {
 
         console.log('Scan result:', result)
 
+        setMode('idle')
+
         return Promise.resolve(result.content)
     }, [])
 
