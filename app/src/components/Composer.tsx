@@ -76,7 +76,8 @@ export const Composer = (props: Props) => {
                                 padding: CssVar.space(2),
                                 gap: CssVar.space(2),
                                 borderRadius: theme.variant === 'classic' ? undefined : CssVar.round(1),
-                                margin: theme.variant === 'classic' ? undefined : `0 ${CssVar.space(2)}`
+                                margin:
+                                    theme.variant === 'classic' ? undefined : `${CssVar.space(2)} ${CssVar.space(2)} 0`
                             }}
                         >
                             <div>
