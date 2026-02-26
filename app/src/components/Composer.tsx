@@ -69,53 +69,6 @@ export const Composer = (props: Props) => {
                     >
                         <div
                             style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: CssVar.space(2)
-                            }}
-                        >
-                            <Button
-                                variant="text"
-                                onClick={() => {
-                                    setWillClose(true)
-                                }}
-                                style={{
-                                    color: CssVar.backdropText
-                                }}
-                            >
-                                キャンセル
-                            </Button>
-                            <Button
-                                style={{
-                                    color: CssVar.backdropText
-                                }}
-                                onClick={async () => {
-                                    if (!client) return
-
-                                    const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
-                                    const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
-
-                                    const document = {
-                                        key: '/concrnt.world/main/posts/{cdid}',
-                                        schema: Schemas.markdownMessage,
-                                        value: {
-                                            body: draft
-                                        },
-                                        author: client.ccid,
-                                        distributes,
-                                        createdAt: new Date()
-                                    }
-                                    client.api.commit(document).then(() => {
-                                        setWillClose(true)
-                                    })
-                                }}
-                            >
-                                投稿
-                            </Button>
-                        </div>
-                        <div
-                            style={{
                                 backgroundColor: CssVar.contentBackground,
                                 flex: 1,
                                 display: 'flex',
@@ -160,6 +113,50 @@ export const Composer = (props: Props) => {
                                     }}
                                 />
                             </div>
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: CssVar.space(2)
+                            }}
+                        >
+                            <Button
+                                variant="text"
+                                onClick={() => {
+                                    setWillClose(true)
+                                }}
+                                style={{
+                                    color: CssVar.backdropText
+                                }}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                onClick={async () => {
+                                    if (!client) return
+
+                                    const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+                                    const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+
+                                    const document = {
+                                        key: '/concrnt.world/main/posts/{cdid}',
+                                        schema: Schemas.markdownMessage,
+                                        value: {
+                                            body: draft
+                                        },
+                                        author: client.ccid,
+                                        distributes,
+                                        createdAt: new Date()
+                                    }
+                                    client.api.commit(document).then(() => {
+                                        setWillClose(true)
+                                    })
+                                }}
+                            >
+                                投稿
+                            </Button>
                         </div>
                     </div>
                 </motion.div>
