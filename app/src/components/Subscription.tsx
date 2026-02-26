@@ -3,6 +3,7 @@ import { ListSchema, Schemas } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { useCallback, useEffect, useState } from 'react'
 import { Checkbox, Text } from '@concrnt/ui'
+import { CssVar } from '../types/Theme'
 
 export const Subscription = ({ target }: { target: string }) => {
     const { client } = useClient()
@@ -34,7 +35,14 @@ export const Subscription = ({ target }: { target: string }) => {
     }, [fetchLists])
 
     return (
-        <div>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
+            <Text variant="h3">リストに追加</Text>
             {Object.entries(lists).map(([uri, list]) => (
                 <ListItem key={uri} list={list} target={target} reload={fetchLists} />
             ))}
@@ -49,11 +57,13 @@ const ListItem = ({ list, target, reload }: { list: Document<ListSchema>; target
     return (
         <div
             style={{
-                padding: '8px',
-                borderBottom: '1px solid #ccc'
+                display: 'flex',
+                alignItems: 'center',
+                gap: CssVar.space(2),
+                padding: `${CssVar.space(2)} 0`,
+                borderBottom: `1px solid ${CssVar.divider}`
             }}
         >
-            <Text>{list.value.title}</Text>
             <Checkbox
                 checked={contains}
                 onChange={(checked) => {
@@ -75,6 +85,7 @@ const ListItem = ({ list, target, reload }: { list: Document<ListSchema>; target
                     })
                 }}
             />
+            <Text>{list.value.title}</Text>
         </div>
     )
 }
