@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     href: string
@@ -11,6 +12,9 @@ export const Link = (props: Props) => {
             href={props.href}
             target="_blank"
             rel="noopener noreferrer"
+            style={{
+                color: CssVar.contentLink
+            }}
             onClick={(e) => {
                 e.stopPropagation()
             }}
