@@ -3,6 +3,7 @@ import App from './App'
 import './index.css'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
+import { ScannerProvider } from './contexts/Scanner'
 
 import { ClientProvider } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
@@ -20,9 +21,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                     <DrawerProvider>
                         <SelectProvider>
                             <ComposerProvider>
-                                <OverlayProvider>
-                                    <App />
-                                </OverlayProvider>
+                                <ScannerProvider>
+                                    <OverlayProvider>
+                                        <App />
+                                    </OverlayProvider>
+                                </ScannerProvider>
                             </ComposerProvider>
                         </SelectProvider>
                     </DrawerProvider>
