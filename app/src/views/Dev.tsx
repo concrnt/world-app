@@ -5,6 +5,7 @@ import { Header } from '../ui/Header'
 import { Reorder, useDragControls } from 'motion/react'
 import { useSelect } from '../contexts/Select'
 import { useDrawer } from '../contexts/Drawer'
+import { scan, Format } from '@tauri-apps/plugin-barcode-scanner'
 
 export const DevView = () => {
     const [selected, setSelected] = useState<string[]>(['1'])
@@ -32,6 +33,23 @@ export const DevView = () => {
                     labelFunc={(item) => item.label}
                 />
             </div>
+
+            <Button
+                onClick={() => {
+                    scan({
+                        formats: [Format.QRCode]
+                    })
+                        .then((result) => {
+                            console.log('Scanned:', result)
+                        })
+                        .catch((error) => {
+                            console.error('Scan error:', error)
+                        })
+                }}
+            >
+                Scan
+            </Button>
+
             <Button
                 onClick={() => {
                     select(

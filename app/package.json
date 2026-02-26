@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@concrnt/ui": "workspace:*",
     "@concrnt/cfm": "^0.0.0",
     "@concrnt/client": "workspace:*",
+    "@concrnt/ui": "workspace:*",
     "@concrnt/worldlib": "workspace:*",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-barcode-scanner": "^2.4.4",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.1",
     "boring-avatars": "^2.0.4",

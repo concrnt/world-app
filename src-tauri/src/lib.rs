@@ -71,6 +71,7 @@ pub fn run() {
     builder
         .plugin(tauri_plugin_biometric::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_barcode_scanner::init())
         .plugin(tauri_plugin_keychain::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![auth_available, save_key, get_key])
