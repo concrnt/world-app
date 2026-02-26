@@ -32,7 +32,6 @@ export const ProfileEditor = (props: Props) => {
             >
                 <Text variant="h3">Profile</Text>
                 <Button
-                    variant="text"
                     onClick={() => {
                         if (!client) return
                         const document = {

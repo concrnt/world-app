@@ -100,7 +100,6 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
             >
                 <Text variant="h3">コミュニティを作成</Text>
                 <Button
-                    variant="text"
                     disabled={!communityName}
                     onClick={() => {
                         createCommunity({

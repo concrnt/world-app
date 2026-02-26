@@ -88,9 +88,7 @@ export const ListSettings = (props: Props) => {
                 }}
             >
                 <Text variant="h3">リスト設定</Text>
-                <Button variant="text" onClick={saveSettings}>
-                    保存
-                </Button>
+                <Button onClick={saveSettings}>保存</Button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">リスト名</Text>

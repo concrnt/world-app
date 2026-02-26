@@ -171,7 +171,6 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
             >
                 <Text variant="h3">リストを作成</Text>
                 <Button
-                    variant="text"
                     disabled={!newListTitle}
                     onClick={() => {
                         if (!client) return
