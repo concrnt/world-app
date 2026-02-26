@@ -19,6 +19,8 @@ export const DevView = () => {
     const { select } = useSelect()
     const { open } = useDrawer()
 
+    const [scanned, setScanned] = useState<string>('')
+
     return (
         <View>
             <Header>Devtools</Header>
@@ -46,11 +48,22 @@ export const DevView = () => {
 
                 <Button
                     onClick={() => {
-                        scan()
+                        scan().then((result) => {
+                            if (result) {
+                                setScanned(result)
+                                console.log('Scanned:', result)
+                            } else {
+                                console.log('No scan result')
+                            }
+                        })
                     }}
                 >
                     Scan
                 </Button>
+
+                <pre>
+                    <code>{scanned}</code>
+                </pre>
 
                 <Button
                     onClick={() => {
