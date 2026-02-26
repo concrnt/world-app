@@ -8,6 +8,7 @@ import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
 import { ClassicExplorer } from '../components/ClassicExplorer'
+import { CssVar } from '../types/Theme'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()
@@ -21,8 +22,8 @@ export const ExplorerView = () => {
                         flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
-                        padding: '4px'
+                        gap: CssVar.space(2),
+                        padding: CssVar.space(2)
                     }}
                 >
                     <ClassicExplorer />
@@ -83,26 +84,42 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
     }
 
     return (
-        <div>
-            <Text>コミュニティを作成</Text>
-
-            <Text>名前</Text>
-            <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
-            <Text>説明</Text>
-            <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
-
-            <Button
-                disabled={!communityName}
-                onClick={() => {
-                    createCommunity({
-                        name: communityName,
-                        description: communityDescription
-                    })
-                    onComplete()
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}
             >
-                作成
-            </Button>
+                <Text variant="h3">コミュニティを作成</Text>
+                <Button
+                    disabled={!communityName}
+                    onClick={() => {
+                        createCommunity({
+                            name: communityName,
+                            description: communityDescription
+                        })
+                        onComplete()
+                    }}
+                >
+                    作成
+                </Button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h5">名前</Text>
+                <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h5">説明</Text>
+                <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
+            </div>
         </div>
     )
 }

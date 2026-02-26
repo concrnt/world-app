@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     onComplete?: () => void
@@ -15,10 +16,22 @@ export const ProfileEditor = (props: Props) => {
     const [banner, setBanner] = useState<string>(client?.user?.profile?.banner || '')
 
     return (
-        <div>
-            <div>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <Text variant="h3">Profile</Text>
                 <Button
-                    variant="text"
                     onClick={() => {
                         if (!client) return
                         const document = {
@@ -40,18 +53,10 @@ export const ProfileEditor = (props: Props) => {
                     保存
                 </Button>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Text variant="h3">Profile</Text>
-                <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-                <TextField placeholder="Avatar URL" value={avatar} onChange={(e) => setAvatar(e.target.value)} />
-                <TextField
-                    placeholder="Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                />
-                <TextField placeholder="Banner URL" value={banner} onChange={(e) => setBanner(e.target.value)} />
-            </div>
+            <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <TextField placeholder="Avatar URL" value={avatar} onChange={(e) => setAvatar(e.target.value)} />
+            <TextField placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <TextField placeholder="Banner URL" value={banner} onChange={(e) => setBanner(e.target.value)} />
         </div>
     )
 }

@@ -3,6 +3,7 @@ import { TimelineView } from '../views/Timeline'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useState } from 'react'
+import { CssVar } from '../types/Theme'
 
 export const QueryView = () => {
     const { push } = useStack()
@@ -12,7 +13,14 @@ export const QueryView = () => {
     return (
         <View>
             <Header>照会</Header>
-            <div>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(2),
+                    padding: CssVar.space(2)
+                }}
+            >
                 <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cckv://" />
                 <Button
                     onClick={() => {

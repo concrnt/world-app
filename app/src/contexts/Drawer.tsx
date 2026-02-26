@@ -114,7 +114,7 @@ export const DrawerProvider = (props: Props) => {
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    padding: '12px 0'
+                                    padding: `${CssVar.space(3)} 0`
                                 }}
                                 onPointerDown={(e) => {
                                     dragControls.start(e)
@@ -124,12 +124,20 @@ export const DrawerProvider = (props: Props) => {
                                     style={{
                                         width: '30px',
                                         height: '6px',
-                                        borderRadius: '3px',
+                                        borderRadius: CssVar.round(0.5),
                                         backgroundColor: CssVar.divider
                                     }}
                                 />
                             </div>
-                            {content}
+                            <div
+                                style={{
+                                    padding: `0 ${CssVar.space(4)}`,
+                                    overflow: 'auto',
+                                    flex: 1
+                                }}
+                            >
+                                {content}
+                            </div>
                         </motion.div>
                     </>
                 )}

@@ -6,6 +6,7 @@ import { useClient } from '../contexts/Client'
 import { List, ListSchema, Schemas, Timeline } from '@concrnt/worldlib'
 import { parseCCURI } from '@concrnt/client'
 import { Document } from '@concrnt/client'
+import { CssVar } from '../types/Theme'
 
 interface Props {
     uri: string
@@ -72,13 +73,30 @@ export const ListSettings = (props: Props) => {
     }
 
     return (
-        <div>
-            <Text>リスト設定</Text>
-            <Text>リスト名</Text>
-            <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <Text variant="h3">リスト設定</Text>
+                <Button onClick={saveSettings}>保存</Button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h5">リスト名</Text>
+                <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
+            </div>
             {isPinned && (
-                <>
-                    <Text>デフォルト投稿先</Text>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                    <Text variant="h5">デフォルト投稿先</Text>
                     <TimelinePicker
                         items={list?.communities ?? []}
                         selected={postTimelines}
@@ -86,9 +104,8 @@ export const ListSettings = (props: Props) => {
                         keyFunc={(item: Timeline) => item.uri}
                         labelFunc={(item: Timeline) => item.name}
                     />
-                </>
+                </div>
             )}
-            <Button onClick={saveSettings}>設定を保存</Button>
 
             {isPinned ? (
                 <Button

@@ -12,6 +12,7 @@ import { usePreference } from '../contexts/Preference'
 import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
+import { CssVar } from '../types/Theme'
 
 export const ListsView = () => {
     const { client } = useClient()
@@ -154,38 +155,52 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
     const [newListTitle, setNewListTitle] = useState('')
 
     return (
-        <div>
-            <Text>リストを作成</Text>
-
-            <Text>タイトル</Text>
-            <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
-
-            <Button
-                disabled={!newListTitle}
-                onClick={() => {
-                    if (!client) return
-
-                    const key = Date.now().toString()
-
-                    const document: Document<ListSchema> = {
-                        key: '/concrnt.world/lists/' + key,
-                        schema: Schemas.list,
-                        value: {
-                            title: newListTitle,
-                            items: []
-                        },
-                        author: client.ccid,
-                        createdAt: new Date()
-                    }
-
-                    client.api.commit(document).then(() => {
-                        console.log('Community created')
-                        onComplete()
-                    })
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}
             >
-                作成
-            </Button>
+                <Text variant="h3">リストを作成</Text>
+                <Button
+                    disabled={!newListTitle}
+                    onClick={() => {
+                        if (!client) return
+
+                        const key = Date.now().toString()
+
+                        const document: Document<ListSchema> = {
+                            key: '/concrnt.world/lists/' + key,
+                            schema: Schemas.list,
+                            value: {
+                                title: newListTitle,
+                                items: []
+                            },
+                            author: client.ccid,
+                            createdAt: new Date()
+                        }
+
+                        client.api.commit(document).then(() => {
+                            console.log('Community created')
+                            onComplete()
+                        })
+                    }}
+                >
+                    作成
+                </Button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h5">タイトル</Text>
+                <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
+            </div>
         </div>
     )
 }

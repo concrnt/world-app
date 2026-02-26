@@ -67,19 +67,6 @@ export const Composer = (props: Props) => {
                             transition: 'height 0.1s ease-in-out'
                         }}
                     >
-                        <div>
-                            <Button
-                                variant="text"
-                                onClick={() => {
-                                    setWillClose(true)
-                                }}
-                                style={{
-                                    color: CssVar.backdropText
-                                }}
-                            >
-                                キャンセル
-                            </Button>
-                        </div>
                         <div
                             style={{
                                 backgroundColor: CssVar.contentBackground,
@@ -88,8 +75,9 @@ export const Composer = (props: Props) => {
                                 flexDirection: 'column',
                                 padding: CssVar.space(2),
                                 gap: CssVar.space(2),
-                                borderRadius: theme.variant === 'classic' ? undefined : CssVar.space(2),
-                                margin: theme.variant === 'classic' ? undefined : `0 ${CssVar.space(2)}`
+                                borderRadius: theme.variant === 'classic' ? undefined : CssVar.round(1),
+                                margin:
+                                    theme.variant === 'classic' ? undefined : `${CssVar.space(2)} ${CssVar.space(2)} 0`
                             }}
                         >
                             <div>
@@ -126,37 +114,50 @@ export const Composer = (props: Props) => {
                                     }}
                                 />
                             </div>
-                            <div
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: CssVar.space(2)
+                            }}
+                        >
+                            <Button
+                                variant="text"
+                                onClick={() => {
+                                    setWillClose(true)
+                                }}
                                 style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-end'
+                                    color: CssVar.backdropText
                                 }}
                             >
-                                <Button
-                                    onClick={async () => {
-                                        if (!client) return
+                                キャンセル
+                            </Button>
+                            <Button
+                                onClick={async () => {
+                                    if (!client) return
 
-                                        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
-                                        const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+                                    const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+                                    const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
-                                        const document = {
-                                            key: '/concrnt.world/main/posts/{cdid}',
-                                            schema: Schemas.markdownMessage,
-                                            value: {
-                                                body: draft
-                                            },
-                                            author: client.ccid,
-                                            distributes,
-                                            createdAt: new Date()
-                                        }
-                                        client.api.commit(document).then(() => {
-                                            setWillClose(true)
-                                        })
-                                    }}
-                                >
-                                    投稿
-                                </Button>
-                            </div>
+                                    const document = {
+                                        key: '/concrnt.world/main/posts/{cdid}',
+                                        schema: Schemas.markdownMessage,
+                                        value: {
+                                            body: draft
+                                        },
+                                        author: client.ccid,
+                                        distributes,
+                                        createdAt: new Date()
+                                    }
+                                    client.api.commit(document).then(() => {
+                                        setWillClose(true)
+                                    })
+                                }}
+                            >
+                                投稿
+                            </Button>
                         </div>
                     </div>
                 </motion.div>

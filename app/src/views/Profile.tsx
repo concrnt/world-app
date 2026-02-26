@@ -80,9 +80,8 @@ export const ProfileView = (props: Props) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                height: '50px',
-                                padding: '0 4px',
-                                gap: '4px'
+                                padding: CssVar.space(1),
+                                gap: CssVar.space(1)
                             }}
                         >
                             <div
@@ -101,17 +100,16 @@ export const ProfileView = (props: Props) => {
                             <IconButton variant="contained">
                                 <MdMoreHoriz size={24} />
                             </IconButton>
-                            <div></div>
                         </div>
                     </CCWallpaper>
                     <Avatar
                         ccid={props.id}
                         style={{
-                            width: '100px',
-                            height: '100px',
+                            width: `100px`,
+                            height: `100px`,
                             position: 'absolute',
                             transform: 'translateY(-50%)',
-                            left: '8px'
+                            left: CssVar.space(2)
                         }}
                         src={profilePromise.then((user) => user?.profile.avatar)}
                     />
@@ -120,13 +118,13 @@ export const ProfileView = (props: Props) => {
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
-                        padding: '0 8px'
+                        gap: CssVar.space(2),
+                        padding: `0 ${CssVar.space(2)}`
                     }}
                 >
                     <div
                         style={{
-                            height: '40px',
+                            minHeight: `50px`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-end'
@@ -165,6 +163,7 @@ export const ProfileView = (props: Props) => {
                         </Text>
                     </div>
                 </div>
+                <div style={{ marginTop: CssVar.space(2) }} />
                 <TabLayout
                     divider
                     tabs={tabs}
