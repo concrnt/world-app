@@ -141,8 +141,9 @@ export const Composer = (props: Props) => {
                                     const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
                                     const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
+                                    const key = Date.now().toString()
                                     const document = {
-                                        key: '/concrnt.world/main/posts/{cdid}',
+                                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
                                         schema: Schemas.markdownMessage,
                                         value: {
                                             body: draft

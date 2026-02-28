@@ -35,7 +35,7 @@ export const ProfileEditor = (props: Props) => {
                     onClick={() => {
                         if (!client) return
                         const document = {
-                            key: '/concrnt.world/main/profile',
+                            key: `cckv://${client.ccid}/concrnt.world/main/profile`,
                             schema: 'https://schema.concrnt.world/p/main.json',
                             value: {
                                 username,

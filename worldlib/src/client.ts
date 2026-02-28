@@ -50,7 +50,7 @@ export class Client {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
-                    key: '/concrnt.world/main/home-timeline',
+                    key: `cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-timeline`,
                     author: api.authProvider.getCCID(),
                     schema: 'https://schema.concrnt.world/t/empty.json',
                     value: {},
@@ -79,7 +79,7 @@ export class Client {
                 if (err instanceof NotFoundError) {
                     console.log('Notification timeline not found, creating a new one...')
                     const document = {
-                        key: '/concrnt.world/main/notify-timeline',
+                        key: `cckv://${api.authProvider.getCCID()}/concrnt.world/main/notify-timeline`,
                         author: api.authProvider.getCCID(),
                         schema: 'https://schema.concrnt.world/t/empty.json',
                         value: {},
@@ -108,7 +108,7 @@ export class Client {
                 if (err instanceof NotFoundError) {
                     console.log('Activity timeline not found, creating a new one...')
                     const document = {
-                        key: '/concrnt.world/main/activity-timeline',
+                        key: `cckv://${api.authProvider.getCCID()}/concrnt.world/main/activity-timeline`,
                         author: api.authProvider.getCCID(),
                         schema: 'https://schema.concrnt.world/t/empty.json',
                         value: {},
@@ -138,7 +138,7 @@ export class Client {
             if (err instanceof NotFoundError) {
                 console.log('Home list not found, creating a new one...')
                 const document: Document<ListSchema> = {
-                    key: '/concrnt.world/main/home-list',
+                    key: `cckv://${api.authProvider.getCCID()}/concrnt.world/main/home-list`,
                     author: api.authProvider.getCCID(),
                     schema: 'https://schema.concrnt.world/utils/list.json',
                     value: {
@@ -208,7 +208,6 @@ export class Message<T> implements Document<T> {
     schema: string
     value: T
     author: string
-    owner?: string
     createdAt: Date
     distributes?: string[]
 
@@ -228,7 +227,6 @@ export class Message<T> implements Document<T> {
         this.schema = document.schema
         this.value = document.value
         this.author = document.author
-        this.owner = document.owner
         this.createdAt = document.createdAt
         this.distributes = document.distributes
     }

@@ -59,7 +59,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
         const key = Date.now().toString()
 
         const document: Document<CommunityTimelineSchema> = {
-            key: '/concrnt.world/communities/' + key,
+            key: `cckv://${client.ccid}/concrnt.world/communities/${key}`,
             schema: Schemas.communityTimeline,
             owner: client.server.domain,
             value,

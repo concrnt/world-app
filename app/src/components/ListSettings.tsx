@@ -4,7 +4,6 @@ import { TimelinePicker } from './TimelinePicker'
 import { usePreference } from '../contexts/Preference'
 import { useClient } from '../contexts/Client'
 import { List, ListSchema, Schemas, Timeline } from '@concrnt/worldlib'
-import { parseCCURI } from '@concrnt/client'
 import { Document } from '@concrnt/client'
 import { CssVar } from '../types/Theme'
 
@@ -53,10 +52,8 @@ export const ListSettings = (props: Props) => {
         }
         setPinnedLists(newPins)
 
-        const { key } = parseCCURI(props.uri)
-
         const document: Document<ListSchema> = {
-            key: key,
+            key: props.uri,
             schema: Schemas.list,
             value: {
                 title: listName,

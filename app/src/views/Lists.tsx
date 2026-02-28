@@ -178,7 +178,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                         const key = Date.now().toString()
 
                         const document: Document<ListSchema> = {
-                            key: '/concrnt.world/lists/' + key,
+                            key: `cckv://${client.ccid}/concrnt.world/lists/${key}`,
                             schema: Schemas.list,
                             value: {
                                 title: newListTitle,

@@ -21,7 +21,6 @@ export interface Document<T> {
     schema: string
     value: T
     author: string
-    owner?: string
     createdAt: Date
     distributes?: string[]
 

@@ -498,10 +498,7 @@ export class Api {
             })
             .then((_) => {
                 // TODO: use result
-                const key = document.key?.startsWith('/') ? document.key.slice(1) : document.key
-                const uri = `cckv://${document.owner ?? document.author}/${key}`
-
-                this.cache.invalidate(uri)
+                if (document.key) this.cache.invalidate(document.key)
             })
             .catch((error) => {
                 console.error('Error committing:', error)
