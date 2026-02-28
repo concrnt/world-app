@@ -1,5 +1,6 @@
 import { Api } from './api'
 import { RealtimeEvent } from './model'
+import { renderUriTemplate } from './util'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const WS = typeof window === 'undefined' ? require('ws') : window.WebSocket
@@ -39,13 +40,9 @@ export class Socket {
             throw new Error(`Server not found for host: ${host}`)
         }
 
-        const endpoint = server.endpoints['net.concrnt.core.realtime']
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.realtime', {})
 
-        if (!endpoint) {
-            throw new Error(`Realtime endpoint not found for host: ${host}`)
-        }
-
-        this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + endpoint.template)
+        this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + endpoint)
 
         this.ws.onmessage = async (rawevent: any) => {
             const event: RealtimeEvent = JSON.parse(rawevent.data)

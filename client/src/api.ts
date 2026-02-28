@@ -102,17 +102,9 @@ export class Api {
     async callConcrntApi<T>(host: string, api: string, args: Record<string, string>, init?: RequestInit): Promise<T> {
         const server = await this.getServer(host || this.defaultHost)
 
-        const endpoint = server.endpoints[api]
-        if (!endpoint) {
-            throw new Error(`API ${api} not found on server ${server.domain}`)
-        }
+        const endpoint = renderUriTemplate(server, api, args)
 
-        let template = endpoint.template
-        for (const [key, value] of Object.entries(args)) {
-            template = template.replaceAll(`{${key}}`, value)
-        }
-
-        return this.fetchWithCredential<T>(this.defaultHost, template, init)
+        return this.fetchWithCredential<T>(this.defaultHost, endpoint, init)
     }
 
     async fetchWithCredential<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
@@ -475,19 +467,7 @@ export class Api {
         init?: RequestInit
     ): Promise<T> {
         const server = await this.getServer(host)
-
-        const endpoint = server.endpoints[api]
-        let template = endpoint.template
-        if (opts.params) {
-            for (const [key, value] of Object.entries(opts.params)) {
-                template = template.replaceAll(`{${key}}`, value)
-            }
-        }
-
-        if (opts.query) {
-            template += opts.query
-        }
-
+        const template = renderUriTemplate(server, api, opts.params ?? {})
         return this.fetchHost<T>(host, template, init)
     }
 
@@ -563,18 +543,12 @@ export class Api {
     }
 }
 
-export interface ConcrntApiEndpoint {
-    template: string
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-    query?: string[]
-}
-
 export interface Server {
     version: string
     domain: string
     csid: CSID
     layer: string
-    endpoints: Record<string, ConcrntApiEndpoint>
+    endpoints: Record<string, string>
 }
 
 export interface Entity {

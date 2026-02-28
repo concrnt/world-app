@@ -1,4 +1,5 @@
 import { Server } from './api'
+import { parse } from 'uri-template'
 
 export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 10 * 1000): Promise<Response> => {
     const controller = new AbortController()
@@ -24,29 +25,12 @@ export const parseCCURI = (uri: string): { owner: string; key: string } => {
     return { owner, key }
 }
 
-export const renderUriTemplate = (server: Server, signature: string, arg: Record<string, any>): string => {
-    const description = server.endpoints[signature]
-    if (!description) {
+export const renderUriTemplate = (server: Server, signature: string, args: Record<string, any>): string => {
+    const templateStr = server.endpoints[signature]
+    if (!templateStr) {
         throw new Error(`No endpoint found for signature: ${signature}`)
     }
 
-    let endpoint = description.template
-
-    const queries = []
-    for (const [key, value] of Object.entries(arg)) {
-        if (!value) continue
-        const placeholder = `{${key}}`
-        if (endpoint.includes(placeholder)) {
-            endpoint.replace(placeholder, value)
-        }
-        if (description.query && description.query.includes(key)) {
-            queries.push(`${key}=${encodeURIComponent(value)}`)
-        }
-    }
-
-    if (queries.length > 0) {
-        endpoint += `?${queries.join('&')}`
-    }
-
-    return endpoint
+    const template = parse(templateStr)
+    return template.expand(args)
 }
