@@ -1,29 +1,32 @@
 import { Button, Text, View } from '@concrnt/ui'
 
 import ConcrntLogo from '/concrnt.svg'
-import { useClient } from '../contexts/Client'
-import { useResetPreference } from '../contexts/Preference'
+
+import { useState } from 'react'
+import { AccountSetup } from '../views/AccountSetup'
+import { AccountImport } from '../views/AccountImport'
 
 export const WelcomeView = () => {
-    const { initialize } = useClient()
-    const reset = useResetPreference()
+    const [mode, setMode] = useState<'signup' | 'signin' | 'welcome'>('welcome')
 
-    return (
-        <View>
-            <img src={ConcrntLogo} alt="Concrnt Logo" style={{ width: '150px', height: '150px' }} />
+    switch (mode) {
+        case 'signup':
+            return <AccountSetup onBack={() => setMode('welcome')} />
+        case 'signin':
+            return <AccountImport onBack={() => setMode('welcome')} />
+        case 'welcome':
+            return (
+                <View>
+                    <img src={ConcrntLogo} alt="Concrnt Logo" style={{ width: '150px', height: '150px' }} />
 
-            <Text>ようこそ</Text>
+                    <Text>ようこそ</Text>
 
-            <Button
-                onClick={() => {
-                    initialize()
-                    reset()
-                }}
-            >
-                はじめる
-            </Button>
+                    <Button onClick={() => setMode('signup')}>はじめる</Button>
 
-            <Button variant="text">ログイン</Button>
-        </View>
-    )
+                    <Button variant="text" onClick={() => setMode('signin')}>
+                        ログイン
+                    </Button>
+                </View>
+            )
+    }
 }

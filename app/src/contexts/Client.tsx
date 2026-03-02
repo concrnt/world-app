@@ -1,13 +1,13 @@
-import { load } from '@tauri-apps/plugin-store'
+import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
-import { Api, GenerateIdentity, InMemoryKVS, MasterKeyAuthProvider } from '@concrnt/client'
+import { TauriAuthProvider } from '../lib/authProvider'
+import { InMemoryKVS } from '@concrnt/client'
 
 export interface ClientContextState {
     client?: Client
-    uninitialized?: boolean
-    initialize: () => Promise<void>
+    reload: () => Promise<void>
     logout: () => Promise<void>
 }
 
@@ -17,130 +17,63 @@ interface Props {
 
 const ClientContext = createContext<ClientContextState>({
     client: undefined,
-    uninitialized: undefined,
-    initialize: async () => {},
+    reload: async () => {},
     logout: async () => {}
 })
 
-interface ClientInfo {
+interface SessionState {
+    ccid: string
+    ckid: string
     domain: string
-    privatekey: string
 }
 
 export const ClientProvider = (props: Props): ReactNode => {
-    const [client, setClient] = useState<Client>()
-    const [uninitialized, setUninitialized] = useState<boolean>()
+    const [client, setClient] = useState<Client | null | undefined>(undefined)
 
-    useEffect(() => {
-        load('clientInfo.json')
-            .then((store) => {
-                store
-                    .get<ClientInfo>('ClientInfo')
-                    .then((value) => {
-                        if (!value || value.privatekey === '' || value.domain === '') {
-                            setUninitialized(true)
-                            return
-                        }
+    const reload = useCallback(async () => {
+        const session = await invoke<SessionState | undefined>('get_session')
+        console.log('session', session)
+        if (!session) {
+            console.log('No session found')
+            setClient(null)
+            return
+        }
+        const { ccid, ckid, domain } = session
+        if (!ccid || !ckid || !domain) {
+            console.log('Invalid sessb.rsion data')
+            setClient(null)
+            return
+        }
 
-                        setUninitialized(false)
-
-                        Client.create(value.privatekey, value.domain)
-                            .then((client) => {
-                                setClient(client)
-                            })
-                            .catch((e) => {
-                                console.error(e)
-                            })
-                    })
-                    .catch((e) => {
-                        console.error(e)
-                        setUninitialized(true)
-                    })
+        const authProvider = await TauriAuthProvider.create()
+        const kvs = new InMemoryKVS()
+        Client.create(domain, authProvider, kvs)
+            .then((client) => {
+                setClient(client)
             })
             .catch((e) => {
                 console.error(e)
-                setUninitialized(true)
+                setClient(null)
             })
     }, [])
 
-    const initialize = useCallback(async () => {
-        const identity = GenerateIdentity()
-
-        const host = 'v2dev.concrnt.net'
-        //const host = 'cc2.tunnel.anthrotech.dev'
-
-        const authProvider = new MasterKeyAuthProvider(identity.privateKey, host)
-        const cacheEngine = new InMemoryKVS()
-
-        const api = new Api(authProvider, cacheEngine)
-
-        const document = {
-            author: identity.CCID,
-            schema: 'https://schema.concrnt.net/affiliation.json',
-            value: {
-                domain: host
-            },
-            createdAt: new Date().toISOString()
-        }
-
-        const docString = JSON.stringify(document)
-        const signature = authProvider.sign(docString)
-
-        const request = {
-            affiliationDocument: docString,
-            affiliationSignature: signature,
-            meta: {}
-        }
-
-        api.requestConcrntApi(
-            host,
-            'net.concrnt.world.register',
-            {},
-            {
-                method: 'POST',
-                body: JSON.stringify(request),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        ).then(() => {
-            console.log('Registered')
-            load('clientInfo.json').then((store) => {
-                store.set('ClientInfo', {
-                    domain: host,
-                    privatekey: identity.privateKey
-                })
-                store.save()
-            })
-            Client.create(identity.privateKey, host)
-                .then((client) => {
-                    setClient(client)
-                    setUninitialized(false)
-                })
-                .catch((e) => {
-                    console.error(e)
-                })
-        })
-    }, [])
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        reload()
+    }, [reload])
 
     const logout = useCallback(async () => {
         localStorage.clear()
-        load('clientInfo.json').then((store) => {
-            store.clear().then(() => {
-                setClient(undefined)
-                setUninitialized(true)
-            })
-        })
+        await invoke('clear_session')
     }, [])
 
     const value = useMemo(() => {
         return {
             client,
-            uninitialized,
-            initialize,
+            reload,
             logout
         }
-    }, [client, uninitialized, initialize, logout])
+    }, [client, reload, logout])
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
 }

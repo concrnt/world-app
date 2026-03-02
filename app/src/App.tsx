@@ -3,7 +3,9 @@ import { WelcomeView } from './views/Welcome'
 import { MainView } from './views/Main'
 
 function App() {
-    const client = useClient()
+    const { client, logout } = useClient()
+
+    console.log('client', client)
 
     return (
         <div
@@ -15,8 +17,8 @@ function App() {
             }}
         >
             {(() => {
-                if (client.uninitialized === true) return <WelcomeView />
-                else if (client.client) return <MainView />
+                if (client === null) return <WelcomeView />
+                else if (client) return <MainView />
                 else
                     return (
                         <div
@@ -32,7 +34,7 @@ function App() {
                             Loading Client...
                             <button
                                 onClick={async () => {
-                                    client.logout().then(() => {
+                                    logout().then(() => {
                                         window.location.reload()
                                     })
                                 }}

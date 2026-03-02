@@ -28,7 +28,11 @@ export class GuestAuthProvider implements AuthProvider {
         return this.defaultHost
     }
 
-    sign(_data: string): never {
+    signMaster(_data: string): never {
+        throw new Error('Method not implemented.')
+    }
+
+    signSub(_data: string): never {
         throw new Error('Method not implemented.')
     }
 

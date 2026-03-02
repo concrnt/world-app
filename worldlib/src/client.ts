@@ -1,8 +1,6 @@
 import {
     Api,
     type FQDN,
-    MasterKeyAuthProvider,
-    InMemoryKVS,
     TimelineReader,
     QueryTimelineReader,
     Document,
@@ -10,7 +8,9 @@ import {
     Entity,
     Server,
     NotFoundError,
-    Socket
+    Socket,
+    AuthProvider,
+    KVS
 } from '@concrnt/client'
 import { Schemas } from './schemas'
 import { ListSchema, ProfileSchema, CommunityTimelineSchema, LikeAssociationSchema } from './schemas/'
@@ -32,11 +32,8 @@ export class Client {
         this.server = server
     }
 
-    static async create(privatekey: string, host: FQDN): Promise<Client> {
-        const authProvider = new MasterKeyAuthProvider(privatekey, host)
-        const cacheEngine = new InMemoryKVS()
-
-        const api = new Api(authProvider, cacheEngine)
+    static async create(host: FQDN, authProvider: AuthProvider, cacheEngine: KVS): Promise<Client> {
+        const api = new Api(host, authProvider, cacheEngine)
 
         const server = await api.getServer(host)
         const ccid = authProvider.getCCID()

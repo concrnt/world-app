@@ -1,12 +1,7 @@
-import { JwtPayload } from '../crypto'
-
 export interface AuthProvider {
     getCCID: () => string
     getCKID: () => string | undefined
-    getHeaders: (domain: string) => Promise<Record<string, string>>
-    getAuthToken: (domain: string) => string
-    getHost: () => string
 
-    sign(data: string): string
-    issueJWT: (claims: JwtPayload) => string
+    signMaster(data: string): Promise<string>
+    signSub(data: string): Promise<string>
 }

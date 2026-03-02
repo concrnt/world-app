@@ -3,6 +3,8 @@ import { AuthProvider } from './auth'
 import { fetchWithTimeout, renderUriTemplate } from './util'
 import { CCID, CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument } from './model'
 import { ChunklineItem } from './chunkline'
+import { CheckJwtIsValid, JwtPayload } from './crypto'
+import { keccak256 } from 'ethers'
 
 export class ServerOfflineError extends Error {
     constructor(server: string) {
@@ -44,14 +46,96 @@ export class Api {
     defaultHost: string = ''
     defaultCacheTTL: number = Infinity
     negativeCacheTTL: number = 300
+    tokens: Record<string, string> = {}
 
     private inFlightRequests = new Map<string, Promise<any>>()
 
-    constructor(authProvider: AuthProvider, cache: KVS) {
+    constructor(host: string, authProvider: AuthProvider, cache: KVS) {
+        this.defaultHost = host
         this.cache = cache
         this.authProvider = authProvider
+    }
 
-        this.defaultHost = authProvider.getHost()
+    makeUrlSafe(input: string): string {
+        return input.replaceAll('=', '').replaceAll('+', '-').replaceAll('/', '_')
+    }
+
+    async signJWT(claim: JwtPayload): Promise<string> {
+        const ckid = this.authProvider.getCKID()
+
+        const headerJson: Record<string, string> = {
+            alg: 'CONCRNT',
+            typ: 'JWT'
+        }
+        if (ckid) {
+            headerJson['kid'] = ckid
+        }
+
+        const header = JSON.stringify(headerJson)
+
+        const payload = JSON.stringify({
+            jti: crypto.randomUUID(),
+            iat: Math.floor(new Date().getTime() / 1000).toString(),
+            exp: Math.floor((new Date().getTime() + 5 * 60 * 1000) / 1000).toString(),
+            ...claim
+        })
+
+        const body = this.makeUrlSafe(btoa(header) + '.' + btoa(payload))
+        const bodyHash = keccak256(new TextEncoder().encode(body)).slice(2)
+
+        const hexSig = await this.authProvider.signSub(bodyHash)
+
+        const r = hexSig.slice(0, 64)
+        const s = hexSig.slice(64, 128)
+        const v = parseInt(hexSig.slice(128, 130), 16)
+
+        const r_padded = new Uint8Array(32)
+        const s_padded = new Uint8Array(32)
+
+        const r_bytes = Uint8Array.from(Buffer.from(r, 'hex'))
+        const s_bytes = Uint8Array.from(Buffer.from(s, 'hex'))
+
+        r_padded.set(r_bytes, 32 - r_bytes.length)
+        s_padded.set(s_bytes, 32 - s_bytes.length)
+
+        const base64Sig = this.makeUrlSafe(btoa(String.fromCharCode.apply(null, [...r_padded, ...s_padded, v])))
+
+        return body + '.' + base64Sig
+    }
+
+    async generateApiToken(remote: string): Promise<string> {
+        const ccid = this.authProvider.getCCID()
+
+        const token = await this.signJWT({
+            aud: remote,
+            iss: ccid,
+            sub: 'concrnt'
+        })
+
+        this.tokens[remote] = token
+        return token
+    }
+
+    async getAuthToken(remote: string): Promise<string> {
+        let token = this.tokens[remote]
+        if (!token || !CheckJwtIsValid(token)) {
+            token = await this.generateApiToken(remote)
+        }
+        return token
+    }
+
+    async getHeaders(domain: string) {
+        /*
+            let passport = await this.passport
+            if (!passport) {
+                passport = await this.getPassport()
+            }
+        */
+
+        return {
+            authorization: `Bearer ${await this.getAuthToken(domain)}`
+            //passport: passport
+        }
     }
 
     getServerOnlineStatus = async (host: string): Promise<boolean> => {
@@ -111,7 +195,7 @@ export class Api {
         const fetchHost = host || this.defaultHost
 
         try {
-            const authHeaders = await this.authProvider.getHeaders(fetchHost)
+            const authHeaders = await this.getHeaders(fetchHost)
             init.headers = {
                 ...init.headers,
                 ...authHeaders
@@ -221,7 +305,7 @@ export class Api {
             let authHeaders = {}
             if (opts?.auth !== 'no-auth') {
                 try {
-                    authHeaders = await this.authProvider.getHeaders(fetchHost)
+                    authHeaders = await this.getHeaders(fetchHost)
                 } catch (e) {
                     console.error('failed to get auth headers', e)
                 }
@@ -471,9 +555,11 @@ export class Api {
         return this.fetchHost<T>(host, template, init)
     }
 
-    async commit<T>(document: Document<T>, domain?: string): Promise<void> {
+    async commit<T>(document: Document<T>, domain?: string, opts?: { useMasterkey: boolean }): Promise<void> {
         const docString = JSON.stringify(document)
-        const signature = this.authProvider.sign(docString)
+        const signature = opts?.useMasterkey
+            ? await this.authProvider.signMaster(docString)
+            : await this.authProvider.signSub(docString)
 
         const signedDoc = {
             document: docString,
