@@ -34,3 +34,43 @@ export const renderUriTemplate = (server: Server, signature: string, args: Recor
     const template = parse(templateStr)
     return template.expand(args)
 }
+
+export function toHexString(byteArray: Uint8Array | number[]): string {
+    return Array.from(byteArray, function (byte) {
+        return ('0' + (byte & 0xff).toString(16)).slice(-2)
+    }).join('')
+}
+
+export function parseHexString(hexString: string): Uint8Array {
+    return new Uint8Array((hexString.match(/.{1,2}/g) ?? []).map((byte) => parseInt(byte, 16)))
+}
+
+export const makeUrlSafe = (input: string): string => {
+    return input.replaceAll('=', '').replaceAll('+', '-').replaceAll('/', '_')
+}
+
+export const btoa = (input: string): string => {
+    // use window.btoa if we are in the browser
+    if (typeof window !== 'undefined') {
+        return window.btoa(input)
+    }
+    if (typeof Buffer !== 'undefined') {
+        return Buffer.from(input, 'binary').toString('base64')
+    }
+
+    console.error('no way to encode base64')
+    return ''
+}
+
+export const atob = (input: string): string => {
+    // use window.atob if we are in the browser
+    if (typeof window !== 'undefined') {
+        return window.atob(input)
+    }
+    if (typeof Buffer !== 'undefined') {
+        return Buffer.from(input, 'base64').toString('binary')
+    }
+
+    console.error('no way to decode base64')
+    return ''
+}

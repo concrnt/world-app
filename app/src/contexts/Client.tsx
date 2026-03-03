@@ -65,6 +65,7 @@ export const ClientProvider = (props: Props): ReactNode => {
     const logout = useCallback(async () => {
         localStorage.clear()
         await invoke('clear_session')
+        reload()
     }, [])
 
     const value = useMemo(() => {

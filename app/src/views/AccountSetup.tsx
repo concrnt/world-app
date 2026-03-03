@@ -89,11 +89,13 @@ export const AccountSetup = (props: Props) => {
 
                             const ckid: string = await invoke('create_subkey')
 
-                            const subkeyDoc: Document<string> = {
+                            const subkeyDoc: Document<any> = {
                                 key: `cckv://${ccid}/keys/${ckid}`,
                                 author: ccid,
                                 schema: 'https://schema.concrnt.net/subkey.json',
-                                value: ckid,
+                                value: {
+                                    ckid
+                                },
                                 createdAt: new Date()
                             }
 

@@ -96,9 +96,11 @@ fn sign_masterkey(app_handle: tauri::AppHandle, payload: &str) -> String {
 
 #[tauri::command]
 fn sign_subkey(app_handle: tauri::AppHandle, payload: &str) -> (String, String) {
-    let identity = retract_subkey(app_handle).unwrap();
-    let ckid = compute_ckid(&identity.public_key).unwrap();
-    (sign(&identity.private_key, payload).unwrap(), ckid)
+    let store = app_handle.store("session").unwrap();
+    let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string())).unwrap();
+
+    let priv_key = retract_subkey(app_handle).unwrap();
+    (sign(&priv_key, payload).unwrap(), ckid)
 }
 
 #[tauri::command]
@@ -169,27 +171,23 @@ fn retract_masterkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
     }
 }
 
-fn retract_subkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
-    let request = KeychainRequest {
-        key: Some("concrnt_masterkey".to_string()),
-        password: None,
+fn retract_subkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
+    let store = match app_handle.store("session") {
+        Ok(s) => s,
+        Err(e) => return Err(format!("Failed to create store: {}", e)),
     };
 
-    let resp = match app_handle.keychain().get_item(request) {
-        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
-        Err(e) => Err(format!("Failed to get concrnt_masterkey. Error: {}", e)),
+    let private_key_raw = match store.get("sub_priv".to_string()) {
+        Some(v) => v,
+        None => return Err("No value found for sub_priv".to_string()),
     };
 
-    let mnemonic = match resp {
-        Ok(m) => m,
-        Err(e) => return Err(e),
+    let private_key_str = match private_key_raw.as_str() {
+        Some(s) => s,
+        None => return Err("Value for sub_priv is not a string".to_string()),
     };
 
-    if let Some(identity) = load_identity(&mnemonic)? {
-        Ok(identity)
-    } else {
-        Err("Failed to load identity from mnemonic".into())
-    }
+    Ok(private_key_str.to_string())
 }
 
 fn load_identity(mnemonic: &str) -> Result<Option<Identity>, Error> {

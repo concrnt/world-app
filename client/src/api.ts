@@ -1,6 +1,6 @@
 import { KVS } from './cache'
 import { AuthProvider } from './auth'
-import { fetchWithTimeout, renderUriTemplate } from './util'
+import { fetchWithTimeout, makeUrlSafe, parseHexString, renderUriTemplate, btoa } from './util'
 import { CCID, CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument } from './model'
 import { ChunklineItem } from './chunkline'
 import { CheckJwtIsValid, JwtPayload } from './crypto'
@@ -56,19 +56,13 @@ export class Api {
         this.authProvider = authProvider
     }
 
-    makeUrlSafe(input: string): string {
-        return input.replaceAll('=', '').replaceAll('+', '-').replaceAll('/', '_')
-    }
-
     async signJWT(claim: JwtPayload): Promise<string> {
         const ckid = this.authProvider.getCKID()
 
         const headerJson: Record<string, string> = {
             alg: 'CONCRNT',
-            typ: 'JWT'
-        }
-        if (ckid) {
-            headerJson['kid'] = ckid
+            typ: 'JWT',
+            kid: `cckv://${this.authProvider.getCCID()}/keys/${ckid}`
         }
 
         const header = JSON.stringify(headerJson)
@@ -80,25 +74,20 @@ export class Api {
             ...claim
         })
 
-        const body = this.makeUrlSafe(btoa(header) + '.' + btoa(payload))
-        const bodyHash = keccak256(new TextEncoder().encode(body)).slice(2)
+        const body = makeUrlSafe(btoa(header) + '.' + btoa(payload))
 
-        const [hexSig, _] = await this.authProvider.signSub(bodyHash)
+        const [hexSig, _] = await this.authProvider.signSub(body)
 
-        const r = hexSig.slice(0, 64)
-        const s = hexSig.slice(64, 128)
+        const r_raw = parseHexString(hexSig.slice(0, 64))
+        const s_raw = parseHexString(hexSig.slice(64, 128))
         const v = parseInt(hexSig.slice(128, 130), 16)
 
         const r_padded = new Uint8Array(32)
+        r_padded.set(r_raw, 32 - r_raw.length)
         const s_padded = new Uint8Array(32)
+        s_padded.set(s_raw, 32 - s_raw.length)
 
-        const r_bytes = Uint8Array.from(Buffer.from(r, 'hex'))
-        const s_bytes = Uint8Array.from(Buffer.from(s, 'hex'))
-
-        r_padded.set(r_bytes, 32 - r_bytes.length)
-        s_padded.set(s_bytes, 32 - s_bytes.length)
-
-        const base64Sig = this.makeUrlSafe(btoa(String.fromCharCode.apply(null, [...r_padded, ...s_padded, v])))
+        const base64Sig = makeUrlSafe(btoa(String.fromCharCode.apply(null, [...r_padded, ...s_padded, v])))
 
         return body + '.' + base64Sig
     }
