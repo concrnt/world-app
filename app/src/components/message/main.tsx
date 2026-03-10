@@ -5,6 +5,8 @@ import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
 import { Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
+import { ReplyMessage } from './ReplyMessage'
+import { RerouteMessage } from './RerouteMessage'
 import { LikeAssociation } from './LikeAssociation'
 import { LegacyNoteMessage } from './legacy/note'
 
@@ -72,6 +74,10 @@ const MessageContainerInner = (props: InnerProps) => {
     switch (message.schema) {
         case Schemas.markdownMessage:
             return <MarkdownMessage message={message} />
+        case Schemas.replyMessage:
+            return <ReplyMessage message={message} />
+        case Schemas.rerouteMessage:
+            return <RerouteMessage message={message} />
         case Schemas.likeAssociation:
             return <LikeAssociation message={message} />
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':

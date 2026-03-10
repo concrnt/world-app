@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react'
 import { Button } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
-import { Schemas } from '@concrnt/worldlib'
+import { Message, Schemas } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useTheme } from '../contexts/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
+import { ComposerMode } from '../contexts/Composer'
 
 interface Props {
     onClose?: () => void
     destinations: string[]
     setDestinations: (destinations: string[]) => void
     options: any[]
+    mode: ComposerMode
+    targetMessage?: Message<any>
 }
 
 export const Composer = (props: Props) => {
@@ -35,6 +38,167 @@ export const Composer = (props: Props) => {
         visualViewport?.addEventListener('resize', handleResize)
         return () => visualViewport?.removeEventListener('resize', handleResize)
     }, [setViewportHeight])
+
+    // モードに応じたラベル
+    const getCancelLabel = () => {
+        switch (props.mode) {
+            case 'reply':
+                return 'リプライをキャンセル'
+            case 'reroute':
+                return 'リルートをキャンセル'
+            default:
+                return 'キャンセル'
+        }
+    }
+
+    const getSubmitLabel = () => {
+        switch (props.mode) {
+            case 'reply':
+                return 'リプライ'
+            case 'reroute':
+                return 'リルート'
+            default:
+                return '投稿'
+        }
+    }
+
+    const getPlaceholder = () => {
+        switch (props.mode) {
+            case 'reply':
+                return '返信を入力...'
+            default:
+                return '今、なにしてる？'
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!client) return
+
+        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+        const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
+        const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+
+        try {
+            switch (props.mode) {
+                case 'reply': {
+                    if (!props.targetMessage) {
+                        console.error('Reply: targetMessage is undefined')
+                        setWillClose(true)
+                        return
+                    }
+
+                    const targetAuthorDomain = await client
+                        .getUser(props.targetMessage.author)
+                        .then((user) => user?.domain)
+                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+
+                    // リプライメッセージを作成
+                    const key = Date.now().toString()
+                    const replyDocument = {
+                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                        schema: Schemas.replyMessage,
+                        value: {
+                            body: draft,
+                            replyToMessageId: props.targetMessage.uri,
+                            replyToMessageAuthor: props.targetMessage.author
+                        },
+                        author: client.ccid,
+                        distributes,
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reply:', replyDocument)
+                    const replyResult = await client.api.commit(replyDocument)
+                    console.log('Reply result:', replyResult)
+
+                    // リプライアソシエーションを作成
+                    const associationDocument = {
+                        author: client.ccid,
+                        schema: Schemas.replyAssociation,
+                        associate: props.targetMessage.uri,
+                        value: {
+                            messageId: replyResult.uri,
+                            messageAuthor: client.ccid
+                        },
+                        distributes: [activityTimeline, notifyTimeline],
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reply association:', associationDocument)
+                    await client.api.commit(associationDocument, targetAuthorDomain)
+                    console.log('Reply association submitted')
+                    break
+                }
+                case 'reroute': {
+                    if (!props.targetMessage) {
+                        console.error('Reroute: targetMessage is undefined')
+                        setWillClose(true)
+                        return
+                    }
+
+                    const targetAuthorDomain = await client
+                        .getUser(props.targetMessage.author)
+                        .then((user) => user?.domain)
+                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+
+                    // リルートメッセージを作成
+                    const key = Date.now().toString()
+                    const rerouteDocument = {
+                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                        schema: Schemas.rerouteMessage,
+                        value: {
+                            rerouteMessageId: props.targetMessage.uri,
+                            rerouteMessageAuthor: props.targetMessage.author
+                        },
+                        author: client.ccid,
+                        distributes,
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reroute:', rerouteDocument)
+                    const rerouteResult = await client.api.commit(rerouteDocument)
+                    console.log('Reroute result:', rerouteResult)
+
+                    // リルートアソシエーションを作成
+                    const associationDocument = {
+                        author: client.ccid,
+                        schema: Schemas.rerouteAssociation,
+                        associate: props.targetMessage.uri,
+                        value: {
+                            messageId: rerouteResult.uri,
+                            messageAuthor: client.ccid
+                        },
+                        distributes: [activityTimeline, notifyTimeline],
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reroute association:', associationDocument)
+                    await client.api.commit(associationDocument, targetAuthorDomain)
+                    console.log('Reroute association submitted')
+                    break
+                }
+                default: {
+                    // 通常の投稿
+                    const key = Date.now().toString()
+                    const document = {
+                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                        schema: Schemas.markdownMessage,
+                        value: {
+                            body: draft
+                        },
+                        author: client.ccid,
+                        distributes,
+                        createdAt: new Date()
+                    }
+                    await client.api.commit(document)
+                }
+            }
+        } catch (error) {
+            console.error('Submit error:', error)
+        }
+
+        setWillClose(true)
+    }
 
     return (
         <AnimatePresence
@@ -91,29 +255,61 @@ export const Composer = (props: Props) => {
                                     setPostHome={setPostHome}
                                 />
                             </div>
-                            <div
-                                style={{
-                                    flex: 1
-                                }}
-                            >
-                                <textarea
-                                    autoFocus
-                                    value={draft}
-                                    placeholder="いま、なにしてる？"
-                                    onChange={(e) => setDraft(e.target.value)}
+
+                            {/* リプライ/リルート対象の表示 */}
+                            {props.targetMessage && (
+                                <div
                                     style={{
-                                        width: '100%',
-                                        fontSize: '1.5rem',
-                                        boxSizing: 'border-box',
-                                        border: 'none',
-                                        outline: 'none',
-                                        resize: 'none',
-                                        height: '100%',
-                                        background: 'transparent',
-                                        color: CssVar.contentText
+                                        padding: '8px',
+                                        backgroundColor: CssVar.backdropBackground,
+                                        borderRadius: '4px',
+                                        borderLeft: '3px solid',
+                                        borderLeftColor: CssVar.contentLink,
+                                        fontSize: '14px'
                                     }}
-                                />
-                            </div>
+                                >
+                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                        {props.targetMessage.authorUser?.profile.username}
+                                    </div>
+                                    <div
+                                        style={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            opacity: 0.8
+                                        }}
+                                    >
+                                        {props.targetMessage.value.body}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* リルートモードではテキストエリアを非表示 */}
+                            {props.mode !== 'reroute' && (
+                                <div
+                                    style={{
+                                        flex: 1
+                                    }}
+                                >
+                                    <textarea
+                                        autoFocus
+                                        value={draft}
+                                        placeholder={getPlaceholder()}
+                                        onChange={(e) => setDraft(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            fontSize: '1.5rem',
+                                            boxSizing: 'border-box',
+                                            border: 'none',
+                                            outline: 'none',
+                                            resize: 'none',
+                                            height: '100%',
+                                            background: 'transparent',
+                                            color: CssVar.contentText
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                         <div
                             style={{
@@ -132,33 +328,9 @@ export const Composer = (props: Props) => {
                                     color: CssVar.backdropText
                                 }}
                             >
-                                キャンセル
+                                {getCancelLabel()}
                             </Button>
-                            <Button
-                                onClick={async () => {
-                                    if (!client) return
-
-                                    const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
-                                    const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
-
-                                    const key = Date.now().toString()
-                                    const document = {
-                                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
-                                        schema: Schemas.markdownMessage,
-                                        value: {
-                                            body: draft
-                                        },
-                                        author: client.ccid,
-                                        distributes,
-                                        createdAt: new Date()
-                                    }
-                                    client.api.commit(document).then(() => {
-                                        setWillClose(true)
-                                    })
-                                }}
-                            >
-                                投稿
-                            </Button>
+                            <Button onClick={handleSubmit}>{getSubmitLabel()}</Button>
                         </div>
                     </div>
                 </motion.div>

@@ -1,8 +1,11 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { Message } from '@concrnt/worldlib'
+
+export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
 interface ComposerContextState {
-    open: (destinations: string[], options: any[]) => void
+    open: (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => void
     close: () => void
 }
 
@@ -11,7 +14,7 @@ interface Props {
 }
 
 const ComposerContext = createContext<ComposerContextState>({
-    open: (_destinations: string[]) => {},
+    open: () => {},
     close: () => {}
 })
 
@@ -19,15 +22,24 @@ export const ComposerProvider = (props: Props) => {
     const [showComposer, setShowComposer] = useState(false)
     const [destinations, setDestinations] = useState<string[]>([])
     const [options, setOptions] = useState<any[]>([])
+    const [mode, setMode] = useState<ComposerMode>('normal')
+    const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
 
-    const open = useCallback((destinations: string[], options: any[]) => {
-        setDestinations(destinations)
-        setShowComposer(true)
-        setOptions(options)
-    }, [])
+    const open = useCallback(
+        (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => {
+            setDestinations(destinations)
+            setOptions(options)
+            setMode(mode ?? 'normal')
+            setTargetMessage(targetMessage)
+            setShowComposer(true)
+        },
+        []
+    )
 
     const close = useCallback(() => {
         setShowComposer(false)
+        setMode('normal')
+        setTargetMessage(undefined)
     }, [])
 
     const value = useMemo(
@@ -75,6 +87,8 @@ export const ComposerProvider = (props: Props) => {
                             destinations={destinations}
                             setDestinations={setDestinations}
                             options={options}
+                            mode={mode}
+                            targetMessage={targetMessage}
                         />
                     </div>
                 )}
