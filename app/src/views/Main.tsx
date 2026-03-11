@@ -60,8 +60,8 @@ export const MainView = () => {
             const document = message
             if (!document) return
 
-            // TODO: 動作確認後に戻す - 自分自身からの通知は無視
-            // if (document.author === client.ccid) return
+            // 自分自身からの通知は無視
+            if (document.author === client.ccid) return
 
             // 作成者のプロフィールを取得
             const author = await client.getUser(document.author).catch(() => null)
