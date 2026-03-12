@@ -58,18 +58,6 @@ export const HomeView = (props: ScrollViewProps) => {
         }
     }, [selectedTabUri, tabs, client])
 
-    /*
-    const communitiesPromise = useMemo(async () => {
-        const timelineIDs = await timelineIDsPromise
-        const results = await Promise.allSettled(timelineIDs.map((uri) => client?.getTimeline(uri)))
-        return results
-            .filter(isFulfilled)
-            .map((res) => res.value)
-            .filter((timeline) => !!timeline)
-            .filter((tl) => tl.schema === Schemas.communityTimeline)
-    }, [timelineIDsPromise, client])
-    */
-
     const communitiesPromise = useMemo(() => {
         return timelineIDsPromise.then((timelineIDs) => {
             return Promise.allSettled(timelineIDs.map((uri) => client?.getTimeline(uri))).then((results) => {
