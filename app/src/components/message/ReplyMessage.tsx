@@ -33,7 +33,6 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
 
     // リプライ先のメッセージ情報
     const replyToId = message.value.replyToMessageId
-    const replyToAuthor = message.value.replyToMessageAuthor
 
     // リプライ先のメッセージを取得
     const [replyToMessage, setReplyToMessage] = useState<Message<any> | null>(null)

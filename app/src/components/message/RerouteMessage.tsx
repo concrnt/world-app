@@ -16,7 +16,6 @@ import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { useComposer } from '../../contexts/Composer'
-import { CssVar } from '../../types/Theme'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { push } = useStack()
@@ -26,14 +25,8 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
 
     const message = props.message
 
-    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
-    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
-    const replyCount = message.associationCounts?.[Schemas.replyAssociation] ?? 0
-    const rerouteCount = message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
-
     // リルート元のメッセージ情報
     const rerouteId = message.value.rerouteMessageId
-    const rerouteAuthor = message.value.rerouteMessageAuthor
 
     // リルート元のメッセージを取得
     const [rerouteMessage, setRerouteMessage] = useState<Message<any> | null>(null)

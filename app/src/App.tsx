@@ -1,7 +1,6 @@
 import { useClient } from './contexts/Client'
 import { WelcomeView } from './views/Welcome'
 import { MainView } from './views/Main'
-import { ToastProvider } from './contexts/Toast'
 
 function App() {
     const { client, logout } = useClient()
@@ -19,12 +18,7 @@ function App() {
         >
             {(() => {
                 if (client === null) return <WelcomeView />
-                else if (client)
-                    return (
-                        <ToastProvider>
-                            <MainView />
-                        </ToastProvider>
-                    )
+                else if (client) return <MainView />
                 else
                     return (
                         <div

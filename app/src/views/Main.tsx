@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { TabLayout } from '../layouts/Tab'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { Sidebar } from '../components/Sidebar'
@@ -16,118 +16,17 @@ import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { useTheme } from '../contexts/Theme'
 import { CssVar } from '../types/Theme'
-import { useClient } from '../contexts/Client'
-import { useToast } from '../contexts/Toast'
-import { Schemas } from '@concrnt/worldlib'
-import { TimelineReader, Document, ChunklineItem } from '@concrnt/client'
-import { Avatar, CfmRenderer } from '@concrnt/ui'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
-    const { client } = useClient()
-    const toast = useToast()
-
-    // 新着通知バッジの状態
-    const [hasNewNotification, setHasNewNotification] = useState(false)
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
     const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
 
     const theme = useTheme()
 
-    // リアルタイム通知のセットアップ
-    useEffect(() => {
-        if (!client) return
-
-        const notifyTimeline = `cckv://${client.ccid}/concrnt.world/main/notify-timeline`
-        let reader: TimelineReader | undefined
-
-        const handleNewItem = async (item: ChunklineItem) => {
-            console.log('New notification item:', item)
-
-            // 新着通知バッジを表示
-            setHasNewNotification(true)
-
-            // item.href からドキュメントを取得
-            const message = await client.getMessage<any>(item.href).catch(() => null)
-            if (!message) {
-                console.log('Failed to get message:', item.href)
-                return
-            }
-
-            console.log('Notification message:', message)
-
-            const document = message
-            if (!document) return
-
-            // 自分自身からの通知は無視
-            if (document.author === client.ccid) return
-
-            // 作成者のプロフィールを取得
-            const author = await client.getUser(document.author).catch(() => null)
-            const username = author?.profile.username || 'anonymous'
-            const avatar = author?.profile.avatar
-
-            switch (document.schema) {
-                case Schemas.replyAssociation: {
-                    // リプライメッセージを取得
-                    const replyMessageId = document.value?.messageId
-                    if (replyMessageId) {
-                        const replyMessage = await client.getMessage<any>(replyMessageId).catch(() => null)
-                        toast.show(
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                                <Avatar ccid={document.author} src={avatar} style={{ width: '32px', height: '32px' }} />
-                                <div>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {username} が返信しました
-                                    </div>
-                                    {replyMessage && (
-                                        <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                                            <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    }
-                    break
-                }
-                case Schemas.rerouteAssociation: {
-                    toast.show(
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <Avatar ccid={document.author} src={avatar} style={{ width: '32px', height: '32px' }} />
-                            <div style={{ fontWeight: 'bold' }}>{username} がリルートしました</div>
-                        </div>
-                    )
-                    break
-                }
-                case Schemas.likeAssociation: {
-                    toast.show(
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <Avatar ccid={document.author} src={avatar} style={{ width: '32px', height: '32px' }} />
-                            <div style={{ fontWeight: 'bold' }}>{username} がお気に入りに登録しました</div>
-                        </div>
-                    )
-                    break
-                }
-            }
-        }
-
-        // TimelineReader をセットアップ
-        client.newTimelineReader().then((r) => {
-            reader = r
-            reader.onNewItem = handleNewItem
-            reader.listen([notifyTimeline])
-            console.log('Notification listener started for:', notifyTimeline)
-        })
-
-        // クリーンアップ
-        return () => {
-            if (reader) {
-                reader.dispose()
-            }
-        }
-    }, [client, toast])
+    // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
+    // const [hasNewNotification, setHasNewNotification] = useState(false)
 
     const tabs = useMemo(() => {
         return {
@@ -169,24 +68,26 @@ export const MainView = () => {
                         <NotificationsView />
                     </StackLayout>
                 ),
-                tab: (
-                    <div style={{ position: 'relative', display: 'inline-flex' }}>
-                        <MdNotifications size={24} />
-                        {hasNewNotification && (
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    top: -2,
-                                    right: -2,
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: '50%',
-                                    backgroundColor: '#ff4444'
-                                }}
-                            />
-                        )}
-                    </div>
-                )
+                // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
+                // tab: (
+                //     <div style={{ position: 'relative', display: 'inline-flex' }}>
+                //         <MdNotifications size={24} />
+                //         {hasNewNotification && (
+                //             <div
+                //                 style={{
+                //                     position: 'absolute',
+                //                     top: -2,
+                //                     right: -2,
+                //                     width: 8,
+                //                     height: 8,
+                //                     borderRadius: '50%',
+                //                     backgroundColor: '#ff4444'
+                //                 }}
+                //             />
+                //         )}
+                //     </div>
+                // )
+                tab: <MdNotifications size={24} />
             },
             contacts: {
                 body: (
@@ -201,7 +102,7 @@ export const MainView = () => {
                 tab: <MdContacts size={24} />
             }
         }
-    }, [hasNewNotification])
+    }, [])
 
     const [selectedTab, setSelectedTab] = useState<string>('home')
 
@@ -211,10 +112,6 @@ export const MainView = () => {
                 if (!stackRefs.current[tab]?.clear()) {
                     scrollRefs.current[tab]?.scrollToTop()
                 }
-            }
-            // 通知タブを選択したらバッジを消す
-            if (tab === 'notifications') {
-                setHasNewNotification(false)
             }
             setSelectedTab(tab)
         },
