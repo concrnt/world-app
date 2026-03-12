@@ -99,53 +99,35 @@ export const RealtimeTimeline = (props: Props) => {
             }}
             ref={scrollRef}
         >
-            <ErrorBoundary FallbackComponent={renderError}>
-                {reader.current?.chunkedBody.map((chunk, i) => (
-                    <div key={i}>
-                        <ErrorBoundary FallbackComponent={renderError}>
-                            <div
-                                style={{
-                                    padding: '8px',
-                                    fontSize: '12px',
-                                    color: '#888',
-                                    textAlign: 'center'
-                                }}
-                            >
-                                {i}
-                            </div>
-                            {chunk.map((item) => (
-                                <Fragment key={item.timestamp.getTime() ?? item.href}>
-                                    <ErrorBoundary FallbackComponent={renderError}>
-                                        <div style={{ padding: '0 8px' }}>
-                                            <MessageContainer
-                                                uri={item.href}
-                                                source={item.source}
-                                                lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                                                content={item.content}
-                                            />
-                                        </div>
-                                    </ErrorBoundary>
-                                    <Divider />
-                                </Fragment>
-                            ))}
-                        </ErrorBoundary>
+            {reader.current?.chunkedBody.map((chunk, i) => (
+                <div key={i}>
+                    <div
+                        style={{
+                            padding: '8px',
+                            fontSize: '12px',
+                            color: '#888',
+                            textAlign: 'center'
+                        }}
+                    >
+                        {i}
                     </div>
-                ))}
-
-                {/*reader.current?.body.map((item) => (
-                <Fragment key={item.href}>
-                    <div style={{ padding: '0 8px' }}>
-                        <MessageContainer
-                            uri={item.href}
-                            source={item.source}
-                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                            content={item.content}
-                        />
-                    </div>
-                    <Divider />
-                </Fragment>
-            ))*/}
-            </ErrorBoundary>
+                    {chunk.map((item) => (
+                        <Fragment key={item.timestamp.getTime() ?? item.href}>
+                            <ErrorBoundary FallbackComponent={renderError}>
+                                <div style={{ padding: '0 8px' }}>
+                                    <MessageContainer
+                                        uri={item.href}
+                                        source={item.source}
+                                        lastUpdated={item.lastUpdate?.getTime() ?? 0}
+                                        content={item.content}
+                                    />
+                                </div>
+                            </ErrorBoundary>
+                            <Divider />
+                        </Fragment>
+                    ))}
+                </div>
+            ))}
         </div>
     )
 }
