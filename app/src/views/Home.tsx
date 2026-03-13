@@ -1,4 +1,4 @@
-import { Suspense, use, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { startTransition, Suspense, use, useEffect, useMemo, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
@@ -119,7 +119,11 @@ export const HomeView = (props: ScrollViewProps) => {
                             <Tab
                                 key={tab.uri}
                                 selected={selectedTabUri === tab.uri}
-                                onClick={() => setSelectedTabUri(tab.uri)}
+                                onClick={() =>
+                                    startTransition(() => {
+                                        setSelectedTabUri(tab.uri)
+                                    })
+                                }
                                 groupId="home-timeline-tabs"
                                 style={{
                                     color: CssVar.contentText,
@@ -131,7 +135,7 @@ export const HomeView = (props: ScrollViewProps) => {
                         ))}
                     </Tabs>
                 )}
-                <Suspense fallback={<Text>Loading: {selectedTabUri}</Text>}>
+                <Suspense key={selectedTabUri} fallback={<Text>Loading: {selectedTabUri}</Text>}>
                     <InnerHomeView
                         {...props}
                         pinnedLists={pinnedLists}
@@ -143,7 +147,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 </Suspense>
             </View>
             <Suspense fallback={<div />}>
-                {useDeferredValue(<InnerFab communitiesPromise={communitiesPromise} />)})
+                <InnerFab communitiesPromise={communitiesPromise} />
             </Suspense>
         </>
     )
