@@ -1,9 +1,11 @@
+
 import { QRCode } from 'react-qrcode-logo'
 import { Text } from '@concrnt/ui'
 import { useState } from 'react'
 import { type Identity, GenerateIdentity, ComputeCKID } from '@concrnt/client'
 
-function App() {
+export const Login = () => {
+
 
     const [identity, _setIdentity] = useState<Identity>(GenerateIdentity())
 
@@ -44,4 +46,3 @@ function App() {
     )
 }
 
-export default App
