@@ -105,7 +105,11 @@ export class TimelineReader {
         console.log('Read more!!!!!!!!!!!!!!!!!!!!!!!!')
         if (this.body.length === 0) return false
         const last = this.body[this.body.length - 1]
-        const items = await this.api.getTimelineRanged(this.timelines, { until: last.timestamp }, this.hostOverride)
+        const items = await this.api.getTimelineRanged(
+            this.timelines,
+            { until: last.timestamp, limit: 4 },
+            this.hostOverride
+        )
         const newdata = items.filter(
             (item) => !this.body.find((i) => i.timestamp.getTime() === item.timestamp.getTime())
         )
