@@ -25,6 +25,9 @@ export const MainView = () => {
 
     const theme = useTheme()
 
+    // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
+    // const [hasNewNotification, setHasNewNotification] = useState(false)
+
     const tabs = useMemo(() => {
         return {
             home: {
@@ -65,6 +68,25 @@ export const MainView = () => {
                         <NotificationsView />
                     </StackLayout>
                 ),
+                // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
+                // tab: (
+                //     <div style={{ position: 'relative', display: 'inline-flex' }}>
+                //         <MdNotifications size={24} />
+                //         {hasNewNotification && (
+                //             <div
+                //                 style={{
+                //                     position: 'absolute',
+                //                     top: -2,
+                //                     right: -2,
+                //                     width: 8,
+                //                     height: 8,
+                //                     borderRadius: '50%',
+                //                     backgroundColor: '#ff4444'
+                //                 }}
+                //             />
+                //         )}
+                //     </div>
+                // )
                 tab: <MdNotifications size={24} />
             },
             contacts: {

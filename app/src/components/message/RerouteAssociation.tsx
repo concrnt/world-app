@@ -1,20 +1,23 @@
 import { MessageProps } from './types'
-import { LikeAssociationSchema } from '@concrnt/worldlib'
+import { RerouteAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
-import { MdStar } from 'react-icons/md'
+import { MdRepeat } from 'react-icons/md'
 
-export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
+export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
     const { push } = useStack()
     const message = props.message
 
-    // アソシエーションのターゲット（お気に入り登録された投稿）
+    // アソシエーションのターゲット（リルートされた元の投稿）
     const targetMessage = message.associationTarget
 
-    // お気に入り登録したユーザー
-    const likeAuthor = message.authorUser
+    // リルートしたユーザー
+    const rerouteAuthor = message.authorUser
+
+    // リルートメッセージのID（valueから取得）
+    const rerouteMessageId = message.value.messageId
 
     return (
         <div
@@ -25,12 +28,12 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                 cursor: 'pointer'
             }}
             onClick={() => {
-                if (targetMessage) {
-                    push(<PostView uri={targetMessage.uri} />)
+                if (rerouteMessageId) {
+                    push(<PostView uri={rerouteMessageId} />)
                 }
             }}
         >
-            {/* 上部: お気に入り登録したユーザーの情報 */}
+            {/* 上部: リルートしたユーザーの情報 */}
             <div
                 style={{
                     display: 'flex',
@@ -43,20 +46,20 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             >
                 <Avatar
                     ccid={message.author}
-                    src={likeAuthor?.profile.avatar}
+                    src={rerouteAuthor?.profile.avatar}
                     style={{ width: '16px', height: '16px' }}
                 />
-                <MdStar size={14} />
+                <MdRepeat size={14} />
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (likeAuthor) {
-                            push(<ProfileView id={likeAuthor.ccid} />)
+                        if (rerouteAuthor) {
+                            push(<ProfileView id={rerouteAuthor.ccid} />)
                         }
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {likeAuthor?.profile.username} がお気に入りに登録しました
+                    {rerouteAuthor?.profile.username} がリルートしました
                 </span>
             </div>
 
@@ -67,6 +70,10 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                         display: 'flex',
                         flexDirection: 'row',
                         gap: '8px'
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        push(<PostView uri={targetMessage.uri} />)
                     }}
                 >
                     <div

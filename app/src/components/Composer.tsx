@@ -89,8 +89,9 @@ export const Composer = (props: Props) => {
 
                     // リプライメッセージを作成
                     const key = Date.now().toString()
+                    const replyMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
                     const replyDocument = {
-                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                        key: replyMessageUri,
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
@@ -103,8 +104,8 @@ export const Composer = (props: Props) => {
                     }
 
                     console.log('Submitting reply:', replyDocument)
-                    const replyResult = await client.api.commit(replyDocument)
-                    console.log('Reply result:', replyResult)
+                    await client.api.commit(replyDocument)
+                    console.log('Reply submitted, uri:', replyMessageUri)
 
                     // リプライアソシエーションを作成
                     /*
@@ -118,7 +119,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: replyResult.uri,
+                            messageId: replyMessageUri,
                             messageAuthor: client.ccid
                         },
                         distributes: [activityTimeline, notifyTimeline],
@@ -140,8 +141,9 @@ export const Composer = (props: Props) => {
 
                     // リルートメッセージを作成
                     const key = Date.now().toString()
+                    const rerouteMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
                     const rerouteDocument = {
-                        key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                        key: rerouteMessageUri,
                         schema: Schemas.rerouteMessage,
                         value: {
                             rerouteMessageId: props.targetMessage.uri,
@@ -153,8 +155,8 @@ export const Composer = (props: Props) => {
                     }
 
                     console.log('Submitting reroute:', rerouteDocument)
-                    const rerouteResult = await client.api.commit(rerouteDocument)
-                    console.log('Reroute result:', rerouteResult)
+                    await client.api.commit(rerouteDocument)
+                    console.log('Reroute submitted, uri:', rerouteMessageUri)
 
                     // リルートアソシエーションを作成
                     /*
@@ -168,7 +170,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: rerouteResult.uri,
+                            messageId: rerouteMessageUri,
                             messageAuthor: client.ccid
                         },
                         distributes: [activityTimeline, notifyTimeline],

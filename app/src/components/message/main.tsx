@@ -7,6 +7,8 @@ import { MarkdownMessage } from './MarkdownMessage'
 import { ReplyMessage } from './ReplyMessage'
 import { RerouteMessage } from './RerouteMessage'
 import { LikeAssociation } from './LikeAssociation'
+import { ReplyAssociation } from './ReplyAssociation'
+import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
 
 interface Props {
@@ -35,6 +37,10 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return <RerouteMessage message={message} />
         case Schemas.likeAssociation:
             return <LikeAssociation message={message} />
+        case Schemas.replyAssociation:
+            return <ReplyAssociation message={message} />
+        case Schemas.rerouteAssociation:
+            return <RerouteAssociation message={message} />
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
             return <LegacyNoteMessage message={message} />
         default:
