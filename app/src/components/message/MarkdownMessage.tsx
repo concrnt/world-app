@@ -34,8 +34,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px',
-                contentVisibility: 'auto'
+                gap: '8px'
             }}
             onClick={(e) => {
                 e.stopPropagation()

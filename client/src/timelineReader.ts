@@ -9,6 +9,8 @@ export interface TimelineItemWithUpdate extends ChunklineItem {
 
 export class TimelineReader {
     body: TimelineItemWithUpdate[] = []
+    chunkedBody: TimelineItemWithUpdate[][] = []
+
     onUpdate?: () => void
     onNewItem?: (item: ChunklineItem) => void
     socket?: Socket
@@ -48,6 +50,7 @@ export class TimelineReader {
                     lastUpdate: new Date()
                 }
                 this.body.unshift(itemWithUpdate)
+                this.chunkedBody.unshift([itemWithUpdate])
                 this.onUpdate?.()
                 break
             }
@@ -69,6 +72,7 @@ export class TimelineReader {
     }
 
     async listen(timelines: string[]): Promise<boolean> {
+        console.log('Listen!!!!!!!!!!!!!!!!!!!!!!!!')
         this.timelines = timelines
 
         let hasMore = true
@@ -77,7 +81,8 @@ export class TimelineReader {
             .getTimelineRecent(timelines)
             .then((items: ChunklineItem[]) => {
                 const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
-                this.body = itemsWithUpdate
+                this.body = [...itemsWithUpdate]
+                this.chunkedBody = [[...itemsWithUpdate]]
                 if (items.length < 16) {
                     hasMore = false
                 }
@@ -87,6 +92,7 @@ export class TimelineReader {
                 console.error('Failed to load timeline:', err)
                 hasMore = false
                 this.body = []
+                this.chunkedBody = []
                 this.onUpdate?.()
             })
 
@@ -95,24 +101,35 @@ export class TimelineReader {
         return hasMore
     }
 
-    async readMore(): Promise<boolean> {
+    async readMore(limit: number = 4): Promise<boolean> {
+        console.log('Read more!!!!!!!!!!!!!!!!!!!!!!!!')
         if (this.body.length === 0) return false
         const last = this.body[this.body.length - 1]
-        const items = await this.api.getTimelineRanged(this.timelines, { until: last.timestamp }, this.hostOverride)
-        const newdata = items.filter((item) => !this.body.find((i) => i.href === item.href))
+        const items = await this.api.getTimelineRanged(
+            this.timelines,
+            { until: last.timestamp, limit: limit },
+            this.hostOverride
+        )
+        const newdata = items.filter(
+            (item) => !this.body.find((i) => i.timestamp.getTime() === item.timestamp.getTime())
+        )
         const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
+        console.log(`Read more: ${newdata.length} new items`)
         if (newdata.length === 0) return false
         this.body = this.body.concat(newdataWithUpdate)
+        this.chunkedBody.push(newdataWithUpdate)
         this.onUpdate?.()
         return true
     }
 
     async reload(): Promise<boolean> {
+        console.log('Reload!!!!!!!!!!!!!!!!!!!!!!!!')
         let hasMore = true
         this.haltUpdate = true
         const items = await this.api.getTimelineRecent(this.timelines)
         const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         this.body = itemsWithUpdate
+        this.chunkedBody = [itemsWithUpdate]
         if (items.length < 16) {
             hasMore = false
         }

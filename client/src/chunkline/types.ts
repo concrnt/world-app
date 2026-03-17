@@ -1,6 +1,7 @@
 export interface ChunklineItem {
-    href: string
+    href?: string
     timestamp: Date
     contentType?: string
     source?: string
+    content?: string
 }

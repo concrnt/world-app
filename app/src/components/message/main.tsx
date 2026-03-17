@@ -1,67 +1,30 @@
-import { ReactNode, Suspense, use, useDeferredValue, useMemo } from 'react'
-import { IsCCID, parseCCURI } from '@concrnt/client'
+import { ReactNode, use } from 'react'
 
 import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
-import { Message, Schemas } from '@concrnt/worldlib'
+import { Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { ReplyMessage } from './ReplyMessage'
 import { RerouteMessage } from './RerouteMessage'
 import { LikeAssociation } from './LikeAssociation'
 import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
+import { LegacyNoteMessage } from './legacy/note'
 
 interface Props {
-    uri: string
+    uri?: string
     source?: string
     lastUpdated?: number
+    content?: string
 }
 
 export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
 
-    const messagePromise = useMemo(() => {
-        console.log('Fetching message', props.uri)
+    if (!client) return <div>Loading...</div>
+    if (!props.uri && !props.content) return <div>No message specified</div>
 
-        const fetchHint = async () => {
-            let hint: string | undefined = undefined
-            try {
-                if (props.source) {
-                    const { owner } = parseCCURI(props.source)
-                    if (IsCCID(owner)) {
-                        const user = await client?.getUser(owner)
-                        if (user) {
-                            hint = user.domain
-                        }
-                    } else {
-                        hint = owner
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to resolve hint for message', e)
-            }
-
-            return hint
-        }
-
-        return fetchHint().then((hint) => {
-            return client!.getMessage<any>(props.uri, hint).catch(() => undefined)
-        })
-    }, [client, props.uri, props.source, props.lastUpdated])
-
-    return (
-        <Suspense fallback={<div>Loading message...</div>}>
-            {useDeferredValue(<MessageContainerInner messagePromise={messagePromise} />)}
-        </Suspense>
-    )
-}
-
-interface InnerProps {
-    messagePromise: Promise<any>
-}
-
-const MessageContainerInner = (props: InnerProps) => {
-    const message: Message<any> = use(props.messagePromise)
+    const message = props.content ? JSON.parse(props.content) : use(client.getMessage<any>(props.uri!))
 
     if (!message) return <div>Message not found</div>
 
@@ -78,6 +41,8 @@ const MessageContainerInner = (props: InnerProps) => {
             return <ReplyAssociation message={message} />
         case Schemas.rerouteAssociation:
             return <RerouteAssociation message={message} />
+        case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
+            return <LegacyNoteMessage message={message} />
         default:
             return (
                 <div>

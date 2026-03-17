@@ -16,6 +16,12 @@ import { Schemas } from './schemas'
 import { ListSchema, ProfileSchema, CommunityTimelineSchema, LikeAssociationSchema } from './schemas/'
 import { isFulfilled, isNonNull } from './util'
 
+const cacheLifetime = 5 * 60 * 1000
+interface Cache<T> {
+    data: T
+    expire: number
+}
+
 export class Client {
     api: Api
     ccid: string
@@ -26,10 +32,16 @@ export class Client {
 
     sockets: Record<string, Socket> = {}
 
+    messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
+
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
         this.ccid = ccid
         this.server = server
+
+        this.api.onResourceUpdated = (uri) => {
+            delete this.messageCache[uri]
+        }
     }
 
     static async create(host: FQDN, authProvider: AuthProvider, cacheEngine: KVS): Promise<Client> {
@@ -182,8 +194,19 @@ export class Client {
         return new QueryTimelineReader(this.api)
     }
 
-    async getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
-        return Message.load<T>(this, uri, hint).catch(() => null)
+    getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
+        const cached = this.messageCache[uri]
+
+        if (cached && cached.expire > Date.now()) {
+            return cached.data
+        }
+
+        const msg = Message.load<T>(this, uri, hint)
+        this.messageCache[uri] = {
+            data: msg,
+            expire: Date.now() + cacheLifetime
+        }
+        return msg
     }
 
     async getUser(id: CCID, hint?: string): Promise<User | null> {

@@ -7,6 +7,7 @@ import {
     useEffect,
     useImperativeHandle,
     useMemo,
+    useRef,
     useState
 } from 'react'
 import { NavigationProvider } from '../contexts/Navigation'
@@ -131,8 +132,15 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
 
     const controls = useAnimationControls()
 
+    const initialized = useRef(false)
+
     useEffect(() => {
-        controls.start({ x: 0, transition: { duration: 0.12 } })
+        if (initialized.current) {
+            controls.set({ x: 0 })
+        } else {
+            controls.start({ x: 0, transition: { duration: 0.12 } })
+            initialized.current = true
+        }
     }, [controls])
 
     const popDistance = Math.max(80, width * 0.3) // 画面幅の30% or 80px

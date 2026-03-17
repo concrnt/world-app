@@ -50,6 +50,12 @@ export class Socket {
             // TODO: cache here
             // const document = JSON.parse(event.sd.document) as Document<any>
 
+            switch (event.type) {
+                case 'associated': {
+                    this.api.notifyResourceUpdate(event.uri)
+                }
+            }
+
             this.distribute(event.source, event)
         }
 
