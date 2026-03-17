@@ -35,7 +35,7 @@ export const SidebarLayout = (props: Props) => {
     }, [props.opened, width, x])
 
     const popDistance = Math.max(80, width * 0.3) // 画面幅の30% or 80px
-    const popVelocity = 50 // px/s 目安
+    const popVelocity = 100 // px/s 目安
 
     const backdropOpacity = useTransform(x, [0, width], [0, 0.5])
 
