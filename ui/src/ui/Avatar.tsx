@@ -5,6 +5,7 @@ interface Props {
     ccid: string
     src?: string | Promise<string | undefined>
     style?: React.CSSProperties
+    onClick?: () => void
 }
 
 export const Avatar = (props: Props) => {
@@ -40,6 +41,7 @@ const Inner = (props: Props) => {
                     borderRadius: '4px',
                     ...props.style
                 }}
+                onClick={props.onClick}
             />
         )
     } else {
@@ -53,6 +55,7 @@ const Inner = (props: Props) => {
                     ...props.style
                 }}
                 name={props.ccid}
+                onClick={props.onClick}
             />
         )
     }

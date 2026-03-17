@@ -6,6 +6,7 @@ interface Props {
     src?: string
     children?: ReactNode
     style?: CSSProperties
+    onClick?: () => void
 }
 
 export const CCWallpaper = (props: Props) => {
@@ -16,6 +17,7 @@ export const CCWallpaper = (props: Props) => {
                 position: 'relative',
                 ...props.style
             }}
+            onClick={props.onClick}
         >
             <div
                 style={{
