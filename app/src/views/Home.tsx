@@ -34,9 +34,9 @@ export const HomeView = (props: ScrollViewProps) => {
     )
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>(`cckv://${client?.ccid}/concrnt.world/main/home-list`)
+    const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
 
     const timelineIDsPromise = useMemo(() => {
-        const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
         if (selectedTab) {
             return (
                 client
@@ -147,7 +147,10 @@ export const HomeView = (props: ScrollViewProps) => {
                 </Suspense>
             </View>
             <Suspense fallback={<div />}>
-                <InnerFab communitiesPromise={communitiesPromise} />
+                <InnerFab
+                    defaultPostTimelines={selectedTab?.pinData.defaultPostTimelines ?? []}
+                    communitiesPromise={communitiesPromise}
+                />
             </Suspense>
         </>
     )
@@ -170,14 +173,15 @@ const InnerHomeView = (props: InnerHomeViewProps) => {
     return <RealtimeTimeline ref={props.ref} timelines={timelineIDs} />
 }
 
-const InnerFab = (props: { communitiesPromise: Promise<any[]> }) => {
+const InnerFab = (props: { defaultPostTimelines: string[]; communitiesPromise: Promise<any[]> }) => {
     const composer = useComposer()
     const communities = use(props.communitiesPromise)
+    console.log('communities', communities)
 
     return (
         <FAB
             onClick={() => {
-                composer.open([], communities)
+                composer.open(props.defaultPostTimelines, communities)
             }}
         >
             <MdCreate size={24} />
