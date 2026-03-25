@@ -121,6 +121,7 @@ export const Composer = (props: Props) => {
         if (!client) return
 
         const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+        // const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
         try {
@@ -134,6 +135,7 @@ export const Composer = (props: Props) => {
                         return
                     }
 
+                    // リプライメッセージを作成
                     const key = Date.now().toString()
                     const replyMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
                     const replyDocument = {
@@ -152,6 +154,30 @@ export const Composer = (props: Props) => {
                     console.log('Submitting reply:', replyDocument)
                     await client.api.commit(replyDocument)
                     console.log('Reply submitted, uri:', replyMessageUri)
+
+                    // リプライアソシエーションを作成
+                    /*
+                    const targetAuthorDomain = await client
+                        .getUser(props.targetMessage.author)
+                        .then((user) => user?.domain)
+                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+
+                    const associationDocument = {
+                        author: client.ccid,
+                        schema: Schemas.replyAssociation,
+                        associate: props.targetMessage.uri,
+                        value: {
+                            messageId: replyMessageUri,
+                            messageAuthor: client.ccid
+                        },
+                        distributes: [activityTimeline, notifyTimeline],
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reply association:', associationDocument)
+                    await client.api.commit(associationDocument, targetAuthorDomain)
+                    console.log('Reply association submitted')
+                    */
                     break
                 }
                 case 'reroute': {
@@ -161,6 +187,7 @@ export const Composer = (props: Props) => {
                         return
                     }
 
+                    // リルートメッセージを作成
                     const key = Date.now().toString()
                     const rerouteMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
                     const rerouteDocument = {
@@ -178,9 +205,34 @@ export const Composer = (props: Props) => {
                     console.log('Submitting reroute:', rerouteDocument)
                     await client.api.commit(rerouteDocument)
                     console.log('Reroute submitted, uri:', rerouteMessageUri)
+
+                    // リルートアソシエーションを作成
+                    /*
+                    const targetAuthorDomain = await client
+                        .getUser(props.targetMessage.author)
+                        .then((user) => user?.domain)
+                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+
+                    const associationDocument = {
+                        author: client.ccid,
+                        schema: Schemas.rerouteAssociation,
+                        associate: props.targetMessage.uri,
+                        value: {
+                            messageId: rerouteMessageUri,
+                            messageAuthor: client.ccid
+                        },
+                        distributes: [activityTimeline, notifyTimeline],
+                        createdAt: new Date()
+                    }
+
+                    console.log('Submitting reroute association:', associationDocument)
+                    await client.api.commit(associationDocument, targetAuthorDomain)
+                    console.log('Reroute association submitted')
+                    */
                     break
                 }
                 default: {
+                    // 通常の投稿
                     const key = Date.now().toString()
 
                     // 画像がある場合は mediaMessage、なければ markdownMessage
