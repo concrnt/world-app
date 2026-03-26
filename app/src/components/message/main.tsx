@@ -4,6 +4,7 @@ import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
 import { Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
+import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
 import { RerouteMessage } from './RerouteMessage'
 import { LikeAssociation } from './LikeAssociation'
@@ -31,6 +32,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     switch (message.schema) {
         case Schemas.markdownMessage:
             return <MarkdownMessage message={message} />
+        case Schemas.mediaMessage:
+            return <MediaMessage message={message} />
         case Schemas.replyMessage:
             return <ReplyMessage message={message} />
         case Schemas.rerouteMessage:
