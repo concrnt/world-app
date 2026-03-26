@@ -12,6 +12,7 @@ import { SelectProvider } from './contexts/Select'
 import { DrawerProvider } from './contexts/Drawer'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
+import { MediaViewerProvider } from './contexts/MediaViewer'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
@@ -23,7 +24,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             <ComposerProvider>
                                 <ScannerProvider>
                                     <OverlayProvider>
-                                        <App />
+                                        <MediaViewerProvider>
+                                            <App />
+                                        </MediaViewerProvider>
                                     </OverlayProvider>
                                 </ScannerProvider>
                             </ComposerProvider>
