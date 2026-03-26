@@ -313,9 +313,6 @@ export const MediaViewerProvider = (props: Props) => {
 
             if (g.gestureType === 'swipe-x') {
                 // 横スワイプ完了
-                const ox = s.panX // offsetXはstateなのでstateRefには入ってない、直接参照
-                // ここではsetState経由で確認するのが難しいので、DOMから直接は取れない
-                // finishSwipe的な処理をインラインで
                 setOffsetX((currentOffsetX) => {
                     if (currentOffsetX < -SWIPE_X_THRESHOLD && s.currentIndex < s.mediasLength - 1) {
                         // 次の画像へ（setStateの中からsetStateを呼ぶ代わりにqueueMicrotaskを使う）
