@@ -69,6 +69,29 @@ export const MediaViewerProvider = (props: Props) => {
     const [panY, setPanY] = useState(0)
     const [isPinching, setIsPinching] = useState(false)
 
+    const imgRef = useRef<HTMLImageElement>(null)
+
+    // パン範囲をクランプ（画像の端を超えないようにする）
+    const clampPan = useCallback((px: number, py: number, s: number): { x: number; y: number } => {
+        const img = imgRef.current
+        if (!img || s <= 1) return { x: 0, y: 0 }
+
+        // 画像の等倍時のレンダリングサイズ
+        const imgW = img.offsetWidth
+        const imgH = img.offsetHeight
+        const vpW = window.innerWidth
+        const vpH = window.innerHeight
+
+        // ズームで画像がビューポートをはみ出す分だけパン可能
+        const maxPanX = Math.max(0, (imgW * s - vpW) / 2)
+        const maxPanY = Math.max(0, (imgH * s - vpH) / 2)
+
+        return {
+            x: Math.min(maxPanX, Math.max(-maxPanX, px)),
+            y: Math.min(maxPanY, Math.max(-maxPanY, py))
+        }
+    }, [])
+
     const gestureRef = useRef<GestureRef>({
         gestureType: 'none',
         startX: 0,
@@ -132,9 +155,10 @@ export const MediaViewerProvider = (props: Props) => {
             const centerY = window.innerHeight / 2
             const newPanX = (centerX - clientX) * (DOUBLE_TAP_ZOOM - 1)
             const newPanY = (centerY - clientY) * (DOUBLE_TAP_ZOOM - 1)
+            const clamped = clampPan(newPanX, newPanY, DOUBLE_TAP_ZOOM)
             setScale(DOUBLE_TAP_ZOOM)
-            setPanX(newPanX)
-            setPanY(newPanY)
+            setPanX(clamped.x)
+            setPanY(clamped.y)
         }
     }, [])
 
@@ -187,9 +211,10 @@ export const MediaViewerProvider = (props: Props) => {
             const newPanX = g.startPanX - focalX * (scaleChange - 1)
             const newPanY = g.startPanY - focalY * (scaleChange - 1)
 
+            const clamped = clampPan(newPanX, newPanY, newScale)
             setScale(newScale)
-            setPanX(newPanX)
-            setPanY(newPanY)
+            setPanX(clamped.x)
+            setPanY(clamped.y)
             return
         }
 
@@ -201,10 +226,11 @@ export const MediaViewerProvider = (props: Props) => {
         const dy = touch.clientY - g.startY
 
         if (s.scale > 1) {
-            // ズーム中 → パン
+            // ズーム中 → パン（範囲制限付き）
             g.gestureType = 'pan'
-            setPanX(g.startPanX + dx)
-            setPanY(g.startPanY + dy)
+            const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, s.scale)
+            setPanX(clamped.x)
+            setPanY(clamped.y)
             return
         }
 
@@ -250,6 +276,11 @@ export const MediaViewerProvider = (props: Props) => {
                         setScale(1)
                         setPanX(0)
                         setPanY(0)
+                    } else {
+                        // ズーム維持の場合もパン範囲を補正
+                        const clamped = clampPan(s.panX, s.panY, s.scale)
+                        setPanX(clamped.x)
+                        setPanY(clamped.y)
                     }
                 }
                 return
@@ -420,6 +451,7 @@ export const MediaViewerProvider = (props: Props) => {
                                     willChange: 'transform'
                                 }}
                                 draggable={false}
+                                ref={imgRef}
                             />
                         ) : currentMedia.mediaType.startsWith('video/') ? (
                             <video
