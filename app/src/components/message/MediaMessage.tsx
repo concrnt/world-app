@@ -15,12 +15,14 @@ import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { useComposer } from '../../contexts/Composer'
+import { useMediaViewer } from '../../contexts/MediaViewer'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
     const { client } = useClient()
     const { select } = useSelect()
     const composer = useComposer()
+    const mediaViewer = useMediaViewer()
 
     const message = props.message
 
@@ -123,8 +125,11 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    // TODO: 画像ビューアを開く
-                                    window.open(media.mediaURL, '_blank')
+                                    const imageMedias = medias.filter((m) => m.mediaType.startsWith('image/'))
+                                    const viewerIndex = imageMedias.findIndex((m) => m.mediaURL === media.mediaURL)
+                                    if (media.mediaType.startsWith('image/')) {
+                                        mediaViewer.open(imageMedias, viewerIndex >= 0 ? viewerIndex : 0)
+                                    }
                                 }}
                             >
                                 {media.mediaType.startsWith('image/') ? (
