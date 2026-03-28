@@ -29,7 +29,7 @@ const DOUBLE_TAP_DELAY = 300
 const DOUBLE_TAP_ZOOM = 2.5
 const MIN_SCALE = 1
 const MAX_SCALE = 5
-const IMAGE_GAP = 16
+const IMAGE_GAP = 5
 const ANIM_CONFIG = { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.25 }
 
 type GestureType = 'none' | 'swipe-x' | 'swipe-y' | 'pan' | 'pinch'
