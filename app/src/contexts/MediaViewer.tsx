@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { motion, useMotionValue, useTransform } from 'motion/react'
+import { animate } from 'motion'
 
 import { MdClose } from 'react-icons/md'
 
@@ -27,6 +29,8 @@ const DOUBLE_TAP_DELAY = 300
 const DOUBLE_TAP_ZOOM = 2.5
 const MIN_SCALE = 1
 const MAX_SCALE = 5
+const IMAGE_GAP = 5
+const ANIM_CONFIG = { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.25 }
 
 type GestureType = 'none' | 'swipe-x' | 'swipe-y' | 'pan' | 'pinch'
 
@@ -43,7 +47,6 @@ interface GestureRef {
     lastTapTime: number
     lastTapX: number
     lastTapY: number
-    tapTimeout: ReturnType<typeof setTimeout> | null
 }
 
 const getDistance = (t1: React.Touch, t2: React.Touch) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
@@ -58,31 +61,39 @@ export const MediaViewerProvider = (props: Props) => {
     const [currentIndex, setCurrentIndex] = useState(0)
     const isOpen = medias.length > 0
 
-    // スワイプ（等倍時の画像切り替え/閉じる）
-    const [offsetX, setOffsetX] = useState(0)
-    const [offsetY, setOffsetY] = useState(0)
-    const [isSwiping, setIsSwiping] = useState(false)
+    // --- motion values ---
+    // カルーセル全体のオフセット（横スワイプ / 縦スワイプ）
+    const mvOffsetX = useMotionValue(0)
+    const mvOffsetY = useMotionValue(0)
 
-    // ズーム・パン
-    const [scale, setScale] = useState(1)
-    const [panX, setPanX] = useState(0)
-    const [panY, setPanY] = useState(0)
-    const [isPinching, setIsPinching] = useState(false)
+    // 現在の画像のズーム・パン
+    const mvScale = useMotionValue(1)
+    const mvPanX = useMotionValue(0)
+    const mvPanY = useMotionValue(0)
+
+    // --- 派生値 ---
+    const bgColor = useTransform(mvOffsetY, (oy) => {
+        const progress = Math.min(Math.abs(oy) / (SWIPE_Y_THRESHOLD * 1.5), 1)
+        const opacity = 0.9 * (1 - progress * 0.5)
+        return `rgba(0, 0, 0, ${opacity})`
+    })
+
+    const contentOpacity = useTransform(mvOffsetY, (oy) => {
+        const progress = Math.min(Math.abs(oy) / (SWIPE_Y_THRESHOLD * 1.5), 1)
+        return 1 - progress * 0.3
+    })
 
     const imgRef = useRef<HTMLImageElement>(null)
 
-    // パン範囲をクランプ（画像の端を超えないようにする）
     const clampPan = useCallback((px: number, py: number, s: number): { x: number; y: number } => {
         const img = imgRef.current
         if (!img || s <= 1) return { x: 0, y: 0 }
 
-        // 画像の等倍時のレンダリングサイズ
         const imgW = img.offsetWidth
         const imgH = img.offsetHeight
         const vpW = window.innerWidth
         const vpH = window.innerHeight
 
-        // ズームで画像がビューポートをはみ出す分だけパン可能
         const maxPanX = Math.max(0, (imgW * s - vpW) / 2)
         const maxPanY = Math.max(0, (imgH * s - vpH) / 2)
 
@@ -104,183 +115,183 @@ export const MediaViewerProvider = (props: Props) => {
         pinchMidY: 0,
         lastTapTime: 0,
         lastTapX: 0,
-        lastTapY: 0,
-        tapTimeout: null
+        lastTapY: 0
     })
 
-    // 現在のstateをrefで参照（コールバック内の最新値アクセス用）
-    const stateRef = useRef({ scale: 1, panX: 0, panY: 0, currentIndex: 0, mediasLength: 0 })
-    stateRef.current = { scale, panX, panY, currentIndex, mediasLength: medias.length }
+    const stateRef = useRef({ currentIndex: 0, mediasLength: 0 })
+    stateRef.current = { currentIndex, mediasLength: medias.length }
 
-    const open = useCallback((medias: MediaItem[], startIndex?: number) => {
-        setMedias(medias)
-        setCurrentIndex(startIndex ?? 0)
-    }, [])
+    // 1ページ分のスライド幅（画面幅 + 画像間ギャップ）
+    const getPageWidth = useCallback(() => window.innerWidth + IMAGE_GAP, [])
 
-    const resetZoom = useCallback(() => {
-        setScale(1)
-        setPanX(0)
-        setPanY(0)
-    }, [])
+    const resetMotion = useCallback(() => {
+        mvOffsetX.set(0)
+        mvOffsetY.set(0)
+        mvScale.set(1)
+        mvPanX.set(0)
+        mvPanY.set(0)
+    }, [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY])
+
+    const open = useCallback(
+        (medias: MediaItem[], startIndex?: number) => {
+            resetMotion()
+            setMedias(medias)
+            setCurrentIndex(startIndex ?? 0)
+        },
+        [resetMotion]
+    )
 
     const close = useCallback(() => {
         setMedias([])
         setCurrentIndex(0)
-        setOffsetX(0)
-        setOffsetY(0)
-        setIsSwiping(false)
-        resetZoom()
-    }, [resetZoom])
+        resetMotion()
+    }, [resetMotion])
 
-    // 画像切り替え時にズームをリセット
     const changeImage = useCallback(
         (newIndex: number) => {
             setCurrentIndex(newIndex)
-            resetZoom()
+            mvOffsetX.set(0)
+            mvScale.set(1)
+            mvPanX.set(0)
+            mvPanY.set(0)
         },
-        [resetZoom]
+        [mvOffsetX, mvScale, mvPanX, mvPanY]
     )
 
     // --- ダブルタップ処理 ---
-    const handleDoubleTap = useCallback((clientX: number, clientY: number) => {
-        const s = stateRef.current
-        if (s.scale > 1) {
-            // ズーム中 → 等倍に戻す
-            setScale(1)
-            setPanX(0)
-            setPanY(0)
-        } else {
-            // 等倍 → タップ位置を中心に拡大
-            const centerX = window.innerWidth / 2
-            const centerY = window.innerHeight / 2
-            const newPanX = (centerX - clientX) * (DOUBLE_TAP_ZOOM - 1)
-            const newPanY = (centerY - clientY) * (DOUBLE_TAP_ZOOM - 1)
-            const clamped = clampPan(newPanX, newPanY, DOUBLE_TAP_ZOOM)
-            setScale(DOUBLE_TAP_ZOOM)
-            setPanX(clamped.x)
-            setPanY(clamped.y)
-        }
-    }, [])
+    const handleDoubleTap = useCallback(
+        (clientX: number, clientY: number) => {
+            const currentScale = mvScale.get()
+            if (currentScale > 1) {
+                animate(mvScale, 1, ANIM_CONFIG)
+                animate(mvPanX, 0, ANIM_CONFIG)
+                animate(mvPanY, 0, ANIM_CONFIG)
+            } else {
+                const centerX = window.innerWidth / 2
+                const centerY = window.innerHeight / 2
+                const newPanX = (centerX - clientX) * (DOUBLE_TAP_ZOOM - 1)
+                const newPanY = (centerY - clientY) * (DOUBLE_TAP_ZOOM - 1)
+                const clamped = clampPan(newPanX, newPanY, DOUBLE_TAP_ZOOM)
+                animate(mvScale, DOUBLE_TAP_ZOOM, ANIM_CONFIG)
+                animate(mvPanX, clamped.x, ANIM_CONFIG)
+                animate(mvPanY, clamped.y, ANIM_CONFIG)
+            }
+        },
+        [mvScale, mvPanX, mvPanY, clampPan]
+    )
 
     // --- タッチイベント ---
-    const handleTouchStart = useCallback((e: React.TouchEvent) => {
-        const g = gestureRef.current
-        const s = stateRef.current
+    const handleTouchStart = useCallback(
+        (e: React.TouchEvent) => {
+            const g = gestureRef.current
 
-        if (e.touches.length === 2) {
-            // ピンチ開始
-            g.gestureType = 'pinch'
-            g.lastPinchDist = getDistance(e.touches[0], e.touches[1])
-            const mid = getMidpoint(e.touches[0], e.touches[1])
-            g.pinchMidX = mid.x
-            g.pinchMidY = mid.y
-            g.startScale = s.scale
-            g.startPanX = s.panX
-            g.startPanY = s.panY
-            setIsPinching(true)
-            setIsSwiping(false)
-            return
-        }
-
-        if (e.touches.length === 1) {
-            const touch = e.touches[0]
-            g.gestureType = 'none'
-            g.startX = touch.clientX
-            g.startY = touch.clientY
-            g.startPanX = s.panX
-            g.startPanY = s.panY
-        }
-    }, [])
-
-    const handleTouchMove = useCallback((e: React.TouchEvent) => {
-        const g = gestureRef.current
-        const s = stateRef.current
-
-        if (e.touches.length === 2 && g.gestureType === 'pinch') {
-            // ピンチ中
-            const newDist = getDistance(e.touches[0], e.touches[1])
-            const ratio = newDist / g.lastPinchDist
-            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * ratio))
-
-            // ピンチ中心を基準にパン調整
-            const centerX = window.innerWidth / 2
-            const centerY = window.innerHeight / 2
-            const focalX = g.pinchMidX - centerX
-            const focalY = g.pinchMidY - centerY
-            const scaleChange = newScale / g.startScale
-            const newPanX = g.startPanX - focalX * (scaleChange - 1)
-            const newPanY = g.startPanY - focalY * (scaleChange - 1)
-
-            const clamped = clampPan(newPanX, newPanY, newScale)
-            setScale(newScale)
-            setPanX(clamped.x)
-            setPanY(clamped.y)
-            return
-        }
-
-        if (e.touches.length !== 1) return
-        if (g.gestureType === 'pinch') return // ピンチ中に指が1本になった
-
-        const touch = e.touches[0]
-        const dx = touch.clientX - g.startX
-        const dy = touch.clientY - g.startY
-
-        if (s.scale > 1) {
-            // ズーム中 → パン（範囲制限付き）
-            g.gestureType = 'pan'
-            const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, s.scale)
-            setPanX(clamped.x)
-            setPanY(clamped.y)
-            return
-        }
-
-        // 等倍時 → ジェスチャー方向を判定
-        if (g.gestureType === 'none') {
-            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-                g.gestureType = Math.abs(dx) > Math.abs(dy) ? 'swipe-x' : 'swipe-y'
-                setIsSwiping(true)
-            } else {
+            if (e.touches.length === 2) {
+                g.gestureType = 'pinch'
+                g.lastPinchDist = getDistance(e.touches[0], e.touches[1])
+                const mid = getMidpoint(e.touches[0], e.touches[1])
+                g.pinchMidX = mid.x
+                g.pinchMidY = mid.y
+                g.startScale = mvScale.get()
+                g.startPanX = mvPanX.get()
+                g.startPanY = mvPanY.get()
                 return
             }
-        }
 
-        if (g.gestureType === 'swipe-x') {
-            // 横スワイプ（画像切り替え）
-            let clampedDx = dx
-            if ((s.currentIndex === 0 && dx > 0) || (s.currentIndex === s.mediasLength - 1 && dx < 0)) {
-                clampedDx = dx * 0.3
+            if (e.touches.length === 1) {
+                const touch = e.touches[0]
+                g.gestureType = 'none'
+                g.startX = touch.clientX
+                g.startY = touch.clientY
+                g.startPanX = mvPanX.get()
+                g.startPanY = mvPanY.get()
             }
-            // 画像1枚のみの場合もラバーバンド
-            if (s.mediasLength <= 1) {
-                clampedDx = dx * 0.3
+        },
+        [mvScale, mvPanX, mvPanY]
+    )
+
+    const handleTouchMove = useCallback(
+        (e: React.TouchEvent) => {
+            const g = gestureRef.current
+
+            if (e.touches.length === 2 && g.gestureType === 'pinch') {
+                const newDist = getDistance(e.touches[0], e.touches[1])
+                const ratio = newDist / g.lastPinchDist
+                const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * ratio))
+
+                const centerX = window.innerWidth / 2
+                const centerY = window.innerHeight / 2
+                const focalX = g.pinchMidX - centerX
+                const focalY = g.pinchMidY - centerY
+                const scaleChange = newScale / g.startScale
+                const newPanX = g.startPanX - focalX * (scaleChange - 1)
+                const newPanY = g.startPanY - focalY * (scaleChange - 1)
+
+                const clamped = clampPan(newPanX, newPanY, newScale)
+                mvScale.set(newScale)
+                mvPanX.set(clamped.x)
+                mvPanY.set(clamped.y)
+                return
             }
-            setOffsetX(clampedDx)
-        } else if (g.gestureType === 'swipe-y') {
-            // 縦スワイプ（閉じる）
-            setOffsetY(dy)
-        }
-    }, [])
+
+            if (e.touches.length !== 1) return
+            if (g.gestureType === 'pinch') return
+
+            const touch = e.touches[0]
+            const dx = touch.clientX - g.startX
+            const dy = touch.clientY - g.startY
+
+            if (mvScale.get() > 1) {
+                g.gestureType = 'pan'
+                const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, mvScale.get())
+                mvPanX.set(clamped.x)
+                mvPanY.set(clamped.y)
+                return
+            }
+
+            // 等倍時 → ジェスチャー方向を判定
+            if (g.gestureType === 'none') {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    g.gestureType = Math.abs(dx) > Math.abs(dy) ? 'swipe-x' : 'swipe-y'
+                } else {
+                    return
+                }
+            }
+
+            if (g.gestureType === 'swipe-x') {
+                const s = stateRef.current
+                let clampedDx = dx
+                if ((s.currentIndex === 0 && dx > 0) || (s.currentIndex === s.mediasLength - 1 && dx < 0)) {
+                    clampedDx = dx * 0.3
+                }
+                if (s.mediasLength <= 1) {
+                    clampedDx = dx * 0.3
+                }
+                mvOffsetX.set(clampedDx)
+            } else if (g.gestureType === 'swipe-y') {
+                mvOffsetY.set(dy)
+            }
+        },
+        [mvScale, mvPanX, mvPanY, mvOffsetX, mvOffsetY, clampPan]
+    )
 
     const handleTouchEnd = useCallback(
         (e: React.TouchEvent) => {
             const g = gestureRef.current
             const s = stateRef.current
 
-            // ピンチ終了（指が減った場合）
+            // ピンチ終了
             if (g.gestureType === 'pinch') {
                 if (e.touches.length === 0) {
                     g.gestureType = 'none'
-                    setIsPinching(false)
-                    // ズームが1以下ならリセット
-                    if (s.scale <= 1) {
-                        setScale(1)
-                        setPanX(0)
-                        setPanY(0)
+                    const currentScale = mvScale.get()
+                    if (currentScale <= 1) {
+                        animate(mvScale, 1, ANIM_CONFIG)
+                        animate(mvPanX, 0, ANIM_CONFIG)
+                        animate(mvPanY, 0, ANIM_CONFIG)
                     } else {
-                        // ズーム維持の場合もパン範囲を補正
-                        const clamped = clampPan(s.panX, s.panY, s.scale)
-                        setPanX(clamped.x)
-                        setPanY(clamped.y)
+                        const clamped = clampPan(mvPanX.get(), mvPanY.get(), currentScale)
+                        animate(mvPanX, clamped.x, ANIM_CONFIG)
+                        animate(mvPanY, clamped.y, ANIM_CONFIG)
                     }
                 }
                 return
@@ -291,73 +302,66 @@ export const MediaViewerProvider = (props: Props) => {
             const now = Date.now()
             const touch = e.changedTouches[0]
 
-            // ジェスチャーが発火してない場合 → タップ判定
+            // タップ判定
             if (g.gestureType === 'none') {
                 const timeDiff = now - g.lastTapTime
                 const distDiff = Math.hypot(touch.clientX - g.lastTapX, touch.clientY - g.lastTapY)
 
                 if (timeDiff < DOUBLE_TAP_DELAY && distDiff < 30) {
-                    // ダブルタップ
-                    if (g.tapTimeout) clearTimeout(g.tapTimeout)
-                    g.tapTimeout = null
                     g.lastTapTime = 0
                     handleDoubleTap(touch.clientX, touch.clientY)
                 } else {
                     g.lastTapTime = now
                     g.lastTapX = touch.clientX
                     g.lastTapY = touch.clientY
-                    // シングルタップの遅延処理は不要（特に何もしない）
                 }
                 return
             }
 
             if (g.gestureType === 'swipe-x') {
-                // 横スワイプ完了
-                setOffsetX((currentOffsetX) => {
-                    if (currentOffsetX < -SWIPE_X_THRESHOLD && s.currentIndex < s.mediasLength - 1) {
-                        // 次の画像へ（setStateの中からsetStateを呼ぶ代わりにqueueMicrotaskを使う）
-                        queueMicrotask(() => {
+                // 横スワイプ完了 — ページ幅分スライドして画像切り替え
+                const currentOX = mvOffsetX.get()
+                const pw = getPageWidth()
+
+                if (currentOX < -SWIPE_X_THRESHOLD && s.currentIndex < s.mediasLength - 1) {
+                    // 次の画像へ: 左にページ幅分スライド → インデックス更新 → リセット
+                    animate(mvOffsetX, -pw, {
+                        ...ANIM_CONFIG,
+                        onComplete: () => {
                             setCurrentIndex(s.currentIndex + 1)
-                            setScale(1)
-                            setPanX(0)
-                            setPanY(0)
-                        })
-                    } else if (currentOffsetX > SWIPE_X_THRESHOLD && s.currentIndex > 0) {
-                        queueMicrotask(() => {
+                            mvScale.set(1)
+                            mvPanX.set(0)
+                            mvPanY.set(0)
+                            mvOffsetX.set(0)
+                        }
+                    })
+                } else if (currentOX > SWIPE_X_THRESHOLD && s.currentIndex > 0) {
+                    // 前の画像へ: 右にページ幅分スライド → インデックス更新 → リセット
+                    animate(mvOffsetX, pw, {
+                        ...ANIM_CONFIG,
+                        onComplete: () => {
                             setCurrentIndex(s.currentIndex - 1)
-                            setScale(1)
-                            setPanX(0)
-                            setPanY(0)
-                        })
-                    }
-                    return 0
-                })
-                setIsSwiping(false)
+                            mvScale.set(1)
+                            mvPanX.set(0)
+                            mvPanY.set(0)
+                            mvOffsetX.set(0)
+                        }
+                    })
+                } else {
+                    animate(mvOffsetX, 0, ANIM_CONFIG)
+                }
             } else if (g.gestureType === 'swipe-y') {
-                // 縦スワイプ完了
-                setOffsetY((currentOffsetY) => {
-                    if (Math.abs(currentOffsetY) > SWIPE_Y_THRESHOLD) {
-                        queueMicrotask(() => {
-                            setMedias([])
-                            setCurrentIndex(0)
-                            setOffsetX(0)
-                            setOffsetY(0)
-                            setIsSwiping(false)
-                            setScale(1)
-                            setPanX(0)
-                            setPanY(0)
-                        })
-                    }
-                    return 0
-                })
-                setIsSwiping(false)
-            } else if (g.gestureType === 'pan') {
-                // パン終了 — 何もしない（位置はそのまま）
+                const currentOY = mvOffsetY.get()
+                if (Math.abs(currentOY) > SWIPE_Y_THRESHOLD) {
+                    close()
+                } else {
+                    animate(mvOffsetY, 0, ANIM_CONFIG)
+                }
             }
 
             g.gestureType = 'none'
         },
-        [handleDoubleTap]
+        [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY, clampPan, handleDoubleTap, close, getPageWidth]
     )
 
     // スクロール抑制
@@ -372,97 +376,155 @@ export const MediaViewerProvider = (props: Props) => {
         }
     }, [isOpen])
 
-    // 画像切り替え時にジェスチャーリセット
     useEffect(() => {
         gestureRef.current.gestureType = 'none'
     }, [currentIndex])
 
     const currentMedia = medias[currentIndex]
+    const prevMedia = currentIndex > 0 ? medias[currentIndex - 1] : null
+    const nextMedia = currentIndex < medias.length - 1 ? medias[currentIndex + 1] : null
 
     const value = useMemo(() => ({ open }), [open])
-
-    // 背景の透明度（縦スワイプ時にフェード）
-    const dismissProgress = Math.min(Math.abs(offsetY) / (SWIPE_Y_THRESHOLD * 1.5), 1)
-    const bgOpacity = 0.9 * (1 - dismissProgress * 0.5)
-
-    // アニメーション制御
-    const isAnimating = !isSwiping && !isPinching
-    const transitionStyle = isAnimating ? 'transform 0.25s ease-out, opacity 0.25s ease-out' : 'none'
 
     return (
         <MediaViewerContext.Provider value={value}>
             {props.children}
 
             {isOpen && currentMedia && (
-                <div
+                <motion.div
                     style={{
                         position: 'fixed',
                         top: 0,
                         left: 0,
                         width: '100vw',
                         height: '100dvh',
-                        backgroundColor: `rgba(0, 0, 0, ${bgOpacity})`,
+                        backgroundColor: bgColor,
                         zIndex: 9999,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         overflow: 'hidden',
-                        touchAction: 'none',
-                        transition: isAnimating ? 'background-color 0.25s ease-out' : 'none'
+                        touchAction: 'none'
                     }}
                     onClick={(e) => {
                         if (e.target === e.currentTarget) close()
                     }}
                 >
-                    {/* ジェスチャー領域 */}
-                    <div
+                    {/* カルーセル: 前・現在・次 の画像を横並び */}
+                    <motion.div
                         style={{
                             display: 'flex',
+                            flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'center',
                             width: '100%',
                             height: '100%',
-                            transform: `translateX(${offsetX}px) translateY(${offsetY}px)`,
-                            opacity: 1 - dismissProgress * 0.3,
-                            transition: transitionStyle,
-                            willChange: 'transform, opacity'
+                            x: mvOffsetX,
+                            y: mvOffsetY,
+                            opacity: contentOpacity,
+                            gap: `${IMAGE_GAP}px`
                         }}
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
                     >
-                        {/* メイン画像 */}
-                        {currentMedia.mediaType.startsWith('image/') ? (
-                            <img
-                                src={currentMedia.mediaURL}
-                                alt={currentMedia.altText ?? ''}
-                                style={{
-                                    maxWidth: '90vw',
-                                    maxHeight: '85dvh',
-                                    objectFit: 'contain',
-                                    userSelect: 'none',
-                                    pointerEvents: 'auto',
-                                    transform: `scale(${scale}) translate(${panX / scale}px, ${panY / scale}px)`,
-                                    transition: isPinching ? 'none' : 'transform 0.25s ease-out',
-                                    transformOrigin: 'center center',
-                                    willChange: 'transform'
-                                }}
-                                draggable={false}
-                                ref={imgRef}
-                            />
-                        ) : currentMedia.mediaType.startsWith('video/') ? (
-                            <video
-                                src={currentMedia.mediaURL}
-                                controls
-                                autoPlay
-                                style={{
-                                    maxWidth: '90vw',
-                                    maxHeight: '85dvh'
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        ) : null}
-                    </div>
+                        {/* 前の画像 */}
+                        <div
+                            style={{
+                                flexShrink: 0,
+                                width: '100vw',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginLeft: `calc(-100vw - ${IMAGE_GAP}px)`
+                            }}
+                        >
+                            {prevMedia && prevMedia.mediaType.startsWith('image/') && (
+                                <img
+                                    src={prevMedia.mediaURL}
+                                    alt={prevMedia.altText ?? ''}
+                                    style={{
+                                        maxWidth: '90vw',
+                                        maxHeight: '85dvh',
+                                        objectFit: 'contain',
+                                        userSelect: 'none',
+                                        pointerEvents: 'none'
+                                    }}
+                                    draggable={false}
+                                />
+                            )}
+                        </div>
+
+                        {/* 現在の画像（ズーム・パン対応） */}
+                        <div
+                            style={{
+                                flexShrink: 0,
+                                width: '100vw',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {currentMedia.mediaType.startsWith('image/') ? (
+                                <motion.img
+                                    src={currentMedia.mediaURL}
+                                    alt={currentMedia.altText ?? ''}
+                                    style={{
+                                        maxWidth: '90vw',
+                                        maxHeight: '85dvh',
+                                        objectFit: 'contain',
+                                        userSelect: 'none',
+                                        pointerEvents: 'auto',
+                                        scale: mvScale,
+                                        x: mvPanX,
+                                        y: mvPanY,
+                                        transformOrigin: 'center center'
+                                    }}
+                                    draggable={false}
+                                    ref={imgRef}
+                                />
+                            ) : currentMedia.mediaType.startsWith('video/') ? (
+                                <video
+                                    src={currentMedia.mediaURL}
+                                    controls
+                                    autoPlay
+                                    style={{
+                                        maxWidth: '90vw',
+                                        maxHeight: '85dvh'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ) : null}
+                        </div>
+
+                        {/* 次の画像 */}
+                        <div
+                            style={{
+                                flexShrink: 0,
+                                width: '100vw',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {nextMedia && nextMedia.mediaType.startsWith('image/') && (
+                                <img
+                                    src={nextMedia.mediaURL}
+                                    alt={nextMedia.altText ?? ''}
+                                    style={{
+                                        maxWidth: '90vw',
+                                        maxHeight: '85dvh',
+                                        objectFit: 'contain',
+                                        userSelect: 'none',
+                                        pointerEvents: 'none'
+                                    }}
+                                    draggable={false}
+                                />
+                            )}
+                        </div>
+                    </motion.div>
 
                     {/* 閉じるボタン */}
                     <button
@@ -521,7 +583,7 @@ export const MediaViewerProvider = (props: Props) => {
                             ))}
                         </div>
                     )}
-                </div>
+                </motion.div>
             )}
         </MediaViewerContext.Provider>
     )
