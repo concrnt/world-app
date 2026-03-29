@@ -34,6 +34,9 @@ export class Client {
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
+    acknowledging: any
+    acknowledgers: any
+
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
         this.ccid = ccid
@@ -168,6 +171,16 @@ export class Client {
             }
         })
 
+        client.acknowledgers = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
+            to: client.ccid,
+            context: 'world.concrnt.follow'
+        })
+
+        client.acknowledging = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
+            from: client.ccid,
+            context: 'world.concrnt.follow'
+        })
+
         // =====================
 
         return client
@@ -219,6 +232,41 @@ export class Client {
 
     async getList(uri: string, hint?: string): Promise<List | null> {
         return List.load(this, uri, hint).catch(() => null)
+    }
+
+    async Acknowledge(to: string): Promise<void> {
+        const document = {
+            author: this.ccid,
+            schema: 'https://schema.concrnt.net/acknowledge.json',
+            value: {
+                context: 'world.concrnt.ack'
+            },
+            associate: `cckv://${to}`,
+            createdAt: new Date()
+        }
+        await this.api.commit(document)
+        await this.reloadAcknowledges()
+    }
+
+    async UnAcknowledge(to: string): Promise<void> {
+        const document = {
+            author: this.ccid,
+            schema: 'https://schema.concrnt.net/unacknowledge.json',
+            value: {
+                context: 'world.concrnt.ack'
+            },
+            associate: `cckv://${to}`,
+            createdAt: new Date()
+        }
+        await this.api.commit(document)
+        await this.reloadAcknowledges()
+    }
+
+    async reloadAcknowledges(): Promise<void> {
+        this.acknowledging = await this.api.requestConcrntApi(this.server.domain, 'net.concrnt.core.acknowledges', {
+            from: this.ccid,
+            context: 'world.concrnt.follow'
+        })
     }
 }
 
@@ -319,6 +367,29 @@ export class User {
         const profile = await client.api.getDocument<ProfileSchema>(`cckv://${entity.ccid}/concrnt.world/main/profile`)
 
         return new User(entity.domain, entity, profile?.value)
+    }
+
+    async GetStats(client: Client): Promise<{ acknowledging: number; acknowledged: number }> {
+        const acknowledging = await client.api.requestConcrntApi<{ count: number }>(
+            client.server.domain,
+            'net.concrnt.core.acknowledge-counts',
+            {
+                from: this.ccid
+            }
+        )
+        console.log('acknowledging', acknowledging)
+        const acknowledged = await client.api.requestConcrntApi<{ count: number }>(
+            client.server.domain,
+            'net.concrnt.core.acknowledged-counts',
+            {
+                to: this.ccid
+            }
+        )
+        console.log('acknowledged', acknowledged)
+        return {
+            acknowledging: acknowledging.count,
+            acknowledged: acknowledged.count
+        }
     }
 }
 

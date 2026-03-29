@@ -30,6 +30,11 @@ export const ProfileView = (props: Props) => {
         return client!.getUser(props.id).catch(() => null)
     }, [client, props.id])
 
+    const myAck = useMemo(() => {
+        if (!client) return null
+        return client.acknowledging.find((a: any) => a.associate === `cckv://${props.id}`)
+    }, [client, props.id])
+
     const isMe = useMemo(() => {
         return client?.ccid === props.id
     }, [client, props.id])
@@ -138,8 +143,28 @@ export const ProfileView = (props: Props) => {
                             >
                                 Edit Profile
                             </Button>
+                        ) : myAck ? (
+                            <Button
+                                onClick={() => {
+                                    if (!client) return
+                                    client.UnAcknowledge(props.id).then((e) => {
+                                        console.log('Unacknowledged', e)
+                                    })
+                                }}
+                            >
+                                Acknowledged
+                            </Button>
                         ) : (
-                            <Button>Follow</Button>
+                            <Button
+                                onClick={() => {
+                                    if (!client) return
+                                    client.Acknowledge(props.id).then((e) => {
+                                        console.log('Acknowledged', e)
+                                    })
+                                }}
+                            >
+                                Acknowledge
+                            </Button>
                         )}
                     </div>
                     <div>

@@ -541,11 +541,11 @@ export class Api {
     async requestConcrntApi<T>(
         host: string,
         api: string,
-        opts: { params?: Record<string, string>; query?: string },
+        params?: Record<string, string>,
         init?: RequestInit
     ): Promise<T> {
         const server = await this.getServer(host)
-        const template = renderUriTemplate(server, api, opts.params ?? {})
+        const template = renderUriTemplate(server, api, params ?? {})
         return this.fetchHost<T>(host, template, init)
     }
 
