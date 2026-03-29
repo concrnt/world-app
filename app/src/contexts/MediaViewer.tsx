@@ -31,6 +31,9 @@ const MIN_SCALE = 1
 const MAX_SCALE = 5
 const IMAGE_GAP = 5
 const ANIM_CONFIG = { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.25 }
+const INERTIA_MULTIPLIER = 0.3
+const INERTIA_DURATION = 1
+const INERTIA_EASE: [number, number, number, number] = [0.25, 1, 0.5, 1]
 
 type GestureType = 'none' | 'swipe-x' | 'swipe-y' | 'pan' | 'pinch'
 
@@ -47,6 +50,12 @@ interface GestureRef {
     lastTapTime: number
     lastTapX: number
     lastTapY: number
+    // 慣性用: 速度追跡
+    prevMoveX: number
+    prevMoveY: number
+    prevMoveTime: number
+    velocityX: number
+    velocityY: number
 }
 
 const getDistance = (t1: React.Touch, t2: React.Touch) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
@@ -62,11 +71,9 @@ export const MediaViewerProvider = (props: Props) => {
     const isOpen = medias.length > 0
 
     // --- motion values ---
-    // カルーセル全体のオフセット（横スワイプ / 縦スワイプ）
     const mvOffsetX = useMotionValue(0)
     const mvOffsetY = useMotionValue(0)
 
-    // 現在の画像のズーム・パン
     const mvScale = useMotionValue(1)
     const mvPanX = useMotionValue(0)
     const mvPanY = useMotionValue(0)
@@ -115,13 +122,17 @@ export const MediaViewerProvider = (props: Props) => {
         pinchMidY: 0,
         lastTapTime: 0,
         lastTapX: 0,
-        lastTapY: 0
+        lastTapY: 0,
+        prevMoveX: 0,
+        prevMoveY: 0,
+        prevMoveTime: 0,
+        velocityX: 0,
+        velocityY: 0
     })
 
     const stateRef = useRef({ currentIndex: 0, mediasLength: 0 })
     stateRef.current = { currentIndex, mediasLength: medias.length }
 
-    // 1ページ分のスライド幅（画面幅 + 画像間ギャップ）
     const getPageWidth = useCallback(() => window.innerWidth + IMAGE_GAP, [])
 
     const resetMotion = useCallback(() => {
@@ -204,6 +215,12 @@ export const MediaViewerProvider = (props: Props) => {
                 g.startY = touch.clientY
                 g.startPanX = mvPanX.get()
                 g.startPanY = mvPanY.get()
+                // 慣性用の速度リセット
+                g.prevMoveX = touch.clientX
+                g.prevMoveY = touch.clientY
+                g.prevMoveTime = performance.now()
+                g.velocityX = 0
+                g.velocityY = 0
             }
         },
         [mvScale, mvPanX, mvPanY]
@@ -245,6 +262,17 @@ export const MediaViewerProvider = (props: Props) => {
                 const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, mvScale.get())
                 mvPanX.set(clamped.x)
                 mvPanY.set(clamped.y)
+
+                // 慣性用の速度計算
+                const now = performance.now()
+                const dt = now - g.prevMoveTime
+                if (dt > 0) {
+                    g.velocityX = (touch.clientX - g.prevMoveX) / dt
+                    g.velocityY = (touch.clientY - g.prevMoveY) / dt
+                }
+                g.prevMoveX = touch.clientX
+                g.prevMoveY = touch.clientY
+                g.prevMoveTime = now
                 return
             }
 
@@ -319,12 +347,11 @@ export const MediaViewerProvider = (props: Props) => {
             }
 
             if (g.gestureType === 'swipe-x') {
-                // 横スワイプ完了 — ページ幅分スライドして画像切り替え
+                // 横スワイプ完了
                 const currentOX = mvOffsetX.get()
                 const pw = getPageWidth()
 
                 if (currentOX < -SWIPE_X_THRESHOLD && s.currentIndex < s.mediasLength - 1) {
-                    // 次の画像へ: 左にページ幅分スライド → インデックス更新 → リセット
                     animate(mvOffsetX, -pw, {
                         ...ANIM_CONFIG,
                         onComplete: () => {
@@ -336,7 +363,6 @@ export const MediaViewerProvider = (props: Props) => {
                         }
                     })
                 } else if (currentOX > SWIPE_X_THRESHOLD && s.currentIndex > 0) {
-                    // 前の画像へ: 右にページ幅分スライド → インデックス更新 → リセット
                     animate(mvOffsetX, pw, {
                         ...ANIM_CONFIG,
                         onComplete: () => {
@@ -357,6 +383,26 @@ export const MediaViewerProvider = (props: Props) => {
                 } else {
                     animate(mvOffsetY, 0, ANIM_CONFIG)
                 }
+            } else if (g.gestureType === 'pan') {
+                // パン終了 — 慣性アニメーション
+                const currentScale = mvScale.get()
+                const vx = g.velocityX * 1000 // px/ms → px/s
+                const vy = g.velocityY * 1000
+
+                const targetX = mvPanX.get() + vx * INERTIA_MULTIPLIER
+                const targetY = mvPanY.get() + vy * INERTIA_MULTIPLIER
+                const clamped = clampPan(targetX, targetY, currentScale)
+
+                animate(mvPanX, clamped.x, {
+                    type: 'tween',
+                    ease: INERTIA_EASE,
+                    duration: INERTIA_DURATION
+                })
+                animate(mvPanY, clamped.y, {
+                    type: 'tween',
+                    ease: INERTIA_EASE,
+                    duration: INERTIA_DURATION
+                })
             }
 
             g.gestureType = 'none'
