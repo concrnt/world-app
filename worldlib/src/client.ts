@@ -173,12 +173,12 @@ export class Client {
 
         client.acknowledgers = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
             to: client.ccid,
-            context: 'world.concrnt.follow'
+            context: 'world.concrnt.ack'
         })
 
         client.acknowledging = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
             from: client.ccid,
-            context: 'world.concrnt.follow'
+            context: 'world.concrnt.ack'
         })
 
         // =====================
@@ -265,7 +265,7 @@ export class Client {
     async reloadAcknowledges(): Promise<void> {
         this.acknowledging = await this.api.requestConcrntApi(this.server.domain, 'net.concrnt.core.acknowledges', {
             from: this.ccid,
-            context: 'world.concrnt.follow'
+            context: 'world.concrnt.ack'
         })
     }
 }
