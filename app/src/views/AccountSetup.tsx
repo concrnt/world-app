@@ -1,11 +1,11 @@
 import { invoke } from '@tauri-apps/api/core'
-
 import { Button, View, Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document } from '@concrnt/client'
 import { useClient } from '../contexts/Client'
+import { openUrl } from '@tauri-apps/plugin-opener'
 
 interface Props {
     onBack?: () => void
@@ -110,6 +110,33 @@ export const AccountSetup = (props: Props) => {
                     >
                         {' '}
                         登録
+                    </Button>
+
+                    <Button
+                        onClick={async () => {
+                            const authProvider = new TauriAuthProvider(ccid)
+
+                            const document = {
+                                author: ccid,
+                                schema: 'https://schema.concrnt.net/affiliation.json',
+                                value: {
+                                    domain
+                                },
+                                createdAt: new Date().toISOString()
+                            }
+
+                            const docString = JSON.stringify(document)
+                            const signature = await authProvider.signMaster(docString)
+
+                            const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
+
+                            openUrl(
+                                `https://${domain}/register?document=${encodedDoc}&signature=${signature}`,
+                                'inAppBrowser'
+                            )
+                        }}
+                    >
+                        登録ページを開く(準備中)
                     </Button>
                 </>
             ) : (
