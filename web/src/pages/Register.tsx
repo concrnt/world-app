@@ -88,8 +88,8 @@ export const Inner = (props: {
     const [captcha, setCaptcha] = useState<string>("")
     const [formData, setFormData] = useState<any>({})
 
-    const encodedregistration = searchParams.get('registration')
-    const registration = encodedregistration ? atob(encodedregistration.replace('-', '+').replace('_', '/')) : null
+    const encodedDocument = searchParams.get('document')
+    const registration = encodedDocument ? atob(encodedDocument.replace('-', '+').replace('_', '/')) : null
     const signature = searchParams.get('signature')
     const callback = searchParams.get('callback')
 
