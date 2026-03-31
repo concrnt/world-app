@@ -1,4 +1,4 @@
-import { Fragment, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { Fragment, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -6,6 +6,7 @@ import { TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { Divider, Text } from '@concrnt/ui'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
+import { PullToRefresh } from './PullToRefresh'
 
 interface Props extends ScrollViewProps {
     timelines: string[]
@@ -17,6 +18,11 @@ export const RealtimeTimeline = (props: Props) => {
     // eslint-disable-next-line prefer-const
     let [loading, setLoading] = useState(true)
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
+
+    const [isFetching, setIsFetching] = useState(false)
+
+    /** スクロール位置の追跡。PullToRefreshが先頭判定に使う */
+    const scrollPositionRef = useRef<number>(0)
 
     useEffect(() => {
         console.log('Initializing timeline reader for timelines:', props.timelines)
@@ -32,7 +38,6 @@ export const RealtimeTimeline = (props: Props) => {
 
                 reader.current = t
                 t.listen(props.timelines).finally(() => {
-                    // eslint-disable-next-line react-hooks/immutability
                     setLoading((loading = false))
                 })
                 return t
@@ -57,11 +62,28 @@ export const RealtimeTimeline = (props: Props) => {
         }
     }))
 
+    /** Pull to Refreshのリフレッシュ処理 */
+    const onRefresh = useCallback(async () => {
+        if (!reader.current) return
+        console.log('Pull to refresh: reloading timeline')
+        setIsFetching(true)
+        try {
+            await reader.current.reload()
+            // リロード完了後に少し待機して、ユーザーにフィードバックを見せる
+            await new Promise((resolve) => setTimeout(resolve, 500))
+        } finally {
+            setIsFetching(false)
+        }
+    }, [reader])
+
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
 
         const handleScroll = () => {
+            // PullToRefresh用にスクロール位置を記録
+            scrollPositionRef.current = el.scrollTop
+
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
                 if (loading) return
                 if (!reader.current) return
@@ -89,54 +111,57 @@ export const RealtimeTimeline = (props: Props) => {
     }, [scrollRef])
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                padding: '8px 0',
-                overflowX: 'hidden',
-                overflowY: 'auto'
-            }}
-            ref={scrollRef}
-        >
-            {reader.current?.body.map((item) => (
-                <Fragment key={item.timestamp.getTime() ?? item.href}>
-                    <ErrorBoundary FallbackComponent={renderError}>
-                        <Suspense fallback={<Text>Loading...</Text>}>
-                            <div
-                                style={{
-                                    padding: '0 8px',
-                                    contentVisibility: 'auto'
-                                }}
-                            >
-                                <MessageContainer
-                                    uri={item.href}
-                                    source={item.source}
-                                    lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                                    content={item.content}
-                                />
-                            </div>
-                        </Suspense>
-                    </ErrorBoundary>
-                    <Divider />
-                </Fragment>
-            ))}
+        <PullToRefresh scrollPositionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
             <div
                 style={{
-                    padding: '8px',
-                    fontSize: '12px',
-                    color: '#888',
-                    width: '100%',
-                    height: '100px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '8px 0',
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
+                    overscrollBehaviorY: 'none'
                 }}
+                ref={scrollRef}
             >
-                Loading...
+                {reader.current?.body.map((item) => (
+                    <Fragment key={item.timestamp.getTime() ?? item.href}>
+                        <ErrorBoundary FallbackComponent={renderError}>
+                            <Suspense fallback={<Text>Loading...</Text>}>
+                                <div
+                                    style={{
+                                        padding: '0 8px',
+                                        contentVisibility: 'auto'
+                                    }}
+                                >
+                                    <MessageContainer
+                                        uri={item.href}
+                                        source={item.source}
+                                        lastUpdated={item.lastUpdate?.getTime() ?? 0}
+                                        content={item.content}
+                                    />
+                                </div>
+                            </Suspense>
+                        </ErrorBoundary>
+                        <Divider />
+                    </Fragment>
+                ))}
+                <div
+                    style={{
+                        padding: '8px',
+                        fontSize: '12px',
+                        color: '#888',
+                        width: '100%',
+                        height: '100px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    Loading...
+                </div>
             </div>
-        </div>
+        </PullToRefresh>
     )
 }
 
