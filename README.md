@@ -1,7 +1,46 @@
-# Tauri + React + Typescript
+# Concrnt World-App
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+このレポジトリは、concrntバージョン2のモバイルアプリおよびウェブアプリのプロジェクトを管理しています。
 
-## Recommended IDE Setup
+## 内訳
+- client: concrntのサーバーとやりとりするローレベルなクライアントコード
+- worldlib: concrntをSNSとして利用するため、clientをより高レベルなAPIでラップしたライブラリコード
+- ui: モバイルアプリとウェブアプリで共通して利用するUIコンポーネントコード
+- app: モバイルアプリのフロントエンドコード
+- src-tauri: appと連携するTauriのコード
+- plugins: Tauriのプラグイン
+- web: webアプリのフロントエンドコード
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## ビルド方法
+
+### 事前準備
+[tauriのセットアップ](https://v2.tauri.app/ja/start/prerequisites/)を済ませます
+
+### Andoird
+
+```
+# 開発
+$ pnpm tauri android dev
+
+# 本番ビルド
+$ pnpm tauri android build
+```
+
+ビルドする際は`/src-tauri/gen/android/keystore.properties`に署名の設定を追加する必要があります。
+```
+password=<password>
+keyAlias=<keyAlias>
+storeFile=<jksファイルのパス>
+```
+
+### iOS
+
+```
+# 開発
+$ pnpm tauri ios dev
+# 本番ビルド
+$ pnpm tauri ios build
+```
+
+本番ビルドはApple Developerの署名設定が必要かも
+
