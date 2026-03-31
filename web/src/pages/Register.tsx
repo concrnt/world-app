@@ -147,6 +147,7 @@ export const Inner = (props: {
     }
 
     return <>
+        <Text>welcome {ccaddr}!</Text>
         <Text variant="h1">登録</Text>
         <Text variant="h2">行動規範</Text>
         <div
