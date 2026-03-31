@@ -8,7 +8,7 @@ export class InMemoryAuthProvider implements AuthProvider {
     ccid: string
     ckid?: string
 
-    constructor(masterkey: string, subkey: string) {
+    constructor(masterkey?: string, subkey?: string) {
         let ccid = ''
 
         if (masterkey) {
