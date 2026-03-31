@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TabLayout } from '../layouts/Tab'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { Sidebar } from '../components/Sidebar'
@@ -117,6 +117,24 @@ export const MainView = () => {
         },
         [selectedTab]
     )
+
+    // Android back button handling
+    useEffect(() => {
+        ;(window as any).__concrntHandleBack = (): boolean => {
+            const stackRef = stackRefs.current[selectedTab]
+            if (stackRef && stackRef.pop()) {
+                return true
+            }
+            if (selectedTab !== 'home') {
+                setSelectedTab('home')
+                return true
+            }
+            return false
+        }
+        return () => {
+            delete (window as any).__concrntHandleBack
+        }
+    }, [selectedTab])
 
     return (
         <>
