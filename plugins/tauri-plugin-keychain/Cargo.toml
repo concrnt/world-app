@@ -1,0 +1,21 @@
+[package]
+name = "tauri-plugin-keychain"
+version = "2.0.2"
+authors = [ "lindongchen","zhangcheng" ]
+description = "A Tauri keychain plugin"
+edition = "2021"
+rust-version = "1.77.2"
+exclude = ["/keychains", "/webview-dist", "/webview-src", "/node_modules"]
+links = "tauri-plugin-keychain"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/lindongchen/tauri-plugin-keychain"
+documentation = "https://docs.rs/tauri-plugin-keychain"
+
+[dependencies]
+tauri = { version = "2.0.6" }
+serde = "1.0"
+thiserror = "1.0"
+
+[build-dependencies]
+tauri-plugin = { version = "2.0.1", features = ["build"] }

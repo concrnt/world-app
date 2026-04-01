@@ -3935,7 +3935,6 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-keychain"
 version = "2.0.2"
-source = "git+https://github.com/totegamma/tauri-plugin-keychain?rev=c81bf04b28921c403dbafb0bc8997db1e37f34b2#c81bf04b28921c403dbafb0bc8997db1e37f34b2"
 dependencies = [
  "serde",
  "tauri",
