@@ -16,16 +16,12 @@ const HD_PATH: &str = "m/44'/118'/0'/0/0";
 type Error = String;
 
 #[tauri::command]
-fn initialize_master(app_handle: tauri::AppHandle) -> String {
+fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
 
-    let store = match app_handle.store("session") {
-        Ok(s) => s,
-        Err(e) => return format!("Failed to create store: {}", e),
-    };
+    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
 
     // generate master key
     let master_identity = generate_identity().unwrap();
-    store.set("ccid".to_string(), master_identity.ccid.clone());
 
     let key = "concrnt_masterkey".to_string();
     let value = master_identity.mnemonic.clone();
@@ -35,9 +31,12 @@ fn initialize_master(app_handle: tauri::AppHandle) -> String {
         password: Some(value.clone()),
     };
 
-    app_handle.keychain().save_item(request);
+    let success = app_handle.keychain().save_item(request);
+    if !success {
+        return Err("Failed to save master key to keychain".to_string());
+    }
 
-    master_identity.ccid
+    return Ok(master_identity.ccid);
 }
 
 #[tauri::command]
@@ -117,10 +116,60 @@ pub struct SessionInfo {
 }
 
 #[tauri::command]
-fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
-    let store = app_handle.store("session").ok()?;
+fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
+    let request = KeychainRequest {
+        key: Some("concrnt_masterkey".to_string()),
+        password: None,
+    };
 
-    let ccid = store.get("ccid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string()));
+    let resp = match app_handle.keychain().get_item(request) {
+        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
+        Err(e) => Err(format!("Failed to get concrnt_masterkey. Error: {}", e)),
+    };
+
+    let mnemonic = match resp {
+        Ok(m) => m,
+        Err(e) => return Err(e),
+    };
+
+
+    let identity = match load_identity(&mnemonic) {
+        Ok(Some(id)) => id,
+        Ok(None) => return Err("Failed to load identity from mnemonic".into()),
+        Err(e) => return Err(e),
+    };
+
+    Ok(identity.ccid)
+}
+
+#[tauri::command]
+fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
+
+    let request = KeychainRequest {
+        key: Some("concrnt_masterkey".to_string()),
+        password: None,
+    };
+
+    let resp = match app_handle.keychain().get_item(request) {
+        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
+        Err(e) => return None, // If we fail to access the keychain, we just return None for session info instead of error
+    };
+
+    let mnemonic = match resp {
+        Ok(m) => m,
+        Err(e) => return None, // If we fail to get the master key, we just return None for session info instead of error
+    };
+
+
+    let identity = match load_identity(&mnemonic) {
+        Ok(Some(id)) => id,
+        Ok(None) => return None, // If we fail to load identity from mnemonic, we just return None for session info instead of error
+        Err(e) => return None, // If we fail to load identity due to some error, we just return None for session info instead of error
+    };
+
+    let ccid = Some(identity.ccid);
+
+    let store = app_handle.store("session").ok()?;
     let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string()));
     let domain = store.get("domain".to_string()).and_then(|v| v.as_str().map(|s| s.to_string()));
 
@@ -131,6 +180,18 @@ fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
 fn clear_session(app_handle: tauri::AppHandle) {
     let store = app_handle.store("session").unwrap();
     store.clear();
+}
+
+#[tauri::command]
+fn clear_all(app_handle: tauri::AppHandle) {
+    let store = app_handle.store("session").unwrap();
+    store.clear();
+
+    let request = KeychainRequest {
+        key: Some("concrnt_masterkey".to_string()),
+        password: None,
+    };
+    let _ = app_handle.keychain().remove_item(request);
 }
 
 fn retract_masterkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
@@ -230,7 +291,18 @@ pub fn run() {
         .plugin(tauri_plugin_barcode_scanner::init())
         .plugin(tauri_plugin_keychain::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![auth_available, initialize_master, create_subkey, sign_masterkey, sign_subkey, get_session, clear_session, set_domain])
+        .invoke_handler(tauri::generate_handler![
+            auth_available,
+            initialize_master,
+            create_subkey,
+            sign_masterkey,
+            sign_subkey,
+            get_session,
+            clear_session,
+            set_domain,
+            has_masterkey,
+            clear_all,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

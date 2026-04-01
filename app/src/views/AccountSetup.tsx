@@ -15,41 +15,92 @@ export const AccountSetup = (props: Props) => {
     const { reload } = useClient()
     const reset = useResetPreference()
 
-    const [ccid, setCCID] = useState<string | undefined>(undefined)
     const [domain, setDomain] = useState<string>('v2dev.concrnt.net')
+    const [existingCCID, setExistingCCID] = useState<string | null>(null)
 
     useEffect(() => {
-        invoke('initialize_master').then((ccid) => {
-            console.log('ccid', ccid)
-            setCCID(ccid as string)
+        invoke('has_masterkey').then((existing) => {
+            if (typeof existing !== 'string') return
+            setExistingCCID(existing)
         })
     }, [])
 
     return (
-        <View>
+        <View
+            style={{
+                gap: 16
+            }}
+        >
             <Button onClick={props.onBack}>Back</Button>
 
-            <Button
-                onClick={async () => {
-                    if (!ccid) return
-                    const authProvider = new TauriAuthProvider(ccid)
-                    authProvider.signMaster('hogehogehoge').then((signature) => {
-                        console.log('signature', signature)
-                    })
-                }}
-            >
-                Test
-            </Button>
-
-            {ccid ? (
+            {existingCCID ? (
                 <>
-                    <Text>CCID: {ccid}</Text>
+                    <Text>端末にはすでにアカウントが保存されています</Text>
+                    <Text>CCID: {existingCCID}</Text>
+
+                    <Text>端末に保存されたアカウントを使用する</Text>
 
                     <Text>Domain</Text>
                     <TextField value={domain} onChange={(e) => setDomain(e.target.value)} />
 
                     <Button
                         onClick={async () => {
+                            const ccid = existingCCID
+
+                            const ckid: string = await invoke('create_subkey')
+
+                            const subkeyDoc: Document<any> = {
+                                key: `cckv://${ccid}/keys/${ckid}`,
+                                author: ccid,
+                                schema: 'https://schema.concrnt.net/subkey.json',
+                                value: {
+                                    ckid
+                                },
+                                createdAt: new Date()
+                            }
+
+                            const authProvider = new TauriAuthProvider(ccid)
+                            const kvs = new InMemoryKVS()
+
+                            const api = new Api(domain, authProvider, kvs)
+
+                            await api.commit(subkeyDoc, domain, { useMasterkey: true })
+                            console.log('Subkey Registered')
+
+                            await invoke('set_domain', { domain })
+
+                            reset()
+                            reload()
+                        }}
+                    >
+                        ログイン
+                    </Button>
+
+                    <Button
+                        style={{
+                            backgroundColor: 'transparent',
+                            color: 'red',
+                            border: '1px solid red'
+                        }}
+                        onClick={async () => {
+                            await invoke('clear_all').then(async () => {
+                                reset()
+                                await reload()
+                                window.location.reload()
+                            })
+                        }}
+                    >
+                        リセットする
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <Text>Domain</Text>
+                    <TextField value={domain} onChange={(e) => setDomain(e.target.value)} />
+
+                    <Button
+                        onClick={async () => {
+                            const ccid: string = await invoke('initialize_master')
                             const authProvider = new TauriAuthProvider(ccid)
                             const kvs = new InMemoryKVS()
 
@@ -114,6 +165,8 @@ export const AccountSetup = (props: Props) => {
 
                     <Button
                         onClick={async () => {
+                            const ccid: string = await invoke('initialize_master')
+
                             const authProvider = new TauriAuthProvider(ccid)
 
                             const document = {
@@ -136,11 +189,9 @@ export const AccountSetup = (props: Props) => {
                             )
                         }}
                     >
-                        登録ページを開く(準備中)
+                        登録ページを開く
                     </Button>
                 </>
-            ) : (
-                <Text>じゅんびちゅう</Text>
             )}
         </View>
     )

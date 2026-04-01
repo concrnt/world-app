@@ -38,7 +38,23 @@ class KeychainPlugin: Plugin {
 						
 		let resp = KeychainResponse(password: password)
 		invoke.resolve(resp)
-  }
+    }
+
+    @objc public func hasItem(_ invoke: Invoke) throws {
+      let args = try invoke.parseArgs(KeychainArgs.self)
+      let key = args.key
+      let query = [
+          kSecClass: kSecClassGenericPassword,
+          kSecAttrAccount: key,
+          kSecReturnData: kCFBooleanTrue!,
+          kSecMatchLimit: kSecMatchLimitOne
+      ] as CFDictionary
+      
+      var data: AnyObject?
+      let status = SecItemCopyMatching(query, &data)
+      
+      invoke.resolve(status == errSecSuccess)
+    }
 	
 	@objc public func saveItem(_ invoke: Invoke) throws {
 	  let args = try invoke.parseArgs(KeychainArgs.self)
@@ -48,12 +64,6 @@ class KeychainPlugin: Plugin {
 			invoke.resolve(false)
 			return 
 		}
-		        
-		let query = [
-				kSecClass: kSecClassGenericPassword,
-				kSecAttrAccount: key
-		] as CFDictionary
-		SecItemDelete(query)
 		
 		let attributes = [
 				kSecClass: kSecClassGenericPassword,

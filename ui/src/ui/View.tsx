@@ -4,6 +4,7 @@ import { CssVar } from '../types/Theme'
 interface Props {
     children?: ReactNode
     variant?: 'classic' | 'world'
+    style?: React.CSSProperties
 }
 
 export const View = (props: Props) => {
@@ -19,7 +20,8 @@ export const View = (props: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     color: CssVar.contentText,
-                    backgroundColor: CssVar.contentBackground
+                    backgroundColor: CssVar.contentBackground,
+                    ...props.style
                 }}
             >
                 {props.children}
@@ -37,7 +39,8 @@ export const View = (props: Props) => {
                     margin: `env(safe-area-inset-top) ${CssVar.space(1)} ${CssVar.space(1)} ${CssVar.space(1)}`,
                     borderRadius: CssVar.round(1),
                     overflow: 'hidden',
-                    flex: 1
+                    flex: 1,
+                    ...props.style
                 }}
             >
                 {props.children}

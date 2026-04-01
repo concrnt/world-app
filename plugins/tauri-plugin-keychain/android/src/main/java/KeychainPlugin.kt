@@ -26,16 +26,16 @@ class KeychainPlugin(private val activity: Activity): Plugin(activity) {
 	private val deviceProtectedContext: Context
 
 	init {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-					val context = activity.applicationContext
-					deviceProtectedContext = context.createDeviceProtectedStorageContext()
-					if (!deviceProtectedContext.isDeviceProtectedStorage) {
-							deviceProtectedContext.moveSharedPreferencesFrom(context, "secure_prefs")
-							deviceProtectedContext.moveDatabaseFrom(context, "secure_db")
-					}
-			} else {
-					throw UnsupportedOperationException("Device Protected Storage requires API 24 or above")
-			}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val context = activity.applicationContext
+            deviceProtectedContext = context.createDeviceProtectedStorageContext()
+            if (!deviceProtectedContext.isDeviceProtectedStorage) {
+                deviceProtectedContext.moveSharedPreferencesFrom(context, "secure_prefs")
+                deviceProtectedContext.moveDatabaseFrom(context, "secure_db")
+            }
+        } else {
+            throw UnsupportedOperationException("Device Protected Storage requires API 24 or above")
+        }
 	}
 	
 	private val accountType = "com.tauri.keychain" 
@@ -48,38 +48,43 @@ class KeychainPlugin(private val activity: Activity): Plugin(activity) {
 		val targetAccount = accounts.firstOrNull { it.name == args.key }
 
 		if (targetAccount != null) {
-				val password = accountManager.getPassword(targetAccount)
-				invoke.resolve(JSObject().apply { put("password", password ?: "") })
+            val password = accountManager.getPassword(targetAccount)
+            invoke.resolve(JSObject().apply { put("password", password ?: "") })
 		} else {
-				val sharedPreferences = deviceProtectedContext.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
-				val password = sharedPreferences.getString(args.key, null)
-				invoke.resolve(JSObject().apply { put("password", password ?: "") })
+			val sharedPreferences = deviceProtectedContext.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
+            val password = sharedPreferences.getString(args.key, null)
+            invoke.resolve(JSObject().apply { put("password", password ?: "") })
 		}
 		
 	}
+
+    @Command
+    fun hasItem(invoke: Invoke) {
+        val args = invoke.parseArgs(KeychainOptions::class.java)
+        val accountManager = AccountManager.get(activity.applicationContext)
+
+        val accounts = accountManager.getAccountsByType(accountType)
+        val targetAccount = accounts.firstOrNull { it.name == args.key }
+
+        if (targetAccount != null) {
+            invoke.resolveObject(true)
+        } else {
+            val sharedPreferences = deviceProtectedContext.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
+            val exists = sharedPreferences.contains(args.key)
+            invoke.resolveObject(exists)
+        }
+    }
 	
 	@Command
 	fun saveItem(invoke: Invoke) {
 		val args = invoke.parseArgs(KeychainOptions::class.java)
 		val accountManager = AccountManager.get(activity.applicationContext)
-		val existingAccounts = accountManager.getAccountsByType(accountType)
-		val existingAccount = existingAccounts.firstOrNull { it.name == args.key }
 
-		
-		if (existingAccount != null) {
-				accountManager.setPassword(existingAccount, args.password)
-				invoke.resolve(JSObject().apply { put("status", "Password updated") })
-		} else {
-				// 添加新账户
-				val newAccount = Account(args.key, accountType)
-				val success = accountManager.addAccountExplicitly(newAccount, args.password, null)
+        val newAccount = Account(args.key, accountType)
+        val success = accountManager.addAccountExplicitly(newAccount, args.password, null)
 
-				if (success) {
-						invoke.resolve(JSObject().apply { put("status", "Account added") })
-				} else {
-						invoke.resolve(JSObject().apply { put("status", "") })
-				}
-		}
+        invoke.resolveObject(success)
+
 		val sharedPreferences = deviceProtectedContext.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
 		sharedPreferences.edit().putString(args.key, args.password).apply()
 	}
@@ -93,14 +98,10 @@ class KeychainPlugin(private val activity: Activity): Plugin(activity) {
 		val targetAccount = accounts.firstOrNull { it.name == args.key }
 
 		if (targetAccount != null) {
-				val success = accountManager.removeAccountExplicitly(targetAccount)
-				if (success) {
-						invoke.resolve(JSObject().apply { put("status", "Account removed") })
-				} else {
-						invoke.resolve(JSObject().apply { put("status", "Account removed") })
-				}
+            val success = accountManager.removeAccountExplicitly(targetAccount)
+            invoke.resolveObject(success)
 		} else {
-			invoke.resolve(JSObject().apply { put("status", "Account removed") })
+            invoke.resolveObject(false)
 		}
 		
 		val sharedPreferences = deviceProtectedContext.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)

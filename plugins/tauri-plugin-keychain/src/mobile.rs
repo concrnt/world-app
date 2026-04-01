@@ -32,16 +32,22 @@ impl<R: Runtime> Keychain<R> {
       .run_mobile_plugin("getItem", payload)
       .map_err(Into::into)
   }
-  pub fn save_item(&self, payload: KeychainRequest) -> crate::Result<KeychainResponse> {
+  pub fn has_item(&self, payload: KeychainRequest) -> bool {
+    self
+      .0
+      .run_mobile_plugin("hasItem", payload)
+      .unwrap_or(false)
+  }
+  pub fn save_item(&self, payload: KeychainRequest) -> bool {
     self
       .0
       .run_mobile_plugin("saveItem", payload)
-      .map_err(Into::into)
+      .unwrap_or(false)
   }
-  pub fn remove_item(&self, payload: KeychainRequest) -> crate::Result<KeychainResponse> {
+  pub fn remove_item(&self, payload: KeychainRequest) -> bool {
     self
       .0
       .run_mobile_plugin("removeItem", payload)
-      .map_err(Into::into)
+      .unwrap_or(false)
   }
 }
