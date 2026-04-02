@@ -18,6 +18,8 @@ export const AccountSetup = (props: Props) => {
     const [domain, setDomain] = useState<string>('v2dev.concrnt.net')
     const [existingCCID, setExistingCCID] = useState<string | null>(null)
 
+    const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
+
     useEffect(() => {
         invoke('has_masterkey').then((existing) => {
             if (typeof existing !== 'string') return
@@ -101,10 +103,8 @@ export const AccountSetup = (props: Props) => {
                     <Button
                         onClick={async () => {
                             const ccid: string = await invoke('initialize_master')
-                            const authProvider = new TauriAuthProvider(ccid)
-                            const kvs = new InMemoryKVS()
 
-                            const api = new Api(domain, authProvider, kvs)
+                            const authProvider = new TauriAuthProvider(ccid)
 
                             const document = {
                                 author: ccid,
@@ -118,25 +118,39 @@ export const AccountSetup = (props: Props) => {
                             const docString = JSON.stringify(document)
                             const signature = await authProvider.signMaster(docString)
 
-                            const request = {
-                                affiliationDocument: docString,
-                                affiliationSignature: signature,
-                                meta: {}
+                            const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
+
+                            openUrl(
+                                `https://${domain}/register?document=${encodedDoc}&signature=${signature}`,
+                                'inAppBrowser'
+                            )
+
+                            setRegistrationPageOpened(true)
+                        }}
+                    >
+                        登録ページを開く
+                    </Button>
+
+                    <Button
+                        disabled={!registrationPageOpened}
+                        onClick={async () => {
+                            const ccid = await invoke('has_masterkey')
+                            if (typeof ccid !== 'string') {
+                                alert('プログラムエラー: CCIDが見つかりません')
+                                return
                             }
 
-                            await api.requestConcrntApi(
-                                domain,
-                                'net.concrnt.world.register',
-                                {},
-                                {
-                                    method: 'POST',
-                                    body: JSON.stringify(request),
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                }
-                            )
-                            console.log('Registered')
+                            const authProvider = new TauriAuthProvider(ccid)
+                            const kvs = new InMemoryKVS()
+
+                            const api = new Api(domain, authProvider, kvs)
+
+                            const registration = await api.getEntity(ccid)
+                            console.log('Registration Check:', registration)
+                            if (!registration) {
+                                alert('アカウントの登録が確認できませんでした。')
+                                return
+                            }
 
                             const ckid: string = await invoke('create_subkey')
 
@@ -159,37 +173,7 @@ export const AccountSetup = (props: Props) => {
                             reload()
                         }}
                     >
-                        {' '}
-                        登録
-                    </Button>
-
-                    <Button
-                        onClick={async () => {
-                            const ccid: string = await invoke('initialize_master')
-
-                            const authProvider = new TauriAuthProvider(ccid)
-
-                            const document = {
-                                author: ccid,
-                                schema: 'https://schema.concrnt.net/affiliation.json',
-                                value: {
-                                    domain
-                                },
-                                createdAt: new Date().toISOString()
-                            }
-
-                            const docString = JSON.stringify(document)
-                            const signature = await authProvider.signMaster(docString)
-
-                            const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
-
-                            openUrl(
-                                `https://${domain}/register?document=${encodedDoc}&signature=${signature}`,
-                                'inAppBrowser'
-                            )
-                        }}
-                    >
-                        登録ページを開く
+                        登録状態を確認
                     </Button>
                 </>
             )}

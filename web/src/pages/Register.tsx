@@ -132,17 +132,22 @@ export const Inner = (props: {
 
         setSuccess(true)
 
-        if (callback) {
-            setTimeout(() => {
+        setTimeout(() => {
+            if (callback) {
                 window.location.href = callback
-            }, 1000)
-        }
+            } else {
+                window.close()
+            }
+        }, 1000)
+
     }
 
     if (success) {
         return <>
             <Text variant="h1">登録完了</Text>
-            {callback && <Text>元のページに戻ります...</Text>}
+            {
+                callback ? <Text>元のページに戻ります...</Text> : <Text>このページを閉じてください...</Text>
+            }
         </>
     }
 
