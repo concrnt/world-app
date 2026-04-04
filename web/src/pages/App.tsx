@@ -29,6 +29,7 @@ export const App = () => {
             <div
                 style={{
                     flex: 1,
+                    overflow: 'hidden',
                 }}
             >
                 <Outlet />
