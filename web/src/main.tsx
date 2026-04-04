@@ -6,9 +6,11 @@ import { Home } from './pages/Home.tsx'
 import { Login } from './pages/Login.tsx'
 import { App } from './pages/App.tsx'
 import { Register } from './pages/Register.tsx'
+import { Timeline } from './pages/Timeline.tsx'
 import { ClientProvider } from './contexts/Client.tsx'
 import { LoginGuard } from './LoginGuard.tsx'
 import { ThemeProvider } from '@concrnt/ui'
+import { Explorer } from './pages/Explorer.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -24,6 +26,8 @@ createRoot(document.getElementById('root')!).render(
                             </LoginGuard>
                         }>
                             <Route index element={<Home />} />
+                            <Route path="/explorer" element={<Explorer />} />
+                            <Route path="/timeline/:uri" element={<Timeline />} />
                         </Route>
                         <Route path="/login" element={
                             <Login />

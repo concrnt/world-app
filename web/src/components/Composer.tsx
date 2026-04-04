@@ -4,6 +4,7 @@ import { useClient } from "../contexts/Client";
 import { Schemas } from "@concrnt/worldlib";
 
 interface Props {
+    additionalDestinations?: string[]
 }
 
 export const Composer = (props: Props) => {
@@ -18,7 +19,8 @@ export const Composer = (props: Props) => {
         const key = Date.now().toString()
 
         const distributes = [
-            homeTimeline
+            homeTimeline,
+            ...(props.additionalDestinations || [])
         ]
 
         const document = {
