@@ -25,7 +25,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     if (!client) return <div>Loading...</div>
     if (!props.uri && !props.content) return <div>No message specified</div>
 
-    const message = props.content ? JSON.parse(props.content) : use(client.getMessage<any>(props.uri!))
+    const sourceDomain = props.source ? new URL(props.source).hostname : undefined
+    const message = props.content ? JSON.parse(props.content) : use(client.getMessage<any>(props.uri!, sourceDomain))
 
     if (!message) return <div>Message not found</div>
 
