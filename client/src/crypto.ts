@@ -209,7 +209,7 @@ export interface SubKey {
 export const LoadSubKey = (secret: string): SubKey | null => {
     try {
         // format: concurrent-subkey <privatekey> <ccid>@<domain>
-        const reg = /concurrent-subkey\s+([0-9a-f]{64})\s+([^@]+)@([^\s]+)/
+        const reg = /concrnt-subkey\s+([0-9a-f]{64})\s+([^@]+)@([^\s]+)/
         const match = secret.match(reg)
         if (!match) return null
         const privatekey = match[1]

@@ -6,21 +6,34 @@ import { Home } from './pages/Home.tsx'
 import { Login } from './pages/Login.tsx'
 import { App } from './pages/App.tsx'
 import { Register } from './pages/Register.tsx'
+import { ClientProvider } from './contexts/Client.tsx'
+import { LoginGuard } from './LoginGuard.tsx'
+import { ThemeProvider } from '@concrnt/ui'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-        <Routes>
-            <Route path="/" element={<App />}>
-                <Route index element={<Home />} />
-            </Route>
-            <Route path="/login" element={
-                <Login />
-            } />
-            <Route path="/register" element={
-                <Register />
-            } />
-        </Routes>
-    </BrowserRouter>
-  </StrictMode>,
+    <StrictMode>
+        <ClientProvider>
+            <ThemeProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={
+                            <LoginGuard
+                                redirect="/login"
+                            >
+                                <App />
+                            </LoginGuard>
+                        }>
+                            <Route index element={<Home />} />
+                        </Route>
+                        <Route path="/login" element={
+                            <Login />
+                        } />
+                        <Route path="/register" element={
+                            <Register />
+                        } />
+                    </Routes>
+                </BrowserRouter>
+            </ThemeProvider>
+        </ClientProvider>
+    </StrictMode>,
 )

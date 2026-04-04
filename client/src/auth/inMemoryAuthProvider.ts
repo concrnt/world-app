@@ -41,6 +41,14 @@ export class InMemoryAuthProvider implements AuthProvider {
         return this.ckid
     }
 
+    canSignMaster() {
+        return !!this.masterkey
+    }
+
+    canSignSub() {
+        return !!this.subkey && !!this.ckid
+    }
+
     signMaster(data: string): Promise<string> {
         if (!this.masterkey) {
             throw new Error('Master key not available')

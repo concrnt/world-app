@@ -40,6 +40,14 @@ export class TauriAuthProvider implements AuthProvider {
         return this.ckid
     }
 
+    canSignMaster(): boolean {
+        return true
+    }
+
+    canSignSub(): boolean {
+        return true
+    }
+
     signMaster(data: string): Promise<string> {
         return invoke<string>('sign_masterkey', { payload: data })
     }
