@@ -1,0 +1,66 @@
+import { Button } from "@concrnt/ui";
+import { useState } from "react";
+import { useClient } from "../contexts/Client";
+import { Schemas } from "@concrnt/worldlib";
+
+interface Props {
+}
+
+export const Composer = (props: Props) => {
+
+    const { client } = useClient()
+    const [draft, setDraft] = useState("");
+
+    const handleSubmit = async () => {
+        if (!client) return
+
+        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+        const key = Date.now().toString()
+
+        const distributes = [
+            homeTimeline
+        ]
+
+        const document = {
+            key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+            schema: Schemas.markdownMessage,
+            value: {
+                body: draft
+            },
+            author: client.ccid,
+            distributes,
+            createdAt: new Date()
+        }
+        await client.api.commit(document)
+
+        setDraft("")
+
+    }
+
+    return <div>
+        <textarea
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            style={{
+                width: "100%",
+            }}
+        >
+        </textarea>
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: 8,
+            }}
+        >
+            <Button
+                onClick={() => {
+                    handleSubmit()
+                }}
+            >Send</Button>
+        </div>
+    </div>
+
+}
+
+

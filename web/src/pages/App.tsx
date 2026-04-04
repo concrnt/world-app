@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom"
+import { Sidebar } from "../components/Sidebar"
 
 export const App = () => {
     return <div
@@ -21,15 +22,13 @@ export const App = () => {
             <div
                 style={{
                     width: "250px",
-                    backgroundColor: "red"
                 }}
             >
-                Sidebar
+                <Sidebar />
             </div>
             <div
                 style={{
                     flex: 1,
-                    backgroundColor: "green"
                 }}
             >
                 <Outlet />
