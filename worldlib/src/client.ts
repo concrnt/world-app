@@ -54,6 +54,7 @@ export class Client {
         const ccid = authProvider.getCCID()
 
         const client = new Client(api, ccid, server)
+        if (ccid === '') return client
 
         client.user = await client.getUser(ccid).catch(() => null)
 

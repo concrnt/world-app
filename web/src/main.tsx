@@ -11,6 +11,7 @@ import { ClientProvider } from './contexts/Client.tsx'
 import { LoginGuard } from './LoginGuard.tsx'
 import { ThemeProvider } from '@concrnt/ui'
 import { Explorer } from './pages/Explorer.tsx'
+import { Settings } from './pages/Settings.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
                             <Route index element={<Home />} />
                             <Route path="/explorer" element={<Explorer />} />
                             <Route path="/timeline/:uri" element={<Timeline />} />
+                            <Route path="/settings" element={<Settings />} />
                         </Route>
                         <Route path="/login" element={
                             <Login />

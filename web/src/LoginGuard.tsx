@@ -13,7 +13,7 @@ export const LoginGuard = (props: Props) => {
 
     const { client } = useClient()
 
-    if (!client?.api.authProvider.canSignMaster && !client?.api.authProvider.canSignSub) {
+    if (!client?.api.authProvider.canSignMaster() && !client?.api.authProvider.canSignSub()) {
         return <Navigate to={props.redirect} state={{ from: useLocation() }} replace={true} />
     }
 

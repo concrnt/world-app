@@ -1,6 +1,6 @@
 
 import { QRCode } from 'react-qrcode-logo'
-import { Button, Text } from '@concrnt/ui'
+import { Button, Text, TextField } from '@concrnt/ui'
 import { useState } from 'react'
 import { type Document, type Identity, GenerateIdentity, ComputeCKID, InMemoryKVS, Api, InMemoryAuthProvider } from '@concrnt/client'
 import { usePersistent } from '../hooks/usePersistent'
@@ -9,9 +9,9 @@ export const Login = () => {
 
     const [identity, _setIdentity] = useState<Identity>(GenerateIdentity())
 
-    const [_domain, setDomain] = usePersistent<string>('Domain', '')
-    const [_prvkey, setPrivateKey] = usePersistent<string>('PrivateKey', '')
-    const [_subkey, setSubkey] = usePersistent<string>('SubKey', '')
+    const [_domain, setDomain] = usePersistent<string>('Domain')
+    const [_prvkey, setPrivateKey] = usePersistent<string>('PrivateKey')
+    const [_subkey, setSubkey] = usePersistent<string>('SubKey')
 
     const keyID = ComputeCKID(identity.publicKey)
 
@@ -22,6 +22,8 @@ export const Login = () => {
         key: keyID,
         response: `https://signal.concrnt.net/channel/$${sessionID}`
     }
+
+    const [domainDraft, setDomainDraft] = useState<string>('v2dev.concrnt.net')
 
     return (
         <div>
@@ -52,12 +54,17 @@ export const Login = () => {
                     Developer Option
                 </Text>
 
+                <TextField
+                    value={domainDraft}
+                    onChange={(e) => setDomainDraft(e.target.value)}
+                />
+
                 <Button
                     onClick={async () => {
                         const ccid = identity.CCID
                         console.log('Identity:', identity)
 
-                        const domain = 'v2dev.concrnt.net'
+                        const domain = domainDraft
 
                         const authProvider = new InMemoryAuthProvider(identity.privateKey)
                         const kvs = new InMemoryKVS()
@@ -116,6 +123,7 @@ export const Login = () => {
                         setPrivateKey(identity.privateKey)
                         setSubkey(subkey)
 
+                        window.location.href = '/'
                     }}
                 >
                     Quick Setup

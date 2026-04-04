@@ -9,14 +9,14 @@ function parseJsonSafely(input: string): any {
     return parsed
 }
 
-export function usePersistent<T>(key: string, init: T): [value: T, update: (updator: T | ((old: T) => T)) => void] {
+export function usePersistent<T>(key: string, init?: T): [value: T, update: (updator: T | ((old: T) => T)) => void] {
     const [value, setValue] = useState<T>(
         (() => {
             const cached = localStorage.getItem(key)
             if (cached) {
                 return parseJsonSafely(cached) ?? init
             } else {
-                localStorage.setItem(key, JSON.stringify(init))
+                if (init) localStorage.setItem(key, JSON.stringify(init))
                 return init
             }
         })()

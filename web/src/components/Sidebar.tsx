@@ -25,6 +25,9 @@ export const Sidebar = () => {
             <Link
                 to="/explorer"
             >Explorer</Link>
+            <Link
+                to="/settings"
+            >Settings</Link>
         </div>
         <hr/>
     </div>

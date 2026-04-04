@@ -23,16 +23,16 @@ const ClientContext = createContext<ClientContextState>({
 
 export const ClientProvider = (props: Props): ReactNode => {
 
-    const [domain] = usePersistent<string>('Domain', '')
-    const [prvkey] = usePersistent<string>('PrivateKey', '')
-    const [subkey] = usePersistent<string>('SubKey', '')
+    const [domain] = usePersistent<string>('Domain')
+    const [prvkey] = usePersistent<string>('PrivateKey')
+    const [subkey] = usePersistent<string>('SubKey')
 
     const [client, setClient] = useState<Client | null | undefined>(undefined)
 
     const reload = useCallback(async () => {
         const authProvider = new InMemoryAuthProvider(prvkey, subkey)
         const kvs = new InMemoryKVS()
-        Client.create(domain, authProvider, kvs)
+        Client.create(domain ?? 'v2dev.concrnt.net', authProvider, kvs)
             .then((client) => {
                 setClient(client)
             })
