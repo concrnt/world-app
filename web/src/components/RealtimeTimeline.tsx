@@ -52,9 +52,6 @@ export const RealtimeTimeline = (props: Props) => {
                 flexDirection: 'column',
                 gap: '8px',
                 padding: '8px 0',
-                overflowX: 'hidden',
-                overflowY: 'auto',
-                overscrollBehaviorY: 'none'
             }}
         >
             {reader.current?.body.map((item) => (
