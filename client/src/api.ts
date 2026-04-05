@@ -72,12 +72,7 @@ export class Api {
 
         const header = JSON.stringify(headerJson)
 
-        const payload = JSON.stringify({
-            jti: crypto.randomUUID(),
-            iat: Math.floor(new Date().getTime() / 1000).toString(),
-            exp: Math.floor((new Date().getTime() + 5 * 60 * 1000) / 1000).toString(),
-            ...claim
-        })
+        const payload = JSON.stringify(claim)
 
         const body = makeUrlSafe(btoa(header) + '.' + btoa(payload))
 
@@ -98,12 +93,13 @@ export class Api {
     }
 
     async generateApiToken(remote: string): Promise<string> {
-        const ccid = this.authProvider.getCCID()
-
         const token = await this.signJWT({
             aud: remote,
-            iss: ccid,
-            sub: 'concrnt'
+            iss: `cckv://${this.authProvider.getCCID()}@${this.defaultHost}`,
+            sub: 'concrnt',
+            jti: crypto.randomUUID(),
+            iat: Math.floor(new Date().getTime() / 1000).toString(),
+            exp: Math.floor((new Date().getTime() + 5 * 60 * 1000) / 1000).toString()
         })
 
         this.tokens[remote] = token
@@ -119,16 +115,8 @@ export class Api {
     }
 
     async getHeaders(domain: string) {
-        /*
-            let passport = await this.passport
-            if (!passport) {
-                passport = await this.getPassport()
-            }
-        */
-
         return {
             authorization: `Bearer ${await this.getAuthToken(domain)}`
-            //passport: passport
         }
     }
 
