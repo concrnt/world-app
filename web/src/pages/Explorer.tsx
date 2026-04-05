@@ -32,7 +32,10 @@ export const Explorer = () => {
             </Suspense>
 
             <h2>Communities on {server}</h2>
-            <Suspense fallback={<div>Loading communities...</div>}>
+            <Suspense 
+                key={server}
+                fallback={<div>Loading communities...</div>}
+            >
                 <CommunityList communitiesPromise={communitiesPromise} />
             </Suspense>
         </div>
@@ -44,7 +47,11 @@ const ServerList = ({ serversPromise }: { serversPromise: Promise<Server[]> }) =
     const servers = use(serversPromise)
     return <ul>
         {servers.map(server => (
-            <li key={server.domain}>{server.domain}</li>
+            <li key={server.domain}>
+                <Link to={`#${server.domain}`}>
+                    {server.domain}
+                </Link>
+            </li>
         ))}
     </ul>
 }

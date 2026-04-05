@@ -64,6 +64,8 @@ export const ClientProvider = (props: Props): ReactNode => {
         return <>Loading...</>
     }
 
+    console.log("oOoOoOoO Client loaded oOoOoOoO")
+
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
 }
 
