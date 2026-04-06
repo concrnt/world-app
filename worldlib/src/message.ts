@@ -13,6 +13,8 @@ export class Message<T> implements Document<T> {
     createdAt: Date
     distributes?: string[]
 
+    hint?: string
+
     authorUser?: User
 
     associations: Array<Document<any>> = []
@@ -39,6 +41,7 @@ export class Message<T> implements Document<T> {
             return null
         }
         const message = new Message<T>(uri, res)
+        message.hint = hint
         message.authorUser = await User.load(client, message.author, hint).catch(() => undefined)
 
         message.ownAssociations = await client.api.getAssociations<any>(uri, { author: client.ccid })
@@ -53,7 +56,8 @@ export class Message<T> implements Document<T> {
     }
 
     async favorite(client: Client): Promise<void> {
-        const authorDomain = await client.getUser(this.author).then((user) => user?.domain)
+        const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.domain)
+        console.log('fav author domain', authorDomain)
 
         const distributes = [
             `cckv://${client.ccid}/concrnt.world/main/activity-timeline`,
