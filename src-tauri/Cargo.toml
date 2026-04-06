@@ -38,6 +38,7 @@ sha3 = "0.10"
 tauri-plugin-biometric = "2"
 tauri-plugin-keychain = { version="2.0.2", path = "../plugins/tauri-plugin-keychain" }
 tauri-plugin-barcode-scanner = "2"
+tauri-plugin-haptics = "2"
 
 [target.'cfg(any(target_os = "ios"))'.dependencies]
 tauri-plugin-safari-scroll-killer = { version="0.1.0", path = "../plugins/tauri-plugin-safari-scroll-killer" }

@@ -7,6 +7,7 @@ import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
+import { hapticLight } from '../../utils/haptics'
 
 interface Props {
     message: Message<any>
@@ -62,6 +63,7 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!client) return
+                    hapticLight()
                     if (ownFavorite) {
                         //client?.unfavorite(message)
                     } else {

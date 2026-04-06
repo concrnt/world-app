@@ -11,6 +11,7 @@ import { Avatar, CfmRenderer, Text, IconButton } from '@concrnt/ui'
 import { MdMoreHoriz } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { MessageActions } from './MessageActions'
+import { hapticSuccess } from '../../utils/haptics'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { push } = useStack()
@@ -73,7 +74,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                                 },
                                 (key) => {
                                     if (key === 'delete') {
-                                        client?.api.delete(message.uri)
+                                        client?.api.delete(message.uri).then(() => hapticSuccess())
                                     }
                                 }
                             )

@@ -15,6 +15,7 @@
     "@concrnt/worldlib": "workspace:*",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-barcode-scanner": "^2.4.4",
+    "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-opener": "^2",
     "boring-avatars": "^2.0.4",
     "motion": "^12.36.0",

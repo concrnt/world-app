@@ -3,6 +3,7 @@ import { animate } from 'motion'
 import { ReactNode, RefObject, useCallback, useEffect, useRef } from 'react'
 import { MdArrowDownward, MdSync } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
+import { hapticSelection } from '../utils/haptics'
 
 /** リフレッシュ発動の閾値（px）。この高さ以上引っ張ると離した時にリフレッシュが走る */
 const PTR_THRESHOLD = 60
@@ -80,6 +81,9 @@ export const PullToRefresh = (props: PullToRefreshProps) => {
             const dampened = rubberBand(rawDelta)
             pullDistance.set(dampened)
             if (dampened >= PTR_THRESHOLD) {
+                if (!isOverThreshold.current) {
+                    hapticSelection()
+                }
                 isOverThreshold.current = true
             }
         },

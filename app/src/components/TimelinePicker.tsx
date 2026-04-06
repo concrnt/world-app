@@ -9,6 +9,7 @@ import { IoMdAdd } from 'react-icons/io'
 import { useClient } from '../contexts/Client'
 import { Avatar } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
+import { hapticSelection } from '../utils/haptics'
 
 interface Props {
     selected: string[]
@@ -144,6 +145,7 @@ export const TimelinePicker = (props: Props) => {
                 <Chip
                     variant="outlined"
                     onClick={() => {
+                        hapticSelection()
                         setFocused(true)
                     }}
                     style={{

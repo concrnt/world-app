@@ -7,6 +7,10 @@
     "core:default",
     "barcode-scanner:allow-scan",
     "barcode-scanner:allow-cancel",
+    "haptics:allow-impact-feedback",
+    "haptics:allow-notification-feedback",
+    "haptics:allow-selection-feedback",
+    "haptics:allow-vibrate",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

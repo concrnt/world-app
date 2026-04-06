@@ -13,6 +13,7 @@ import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { MessageActions } from './MessageActions'
+import { hapticSuccess } from '../../utils/haptics'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { push } = useStack()
@@ -78,7 +79,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                             },
                             (key) => {
                                 if (key === 'delete') {
-                                    client?.api.delete(message.uri)
+                                    client?.api.delete(message.uri).then(() => hapticSuccess())
                                 }
                             }
                         )
