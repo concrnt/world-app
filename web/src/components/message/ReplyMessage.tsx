@@ -1,25 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useClient } from '../../contexts/Client'
 import { type MessageProps } from './types'
-import { type ReplyMessageSchema, Schemas, Message } from '@concrnt/worldlib'
+import { type ReplyMessageSchema, Message } from '@concrnt/worldlib'
 
-import { Avatar, Button, CfmRenderer, IconButton, CssVar } from '@concrnt/ui'
+import { Avatar, CfmRenderer, IconButton, CssVar } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
-import { MdStar } from 'react-icons/md'
-import { MdStarOutline } from 'react-icons/md'
 import { MdReply } from 'react-icons/md'
-import { MdRepeat } from 'react-icons/md'
+import { MessageActions } from './MessageActions'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { client } = useClient()
 
     const message = props.message
-
-    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
-    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
-    const replyCount = message.associationCounts?.[Schemas.replyAssociation] ?? 0
-    const rerouteCount = message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
 
     // リプライ先のメッセージ情報
     const replyToId = message.value.replyToMessageId
@@ -148,58 +141,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 )}
 
                 <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px',
-                        alignItems: 'center'
-                    }}
-                >
-                    {/* リプライボタン */}
-                    <Button
-                        variant="text"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            // composer.open([], [], 'reply', message)
-                        }}
-                        style={{ display: 'flex', alignItems: 'center' }}
-                    >
-                        <MdReply size={20} />
-                        {replyCount > 0 && <span style={{ marginLeft: '4px' }}>{replyCount}</span>}
-                    </Button>
-
-                    {/* リルートボタン */}
-                    <Button
-                        variant="text"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            // composer.open([], [], 'reroute', message)
-                        }}
-                        style={{ display: 'flex', alignItems: 'center' }}
-                    >
-                        <MdRepeat size={20} />
-                        {rerouteCount > 0 && <span style={{ marginLeft: '4px' }}>{rerouteCount}</span>}
-                    </Button>
-
-                    {/* いいねボタン */}
-                    <Button
-                        variant="text"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (!client) return
-                            if (ownFavorite) {
-                                //client?.unfavorite(message)
-                            } else {
-                                message.favorite(client)
-                            }
-                        }}
-                        style={{ display: 'flex', alignItems: 'center' }}
-                    >
-                        {ownFavorite ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
-                        <span style={{ marginLeft: '4px' }}>{likeCount}</span>
-                    </Button>
-                </div>
+                <MessageActions message={message} />
             </div>
         </div>
     )

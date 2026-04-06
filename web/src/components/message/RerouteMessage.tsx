@@ -1,27 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useClient } from '../../contexts/Client'
 import { type MessageProps } from './types'
-import { type RerouteMessageSchema, Schemas, Message } from '@concrnt/worldlib'
+import { type RerouteMessageSchema, Message } from '@concrnt/worldlib'
 
-import { Avatar, Button, CfmRenderer, IconButton } from '@concrnt/ui'
+import { Avatar, CfmRenderer, IconButton } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
-import { MdStar } from 'react-icons/md'
-import { MdStarOutline } from 'react-icons/md'
-import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
+import { MessageActions } from './MessageActions'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { client } = useClient()
 
     const message = props.message
-
-    /*
-    const ownFavorite = message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
-    const likeCount = message.associationCounts?.[Schemas.likeAssociation] ?? 0
-    const replyCount = message.associationCounts?.[Schemas.replyAssociation] ?? 0
-    const rerouteCount = message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
-    */
 
     // リルート元のメッセージ情報
     const rerouteId = message.value.rerouteMessageId
@@ -101,75 +92,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                             {rerouteMessage.authorUser?.profile.username}
                         </div>
                         <CfmRenderer messagebody={rerouteMessage.value.body} emojiDict={{}} />
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                gap: '8px',
-                                alignItems: 'center'
-                            }}
-                        >
-                            {/* リプライボタン */}
-                            <Button
-                                variant="text"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    // composer.open([], [], 'reply', rerouteMessage)
-                                }}
-                                style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                                <MdReply size={20} />
-                                {(rerouteMessage.associationCounts?.[Schemas.replyAssociation] ?? 0) > 0 && (
-                                    <span style={{ marginLeft: '4px' }}>
-                                        {rerouteMessage.associationCounts?.[Schemas.replyAssociation]}
-                                    </span>
-                                )}
-                            </Button>
-
-                            {/* リルートボタン */}
-                            <Button
-                                variant="text"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    // composer.open([], [], 'reroute', rerouteMessage)
-                                }}
-                                style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                                <MdRepeat size={20} />
-                                {(rerouteMessage.associationCounts?.[Schemas.rerouteAssociation] ?? 0) > 0 && (
-                                    <span style={{ marginLeft: '4px' }}>
-                                        {rerouteMessage.associationCounts?.[Schemas.rerouteAssociation]}
-                                    </span>
-                                )}
-                            </Button>
-
-                            {/* いいねボタン */}
-                            <Button
-                                variant="text"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (!client) return
-                                    const ownFav = rerouteMessage.ownAssociations.find(
-                                        (a) => a.schema === Schemas.likeAssociation
-                                    )
-                                    if (ownFav) {
-                                        //client?.unfavorite(rerouteMessage)
-                                    } else {
-                                        rerouteMessage.favorite(client)
-                                    }
-                                }}
-                                style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                                {rerouteMessage.ownAssociations.find((a) => a.schema === Schemas.likeAssociation) ? (
-                                    <MdStar size={20} color="gold" />
-                                ) : (
-                                    <MdStarOutline size={20} />
-                                )}
-                                <span style={{ marginLeft: '4px' }}>
-                                    {rerouteMessage.associationCounts?.[Schemas.likeAssociation] ?? 0}
-                                </span>
-                            </Button>
-                        </div>
+                        <MessageActions message={message} />
                     </div>
                 </div>
             )}
