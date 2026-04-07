@@ -6,6 +6,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { FAB } from '../ui/FAB'
 import { useComposer } from '../contexts/Composer'
 import { MdCreate } from 'react-icons/md'
+import { hapticLight } from '../utils/haptics'
 
 interface Props {
     uri: string
@@ -29,6 +30,7 @@ export const TimelineView = (props: Props) => {
             </View>
             <FAB
                 onClick={() => {
+                    hapticLight()
                     timelinePromise.then((timeline) => {
                         composer.open([props.uri], timeline ? [timeline] : [])
                     })
