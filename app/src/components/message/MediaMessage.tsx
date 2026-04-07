@@ -12,6 +12,7 @@ import { MdMoreHoriz } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { MessageActions } from './MessageActions'
+import { hapticSuccess } from '../../utils/haptics'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
@@ -77,7 +78,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                                 },
                                 (key) => {
                                     if (key === 'delete') {
-                                        client?.api.delete(message.uri)
+                                        client?.api.delete(message.uri).then(() => hapticSuccess())
                                     }
                                 }
                             )

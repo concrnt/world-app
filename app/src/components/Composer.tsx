@@ -11,6 +11,7 @@ import { CssVar } from '../types/Theme'
 import { ComposerMode } from '../contexts/Composer'
 import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
+import { hapticSuccess } from '../utils/haptics'
 
 interface MediaDraft {
     file: File
@@ -124,6 +125,7 @@ export const Composer = (props: Props) => {
         // const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
+        let success = false
         try {
             setUploading(true)
 
@@ -275,12 +277,14 @@ export const Composer = (props: Props) => {
                     }
                 }
             }
+            success = true
         } catch (error) {
             console.error('Submit error:', error)
         } finally {
             setUploading(false)
         }
 
+        if (success) hapticSuccess()
         setWillClose(true)
     }
 

@@ -16,6 +16,7 @@ import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
 import { isFulfilled, Schemas } from '@concrnt/worldlib'
+import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 
 export const HomeView = (props: ScrollViewProps) => {
@@ -181,6 +182,7 @@ const InnerFab = (props: { defaultPostTimelines: string[]; communitiesPromise: P
     return (
         <FAB
             onClick={() => {
+                hapticLight()
                 composer.open(props.defaultPostTimelines, communities)
             }}
         >

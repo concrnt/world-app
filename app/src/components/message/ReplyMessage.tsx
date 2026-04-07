@@ -14,6 +14,7 @@ import { MdReply } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { CssVar } from '../../types/Theme'
 import { MessageActions } from './MessageActions'
+import { hapticSuccess } from '../../utils/haptics'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { push } = useStack()
@@ -92,7 +93,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                                 },
                                 (key) => {
                                     if (key === 'delete') {
-                                        client?.api.delete(message.uri)
+                                        client?.api.delete(message.uri).then(() => hapticSuccess())
                                     }
                                 }
                             )
