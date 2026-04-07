@@ -7,6 +7,7 @@ import { Header } from '../ui/Header'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
+import { hapticLight, hapticSuccess } from '../utils/haptics'
 import { ClassicExplorer } from '../components/ClassicExplorer'
 import { CssVar } from '../types/Theme'
 
@@ -31,6 +32,7 @@ export const ExplorerView = () => {
             </View>
             <FAB
                 onClick={() => {
+                    hapticLight()
                     drawer.open(
                         <CommunityCreator
                             onComplete={() => {
@@ -53,7 +55,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
 
     const { client } = useClient()
 
-    const createCommunity = (value: CommunityTimelineSchema) => {
+    const createCommunity = async (value: CommunityTimelineSchema) => {
         if (!client) return
 
         const key = Date.now().toString()
@@ -77,9 +79,8 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
             ]
         }
 
-        client.api.commit(document).then(() => {
-            console.log('Community created')
-        })
+        await client.api.commit(document)
+        console.log('Community created')
     }
 
     return (
@@ -100,11 +101,12 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
                 <Text variant="h3">コミュニティを作成</Text>
                 <Button
                     disabled={!communityName}
-                    onClick={() => {
-                        createCommunity({
+                    onClick={async () => {
+                        await createCommunity({
                             name: communityName,
                             description: communityDescription
                         })
+                        hapticSuccess()
                         onComplete()
                     }}
                 >
