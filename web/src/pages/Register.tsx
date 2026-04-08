@@ -112,8 +112,11 @@ export const Inner = (props: {
         const api = new Api(domain, authProvider, kvs)
 
         const request = {
-            affiliationDocument: registration,
-            affiliationSignature: signature,
+            document: registration,
+            proof: {
+                type: 'concrnt-ecrecover-direct',
+                signature: signature,
+            },
             meta: meta,
         }
 

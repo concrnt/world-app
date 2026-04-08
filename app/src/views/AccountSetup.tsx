@@ -108,7 +108,7 @@ export const AccountSetup = (props: Props) => {
 
                             const document = {
                                 author: ccid,
-                                schema: 'https://schema.concrnt.net/affiliation.json',
+                                schema: 'https://schema.concrnt.net/entity.json',
                                 value: {
                                     domain
                                 },
