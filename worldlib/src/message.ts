@@ -56,7 +56,7 @@ export class Message<T> implements Document<T> {
     }
 
     async favorite(client: Client): Promise<void> {
-        const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.domain)
+        const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.value.domain)
         console.log('fav author domain', authorDomain)
 
         const distributes = [

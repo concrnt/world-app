@@ -1,4 +1,4 @@
-import { type FQDN, CCID, Entity } from '@concrnt/client'
+import { type FQDN, CCID, Entity, Document } from '@concrnt/client'
 import { ProfileSchema } from './schemas/'
 import { Client } from './client'
 
@@ -8,18 +8,12 @@ export class User {
 
     ccid: CCID
     alias?: string
-    tag?: string
-    affiliationDocument?: string
-    affiliationSignature?: string
 
-    constructor(domain: FQDN, entity: Entity, profile?: ProfileSchema) {
+    constructor(domain: FQDN, entity: Document<Entity>, profile?: ProfileSchema) {
         this.domain = domain
         this.profile = profile || {}
-        this.ccid = entity.ccid
-        this.alias = entity.alias
-        this.tag = entity.tag
-        this.affiliationDocument = entity.affiliationDocument
-        this.affiliationSignature = entity.affiliationSignature
+        this.ccid = entity.author
+        this.alias = entity.value.alias
     }
 
     static async load(client: Client, id: CCID, hint?: string): Promise<User> {
@@ -27,9 +21,11 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getDocument<ProfileSchema>(`cckv://${entity.ccid}/concrnt.world/main/profile`)
+        const profile = await client.api.getDocument<ProfileSchema>(
+            `cckv://${entity.author}/concrnt.world/main/profile`
+        )
 
-        return new User(entity.domain, entity, profile?.value)
+        return new User(entity.value.domain, entity, profile?.value)
     }
 
     async GetStats(client: Client): Promise<{ acknowledging: number; acknowledged: number }> {

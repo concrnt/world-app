@@ -49,8 +49,10 @@ export interface SignedDocument {
     proof: Proof
 }
 
-export interface Affiliation {
+export interface Entity {
     domain: string
+    alias: string
+    alias_proof_type: string
 }
 
 export interface RealtimeEvent {

@@ -72,7 +72,7 @@ export const Login = () => {
 
                         const document = {
                             author: ccid,
-                            schema: 'https://schema.concrnt.net/affiliation.json',
+                            schema: 'https://schema.concrnt.net/entity.json',
                             value: {
                                 domain
                             },
@@ -83,8 +83,11 @@ export const Login = () => {
                         const signature = await authProvider.signMaster(docString)
 
                         const request = {
-                            affiliationDocument: docString,
-                            affiliationSignature: signature,
+                            document: docString,
+                            proof: {
+                                type: 'concrnt-ecrecover-direct',
+                                signature,
+                            },
                             meta: {}
                         }
 

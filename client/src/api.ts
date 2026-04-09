@@ -1,7 +1,7 @@
 import { KVS } from './cache'
 import { AuthProvider } from './auth'
 import { fetchWithTimeout, makeUrlSafe, parseHexString, renderUriTemplate, btoa } from './util'
-import { CCID, CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument } from './model'
+import { CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument, Entity } from './model'
 import { ChunklineItem } from './chunkline'
 import { CheckJwtIsValid, JwtPayload } from './crypto'
 
@@ -382,7 +382,7 @@ export class Api {
         return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, {})
     }
 
-    async getEntity(ccid: string, hint?: string): Promise<Entity> {
+    async getEntity(ccid: string, hint?: string): Promise<Document<Entity>> {
         const uri = hint ? `cckv://${ccid}@${hint}` : `cckv://${ccid}`
 
         const server = await this.getServer(this.defaultHost)
@@ -392,7 +392,10 @@ export class Api {
             owner: ccid
         })
 
-        return this.fetchWithCache<Entity>(this.defaultHost, endpoint, uri, {})
+        const sd = await this.fetchWithCache<SignedDocument>(this.defaultHost, endpoint, uri, {})
+
+        const document: Document<Entity> = JSON.parse(sd.document)
+        return document
     }
 
     async getDocument<T>(uri: string, domain?: string): Promise<Document<T>> {
@@ -416,7 +419,7 @@ export class Api {
         let fqdn = owner
         if (IsCCID(fqdn)) {
             const entity = await this.getEntity(owner, hint)
-            fqdn = entity.domain
+            fqdn = entity.value.domain
         }
         if (IsCSID(fqdn)) {
             const server = await this.getServerByCSID(owner, hint)
@@ -452,7 +455,7 @@ export class Api {
         let fqdn = owner
         if (IsCCID(fqdn)) {
             const entity = await this.getEntity(owner, hint)
-            fqdn = entity.domain
+            fqdn = entity.value.domain
         }
         if (IsCSID(fqdn)) {
             const server = await this.getServerByCSID(owner, hint)
@@ -477,7 +480,7 @@ export class Api {
         let fqdn = owner
         if (IsCCID(fqdn)) {
             const entity = await this.getEntity(owner, hint)
-            fqdn = entity.domain
+            fqdn = entity.value.domain
         }
         if (IsCSID(fqdn)) {
             const server = await this.getServerByCSID(owner, hint)
@@ -627,16 +630,4 @@ export interface Server {
     csid: CSID
     layer: string
     endpoints: Record<string, string>
-}
-
-export interface Entity {
-    ccid: CCID
-    alias?: string
-    domain: FQDN
-    tag: string
-
-    affiliationDocument: string
-    affiliationSignature: string
-
-    cdate: string
 }
