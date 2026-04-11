@@ -47,12 +47,23 @@ export class Socket {
         this.ws.onmessage = async (rawevent: any) => {
             const event: RealtimeEvent = JSON.parse(rawevent.data)
 
-            // TODO: cache here
-            // const document = JSON.parse(event.sd.document) as Document<any>
-
             switch (event.type) {
+                case 'created': {
+                    // TODO: cache here
+                    // const document = JSON.parse(event.sd.document) as Document<any>
+                    break
+                }
                 case 'associated': {
                     this.api.notifyResourceUpdate(event.uri)
+                    break
+                }
+                case 'unassociated': {
+                    this.api.notifyResourceUpdate(event.uri)
+                    break
+                }
+                case 'deleted': {
+                    this.api.notifyResourceUpdate(event.uri)
+                    break
                 }
             }
 

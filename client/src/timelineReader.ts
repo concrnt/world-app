@@ -54,7 +54,8 @@ export class TimelineReader {
                 this.onUpdate?.()
                 break
             }
-            case 'associated': {
+            case 'associated':
+            case 'unassociated': {
                 const target = this.body.find((item) => item.href === event.uri)
                 if (!target) {
                     console.log('Associated event for unknown item:', event.uri)
@@ -62,6 +63,11 @@ export class TimelineReader {
                 }
                 console.log('Item associated updated:', event.uri)
                 target.lastUpdate = new Date()
+                this.onUpdate?.()
+                break
+            }
+            case 'deleted': {
+                this.body = this.body.filter((item) => item.href !== event.uri)
                 this.onUpdate?.()
                 break
             }
