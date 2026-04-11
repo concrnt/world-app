@@ -8,6 +8,7 @@ import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
 import { MdReply } from 'react-icons/md'
 import { CssVar } from '../../types/Theme'
+import { MessageLayout } from './MessageLayout'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
     const { push } = useStack()
@@ -78,54 +79,43 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
 
             {/* リプライメッセージを表示 */}
             {replyMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px'
+                <MessageLayout
+                    onClick={() => {
+                        if (replyMessageId) {
+                            push(<PostView uri={replyMessageId} />)
+                        }
                     }}
-                >
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (replyAuthor) {
-                                push(<ProfileView id={replyAuthor.ccid} />)
-                            }
-                        }}
-                    >
-                        <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>
-
-                        {/* リプライ先の表示 */}
+                    left={
                         <div
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: CssVar.backdropBackground,
-                                borderRadius: '4px',
-                                padding: '2px 8px',
-                                fontSize: '12px',
-                                width: 'fit-content'
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (replyAuthor) {
+                                    push(<ProfileView id={replyAuthor.ccid} />)
+                                }
                             }}
                         >
-                            <MdReply size={12} />
-                            <span>{targetMessage?.authorUser?.profile.username}</span>
+                            <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
                         </div>
-
-                        {/* リプライ本文 */}
-                        <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
+                    }
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>}
+                >
+                    <div
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: CssVar.backdropBackground,
+                            borderRadius: '4px',
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            width: 'fit-content'
+                        }}
+                    >
+                        <MdReply size={12} />
+                        <span>{targetMessage?.authorUser?.profile.username}</span>
                     </div>
-                </div>
+                    <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
+                </MessageLayout>
             )}
 
             {/* ローディング */}

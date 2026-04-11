@@ -15,6 +15,7 @@ import { useSelect } from '../../contexts/Select'
 import { CssVar } from '../../types/Theme'
 import { MessageActions } from './MessageActions'
 import { hapticSuccess } from '../../utils/haptics'
+import { MessageLayout } from './MessageLayout'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { push } = useStack()
@@ -39,117 +40,95 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     }, [replyToId, client])
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '8px',
-                contentVisibility: 'auto'
-            }}
-            onClick={(e) => {
-                e.stopPropagation()
+        <MessageLayout
+            onClick={() => {
                 push(<PostView uri={message.uri} />)
             }}
-        >
-            <div
-                onClick={(e) => {
-                    e.stopPropagation()
-                    push(<ProfileView id={message.author} />)
-                }}
-            >
-                <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    flex: 1
-                }}
-            >
+            left={
                 <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '8px'
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        push(<ProfileView id={message.author} />)
                     }}
                 >
-                    <div
-                        style={{
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {message.authorUser?.profile.username}
-                    </div>
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            select(
-                                '',
-                                {
-                                    delete: <Text>投稿を削除</Text>
-                                },
-                                (key) => {
-                                    if (key === 'delete') {
-                                        client?.api.delete(message.uri).then(() => hapticSuccess())
-                                    }
-                                }
-                            )
-                        }}
-                        style={{
-                            padding: 0,
-                            margin: 0
-                        }}
-                    >
-                        <MdMoreHoriz size={15} />
-                    </IconButton>
+                    <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
                 </div>
-
-                {/* リプライ先の引用表示 */}
-                {replyToMessage && (
+            }
+            headerLeft={
+                <div
+                    style={{
+                        fontWeight: 'bold'
+                    }}
+                >
+                    {message.authorUser?.profile.username}
+                </div>
+            }
+            headerRight={
+                <IconButton
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        select(
+                            '',
+                            {
+                                delete: <Text>投稿を削除</Text>
+                            },
+                            (key) => {
+                                if (key === 'delete') {
+                                    client?.api.delete(message.uri).then(() => hapticSuccess())
+                                }
+                            }
+                        )
+                    }}
+                    style={{
+                        padding: 0,
+                        margin: 0
+                    }}
+                >
+                    <MdMoreHoriz size={15} />
+                </IconButton>
+            }
+        >
+            {replyToMessage && (
+                <div
+                    style={{
+                        padding: '8px',
+                        backgroundColor: CssVar.backdropBackground,
+                        borderRadius: '4px',
+                        borderLeft: '3px solid',
+                        borderLeftColor: CssVar.contentLink,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        push(<PostView uri={replyToId} />)
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        <MdReply size={12} />
+                        <Avatar
+                            ccid={replyToMessage.author}
+                            src={replyToMessage.authorUser?.profile.avatar}
+                            style={{ width: '16px', height: '16px' }}
+                        />
+                        <span style={{ fontWeight: 'bold' }}>{replyToMessage.authorUser?.profile.username}</span>
+                    </div>
                     <div
                         style={{
-                            padding: '8px',
-                            backgroundColor: CssVar.backdropBackground,
-                            borderRadius: '4px',
-                            borderLeft: '3px solid',
-                            borderLeftColor: CssVar.contentLink,
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            push(<PostView uri={replyToId} />)
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                            <MdReply size={12} />
-                            <Avatar
-                                ccid={replyToMessage.author}
-                                src={replyToMessage.authorUser?.profile.avatar}
-                                style={{ width: '16px', height: '16px' }}
-                            />
-                            <span style={{ fontWeight: 'bold' }}>{replyToMessage.authorUser?.profile.username}</span>
-                        </div>
-                        <div
-                            style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical'
-                            }}
-                        >
-                            <CfmRenderer messagebody={replyToMessage.value.body} emojiDict={{}} />
-                        </div>
+                        <CfmRenderer messagebody={replyToMessage.value.body} emojiDict={{}} />
                     </div>
-                )}
+                </div>
+            )}
 
-                <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
-                <MessageActions message={message} />
-            </div>
-        </div>
+            <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+            <MessageActions message={message} />
+        </MessageLayout>
     )
 }

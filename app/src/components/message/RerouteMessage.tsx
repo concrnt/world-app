@@ -14,6 +14,7 @@ import { MdRepeat } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { MessageActions } from './MessageActions'
 import { hapticSuccess } from '../../utils/haptics'
+import { MessageLayout } from './MessageLayout'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { push } = useStack()
@@ -95,34 +96,21 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
 
             {/* リルート元のメッセージを表示 */}
             {rerouteMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px',
-                        cursor: 'pointer'
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation()
+                <MessageLayout
+                    onClick={() => {
                         push(<PostView uri={rerouteId} />)
                     }}
-                >
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            push(<ProfileView id={rerouteMessage.author} />)
-                        }}
-                    >
-                        <Avatar ccid={rerouteMessage.author} src={rerouteMessage.authorUser?.profile.avatar} />
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
+                    left={
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                push(<ProfileView id={rerouteMessage.author} />)
+                            }}
+                        >
+                            <Avatar ccid={rerouteMessage.author} src={rerouteMessage.authorUser?.profile.avatar} />
+                        </div>
+                    }
+                    headerLeft={
                         <div
                             style={{
                                 fontWeight: 'bold'
@@ -130,10 +118,11 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         >
                             {rerouteMessage.authorUser?.profile.username}
                         </div>
-                        <CfmRenderer messagebody={rerouteMessage.value.body} emojiDict={{}} />
-                        <MessageActions message={message} />
-                    </div>
-                </div>
+                    }
+                >
+                    <CfmRenderer messagebody={rerouteMessage.value.body} emojiDict={{}} />
+                    <MessageActions message={message} />
+                </MessageLayout>
             )}
 
             {/* ローディング中 */}

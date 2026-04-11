@@ -5,6 +5,7 @@ import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
 import { MdRepeat } from 'react-icons/md'
+import { MessageLayout } from './MessageLayout'
 
 export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
     const { push } = useStack()
@@ -65,37 +66,24 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
 
             {/* 下部: 元の投稿 */}
             {targetMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px'
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation()
+                <MessageLayout
+                    onClick={() => {
                         push(<PostView uri={targetMessage.uri} />)
                     }}
+                    left={
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                push(<ProfileView id={targetMessage.author} />)
+                            }}
+                        >
+                            <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
+                        </div>
+                    }
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>}
                 >
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            push(<ProfileView id={targetMessage.author} />)
-                        }}
-                    >
-                        <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>
-                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                    </div>
-                </div>
+                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
+                </MessageLayout>
             )}
 
             {/* ローディング */}
