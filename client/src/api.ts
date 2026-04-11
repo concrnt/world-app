@@ -440,7 +440,7 @@ export class Api {
     }
 
     // net.concrnt.associations
-    async getAssociations<T>(
+    async getAssociations(
         uri: string,
         query: {
             schema?: string
@@ -448,7 +448,7 @@ export class Api {
             author?: string
         },
         hint?: string
-    ): Promise<Array<Document<T>>> {
+    ): Promise<Array<SignedDocument>> {
         const parsed = new URL(uri)
         const owner = parsed.host
 
@@ -469,7 +469,7 @@ export class Api {
             ...query
         })
 
-        return await this.fetchWithCredential<Array<Document<T>>>(fqdn, endpoint, {})
+        return await this.fetchWithCredential<Array<SignedDocument>>(fqdn, endpoint, {})
     }
 
     // net.concrnt.association-counts

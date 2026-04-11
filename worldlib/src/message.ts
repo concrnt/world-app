@@ -3,6 +3,7 @@ import { Schemas } from './schemas'
 import { LikeAssociationSchema } from './schemas/'
 import { User } from './user'
 import { Client } from './client'
+import { Association } from './association'
 
 export class Message<T> implements Document<T> {
     uri: string
@@ -17,8 +18,8 @@ export class Message<T> implements Document<T> {
 
     authorUser?: User
 
-    associations: Array<Document<any>> = []
-    ownAssociations: Array<Document<any>> = []
+    associations: Array<Association<any>> = []
+    ownAssociations: Array<Association<any>> = []
 
     associationCounts?: Record<string, number>
     reactionCounts?: Record<string, number>
@@ -44,7 +45,10 @@ export class Message<T> implements Document<T> {
         message.hint = hint
         message.authorUser = await User.load(client, message.author, hint).catch(() => undefined)
 
-        message.ownAssociations = await client.api.getAssociations<any>(uri, { author: client.ccid })
+        message.ownAssociations = (await client.api.getAssociations(uri, { author: client.ccid })).map((sd) =>
+            Association.fromSignedDocument(sd)
+        )
+
         message.associationCounts = await client.api.getAssociationCounts(uri)
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
 
