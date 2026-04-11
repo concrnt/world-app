@@ -13,7 +13,7 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { Divider, Text } from '@concrnt/ui'
+import { Divider } from '@concrnt/ui'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -25,14 +25,17 @@ interface Props extends ScrollViewProps {
 export const RealtimeTimeline = (props: Props) => {
     const { client } = useClient()
 
-    // eslint-disable-next-line prefer-const
-    let [loading, setLoading] = useState(true)
+    const loadingRef = useRef(true)
+    const [loading, setLoading] = useState(true)
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
 
     const [isFetching, setIsFetching] = useState(false)
 
     /** スクロール位置の追跡。PullToRefreshが先頭判定に使う */
     const scrollPositionRef = useRef<number>(0)
+
+    const [hasMoreData, setHasMoreData] = useState<boolean>(false)
+    const [initialLoaded, setInitialLoaded] = useState(false)
 
     useEffect(() => {
         console.log('Initializing timeline reader for timelines:', props.timelines)
@@ -49,9 +52,15 @@ export const RealtimeTimeline = (props: Props) => {
                 }
 
                 reader.current = t
-                t.listen(props.timelines).finally(() => {
-                    setLoading((loading = false))
-                })
+                t.listen(props.timelines)
+                    .then((hasMoreData) => {
+                        setHasMoreData(hasMoreData)
+                    })
+                    .finally(() => {
+                        loadingRef.current = false
+                        setLoading(false)
+                        setInitialLoaded(true)
+                    })
                 return t
             })
         }
@@ -97,21 +106,27 @@ export const RealtimeTimeline = (props: Props) => {
             scrollPositionRef.current = el.scrollTop
 
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
-                if (loading) return
+                if (loadingRef.current) return
+                if (!hasMoreData) return
                 if (!reader.current) return
 
                 console.log('Reading more...')
 
-                setLoading((loading = true))
+                loadingRef.current = true
+                setLoading(true)
                 reader.current
                     ?.readMore(8)
-                    .finally(() => {
-                        setLoading((loading = false))
-                        console.log('Finished reading more')
+                    .then((hasMore) => {
+                        setHasMoreData(hasMore)
                     })
                     .catch((e) => {
                         console.error('Failed to read more', e)
                         console.log(reader.current?.body[reader.current.body.length - 1])
+                    })
+                    .finally(() => {
+                        loadingRef.current = false
+                        setLoading(false)
+                        console.log('Finished reading more')
                     })
             }
         }
@@ -120,7 +135,7 @@ export const RealtimeTimeline = (props: Props) => {
         return () => {
             el.removeEventListener('scroll', handleScroll)
         }
-    }, [scrollRef])
+    }, [scrollRef, reader, hasMoreData])
 
     return (
         <PullToRefresh scrollPositionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
@@ -136,6 +151,46 @@ export const RealtimeTimeline = (props: Props) => {
                 }}
                 ref={scrollRef}
             >
+                {!initialLoaded && (
+                    <>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                        <div style={{ padding: '0 8px' }}>
+                            <MessageSkeleton />
+                        </div>
+                    </>
+                )}
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.timestamp.getTime() ?? item.href}>
                         <ErrorBoundary FallbackComponent={renderError}>
@@ -158,20 +213,38 @@ export const RealtimeTimeline = (props: Props) => {
                         <Divider />
                     </Fragment>
                 ))}
-                <div
-                    style={{
-                        padding: '8px',
-                        fontSize: '12px',
-                        color: '#888',
-                        width: '100%',
-                        height: '100px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    Loading...
-                </div>
+                {loading && (
+                    <div
+                        style={{
+                            padding: '8px',
+                            fontSize: '12px',
+                            color: '#888',
+                            width: '100%',
+                            height: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        Loading...
+                    </div>
+                )}
+                {!hasMoreData && (
+                    <div
+                        style={{
+                            padding: '8px',
+                            fontSize: '12px',
+                            color: '#888',
+                            width: '100%',
+                            height: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        -- End of Timeline --
+                    </div>
+                )}
             </div>
         </PullToRefresh>
     )
