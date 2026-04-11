@@ -1,4 +1,13 @@
-import { Fragment, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+    Fragment,
+    startTransition,
+    Suspense,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    useState
+} from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -33,7 +42,9 @@ export const RealtimeTimeline = (props: Props) => {
             return client.newTimelineReader().then((t) => {
                 if (isCancelled) return
                 t.onUpdate = () => {
-                    update()
+                    startTransition(() => {
+                        update()
+                    })
                 }
 
                 reader.current = t
@@ -127,7 +138,7 @@ export const RealtimeTimeline = (props: Props) => {
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.timestamp.getTime() ?? item.href}>
                         <ErrorBoundary FallbackComponent={renderError}>
-                            <Suspense fallback={<Text>Loading...</Text>}>
+                            <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<Text>Loading...</Text>}>
                                 <div
                                     style={{
                                         padding: '0 8px',
