@@ -1,4 +1,3 @@
-import { useClient } from '../../contexts/Client'
 import { useStack } from '../../layouts/Stack'
 import { MessageProps } from './types'
 import { MediaMessageSchema } from '@concrnt/worldlib'
@@ -6,20 +5,15 @@ import { MediaMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, Text, IconButton } from '@concrnt/ui'
+import { Avatar, CfmRenderer } from '@concrnt/ui'
 
-import { MdMoreHoriz } from 'react-icons/md'
-import { useSelect } from '../../contexts/Select'
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { MessageActions } from './MessageActions'
-import { hapticSuccess } from '../../utils/haptics'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
-    const { client } = useClient()
-    const { select } = useSelect()
     const mediaViewer = useMediaViewer()
 
     const message = props.message
