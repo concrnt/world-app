@@ -11,9 +11,9 @@ import {
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { TimelineReader } from '@concrnt/client'
+import { NotFoundError, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { Divider } from '@concrnt/ui'
+import { Divider, Text } from '@concrnt/ui'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -251,6 +251,17 @@ export const RealtimeTimeline = (props: Props) => {
 }
 
 const renderError = ({ error }: FallbackProps) => {
+    if (error instanceof NotFoundError) {
+        return (
+            <div
+                style={{
+                    padding: '0 8px'
+                }}
+            >
+                <Text variant="caption">このメッセージは削除されました</Text>
+            </div>
+        )
+    }
     return (
         <div>
             {(error as any)?.message}
