@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { View, Button, Divider } from '@concrnt/ui'
+import { View, Button, Divider, Skeleton } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useScanner } from '../contexts/Scanner'
 import { AvatarUploader } from '../components/AvatarUploader'
+import { MessageLayout } from '../components/message/MessageLayout'
 
 export const DevView = () => {
     const { scan } = useScanner()
@@ -52,6 +53,30 @@ export const DevView = () => {
                         console.log('Avatar URL:', url)
                     }}
                 />
+
+                <MessageLayout
+                    left={
+                        <Skeleton
+                            style={{
+                                width: '40px',
+                                height: '40px'
+                            }}
+                        />
+                    }
+                    headerLeft={
+                        <Skeleton
+                            style={{
+                                height: '1rem'
+                            }}
+                        />
+                    }
+                >
+                    <Skeleton
+                        style={{
+                            height: '3rem'
+                        }}
+                    />
+                </MessageLayout>
             </div>
         </View>
     )

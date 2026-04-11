@@ -16,6 +16,7 @@ import { MessageContainer } from './message'
 import { Divider, Text } from '@concrnt/ui'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
+import { MessageSkeleton } from './message/MessageSkeleton'
 
 interface Props extends ScrollViewProps {
     timelines: string[]
@@ -138,21 +139,21 @@ export const RealtimeTimeline = (props: Props) => {
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.timestamp.getTime() ?? item.href}>
                         <ErrorBoundary FallbackComponent={renderError}>
-                            <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<Text>Loading...</Text>}>
-                                <div
-                                    style={{
-                                        padding: '0 8px',
-                                        contentVisibility: 'auto'
-                                    }}
-                                >
+                            <div
+                                style={{
+                                    padding: '0 8px',
+                                    contentVisibility: 'auto'
+                                }}
+                            >
+                                <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
                                     <MessageContainer
                                         uri={item.href}
                                         source={item.source}
                                         lastUpdated={item.lastUpdate?.getTime() ?? 0}
                                         content={item.content}
                                     />
-                                </div>
-                            </Suspense>
+                                </Suspense>
+                            </div>
                         </ErrorBoundary>
                         <Divider />
                     </Fragment>

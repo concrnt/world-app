@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 
 interface Props {
+    width?: string | number
+    height?: string | number
     style?: CSSProperties
 }
 
@@ -10,8 +12,8 @@ export const Skeleton = (props: Props) => {
             <div
                 style={{
                     position: 'relative',
-                    width: '100%',
-                    height: '100%',
+                    width: props.width ?? '100%',
+                    height: props.height ?? '100%',
                     overflow: 'hidden',
                     background: '#e5e7eb',
                     ...props.style
