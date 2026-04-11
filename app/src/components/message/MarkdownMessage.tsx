@@ -42,7 +42,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                         fontWeight: 'bold'
                     }}
                 >
-                    {message.authorUser?.profile.username}
+                    {message.authorUser?.profile.username || 'Anonymous'}
                 </div>
             }
             headerRight={

@@ -11,12 +11,14 @@ import { LikeAssociation } from './LikeAssociation'
 import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
+import { OnelineMessage } from './OnelineMessage'
 
 interface Props {
     uri?: string
     source?: string
     lastUpdated?: number
     content?: string
+    oneline?: boolean
 }
 
 export const MessageContainer = (props: Props): ReactNode | null => {
@@ -26,6 +28,10 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     const message = props.content ? JSON.parse(props.content) : use(client!.getMessage<any>(props.uri!, sourceDomain))
 
     if (!message) return <div>Message not found</div>
+
+    if (props.oneline) {
+        return <OnelineMessage message={message} />
+    }
 
     switch (message.schema) {
         case Schemas.markdownMessage:

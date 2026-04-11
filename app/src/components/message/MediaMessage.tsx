@@ -46,7 +46,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                         fontWeight: 'bold'
                     }}
                 >
-                    {message.authorUser?.profile.username}
+                    {message.authorUser?.profile.username || 'Anonymous'}
                 </div>
             }
             headerRight={
