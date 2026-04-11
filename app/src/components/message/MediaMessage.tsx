@@ -14,6 +14,7 @@ import { useMediaViewer } from '../../contexts/MediaViewer'
 import { MessageActions } from './MessageActions'
 import { hapticSuccess } from '../../utils/haptics'
 import { MessageLayout } from './MessageLayout'
+import { TimeDiff } from '../TimeDiff'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
@@ -49,30 +50,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                     {message.authorUser?.profile.username || 'Anonymous'}
                 </div>
             }
-            headerRight={
-                <IconButton
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        select(
-                            '',
-                            {
-                                delete: <Text>投稿を削除</Text>
-                            },
-                            (key) => {
-                                if (key === 'delete') {
-                                    client?.api.delete(message.uri).then(() => hapticSuccess())
-                                }
-                            }
-                        )
-                    }}
-                    style={{
-                        padding: 0,
-                        margin: 0
-                    }}
-                >
-                    <MdMoreHoriz size={15} />
-                </IconButton>
-            }
+            headerRight={<TimeDiff date={message.createdAt} />}
         >
             {message.value.body && <CfmRenderer messagebody={message.value.body} emojiDict={{}} />}
 

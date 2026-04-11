@@ -1,14 +1,16 @@
-import { Button } from '@concrnt/ui'
+import { Button, Text } from '@concrnt/ui'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
+import { useClient } from '../../contexts/Client'
+import { useComposer } from '../../contexts/Composer'
+import { hapticLight, hapticSuccess } from '../../utils/haptics'
+import { startTransition, useOptimistic } from 'react'
+import { useSelect } from '../../contexts/Select'
 
 import { MdStar } from 'react-icons/md'
 import { MdStarOutline } from 'react-icons/md'
 import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
-import { useClient } from '../../contexts/Client'
-import { useComposer } from '../../contexts/Composer'
-import { hapticLight } from '../../utils/haptics'
-import { startTransition, useOptimistic } from 'react'
+import { MdMoreHoriz } from 'react-icons/md'
 
 interface Props {
     message: Message<any>
@@ -22,6 +24,7 @@ interface LikeState {
 export const MessageActions = (props: Props) => {
     const { client } = useClient()
     const composer = useComposer()
+    const { select } = useSelect()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -106,6 +109,26 @@ export const MessageActions = (props: Props) => {
             >
                 {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
                 <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
+            </Button>
+            {/* メニュー */}
+            <Button
+                variant="text"
+                onClick={(e) => {
+                    e.stopPropagation()
+                    select(
+                        '',
+                        {
+                            delete: <Text>投稿を削除</Text>
+                        },
+                        (key) => {
+                            if (key === 'delete') {
+                                client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                            }
+                        }
+                    )
+                }}
+            >
+                <MdMoreHoriz size={20} />
             </Button>
         </div>
     )

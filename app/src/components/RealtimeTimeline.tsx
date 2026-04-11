@@ -13,7 +13,7 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { NotFoundError, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { Divider, Text } from '@concrnt/ui'
+import { CssVar, Divider, Text } from '@concrnt/ui'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -151,52 +151,18 @@ export const RealtimeTimeline = (props: Props) => {
                 }}
                 ref={scrollRef}
             >
-                {!initialLoaded && (
-                    <>
-                        <div style={{ padding: '0 8px' }}>
+                {!initialLoaded &&
+                    Array.from({ length: 10 }).map((_, i) => (
+                        <div key={i} style={{ padding: `0 ${CssVar.space(2)}` }}>
                             <MessageSkeleton />
                         </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                        <div style={{ padding: '0 8px' }}>
-                            <MessageSkeleton />
-                        </div>
-                    </>
-                )}
+                    ))}
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.timestamp.getTime() ?? item.href}>
                         <ErrorBoundary FallbackComponent={renderError}>
                             <div
                                 style={{
-                                    padding: '0 8px',
+                                    padding: `0 ${CssVar.space(2)}`,
                                     contentVisibility: 'auto'
                                 }}
                             >

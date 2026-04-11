@@ -32,7 +32,7 @@ export class Message<T> implements Document<T> {
         this.schema = document.schema
         this.value = document.value
         this.author = document.author
-        this.createdAt = document.createdAt
+        this.createdAt = new Date(document.createdAt)
         this.distributes = document.distributes
     }
 

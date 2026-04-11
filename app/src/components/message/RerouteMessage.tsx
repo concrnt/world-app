@@ -10,6 +10,7 @@ import { useSelect } from '../../contexts/Select'
 import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { MessageContainer } from './main'
+import { TimeDiff } from '../TimeDiff'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { client } = useClient()
@@ -22,11 +23,11 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     <div
                         style={{
                             display: 'flex',
+                            justifyContent: 'space-between',
                             alignItems: 'center',
                             gap: '4px',
                             fontSize: '12px',
-                            opacity: 0.7,
-                            paddingLeft: '48px'
+                            opacity: 0.7
                         }}
                     >
                         <MdRepeat size={14} />
@@ -38,7 +39,10 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     </div>
                 }
             >
-                <Text>{props.message.authorUser?.profile.username || 'Anonymous'} がリルートしました</Text>
+                <Text variant="caption">
+                    {props.message.authorUser?.profile.username || 'Anonymous'}さんがリルートしました
+                </Text>
+                <div style={{ flex: 1 }} />
                 <IconButton
                     onClick={(e) => {
                         e.stopPropagation()
@@ -61,6 +65,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 >
                     <MdMoreHoriz size={15} />
                 </IconButton>
+                <TimeDiff date={props.message.createdAt} />
             </OnelineMessageLayout>
             <MessageContainer uri={props.message.value.rerouteMessageId} />
         </div>

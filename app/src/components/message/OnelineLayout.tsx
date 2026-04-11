@@ -17,6 +17,8 @@ export const OnelineMessageLayout = (props: Props) => {
                 height: '1.4rem',
                 width: '100%',
                 overflow: 'hidden',
+                alignItems: 'center',
+                justifyContent: 'center',
                 ...props.style
             }}
             onClick={(e) => {
@@ -26,7 +28,7 @@ export const OnelineMessageLayout = (props: Props) => {
         >
             <div
                 style={{
-                    width: '48px'
+                    width: '40px'
                 }}
             >
                 {props.left}
@@ -34,9 +36,11 @@ export const OnelineMessageLayout = (props: Props) => {
             <div
                 style={{
                     display: 'flex',
-                    flexDirection: 'column',
                     gap: '4px',
-                    flex: 1
+                    flex: 1,
+                    overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 }}
             >
                 {props.children}

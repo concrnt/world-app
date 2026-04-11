@@ -12,6 +12,7 @@ import { MdMoreHoriz } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
 import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
+import { TimeDiff } from '../TimeDiff'
 
 export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { push } = useStack()
@@ -37,6 +38,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             }}
         >
             <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+            <div style={{ flex: 1 }} />
             <IconButton
                 onClick={(e) => {
                     e.stopPropagation()
@@ -59,6 +61,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             >
                 <MdMoreHoriz size={15} />
             </IconButton>
+            <TimeDiff date={props.message.createdAt} />
         </OnelineMessageLayout>
     )
 }

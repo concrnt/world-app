@@ -1,4 +1,3 @@
-import { useClient } from '../../contexts/Client'
 import { useStack } from '../../layouts/Stack'
 import { MessageProps } from './types'
 import { MarkdownMessageSchema } from '@concrnt/worldlib'
@@ -6,18 +5,14 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, Text, IconButton } from '@concrnt/ui'
+import { Avatar, CfmRenderer } from '@concrnt/ui'
 
-import { MdMoreHoriz } from 'react-icons/md'
-import { useSelect } from '../../contexts/Select'
 import { MessageActions } from './MessageActions'
-import { hapticSuccess } from '../../utils/haptics'
 import { MessageLayout } from './MessageLayout'
+import { TimeDiff } from '../TimeDiff'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { push } = useStack()
-    const { client } = useClient()
-    const { select } = useSelect()
 
     const message = props.message
 
@@ -45,30 +40,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                     {message.authorUser?.profile.username || 'Anonymous'}
                 </div>
             }
-            headerRight={
-                <IconButton
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        select(
-                            '',
-                            {
-                                delete: <Text>投稿を削除</Text>
-                            },
-                            (key) => {
-                                if (key === 'delete') {
-                                    client?.api.delete(message.uri).then(() => hapticSuccess())
-                                }
-                            }
-                        )
-                    }}
-                    style={{
-                        padding: 0,
-                        margin: 0
-                    }}
-                >
-                    <MdMoreHoriz size={15} />
-                </IconButton>
-            }
+            headerRight={<TimeDiff date={message.createdAt} />}
         >
             <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
             <MessageActions message={message} />
