@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
-import { useTheme } from '../contexts/Theme'
 import { useNavigation } from '../contexts/Navigation'
 import { CssVar } from '../types/Theme'
+import { useTheme } from '@concrnt/ui'
 
 interface Props {
     children?: ReactNode

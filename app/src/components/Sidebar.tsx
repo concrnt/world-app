@@ -1,9 +1,8 @@
 import { ReactNode } from 'react'
 
-import { useTheme } from '../contexts/Theme'
 import { useClient } from '../contexts/Client'
 
-import { ListItem, Divider, Text } from '@concrnt/ui'
+import { ListItem, Divider, Text, useTheme } from '@concrnt/ui'
 import { Avatar } from '@concrnt/ui'
 
 import { SettingsView } from '../views/Settings'

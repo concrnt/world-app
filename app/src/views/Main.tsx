@@ -14,8 +14,8 @@ import { MdNotifications } from 'react-icons/md'
 import { MdContacts } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
-import { useTheme } from '../contexts/Theme'
 import { CssVar } from '../types/Theme'
+import { useTheme } from '@concrnt/ui'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)

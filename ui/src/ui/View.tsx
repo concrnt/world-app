@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { useTheme } from '../contexts'
 
 interface Props {
     children?: ReactNode
@@ -8,7 +9,8 @@ interface Props {
 }
 
 export const View = (props: Props) => {
-    const variant = props.variant ?? 'world'
+    const theme = useTheme()
+    const variant = props.variant ?? theme.variant
 
     if (variant === 'classic') {
         return (
@@ -38,6 +40,7 @@ export const View = (props: Props) => {
                     backgroundColor: CssVar.contentBackground,
                     borderRadius: CssVar.round(1),
                     overflow: 'hidden',
+                    margin: `env(safe-area-inset-top) ${CssVar.space(1)} ${CssVar.space(1)} ${CssVar.space(1)}`,
                     flex: 1,
                     ...props.style
                 }}

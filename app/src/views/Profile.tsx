@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider } from '@concrnt/ui'
+import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
 import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
-import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
