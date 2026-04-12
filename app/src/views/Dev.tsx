@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Button, Divider, Skeleton } from '@concrnt/ui'
+import { View, Button, Divider, Skeleton, ConcrntLogo } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useScanner } from '../contexts/Scanner'
@@ -77,6 +77,7 @@ export const DevView = () => {
                         }}
                     />
                 </MessageLayout>
+                <ConcrntLogo size="100px" upperColor="#0476d9" lowerColor="#0476d9" frameColor="#0476d9" spinning />
             </div>
         </View>
     )

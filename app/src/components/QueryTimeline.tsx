@@ -8,6 +8,7 @@ import { CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './message/RenderError'
 import { MessageSkeleton } from './message/MessageSkeleton'
+import { Loading } from './message/Loading'
 
 interface Props extends ScrollViewProps {
     prefix: string
@@ -129,22 +130,7 @@ export const QueryTimeline = (props: Props) => {
                     <Divider />
                 </Fragment>
             ))}
-            {loading && (
-                <div
-                    style={{
-                        padding: '8px',
-                        fontSize: '12px',
-                        color: '#888',
-                        width: '100%',
-                        height: '100px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    Loading...
-                </div>
-            )}
+            {loading && <Loading message={'Loading...'} />}
             {!hasMoreData && (
                 <div
                     style={{

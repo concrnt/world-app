@@ -18,6 +18,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { RenderError } from './message/RenderError'
+import { Loading } from './message/Loading'
 
 interface Props extends ScrollViewProps {
     timelines: string[]
@@ -180,22 +181,7 @@ export const RealtimeTimeline = (props: Props) => {
                         <Divider />
                     </Fragment>
                 ))}
-                {loading && (
-                    <div
-                        style={{
-                            padding: '8px',
-                            fontSize: '12px',
-                            color: '#888',
-                            width: '100%',
-                            height: '100px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        Loading...
-                    </div>
-                )}
+                {loading && <Loading message={'Loading...'} />}
                 {!hasMoreData && (
                     <div
                         style={{

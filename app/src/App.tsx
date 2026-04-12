@@ -1,6 +1,7 @@
 import { useClient } from './contexts/Client'
 import { WelcomeView } from './views/Welcome'
 import { MainView } from './views/Main'
+import { Button, ConcrntLogo, CssVar, Text } from '@concrnt/ui'
 
 function App() {
     const { client, logout } = useClient()
@@ -23,24 +24,59 @@ function App() {
                     return (
                         <div
                             style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
+                                height: '100dvh',
+                                width: '100dvw',
+                                backgroundColor: CssVar.uiBackground,
                                 display: 'flex',
-                                flexDirection: 'column'
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                paddingTop: 'env(safe-area-inset-top)',
+                                paddingBottom: 'env(safe-area-inset-bottom)'
                             }}
                         >
-                            Loading Client...
-                            <button
-                                onClick={async () => {
-                                    logout().then(() => {
-                                        window.location.reload()
-                                    })
+                            <ConcrntLogo
+                                spinning
+                                size="100px"
+                                upperColor={CssVar.uiText}
+                                lowerColor={CssVar.uiText}
+                                frameColor={CssVar.uiText}
+                            />
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    bottom: 'calc(env(safe-area-inset-bottom) + 10px)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '8px'
                                 }}
                             >
-                                RESET
-                            </button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={async () => {
+                                        logout().then(() => {
+                                            window.location.reload()
+                                        })
+                                    }}
+                                    style={{
+                                        color: CssVar.uiText,
+                                        borderColor: CssVar.uiText,
+                                        fontSize: '0.8rem'
+                                    }}
+                                >
+                                    リセット
+                                </Button>
+                                <Text
+                                    style={{
+                                        color: CssVar.uiText,
+                                        fontWeight: 600,
+                                        fontSize: '22px'
+                                    }}
+                                >
+                                    Concrnt
+                                </Text>
+                            </div>
                         </div>
                     )
             })()}
