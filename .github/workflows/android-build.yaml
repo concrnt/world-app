@@ -9,25 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # ----------------------
       # Node / pnpm
       # ----------------------
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
-      - run: corepack enable
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
 
       # pnpm cache
       - name: Cache pnpm
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -59,11 +56,11 @@ jobs:
       # ----------------------
       # Android
       # ----------------------
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
       # Gradle cache
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -78,7 +75,7 @@ jobs:
       - name: Restore keystore
         run: |
           mkdir -p src-tauri/gen/android
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > src-tauri/gen/android/keystore.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > src-tauri/gen/android/app/keystore.jks
 
       - name: Create keystore.properties
         run: |
@@ -99,7 +96,7 @@ jobs:
       # ----------------------
       # artifact
       # ----------------------
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: android-build
           path: |
