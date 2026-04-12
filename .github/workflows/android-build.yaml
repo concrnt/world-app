@@ -11,17 +11,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node + pnpm
+      # ----------------------
+      # Node / pnpm
+      # ----------------------
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - run: corepack enable
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # pnpm cache
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - run: pnpm install
 
+      # ----------------------
       # Rust
+      # ----------------------
       - uses: dtolnay/rust-toolchain@stable
+
+      # Rust cache（ここが重要位置）
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            src-tauri -> src-tauri/target
+          cache-on-failure: true
 
       - name: Add Android targets
         run: |
@@ -29,16 +56,30 @@ jobs:
           rustup target add armv7-linux-androideabi
           rustup target add x86_64-linux-android
 
-      # Android SDK
+      # ----------------------
+      # Android
+      # ----------------------
       - uses: android-actions/setup-android@v3
 
-      # keystore復元
+      # Gradle cache
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ----------------------
+      # keystore 注入
+      # ----------------------
       - name: Restore keystore
         run: |
           mkdir -p src-tauri/gen/android
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > src-tauri/gen/android/keystore.jks
 
-      # keystore.properties生成
       - name: Create keystore.properties
         run: |
           cat <<EOF > src-tauri/gen/android/keystore.properties
@@ -47,15 +88,17 @@ jobs:
           storeFile=keystore.jks
           EOF
 
-      # フロントビルド（必要なら）
+      # ----------------------
+      # build
+      # ----------------------
       - run: pnpm build
 
-      # Tauri Android build
       - name: Build Android
-        run: |
-          pnpm tauri android build
+        run: pnpm tauri android build
 
-      # artifact upload
+      # ----------------------
+      # artifact
+      # ----------------------
       - uses: actions/upload-artifact@v4
         with:
           name: android-build
