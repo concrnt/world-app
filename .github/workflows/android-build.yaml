@@ -1,4 +1,4 @@
-name: build-android
+name: AndroidBuild
 
 on:
   push:
@@ -53,9 +53,7 @@ jobs:
       # Tauri Android build
       - name: Build Android
         run: |
-          cd src-tauri
-          cargo install tauri-cli --locked || true
-          tauri android build
+          pnpm tauri android build
 
       # artifact upload
       - uses: actions/upload-artifact@v4
