@@ -38,13 +38,11 @@ jobs:
       # ----------------------
       - uses: dtolnay/rust-toolchain@stable
 
-      # Rust cache（ここが重要位置）
+      # Rust cache
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            . -> target
-            src-tauri -> src-tauri/target
+          workspaces: src-tauri
           cache-on-failure: true
 
       - name: Add Android targets
@@ -70,7 +68,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       # ----------------------
-      # keystore 注入
+      # Inject keystore
       # ----------------------
       - name: Restore keystore
         run: |
