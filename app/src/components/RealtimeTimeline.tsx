@@ -138,7 +138,7 @@ export const RealtimeTimeline = (props: Props) => {
     }, [scrollRef, reader, hasMoreData])
 
     return (
-        <PullToRefresh scrollPositionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
+        <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
             <div
                 style={{
                     display: 'flex',
