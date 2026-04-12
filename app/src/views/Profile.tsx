@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Avatar, CCWallpaper, IconButton, Text, View, Button } from '@concrnt/ui'
+import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
 import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
-import { TabLayout } from '../layouts/Tab'
 import { useTheme } from '../contexts/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
@@ -39,167 +38,195 @@ export const ProfileView = (props: Props) => {
         return client?.ccid === props.id
     }, [client, props.id])
 
-    const [selectedTab, setSelectedTab] = useState<string>('posts')
+    const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
 
-    const tabs = useMemo(() => {
-        return {
-            posts: {
-                tab: <div>カレント</div>,
-                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/home-timeline/`} />
-            },
-            media: {
-                tab: <div>メディア</div>,
-                body: (
-                    <QueryTimeline
-                        prefix={`cckv://${props.id}/concrnt.world/main/home-timeline/`}
-                        query={{
-                            schema: Schemas.mediaMessage
-                        }}
-                    />
-                )
-            },
-            activity: {
-                tab: <div>アクティビティ</div>,
-                body: <QueryTimeline prefix={`cckv://${props.id}/concrnt.world/main/activity-timeline/`} />
-            }
+    const target = useMemo(() => {
+        switch (tab ?? '') {
+            case 'posts':
+                return {
+                    prefix: `cckv://${props.id}/concrnt.world/main/home-timeline/`,
+                    query: {}
+                }
+            case 'media':
+                return {
+                    prefix: `cckv://${props.id}/concrnt.world/main/home-timeline/`,
+                    query: {
+                        schema: Schemas.mediaMessage
+                    }
+                }
+            case 'activity':
+                return {
+                    prefix: `cckv://${props.id}/concrnt.world/main/activity-timeline/`,
+                    query: {}
+                }
         }
-    }, [])
+    }, [props.id, tab])
 
     return (
-        <>
-            <View>
-                <div
-                    style={{
-                        position: 'relative'
-                    }}
-                >
-                    <CCWallpaper
-                        style={{
-                            paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                            height: '150px'
-                        }}
-                    >
+        <View>
+            <QueryTimeline
+                prefix={target.prefix}
+                query={target.query}
+                header={
+                    <>
                         <div
                             style={{
-                                width: '100%',
+                                position: 'relative'
+                            }}
+                        >
+                            <CCWallpaper
+                                style={{
+                                    paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                                    height: '150px'
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: CssVar.space(1),
+                                        gap: CssVar.space(1)
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
+                                            height: '40px',
+                                            width: '40px'
+                                        }}
+                                    >
+                                        {navigation.backNode}
+                                    </div>
+                                    <div style={{ flex: 1 }} />
+                                    <IconButton variant="contained">
+                                        <MdSearch size={24} />
+                                    </IconButton>
+                                    <IconButton variant="contained">
+                                        <MdMoreHoriz size={24} />
+                                    </IconButton>
+                                </div>
+                            </CCWallpaper>
+                            <Avatar
+                                ccid={props.id}
+                                style={{
+                                    width: `100px`,
+                                    height: `100px`,
+                                    position: 'absolute',
+                                    transform: 'translateY(-50%)',
+                                    left: CssVar.space(2)
+                                }}
+                                src={profilePromise.then((user) => user?.profile.avatar)}
+                            />
+                        </div>
+                        <div
+                            style={{
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: CssVar.space(1),
-                                gap: CssVar.space(1)
+                                flexDirection: 'column',
+                                gap: CssVar.space(2),
+                                padding: `0 ${CssVar.space(2)}`
                             }}
                         >
                             <div
                                 style={{
-                                    color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
-                                    height: '40px',
-                                    width: '40px'
+                                    minHeight: `50px`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end'
                                 }}
                             >
-                                {navigation.backNode}
+                                {isMe ? (
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<MdEdit size={20} />}
+                                        onClick={() => drawer.open(<ProfileEditor onComplete={() => drawer.close()} />)}
+                                    >
+                                        Edit Profile
+                                    </Button>
+                                ) : myAck ? (
+                                    <Button
+                                        onClick={() => {
+                                            if (!client) return
+                                            client.UnAcknowledge(props.id).then((e) => {
+                                                console.log('Unacknowledged', e)
+                                            })
+                                        }}
+                                    >
+                                        Acknowledged
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => {
+                                            if (!client) return
+                                            client.Acknowledge(props.id).then((e) => {
+                                                console.log('Acknowledged', e)
+                                            })
+                                        }}
+                                    >
+                                        Acknowledge
+                                    </Button>
+                                )}
                             </div>
-                            <div style={{ flex: 1 }} />
-                            <IconButton variant="contained">
-                                <MdSearch size={24} />
-                            </IconButton>
-                            <IconButton variant="contained">
-                                <MdMoreHoriz size={24} />
-                            </IconButton>
+                            <div>
+                                <Text
+                                    variant="h6"
+                                    style={{
+                                        fontWeight: 'bold',
+                                        fontSize: '1.2rem'
+                                    }}
+                                >
+                                    {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
+                                </Text>
+                                <Text>{profilePromise.then((user) => (user?.alias ? user.alias : null))}</Text>
+                            </div>
+                            <div>
+                                <Text variant="caption">{props.id}</Text>
+                            </div>
+                            <div>
+                                <Text>
+                                    {profilePromise.then(
+                                        (user) => user?.profile?.description || '説明はまだありません'
+                                    )}
+                                </Text>
+                            </div>
                         </div>
-                    </CCWallpaper>
-                    <Avatar
-                        ccid={props.id}
-                        style={{
-                            width: `100px`,
-                            height: `100px`,
-                            position: 'absolute',
-                            transform: 'translateY(-50%)',
-                            left: CssVar.space(2)
-                        }}
-                        src={profilePromise.then((user) => user?.profile.avatar)}
-                    />
-                </div>
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: CssVar.space(2),
-                        padding: `0 ${CssVar.space(2)}`
-                    }}
-                >
-                    <div
-                        style={{
-                            minHeight: `50px`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end'
-                        }}
-                    >
-                        {isMe ? (
-                            <Button
-                                variant="outlined"
-                                startIcon={<MdEdit size={20} />}
-                                onClick={() => drawer.open(<ProfileEditor onComplete={() => drawer.close()} />)}
-                            >
-                                Edit Profile
-                            </Button>
-                        ) : myAck ? (
-                            <Button
-                                onClick={() => {
-                                    if (!client) return
-                                    client.UnAcknowledge(props.id).then((e) => {
-                                        console.log('Unacknowledged', e)
-                                    })
+                        <Tabs>
+                            <Tab
+                                selected={tab === 'posts'}
+                                onClick={() => setTab('posts')}
+                                groupId="profile-tabs"
+                                style={{
+                                    color: CssVar.contentText
                                 }}
                             >
-                                Acknowledged
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={() => {
-                                    if (!client) return
-                                    client.Acknowledge(props.id).then((e) => {
-                                        console.log('Acknowledged', e)
-                                    })
+                                Posts
+                            </Tab>
+                            <Tab
+                                selected={tab === 'media'}
+                                onClick={() => setTab('media')}
+                                groupId="profile-tabs"
+                                style={{
+                                    color: CssVar.contentText
                                 }}
                             >
-                                Acknowledge
-                            </Button>
-                        )}
-                    </div>
-                    <div>
-                        <Text
-                            variant="h6"
-                            style={{
-                                fontWeight: 'bold',
-                                fontSize: '1.2rem'
-                            }}
-                        >
-                            {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
-                        </Text>
-                        <Text>{profilePromise.then((user) => (user?.alias ? user.alias : null))}</Text>
-                    </div>
-                    <div>
-                        <Text variant="caption">{props.id}</Text>
-                    </div>
-                    <div>
-                        <Text>
-                            {profilePromise.then((user) => user?.profile?.description || '説明はまだありません')}
-                        </Text>
-                    </div>
-                </div>
-                <div style={{ marginTop: CssVar.space(2) }} />
-                <TabLayout
-                    divider
-                    tabs={tabs}
-                    selectedTab={selectedTab}
-                    setSelectedTab={(tab) => setSelectedTab(tab)}
-                    placement="upper"
-                    tabStyle={{
-                        color: CssVar.contentText
-                    }}
-                />
-            </View>
-        </>
+                                Media
+                            </Tab>
+                            <Tab
+                                selected={tab === 'activity'}
+                                onClick={() => setTab('activity')}
+                                groupId="profile-tabs"
+                                style={{
+                                    color: CssVar.contentText
+                                }}
+                            >
+                                Activity
+                            </Tab>
+                        </Tabs>
+                        <Divider />
+                    </>
+                }
+            />
+        </View>
     )
 }

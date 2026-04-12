@@ -11,12 +11,13 @@ import {
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { NotFoundError, TimelineReader } from '@concrnt/client'
+import { TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { CssVar, Divider, Text } from '@concrnt/ui'
-import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
+import { CssVar, Divider } from '@concrnt/ui'
+import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
+import { RenderError } from './message/RenderError'
 
 interface Props extends ScrollViewProps {
     timelines: string[]
@@ -159,7 +160,7 @@ export const RealtimeTimeline = (props: Props) => {
                     ))}
                 {reader.current?.body.map((item) => (
                     <Fragment key={item.timestamp.getTime() ?? item.href}>
-                        <ErrorBoundary FallbackComponent={renderError}>
+                        <ErrorBoundary FallbackComponent={RenderError}>
                             <div
                                 style={{
                                     padding: `0 ${CssVar.space(2)}`,
@@ -213,25 +214,5 @@ export const RealtimeTimeline = (props: Props) => {
                 )}
             </div>
         </PullToRefresh>
-    )
-}
-
-const renderError = ({ error }: FallbackProps) => {
-    if (error instanceof NotFoundError) {
-        return (
-            <div
-                style={{
-                    padding: '0 8px'
-                }}
-            >
-                <Text variant="caption">このメッセージは削除されました</Text>
-            </div>
-        )
-    }
-    return (
-        <div>
-            {(error as any)?.message}
-            <pre>{(error as any)?.stack}</pre>
-        </div>
     )
 }
