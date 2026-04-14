@@ -44,3 +44,29 @@ $ pnpm tauri ios build
 
 本番ビルドはApple Developerの署名設定が必要かも
 
+## concrnt KV path
+
+以下のようにworldのデータを格納する
+```
+# システム
+cckv://<owner>/concrnt.world/settings
+
+# メイン
+cckv://<owner>/concrnt.world/profiles/main
+cckv://<owner>/concrnt.world/profiles/main/home-timeline
+cckv://<owner>/concrnt.world/profiles/main/notify-timeline
+cckv://<owner>/concrnt.world/profiles/main/activity-timeline
+cckv://<owner>/concrnt.world/profiles/main/posts/<id>
+cckv://<owner>/concrnt.world/profiles/main/lists/<id>
+
+# サブプロフィール追加分
+cckv://<owner>/concrnt.world/profiles/<profileID>
+cckv://<owner>/concrnt.world/profiles/<profileID>/home-timeline
+cckv://<owner>/concrnt.world/profiles/<profileID>/notify-timeline
+cckv://<owner>/concrnt.world/profiles/<profileID>/activity-timeline
+cckv://<owner>/concrnt.world/profiles/<profileID>/posts/<id>
+cckv://<owner>/concrnt.world/profiles/<profileID>/lists/<id>
+```
+
+リストも全て完全にサブプロフィールで分離してしまう。
+
