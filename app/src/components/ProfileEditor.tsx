@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Avatar, Button, CCWallpaper, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
-import { ImageCropper } from './ImageCropper'
+import { useImageCropper } from '../contexts/ImageCropper'
 
 interface Props {
     onComplete?: () => void
@@ -12,6 +11,7 @@ interface Props {
 
 export const ProfileEditor = (props: Props) => {
     const { client } = useClient()
+    const cropper = useImageCropper()
 
     const [username, setUsername] = useState<string>(client?.user?.profile?.username || '')
     const [description, setDescription] = useState<string>(client?.user?.profile?.description || '')
@@ -26,7 +26,6 @@ export const ProfileEditor = (props: Props) => {
     const bannerInputRef = useRef<HTMLInputElement>(null)
 
     const [saving, setSaving] = useState<boolean>(false)
-    const [cropperSrc, setCropperSrc] = useState<string | null>(null)
 
     return (
         <div
@@ -98,12 +97,20 @@ export const ProfileEditor = (props: Props) => {
                 ref={avatarInputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
+                onChange={async (e) => {
                     if (e.target.files?.[0]) {
                         const file = e.target.files[0]
                         const reader = new FileReader()
-                        reader.onload = (event) => {
-                            setCropperSrc(event.target?.result as string)
+                        reader.onload = async (event) => {
+                            const src = event.target?.result as string
+                            const croppedFile = await cropper.open(src, {
+                                aspect: 1,
+                                outputWidth: 512
+                            })
+                            if (croppedFile) {
+                                setAvatarDraft(croppedFile)
+                                setAvatar(URL.createObjectURL(croppedFile))
+                            }
                         }
                         reader.readAsDataURL(file)
                         // 同じファイルを再選択できるようにリセット
@@ -114,37 +121,32 @@ export const ProfileEditor = (props: Props) => {
                 }}
             />
 
-            {/* アバタークロッパー — Drawer の上に表示するため createPortal を使用 */}
-            {cropperSrc &&
-                createPortal(
-                    <ImageCropper
-                        imageSrc={cropperSrc}
-                        onComplete={(croppedFile) => {
-                            setAvatarDraft(croppedFile)
-                            setAvatar(URL.createObjectURL(croppedFile))
-                            setCropperSrc(null)
-                        }}
-                        onCancel={() => {
-                            setCropperSrc(null)
-                        }}
-                    />,
-                    document.body
-                )}
-
             <input
                 hidden
                 ref={bannerInputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
+                onChange={async (e) => {
                     if (e.target.files?.[0]) {
                         const file = e.target.files[0]
-                        setBannerDraft(file)
                         const reader = new FileReader()
-                        reader.onload = (event) => {
-                            setBanner(event.target?.result as string)
+                        reader.onload = async (event) => {
+                            const src = event.target?.result as string
+                            const croppedFile = await cropper.open(src, {
+                                aspect: 3,
+                                outputWidth: 1500,
+                                outputHeight: 500
+                            })
+                            if (croppedFile) {
+                                setBannerDraft(croppedFile)
+                                setBanner(URL.createObjectURL(croppedFile))
+                            }
                         }
                         reader.readAsDataURL(file)
+                        // 同じファイルを再選択できるようにリセット
+                        if (bannerInputRef.current) {
+                            bannerInputRef.current.value = ''
+                        }
                     }
                 }}
             />

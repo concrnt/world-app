@@ -13,6 +13,7 @@ import { DrawerProvider } from './contexts/Drawer'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
+import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -20,21 +21,23 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <ClientProvider>
             <PreferenceProvider>
                 <ThemeProvider>
-                    <DrawerProvider>
-                        <SelectProvider>
-                            <ComposerProvider>
-                                <ScannerProvider>
-                                    <OverlayProvider>
-                                        <MediaViewerProvider>
-                                            <TickerProvider>
-                                                <App />
-                                            </TickerProvider>
-                                        </MediaViewerProvider>
-                                    </OverlayProvider>
-                                </ScannerProvider>
-                            </ComposerProvider>
-                        </SelectProvider>
-                    </DrawerProvider>
+                    <ImageCropperProvider>
+                        <DrawerProvider>
+                            <SelectProvider>
+                                <ComposerProvider>
+                                    <ScannerProvider>
+                                        <OverlayProvider>
+                                            <MediaViewerProvider>
+                                                <TickerProvider>
+                                                    <App />
+                                                </TickerProvider>
+                                            </MediaViewerProvider>
+                                        </OverlayProvider>
+                                    </ScannerProvider>
+                                </ComposerProvider>
+                            </SelectProvider>
+                        </DrawerProvider>
+                    </ImageCropperProvider>
                 </ThemeProvider>
             </PreferenceProvider>
         </ClientProvider>
