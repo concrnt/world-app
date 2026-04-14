@@ -74,6 +74,7 @@ export const ProfileView = (props: Props) => {
                             }}
                         >
                             <CCWallpaper
+                                src={profilePromise.then((user) => user?.profile?.banner)}
                                 style={{
                                     paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                                     height: '150px'
