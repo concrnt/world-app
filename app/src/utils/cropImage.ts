@@ -15,20 +15,27 @@ interface PixelCrop {
 }
 
 /**
- * 指定されたクロップ領域で画像を切り抜き、outputSize x outputSize の正方形 PNG File を返す
+ * 指定されたクロップ領域で画像を切り抜き、outputWidth x outputHeight の PNG File を返す
+ * outputHeight を省略すると outputWidth x outputWidth の正方形になる
  */
-export const cropImage = async (imageSrc: string, pixelCrop: PixelCrop, outputSize: number = 512): Promise<File> => {
+export const cropImage = async (
+    imageSrc: string,
+    pixelCrop: PixelCrop,
+    outputWidth: number = 512,
+    outputHeight?: number
+): Promise<File> => {
+    const h = outputHeight ?? outputWidth
     const image = await createImage(imageSrc)
     const canvas = document.createElement('canvas')
-    canvas.width = outputSize
-    canvas.height = outputSize
+    canvas.width = outputWidth
+    canvas.height = h
     const ctx = canvas.getContext('2d')
 
     if (!ctx) {
         throw new Error('Failed to get canvas context')
     }
 
-    ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, outputSize, outputSize)
+    ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, outputWidth, h)
 
     return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
@@ -36,7 +43,7 @@ export const cropImage = async (imageSrc: string, pixelCrop: PixelCrop, outputSi
                 reject(new Error('Failed to create blob'))
                 return
             }
-            resolve(new File([blob], 'avatar.png', { type: 'image/png' }))
+            resolve(new File([blob], 'cropped.png', { type: 'image/png' }))
         }, 'image/png')
     })
 }
