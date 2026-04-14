@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Avatar, Button, CCWallpaper, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
+import { ImageCropper } from './ImageCropper'
 
 interface Props {
     onComplete?: () => void
@@ -24,6 +26,7 @@ export const ProfileEditor = (props: Props) => {
     const bannerInputRef = useRef<HTMLInputElement>(null)
 
     const [saving, setSaving] = useState<boolean>(false)
+    const [cropperSrc, setCropperSrc] = useState<string | null>(null)
 
     return (
         <div
@@ -98,15 +101,35 @@ export const ProfileEditor = (props: Props) => {
                 onChange={(e) => {
                     if (e.target.files?.[0]) {
                         const file = e.target.files[0]
-                        setAvatarDraft(file)
                         const reader = new FileReader()
                         reader.onload = (event) => {
-                            setAvatar(event.target?.result as string)
+                            setCropperSrc(event.target?.result as string)
                         }
                         reader.readAsDataURL(file)
+                        // 同じファイルを再選択できるようにリセット
+                        if (avatarInputRef.current) {
+                            avatarInputRef.current.value = ''
+                        }
                     }
                 }}
             />
+
+            {/* アバタークロッパー — Drawer の上に表示するため createPortal を使用 */}
+            {cropperSrc &&
+                createPortal(
+                    <ImageCropper
+                        imageSrc={cropperSrc}
+                        onComplete={(croppedFile) => {
+                            setAvatarDraft(croppedFile)
+                            setAvatar(URL.createObjectURL(croppedFile))
+                            setCropperSrc(null)
+                        }}
+                        onCancel={() => {
+                            setCropperSrc(null)
+                        }}
+                    />,
+                    document.body
+                )}
 
             <input
                 hidden
