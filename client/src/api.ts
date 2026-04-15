@@ -601,7 +601,7 @@ export class Api {
     // ---
 
     async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {
-        const requestPath = `/api/v1/timeline/recent?uris=${timelines.join(',')}`
+        const requestPath = `/api/v2/timeline/recent?uris=${timelines.join(',')}`
         const resp = await this.fetchWithCredential<ChunklineItem[]>(this.defaultHost, requestPath)
         return resp.map((item) => ({ ...item, timestamp: new Date(item.timestamp) }))
     }
