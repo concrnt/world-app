@@ -18,7 +18,8 @@ export const Explorer = () => {
         return client.api.query(
             {
                 prefix: `cckv://${server}/concrnt.world/communities/`,
-                schema: Schemas.communityTimeline
+                schema: Schemas.communityTimeline,
+                limit: '100'
             },
             server
         )
