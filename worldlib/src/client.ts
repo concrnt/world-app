@@ -23,6 +23,11 @@ interface Cache<T> {
     expire: number
 }
 
+export interface Acknowledge {
+    author: string
+    associate: string
+}
+
 export class Client {
     api: Api
     ccid: string
@@ -35,8 +40,8 @@ export class Client {
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
-    acknowledging: any
-    acknowledgers: any
+    acknowledging: Acknowledge[] = []
+    acknowledgers: Acknowledge[] = []
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -173,15 +178,8 @@ export class Client {
             }
         })
 
-        client.acknowledgers = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
-            to: client.ccid,
-            context: 'world.concrnt.ack'
-        })
-
-        client.acknowledging = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
-            from: client.ccid,
-            context: 'world.concrnt.ack'
-        })
+        client.acknowledgers = await client.getAcknowledgers(client.ccid)
+        client.acknowledging = await client.getAcknowledging(client.ccid)
 
         // =====================
 
@@ -264,10 +262,22 @@ export class Client {
         await this.reloadAcknowledges()
     }
 
-    async reloadAcknowledges(): Promise<void> {
-        this.acknowledging = await this.api.requestConcrntApi(this.server.domain, 'net.concrnt.core.acknowledges', {
-            from: this.ccid,
+    async getAcknowledging(ccid: string): Promise<Acknowledge[]> {
+        return await this.api.requestConcrntApi<Acknowledge[]>(this.server.domain, 'net.concrnt.core.acknowledges', {
+            from: ccid,
             context: 'world.concrnt.ack'
         })
+    }
+
+    async getAcknowledgers(ccid: string): Promise<Acknowledge[]> {
+        return await this.api.requestConcrntApi<Acknowledge[]>(this.server.domain, 'net.concrnt.core.acknowledges', {
+            to: ccid,
+            context: 'world.concrnt.ack'
+        })
+    }
+
+    async reloadAcknowledges(): Promise<void> {
+        this.acknowledging = await this.getAcknowledging(this.ccid)
+        this.acknowledgers = await this.getAcknowledgers(this.ccid)
     }
 }
