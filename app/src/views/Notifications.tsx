@@ -1,6 +1,6 @@
 import { View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
-import { QueryTimeline } from '../components/QueryTimeline'
+import { NotificationTimeline } from '../components/NotificationTimeline'
 import { useClient } from '../contexts/Client'
 
 export const NotificationsView = () => {
@@ -9,7 +9,7 @@ export const NotificationsView = () => {
     return (
         <View>
             <Header>Notifications</Header>
-            <QueryTimeline prefix={`cckv://${client?.ccid}/concrnt.world/main/notify-timeline/`} />
+            <NotificationTimeline prefix={`cckv://${client?.ccid}/concrnt.world/main/notify-timeline/`} />
         </View>
     )
 }
