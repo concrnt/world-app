@@ -114,12 +114,23 @@ export const DrawerProvider = (props: Props) => {
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    padding: `${CssVar.space(3)} 0`
+                                    padding: `${CssVar.space(3)} 0`,
+                                    position: 'relative'
                                 }}
                                 onPointerDown={(e) => {
                                     dragControls.start(e)
                                 }}
                             >
+                                {/* ハンドルの見た目は変えず、当たり判定を縦方向に拡張する透明レイヤー */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: `-${CssVar.space(3)}`,
+                                        bottom: `-${CssVar.space(3)}`,
+                                        left: 0,
+                                        right: 0
+                                    }}
+                                />
                                 <div
                                     style={{
                                         width: '30px',
