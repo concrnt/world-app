@@ -9,7 +9,8 @@ import {
     NotFoundError,
     Socket,
     AuthProvider,
-    KVS
+    KVS,
+    SignedDocument
 } from '@concrnt/client'
 import { ListSchema } from './schemas/'
 import { User } from './user'
@@ -21,11 +22,6 @@ const cacheLifetime = 5 * 60 * 1000
 interface Cache<T> {
     data: T
     expire: number
-}
-
-export interface Acknowledge {
-    author: string
-    associate: string
 }
 
 export class Client {
@@ -40,8 +36,8 @@ export class Client {
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
-    acknowledging: Acknowledge[] = []
-    acknowledgers: Acknowledge[] = []
+    acknowledging: Document<any>[] = []
+    acknowledgers: Document<any>[] = []
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -262,18 +258,22 @@ export class Client {
         await this.reloadAcknowledges()
     }
 
-    async getAcknowledging(ccid: string): Promise<Acknowledge[]> {
-        return await this.api.requestConcrntApi<Acknowledge[]>(this.server.domain, 'net.concrnt.core.acknowledges', {
-            from: ccid,
-            context: 'world.concrnt.ack'
-        })
+    getAcknowledging(ccid: string): Promise<Document<any>[]> {
+        return this.api
+            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
+                from: ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
     }
 
-    async getAcknowledgers(ccid: string): Promise<Acknowledge[]> {
-        return await this.api.requestConcrntApi<Acknowledge[]>(this.server.domain, 'net.concrnt.core.acknowledges', {
-            to: ccid,
-            context: 'world.concrnt.ack'
-        })
+    async getAcknowledgers(ccid: string): Promise<Document<any>[]> {
+        return this.api
+            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
+                to: ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
     }
 
     async reloadAcknowledges(): Promise<void> {
