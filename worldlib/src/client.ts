@@ -10,7 +10,8 @@ import {
     Socket,
     AuthProvider,
     KVS,
-    SignedDocument
+    SignedDocument,
+    Acknowledge
 } from '@concrnt/client'
 import { ListSchema } from './schemas/'
 import { User } from './user'
@@ -36,8 +37,8 @@ export class Client {
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
-    acknowledging: Document<any>[] = []
-    acknowledgers: Document<any>[] = []
+    acknowledging: Document<Acknowledge>[] = []
+    acknowledgers: Document<Acknowledge>[] = []
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -258,7 +259,7 @@ export class Client {
         await this.reloadAcknowledges()
     }
 
-    getAcknowledging(ccid: string): Promise<Document<any>[]> {
+    getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
         return this.api
             .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
                 from: ccid,
@@ -267,7 +268,7 @@ export class Client {
             .then((res) => res.map((sd) => JSON.parse(sd.document)))
     }
 
-    async getAcknowledgers(ccid: string): Promise<Document<any>[]> {
+    async getAcknowledgers(ccid: string): Promise<Document<Acknowledge>[]> {
         return this.api
             .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
                 to: ccid,
