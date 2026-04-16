@@ -9,7 +9,8 @@ import {
     NotFoundError,
     Socket,
     AuthProvider,
-    KVS
+    KVS,
+    SignedDocument
 } from '@concrnt/client'
 import { ListSchema } from './schemas/'
 import { User } from './user'
@@ -173,15 +174,19 @@ export class Client {
             }
         })
 
-        client.acknowledgers = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
-            to: client.ccid,
-            context: 'world.concrnt.ack'
-        })
+        client.acknowledgers = await api
+            .requestConcrntApi<Array<SignedDocument>>(client.server.domain, 'net.concrnt.core.acknowledges', {
+                to: client.ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
 
-        client.acknowledging = await api.requestConcrntApi(client.server.domain, 'net.concrnt.core.acknowledges', {
-            from: client.ccid,
-            context: 'world.concrnt.ack'
-        })
+        client.acknowledging = await api
+            .requestConcrntApi<Array<SignedDocument>>(client.server.domain, 'net.concrnt.core.acknowledges', {
+                from: client.ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
 
         // =====================
 
