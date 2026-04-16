@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
@@ -34,32 +34,11 @@ export const ProfileView = (props: Props) => {
         return client?.ccid === props.id
     }, [client, props.id])
 
-    const [stats, setStats] = useState<{ acknowledging: number; acknowledged: number }>({
-        acknowledging: 0,
-        acknowledged: 0
-    })
-
-    const refetchStats = async () => {
-        if (!client) return
-        const user = await profilePromise
-        if (!user) return
-        const newStats = await user.GetStats(client)
-        setStats(newStats)
-    }
-
-    useEffect(() => {
-        let unmounted = false
-        if (!client) return
-        profilePromise.then((user) => {
-            if (!user) return
-            user.GetStats(client).then((s) => {
-                if (unmounted) return
-                setStats(s)
-            })
+    const statsPromise = useMemo(() => {
+        return profilePromise.then((user) => {
+            if (!user) return { acknowledging: 0, acknowledged: 0 }
+            return user.GetStats(client!)
         })
-        return () => {
-            unmounted = true
-        }
     }, [client, profilePromise])
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
@@ -170,7 +149,7 @@ export const ProfileView = (props: Props) => {
                                         Edit Profile
                                     </Button>
                                 ) : (
-                                    <AcknowledgeButton ccid={props.id} onChange={refetchStats} />
+                                    <AcknowledgeButton ccid={props.id} /*onChange={refetchStats}*/ />
                                 )}
                             </div>
                             <div>
@@ -209,7 +188,7 @@ export const ProfileView = (props: Props) => {
                                         )
                                     }
                                 >
-                                    <Text>{`${stats.acknowledging} フォロー`}</Text>
+                                    <Text>{statsPromise.then((s) => `${s.acknowledging} フォロー`)}</Text>
                                 </div>
                                 <div
                                     style={{ cursor: 'pointer' }}
@@ -219,7 +198,7 @@ export const ProfileView = (props: Props) => {
                                         )
                                     }
                                 >
-                                    <Text>{`${stats.acknowledged} フォロワー`}</Text>
+                                    <Text>{statsPromise.then((s) => `${s.acknowledged} フォロワー`)}</Text>
                                 </div>
                             </div>
                         </div>

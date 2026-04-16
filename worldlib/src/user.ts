@@ -29,25 +29,23 @@ export class User {
     }
 
     async GetStats(client: Client): Promise<{ acknowledging: number; acknowledged: number }> {
-        const acknowledging = await client.api.requestConcrntApi<{ count: number }>(
+        const acknowledging = await client.api.requestConcrntApi<Record<string, number>>(
             client.server.domain,
             'net.concrnt.core.acknowledge-counts',
             {
                 from: this.ccid
             }
         )
-        console.log('acknowledging', acknowledging)
-        const acknowledged = await client.api.requestConcrntApi<{ count: number }>(
+        const acknowledged = await client.api.requestConcrntApi<Record<string, number>>(
             client.server.domain,
-            'net.concrnt.core.acknowledged-counts',
+            'net.concrnt.core.acknowledge-counts',
             {
                 to: this.ccid
             }
         )
-        console.log('acknowledged', acknowledged)
         return {
-            acknowledging: acknowledging.count,
-            acknowledged: acknowledged.count
+            acknowledging: acknowledging['world.concrnt.ack'] ?? 0,
+            acknowledged: acknowledged['world.concrnt.ack'] ?? 0
         }
     }
 }

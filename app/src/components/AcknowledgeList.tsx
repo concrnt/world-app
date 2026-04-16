@@ -33,10 +33,7 @@ export const AcknowledgeList = (props: Props) => {
     const acknowledgersUsersPromise = useMemo(() => {
         if (!client) return Promise.resolve(null)
         return client.getAcknowledgers(props.targetCcid).then(async (acks) => {
-            const ccids = acks
-                .map((a) => a.associate)
-                .filter(isNonNullOrUndefined)
-                .map((uri) => uri.replace('cckv://', ''))
+            const ccids = acks.map((a) => a.author)
             const users = await Promise.all(ccids.map((ccid) => client.getUser(ccid)))
             return users.filter((u): u is User => u !== null)
         })
