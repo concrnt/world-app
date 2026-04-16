@@ -11,6 +11,8 @@ import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { Schemas } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
+import { AcknowledgeButton } from '../components/AcknowledgeButton'
+import { AcknowledgeList } from '../components/AcknowledgeList'
 
 interface Props {
     id: string
@@ -28,14 +30,17 @@ export const ProfileView = (props: Props) => {
         return client!.getUser(props.id).catch(() => null)
     }, [client, props.id])
 
-    const myAck = useMemo(() => {
-        if (!client) return null
-        return client.acknowledging.find((a: any) => a.associate === `cckv://${props.id}`)
-    }, [client, props.id])
-
     const isMe = useMemo(() => {
         return client?.ccid === props.id
     }, [client, props.id])
+
+    const [updateStats, setUpdateStats] = useState(0)
+    const statsPromise = useMemo(() => {
+        return profilePromise.then((user) => {
+            if (!user) return { acknowledging: 0, acknowledged: 0 }
+            return user.GetStats(client!)
+        })
+    }, [client, profilePromise, updateStats])
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
 
@@ -144,28 +149,8 @@ export const ProfileView = (props: Props) => {
                                     >
                                         Edit Profile
                                     </Button>
-                                ) : myAck ? (
-                                    <Button
-                                        onClick={() => {
-                                            if (!client) return
-                                            client.UnAcknowledge(props.id).then((e) => {
-                                                console.log('Unacknowledged', e)
-                                            })
-                                        }}
-                                    >
-                                        Acknowledged
-                                    </Button>
                                 ) : (
-                                    <Button
-                                        onClick={() => {
-                                            if (!client) return
-                                            client.Acknowledge(props.id).then((e) => {
-                                                console.log('Acknowledged', e)
-                                            })
-                                        }}
-                                    >
-                                        Acknowledge
-                                    </Button>
+                                    <AcknowledgeButton ccid={props.id} onChange={() => setUpdateStats((s) => s + 1)} />
                                 )}
                             </div>
                             <div>
@@ -189,6 +174,33 @@ export const ProfileView = (props: Props) => {
                                         (user) => user?.profile?.description || '説明はまだありません'
                                     )}
                                 </Text>
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: CssVar.space(2)
+                                }}
+                            >
+                                <div
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() =>
+                                        drawer.open(
+                                            <AcknowledgeList targetCcid={props.id} initialTab="acknowledging" />
+                                        )
+                                    }
+                                >
+                                    <Text>{statsPromise.then((s) => `${s.acknowledging} フォロー`)}</Text>
+                                </div>
+                                <div
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() =>
+                                        drawer.open(
+                                            <AcknowledgeList targetCcid={props.id} initialTab="acknowledgers" />
+                                        )
+                                    }
+                                >
+                                    <Text>{statsPromise.then((s) => `${s.acknowledged} フォロワー`)}</Text>
+                                </div>
                             </div>
                         </div>
                         <Tabs>

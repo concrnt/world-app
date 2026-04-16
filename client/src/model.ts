@@ -55,6 +55,10 @@ export interface Entity {
     alias_proof_type: string
 }
 
+export interface Acknowledge {
+    context: string
+}
+
 export interface RealtimeEvent {
     type: string
     uri: string

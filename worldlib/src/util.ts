@@ -5,3 +5,7 @@ export function isFulfilled<T>(result: PromiseSettledResult<T>): result is Promi
 export function isNonNull<T>(value: T | null): value is T {
     return value !== null
 }
+
+export function isNonNullOrUndefined<T>(value: T | null | undefined): value is T {
+    return value !== null && value !== undefined
+}

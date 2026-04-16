@@ -10,7 +10,8 @@ import {
     Socket,
     AuthProvider,
     KVS,
-    SignedDocument
+    SignedDocument,
+    Acknowledge
 } from '@concrnt/client'
 import { ListSchema } from './schemas/'
 import { User } from './user'
@@ -36,8 +37,8 @@ export class Client {
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
-    acknowledging: any
-    acknowledgers: any
+    acknowledging: Document<Acknowledge>[] = []
+    acknowledgers: Document<Acknowledge>[] = []
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -174,19 +175,8 @@ export class Client {
             }
         })
 
-        client.acknowledgers = await api
-            .requestConcrntApi<Array<SignedDocument>>(client.server.domain, 'net.concrnt.core.acknowledges', {
-                to: client.ccid,
-                context: 'world.concrnt.ack'
-            })
-            .then((res) => res.map((sd) => JSON.parse(sd.document)))
-
-        client.acknowledging = await api
-            .requestConcrntApi<Array<SignedDocument>>(client.server.domain, 'net.concrnt.core.acknowledges', {
-                from: client.ccid,
-                context: 'world.concrnt.ack'
-            })
-            .then((res) => res.map((sd) => JSON.parse(sd.document)))
+        client.acknowledgers = await client.getAcknowledgers(client.ccid)
+        client.acknowledging = await client.getAcknowledging(client.ccid)
 
         // =====================
 
@@ -269,10 +259,26 @@ export class Client {
         await this.reloadAcknowledges()
     }
 
+    getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
+        return this.api
+            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
+                from: ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
+    }
+
+    async getAcknowledgers(ccid: string): Promise<Document<Acknowledge>[]> {
+        return this.api
+            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
+                to: ccid,
+                context: 'world.concrnt.ack'
+            })
+            .then((res) => res.map((sd) => JSON.parse(sd.document)))
+    }
+
     async reloadAcknowledges(): Promise<void> {
-        this.acknowledging = await this.api.requestConcrntApi(this.server.domain, 'net.concrnt.core.acknowledges', {
-            from: this.ccid,
-            context: 'world.concrnt.ack'
-        })
+        this.acknowledging = await this.getAcknowledging(this.ccid)
+        this.acknowledgers = await this.getAcknowledgers(this.ccid)
     }
 }
