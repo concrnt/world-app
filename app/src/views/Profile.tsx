@@ -34,12 +34,13 @@ export const ProfileView = (props: Props) => {
         return client?.ccid === props.id
     }, [client, props.id])
 
+    const [updateStats, setUpdateStats] = useState(0)
     const statsPromise = useMemo(() => {
         return profilePromise.then((user) => {
             if (!user) return { acknowledging: 0, acknowledged: 0 }
             return user.GetStats(client!)
         })
-    }, [client, profilePromise])
+    }, [client, profilePromise, updateStats])
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
 
@@ -149,7 +150,7 @@ export const ProfileView = (props: Props) => {
                                         Edit Profile
                                     </Button>
                                 ) : (
-                                    <AcknowledgeButton ccid={props.id} /*onChange={refetchStats}*/ />
+                                    <AcknowledgeButton ccid={props.id} onChange={() => setUpdateStats((s) => s + 1)} />
                                 )}
                             </div>
                             <div>
