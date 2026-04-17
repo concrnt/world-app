@@ -48,7 +48,15 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    composer.open([], [], 'reply', props.message)
+                    // 元メッセージのコミュニティ投稿先を抽出（homeタイムラインは除外）
+                    const communityDestinations =
+                        props.message.distributes?.filter(
+                            (uri) =>
+                                !uri.includes('/main/home-timeline') &&
+                                !uri.includes('/main/activity-timeline') &&
+                                !uri.includes('/main/notify-timeline')
+                        ) ?? []
+                    composer.open(communityDestinations, [], 'reply', props.message)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -61,7 +69,14 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    composer.open([], [], 'reroute', props.message)
+                    const communityDestinations =
+                        props.message.distributes?.filter(
+                            (uri) =>
+                                !uri.includes('/main/home-timeline') &&
+                                !uri.includes('/main/activity-timeline') &&
+                                !uri.includes('/main/notify-timeline')
+                        ) ?? []
+                    composer.open(communityDestinations, [], 'reroute', props.message)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
