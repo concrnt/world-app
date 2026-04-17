@@ -7,6 +7,7 @@ export type ComposerMode = 'normal' | 'reply' | 'reroute'
 interface ComposerContextState {
     open: (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => void
     close: () => void
+    setCommunityOptions: (options: any[]) => void
 }
 
 interface Props {
@@ -15,7 +16,8 @@ interface Props {
 
 const ComposerContext = createContext<ComposerContextState>({
     open: () => {},
-    close: () => {}
+    close: () => {},
+    setCommunityOptions: () => {}
 })
 
 export const ComposerProvider = (props: Props) => {
@@ -24,16 +26,22 @@ export const ComposerProvider = (props: Props) => {
     const [options, setOptions] = useState<any[]>([])
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
+    const [communityOptions, _setCommunityOptions] = useState<any[]>([])
+
+    const setCommunityOptions = useCallback((options: any[]) => {
+        _setCommunityOptions(options)
+    }, [])
 
     const open = useCallback(
         (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => {
             setDestinations(destinations)
-            setOptions(options)
+            // options が空の場合は保持済みの communityOptions にフォールバック
+            setOptions(options.length > 0 ? options : communityOptions)
             setMode(mode ?? 'normal')
             setTargetMessage(targetMessage)
             setShowComposer(true)
         },
-        []
+        [communityOptions]
     )
 
     const close = useCallback(() => {
@@ -45,9 +53,10 @@ export const ComposerProvider = (props: Props) => {
     const value = useMemo(
         () => ({
             open,
-            close
+            close,
+            setCommunityOptions
         }),
-        [open, close]
+        [open, close, setCommunityOptions]
     )
 
     return (

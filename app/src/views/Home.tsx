@@ -179,6 +179,11 @@ const InnerFab = (props: { defaultPostTimelines: string[]; communitiesPromise: P
     const communities = use(props.communitiesPromise)
     console.log('communities', communities)
 
+    // コミュニティ選択肢をComposerContextにグローバル保持
+    useEffect(() => {
+        composer.setCommunityOptions(communities)
+    }, [communities])
+
     return (
         <FAB
             onClick={() => {
