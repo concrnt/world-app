@@ -1,4 +1,4 @@
-import { Fragment, ReactNode, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { Fragment, ReactNode, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -9,6 +9,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './message/RenderError'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
+import { PullToRefresh } from './PullToRefresh'
 
 interface Props extends ScrollViewProps {
     prefix: string
@@ -25,6 +26,8 @@ export const QueryTimeline = (props: Props) => {
     const [reader, update] = useRefWithUpdate<QueryTimelineReader | undefined>(undefined)
     const [loading, setLoading] = useState(true)
     const [hasMoreData, setHasMoreData] = useState<boolean>(false)
+    // PullToRefresh のインジケータ表示制御用
+    const [isFetching, setIsFetching] = useState(false)
 
     useEffect(() => {
         let isCancelled = false
@@ -60,6 +63,20 @@ export const QueryTimeline = (props: Props) => {
             }
         }
     }))
+
+    // PullToRefresh のリロード処理
+    const onRefresh = useCallback(async () => {
+        if (!reader.current) return
+        setIsFetching(true)
+        try {
+            const hasMore = await reader.current.reload()
+            setHasMoreData(hasMore)
+            // ユーザーにリフレッシュのフィードバックを見せるための短い待機
+            await new Promise((resolve) => setTimeout(resolve, 500))
+        } finally {
+            setIsFetching(false)
+        }
+    }, [reader])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -102,51 +119,55 @@ export const QueryTimeline = (props: Props) => {
     }, [scrollRef, reader, hasMoreData])
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                overflowX: 'hidden',
-                overflowY: 'auto'
-            }}
-            ref={scrollRef}
-        >
-            {props.header}
-            {reader.current?.body.map((item) => (
-                <Fragment key={item.href}>
-                    <ErrorBoundary FallbackComponent={RenderError}>
-                        <div
-                            style={{
-                                padding: `0 ${CssVar.space(2)}`,
-                                contentVisibility: 'auto'
-                            }}
-                        >
-                            <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
-                                <MessageContainer uri={item.href} source={item.source} />
-                            </Suspense>
-                        </div>
-                    </ErrorBoundary>
-                    <Divider />
-                </Fragment>
-            ))}
-            {loading && <Loading message={'Loading...'} />}
-            {!hasMoreData && (
-                <div
-                    style={{
-                        padding: '8px',
-                        fontSize: '12px',
-                        color: '#888',
-                        width: '100%',
-                        height: '100px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    -- End of Timeline --
-                </div>
-            )}
-        </div>
+        <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
+                    // iOS の慣性スクロール跳ね返りを抑制して PullToRefresh との干渉を防ぐ
+                    overscrollBehaviorY: 'none'
+                }}
+                ref={scrollRef}
+            >
+                {props.header}
+                {reader.current?.body.map((item) => (
+                    <Fragment key={item.href}>
+                        <ErrorBoundary FallbackComponent={RenderError}>
+                            <div
+                                style={{
+                                    padding: `0 ${CssVar.space(2)}`,
+                                    contentVisibility: 'auto'
+                                }}
+                            >
+                                <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
+                                    <MessageContainer uri={item.href} source={item.source} />
+                                </Suspense>
+                            </div>
+                        </ErrorBoundary>
+                        <Divider />
+                    </Fragment>
+                ))}
+                {loading && <Loading message={'Loading...'} />}
+                {!hasMoreData && (
+                    <div
+                        style={{
+                            padding: '8px',
+                            fontSize: '12px',
+                            color: '#888',
+                            width: '100%',
+                            height: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        -- End of Timeline --
+                    </div>
+                )}
+            </div>
+        </PullToRefresh>
     )
 }
