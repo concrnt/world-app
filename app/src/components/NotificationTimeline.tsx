@@ -34,7 +34,6 @@ interface Props extends ScrollViewProps {
     query?: any
     batchSize?: number
     header?: React.ReactNode
-    filterSchema?: string
 }
 
 // 集約キーのサフィックス（'$' を含むキーは集約対象として識別する）
@@ -256,19 +255,6 @@ export const NotificationTimeline = (props: Props) => {
         }
     }, [scrollRef, reader, hasMoreData])
 
-    // filterSchema が指定されていればクライアント側で絞り込む
-    // - summarised-like / summarised-reaction は type で判定
-    // - normal は items[0].schema（= 元 Message の schema）と比較
-    // items が空のケースはそもそも summariseNotifications で弾かれているので n.items[0] は安全
-    const filteredNotifications = props.filterSchema
-        ? notifications.filter((n) => {
-              if (n.type === 'summarised-like') return props.filterSchema === Schemas.likeAssociation
-              if (n.type === 'summarised-reaction') return props.filterSchema === Schemas.reactionAssociation
-              // normal
-              return n.items[0]?.schema === props.filterSchema
-          })
-        : notifications
-
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
             <div
@@ -286,7 +272,7 @@ export const NotificationTimeline = (props: Props) => {
                 ref={scrollRef}
             >
                 {props.header}
-                {filteredNotifications.map((n) => (
+                {notifications.map((n) => (
                     <Fragment key={n.key}>
                         <ErrorBoundary FallbackComponent={RenderError}>
                             <div
