@@ -4,6 +4,7 @@ import { Header } from '../ui/Header'
 import { NotificationTimeline } from '../components/NotificationTimeline'
 import { NotificationFilter } from '../components/NotificationFilter'
 import { useClient } from '../contexts/Client'
+import { semantics } from '@concrnt/worldlib'
 
 export const NotificationsView = () => {
     const { client } = useClient()
@@ -17,11 +18,19 @@ export const NotificationsView = () => {
         [selected]
     )
 
+    if (!client) {
+        return (
+            <View>
+                <Header>Notifications</Header>
+            </View>
+        )
+    }
+
     return (
         <View>
             <Header>Notifications</Header>
             <NotificationFilter selected={selected} setSelected={setSelected} />
-            <NotificationTimeline prefix={`cckv://${client?.ccid}/concrnt.world/main/notify-timeline/`} query={query} />
+            <NotificationTimeline prefix={semantics.notificationTimeline(client.ccid)} query={query} />
         </View>
     )
 }

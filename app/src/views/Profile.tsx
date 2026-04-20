@@ -9,7 +9,7 @@ import { ProfileEditor } from '../components/ProfileEditor'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
-import { Schemas } from '@concrnt/worldlib'
+import { Schemas, semantics } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeList } from '../components/AcknowledgeList'
@@ -48,19 +48,19 @@ export const ProfileView = (props: Props) => {
         switch (tab ?? '') {
             case 'posts':
                 return {
-                    prefix: `cckv://${props.id}/concrnt.world/main/home-timeline/`,
+                    prefix: semantics.homeTimeline(props.id),
                     query: {}
                 }
             case 'media':
                 return {
-                    prefix: `cckv://${props.id}/concrnt.world/main/home-timeline/`,
+                    prefix: semantics.homeTimeline(props.id),
                     query: {
                         schema: Schemas.mediaMessage
                     }
                 }
             case 'activity':
                 return {
-                    prefix: `cckv://${props.id}/concrnt.world/main/activity-timeline/`,
+                    prefix: semantics.activityTimeline(props.id),
                     query: {}
                 }
         }

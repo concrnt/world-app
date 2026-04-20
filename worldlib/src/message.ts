@@ -4,6 +4,7 @@ import { LikeAssociationSchema } from './schemas/'
 import { User } from './user'
 import { Client } from './client'
 import { Association } from './association'
+import { semantics } from './semantics'
 
 export class Message<T> implements Document<T> {
     uri: string
@@ -63,10 +64,7 @@ export class Message<T> implements Document<T> {
         const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.value.domain)
         console.log('fav author domain', authorDomain)
 
-        const distributes = [
-            `cckv://${client.ccid}/concrnt.world/main/activity-timeline`,
-            `cckv://${this.author}/concrnt.world/main/notify-timeline`
-        ]
+        const distributes = [semantics.activityTimeline(client.ccid), semantics.notificationTimeline(this.author)]
 
         const document: Document<LikeAssociationSchema> = {
             author: client.ccid,

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, IconButton, useTheme } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
-import { Message, Schemas } from '@concrnt/worldlib'
+import { Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -120,7 +120,7 @@ export const Composer = (props: Props) => {
     const handleSubmit = async () => {
         if (!client) return
 
-        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+        const homeTimeline = semantics.homeTimeline(client.ccid)
         // const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
@@ -138,7 +138,7 @@ export const Composer = (props: Props) => {
 
                     // リプライメッセージを作成
                     const key = Date.now().toString()
-                    const replyMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
+                    const replyMessageUri = semantics.post(client.ccid, 'main', key)
                     const replyDocument = {
                         key: replyMessageUri,
                         schema: Schemas.replyMessage,
@@ -190,7 +190,7 @@ export const Composer = (props: Props) => {
 
                     // リルートメッセージを作成
                     const key = Date.now().toString()
-                    const rerouteMessageUri = `cckv://${client.ccid}/concrnt.world/posts/${key}`
+                    const rerouteMessageUri = semantics.post(client.ccid, 'main', key)
                     const rerouteDocument = {
                         key: rerouteMessageUri,
                         schema: Schemas.rerouteMessage,
@@ -250,7 +250,7 @@ export const Composer = (props: Props) => {
                         )
 
                         const document = {
-                            key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                            key: semantics.post(client.ccid, 'main', key),
                             schema: Schemas.mediaMessage,
                             value: {
                                 body: draft,
@@ -263,7 +263,7 @@ export const Composer = (props: Props) => {
                         await client.api.commit(document)
                     } else {
                         const document = {
-                            key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+                            key: semantics.post(client.ccid, 'main', key),
                             schema: Schemas.markdownMessage,
                             value: {
                                 body: draft

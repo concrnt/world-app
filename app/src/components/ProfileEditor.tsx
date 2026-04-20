@@ -4,6 +4,7 @@ import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
 import { useImageCropper } from '../contexts/ImageCropper'
+import { semantics } from '@concrnt/worldlib'
 
 interface Props {
     onComplete?: () => void
@@ -49,7 +50,7 @@ export const ProfileEditor = (props: Props) => {
                         if (!client) return
                         setSaving(true)
                         const document = {
-                            key: `cckv://${client.ccid}/concrnt.world/main/profile`,
+                            key: semantics.profile(client.ccid),
                             schema: 'https://schema.concrnt.world/p/main.json',
                             value: {
                                 username: username,

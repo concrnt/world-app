@@ -1,7 +1,7 @@
 import { Button } from "@concrnt/ui";
 import { useState } from "react";
 import { useClient } from "../contexts/Client";
-import { Schemas } from "@concrnt/worldlib";
+import { Schemas, semantics } from "@concrnt/worldlib";
 
 interface Props {
     additionalDestinations?: string[]
@@ -15,7 +15,7 @@ export const Composer = (props: Props) => {
     const handleSubmit = async () => {
         if (!client) return
 
-        const homeTimeline = `cckv://${client.ccid}/concrnt.world/main/home-timeline`
+        const homeTimeline = semantics.homeTimeline(client.ccid)
         const key = Date.now().toString()
 
         const distributes = [
@@ -24,7 +24,7 @@ export const Composer = (props: Props) => {
         ]
 
         const document = {
-            key: `cckv://${client.ccid}/concrnt.world/posts/${key}`,
+            key: semantics.post(client.ccid, 'main', key),
             schema: Schemas.markdownMessage,
             value: {
                 body: draft

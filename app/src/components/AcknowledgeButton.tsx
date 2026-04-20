@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
+import { semantics } from '@concrnt/worldlib'
 
 interface Props {
     ccid: string
@@ -11,7 +12,7 @@ export const AcknowledgeButton = (props: Props) => {
     const { client } = useClient()
 
     const [acknowledged, setAcknowledged] = useState<boolean>(() => {
-        return !!client?.acknowledging.find((a) => a.associate === `cckv://${props.ccid}`)
+        return !!client?.acknowledging.find((a) => a.associate === semantics.user(props.ccid))
     })
 
     if (!client || client.ccid === props.ccid) return null

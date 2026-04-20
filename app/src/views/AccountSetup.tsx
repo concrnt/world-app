@@ -6,6 +6,7 @@ import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document } from '@concrnt/client'
 import { useClient } from '../contexts/Client'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import { semantics } from '@concrnt/worldlib'
 
 interface Props {
     onBack?: () => void
@@ -52,7 +53,7 @@ export const AccountSetup = (props: Props) => {
                             const ckid: string = await invoke('create_subkey')
 
                             const subkeyDoc: Document<any> = {
-                                key: `cckv://${ccid}/keys/${ckid}`,
+                                key: semantics.subkey(ccid, ckid),
                                 author: ccid,
                                 schema: 'https://schema.concrnt.net/subkey.json',
                                 value: {
@@ -155,7 +156,7 @@ export const AccountSetup = (props: Props) => {
                             const ckid: string = await invoke('create_subkey')
 
                             const subkeyDoc: Document<any> = {
-                                key: `cckv://${ccid}/keys/${ckid}`,
+                                key: semantics.subkey(ccid, ckid),
                                 author: ccid,
                                 schema: 'https://schema.concrnt.net/subkey.json',
                                 value: {

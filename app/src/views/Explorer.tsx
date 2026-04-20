@@ -1,4 +1,4 @@
-import { CommunityTimelineSchema, Schemas } from '@concrnt/worldlib'
+import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, View, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
@@ -61,7 +61,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
         const key = Date.now().toString()
 
         const document: Document<CommunityTimelineSchema> = {
-            key: `cckv://${client.server.domain}/concrnt.world/communities/${key}`,
+            key: semantics.community(client.ccid, key),
             schema: Schemas.communityTimeline,
             value,
             author: client.ccid,

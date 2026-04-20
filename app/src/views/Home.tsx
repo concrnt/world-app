@@ -15,7 +15,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
-import { isFulfilled, Schemas } from '@concrnt/worldlib'
+import { isFulfilled, Schemas, semantics } from '@concrnt/worldlib'
 import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 
@@ -34,28 +34,31 @@ export const HomeView = (props: ScrollViewProps) => {
         [pinnedLists]
     )
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(`cckv://${client?.ccid}/concrnt.world/main/home-list`)
+    const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client?.ccid ?? ''))
     const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
 
     const timelineIDsPromise = useMemo(() => {
+        if (!client) {
+            return Promise.resolve([semantics.homeTimeline('')])
+        }
         if (selectedTab) {
             return (
                 client
-                    ?.getList(selectedTab.uri)
+                    .getList(selectedTab.uri)
                     .then((list) => {
                         const items = list?.items ?? []
-                        if (!items.includes(`cckv://${client?.ccid}/concrnt.world/main/home-timeline`)) {
-                            items.unshift(`cckv://${client?.ccid}/concrnt.world/main/home-timeline`)
+                        if (!items.includes(semantics.homeTimeline(client.ccid))) {
+                            items.unshift(semantics.homeTimeline(client.ccid))
                         }
                         return items
                     })
                     .catch((e) => {
                         console.error(e)
-                        return [`cckv://${client?.ccid}/concrnt.world/main/home-timeline`]
-                    }) ?? Promise.resolve([`cckv://${client?.ccid}/concrnt.world/main/home-timeline`])
+                        return [semantics.homeTimeline(client.ccid)]
+                    }) ?? Promise.resolve([semantics.homeTimeline(client.ccid)])
             )
         } else {
-            return Promise.resolve([`cckv://${client?.ccid}/concrnt.world/main/home-timeline`])
+            return Promise.resolve([semantics.homeTimeline(client.ccid)])
         }
     }, [selectedTabUri, tabs, client])
 
@@ -74,7 +77,7 @@ export const HomeView = (props: ScrollViewProps) => {
     // fix default settings
     useEffect(() => {
         if (!client) return
-        const homeURI = `cckv://${client.ccid}/concrnt.world/main/home-list`
+        const homeURI = semantics.homeList(client.ccid)
         if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
             setPinnedLists((old) => [{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...old])
         }
