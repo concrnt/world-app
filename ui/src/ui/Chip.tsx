@@ -18,6 +18,7 @@ export const Chip = (props: Props) => {
                 <div
                     onClick={props.onClick}
                     style={{
+                        flexShrink: 0,
                         border: `1px solid ${CssVar.divider}`,
                         color: 'rgb(41, 46, 36)',
                         fontSize: '16px',
@@ -26,7 +27,7 @@ export const Chip = (props: Props) => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: '16px',
-                        padding: '0 8px',
+                        padding: '0 4px',
                         width: 'fit-content',
                         ...props.style
                     }}
@@ -66,6 +67,7 @@ export const Chip = (props: Props) => {
                 <div
                     onClick={props.onClick}
                     style={{
+                        flexShrink: 0,
                         backgroundColor: 'rgba(0, 0, 0, 0.08)',
                         color: 'rgb(41, 46, 36)',
                         fontSize: '16px',
@@ -76,6 +78,7 @@ export const Chip = (props: Props) => {
                         borderRadius: '16px',
                         padding: '0 4px',
                         width: 'fit-content',
+                        border: '1px solid transparent',
                         ...props.style
                     }}
                 >
