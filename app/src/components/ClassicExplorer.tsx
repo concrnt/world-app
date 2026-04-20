@@ -1,4 +1,4 @@
-import { CommunityTimelineSchema, Schemas } from '@concrnt/worldlib'
+import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { TimelineCard } from './TimelineCard'
@@ -31,7 +31,7 @@ export const ClassicExplorer = () => {
         client.api
             .query(
                 {
-                    prefix: `cckv://${selectedServer}/concrnt.world/communities/`,
+                    prefix: semantics.communities(selectedServer),
                     schema: Schemas.communityTimeline
                 },
                 selectedServer

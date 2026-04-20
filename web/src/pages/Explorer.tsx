@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo } from "react"
 import { useClient } from "../contexts/Client"
 import type { Server, Document, SignedDocument } from "@concrnt/client"
-import { Schemas, type CommunityTimelineSchema } from "@concrnt/worldlib"
+import { Schemas, semantics, type CommunityTimelineSchema } from "@concrnt/worldlib"
 import { Link, useLocation } from "react-router-dom"
 
 export const Explorer = () => {
@@ -17,7 +17,7 @@ export const Explorer = () => {
     const communitiesPromise = useMemo(() => {
         return client.api.query(
             {
-                prefix: `cckv://${server}/concrnt.world/communities/`,
+                prefix: semantics.communities(server),
                 schema: Schemas.communityTimeline,
                 limit: '100'
             },

@@ -1,6 +1,7 @@
 import { type FQDN, CCID, Entity, Document } from '@concrnt/client'
 import { ProfileSchema } from './schemas/'
 import { Client } from './client'
+import { semantics } from './semantics'
 
 export class User {
     domain: FQDN
@@ -21,12 +22,10 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api
-            .getDocument<ProfileSchema>(`cckv://${entity.author}/concrnt.world/main/profile`)
-            .catch((_e) => {
-                // ignore error, profile is optional
-                return undefined
-            })
+        const profile = await client.api.getDocument<ProfileSchema>(semantics.profile(entity.author)).catch((_e) => {
+            // ignore error, profile is optional
+            return undefined
+        })
 
         return new User(entity.value.domain, entity, profile?.value)
     }

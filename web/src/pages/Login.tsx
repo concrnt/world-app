@@ -4,6 +4,7 @@ import { Button, Text, TextField } from '@concrnt/ui'
 import { useState } from 'react'
 import { type Document, type Identity, GenerateIdentity, ComputeCKID, InMemoryKVS, Api, InMemoryAuthProvider } from '@concrnt/client'
 import { usePersistent } from '../hooks/usePersistent'
+import { semantics } from '@concrnt/worldlib'
 
 export const Login = () => {
 
@@ -110,7 +111,7 @@ export const Login = () => {
                         const ckid = ComputeCKID(subkeyIdentity.publicKey)
 
                         const subkeyDoc: Document<any> = {
-                            key: `cckv://${ccid}/keys/${ckid}`,
+                            key: semantics.subkey(ccid, ckid),
                             author: ccid,
                             schema: 'https://schema.concrnt.net/subkey.json',
                             value: {
