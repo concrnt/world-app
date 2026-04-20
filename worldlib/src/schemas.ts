@@ -17,6 +17,7 @@ export const Schemas = {
 
     profile: 'https://schema.concrnt.world/p/main.json',
 
+    userTimeline: 'https://schema.concrnt.world/t/user.json',
     communityTimeline: 'https://schema.concrnt.world/t/community.json',
     emptyTimeline: 'https://schema.concrnt.world/t/empty.json',
     subprofileTimeline: 'https://schema.concrnt.world/t/subprofile.json',
