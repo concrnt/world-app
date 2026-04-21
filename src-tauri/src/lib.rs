@@ -40,31 +40,36 @@ fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
 }
 
 #[tauri::command]
-fn create_subkey(app_handle: tauri::AppHandle) -> String {
+fn create_subkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
     let store = match app_handle.store("session") {
         Ok(s) => s,
-        Err(e) => return format!("Failed to create store: {}", e),
+        Err(e) => return Err(format!("Failed to create store: {}", e)),
     };
 
     // generate sub key
-    let sub_identity = generate_identity().unwrap();
+    let sub_identity = generate_identity().map_err(|e| format!("Failed to generate sub identity: {}", e))?;
     store.set("sub_priv".to_string(), sub_identity.private_key.clone());
 
-    let ckid = compute_ckid(&sub_identity.public_key).unwrap();
+    let ckid = compute_ckid(&sub_identity.public_key).map_err(|e| format!("Failed to compute ckid: {}", e))?;
     store.set("ckid".to_string(), ckid.clone());
 
-    ckid
+    Ok(ckid)
 }
 
 #[tauri::command]
-fn auth_available(app_handle: tauri::AppHandle) -> String {
-    let status = app_handle.biometric().status().unwrap();
-    if status.is_available {
-        return "Yes! Biometric Authentication is available".to_string();
-    } else {
-        return format!("No! Biometric Authentication is not available due to: {}", status.error.unwrap());
+fn auth_available(app_handle: tauri::AppHandle) -> Result<String, Error> {
+    match app_handle.biometric().status() {
+        Ok(status) => {
+            if status.is_available {
+                Ok("Yes! Biometric Authentication is available".to_string())
+            } else {
+                Err(format!("No! Biometric Authentication is not available due to: {}", status.error.unwrap_or("Unknown error".to_string())))
+            }
+        },
+        Err(e) => Err(format!("Failed to check biometric status: {}", e)),
     }
 }
+
 
 fn sign(private_key_hex: &str, payload: &str) -> Result<String, Error> {
     let private_key_bytes = hex::decode(private_key_hex).map_err(|_| "private key is not valid hex")?;
@@ -88,24 +93,27 @@ fn sign(private_key_hex: &str, payload: &str) -> Result<String, Error> {
 }
 
 #[tauri::command]
-fn sign_masterkey(app_handle: tauri::AppHandle, payload: &str) -> String {
-    let identity = retract_masterkey(app_handle).unwrap();
-    sign(&identity.private_key, payload).unwrap()
+fn sign_masterkey(app_handle: tauri::AppHandle, payload: &str) -> Result<String, Error> {
+    let identity = retract_masterkey(app_handle)?;
+    sign(&identity.private_key, payload)
 }
 
 #[tauri::command]
-fn sign_subkey(app_handle: tauri::AppHandle, payload: &str) -> (String, String) {
-    let store = app_handle.store("session").unwrap();
-    let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string())).unwrap();
+fn sign_subkey(app_handle: tauri::AppHandle, payload: &str) -> Result<(String, String), Error> {
+    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
+    let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string())).ok_or_else(|| "No value found for ckid".to_string())?;
 
-    let priv_key = retract_subkey(app_handle).unwrap();
-    (sign(&priv_key, payload).unwrap(), ckid)
+    let priv_key = retract_subkey(app_handle)?;
+    let signature = sign(&priv_key, payload)?;
+
+    Ok((signature, ckid))
 }
 
 #[tauri::command]
-fn set_domain(app_handle: tauri::AppHandle, domain: &str) {
-    let store = app_handle.store("session").unwrap();
+fn set_domain(app_handle: tauri::AppHandle, domain: &str) -> Result<(), Error> {
+    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
     store.set("domain".to_string(), domain.to_string());
+    Ok(())
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -134,8 +142,7 @@ fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
 
 
     let identity = match load_identity(&mnemonic) {
-        Ok(Some(id)) => id,
-        Ok(None) => return Err("Failed to load identity from mnemonic".into()),
+        Ok(id) => id,
         Err(e) => return Err(e),
     };
 
@@ -162,8 +169,7 @@ fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
 
 
     let identity = match load_identity(&mnemonic) {
-        Ok(Some(id)) => id,
-        Ok(None) => return None, // If we fail to load identity from mnemonic, we just return None for session info instead of error
+        Ok(id) => id,
         Err(e) => return None, // If we fail to load identity due to some error, we just return None for session info instead of error
     };
 
@@ -225,11 +231,7 @@ fn retract_masterkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
         Err(e) => return Err(e),
     };
 
-    if let Some(identity) = load_identity(&mnemonic)? {
-        Ok(identity)
-    } else {
-        Err("Failed to load identity from mnemonic".into())
-    }
+    load_identity(&mnemonic)
 }
 
 fn retract_subkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
@@ -251,10 +253,11 @@ fn retract_subkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
     Ok(private_key_str.to_string())
 }
 
-fn load_identity(mnemonic: &str) -> Result<Option<Identity>, Error> {
+#[tauri::command]
+fn load_identity(mnemonic: &str) -> Result<Identity, Error> {
     let normalized = normalize_nfkd(mnemonic);
     if normalized.split(' ').count() != 12 {
-        return Ok(None);
+        return Err("Mnemonic must be 12 words".into());
     }
 
     let first = normalized.chars().next().unwrap_or_default();
@@ -267,13 +270,30 @@ fn load_identity(mnemonic: &str) -> Result<Option<Identity>, Error> {
     let (private_key, public_key) = derive_keypair(&mnemonic_en)?;
     let ccid = compute_ccid(&public_key)?;
 
-    Ok(Some(Identity {
+    Ok(Identity {
         mnemonic: mnemonic_en,
         mnemonic_ja,
         private_key,
         public_key,
         ccid,
-    }))
+    })
+}
+
+#[tauri::command]
+fn initialize_from_mnemonic(app_handle: tauri::AppHandle, mnemonic: &str) -> Result<String, Error> {
+    let identity = load_identity(mnemonic)?;
+
+    let request = KeychainRequest {
+        key: Some("concrnt_masterkey".to_string()),
+        password: Some(identity.mnemonic.clone()),
+    };
+
+    let success = app_handle.keychain().save_item(request);
+    if !success {
+        return Err("Failed to save master key to keychain".to_string());
+    }
+
+    Ok(identity.ccid)
 }
 
 
@@ -295,6 +315,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             auth_available,
             initialize_master,
+            initialize_from_mnemonic,
             create_subkey,
             sign_masterkey,
             sign_subkey,
@@ -303,13 +324,14 @@ pub fn run() {
             set_domain,
             has_masterkey,
             clear_all,
+            load_identity,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 struct Identity {
     mnemonic: String,
     mnemonic_ja: String,

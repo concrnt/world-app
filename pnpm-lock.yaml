@@ -90,6 +90,9 @@ importers:
       react-icons:
         specifier: ^5.5.0
         version: 5.6.0(react@19.2.4)
+      react-parallax-tilt:
+        specifier: ^1.7.324
+        version: 1.7.324(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-syntax-highlighter:
         specifier: ^16.1.0
         version: 16.1.1(react@19.2.4)
@@ -2423,6 +2426,12 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-parallax-tilt@1.7.324:
+    resolution: {integrity: sha512-iOmPMoObfRwozzf6Dfpp2k5irtjNhng8jgRX9RZFz40bTeuQT5ZRZW7o0u8vhtRqNvWwlEBkl9++qzoW+p6eFg==}
+    peerDependencies:
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-qrcode-logo@4.0.0:
     resolution: {integrity: sha512-TcDdsJQe7P0OY7uA7Do4Z0DfIIjjqx81RbBGQY+90T2Ba42pUCx/cSI2UTwPPoH9WwE0StLb8A98mFgKIAI4JQ==}
@@ -5110,6 +5119,11 @@ snapshots:
   react-is@17.0.2: {}
 
   react-is@18.3.1: {}
+
+  react-parallax-tilt@1.7.324(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   react-qrcode-logo@4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:

@@ -24,6 +24,7 @@
     "react-easy-crop": "^5.5.7",
     "react-error-boundary": "^6.0.3",
     "react-icons": "^5.5.0",
+    "react-parallax-tilt": "^1.7.324",
     "react-syntax-highlighter": "^16.1.0",
     "vite-plugin-react-fallback-throttle": "^0.1.3"
   },

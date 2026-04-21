@@ -13,6 +13,7 @@ import { Schemas, semantics } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeList } from '../components/AcknowledgeList'
+import { TextLoader } from '../components/TextLoader'
 
 interface Props {
     id: string
@@ -154,7 +155,7 @@ export const ProfileView = (props: Props) => {
                                 )}
                             </div>
                             <div>
-                                <Text
+                                <TextLoader
                                     variant="h6"
                                     style={{
                                         fontWeight: 'bold',
@@ -162,18 +163,20 @@ export const ProfileView = (props: Props) => {
                                     }}
                                 >
                                     {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
-                                </Text>
-                                <Text>{profilePromise.then((user) => (user?.alias ? user.alias : null))}</Text>
+                                </TextLoader>
+                                <TextLoader>
+                                    {profilePromise.then((user) => (user?.alias ? user.alias : null))}
+                                </TextLoader>
                             </div>
                             <div>
                                 <Text variant="caption">{props.id}</Text>
                             </div>
                             <div>
-                                <Text>
+                                <TextLoader>
                                     {profilePromise.then(
                                         (user) => user?.profile?.description || '説明はまだありません'
                                     )}
-                                </Text>
+                                </TextLoader>
                             </div>
                             <div
                                 style={{
@@ -189,7 +192,7 @@ export const ProfileView = (props: Props) => {
                                         )
                                     }
                                 >
-                                    <Text>{statsPromise.then((s) => `${s.acknowledging} フォロー`)}</Text>
+                                    <TextLoader>{statsPromise.then((s) => `${s.acknowledging} フォロー`)}</TextLoader>
                                 </div>
                                 <div
                                     style={{ cursor: 'pointer' }}
@@ -199,7 +202,7 @@ export const ProfileView = (props: Props) => {
                                         )
                                     }
                                 >
-                                    <Text>{statsPromise.then((s) => `${s.acknowledged} フォロワー`)}</Text>
+                                    <TextLoader>{statsPromise.then((s) => `${s.acknowledged} フォロワー`)}</TextLoader>
                                 </div>
                             </div>
                         </div>

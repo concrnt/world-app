@@ -3,12 +3,13 @@ import { Button, View, Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
-import { Api, InMemoryKVS, Document } from '@concrnt/client'
+import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
 import { useClient } from '../contexts/Client'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { semantics } from '@concrnt/worldlib'
 
 interface Props {
+    entrypoint: string
     onBack?: () => void
 }
 
@@ -16,17 +17,47 @@ export const AccountSetup = (props: Props) => {
     const { reload } = useClient()
     const reset = useResetPreference()
 
-    const [domain, setDomain] = useState<string>('v2dev.concrnt.net')
-    const [existingCCID, setExistingCCID] = useState<string | null>(null)
-
+    const [domain, setDomain] = useState<string>(props.entrypoint)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
+    const [accountCreated, setAccountCreated] = useState(false)
+    const [profileCreated, setProfileCreated] = useState(false)
 
     useEffect(() => {
-        invoke('has_masterkey').then((existing) => {
-            if (typeof existing !== 'string') return
-            setExistingCCID(existing)
-        })
-    }, [])
+        const timer = setInterval(async () => {
+            if (!registrationPageOpened) return
+            if (accountCreated) {
+                clearInterval(timer)
+                return
+            }
+
+            const ccid = await invoke('has_masterkey')
+            if (typeof ccid !== 'string') {
+                console.log('CCID not found, waiting...')
+                return
+            }
+
+            const auth = new InMemoryAuthProvider()
+            const kvs = new InMemoryKVS()
+            const api = new Api(domain, auth, kvs)
+
+            const registration = await api.getEntity(ccid)
+            if (!registration) {
+                console.log('Registration not found, waiting...')
+                return
+            }
+
+            console.log('Registration found:', registration)
+            setAccountCreated(true)
+
+            clearInterval(timer)
+        }, 3000)
+
+        return () => {
+            clearInterval(timer)
+        }
+    }, [registrationPageOpened])
+
+    const state = profileCreated ? 'done' : accountCreated ? 'account_created' : 'initial'
 
     return (
         <View
@@ -34,70 +65,9 @@ export const AccountSetup = (props: Props) => {
                 gap: 16
             }}
         >
-            <Button onClick={props.onBack}>Back</Button>
-
-            {existingCCID ? (
-                <>
-                    <Text>端末にはすでにアカウントが保存されています</Text>
-                    <Text>CCID: {existingCCID}</Text>
-
-                    <Text>端末に保存されたアカウントを使用する</Text>
-
-                    <Text>Domain</Text>
-                    <TextField value={domain} onChange={(e) => setDomain(e.target.value)} />
-
-                    <Button
-                        onClick={async () => {
-                            const ccid = existingCCID
-
-                            const ckid: string = await invoke('create_subkey')
-
-                            const subkeyDoc: Document<any> = {
-                                key: semantics.subkey(ccid, ckid),
-                                author: ccid,
-                                schema: 'https://schema.concrnt.net/subkey.json',
-                                value: {
-                                    ckid
-                                },
-                                createdAt: new Date()
-                            }
-
-                            const authProvider = new TauriAuthProvider(ccid)
-                            const kvs = new InMemoryKVS()
-
-                            const api = new Api(domain, authProvider, kvs)
-
-                            await api.commit(subkeyDoc, domain, { useMasterkey: true })
-                            console.log('Subkey Registered')
-
-                            await invoke('set_domain', { domain })
-
-                            reset()
-                            reload()
-                        }}
-                    >
-                        ログイン
-                    </Button>
-
-                    <Button
-                        style={{
-                            backgroundColor: 'transparent',
-                            color: 'red',
-                            border: '1px solid red'
-                        }}
-                        onClick={async () => {
-                            await invoke('clear_all').then(async () => {
-                                reset()
-                                await reload()
-                                window.location.reload()
-                            })
-                        }}
-                    >
-                        リセットする
-                    </Button>
-                </>
-            ) : (
-                <>
+            {state === 'initial' && (
+                <div>
+                    <Button onClick={props.onBack}>Back</Button>
                     <Text>Domain</Text>
                     <TextField value={domain} onChange={(e) => setDomain(e.target.value)} />
 
@@ -132,8 +102,25 @@ export const AccountSetup = (props: Props) => {
                         登録ページを開く
                     </Button>
 
+                    {registrationPageOpened && <Text>サーバー上でアカウントが作成されるのを待っています...</Text>}
+                </div>
+            )}
+            {state === 'account_created' && (
+                <div>
+                    <Text>プロフィールを作成しましょう</Text>
                     <Button
-                        disabled={!registrationPageOpened}
+                        onClick={() => {
+                            setProfileCreated(true)
+                        }}
+                    >
+                        あとで
+                    </Button>
+                </div>
+            )}
+            {state === 'done' && (
+                <div>
+                    <Text>準備完了</Text>
+                    <Button
                         onClick={async () => {
                             const ccid = await invoke('has_masterkey')
                             if (typeof ccid !== 'string') {
@@ -145,13 +132,6 @@ export const AccountSetup = (props: Props) => {
                             const kvs = new InMemoryKVS()
 
                             const api = new Api(domain, authProvider, kvs)
-
-                            const registration = await api.getEntity(ccid)
-                            console.log('Registration Check:', registration)
-                            if (!registration) {
-                                alert('アカウントの登録が確認できませんでした。')
-                                return
-                            }
 
                             const ckid: string = await invoke('create_subkey')
 
@@ -166,17 +146,15 @@ export const AccountSetup = (props: Props) => {
                             }
 
                             await api.commit(subkeyDoc, domain, { useMasterkey: true })
-                            console.log('Subkey Registered')
-
                             await invoke('set_domain', { domain })
 
                             reset()
                             reload()
                         }}
                     >
-                        登録状態を確認
+                        完了
                     </Button>
-                </>
+                </div>
             )}
         </View>
     )

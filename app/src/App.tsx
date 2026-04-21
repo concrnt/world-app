@@ -1,7 +1,8 @@
 import { useClient } from './contexts/Client'
 import { WelcomeView } from './views/Welcome'
 import { MainView } from './views/Main'
-import { Button, ConcrntLogo, CssVar, Text } from '@concrnt/ui'
+import { Button, CssVar } from '@concrnt/ui'
+import { LoadingFull } from './components/LoadingFull'
 
 function App() {
     const { client, logout } = useClient()
@@ -22,62 +23,23 @@ function App() {
                 else if (client) return <MainView />
                 else
                     return (
-                        <div
-                            style={{
-                                height: '100dvh',
-                                width: '100dvw',
-                                backgroundColor: CssVar.uiBackground,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                paddingTop: 'env(safe-area-inset-top)',
-                                paddingBottom: 'env(safe-area-inset-bottom)'
-                            }}
-                        >
-                            <ConcrntLogo
-                                spinning
-                                size="100px"
-                                upperColor={CssVar.uiText}
-                                lowerColor={CssVar.uiText}
-                                frameColor={CssVar.uiText}
-                            />
-                            <div
+                        <LoadingFull>
+                            <Button
+                                variant="outlined"
+                                onClick={async () => {
+                                    logout().then(() => {
+                                        window.location.reload()
+                                    })
+                                }}
                                 style={{
-                                    position: 'absolute',
-                                    bottom: 'calc(env(safe-area-inset-bottom) + 10px)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    gap: '8px'
+                                    color: CssVar.uiText,
+                                    borderColor: CssVar.uiText,
+                                    fontSize: '0.8rem'
                                 }}
                             >
-                                <Button
-                                    variant="outlined"
-                                    onClick={async () => {
-                                        logout().then(() => {
-                                            window.location.reload()
-                                        })
-                                    }}
-                                    style={{
-                                        color: CssVar.uiText,
-                                        borderColor: CssVar.uiText,
-                                        fontSize: '0.8rem'
-                                    }}
-                                >
-                                    リセット
-                                </Button>
-                                <Text
-                                    style={{
-                                        color: CssVar.uiText,
-                                        fontWeight: 600,
-                                        fontSize: '22px'
-                                    }}
-                                >
-                                    Concrnt
-                                </Text>
-                            </div>
-                        </div>
+                                リセット
+                            </Button>
+                        </LoadingFull>
                     )
             })()}
         </div>

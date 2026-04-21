@@ -32,7 +32,8 @@ export const ClassicExplorer = () => {
             .query(
                 {
                     prefix: semantics.communities(selectedServer),
-                    schema: Schemas.communityTimeline
+                    schema: Schemas.communityTimeline,
+                    limit: '100'
                 },
                 selectedServer
             )
