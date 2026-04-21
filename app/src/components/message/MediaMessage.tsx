@@ -5,12 +5,13 @@ import { MediaMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
+import { PostedTimelines } from './PostedTimelines'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
@@ -103,7 +104,37 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                     ))}
                 </div>
             )}
-            <MessageActions message={message} />
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row-reverse',
+                    justifyContent: 'space-between',
+                    alignItems: 'stretch',
+                    flexWrap: 'wrap',
+                    gap: CssVar.space(1)
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center'
+                    }}
+                >
+                    <PostedTimelines message={message} />
+                </div>
+                <div
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start'
+                    }}
+                >
+                    <MessageActions message={message} />
+                </div>
+            </div>
         </MessageLayout>
     )
 }

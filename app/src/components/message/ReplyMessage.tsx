@@ -11,6 +11,7 @@ import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
 import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
+import { PostedTimelines } from './PostedTimelines'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { push } = useStack()
@@ -50,7 +51,37 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
                 <CfmRenderer messagebody={props.message.value.body} emojiDict={{}} />
-                <MessageActions message={props.message} />
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                        alignItems: 'stretch',
+                        flexWrap: 'wrap',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <PostedTimelines message={props.message} />
+                    </div>
+                    <div
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start'
+                        }}
+                    >
+                        <MessageActions message={props.message} />
+                    </div>
+                </div>
             </MessageLayout>
         </div>
     )

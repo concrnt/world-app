@@ -14,7 +14,8 @@ export const MessageLayout = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px'
+                gap: '8px',
+                overflow: 'hidden'
             }}
             onClick={(e) => {
                 e.stopPropagation()
@@ -27,7 +28,8 @@ export const MessageLayout = (props: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
-                    flex: 1
+                    flex: 1,
+                    overflow: 'hidden'
                 }}
             >
                 <div

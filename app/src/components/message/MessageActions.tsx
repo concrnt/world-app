@@ -40,7 +40,8 @@ export const MessageActions = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexShrink: 0
             }}
         >
             {/* リプライボタン */}

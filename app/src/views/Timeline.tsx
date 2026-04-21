@@ -1,4 +1,4 @@
-import { View, Text } from '@concrnt/ui'
+import { View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { useMemo } from 'react'
 import { useClient } from '../contexts/Client'
@@ -7,6 +7,7 @@ import { FAB } from '../ui/FAB'
 import { useComposer } from '../contexts/Composer'
 import { MdCreate } from 'react-icons/md'
 import { hapticLight } from '../utils/haptics'
+import { TimelineTag } from '../components/TimelineTag'
 
 interface Props {
     uri: string
@@ -24,7 +25,7 @@ export const TimelineView = (props: Props) => {
         <>
             <View>
                 <Header>
-                    <Text>{timelinePromise.then((t) => (t ? t.name : 'Timeline'))}</Text>
+                    <TimelineTag uri={props.uri} />
                 </Header>
                 <RealtimeTimeline timelines={[props.uri]} />
             </View>

@@ -6,7 +6,7 @@ import { useDrawer } from '../contexts/Drawer'
 import { PinnedList, usePreference } from '../contexts/Preference'
 
 import { Header } from '../ui/Header'
-import { View, Tabs, Tab, Text } from '@concrnt/ui'
+import { View, Tabs, Tab } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
 
 import { ListSettings } from '../components/ListSettings'
@@ -131,7 +131,7 @@ export const HomeView = (props: ScrollViewProps) => {
                         ))}
                     </Tabs>
                 )}
-                <Suspense key={selectedTabUri} fallback={<Text>Loading: {selectedTabUri}</Text>}>
+                <Suspense key={selectedTabUri} fallback={<></>}>
                     <InnerHomeView
                         {...props}
                         pinnedLists={pinnedLists}
