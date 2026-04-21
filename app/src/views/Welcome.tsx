@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Button, ConcrntLogo, CssVar, Text, TextField, View } from '@concrnt/ui'
+import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { useEffect, useState } from 'react'
 import { AccountSetup } from '../views/AccountSetup'
@@ -10,6 +10,7 @@ import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
+import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
 const entrypoint = 'cc2.tunnel.anthrotech.dev'
 //const entrypoint = 'v2dev.concrnt.net'
@@ -83,74 +84,15 @@ export const WelcomeView = () => {
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
         case 'welcome':
             return (
-                <div
-                    style={{
-                        height: '100dvh',
-                        width: '100dvw',
-                        backgroundColor: CssVar.uiBackground,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        paddingTop: 'env(safe-area-inset-top)',
-                        paddingBottom: 'env(safe-area-inset-bottom)'
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <ConcrntLogo
-                            size="100px"
-                            upperColor={CssVar.uiText}
-                            lowerColor={CssVar.uiText}
-                            frameColor={CssVar.uiText}
-                        />
-                        <Text
-                            style={{
-                                fontSize: '50px',
-                                color: CssVar.uiText
-                            }}
-                        >
-                            Concrnt
-                        </Text>
-                    </div>
-
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: 'calc(env(safe-area-inset-bottom) + 20px)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: CssVar.space(4)
-                        }}
-                    >
-                        <Button
-                            variant="contained"
-                            onClick={() => setState('signup')}
-                            style={{
-                                color: CssVar.uiBackground,
-                                backgroundColor: CssVar.uiText,
-                                width: '80vw'
-                            }}
-                        >
-                            はじめる
-                        </Button>
-                        <Button
-                            variant="text"
-                            onClick={() => setState('signin')}
-                            style={{
-                                color: CssVar.uiText
-                            }}
-                        >
-                            ログイン
-                        </Button>
-                    </div>
-                </div>
+                <AuthScreen>
+                    <div style={{ flex: 1 }} />
+                    <AuthBrand />
+                    <div style={{ flex: 1 }} />
+                    <AuthActions fixedBottom>
+                        <AuthButton onClick={() => setState('signup')}>はじめる</AuthButton>
+                        <AuthTextButton onClick={() => setState('signin')}>ログイン</AuthTextButton>
+                    </AuthActions>
+                </AuthScreen>
             )
         case 'missing':
             return (
@@ -165,20 +107,12 @@ export const WelcomeView = () => {
             )
         case 'ready':
             return (
-                <View
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}
-                >
-                    <Text variant="h1">おかえりなさい！</Text>
-                    <div
-                        style={{
-                            width: '90vw',
-                            margin: '20px 0'
-                        }}
-                    >
+                <AuthScreen>
+                    <AuthHeader
+                        title="おかえりなさい"
+                        description="この端末に保存されているアカウントを確認しました。"
+                    />
+                    <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
                                 ccid={user!.ccid}
@@ -189,21 +123,8 @@ export const WelcomeView = () => {
                             />
                         </Tilt>
                     </div>
-                    <div style={{ flex: 1 }} />
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: 'calc(env(safe-area-inset-bottom) + 20px)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: CssVar.space(4)
-                        }}
-                    >
-                        <Button
-                            style={{
-                                width: '80vw'
-                            }}
+                    <AuthActions fixedBottom>
+                        <AuthButton
                             onClick={async () => {
                                 if (!user || !user.entity) return
                                 const ckid: string = await invoke('create_subkey')
@@ -233,21 +154,18 @@ export const WelcomeView = () => {
                             }}
                         >
                             このアカウントで続行
-                        </Button>
-                        <Button
-                            variant="text"
-                            style={{
-                                width: '80vw'
-                            }}
+                        </AuthButton>
+                        <AuthTextButton
+                            danger
                             onClick={async () => {
                                 await invoke('clear_all')
                                 reload()
                             }}
                         >
                             端末のアカウント情報をリセットする
-                        </Button>
-                    </div>
-                </View>
+                        </AuthTextButton>
+                    </AuthActions>
+                </AuthScreen>
             )
     }
 }
@@ -283,55 +201,48 @@ const RecoveryView = (props: {
     }, [domain])
 
     return (
-        <View
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: 20,
-                gap: 20
-            }}
-        >
-            <Text variant="h1">おかえりなさい！</Text>
-            <Text>端末にはアカウント情報が保存されていますが、サーバーに登録情報が見つかりませんでした...。</Text>
-            <Text>手動でサーバーアドレスを入力して検索するか、所望のサーバーに新規登録することができます。</Text>
-
-            <TextField
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="サーバーアドレスを入力"
+        <AuthScreen align="top">
+            <AuthHeader
+                title="登録サーバーを確認してください"
+                description="端末にはアカウント情報がありますが、現在のサーバーでは登録情報が見つかりませんでした。"
             />
-            <Text>{found ? '登録情報が見つかりました！' : '登録情報が見つかりませんでした...'}</Text>
+            <div style={authStyles.section}>
+                <div style={authStyles.inputGroup}>
+                    <Text style={{ color: CssVar.uiText }}>サーバーアドレス</Text>
+                    <TextField
+                        value={domain}
+                        onChange={(e) => setDomain(e.target.value)}
+                        placeholder="サーバーアドレスを入力"
+                    />
+                </div>
+                <Text style={authStyles.status}>
+                    {found ? '登録情報が見つかりました。' : '登録情報が見つかりませんでした。'}
+                </Text>
+            </div>
             {found ? (
-                <Button>続行</Button>
+                <AuthActions fixedBottom>
+                    <AuthButton onClick={props.reload}>続行</AuthButton>
+                </AuthActions>
             ) : (
-                <div style={{}}>
-                    <Button
-                        variant="text"
-                        style={{
-                            width: '80vw'
-                        }}
+                <AuthActions fixedBottom>
+                    <AuthButton
                         onClick={() => {
                             props.giveup()
                         }}
                     >
                         新規登録する
-                    </Button>
-
-                    <Button
-                        variant="text"
-                        style={{
-                            width: '80vw'
-                        }}
+                    </AuthButton>
+                    <AuthTextButton
+                        danger
                         onClick={async () => {
                             await invoke('clear_all')
                             props.reload()
                         }}
                     >
                         端末のアカウント情報を削除
-                    </Button>
-                </div>
+                    </AuthTextButton>
+                </AuthActions>
             )}
-        </View>
+        </AuthScreen>
     )
 }

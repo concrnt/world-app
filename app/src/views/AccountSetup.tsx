@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Button, View, Text, CssVar } from '@concrnt/ui'
+import { Text, CssVar } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
@@ -9,6 +9,7 @@ import { openUrl } from '@tauri-apps/plugin-opener'
 import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
+import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
 interface Props {
     entrypoint: string
@@ -87,28 +88,15 @@ export const AccountSetup = (props: Props) => {
     const state = accountCreated ? 'done' : 'initial'
 
     return (
-        <View
-            style={{
-                gap: 16
-            }}
-        >
+        <AuthScreen align="top">
             {state === 'initial' && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: CssVar.space(2)
-                    }}
-                >
-                    <Text variant="h1">アカウントを作成しましょう</Text>
+                <>
+                    <AuthHeader
+                        title="アカウントを作成"
+                        description="登録に使うサーバーを選んでから、ブラウザで登録を完了します。"
+                    />
 
-                    <div
-                        style={{
-                            width: '90vw',
-                            margin: '20px 0'
-                        }}
-                    >
+                    <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
                                 ccid={'con1......................................'}
@@ -120,96 +108,117 @@ export const AccountSetup = (props: Props) => {
                         </Tilt>
                     </div>
 
-                    <Text>{props.entrypoint === domain ? 'おすすめサーバー:' : 'カスタムサーバー:'}</Text>
-                    <div
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 0,
-                            height: 32
-                        }}
-                    >
-                        <input
-                            ref={serverInput}
-                            type="text"
-                            value={domain}
-                            onChange={(e) => setDomain(e.target.value)}
-                            style={{
-                                padding: '4px 8px',
-                                borderRadius: `4px 0 0 4px`,
-                                border: `1px solid ${CssVar.divider}`,
-                                width: 200,
-                                height: '100%'
-                            }}
-                        />
-                        <div
-                            style={{
-                                display: 'inline-block',
-                                padding: '4px 8px',
-                                color: CssVar.uiText,
-                                borderRadius: `0 4px 4px 0`,
-                                backgroundColor: CssVar.uiBackground
-                            }}
-                            onClick={() => {
-                                serverInput.current?.focus()
-                            }}
-                        >
-                            変更
+                    <div style={authStyles.section}>
+                        <div style={authStyles.inputGroup}>
+                            <Text style={{ color: CssVar.uiText }}>
+                                {props.entrypoint === domain ? 'おすすめサーバー' : 'カスタムサーバー'}
+                            </Text>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'stretch',
+                                    width: '100%',
+                                    height: 44
+                                }}
+                            >
+                                <input
+                                    ref={serverInput}
+                                    type="text"
+                                    value={domain}
+                                    onChange={(e) => setDomain(e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        minWidth: 0,
+                                        padding: '8px 12px',
+                                        borderRadius: `${CssVar.round(1)} 0 0 ${CssVar.round(1)}`,
+                                        border: `1px solid ${CssVar.divider}`,
+                                        backgroundColor: CssVar.contentBackground,
+                                        color: CssVar.contentText,
+                                        fontSize: 16
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    style={{
+                                        padding: '0 14px',
+                                        color: CssVar.uiBackground,
+                                        border: `1px solid ${CssVar.uiText}`,
+                                        borderLeft: 'none',
+                                        borderRadius: `0 ${CssVar.round(1)} ${CssVar.round(1)} 0`,
+                                        backgroundColor: CssVar.uiText,
+                                        fontSize: 14,
+                                        fontWeight: 700
+                                    }}
+                                    onClick={() => {
+                                        serverInput.current?.focus()
+                                    }}
+                                >
+                                    変更
+                                </button>
+                            </div>
                         </div>
+
+                        <Text style={authStyles.status}>
+                            {registrationPageOpened ? 'サーバー上でアカウントが作成されるのを待っています。' : ''}
+                        </Text>
                     </div>
 
-                    <Button
-                        onClick={async () => {
-                            openRegistrationPage(domain)
-                        }}
-                    >
-                        {props.entrypoint === domain ? 'オススメではじめる' : 'このサーバーではじめる'}
-                    </Button>
-
-                    {registrationPageOpened && <Text>サーバー上でアカウントが作成されるのを待っています...</Text>}
-
-                    <Button onClick={props.onBack}>Back</Button>
-                </div>
+                    <AuthActions fixedBottom>
+                        <AuthButton
+                            onClick={async () => {
+                                openRegistrationPage(domain)
+                            }}
+                        >
+                            {props.entrypoint === domain ? 'おすすめサーバーではじめる' : 'このサーバーではじめる'}
+                        </AuthButton>
+                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                    </AuthActions>
+                </>
             )}
             {state === 'done' && (
-                <div>
-                    <Text>準備完了</Text>
-                    <Button
-                        onClick={async () => {
-                            const ccid = await invoke('has_masterkey')
-                            if (typeof ccid !== 'string') {
-                                alert('プログラムエラー: CCIDが見つかりません')
-                                return
-                            }
+                <>
+                    <AuthHeader
+                        title="準備完了"
+                        description="登録が確認できました。最後にこの端末で使う鍵を登録します。"
+                    />
+                    <AuthActions fixedBottom>
+                        <AuthButton
+                            onClick={async () => {
+                                const ccid = await invoke('has_masterkey')
+                                if (typeof ccid !== 'string') {
+                                    alert('プログラムエラー: CCIDが見つかりません')
+                                    return
+                                }
 
-                            const authProvider = new TauriAuthProvider(ccid)
-                            const kvs = new InMemoryKVS()
+                                const authProvider = new TauriAuthProvider(ccid)
+                                const kvs = new InMemoryKVS()
 
-                            const api = new Api(domain, authProvider, kvs)
+                                const api = new Api(domain, authProvider, kvs)
 
-                            const ckid: string = await invoke('create_subkey')
+                                const ckid: string = await invoke('create_subkey')
 
-                            const subkeyDoc: Document<any> = {
-                                key: semantics.subkey(ccid, ckid),
-                                author: ccid,
-                                schema: 'https://schema.concrnt.net/subkey.json',
-                                value: {
-                                    ckid
-                                },
-                                createdAt: new Date()
-                            }
+                                const subkeyDoc: Document<any> = {
+                                    key: semantics.subkey(ccid, ckid),
+                                    author: ccid,
+                                    schema: 'https://schema.concrnt.net/subkey.json',
+                                    value: {
+                                        ckid
+                                    },
+                                    createdAt: new Date()
+                                }
 
-                            await api.commit(subkeyDoc, domain, { useMasterkey: true })
-                            await invoke('set_domain', { domain })
+                                await api.commit(subkeyDoc, domain, { useMasterkey: true })
+                                await invoke('set_domain', { domain })
 
-                            reset()
-                            reload()
-                        }}
-                    >
-                        完了
-                    </Button>
-                </div>
+                                reset()
+                                reload()
+                            }}
+                        >
+                            完了
+                        </AuthButton>
+                    </AuthActions>
+                </>
             )}
-        </View>
+        </AuthScreen>
     )
 }
