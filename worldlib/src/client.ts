@@ -19,6 +19,8 @@ import { List } from './list'
 import { Message } from './message'
 import { Timeline } from './timeline'
 import { semantics } from './semantics'
+import { Schemas } from './schemas'
+import { isFulfilled } from './util'
 
 const cacheLifetime = 5 * 60 * 1000
 interface Cache<T> {
@@ -40,6 +42,8 @@ export class Client {
 
     acknowledging: Document<Acknowledge>[] = []
     acknowledgers: Document<Acknowledge>[] = []
+
+    knownCommunities: Timeline[] = []
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -159,11 +163,7 @@ export class Client {
                 }
                 api.commit(document)
 
-                return new List(
-                    semantics.homeList(api.authProvider.getCCID()),
-                    document.value.title,
-                    document.value.items
-                )
+                return new List(semantics.homeList(api.authProvider.getCCID()), document.value.title)
             } else {
                 throw err
             }
@@ -171,6 +171,21 @@ export class Client {
 
         client.acknowledgers = await client.getAcknowledgers(client.ccid)
         client.acknowledging = await client.getAcknowledging(client.ccid)
+
+        client.api
+            .query({
+                prefix: semantics.lists(client.ccid),
+                schema: Schemas.communityTimeline
+            })
+            .then((res) => {
+                Promise.allSettled(res.map((sd) => Timeline.loadFromReferenceSD(client, sd))).then(
+                    (results) =>
+                        (client.knownCommunities = results
+                            .filter(isFulfilled)
+                            .map((r) => r.value)
+                            .filter((t): t is Timeline => t !== null))
+                )
+            })
 
         // =====================
 
@@ -274,5 +289,16 @@ export class Client {
     async reloadAcknowledges(): Promise<void> {
         this.acknowledging = await this.getAcknowledging(this.ccid)
         this.acknowledgers = await this.getAcknowledgers(this.ccid)
+    }
+
+    async getLists(): Promise<List[]> {
+        const rawlists = await this.api.query({
+            prefix: semantics.lists(this.ccid),
+            schema: Schemas.list
+        })
+
+        const Lists = await Promise.all(rawlists.map((sd) => List.loadFromSD(this, sd)))
+
+        return Lists
     }
 }

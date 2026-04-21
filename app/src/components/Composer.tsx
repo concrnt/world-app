@@ -21,7 +21,7 @@ interface Props {
     onClose?: () => void
     destinations: string[]
     setDestinations: (destinations: string[]) => void
-    options: any[]
+    options: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
 }

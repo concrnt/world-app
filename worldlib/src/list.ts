@@ -1,3 +1,4 @@
+import { CDID, Document, SignedDocument } from '@concrnt/client'
 import { Client } from './client'
 import { Schemas } from './schemas'
 import { ListSchema } from './schemas/list'
@@ -9,13 +10,12 @@ export class List {
 
     title: string
 
-    items: string[]
-    communities: Timeline[] = []
+    items: string[] = []
+    communityIds: string[] = []
 
-    constructor(uri: string, title: string, items: string[]) {
+    constructor(uri: string, title: string) {
         this.uri = uri
         this.title = title
-        this.items = items
     }
 
     static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
@@ -23,50 +23,80 @@ export class List {
         if (!res) {
             return null
         }
-        const list = new List(uri, res.value.title, res.value.items)
-
-        const itemsQuery = await Promise.allSettled(
-            res.value.items.map(async (item) => {
-                return Timeline.load(client, item)
-            })
-        )
-
-        const items: Timeline[] = itemsQuery
-            .filter(isFulfilled)
-            .map((r) => r.value)
-            .filter(isNonNull)
-        list.communities = items.filter((i) => i.schema === Schemas.communityTimeline)
+        const list = new List(uri, res.value.title)
+        await list.loadItems(client)
 
         return list
     }
 
-    async addItem(client: Client, item: string): Promise<void> {
-        const latestDocument = await client.api.getDocument<ListSchema>(this.uri)
-        if (!latestDocument) {
-            throw new Error('List document not found')
+    static async loadFromSD(client: Client, sd: SignedDocument): Promise<List> {
+        const doc = JSON.parse(sd.document)
+        const list = new List(sd.cckv ?? sd.ccfs, doc.value.title)
+
+        await list.loadItems(client)
+        return list
+    }
+
+    async loadItems(client: Client): Promise<void> {
+        const items = await client.api.query({
+            prefix: this.uri
+        })
+
+        const documents = items.map((i) => JSON.parse(i.document))
+        this.items = documents.map((d) => d.value.href)
+        this.communityIds = documents
+            .filter((d) => d.value.schema === Schemas.communityTimeline)
+            .map((d) => d.value.href)
+    }
+
+    communities(client: Client): Promise<Timeline[]> {
+        return Promise.allSettled(this.communityIds.map((id) => Timeline.load(client, id))).then((results) =>
+            results
+                .filter(isFulfilled)
+                .map((r) => r.value)
+                .filter(isNonNull)
+        )
+    }
+
+    async addItem(client: Client, item: string, schema?: string): Promise<void> {
+        if (!schema) {
+            const target = await client.api.getDocument(item)
+            schema = target.schema
         }
 
-        if (latestDocument.value.items.includes(item)) {
-            return
+        const hash = CDID.makeHash(new TextEncoder().encode(item))
+
+        let key = this.uri
+        if (!key.endsWith('/')) {
+            key += '/'
+        }
+        key += hash
+
+        const document: Document<any> = {
+            key: key,
+            author: client.ccid,
+            schema: 'https://schema.concrnt.net/reference.json',
+            value: {
+                href: item,
+                schema: schema
+            },
+            createdAt: new Date()
         }
 
-        latestDocument.value.items.push(item)
-
-        await client.api.commit(latestDocument)
-
-        this.items = latestDocument.value.items
+        await client.api.commit(document)
+        await this.loadItems(client)
     }
 
     async removeItem(client: Client, item: string): Promise<void> {
-        const latestDocument = await client.api.getDocument<ListSchema>(this.uri)
-        if (!latestDocument) {
-            throw new Error('List document not found')
+        const hash = CDID.makeHash(new TextEncoder().encode(item))
+
+        let key = this.uri
+        if (!key.endsWith('/')) {
+            key += '/'
         }
+        key += hash
 
-        latestDocument.value.items = latestDocument.value.items.filter((i) => i !== item)
-
-        await client.api.commit(latestDocument)
-
-        this.items = latestDocument.value.items
+        await client.api.delete(key)
+        await this.loadItems(client)
     }
 }

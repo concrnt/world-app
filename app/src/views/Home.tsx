@@ -15,9 +15,10 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
-import { isFulfilled, Schemas, semantics } from '@concrnt/worldlib'
+import { semantics } from '@concrnt/worldlib'
 import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
+import { ListName } from '../components/ListName'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
@@ -37,9 +38,12 @@ export const HomeView = (props: ScrollViewProps) => {
     const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client?.ccid ?? ''))
     const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
 
+    console.log('HomeView: rendering', { selectedTabUri, tabs, client })
+
     const timelineIDsPromise = useMemo(() => {
+        console.log('HomeView: calculating timelineIDsPromise', { selectedTabUri, tabs, client })
         if (!client) {
-            return Promise.resolve([semantics.homeTimeline('')])
+            return Promise.resolve([])
         }
         if (selectedTab) {
             return (
@@ -61,18 +65,6 @@ export const HomeView = (props: ScrollViewProps) => {
             return Promise.resolve([semantics.homeTimeline(client.ccid)])
         }
     }, [selectedTabUri, tabs, client])
-
-    const communitiesPromise = useMemo(() => {
-        return timelineIDsPromise.then((timelineIDs) => {
-            return Promise.allSettled(timelineIDs.map((uri) => client?.getTimeline(uri))).then((results) => {
-                return results
-                    .filter(isFulfilled)
-                    .map((res) => res.value)
-                    .filter((timeline) => !!timeline)
-                    .filter((tl) => tl.schema === Schemas.communityTimeline)
-            })
-        })
-    }, [timelineIDsPromise, client])
 
     // fix default settings
     useEffect(() => {
@@ -134,7 +126,7 @@ export const HomeView = (props: ScrollViewProps) => {
                                     width: '120px'
                                 }}
                             >
-                                <Text>{client?.getList(tab.uri).then((l) => l?.title)}</Text>
+                                <ListName uri={tab.uri} />
                             </Tab>
                         ))}
                     </Tabs>
@@ -150,11 +142,8 @@ export const HomeView = (props: ScrollViewProps) => {
                     />
                 </Suspense>
             </View>
-            <Suspense fallback={<div />}>
-                <InnerFab
-                    defaultPostTimelines={selectedTab?.pinData.defaultPostTimelines ?? []}
-                    communitiesPromise={communitiesPromise}
-                />
+            <Suspense key={selectedTabUri} fallback={<div />}>
+                <InnerFab defaultPostTimelines={selectedTab?.pinData.defaultPostTimelines ?? []} />
             </Suspense>
         </>
     )
@@ -177,21 +166,14 @@ const InnerHomeView = (props: InnerHomeViewProps) => {
     return <RealtimeTimeline ref={props.ref} timelines={timelineIDs} />
 }
 
-const InnerFab = (props: { defaultPostTimelines: string[]; communitiesPromise: Promise<any[]> }) => {
+const InnerFab = (props: { defaultPostTimelines: string[] }) => {
     const composer = useComposer()
-    const communities = use(props.communitiesPromise)
-    console.log('communities', communities)
-
-    // コミュニティ選択肢をComposerContextにグローバル保持
-    useEffect(() => {
-        composer.setCommunityOptions(communities)
-    }, [communities])
 
     return (
         <FAB
             onClick={() => {
                 hapticLight()
-                composer.open(props.defaultPostTimelines, communities)
+                composer.open(props.defaultPostTimelines)
             }}
         >
             <MdCreate size={24} />

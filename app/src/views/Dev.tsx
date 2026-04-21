@@ -40,6 +40,14 @@ export const DevView = () => {
                     Scan
                 </Button>
 
+                <Button
+                    onClick={() => {
+                        window.location.reload()
+                    }}
+                >
+                    Reload
+                </Button>
+
                 <pre>
                     <code>{scanned}</code>
                 </pre>

@@ -1,8 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { Suspense, use, useDeferredValue } from 'react'
 
 interface Props {
-    children: ReactNode | Promise<ReactNode>
+    children: ReactNode
     style?: CSSProperties
     variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'caption'
 }
@@ -46,31 +45,6 @@ const baseStyles: Record<NonNullable<Props['variant']>, CSSProperties> = {
 
 export const Text = (props: Props) => {
     return (
-        <Suspense
-            fallback={
-                <span
-                    style={{
-                        backgroundColor: '#e0e0e0',
-                        color: 'transparent',
-                        display: 'inline-block',
-                        width: '100%',
-                        ...baseStyles[props.variant || 'body'],
-                        ...props.style
-                    }}
-                >
-                    {'loading...'}
-                </span>
-            }
-        >
-            {useDeferredValue(<Inner {...props} />)}
-        </Suspense>
-    )
-}
-
-const Inner = (props: Props) => {
-    const children = props.children instanceof Promise ? use(props.children) : props.children
-
-    return (
         <p
             style={{
                 whiteSpace: 'pre-wrap',
@@ -79,7 +53,7 @@ const Inner = (props: Props) => {
                 ...props.style
             }}
         >
-            {children}
+            {props.children}
         </p>
     )
 }

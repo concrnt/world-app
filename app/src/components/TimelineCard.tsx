@@ -25,7 +25,8 @@ export const TimelineCard = (props: Props) => {
                 borderRadius: '8px',
                 display: 'flex',
                 overflow: 'hidden',
-                height: '7rem'
+                height: '7rem',
+                minHeight: '7rem'
             }}
         >
             <CCWallpaper

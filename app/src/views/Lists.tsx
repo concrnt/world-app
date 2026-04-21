@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, use, useMemo, useState } from 'react'
 import { Header } from '../ui/Header'
 import { View, Text, IconButton, Button, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { ListSchema, Schemas } from '@concrnt/worldlib'
+import { List, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { MdPlaylistAdd } from 'react-icons/md'
 
 import { RiPushpinFill } from 'react-icons/ri'
-import { Reorder } from 'motion/react'
+import { RiPushpinLine } from 'react-icons/ri'
 import { usePreference } from '../contexts/Preference'
 import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
@@ -16,121 +16,27 @@ import { CssVar } from '../types/Theme'
 
 export const ListsView = () => {
     const { client } = useClient()
-    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
-    const [lists, setLists] = useState<Record<string, Document<ListSchema>>>({})
-
-    const hiddenLists = Object.keys(lists).filter((uri) => !pinnedLists.find((pinned) => pinned.uri === uri))
 
     const drawer = useDrawer()
 
-    const fetchLists = useCallback(() => {
-        if (!client) return
-        client.api
-            .query({
-                prefix: `cckv://${client.ccid}/concrnt.world/`,
-                schema: Schemas.list
-            })
-            .then((results) => {
-                const mapped: Record<string, Document<ListSchema>> = {}
-                results.forEach((sd) => {
-                    mapped[sd.cckv] = JSON.parse(sd.document)
-                })
-
-                setLists(mapped)
-                console.log('Fetched communities:', results)
-            })
-            .catch((error) => {
-                console.error('Error fetching communities:', error)
-            })
-    }, [client])
-
-    useEffect(() => {
-        fetchLists()
-    }, [fetchLists])
+    const [updater, setUpdater] = useState(0)
+    const listsPromise = useMemo(() => {
+        if (!client) return Promise.resolve([])
+        return client.getLists()
+    }, [client, updater])
 
     return (
         <>
             <View>
                 <Header>Lists</Header>
-                <div style={{ padding: '8px' }}>
-                    <Text variant="h3">ピン留め中のリスト</Text>
-                    <Reorder.Group values={pinnedLists} onReorder={setPinnedLists}>
-                        {pinnedLists.map((pinned) => (
-                            <Reorder.Item
-                                key={pinned.uri}
-                                value={pinned}
-                                style={{}}
-                                onClick={() =>
-                                    drawer.open(
-                                        <ListSettings
-                                            uri={pinned.uri}
-                                            onComplete={() => {
-                                                drawer.close()
-                                                fetchLists()
-                                            }}
-                                        />
-                                    )
-                                }
-                            >
-                                <div
-                                    style={{
-                                        border: '1px solid #ccc',
-                                        padding: 10,
-                                        marginBottom: 10,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    <Text>{lists[pinned.uri]?.value.title ?? '無題のリスト'}</Text>
-                                </div>
-                            </Reorder.Item>
-                        ))}
-                    </Reorder.Group>
-
-                    <Text variant="h3">非表示中のリスト</Text>
-                    {hiddenLists.map((uri) => {
-                        const list = lists[uri]
-                        return (
-                            <div
-                                key={uri}
-                                style={{
-                                    border: '1px solid #ccc',
-                                    padding: 10,
-                                    marginBottom: 10,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                                onClick={() =>
-                                    drawer.open(
-                                        <ListSettings
-                                            uri={uri}
-                                            onComplete={() => {
-                                                drawer.close()
-                                                fetchLists()
-                                            }}
-                                        />
-                                    )
-                                }
-                            >
-                                <Text variant="h4">{list.value.title}</Text>
-                                <Text>アイテム数: {list.value.items.length}</Text>
-                                <IconButton
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        setPinnedLists([
-                                            ...pinnedLists,
-                                            { uri: uri, defaultPostHome: false, defaultPostTimelines: [] }
-                                        ])
-                                    }}
-                                >
-                                    <RiPushpinFill />
-                                </IconButton>
-                            </div>
-                        )
-                    })}
-                </div>
+                <Suspense fallback={<Text>Loading...</Text>}>
+                    <Lists
+                        listsPromise={listsPromise}
+                        onUpdate={() => {
+                            setUpdater((u) => u + 1)
+                        }}
+                    />
+                </Suspense>
             </View>
             <FAB
                 onClick={() => {
@@ -138,7 +44,7 @@ export const ListsView = () => {
                         <ListCreator
                             onComplete={() => {
                                 drawer.close()
-                                fetchLists()
+                                setUpdater((u) => u + 1)
                             }}
                         />
                     )
@@ -147,6 +53,67 @@ export const ListsView = () => {
                 <MdPlaylistAdd size={24} />
             </FAB>
         </>
+    )
+}
+
+interface ListsProps {
+    listsPromise: Promise<List[]>
+    onUpdate?: () => void
+}
+
+const Lists = (props: ListsProps) => {
+    const lists = use(props.listsPromise)
+    const drawer = useDrawer()
+
+    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
+
+    return (
+        <div style={{ padding: '8px' }}>
+            {lists.map((list) => (
+                <div
+                    key={list.uri}
+                    style={{
+                        border: '1px solid #ccc',
+                        padding: 10,
+                        marginBottom: 10,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                    onClick={() =>
+                        drawer.open(
+                            <ListSettings
+                                uri={list.uri}
+                                onComplete={() => {
+                                    drawer.close()
+                                    props.onUpdate?.()
+                                }}
+                            />
+                        )
+                    }
+                >
+                    <Text>{list.title}</Text>
+                    <Text>アイテム数: {list.items.length}</Text>
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (pinnedLists.find((p) => p.uri === list.uri)) {
+                                // unpin
+                                setPinnedLists(pinnedLists.filter((p) => p.uri !== list.uri))
+                            } else {
+                                // pin
+                                setPinnedLists([
+                                    ...pinnedLists,
+                                    { uri: list.uri, defaultPostHome: false, defaultPostTimelines: [] }
+                                ])
+                            }
+                        }}
+                    >
+                        {pinnedLists.find((p) => p.uri === list.uri) ? <RiPushpinFill /> : <RiPushpinLine />}
+                    </IconButton>
+                </div>
+            ))}
+        </div>
     )
 }
 
@@ -178,7 +145,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                         const key = Date.now().toString()
 
                         const document: Document<ListSchema> = {
-                            key: `cckv://${client.ccid}/concrnt.world/lists/${key}`,
+                            key: semantics.list(client.ccid, 'main', key),
                             schema: Schemas.list,
                             value: {
                                 title: newListTitle,

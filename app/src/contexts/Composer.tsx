@@ -1,13 +1,13 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { Message } from '@concrnt/worldlib'
+import { Message, Timeline } from '@concrnt/worldlib'
+import { useClient } from './Client'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
 interface ComposerContextState {
-    open: (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => void
+    open: (destinations: string[], options?: Timeline[], mode?: ComposerMode, targetMessage?: Message<any>) => void
     close: () => void
-    setCommunityOptions: (options: any[]) => void
 }
 
 interface Props {
@@ -16,32 +16,27 @@ interface Props {
 
 const ComposerContext = createContext<ComposerContextState>({
     open: () => {},
-    close: () => {},
-    setCommunityOptions: () => {}
+    close: () => {}
 })
 
 export const ComposerProvider = (props: Props) => {
+    const { client } = useClient()
+
     const [showComposer, setShowComposer] = useState(false)
     const [destinations, setDestinations] = useState<string[]>([])
-    const [options, setOptions] = useState<any[]>([])
+    const [options, setOptions] = useState<Timeline[]>([])
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
-    const [communityOptions, _setCommunityOptions] = useState<any[]>([])
-
-    const setCommunityOptions = useCallback((options: any[]) => {
-        _setCommunityOptions(options)
-    }, [])
 
     const open = useCallback(
-        (destinations: string[], options: any[], mode?: ComposerMode, targetMessage?: Message<any>) => {
+        (destinations: string[], options?: Timeline[], mode?: ComposerMode, targetMessage?: Message<any>) => {
             setDestinations(destinations)
-            // options が空の場合は保持済みの communityOptions にフォールバック
-            setOptions(options.length > 0 ? options : communityOptions)
+            setOptions(options ?? client?.knownCommunities ?? [])
             setMode(mode ?? 'normal')
             setTargetMessage(targetMessage)
             setShowComposer(true)
         },
-        [communityOptions]
+        [client]
     )
 
     const close = useCallback(() => {
@@ -53,10 +48,9 @@ export const ComposerProvider = (props: Props) => {
     const value = useMemo(
         () => ({
             open,
-            close,
-            setCommunityOptions
+            close
         }),
-        [open, close, setCommunityOptions]
+        [open, close]
     )
 
     return (

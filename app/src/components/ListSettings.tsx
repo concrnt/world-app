@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
 import { usePreference } from '../contexts/Preference'
@@ -69,6 +69,11 @@ export const ListSettings = (props: Props) => {
         })
     }
 
+    const optionsPromise = useMemo(() => {
+        if (!client || !list) return Promise.resolve([])
+        return list.communities(client)
+    }, [client, list])
+
     return (
         <div
             style={{
@@ -92,16 +97,13 @@ export const ListSettings = (props: Props) => {
                 <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
             </div>
             {isPinned && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                    <Text variant="h5">デフォルト投稿先</Text>
-                    <TimelinePicker
-                        items={list?.communities ?? []}
+                <Suspense fallback={<Text>Loading...</Text>}>
+                    <DefaultPostTimelines
+                        optionsPromise={optionsPromise}
                         selected={postTimelines}
                         setSelected={setPostTimelines}
-                        keyFunc={(item: Timeline) => item.uri}
-                        labelFunc={(item: Timeline) => item.name}
                     />
-                </div>
+                </Suspense>
             )}
 
             {isPinned ? (
@@ -117,6 +119,27 @@ export const ListSettings = (props: Props) => {
             ) : (
                 <Button>リストを削除</Button>
             )}
+        </div>
+    )
+}
+
+const DefaultPostTimelines = (props: {
+    optionsPromise: Promise<Timeline[]>
+    selected: string[]
+    setSelected: (timelines: string[]) => void
+}) => {
+    const options = use(props.optionsPromise)
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+            <Text variant="h5">デフォルト投稿先</Text>
+            <TimelinePicker
+                items={options}
+                selected={props.selected}
+                setSelected={props.setSelected}
+                keyFunc={(item: Timeline) => item.uri}
+                labelFunc={(item: Timeline) => item.name}
+            />
         </div>
     )
 }

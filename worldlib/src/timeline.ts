@@ -1,5 +1,6 @@
 import { CommunityTimelineSchema } from './schemas/'
 import { Client } from './client'
+import { SignedDocument } from '@concrnt/client'
 
 export class Timeline {
     uri: string
@@ -30,5 +31,21 @@ export class Timeline {
         const timeline = new Timeline(uri, res.schema, res.value)
 
         return timeline
+    }
+
+    static loadFromSD(sd: SignedDocument): Timeline {
+        const doc = JSON.parse(sd.document)
+        const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc.schema, doc.value)
+        return timeline
+    }
+
+    static loadFromReferenceSD(client: Client, sd: SignedDocument): Promise<Timeline | null> {
+        const doc = JSON.parse(sd.document)
+        if (doc.schema === 'https://schema.concrnt.net/reference.json') {
+            return Timeline.load(client, doc.value.href)
+        } else {
+            const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc.schema, doc.value)
+            return Promise.resolve(timeline)
+        }
     }
 }
