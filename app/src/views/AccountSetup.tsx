@@ -1,12 +1,14 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Button, View, Text, TextField } from '@concrnt/ui'
-import { useEffect, useState } from 'react'
+import { Button, View, Text, CssVar } from '@concrnt/ui'
+import { useEffect, useRef, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
 import { useClient } from '../contexts/Client'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { semantics } from '@concrnt/worldlib'
+import Tilt from 'react-parallax-tilt'
+import { Passport } from '@concrnt/ui'
 
 interface Props {
     entrypoint: string
@@ -20,7 +22,8 @@ export const AccountSetup = (props: Props) => {
     const [domain, setDomain] = useState<string>(props.entrypoint)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
-    const [profileCreated, setProfileCreated] = useState(false)
+
+    const serverInput = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const timer = setInterval(async () => {
@@ -57,7 +60,31 @@ export const AccountSetup = (props: Props) => {
         }
     }, [registrationPageOpened])
 
-    const state = profileCreated ? 'done' : accountCreated ? 'account_created' : 'initial'
+    const openRegistrationPage = async (domain: string) => {
+        const ccid: string = await invoke('initialize_master')
+
+        const authProvider = new TauriAuthProvider(ccid)
+
+        const document = {
+            author: ccid,
+            schema: 'https://schema.concrnt.net/entity.json',
+            value: {
+                domain
+            },
+            createdAt: new Date().toISOString()
+        }
+
+        const docString = JSON.stringify(document)
+        const signature = await authProvider.signMaster(docString)
+
+        const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
+
+        openUrl(`https://${domain}/register?document=${encodedDoc}&signature=${signature}`, 'inAppBrowser')
+
+        setRegistrationPageOpened(true)
+    }
+
+    const state = accountCreated ? 'done' : 'initial'
 
     return (
         <View
@@ -66,55 +93,82 @@ export const AccountSetup = (props: Props) => {
             }}
         >
             {state === 'initial' && (
-                <div>
-                    <Button onClick={props.onBack}>Back</Button>
-                    <Text>Domain</Text>
-                    <TextField value={domain} onChange={(e) => setDomain(e.target.value)} />
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: CssVar.space(2)
+                    }}
+                >
+                    <Text variant="h1">アカウントを作成しましょう</Text>
+
+                    <div
+                        style={{
+                            width: '90vw',
+                            margin: '20px 0'
+                        }}
+                    >
+                        <Tilt glareEnable={true} glareBorderRadius="5%">
+                            <Passport
+                                ccid={'con1......................................'}
+                                name={'...'}
+                                avatar={''}
+                                host={'TBD'}
+                                cdate={new Date().toLocaleDateString()}
+                            />
+                        </Tilt>
+                    </div>
+
+                    <Text>{props.entrypoint === domain ? 'おすすめサーバー:' : 'カスタムサーバー:'}</Text>
+                    <div
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0,
+                            height: 32
+                        }}
+                    >
+                        <input
+                            ref={serverInput}
+                            type="text"
+                            value={domain}
+                            onChange={(e) => setDomain(e.target.value)}
+                            style={{
+                                padding: '4px 8px',
+                                borderRadius: `4px 0 0 4px`,
+                                border: `1px solid ${CssVar.divider}`,
+                                width: 200,
+                                height: '100%'
+                            }}
+                        />
+                        <div
+                            style={{
+                                display: 'inline-block',
+                                padding: '4px 8px',
+                                color: CssVar.uiText,
+                                borderRadius: `0 4px 4px 0`,
+                                backgroundColor: CssVar.uiBackground
+                            }}
+                            onClick={() => {
+                                serverInput.current?.focus()
+                            }}
+                        >
+                            変更
+                        </div>
+                    </div>
 
                     <Button
                         onClick={async () => {
-                            const ccid: string = await invoke('initialize_master')
-
-                            const authProvider = new TauriAuthProvider(ccid)
-
-                            const document = {
-                                author: ccid,
-                                schema: 'https://schema.concrnt.net/entity.json',
-                                value: {
-                                    domain
-                                },
-                                createdAt: new Date().toISOString()
-                            }
-
-                            const docString = JSON.stringify(document)
-                            const signature = await authProvider.signMaster(docString)
-
-                            const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
-
-                            openUrl(
-                                `https://${domain}/register?document=${encodedDoc}&signature=${signature}`,
-                                'inAppBrowser'
-                            )
-
-                            setRegistrationPageOpened(true)
+                            openRegistrationPage(domain)
                         }}
                     >
-                        登録ページを開く
+                        {props.entrypoint === domain ? 'オススメではじめる' : 'このサーバーではじめる'}
                     </Button>
 
                     {registrationPageOpened && <Text>サーバー上でアカウントが作成されるのを待っています...</Text>}
-                </div>
-            )}
-            {state === 'account_created' && (
-                <div>
-                    <Text>プロフィールを作成しましょう</Text>
-                    <Button
-                        onClick={() => {
-                            setProfileCreated(true)
-                        }}
-                    >
-                        あとで
-                    </Button>
+
+                    <Button onClick={props.onBack}>Back</Button>
                 </div>
             )}
             {state === 'done' && (
