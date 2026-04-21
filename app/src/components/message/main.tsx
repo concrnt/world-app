@@ -52,9 +52,19 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return <LegacyNoteMessage message={message} />
         default:
             return (
-                <div>
+                <div
+                    style={{
+                        overflow: 'hidden'
+                    }}
+                >
                     <Text>Unsupported message schema: {message.schema}</Text>
-                    <pre>{JSON.stringify(message, null, 2)}</pre>
+                    <pre
+                        style={{
+                            overflowX: 'auto'
+                        }}
+                    >
+                        {JSON.stringify(message, null, 2)}
+                    </pre>
                 </div>
             )
     }

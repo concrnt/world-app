@@ -15,9 +15,20 @@ export const RenderError = ({ error }: FallbackProps) => {
         )
     }
     return (
-        <div>
+        <div
+            style={{
+                overflow: 'hidden'
+            }}
+        >
             {(error as any)?.message}
-            <pre>{(error as any)?.stack}</pre>
+            <pre
+                style={{
+                    fontSize: '12px',
+                    overflowX: 'auto'
+                }}
+            >
+                {(error as any)?.stack}
+            </pre>
         </div>
     )
 }

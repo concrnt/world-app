@@ -49,19 +49,19 @@ export const ProfileView = (props: Props) => {
         switch (tab ?? '') {
             case 'posts':
                 return {
-                    prefix: semantics.homeTimeline(props.id),
+                    prefix: semantics.homeTimeline(props.id) + '/',
                     query: {}
                 }
             case 'media':
                 return {
-                    prefix: semantics.homeTimeline(props.id),
+                    prefix: semantics.homeTimeline(props.id) + '/',
                     query: {
                         schema: Schemas.mediaMessage
                     }
                 }
             case 'activity':
                 return {
-                    prefix: semantics.activityTimeline(props.id),
+                    prefix: semantics.activityTimeline(props.id) + '/',
                     query: {}
                 }
         }

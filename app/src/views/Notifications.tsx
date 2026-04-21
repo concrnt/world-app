@@ -30,7 +30,7 @@ export const NotificationsView = () => {
         <View>
             <Header>Notifications</Header>
             <NotificationFilter selected={selected} setSelected={setSelected} />
-            <NotificationTimeline prefix={semantics.notificationTimeline(client.ccid)} query={query} />
+            <NotificationTimeline prefix={semantics.notificationTimeline(client.ccid) + '/'} query={query} />
         </View>
     )
 }
