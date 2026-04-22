@@ -22,10 +22,12 @@ export class User {
             throw new Error('entity not found')
         })
 
-        const profile = await client.api.getDocument<ProfileSchema>(semantics.profile(entity.author)).catch((_e) => {
-            // ignore error, profile is optional
-            return undefined
-        })
+        const profile = await client.api
+            .getDocument<ProfileSchema>(semantics.profile(entity.author, 'main'))
+            .catch((_e) => {
+                // ignore error, profile is optional
+                return undefined
+            })
 
         return new User(entity.value.domain, entity, profile?.value)
     }

@@ -31,7 +31,7 @@ export class List {
 
     static async loadFromSD(client: Client, sd: SignedDocument): Promise<List> {
         const doc = JSON.parse(sd.document)
-        const list = new List(sd.cckv ?? sd.ccfs, doc.value.title)
+        const list = new List(sd.cckv ?? sd.ccfs, doc.value.name)
 
         await list.loadItems(client)
         return list

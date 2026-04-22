@@ -8,7 +8,7 @@ import { semantics } from "@concrnt/worldlib"
 export const Home = () => {
 
     const { client } = useClient()
-    const timelines = client ? [semantics.homeTimeline(client.ccid)] : []
+    const timelines = client ? [semantics.homeTimeline(client.ccid, client.currentProfile)] : []
 
     return <div>
         <h1>Home</h1>

@@ -18,6 +18,8 @@ import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
+import { SwitchAccountButton } from './SwitchAccountButton'
+
 interface Props {
     onPush?: (view: ReactNode) => void
 }
@@ -55,10 +57,24 @@ export const Sidebar = (props: Props) => {
                             flexDirection: 'column',
                             justifyContent: 'center'
                         }}
-                        onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
+                        onClick={() =>
+                            props.onPush?.(
+                                <ProfileView ccid={client?.ccid || ''} profileName={client?.currentProfile} />
+                            )
+                        }
                     >
-                        <Avatar ccid={client?.ccid || ''} src={client?.user?.profile.avatar} />
-                        <Text variant="h2">{client?.user?.profile.username || 'Unknown User'}</Text>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
+                            <div style={{ flex: 1 }} />
+                            <SwitchAccountButton />
+                        </div>
+                        <Text variant="h2">{client?.profile.username || 'Unknown User'}</Text>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
                     <Divider />
@@ -72,7 +88,11 @@ export const Sidebar = (props: Props) => {
                     >
                         <ListItem
                             icon={<MdPerson size={24} />}
-                            onClick={() => props.onPush?.(<ProfileView id={client?.ccid || ''} />)}
+                            onClick={() =>
+                                props.onPush?.(
+                                    <ProfileView ccid={client?.ccid || ''} profileName={client?.currentProfile} />
+                                )
+                            }
                         >
                             プロフィール
                         </ListItem>

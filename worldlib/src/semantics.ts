@@ -1,20 +1,17 @@
 export const semantics = {
     user: (ccid: string) => `cckv://${ccid}`,
-    profile: (owner: string, profile?: string) => `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}`,
+    profile: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}`,
     profiles: (owner: string) => `cckv://${owner}/concrnt.world/profiles`,
-    lists: (owner: string, profile?: string) => `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/lists`,
+    lists: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists`,
     list: (owner: string, profile: string, listId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/lists/${listId}`,
-    homeList: (owner: string, profile?: string) =>
-        `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/lists/home`,
-    homeTimeline: (owner: string, profile?: string) =>
-        `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/home-timeline`,
-    notificationTimeline: (owner: string, profile?: string) =>
-        `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/notify-timeline`,
-    activityTimeline: (owner: string, profile?: string) =>
-        `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/activity-timeline`,
-    postsParnet: (owner: string, profile?: string) =>
-        `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/posts`,
+    homeList: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists/home`,
+    homeTimeline: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/home-timeline`,
+    notificationTimeline: (owner: string, profile: string) =>
+        `cckv://${owner}/concrnt.world/profiles/${profile}/notify-timeline`,
+    activityTimeline: (owner: string, profile: string) =>
+        `cckv://${owner}/concrnt.world/profiles/${profile}/activity-timeline`,
+    postsParnet: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/posts`,
     post: (owner: string, profile: string, postId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
 

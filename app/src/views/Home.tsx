@@ -19,6 +19,7 @@ import { semantics } from '@concrnt/worldlib'
 import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
+import { ProfileEditor } from '../components/ProfileEditor'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
@@ -35,7 +36,9 @@ export const HomeView = (props: ScrollViewProps) => {
         [pinnedLists]
     )
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client?.ccid ?? ''))
+    const [selectedTabUri, setSelectedTabUri] = useState<string>(
+        semantics.homeList(client?.ccid ?? '', client?.currentProfile ?? 'main')
+    )
     const selectedTab = tabs.find((tab) => tab.uri === selectedTabUri)
 
     console.log('HomeView: rendering', { selectedTabUri, tabs, client })
@@ -51,27 +54,37 @@ export const HomeView = (props: ScrollViewProps) => {
                     .getList(selectedTab.uri)
                     .then((list) => {
                         const items = list?.items ?? []
-                        if (!items.includes(semantics.homeTimeline(client.ccid))) {
-                            items.unshift(semantics.homeTimeline(client.ccid))
+                        if (!items.includes(semantics.homeTimeline(client.ccid, client?.currentProfile))) {
+                            items.unshift(semantics.homeTimeline(client.ccid, client?.currentProfile))
                         }
                         return items
                     })
                     .catch((e) => {
                         console.error(e)
-                        return [semantics.homeTimeline(client.ccid)]
-                    }) ?? Promise.resolve([semantics.homeTimeline(client.ccid)])
+                        return [semantics.homeTimeline(client.ccid, client?.currentProfile)]
+                    }) ?? Promise.resolve([semantics.homeTimeline(client.ccid, client?.currentProfile)])
             )
         } else {
-            return Promise.resolve([semantics.homeTimeline(client.ccid)])
+            return Promise.resolve([semantics.homeTimeline(client.ccid, client?.currentProfile)])
         }
     }, [selectedTabUri, tabs, client])
 
     // fix default settings
     useEffect(() => {
         if (!client) return
-        const homeURI = semantics.homeList(client.ccid)
+        const homeURI = semantics.homeList(client.ccid, client?.currentProfile)
         if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
             setPinnedLists((old) => [{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...old])
+        }
+
+        if (!(client.currentProfile in client.profiles)) {
+            drawer.open(
+                <ProfileEditor
+                    title="プロフィールを設定しましょう！"
+                    targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
+                    onComplete={() => drawer.close()}
+                />
+            )
         }
     }, [client])
 

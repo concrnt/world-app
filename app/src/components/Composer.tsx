@@ -120,7 +120,7 @@ export const Composer = (props: Props) => {
     const handleSubmit = async () => {
         if (!client) return
 
-        const homeTimeline = semantics.homeTimeline(client.ccid)
+        const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
         // const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 

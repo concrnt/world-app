@@ -7,7 +7,7 @@ import { InMemoryKVS } from '@concrnt/client'
 
 export interface ClientContextState {
     client?: Client
-    reload: () => Promise<void>
+    reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
 }
 
@@ -30,7 +30,7 @@ interface SessionState {
 export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client | null | undefined>(undefined)
 
-    const reload = useCallback(async () => {
+    const reload = useCallback(async (name?: string) => {
         const session = await invoke<SessionState | undefined>('get_session')
         console.log('session', session)
         if (!session) {
@@ -47,7 +47,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         const authProvider = await TauriAuthProvider.create()
         const kvs = new InMemoryKVS()
-        Client.create(domain, authProvider, kvs)
+        Client.create(domain, authProvider, kvs, name)
             .then((client) => {
                 setClient(client)
             })

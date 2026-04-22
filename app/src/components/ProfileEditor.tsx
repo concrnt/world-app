@@ -4,21 +4,24 @@ import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
 import { useImageCropper } from '../contexts/ImageCropper'
-import { semantics } from '@concrnt/worldlib'
+import { ProfileSchema } from '@concrnt/worldlib'
 
 interface Props {
     onComplete?: () => void
+    targetURI: string
+    initial?: ProfileSchema
+    title?: string
 }
 
 export const ProfileEditor = (props: Props) => {
     const { client } = useClient()
     const cropper = useImageCropper()
 
-    const [username, setUsername] = useState<string>(client?.user?.profile?.username || '')
-    const [description, setDescription] = useState<string>(client?.user?.profile?.description || '')
+    const [username, setUsername] = useState<string>(props.initial?.username || '')
+    const [description, setDescription] = useState<string>(props.initial?.description || '')
 
-    const [avatar, setAvatar] = useState<string>(client?.user?.profile?.avatar || '')
-    const [banner, setBanner] = useState<string>(client?.user?.profile?.banner || '')
+    const [avatar, setAvatar] = useState<string>(props.initial?.avatar || '')
+    const [banner, setBanner] = useState<string>(props.initial?.banner || '')
 
     const [avatarDraft, setAvatarDraft] = useState<File | null>(null)
     const [bannerDraft, setBannerDraft] = useState<File | null>(null)
@@ -43,20 +46,20 @@ export const ProfileEditor = (props: Props) => {
                     alignItems: 'center'
                 }}
             >
-                <Text variant="h3">Profile</Text>
+                <Text variant="h3">{props.title ?? 'Profile'}</Text>
                 <Button
                     disabled={saving}
                     onClick={async () => {
                         if (!client) return
                         setSaving(true)
                         const document = {
-                            key: semantics.profile(client.ccid),
+                            key: props.targetURI,
                             schema: 'https://schema.concrnt.world/p/main.json',
                             value: {
                                 username: username,
                                 description: description,
-                                avatar: client?.user?.profile?.avatar,
-                                banner: client?.user?.profile?.banner
+                                avatar: props.initial?.avatar,
+                                banner: props.initial?.banner
                             },
                             author: client.ccid,
                             createdAt: new Date()
@@ -74,6 +77,7 @@ export const ProfileEditor = (props: Props) => {
 
                         client.api.commit(document).then(() => {
                             console.log('Profile updated')
+                            client.updateProfiles()
                             props.onComplete?.()
                         })
                     }}

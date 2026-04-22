@@ -1,6 +1,6 @@
 import { Document } from '@concrnt/client'
 import { Schemas } from './schemas'
-import { LikeAssociationSchema } from './schemas/'
+import { LikeAssociationSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
 import { Client } from './client'
 import { Association } from './association'
@@ -26,6 +26,9 @@ export class Message<T> implements Document<T> {
     reactionCounts?: Record<string, number>
 
     associationTarget?: Message<any> | null
+
+    authorProfileName: string | null = null
+    authorProfile: ProfileSchema | null = null
 
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
@@ -53,6 +56,8 @@ export class Message<T> implements Document<T> {
         message.associationCounts = await client.api.getAssociationCounts(uri)
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
 
+        message.authorProfileName = (res.value as any).profileOverride?.profileID || 'main'
+
         if (res.associate) {
             message.associationTarget = await Message.load<any>(client, res.associate).catch(() => undefined)
         }
@@ -64,7 +69,10 @@ export class Message<T> implements Document<T> {
         const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.value.domain)
         console.log('fav author domain', authorDomain)
 
-        const distributes = [semantics.activityTimeline(client.ccid), semantics.notificationTimeline(this.author)]
+        const distributes = [
+            semantics.activityTimeline(client.ccid, client.currentProfile),
+            semantics.notificationTimeline(this.author, this.authorProfileName || 'main')
+        ]
 
         const document: Document<LikeAssociationSchema> = {
             author: client.ccid,

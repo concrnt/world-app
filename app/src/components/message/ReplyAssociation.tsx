@@ -90,7 +90,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                             onClick={(e) => {
                                 e.stopPropagation()
                                 if (replyAuthor) {
-                                    push(<ProfileView id={replyAuthor.ccid} />)
+                                    push(<ProfileView ccid={replyAuthor.ccid} />)
                                 }
                             }}
                         >

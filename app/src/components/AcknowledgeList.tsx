@@ -85,7 +85,7 @@ export const AcknowledgeList = (props: Props) => {
 const UserList = (props: { usersPromise: Promise<User[] | null> }) => {
     const stack = useStack()
     const openProfile = (ccid: string) => {
-        stack.push(<ProfileView id={ccid} />)
+        stack.push(<ProfileView ccid={ccid} />)
     }
 
     const users = use(props.usersPromise)

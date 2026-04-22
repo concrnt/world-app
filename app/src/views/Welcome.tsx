@@ -55,7 +55,9 @@ export const WelcomeView = () => {
                 const api = new Api(resolver, authProvider, kvs)
 
                 const entity = await api.getEntity(ccid).catch(() => undefined)
-                const profile = await api.getDocument<ProfileSchema>(semantics.profile(ccid)).catch(() => undefined)
+                const profile = await api
+                    .getDocument<ProfileSchema>(semantics.profile(ccid, 'main'))
+                    .catch(() => undefined)
 
                 setUser({
                     ccid,

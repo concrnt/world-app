@@ -15,7 +15,7 @@ export const Composer = (props: Props) => {
     const handleSubmit = async () => {
         if (!client) return
 
-        const homeTimeline = semantics.homeTimeline(client.ccid)
+        const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
         const key = Date.now().toString()
 
         const distributes = [

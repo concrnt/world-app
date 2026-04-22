@@ -373,7 +373,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                             onClick={(e) => {
                                 e.stopPropagation()
                                 if (item.authorUser) {
-                                    push(<ProfileView id={item.authorUser.ccid} />)
+                                    push(<ProfileView ccid={item.authorUser.ccid} />)
                                 }
                             }}
                         >
@@ -506,7 +506,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         if (item.authorUser) {
-                                            push(<ProfileView id={item.authorUser.ccid} />)
+                                            push(<ProfileView ccid={item.authorUser.ccid} />)
                                         }
                                     }}
                                 >

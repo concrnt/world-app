@@ -9,14 +9,15 @@ import { ProfileEditor } from '../components/ProfileEditor'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
-import { Schemas, semantics } from '@concrnt/worldlib'
+import { ProfileSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeList } from '../components/AcknowledgeList'
 import { TextLoader } from '../components/TextLoader'
 
 interface Props {
-    id: string
+    ccid: string
+    profileName?: string
 }
 
 export const ProfileView = (props: Props) => {
@@ -27,21 +28,38 @@ export const ProfileView = (props: Props) => {
 
     const drawer = useDrawer()
 
+    const userPromise = useMemo(() => {
+        return client!.getUser(props.ccid).catch(() => null)
+    }, [client, props.ccid])
+
     const profilePromise = useMemo(() => {
-        return client!.getUser(props.id).catch(() => null)
-    }, [client, props.id])
+        return client!.api
+            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
+            .catch(() => {
+                return {
+                    key: semantics.profile(props.ccid, props.profileName ?? 'main'),
+                    schema: Schemas.profile,
+                    value: {
+                        username: 'Anonymous',
+                        description: '',
+                        avatar: '',
+                        banner: ''
+                    }
+                }
+            })
+    }, [client, props.ccid, props.profileName])
 
     const isMe = useMemo(() => {
-        return client?.ccid === props.id
-    }, [client, props.id])
+        return client?.ccid === props.ccid
+    }, [client, props.ccid])
 
     const [updateStats, setUpdateStats] = useState(0)
     const statsPromise = useMemo(() => {
-        return profilePromise.then((user) => {
+        return userPromise.then((user) => {
             if (!user) return { acknowledging: 0, acknowledged: 0 }
             return user.GetStats(client!)
         })
-    }, [client, profilePromise, updateStats])
+    }, [client, userPromise, updateStats])
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
 
@@ -49,23 +67,23 @@ export const ProfileView = (props: Props) => {
         switch (tab ?? '') {
             case 'posts':
                 return {
-                    prefix: semantics.homeTimeline(props.id) + '/',
+                    prefix: semantics.homeTimeline(props.ccid, props.profileName ?? 'main') + '/',
                     query: {}
                 }
             case 'media':
                 return {
-                    prefix: semantics.homeTimeline(props.id) + '/',
+                    prefix: semantics.homeTimeline(props.ccid, props.profileName ?? 'main') + '/',
                     query: {
                         schema: Schemas.mediaMessage
                     }
                 }
             case 'activity':
                 return {
-                    prefix: semantics.activityTimeline(props.id) + '/',
+                    prefix: semantics.activityTimeline(props.ccid, props.profileName ?? 'main') + '/',
                     query: {}
                 }
         }
-    }, [props.id, tab])
+    }, [props.ccid, props.profileName, tab])
 
     return (
         <View>
@@ -80,7 +98,7 @@ export const ProfileView = (props: Props) => {
                             }}
                         >
                             <CCWallpaper
-                                src={profilePromise.then((user) => user?.profile?.banner)}
+                                src={profilePromise.then((p) => p.value.banner)}
                                 style={{
                                     paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                                     height: '150px'
@@ -115,7 +133,7 @@ export const ProfileView = (props: Props) => {
                                 </div>
                             </CCWallpaper>
                             <Avatar
-                                ccid={props.id}
+                                ccid={props.ccid}
                                 style={{
                                     width: `100px`,
                                     height: `100px`,
@@ -123,7 +141,7 @@ export const ProfileView = (props: Props) => {
                                     transform: 'translateY(-50%)',
                                     left: CssVar.space(2)
                                 }}
-                                src={profilePromise.then((user) => user?.profile.avatar)}
+                                src={profilePromise.then((p) => p.value.avatar)}
                             />
                         </div>
                         <div
@@ -146,12 +164,25 @@ export const ProfileView = (props: Props) => {
                                     <Button
                                         variant="outlined"
                                         startIcon={<MdEdit size={20} />}
-                                        onClick={() => drawer.open(<ProfileEditor onComplete={() => drawer.close()} />)}
+                                        onClick={() =>
+                                            drawer.open(
+                                                <ProfileEditor
+                                                    targetURI={semantics.profile(
+                                                        props.ccid,
+                                                        props.profileName ?? 'main'
+                                                    )}
+                                                    onComplete={() => drawer.close()}
+                                                />
+                                            )
+                                        }
                                     >
                                         Edit Profile
                                     </Button>
                                 ) : (
-                                    <AcknowledgeButton ccid={props.id} onChange={() => setUpdateStats((s) => s + 1)} />
+                                    <AcknowledgeButton
+                                        ccid={props.ccid}
+                                        onChange={() => setUpdateStats((s) => s + 1)}
+                                    />
                                 )}
                             </div>
                             <div>
@@ -162,20 +193,16 @@ export const ProfileView = (props: Props) => {
                                         fontSize: '1.2rem'
                                     }}
                                 >
-                                    {profilePromise.then((user) => user?.profile?.username || 'Anonymous')}
+                                    {profilePromise.then((p) => p.value.username || 'Anonymous')}
                                 </TextLoader>
-                                <TextLoader>
-                                    {profilePromise.then((user) => (user?.alias ? user.alias : null))}
-                                </TextLoader>
+                                <TextLoader>{userPromise.then((user) => (user?.alias ? user.alias : null))}</TextLoader>
                             </div>
                             <div>
-                                <Text variant="caption">{props.id}</Text>
+                                <Text variant="caption">{props.ccid}</Text>
                             </div>
                             <div>
                                 <TextLoader>
-                                    {profilePromise.then(
-                                        (user) => user?.profile?.description || '説明はまだありません'
-                                    )}
+                                    {profilePromise.then((p) => p.value.description || '説明はまだありません')}
                                 </TextLoader>
                             </div>
                             <div
@@ -188,7 +215,7 @@ export const ProfileView = (props: Props) => {
                                     style={{ cursor: 'pointer' }}
                                     onClick={() =>
                                         drawer.open(
-                                            <AcknowledgeList targetCcid={props.id} initialTab="acknowledging" />
+                                            <AcknowledgeList targetCcid={props.ccid} initialTab="acknowledging" />
                                         )
                                     }
                                 >
@@ -198,7 +225,7 @@ export const ProfileView = (props: Props) => {
                                     style={{ cursor: 'pointer' }}
                                     onClick={() =>
                                         drawer.open(
-                                            <AcknowledgeList targetCcid={props.id} initialTab="acknowledgers" />
+                                            <AcknowledgeList targetCcid={props.ccid} initialTab="acknowledgers" />
                                         )
                                     }
                                 >

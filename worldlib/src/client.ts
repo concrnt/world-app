@@ -21,6 +21,7 @@ import { Timeline } from './timeline'
 import { semantics } from './semantics'
 import { Schemas } from './schemas'
 import { isFulfilled } from './util'
+import { ProfileSchema } from '@concrnt/worldlib'
 
 const cacheLifetime = 5 * 60 * 1000
 interface Cache<T> {
@@ -32,6 +33,8 @@ export class Client {
     api: Api
     ccid: string
     server: Server
+
+    currentProfile: string
 
     // @deprecated use profiles instead
     user: User | null = null
@@ -47,47 +50,51 @@ export class Client {
 
     knownCommunities: Timeline[] = []
 
-    profiles: Record<string, Document<any>> = {}
+    profiles: Record<string, Document<ProfileSchema>> = {}
 
-    constructor(api: Api, ccid: string, server: Server) {
+    get profile(): ProfileSchema {
+        return (
+            this.profiles[this.currentProfile]?.value ?? {
+                username: 'Anonymous'
+            }
+        )
+    }
+
+    constructor(api: Api, ccid: string, server: Server, profile?: string) {
         this.api = api
         this.ccid = ccid
         this.server = server
+        this.currentProfile = profile ?? 'main'
 
         this.api.onResourceUpdated = (uri) => {
             delete this.messageCache[uri]
         }
     }
 
-    static async create(host: FQDN, authProvider: AuthProvider, cacheEngine: KVS): Promise<Client> {
+    static async create(
+        host: FQDN,
+        authProvider: AuthProvider,
+        cacheEngine: KVS,
+        profile: string = 'main'
+    ): Promise<Client> {
         const api = new Api(host, authProvider, cacheEngine)
 
         const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
-        const client = new Client(api, ccid, server)
+        const client = new Client(api, ccid, server, profile)
         if (ccid === '') return client
 
         client.user = await client.getUser(ccid).catch(() => null)
 
-        await api
-            .query({
-                parent: semantics.profiles(ccid)
-            })
-            .then((res) => {
-                const prefixLength = semantics.profiles(ccid).length + 1
-                for (const sd of res) {
-                    const name = sd.cckv.substring(prefixLength)
-                    client.profiles[name] = JSON.parse(sd.document)
-                }
-            })
+        client.updateProfiles()
 
         // ==== Default kit ====
-        await api.getDocument(semantics.homeTimeline(ccid)).catch((err) => {
+        await api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.homeTimeline(ccid),
+                    key: semantics.homeTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
@@ -110,11 +117,11 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.notificationTimeline(ccid)).catch((err) => {
+        await api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.notificationTimeline(ccid),
+                    key: semantics.notificationTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
@@ -137,11 +144,11 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.activityTimeline(ccid)).catch((err) => {
+        await api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.activityTimeline(ccid),
+                    key: semantics.activityTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
@@ -164,11 +171,11 @@ export class Client {
             throw err
         })
 
-        client.home = await List.load(client, semantics.homeList(ccid)).catch((err) => {
+        client.home = await List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home list not found, creating a new one...')
                 const document: Document<ListSchema> = {
-                    key: semantics.homeList(ccid),
+                    key: semantics.homeList(ccid, profile),
                     author: ccid,
                     schema: Schemas.list,
                     value: {
@@ -178,7 +185,7 @@ export class Client {
                 }
                 api.commit(document)
 
-                return new List(semantics.homeList(ccid), document.value.name)
+                return new List(semantics.homeList(ccid, profile), document.value.name)
             } else {
                 throw err
             }
@@ -194,10 +201,25 @@ export class Client {
         return client
     }
 
+    async updateProfiles(): Promise<void> {
+        await this.api
+            .query({
+                parent: semantics.profiles(this.ccid)
+            })
+            .then((res) => {
+                const prefixLength = semantics.profiles(this.ccid).length + 1
+                for (const sd of res) {
+                    const name = sd.cckv.substring(prefixLength)
+                    this.profiles[name] = JSON.parse(sd.document)
+                }
+                console.log('Profiles updated:', this.profiles)
+            })
+    }
+
     async updateKnwonCommunities(): Promise<void> {
         this.api
             .query({
-                prefix: semantics.lists(this.ccid),
+                prefix: semantics.lists(this.ccid, this.currentProfile),
                 schema: Schemas.communityTimeline
             })
             .then((res) => {
@@ -312,7 +334,7 @@ export class Client {
 
     async getLists(): Promise<List[]> {
         const rawlists = await this.api.query({
-            prefix: semantics.lists(this.ccid),
+            prefix: semantics.lists(this.ccid, this.currentProfile),
             schema: Schemas.list
         })
 

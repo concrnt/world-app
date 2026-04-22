@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useClient } from './Client'
 
 export interface PinnedList {
     uri: string
@@ -37,11 +38,12 @@ interface PreferenceProviderProps {
 }
 
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
-    const [pref, setPref] = useLocalStorage<Preference>('preference', defaultPreference)
+    const { client } = useClient()
+    const [pref, setPref] = useLocalStorage<Preference>(`preference-${client?.currentProfile}`, defaultPreference)
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })
-    }, [setPref])
+    }, [setPref, client])
 
     const value = useMemo(() => {
         return {
@@ -49,7 +51,7 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
             setPreference: setPref,
             reset
         }
-    }, [pref, setPref, reset])
+    }, [pref, setPref, reset, client])
 
     return <PreferenceContext.Provider value={value}>{props.children}</PreferenceContext.Provider>
 }

@@ -30,7 +30,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView id={message.author} />)
+                        push(<ProfileView ccid={message.author} />)
                     }}
                 >
                     <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />

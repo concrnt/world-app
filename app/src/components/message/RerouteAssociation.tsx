@@ -55,7 +55,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     onClick={(e) => {
                         e.stopPropagation()
                         if (rerouteAuthor) {
-                            push(<ProfileView id={rerouteAuthor.ccid} />)
+                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -74,7 +74,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView id={targetMessage.author} />)
+                                push(<ProfileView ccid={targetMessage.author} />)
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
