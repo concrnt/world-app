@@ -13,7 +13,7 @@ import {
     SignedDocument,
     Acknowledge
 } from '@concrnt/client'
-import { ListSchema } from './schemas/'
+import { ListSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
 import { List } from './list'
 import { Message } from './message'
@@ -21,7 +21,6 @@ import { Timeline } from './timeline'
 import { semantics } from './semantics'
 import { Schemas } from './schemas'
 import { isFulfilled } from './util'
-import { ProfileSchema } from '@concrnt/worldlib'
 
 const cacheLifetime = 5 * 60 * 1000
 interface Cache<T> {
