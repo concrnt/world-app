@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@concrnt/cfm": "^0.0.0",
+    "@emotion/is-prop-valid": "^1.4.0",
     "boring-avatars": "^2.0.4",
     "motion": "^12.23.26",
     "react-syntax-highlighter": "^16.1.0"
