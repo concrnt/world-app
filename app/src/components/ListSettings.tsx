@@ -1,4 +1,4 @@
-import { Suspense, use, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
 import { usePreference } from '../contexts/Preference'
@@ -56,8 +56,7 @@ export const ListSettings = (props: Props) => {
             key: props.uri,
             schema: Schemas.list,
             value: {
-                title: listName,
-                items: list.items
+                name: listName
             },
             author: client.ccid,
             createdAt: new Date()
@@ -68,11 +67,6 @@ export const ListSettings = (props: Props) => {
             props.onComplete?.()
         })
     }
-
-    const optionsPromise = useMemo(() => {
-        if (!client || !list) return Promise.resolve([])
-        return list.communities(client)
-    }, [client, list])
 
     return (
         <div
@@ -98,11 +92,7 @@ export const ListSettings = (props: Props) => {
             </div>
             {isPinned && (
                 <Suspense fallback={<Text>Loading...</Text>}>
-                    <DefaultPostTimelines
-                        optionsPromise={optionsPromise}
-                        selected={postTimelines}
-                        setSelected={setPostTimelines}
-                    />
+                    <DefaultPostTimelines selected={postTimelines} setSelected={setPostTimelines} />
                 </Suspense>
             )}
 
@@ -123,18 +113,14 @@ export const ListSettings = (props: Props) => {
     )
 }
 
-const DefaultPostTimelines = (props: {
-    optionsPromise: Promise<Timeline[]>
-    selected: string[]
-    setSelected: (timelines: string[]) => void
-}) => {
-    const options = use(props.optionsPromise)
+const DefaultPostTimelines = (props: { selected: string[]; setSelected: (timelines: string[]) => void }) => {
+    const { client } = useClient()
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
             <Text variant="h5">デフォルト投稿先</Text>
             <TimelinePicker
-                items={options}
+                items={client?.knownCommunities ?? []}
                 selected={props.selected}
                 setSelected={props.setSelected}
                 keyFunc={(item: Timeline) => item.uri}

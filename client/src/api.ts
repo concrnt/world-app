@@ -500,6 +500,7 @@ export class Api {
     async query(
         query: {
             prefix?: string
+            parent?: string
             schema?: string
             since?: string
             until?: string
@@ -517,6 +518,7 @@ export class Api {
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.query', {
             prefix: query.prefix,
+            parent: query.parent,
             schema: query.schema,
             since: query.since,
             until: query.until,

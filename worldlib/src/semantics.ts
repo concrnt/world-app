@@ -1,6 +1,7 @@
 export const semantics = {
     user: (ccid: string) => `cckv://${ccid}`,
     profile: (owner: string, profile?: string) => `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}`,
+    profiles: (owner: string) => `cckv://${owner}/concrnt.world/profiles`,
     lists: (owner: string, profile?: string) => `cckv://${owner}/concrnt.world/profiles/${profile ?? 'main'}/lists`,
     list: (owner: string, profile: string, listId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/lists/${listId}`,

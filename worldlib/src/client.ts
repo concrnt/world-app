@@ -33,7 +33,9 @@ export class Client {
     ccid: string
     server: Server
 
+    // @deprecated use profiles instead
     user: User | null = null
+
     home: List | null = null
 
     sockets: Record<string, Socket> = {}
@@ -44,6 +46,8 @@ export class Client {
     acknowledgers: Document<Acknowledge>[] = []
 
     knownCommunities: Timeline[] = []
+
+    profiles: Record<string, Document<any>> = {}
 
     constructor(api: Api, ccid: string, server: Server) {
         this.api = api
@@ -66,14 +70,26 @@ export class Client {
 
         client.user = await client.getUser(ccid).catch(() => null)
 
+        await api
+            .query({
+                parent: semantics.profiles(ccid)
+            })
+            .then((res) => {
+                const prefixLength = semantics.profiles(ccid).length + 1
+                for (const sd of res) {
+                    const name = sd.cckv.substring(prefixLength)
+                    client.profiles[name] = JSON.parse(sd.document)
+                }
+            })
+
         // ==== Default kit ====
-        await api.getDocument(semantics.homeTimeline(api.authProvider.getCCID())).catch((err) => {
+        await api.getDocument(semantics.homeTimeline(ccid)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.homeTimeline(api.authProvider.getCCID()),
-                    author: api.authProvider.getCCID(),
-                    schema: 'https://schema.concrnt.world/t/empty.json',
+                    key: semantics.homeTimeline(ccid),
+                    author: ccid,
+                    schema: Schemas.userTimeline,
                     value: {},
                     createdAt: new Date(),
                     policies: [
@@ -83,7 +99,7 @@ export class Client {
                                 readListMode: false,
                                 reader: [],
                                 writeListMode: true,
-                                writer: [api.authProvider.getCCID()]
+                                writer: [ccid]
                             }
                         }
                     ]
@@ -94,13 +110,13 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.notificationTimeline(api.authProvider.getCCID())).catch((err) => {
+        await api.getDocument(semantics.notificationTimeline(ccid)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.notificationTimeline(api.authProvider.getCCID()),
-                    author: api.authProvider.getCCID(),
-                    schema: 'https://schema.concrnt.world/t/empty.json',
+                    key: semantics.notificationTimeline(ccid),
+                    author: ccid,
+                    schema: Schemas.userTimeline,
                     value: {},
                     createdAt: new Date(),
                     policies: [
@@ -108,7 +124,7 @@ export class Client {
                             url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
                             params: {
                                 readListMode: true,
-                                reader: [api.authProvider.getCCID()],
+                                reader: [ccid],
                                 writeListMode: false,
                                 writer: []
                             }
@@ -121,13 +137,13 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.activityTimeline(api.authProvider.getCCID())).catch((err) => {
+        await api.getDocument(semantics.activityTimeline(ccid)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
                 const document = {
-                    key: semantics.activityTimeline(api.authProvider.getCCID()),
-                    author: api.authProvider.getCCID(),
-                    schema: 'https://schema.concrnt.world/t/empty.json',
+                    key: semantics.activityTimeline(ccid),
+                    author: ccid,
+                    schema: Schemas.userTimeline,
                     value: {},
                     createdAt: new Date(),
                     policies: [
@@ -137,7 +153,7 @@ export class Client {
                                 readListMode: false,
                                 reader: [],
                                 writeListMode: true,
-                                writer: [api.authProvider.getCCID()]
+                                writer: [ccid]
                             }
                         }
                     ]
@@ -148,48 +164,51 @@ export class Client {
             throw err
         })
 
-        client.home = await List.load(client, semantics.homeList(api.authProvider.getCCID())).catch((err) => {
+        client.home = await List.load(client, semantics.homeList(ccid)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home list not found, creating a new one...')
                 const document: Document<ListSchema> = {
-                    key: semantics.homeList(api.authProvider.getCCID()),
-                    author: api.authProvider.getCCID(),
-                    schema: 'https://schema.concrnt.world/utils/list.json',
+                    key: semantics.homeList(ccid),
+                    author: ccid,
+                    schema: Schemas.list,
                     value: {
-                        title: 'Home',
-                        items: []
+                        name: 'Home'
                     },
                     createdAt: new Date()
                 }
                 api.commit(document)
 
-                return new List(semantics.homeList(api.authProvider.getCCID()), document.value.title)
+                return new List(semantics.homeList(ccid), document.value.name)
             } else {
                 throw err
             }
         })
 
-        client.acknowledgers = await client.getAcknowledgers(client.ccid)
-        client.acknowledging = await client.getAcknowledging(client.ccid)
+        client.acknowledgers = await client.getAcknowledgers(ccid)
+        client.acknowledging = await client.getAcknowledging(ccid)
 
-        client.api
+        client.updateKnwonCommunities()
+
+        // =====================
+
+        return client
+    }
+
+    async updateKnwonCommunities(): Promise<void> {
+        this.api
             .query({
-                prefix: semantics.lists(client.ccid),
+                prefix: semantics.lists(this.ccid),
                 schema: Schemas.communityTimeline
             })
             .then((res) => {
-                Promise.allSettled(res.map((sd) => Timeline.loadFromReferenceSD(client, sd))).then(
+                Promise.allSettled(res.map((sd) => Timeline.loadFromReferenceSD(this, sd))).then(
                     (results) =>
-                        (client.knownCommunities = results
+                        (this.knownCommunities = results
                             .filter(isFulfilled)
                             .map((r) => r.value)
                             .filter((t): t is Timeline => t !== null))
                 )
             })
-
-        // =====================
-
-        return client
     }
 
     async newSocket(host?: string): Promise<Socket> {

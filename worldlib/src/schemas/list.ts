@@ -6,9 +6,7 @@
  */
 
 export interface ListSchema {
-    title: string
-    items: string[]
-    meta?: {
-        [k: string]: unknown
-    }
+    name: string
+    iconURL?: string
+    description?: string
 }

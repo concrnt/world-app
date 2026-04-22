@@ -148,8 +148,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                             key: semantics.list(client.ccid, 'main', key),
                             schema: Schemas.list,
                             value: {
-                                title: newListTitle,
-                                items: []
+                                name: newListTitle
                             },
                             author: client.ccid,
                             createdAt: new Date()

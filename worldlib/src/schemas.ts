@@ -22,7 +22,7 @@ export const Schemas = {
     emptyTimeline: 'https://schema.concrnt.world/t/empty.json',
     subprofileTimeline: 'https://schema.concrnt.world/t/subprofile.json',
 
-    list: 'https://schema.concrnt.world/utils/list.json'
+    list: 'https://schema.concrnt.world/s/list.json'
 } as const
 
 export type Schema = (typeof Schemas)[keyof typeof Schemas]

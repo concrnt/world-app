@@ -23,7 +23,7 @@ export class List {
         if (!res) {
             return null
         }
-        const list = new List(uri, res.value.title)
+        const list = new List(uri, res.value.name)
         await list.loadItems(client)
 
         return list
@@ -85,6 +85,8 @@ export class List {
 
         await client.api.commit(document)
         await this.loadItems(client)
+
+        client.updateKnwonCommunities()
     }
 
     async removeItem(client: Client, item: string): Promise<void> {
@@ -98,5 +100,7 @@ export class List {
 
         await client.api.delete(key)
         await this.loadItems(client)
+
+        client.updateKnwonCommunities()
     }
 }
