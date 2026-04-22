@@ -102,7 +102,7 @@ export const PostView = (props: Props) => {
     return (
         <>
             <View>
-                <Header>Message</Header>
+                <Header>Post</Header>
                 <div
                     style={{
                         padding: CssVar.space(1)
