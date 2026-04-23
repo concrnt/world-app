@@ -5,6 +5,10 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface UpgradeAssociationSchema {
-    txhash: string
+export interface StringListSchema {
+    title: string
+    items: string[]
+    meta?: {
+        [k: string]: unknown
+    }
 }

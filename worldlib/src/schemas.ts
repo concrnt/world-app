@@ -12,17 +12,16 @@ export const Schemas = {
     replyAssociation: 'https://schema.concrnt.world/a/reply.json',
     rerouteAssociation: 'https://schema.concrnt.world/a/reroute.json',
     reactionAssociation: 'https://schema.concrnt.world/a/reaction.json',
-    upgradeAssociation: 'https://schema.concrnt.world/a/upgrade.json',
     readAccessRequestAssociation: 'https://schema.concrnt.world/a/readaccessrequest.json',
 
     profile: 'https://schema.concrnt.world/p/main.json',
 
     userTimeline: 'https://schema.concrnt.world/t/user.json',
     communityTimeline: 'https://schema.concrnt.world/t/community.json',
-    emptyTimeline: 'https://schema.concrnt.world/t/empty.json',
-    subprofileTimeline: 'https://schema.concrnt.world/t/subprofile.json',
 
-    list: 'https://schema.concrnt.world/s/list.json'
+    list: 'https://schema.concrnt.world/s/list.json',
+
+    stringList: 'https://schema.concrnt.world/utils/list.json'
 } as const
 
 export type Schema = (typeof Schemas)[keyof typeof Schemas]
