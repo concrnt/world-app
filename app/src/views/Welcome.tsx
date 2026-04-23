@@ -12,8 +12,8 @@ import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
-const entrypoint = 'cc2.tunnel.anthrotech.dev'
-//const entrypoint = 'v2dev.concrnt.net'
+//const entrypoint = 'cc2.tunnel.anthrotech.dev'
+const entrypoint = 'v2dev.concrnt.net'
 
 /*
 - 完全に初期状態 <initial>
