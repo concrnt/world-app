@@ -5,10 +5,9 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface StringListSchema {
-    title: string
-    items: string[]
-    meta?: {
-        [k: string]: unknown
-    }
-}
+export type PinnedListsSchema = {
+    uri: string
+    defaultPostHome: boolean
+    defaultPostTimelines: string[]
+    defaultProfile?: boolean
+}[]

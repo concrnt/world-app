@@ -18,4 +18,4 @@ export * from './communityTimeline'
 
 export * from './list'
 
-export * from './stringList'
+export * from './pinnedLists'

@@ -51,7 +51,7 @@ export const TimelinePicker = (props: Props) => {
                 headElement={
                     <Avatar
                         ccid={client?.ccid ?? ''}
-                        src={client?.user?.profile?.avatar}
+                        src={client?.profile.avatar}
                         style={{
                             width: 20,
                             height: 20
@@ -76,7 +76,7 @@ export const TimelinePicker = (props: Props) => {
                     opacity: props.postHome === false ? 0.5 : 1
                 }}
             >
-                {client?.user?.profile?.username ?? 'Home'}
+                {client?.profile.username ?? 'Home'}
             </Chip>
             {props.selected.map((sel) => {
                 const item = props.items.find((i) => props.keyFunc(i) === sel)

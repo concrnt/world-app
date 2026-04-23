@@ -8,7 +8,6 @@ import { MdPlaylistAdd } from 'react-icons/md'
 
 import { RiPushpinFill } from 'react-icons/ri'
 import { RiPushpinLine } from 'react-icons/ri'
-import { usePreference } from '../contexts/Preference'
 import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
@@ -22,7 +21,11 @@ export const ListsView = () => {
     const [updater, setUpdater] = useState(0)
     const listsPromise = useMemo(() => {
         if (!client) return Promise.resolve([])
-        return client.getLists()
+        const p = client.getLists()
+        p.then((lists) => {
+            console.log('Fetched lists:', lists)
+        })
+        return p
     }, [client, updater])
 
     return (
@@ -65,7 +68,10 @@ const Lists = (props: ListsProps) => {
     const lists = use(props.listsPromise)
     const drawer = useDrawer()
 
-    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
+    const { client } = useClient()
+    const [_updater, setUpdater] = useState(0)
+
+    const pinnedLists = client?.pinnedLists ?? []
 
     return (
         <div style={{ padding: '8px' }}>
@@ -99,13 +105,14 @@ const Lists = (props: ListsProps) => {
                             e.stopPropagation()
                             if (pinnedLists.find((p) => p.uri === list.uri)) {
                                 // unpin
-                                setPinnedLists(pinnedLists.filter((p) => p.uri !== list.uri))
+                                client?.removePin(list.uri).then(() => {
+                                    setUpdater((u) => u + 1)
+                                })
                             } else {
                                 // pin
-                                setPinnedLists([
-                                    ...pinnedLists,
-                                    { uri: list.uri, defaultPostHome: false, defaultPostTimelines: [] }
-                                ])
+                                client?.addPin(list.uri).then(() => {
+                                    setUpdater((u) => u + 1)
+                                })
                             }
                         }}
                     >
@@ -145,7 +152,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                         const key = Date.now().toString()
 
                         const document: Document<ListSchema> = {
-                            key: semantics.list(client.ccid, 'main', key),
+                            key: semantics.list(client.ccid, client.currentProfile, key),
                             schema: Schemas.list,
                             value: {
                                 name: newListTitle

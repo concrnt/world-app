@@ -13,7 +13,7 @@ import {
     SignedDocument,
     Acknowledge
 } from '@concrnt/client'
-import { ListSchema, ProfileSchema } from './schemas/'
+import { ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
 import { List } from './list'
 import { Message } from './message'
@@ -27,6 +27,8 @@ interface Cache<T> {
     data: T
     expire: number
 }
+
+export type PinnedListItem = PinnedListsSchema[number]
 
 export class Client {
     api: Api
@@ -50,6 +52,8 @@ export class Client {
     knownCommunities: Timeline[] = []
 
     profiles: Record<string, Document<ProfileSchema>> = {}
+
+    pinnedLists: PinnedListItem[] = []
 
     get profile(): ProfileSchema {
         return (
@@ -189,6 +193,32 @@ export class Client {
                 throw err
             }
         })
+
+        client.pinnedLists = await client.api
+            .getDocument<PinnedListsSchema>(semantics.lists(ccid, profile))
+            .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
+            .catch((err) => {
+                if (err instanceof NotFoundError) {
+                    const initial = [
+                        {
+                            uri: semantics.homeTimeline(ccid, profile),
+                            defaultPostHome: true,
+                            defaultPostTimelines: []
+                        }
+                    ]
+                    const document: Document<PinnedListsSchema> = {
+                        key: semantics.lists(ccid, profile),
+                        author: ccid,
+                        schema: Schemas.pinnedLists,
+                        value: initial,
+                        createdAt: new Date()
+                    }
+                    api.commit(document)
+                    return initial
+                } else {
+                    throw err
+                }
+            })
 
         client.acknowledgers = await client.getAcknowledgers(ccid)
         client.acknowledging = await client.getAcknowledging(ccid)
@@ -340,5 +370,69 @@ export class Client {
         const Lists = await Promise.all(rawlists.map((sd) => List.loadFromSD(this, sd)))
 
         return Lists
+    }
+
+    async removePin(uri: string): Promise<void> {
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        const newValue = latestDoc.value.filter((item) => item.uri !== uri)
+        const newDocument: Document<PinnedListsSchema> = {
+            key: semantics.lists(this.ccid, this.currentProfile),
+            author: this.ccid,
+            schema: Schemas.pinnedLists,
+            value: newValue,
+            createdAt: new Date()
+        }
+
+        await this.api.commit(newDocument)
+        this.pinnedLists = newValue
+    }
+
+    async addPin(uri: string, options?: { defaultPostHome?: boolean; defaultPostTimelines?: string[] }): Promise<void> {
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        const newValue = [
+            ...latestDoc.value,
+            {
+                uri,
+                defaultPostHome: options?.defaultPostHome ?? false,
+                defaultPostTimelines: options?.defaultPostTimelines ?? []
+            }
+        ]
+        const newDocument: Document<PinnedListsSchema> = {
+            key: semantics.lists(this.ccid, this.currentProfile),
+            author: this.ccid,
+            schema: Schemas.pinnedLists,
+            value: newValue,
+            createdAt: new Date()
+        }
+
+        await this.api.commit(newDocument)
+        this.pinnedLists = newValue
+    }
+
+    async updatePinnedList(
+        uri: string,
+        options: { defaultPostHome?: boolean; defaultPostTimelines?: string[] }
+    ): Promise<void> {
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        const newValue = latestDoc.value.map((item) => {
+            if (item.uri === uri) {
+                return {
+                    uri,
+                    defaultPostHome: options.defaultPostHome ?? item.defaultPostHome,
+                    defaultPostTimelines: options.defaultPostTimelines ?? item.defaultPostTimelines
+                }
+            }
+            return item
+        })
+        const newDocument: Document<PinnedListsSchema> = {
+            key: semantics.lists(this.ccid, this.currentProfile),
+            author: this.ccid,
+            schema: Schemas.pinnedLists,
+            value: newValue,
+            createdAt: new Date()
+        }
+
+        await this.api.commit(newDocument)
+        this.pinnedLists = newValue
     }
 }

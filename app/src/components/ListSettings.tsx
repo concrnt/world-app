@@ -1,10 +1,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
-import { usePreference } from '../contexts/Preference'
 import { useClient } from '../contexts/Client'
-import { List, ListSchema, Schemas, Timeline } from '@concrnt/worldlib'
-import { Document } from '@concrnt/client'
+import { List, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 
 interface Props {
@@ -15,7 +13,7 @@ interface Props {
 export const ListSettings = (props: Props) => {
     const { client } = useClient()
 
-    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
+    const pinnedLists = client?.pinnedLists ?? []
     const pin = pinnedLists.find((pin) => pin.uri === props.uri)
 
     const [list, setList] = useState<List | null>(null)
@@ -36,35 +34,8 @@ export const ListSettings = (props: Props) => {
     const saveSettings = async () => {
         if (!client || !list) return
 
-        const newPins = [...pinnedLists]
-        const existingIndex = newPins.findIndex((pin) => pin.uri === props.uri)
-        if (existingIndex !== -1) {
-            newPins[existingIndex] = {
-                ...newPins[existingIndex],
-                defaultPostTimelines: postTimelines
-            }
-        } else {
-            newPins.push({
-                uri: props.uri,
-                defaultPostHome: false,
-                defaultPostTimelines: postTimelines
-            })
-        }
-        setPinnedLists(newPins)
-
-        const document: Document<ListSchema> = {
-            key: props.uri,
-            schema: Schemas.list,
-            value: {
-                name: listName
-            },
-            author: client.ccid,
-            createdAt: new Date()
-        }
-
-        client.api.commit(document).then(() => {
-            console.log('list updated')
-            props.onComplete?.()
+        client.updatePinnedList(props.uri, {
+            defaultPostTimelines: postTimelines
         })
     }
 
@@ -99,9 +70,9 @@ export const ListSettings = (props: Props) => {
             {isPinned ? (
                 <Button
                     onClick={() => {
-                        const newPins = pinnedLists.filter((p) => p.uri !== props.uri)
-                        setPinnedLists(newPins)
-                        props.onComplete?.()
+                        client?.removePin(props.uri).then(() => {
+                            props.onComplete?.()
+                        })
                     }}
                 >
                     ピン留め解除

@@ -3,7 +3,6 @@ import { ScrollViewProps } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
-import { PinnedList, usePreference } from '../contexts/Preference'
 
 import { Header } from '../ui/Header'
 import { View, Tabs, Tab } from '@concrnt/ui'
@@ -15,7 +14,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
-import { semantics } from '@concrnt/worldlib'
+import { PinnedListItem, semantics } from '@concrnt/worldlib'
 import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
@@ -25,7 +24,8 @@ export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
 
     const drawer = useDrawer()
-    const [pinnedLists, setPinnedLists] = usePreference('pinnedLists')
+
+    const pinnedLists = client?.pinnedLists ?? []
 
     const tabs = useMemo(
         () =>
@@ -72,11 +72,6 @@ export const HomeView = (props: ScrollViewProps) => {
     // fix default settings
     useEffect(() => {
         if (!client) return
-        const homeURI = semantics.homeList(client.ccid, client?.currentProfile)
-        if (!pinnedLists.find((pin) => pin.uri === homeURI)) {
-            setPinnedLists((old) => [{ uri: homeURI, defaultPostHome: true, defaultPostTimelines: [] }, ...old])
-        }
-
         if (!(client.currentProfile in client.profiles)) {
             drawer.open(
                 <ProfileEditor
@@ -163,12 +158,12 @@ export const HomeView = (props: ScrollViewProps) => {
 }
 
 interface InnerHomeViewProps extends ScrollViewProps {
-    pinnedLists: PinnedList[]
+    pinnedLists: PinnedListItem[]
     selectedTabUri: string
     setSelectedTabUri: (uri: string) => void
     tabs: {
         uri: string
-        pinData: PinnedList
+        pinData: PinnedListItem
     }[]
     timelineIDsPromise: Promise<string[]>
 }
