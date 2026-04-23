@@ -28,7 +28,9 @@ export class Message<T> implements Document<T> {
     associationTarget?: Message<any> | null
 
     authorProfileName: string | null = null
-    authorProfile: ProfileSchema | null = null
+    authorProfile: ProfileSchema = {
+        username: 'Anonymous'
+    }
 
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
@@ -49,14 +51,36 @@ export class Message<T> implements Document<T> {
         message.hint = hint
         message.authorUser = await User.load(client, message.author, hint).catch(() => undefined)
 
+        const key = message.key
+        //  `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
+        const profileName = key?.split('/')[5]
+        if (profileName) {
+            console.log('profile name', profileName)
+            message.authorProfileName = profileName
+            const profile = await client.api
+                .getDocument<ProfileSchema>(semantics.profile(message.author, profileName))
+                .then((res) => res.value)
+                .catch(() => undefined)
+            if (profile) {
+                message.authorProfile = profile
+            }
+        }
+        if ((res.value as any).profileOverride) {
+            const override = (res.value as any).profileOverride
+            if (override.username) {
+                message.authorProfile.username = override.username
+            }
+            if (override.avatar) {
+                message.authorProfile.avatar = override.avatar
+            }
+        }
+
         message.ownAssociations = (await client.api.getAssociations(uri, { author: client.ccid })).map((sd) =>
             Association.fromSignedDocument(sd)
         )
 
         message.associationCounts = await client.api.getAssociationCounts(uri)
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
-
-        message.authorProfileName = (res.value as any).profileOverride?.profileID || 'main'
 
         if (res.associate) {
             message.associationTarget = await Message.load<any>(client, res.associate).catch(() => undefined)

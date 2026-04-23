@@ -35,6 +35,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
 
     switch (message.schema) {
         case Schemas.markdownMessage:
+        case Schemas.gfmMessage:
             return <MarkdownMessage message={message} />
         case Schemas.mediaMessage:
             return <MediaMessage message={message} />
