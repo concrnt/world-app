@@ -233,7 +233,8 @@ export class Client {
     async updateProfiles(): Promise<void> {
         await this.api
             .query({
-                parent: semantics.profiles(this.ccid)
+                parent: semantics.profiles(this.ccid),
+                order: 'asc'
             })
             .then((res) => {
                 const prefixLength = semantics.profiles(this.ccid).length + 1
