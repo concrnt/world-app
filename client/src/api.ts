@@ -504,7 +504,7 @@ export class Api {
             schema?: string
             since?: string
             until?: string
-            limit?: string
+            limit?: string | number
             order?: string
         },
         domain?: string

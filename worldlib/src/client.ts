@@ -234,7 +234,8 @@ export class Client {
         await this.api
             .query({
                 parent: semantics.profiles(this.ccid),
-                order: 'asc'
+                order: 'asc',
+                limit: 100
             })
             .then((res) => {
                 const prefixLength = semantics.profiles(this.ccid).length + 1
@@ -250,7 +251,8 @@ export class Client {
         this.api
             .query({
                 prefix: semantics.lists(this.ccid, this.currentProfile),
-                schema: Schemas.communityTimeline
+                schema: Schemas.communityTimeline,
+                limit: 100
             })
             .then((res) => {
                 Promise.allSettled(res.map((sd) => Timeline.loadFromReferenceSD(this, sd))).then(
@@ -365,7 +367,8 @@ export class Client {
     async getLists(): Promise<List[]> {
         const rawlists = await this.api.query({
             prefix: semantics.lists(this.ccid, this.currentProfile),
-            schema: Schemas.list
+            schema: Schemas.list,
+            limit: 100
         })
 
         const Lists = await Promise.all(rawlists.map((sd) => List.loadFromSD(this, sd)))
