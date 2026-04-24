@@ -1,17 +1,17 @@
 use tauri_plugin_biometric::{AuthOptions, BiometricExt};
+use tauri_plugin_file_saver::{FileSaverExt, SaveTextFileRequest};
 use tauri_plugin_keychain::{KeychainExt, KeychainRequest};
 use tauri_plugin_store::StoreExt;
-use tauri_plugin_file_saver::{FileSaverExt, SaveTextFileRequest};
 
-use std::fs;
-use ripemd::Ripemd160;
-use bip39::{Language, Mnemonic};
-use bip32::{DerivationPath, XPrv};
-use unicode_normalization::UnicodeNormalization;
 use bech32::{Bech32, Hrp};
-use sha2::{Digest as Sha2Digest, Sha256};
+use bip32::{DerivationPath, XPrv};
+use bip39::{Language, Mnemonic};
+use ripemd::Ripemd160;
 use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
+use sha2::{Digest as Sha2Digest, Sha256};
 use sha3::Keccak256;
+use std::fs;
+use unicode_normalization::UnicodeNormalization;
 
 const HD_PATH: &str = "m/44'/118'/0'/0/0";
 
@@ -19,8 +19,9 @@ type Error = String;
 
 #[tauri::command]
 fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
-
-    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
+    let store = app_handle
+        .store("session")
+        .map_err(|e| format!("Failed to create store: {}", e))?;
 
     // generate master key
     let master_identity = generate_identity().unwrap();
@@ -49,10 +50,12 @@ fn create_subkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
     };
 
     // generate sub key
-    let sub_identity = generate_identity().map_err(|e| format!("Failed to generate sub identity: {}", e))?;
+    let sub_identity =
+        generate_identity().map_err(|e| format!("Failed to generate sub identity: {}", e))?;
     store.set("sub_priv".to_string(), sub_identity.private_key.clone());
 
-    let ckid = compute_ckid(&sub_identity.public_key).map_err(|e| format!("Failed to compute ckid: {}", e))?;
+    let ckid = compute_ckid(&sub_identity.public_key)
+        .map_err(|e| format!("Failed to compute ckid: {}", e))?;
     store.set("ckid".to_string(), ckid.clone());
 
     Ok(ckid)
@@ -65,20 +68,25 @@ fn auth_available(app_handle: tauri::AppHandle) -> Result<String, Error> {
             if status.is_available {
                 Ok("Yes! Biometric Authentication is available".to_string())
             } else {
-                Err(format!("No! Biometric Authentication is not available due to: {}", status.error.unwrap_or("Unknown error".to_string())))
+                Err(format!(
+                    "No! Biometric Authentication is not available due to: {}",
+                    status.error.unwrap_or("Unknown error".to_string())
+                ))
             }
-        },
+        }
         Err(e) => Err(format!("Failed to check biometric status: {}", e)),
     }
 }
 
-
 fn sign(private_key_hex: &str, payload: &str) -> Result<String, Error> {
-    let private_key_bytes = hex::decode(private_key_hex).map_err(|_| "private key is not valid hex")?;
-    let secret_key = SecretKey::from_slice(&private_key_bytes).map_err(|_| "invalid private key bytes")?;
+    let private_key_bytes =
+        hex::decode(private_key_hex).map_err(|_| "private key is not valid hex")?;
+    let secret_key =
+        SecretKey::from_slice(&private_key_bytes).map_err(|_| "invalid private key bytes")?;
 
     let message_hash = Keccak256::digest(payload.as_bytes());
-    let message = Message::from_digest_slice(&message_hash).map_err(|_| "failed to create message from payload hash")?;
+    let message = Message::from_digest_slice(&message_hash)
+        .map_err(|_| "failed to create message from payload hash")?;
     let secp = Secp256k1::new();
     let signature = secp.sign_ecdsa_recoverable(&message, &secret_key);
     let (recovery_id, compact) = signature.serialize_compact();
@@ -102,8 +110,13 @@ fn sign_masterkey(app_handle: tauri::AppHandle, payload: &str) -> Result<String,
 
 #[tauri::command]
 fn sign_subkey(app_handle: tauri::AppHandle, payload: &str) -> Result<(String, String), Error> {
-    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
-    let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string())).ok_or_else(|| "No value found for ckid".to_string())?;
+    let store = app_handle
+        .store("session")
+        .map_err(|e| format!("Failed to create store: {}", e))?;
+    let ckid = store
+        .get("ckid".to_string())
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .ok_or_else(|| "No value found for ckid".to_string())?;
 
     let priv_key = retract_subkey(app_handle)?;
     let signature = sign(&priv_key, payload)?;
@@ -113,7 +126,9 @@ fn sign_subkey(app_handle: tauri::AppHandle, payload: &str) -> Result<(String, S
 
 #[tauri::command]
 fn set_domain(app_handle: tauri::AppHandle, domain: &str) -> Result<(), Error> {
-    let store = app_handle.store("session").map_err(|e| format!("Failed to create store: {}", e))?;
+    let store = app_handle
+        .store("session")
+        .map_err(|e| format!("Failed to create store: {}", e))?;
     store.set("domain".to_string(), domain.to_string());
     Ok(())
 }
@@ -133,7 +148,9 @@ fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
     };
 
     let resp = match app_handle.keychain().get_item(request) {
-        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
+        Ok(resp) => resp
+            .password
+            .ok_or_else(|| format!("No value found for concrnt_masterkey")),
         Err(e) => Err(format!("Failed to get concrnt_masterkey. Error: {}", e)),
     };
 
@@ -141,7 +158,6 @@ fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
         Ok(m) => m,
         Err(e) => return Err(e),
     };
-
 
     let identity = match load_identity(&mnemonic) {
         Ok(id) => id,
@@ -153,14 +169,15 @@ fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
 
 #[tauri::command]
 fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
-
     let request = KeychainRequest {
         key: Some("concrnt_masterkey".to_string()),
         password: None,
     };
 
     let resp = match app_handle.keychain().get_item(request) {
-        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
+        Ok(resp) => resp
+            .password
+            .ok_or_else(|| format!("No value found for concrnt_masterkey")),
         Err(e) => return None, // If we fail to access the keychain, we just return None for session info instead of error
     };
 
@@ -168,7 +185,6 @@ fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
         Ok(m) => m,
         Err(e) => return None, // If we fail to get the master key, we just return None for session info instead of error
     };
-
 
     let identity = match load_identity(&mnemonic) {
         Ok(id) => id,
@@ -178,8 +194,12 @@ fn get_session(app_handle: tauri::AppHandle) -> Option<SessionInfo> {
     let ccid = Some(identity.ccid);
 
     let store = app_handle.store("session").ok()?;
-    let ckid = store.get("ckid".to_string()).and_then(|v| v.as_str().map(|s| s.to_string()));
-    let domain = store.get("domain".to_string()).and_then(|v| v.as_str().map(|s| s.to_string()));
+    let ckid = store
+        .get("ckid".to_string())
+        .and_then(|v| v.as_str().map(|s| s.to_string()));
+    let domain = store
+        .get("domain".to_string())
+        .and_then(|v| v.as_str().map(|s| s.to_string()));
 
     Some(SessionInfo { ccid, ckid, domain })
 }
@@ -203,16 +223,14 @@ fn clear_all(app_handle: tauri::AppHandle) {
 }
 
 fn retract_masterkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
-    let verified = app_handle
-        .biometric()
-        .authenticate(
-            "Authenticate to access the keychain item".to_string(),
-            AuthOptions {
-                allow_device_credential: true,
-                cancel_title: Some("Cannot access key without authentication".to_string()),
-                ..Default::default()
-            },
-        );
+    let verified = app_handle.biometric().authenticate(
+        "Authenticate to access the keychain item".to_string(),
+        AuthOptions {
+            allow_device_credential: true,
+            cancel_title: Some("Cannot access key without authentication".to_string()),
+            ..Default::default()
+        },
+    );
 
     if verified.is_err() {
         return Err("Authentication failed. Cannot access key".into());
@@ -224,7 +242,9 @@ fn retract_masterkey(app_handle: tauri::AppHandle) -> Result<Identity, Error> {
     };
 
     let resp = match app_handle.keychain().get_item(request) {
-        Ok(resp) => resp.password.ok_or_else(|| format!("No value found for concrnt_masterkey")),
+        Ok(resp) => resp
+            .password
+            .ok_or_else(|| format!("No value found for concrnt_masterkey")),
         Err(e) => Err(format!("Failed to get concrnt_masterkey. Error: {}", e)),
     };
 
@@ -300,8 +320,7 @@ fn initialize_from_mnemonic(app_handle: tauri::AppHandle, mnemonic: &str) -> Res
 
 // save masterkey as textfile and pick user to save it in somewhere safe.
 #[tauri::command]
-fn backup_masterkey(app_handle: tauri::AppHandle, template: &str) -> Result<(), Error> {
-
+async fn backup_masterkey(app_handle: tauri::AppHandle, template: &str) -> Result<(), Error> {
     let identity = retract_masterkey(app_handle.clone())?;
 
     let content = template
@@ -309,21 +328,25 @@ fn backup_masterkey(app_handle: tauri::AppHandle, template: &str) -> Result<(), 
         .replace("${mnemonic_ja}", &identity.mnemonic_ja)
         .replace("${ccid}", &identity.ccid);
 
-    let result = app_handle.file_saver().save_text_file(SaveTextFileRequest {
-        file_name: "concrnt_masterkey_backup.txt".into(),
-        content: content.into(),
-        mime_type: Some("text/plain".into()),
-    }).map_err(|e| format!("Failed to save text file: {}", e))?;
+    app_handle
+        .file_saver()
+        .save_text_file(SaveTextFileRequest {
+            file_name: "concrnt_masterkey_backup.txt".into(),
+            content: content.into(),
+            mime_type: Some("text/plain".into()),
+        })
+        .await
+        .map_err(|e| format!("Failed to save text file: {}", e))?;
 
     Ok(())
 }
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
 
-    #[cfg(target_os = "ios")] {
+    #[cfg(target_os = "ios")]
+    {
         builder = builder.plugin(tauri_plugin_safari_scroll_killer::init())
     }
 
@@ -354,7 +377,6 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-
 #[derive(Debug, Clone, serde::Serialize)]
 struct Identity {
     mnemonic: String,
@@ -368,9 +390,11 @@ fn generate_identity() -> Result<Identity, Error> {
     let mnemonic =
         Mnemonic::generate_in(Language::English, 12).map_err(|_| "failed to generate mnemonic")?;
     let mnemonic_en = normalize_nfkd(&mnemonic.to_string());
-    let mnemonic_ja = mnemonic_en2ja(&mnemonic_en).map_err(|_| "failed to convert mnemonic to Japanese")?;
+    let mnemonic_ja =
+        mnemonic_en2ja(&mnemonic_en).map_err(|_| "failed to convert mnemonic to Japanese")?;
 
-    let (private_key, public_key) = derive_keypair(&mnemonic_en).map_err(|_| "failed to derive keypair from mnemonic")?;
+    let (private_key, public_key) =
+        derive_keypair(&mnemonic_en).map_err(|_| "failed to derive keypair from mnemonic")?;
     let ccid = compute_ccid(&public_key)?;
 
     Ok(Identity {
@@ -408,7 +432,11 @@ fn map_mnemonic_by_word_id(input: &str, src: Language, dst: Language) -> Result<
             let idx = src.find_word(word);
             let idx = match idx {
                 Some(i) => i,
-                None => return Err(format!("word '{}' not found in source language wordlist", word).into()),
+                None => {
+                    return Err(
+                        format!("word '{}' not found in source language wordlist", word).into(),
+                    )
+                }
             };
             Ok(dst.word_list()[idx as usize])
         })
@@ -426,14 +454,17 @@ fn compute_ckid(public_key_hex: &str) -> Result<String, Error> {
 }
 
 fn derive_keypair(mnemonic_en: &str) -> Result<(String, String), Error> {
-    let mnemonic = Mnemonic::parse_in(Language::English, &normalize_nfkd(mnemonic_en)).map_err(|_| "invalid mnemonic format")?;
+    let mnemonic = Mnemonic::parse_in(Language::English, &normalize_nfkd(mnemonic_en))
+        .map_err(|_| "invalid mnemonic format")?;
     let seed = mnemonic.to_seed("");
     let path: DerivationPath = HD_PATH.parse().map_err(|_| "invalid HD path format")?;
-    let xprv = XPrv::derive_from_path(seed, &path).map_err(|_| "failed to derive xprv from seed and path")?;
+    let xprv = XPrv::derive_from_path(seed, &path)
+        .map_err(|_| "failed to derive xprv from seed and path")?;
     let private_key_bytes = xprv.private_key().to_bytes();
 
     let secp = Secp256k1::new();
-    let secret_key = SecretKey::from_slice(&private_key_bytes).map_err(|_| "invalid private key bytes for secp256k1")?;
+    let secret_key = SecretKey::from_slice(&private_key_bytes)
+        .map_err(|_| "invalid private key bytes for secp256k1")?;
     let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
     let private_key = hex::encode(private_key_bytes);
@@ -443,15 +474,17 @@ fn derive_keypair(mnemonic_en: &str) -> Result<(String, String), Error> {
 }
 
 fn compute_bech32_id(public_key_hex: &str, prefix: &str) -> Result<String, Error> {
-    let public_key_bytes = hex::decode(public_key_hex).map_err(|_| "public key is not valid hex")?;
-    let public_key = PublicKey::from_slice(&public_key_bytes).map_err(|_| "invalid public key bytes")?;
+    let public_key_bytes =
+        hex::decode(public_key_hex).map_err(|_| "public key is not valid hex")?;
+    let public_key =
+        PublicKey::from_slice(&public_key_bytes).map_err(|_| "invalid public key bytes")?;
     let compressed_pubkey = public_key.serialize();
 
     let sha_hash = Sha256::digest(compressed_pubkey);
     let raw_address = Ripemd160::digest(sha_hash);
 
     let hrp = Hrp::parse(prefix).map_err(|_| "invalid HRP for bech32 encoding")?;
-    let bech32 = bech32::encode::<Bech32>(hrp, &raw_address).map_err(|_| "failed to encode bech32 address")?;
+    let bech32 = bech32::encode::<Bech32>(hrp, &raw_address)
+        .map_err(|_| "failed to encode bech32 address")?;
     Ok(bech32)
 }
-

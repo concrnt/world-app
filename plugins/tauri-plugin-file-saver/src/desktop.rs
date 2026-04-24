@@ -14,7 +14,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 pub struct FileSaver<R: Runtime>(AppHandle<R>);
 
 impl<R: Runtime> FileSaver<R> {
-    pub fn save_text_file(
+    pub async fn save_text_file(
         &self,
         _payload: SaveTextFileRequest,
     ) -> crate::Result<SaveTextFileResponse> {

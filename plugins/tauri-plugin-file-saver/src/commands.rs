@@ -9,5 +9,5 @@ pub(crate) async fn save_text_file<R: Runtime>(
     app: AppHandle<R>,
     payload: SaveTextFileRequest,
 ) -> Result<SaveTextFileResponse> {
-    app.file_saver().save_text_file(payload)
+    app.file_saver().save_text_file(payload).await
 }

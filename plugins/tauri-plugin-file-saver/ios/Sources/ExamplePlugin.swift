@@ -65,14 +65,24 @@ class FileSaverPlugin: Plugin {
     pendingTempDirectory = tempDirectory
 
     DispatchQueue.main.async {
-      guard let viewController = self.manager.viewController else {
+      guard let viewController = self.topViewController() else {
         self.failPendingSave(message: "Unable to present document picker")
         return
       }
 
-      let picker = UIDocumentPickerViewController(url: tempFile, in: .exportToService)
+      let picker = UIDocumentPickerViewController(forExporting: [tempFile], asCopy: true)
       picker.delegate = self.pickerDelegate
       picker.modalPresentationStyle = .fullScreen
+      if let popover = picker.popoverPresentationController {
+        popover.sourceView = viewController.view
+        popover.sourceRect = CGRect(
+          x: viewController.view.bounds.midX,
+          y: viewController.view.bounds.midY,
+          width: 0,
+          height: 0
+        )
+        popover.permittedArrowDirections = []
+      }
       viewController.present(picker, animated: true)
     }
   }
@@ -112,6 +122,16 @@ class FileSaverPlugin: Plugin {
     }
 
     try? FileManager.default.removeItem(at: pendingTempDirectory)
+  }
+
+  private func topViewController() -> UIViewController? {
+    var current = manager.viewController
+
+    while let presented = current?.presentedViewController {
+      current = presented
+    }
+
+    return current
   }
 }
 
