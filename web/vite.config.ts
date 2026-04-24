@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['host.docker.internal']
+    host: true,
+    allowedHosts: [
+        'host.docker.internal',
+        'cc2.tunnel.anthrotech.dev'
+    ]
   }
 })
