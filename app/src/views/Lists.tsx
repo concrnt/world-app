@@ -32,14 +32,20 @@ export const ListsView = () => {
         <>
             <View>
                 <Header>Lists</Header>
-                <Suspense fallback={<Text>Loading...</Text>}>
-                    <Lists
-                        listsPromise={listsPromise}
-                        onUpdate={() => {
-                            setUpdater((u) => u + 1)
-                        }}
-                    />
-                </Suspense>
+                <div
+                    style={{
+                        overflowY: 'auto'
+                    }}
+                >
+                    <Suspense fallback={<Text>Loading...</Text>}>
+                        <Lists
+                            listsPromise={listsPromise}
+                            onUpdate={() => {
+                                setUpdater((u) => u + 1)
+                            }}
+                        />
+                    </Suspense>
+                </div>
             </View>
             <FAB
                 onClick={() => {
