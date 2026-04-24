@@ -6,8 +6,10 @@ import { useScanner } from '../contexts/Scanner'
 import { AvatarUploader } from '../components/AvatarUploader'
 import { MessageLayout } from '../components/message/MessageLayout'
 import { invoke } from '@tauri-apps/api/core'
+import { useClient } from '../contexts/Client'
 
 export const DevView = () => {
+    const { client } = useClient()
     const { scan } = useScanner()
     const [scanned, setScanned] = useState<string>('')
 
@@ -90,7 +92,18 @@ export const DevView = () => {
 
                 <Button
                     onClick={() => {
-                        invoke('backup_masterkey')
+                        invoke('backup_masterkey', {
+                            template: `Concrnt ログイン情報
+このファイルは Concrnt のログイン情報をバックアップするためのものです。
+このファイルを安全な場所に保管してください。
+
+CCID: \${ccid}
+マスターキー: \${mnemonic_ja}
+バックアップ時登録サーバー: ${client?.server.domain ?? 'N/A'}
+
+もし、マスターキーを紛失した場合、アカウントを復元することができなくなります。
+また、この内容を他人に知られると、アカウントが永久に乗っ取られる可能性があります。安全な場所に保管してください。`
+                        })
                     }}
                 >
                     bakup keys
