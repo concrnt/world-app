@@ -234,7 +234,7 @@ export const PostView = (props: Props) => {
                                     key={reroute.ccfs}
                                     ccid={reroute.author}
                                     date={reroute.createdAt}
-                                    onClick={() => push(<ProfileView id={reroute.author} />)}
+                                    onClick={() => push(<ProfileView ccid={reroute.author} />)}
                                 >
                                     がリルートしました
                                 </AssociationUserItem>
@@ -254,7 +254,7 @@ export const PostView = (props: Props) => {
                                     key={fav.ccfs}
                                     ccid={fav.author}
                                     date={fav.createdAt}
-                                    onClick={() => push(<ProfileView id={fav.author} />)}
+                                    onClick={() => push(<ProfileView ccid={fav.author} />)}
                                 >
                                     がお気に入りに登録しました
                                 </AssociationUserItem>
@@ -334,7 +334,7 @@ export const PostView = (props: Props) => {
                                                 key={member.ccfs}
                                                 ccid={member.author}
                                                 date={member.createdAt}
-                                                onClick={() => push(<ProfileView id={member.author} />)}
+                                                onClick={() => push(<ProfileView ccid={member.author} />)}
                                             />
                                         ))}
                                 </>
