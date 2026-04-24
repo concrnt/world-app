@@ -33,6 +33,7 @@ ripemd = "0.1"
 hex = "0.4"
 bip32 = "0.5"
 sha3 = "0.10"
+tauri-plugin-dialog = "2"
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 tauri-plugin-biometric = "2"

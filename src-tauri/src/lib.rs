@@ -1,7 +1,9 @@
 use tauri_plugin_biometric::{AuthOptions, BiometricExt};
 use tauri_plugin_keychain::{KeychainExt, KeychainRequest};
 use tauri_plugin_store::StoreExt;
+use tauri_plugin_dialog::DialogExt;
 
+use std::fs;
 use ripemd::Ripemd160;
 use bip39::{Language, Mnemonic};
 use bip32::{DerivationPath, XPrv};
@@ -296,6 +298,31 @@ fn initialize_from_mnemonic(app_handle: tauri::AppHandle, mnemonic: &str) -> Res
     Ok(identity.ccid)
 }
 
+// save masterkey as textfile and pick user to save it in somewhere safe.
+#[tauri::command]
+fn backup_masterkey(app_handle: tauri::AppHandle) -> Result<(), Error> {
+
+    let identity = retract_masterkey(app_handle.clone())?;
+
+    let content = format!(
+        "Mnemonic (EN): {}\nMnemonic (JA): {}\nPublic Key: {}\nCCID: {}",
+        identity.mnemonic, identity.mnemonic_ja, identity.public_key, identity.ccid
+    );
+
+    let save_path = app_handle
+        .dialog()
+        .file()
+        .set_file_name("concrnt_masterkey_backup.txt".to_string())
+        .blocking_save_file()
+        .ok_or_else(|| "No file path selected for backup".to_string())?
+        .into_path()
+        .map_err(|e| format!("Failed to convert selected path: {}", e))?;
+
+    fs::write(&save_path, content).map_err(|e| format!("Failed to write master key to backup file: {}", e))?;
+
+    Ok(())
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -311,6 +338,7 @@ pub fn run() {
         .plugin(tauri_plugin_barcode_scanner::init())
         .plugin(tauri_plugin_keychain::init())
         .plugin(tauri_plugin_haptics::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             auth_available,
@@ -325,6 +353,7 @@ pub fn run() {
             has_masterkey,
             clear_all,
             load_identity,
+            backup_masterkey,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

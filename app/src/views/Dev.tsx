@@ -5,6 +5,7 @@ import { CssVar } from '../types/Theme'
 import { useScanner } from '../contexts/Scanner'
 import { AvatarUploader } from '../components/AvatarUploader'
 import { MessageLayout } from '../components/message/MessageLayout'
+import { invoke } from '@tauri-apps/api/core'
 
 export const DevView = () => {
     const { scan } = useScanner()
@@ -86,6 +87,14 @@ export const DevView = () => {
                     />
                 </MessageLayout>
                 <ConcrntLogo size="100px" upperColor="#0476d9" lowerColor="#0476d9" frameColor="#0476d9" spinning />
+
+                <Button
+                    onClick={() => {
+                        invoke('backup_masterkey')
+                    }}
+                >
+                    bakup keys
+                </Button>
             </div>
         </View>
     )
