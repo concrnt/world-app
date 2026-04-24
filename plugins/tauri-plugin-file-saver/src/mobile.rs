@@ -1,4 +1,5 @@
 use serde::de::DeserializeOwned;
+use std::sync::mpsc::channel;
 use tauri::{
     plugin::{PluginApi, PluginHandle},
     AppHandle, Runtime,
@@ -27,13 +28,30 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 /// Access to the file-saver APIs.
 pub struct FileSaver<R: Runtime>(PluginHandle<R>);
 
+impl<R: Runtime> Clone for FileSaver<R> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
 impl<R: Runtime> FileSaver<R> {
     pub fn save_text_file(
         &self,
         payload: SaveTextFileRequest,
     ) -> crate::Result<SaveTextFileResponse> {
-        self.0
-            .run_mobile_plugin("saveTextFile", payload)
-            .map_err(Into::into)
+        let plugin = self.clone();
+        let (tx, rx) = channel();
+
+        std::thread::spawn(move || {
+            let result = plugin
+                .0
+                .run_mobile_plugin("saveTextFile", payload)
+                .map_err(Into::into);
+            let _ = tx.send(result);
+        });
+
+        rx.recv().map_err(|_| {
+            crate::Error::Internal("save_text_file worker thread terminated unexpectedly")
+        })?
     }
 }
