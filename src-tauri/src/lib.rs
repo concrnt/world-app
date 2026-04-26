@@ -19,27 +19,32 @@ type Error = String;
 
 #[tauri::command]
 fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
-    let store = app_handle
-        .store("session")
-        .map_err(|e| format!("Failed to create store: {}", e))?;
 
-    // generate master key
-    let master_identity = generate_identity().unwrap();
+    if let Ok(ccid) = has_masterkey(app_handle.clone()) {
+        return Ok(ccid);
+    } else {
+        let store = app_handle
+            .store("session")
+            .map_err(|e| format!("Failed to create store: {}", e))?;
 
-    let key = "concrnt_masterkey".to_string();
-    let value = master_identity.mnemonic.clone();
+        // generate master key
+        let master_identity = generate_identity().unwrap();
 
-    let request = KeychainRequest {
-        key: Some(key.clone()),
-        password: Some(value.clone()),
-    };
+        let key = "concrnt_masterkey".to_string();
+        let value = master_identity.mnemonic.clone();
 
-    let success = app_handle.keychain().save_item(request);
-    if !success {
-        return Err("Failed to save master key to keychain".to_string());
+        let request = KeychainRequest {
+            key: Some(key.clone()),
+            password: Some(value.clone()),
+        };
+
+        let success = app_handle.keychain().save_item(request);
+        if !success {
+            return Err("Failed to save master key to keychain".to_string());
+        }
+
+        return Ok(master_identity.ccid);
     }
-
-    return Ok(master_identity.ccid);
 }
 
 #[tauri::command]
