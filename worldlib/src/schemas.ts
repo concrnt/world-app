@@ -21,7 +21,9 @@ export const Schemas = {
 
     list: 'https://schema.concrnt.world/s/list.json',
 
-    pinnedLists: 'https://schema.concrnt.world/utils/pinnedLists.json'
+    pinnedLists: 'https://schema.concrnt.world/utils/pinnedLists.json',
+
+    empty: 'https://schema.concrnt.world/empty.json'
 } as const
 
 export type Schema = (typeof Schemas)[keyof typeof Schemas]

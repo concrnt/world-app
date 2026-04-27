@@ -18,5 +18,7 @@ export const semantics = {
     communities: (domain: string) => `cckv://${domain}/concrnt.world/communities`,
     community: (domain: string, communityId: string) => `cckv://${domain}/concrnt.world/communities/${communityId}`,
 
-    subkey: (owner: string, ckid: string) => `cckv://${owner}/keys/${ckid}`
+    subkey: (owner: string, ckid: string) => `cckv://${owner}/keys/${ckid}`,
+    blocks: (owner: string) => `cckv://${owner}/.concrnt/blocking`,
+    block: (owner: string, target: string) => `cckv://${owner}/.concrnt/blocking/${target}`
 }

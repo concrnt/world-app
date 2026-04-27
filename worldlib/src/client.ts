@@ -54,6 +54,7 @@ export class Client {
     profiles: Record<string, Document<ProfileSchema>> = {}
 
     pinnedLists: PinnedListItem[] = []
+    blocks: string[] = []
 
     get profile(): ProfileSchema {
         return (
@@ -224,6 +225,7 @@ export class Client {
         client.acknowledging = await client.getAcknowledging(ccid)
 
         client.updateKnwonCommunities()
+        client.updateBlocks()
 
         // =====================
 
@@ -263,6 +265,38 @@ export class Client {
                             .filter((t): t is Timeline => t !== null))
                 )
             })
+    }
+
+    async updateBlocks(): Promise<void> {
+        const prefix = semantics.blocks(this.ccid) + '/'
+
+        const results = await this.api.query({
+            prefix: prefix,
+            limit: 100
+        })
+
+        this.blocks = results.map((sd) => {
+            const target = sd.cckv.substring(prefix.length)
+            return target
+        })
+    }
+
+    async block(target: string): Promise<void> {
+        const blockDocument = {
+            key: semantics.block(this.ccid, target),
+            schema: Schemas.empty,
+            value: {},
+            author: this.ccid,
+            createdAt: new Date()
+        }
+        await this.api.commit(blockDocument)
+        await this.updateBlocks()
+    }
+
+    async unblock(target: string): Promise<void> {
+        const blockUri = semantics.block(this.ccid, target)
+        await this.api.delete(blockUri)
+        await this.updateBlocks()
     }
 
     async newSocket(host?: string): Promise<Socket> {

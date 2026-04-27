@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
-import { MdSearch } from 'react-icons/md'
+// import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -14,6 +14,8 @@ import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeList } from '../components/AcknowledgeList'
 import { TextLoader } from '../components/TextLoader'
+import { useSelect } from '../contexts/Select'
+import { useConfirm } from '../contexts/Confirm'
 
 interface Props {
     ccid: string
@@ -26,7 +28,12 @@ export const ProfileView = (props: Props) => {
     const navigation = useNavigation()
     const { client } = useClient()
 
+    const { select } = useSelect()
     const drawer = useDrawer()
+    const confirm = useConfirm()
+
+    const [_updateBlock, setUpdateBlock] = useState(0)
+    const isBlocking = client?.blocks?.includes(props.ccid)
 
     const userPromise = useMemo(() => {
         return client!.getUser(props.ccid).catch(() => null)
@@ -124,10 +131,61 @@ export const ProfileView = (props: Props) => {
                                         {navigation.backNode}
                                     </div>
                                     <div style={{ flex: 1 }} />
+                                    {/*
                                     <IconButton variant="contained">
                                         <MdSearch size={24} />
                                     </IconButton>
-                                    <IconButton variant="contained">
+                                    */}
+                                    <IconButton
+                                        variant="contained"
+                                        onClick={() => {
+                                            const options: Record<string, React.ReactNode> = {}
+                                            if (!isMe) {
+                                                if (isBlocking) {
+                                                    options['unblock'] = <Text>ブロック解除</Text>
+                                                } else {
+                                                    options['block'] = <Text>ブロック</Text>
+                                                }
+                                            }
+
+                                            select('', options, (key) => {
+                                                switch (key) {
+                                                    case 'block': {
+                                                        confirm.open(
+                                                            '本当にこのユーザーをブロックしますか？',
+                                                            () => {
+                                                                client?.block(props.ccid).then(() => {
+                                                                    setUpdateBlock((b) => b + 1)
+                                                                })
+                                                            },
+                                                            {
+                                                                description:
+                                                                    'ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。',
+                                                                confirmText: 'ブロック'
+                                                            }
+                                                        )
+                                                        break
+                                                    }
+                                                    case 'unblock': {
+                                                        confirm.open(
+                                                            '本当にこのユーザーのブロックを解除しますか？',
+                                                            () => {
+                                                                client?.unblock(props.ccid).then(() => {
+                                                                    setUpdateBlock((b) => b + 1)
+                                                                })
+                                                            },
+                                                            {
+                                                                description:
+                                                                    'ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。',
+                                                                confirmText: 'ブロック解除'
+                                                            }
+                                                        )
+                                                        break
+                                                    }
+                                                }
+                                            })
+                                        }}
+                                    >
                                         <MdMoreHoriz size={24} />
                                     </IconButton>
                                 </div>
@@ -190,7 +248,8 @@ export const ProfileView = (props: Props) => {
                                     variant="h6"
                                     style={{
                                         fontWeight: 'bold',
-                                        fontSize: '1.2rem'
+                                        fontSize: '1.2rem',
+                                        textDecoration: isBlocking ? 'line-through' : undefined
                                     }}
                                 >
                                     {profilePromise.then((p) => p.value.username || 'Anonymous')}
