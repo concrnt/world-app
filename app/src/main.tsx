@@ -15,29 +15,32 @@ import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
+import { ConfirmProvider } from './contexts/Confirm'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <ClientProvider>
             <PreferenceProvider>
                 <ThemeProvider>
-                    <ImageCropperProvider>
-                        <DrawerProvider>
-                            <SelectProvider>
-                                <ComposerProvider>
-                                    <ScannerProvider>
-                                        <OverlayProvider>
-                                            <MediaViewerProvider>
-                                                <TickerProvider>
-                                                    <App />
-                                                </TickerProvider>
-                                            </MediaViewerProvider>
-                                        </OverlayProvider>
-                                    </ScannerProvider>
-                                </ComposerProvider>
-                            </SelectProvider>
-                        </DrawerProvider>
-                    </ImageCropperProvider>
+                    <ConfirmProvider>
+                        <ImageCropperProvider>
+                            <DrawerProvider>
+                                <SelectProvider>
+                                    <ComposerProvider>
+                                        <ScannerProvider>
+                                            <OverlayProvider>
+                                                <MediaViewerProvider>
+                                                    <TickerProvider>
+                                                        <App />
+                                                    </TickerProvider>
+                                                </MediaViewerProvider>
+                                            </OverlayProvider>
+                                        </ScannerProvider>
+                                    </ComposerProvider>
+                                </SelectProvider>
+                            </DrawerProvider>
+                        </ImageCropperProvider>
+                    </ConfirmProvider>
                 </ThemeProvider>
             </PreferenceProvider>
         </ClientProvider>
