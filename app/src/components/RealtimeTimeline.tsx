@@ -42,6 +42,7 @@ export const RealtimeTimeline = (props: Props) => {
     useEffect(() => {
         console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
+        setInitialLoaded(false)
         const request = async () => {
             if (!client) return
 
@@ -102,6 +103,7 @@ export const RealtimeTimeline = (props: Props) => {
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
+        if (!initialLoaded) return
 
         const handleScroll = () => {
             // PullToRefresh用にスクロール位置を記録
@@ -137,7 +139,7 @@ export const RealtimeTimeline = (props: Props) => {
         return () => {
             el.removeEventListener('scroll', handleScroll)
         }
-    }, [scrollRef, reader, hasMoreData])
+    }, [scrollRef, reader, hasMoreData, initialLoaded])
 
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>

@@ -616,8 +616,8 @@ export class Api {
         const server = await this.getServer(host ?? this.defaultHost)
         const endpoint = renderUriTemplate(server, 'net.concrnt.world.timeline.recent', {
             uris: timelines.join(','),
-            since: param.since ? Math.floor(param.since.getTime() / 1000).toString() : undefined,
-            until: param.until ? Math.ceil(param.until.getTime() / 1000).toString() : undefined,
+            since: param.since ? Math.floor(param.since.getTime()).toString() : undefined,
+            until: param.until ? Math.ceil(param.until.getTime()).toString() : undefined,
             limit: param.limit?.toString()
         })
 

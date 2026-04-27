@@ -121,11 +121,10 @@ export class TimelineReader {
         )
         const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         console.log(`Read more: ${newdata.length} new items`)
-        if (newdata.length === 0) return false
         this.body = this.body.concat(newdataWithUpdate)
         this.chunkedBody.push(newdataWithUpdate)
         this.onUpdate?.()
-        return true
+        return items.length >= limit
     }
 
     async reload(): Promise<boolean> {
