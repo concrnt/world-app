@@ -5,12 +5,14 @@ import { useComposer } from '../../contexts/Composer'
 import { hapticLight, hapticSuccess } from '../../utils/haptics'
 import { startTransition, useOptimistic } from 'react'
 import { useSelect } from '../../contexts/Select'
+import { Report } from '../Report'
 
 import { MdStar } from 'react-icons/md'
 import { MdStarOutline } from 'react-icons/md'
 import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
+import { useDrawer } from '../../contexts/Drawer'
 
 interface Props {
     message: Message<any>
@@ -25,6 +27,7 @@ export const MessageActions = (props: Props) => {
     const { client } = useClient()
     const composer = useComposer()
     const { select } = useSelect()
+    const drawer = useDrawer()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -134,11 +137,24 @@ export const MessageActions = (props: Props) => {
                     select(
                         '',
                         {
-                            delete: <Text>投稿を削除</Text>
+                            delete: <Text>投稿を削除</Text>,
+                            report: <Text>投稿を通報</Text>
                         },
                         (key) => {
-                            if (key === 'delete') {
-                                client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                            switch (key) {
+                                case 'delete':
+                                    client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                                    break
+                                case 'report':
+                                    drawer.open(
+                                        <Report
+                                            targetURI={props.message.uri}
+                                            onSend={() => {
+                                                drawer.close()
+                                                hapticSuccess()
+                                            }}
+                                        />
+                                    )
                             }
                         }
                     )
