@@ -8,9 +8,9 @@ export const Sidebar = () => {
 
     return <div>
         <div>
-            <Avatar ccid={client?.ccid || ''} src={client?.user?.profile.avatar} />
-            <Text variant="h2">{client?.user?.profile.username || 'Unknown User'}</Text>
-            <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
+            <Avatar ccid={client.ccid || ''} src={client.profile.avatar} />
+            <Text variant="h2">{client.profile.username || 'Unknown User'}</Text>
+            <Text variant="caption">{client.server.domain || 'Unknown Server'}</Text>
         </div>
         <hr/>
         <div
