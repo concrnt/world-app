@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { Button } from '@concrnt/ui'
-import { useClient } from '../contexts/Client'
+import { useClient, useClientValue } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 
 interface Props {
@@ -11,19 +10,16 @@ interface Props {
 export const AcknowledgeButton = (props: Props) => {
     const { client } = useClient()
 
-    const [acknowledged, setAcknowledged] = useState<boolean>(() => {
-        return !!client?.acknowledging.find((a) => a.associate === semantics.user(props.ccid))
-    })
+    const [acknowledging] = useClientValue('acknowledging')
+    const acknowledged = acknowledging.find((a) => a.associate === semantics.user(props.ccid))
 
     if (!client || client.ccid === props.ccid) return null
 
     const handleClick = async () => {
         if (acknowledged) {
             await client.UnAcknowledge(props.ccid)
-            setAcknowledged(false)
         } else {
             await client.Acknowledge(props.ccid)
-            setAcknowledged(true)
         }
         props.onChange?.()
     }

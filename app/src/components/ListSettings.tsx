@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
-import { useClient } from '../contexts/Client'
+import { useClient, useClientValue } from '../contexts/Client'
 import { List, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 
@@ -85,13 +85,13 @@ export const ListSettings = (props: Props) => {
 }
 
 const DefaultPostTimelines = (props: { selected: string[]; setSelected: (timelines: string[]) => void }) => {
-    const { client } = useClient()
+    const [knownCommunities] = useClientValue('knownCommunities')
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
             <Text variant="h5">デフォルト投稿先</Text>
             <TimelinePicker
-                items={client?.knownCommunities ?? []}
+                items={knownCommunities}
                 selected={props.selected}
                 setSelected={props.setSelected}
                 keyFunc={(item: Timeline) => item.uri}

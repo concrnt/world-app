@@ -21,6 +21,7 @@ import { Timeline } from './timeline'
 import { semantics } from './semantics'
 import { Schemas } from './schemas'
 import { isFulfilled } from './util'
+import { CachedPromise } from './cachedPromise'
 
 const cacheLifetime = 5 * 60 * 1000
 interface Cache<T> {
@@ -37,25 +38,41 @@ export class Client {
 
     currentProfile: string
 
-    // @deprecated use profiles instead
-    user: User | null = null
-
-    home: List | null = null
-
     sockets: Record<string, Socket> = {}
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
-    acknowledging: Document<Acknowledge>[] = []
-    acknowledgers: Document<Acknowledge>[] = []
+    knownCommunities = new CachedPromise<Timeline[]>(async () => {
+        const results = await this.api.query({
+            prefix: semantics.lists(this.ccid, this.currentProfile),
+            schema: Schemas.communityTimeline,
+            limit: 100
+        })
+        const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
+        return timelines
+            .filter(isFulfilled)
+            .map((r) => r.value)
+            .filter((t): t is Timeline => t !== null)
+    })
 
-    knownCommunities: Timeline[] = []
+    acknowledging = new CachedPromise<Document<Acknowledge>[]>(async () => {
+        return this.getAcknowledging(this.ccid)
+    })
+
+    acknowledgers = new CachedPromise<Document<Acknowledge>[]>(async () => {
+        return this.getAcknowledgers(this.ccid)
+    })
+
+    blocks = new CachedPromise<string[]>(async () => {
+        const prefix = semantics.blocks(this.ccid) + '/'
+        const results = await this.api.query({
+            prefix: prefix,
+            limit: 100
+        })
+        return results.map((sd) => sd.cckv.substring(prefix.length))
+    })
 
     profiles: Record<string, Document<ProfileSchema>> = {}
-
-    pinnedLists: PinnedListItem[] = []
-    blocks: string[] = []
-
     get profile(): ProfileSchema {
         return (
             this.profiles[this.currentProfile]?.value ?? {
@@ -63,6 +80,9 @@ export class Client {
             }
         )
     }
+    pinnedLists: PinnedListItem[] = []
+
+    // =====================================================================
 
     constructor(api: Api, ccid: string, server: Server, profile?: string) {
         this.api = api
@@ -89,12 +109,10 @@ export class Client {
         const client = new Client(api, ccid, server, profile)
         if (ccid === '') return client
 
-        client.user = await client.getUser(ccid).catch(() => null)
-
         client.updateProfiles()
 
         // ==== Default kit ====
-        await api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
+        api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
@@ -121,7 +139,7 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
+        api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
                 const document = {
@@ -148,7 +166,7 @@ export class Client {
             throw err
         })
 
-        await api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
+        api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
                 const document = {
@@ -175,7 +193,7 @@ export class Client {
             throw err
         })
 
-        client.home = await List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
+        List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home list not found, creating a new one...')
                 const document: Document<ListSchema> = {
@@ -221,12 +239,6 @@ export class Client {
                 }
             })
 
-        client.acknowledgers = await client.getAcknowledgers(ccid)
-        client.acknowledging = await client.getAcknowledging(ccid)
-
-        client.updateKnwonCommunities()
-        client.updateBlocks()
-
         // =====================
 
         return client
@@ -249,38 +261,6 @@ export class Client {
             })
     }
 
-    async updateKnwonCommunities(): Promise<void> {
-        this.api
-            .query({
-                prefix: semantics.lists(this.ccid, this.currentProfile),
-                schema: Schemas.communityTimeline,
-                limit: 100
-            })
-            .then((res) => {
-                Promise.allSettled(res.map((sd) => Timeline.loadFromReferenceSD(this, sd))).then(
-                    (results) =>
-                        (this.knownCommunities = results
-                            .filter(isFulfilled)
-                            .map((r) => r.value)
-                            .filter((t): t is Timeline => t !== null))
-                )
-            })
-    }
-
-    async updateBlocks(): Promise<void> {
-        const prefix = semantics.blocks(this.ccid) + '/'
-
-        const results = await this.api.query({
-            prefix: prefix,
-            limit: 100
-        })
-
-        this.blocks = results.map((sd) => {
-            const target = sd.cckv.substring(prefix.length)
-            return target
-        })
-    }
-
     async block(target: string): Promise<void> {
         const blockDocument = {
             key: semantics.block(this.ccid, target),
@@ -290,13 +270,13 @@ export class Client {
             createdAt: new Date()
         }
         await this.api.commit(blockDocument)
-        await this.updateBlocks()
+        this.blocks.reload()
     }
 
     async unblock(target: string): Promise<void> {
         const blockUri = semantics.block(this.ccid, target)
         await this.api.delete(blockUri)
-        await this.updateBlocks()
+        this.blocks.reload()
     }
 
     async newSocket(host?: string): Promise<Socket> {
@@ -358,7 +338,7 @@ export class Client {
             createdAt: new Date()
         }
         await this.api.commit(document)
-        await this.reloadAcknowledges()
+        this.acknowledging.reload()
     }
 
     async UnAcknowledge(to: string): Promise<void> {
@@ -372,7 +352,7 @@ export class Client {
             createdAt: new Date()
         }
         await this.api.commit(document)
-        await this.reloadAcknowledges()
+        this.acknowledging.reload()
     }
 
     getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
@@ -391,11 +371,6 @@ export class Client {
                 context: 'world.concrnt.ack'
             })
             .then((res) => res.map((sd) => JSON.parse(sd.document)))
-    }
-
-    async reloadAcknowledges(): Promise<void> {
-        this.acknowledging = await this.getAcknowledging(this.ccid)
-        this.acknowledgers = await this.getAcknowledgers(this.ccid)
     }
 
     async getLists(): Promise<List[]> {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
-import { useClient } from '../contexts/Client'
+import { useClient, useClientValue } from '../contexts/Client'
 
 // import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
@@ -32,8 +32,8 @@ export const ProfileView = (props: Props) => {
     const drawer = useDrawer()
     const confirm = useConfirm()
 
-    const [_updateBlock, setUpdateBlock] = useState(0)
-    const isBlocking = client?.blocks?.includes(props.ccid)
+    const [blocks] = useClientValue('blocks')
+    const isBlocking = blocks.includes(props.ccid)
 
     const userPromise = useMemo(() => {
         return client!.getUser(props.ccid).catch(() => null)
@@ -155,7 +155,7 @@ export const ProfileView = (props: Props) => {
                                                             '本当にこのユーザーをブロックしますか？',
                                                             () => {
                                                                 client?.block(props.ccid).then(() => {
-                                                                    setUpdateBlock((b) => b + 1)
+                                                                    //setUpdateBlock((b) => b + 1)
                                                                 })
                                                             },
                                                             {
@@ -171,7 +171,7 @@ export const ProfileView = (props: Props) => {
                                                             '本当にこのユーザーのブロックを解除しますか？',
                                                             () => {
                                                                 client?.unblock(props.ccid).then(() => {
-                                                                    setUpdateBlock((b) => b + 1)
+                                                                    //setUpdateBlock((b) => b + 1)
                                                                 })
                                                             },
                                                             {

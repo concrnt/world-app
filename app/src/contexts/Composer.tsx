@@ -1,7 +1,7 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { Message, Timeline } from '@concrnt/worldlib'
-import { useClient } from './Client'
+import { useClient, useClientValue } from './Client'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
@@ -28,15 +28,17 @@ export const ComposerProvider = (props: Props) => {
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
 
+    const [knownCommunities] = useClientValue('knownCommunities')
+
     const open = useCallback(
         (destinations: string[], options?: Timeline[], mode?: ComposerMode, targetMessage?: Message<any>) => {
             setDestinations(destinations)
-            setOptions(options ?? client?.knownCommunities ?? [])
+            setOptions(options ?? knownCommunities)
             setMode(mode ?? 'normal')
             setTargetMessage(targetMessage)
             setShowComposer(true)
         },
-        [client]
+        [client, knownCommunities]
     )
 
     const close = useCallback(() => {

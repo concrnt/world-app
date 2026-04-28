@@ -5,6 +5,7 @@ import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
 import { ScannerProvider } from './contexts/Scanner'
 
+import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
@@ -16,10 +17,11 @@ import { MediaViewerProvider } from './contexts/MediaViewer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
+import { WelcomeView } from './views/Welcome'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <ClientProvider>
+        <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
             <PreferenceProvider>
                 <ThemeProvider>
                     <ConfirmProvider>

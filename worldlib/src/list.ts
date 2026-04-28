@@ -86,7 +86,7 @@ export class List {
         await client.api.commit(document)
         await this.loadItems(client)
 
-        client.updateKnwonCommunities()
+        client.knownCommunities.reload()
     }
 
     async removeItem(client: Client, item: string): Promise<void> {
@@ -101,6 +101,6 @@ export class List {
         await client.api.delete(key)
         await this.loadItems(client)
 
-        client.updateKnwonCommunities()
+        client.knownCommunities.reload()
     }
 }

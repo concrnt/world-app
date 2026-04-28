@@ -30,7 +30,7 @@ export const IDView = () => {
                             ccid={client.ccid}
                             name={client.profile?.username ?? 'No Name'}
                             avatar={client.profile?.avatar ?? ''}
-                            host={client.user?.domain ?? 'Unknown'}
+                            host={client.server.domain ?? 'Unknown'}
                             cdate={''}
                         />
                     </Tilt>
