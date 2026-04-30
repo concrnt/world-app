@@ -22,9 +22,8 @@ export const IconButton = (props: Props) => {
 
     const transparentStyle: CSSProperties = {
         backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0)`,
-        padding: '8px',
+        padding: '4px',
         fontSize: '16px',
-        margin: '4px',
         color: CssVar.contentText,
         borderRadius: '999px',
         width: '32px',
@@ -61,7 +60,7 @@ export const IconButton = (props: Props) => {
                         backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.8)`,
                         color: CssVar.uiText,
                         borderRadius: '100%',
-                        padding: '8px',
+                        padding: '4px',
                         fontSize: '16px',
                         display: 'flex',
                         alignItems: 'center',

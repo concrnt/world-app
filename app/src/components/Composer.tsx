@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, IconButton, useTheme } from '@concrnt/ui'
+import { Button, Divider, IconButton, useTheme } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { Message, Schemas, semantics } from '@concrnt/worldlib'
@@ -11,6 +11,7 @@ import { ComposerMode } from '../contexts/Composer'
 import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
 import { hapticSuccess } from '../utils/haptics'
+import { MdSend } from 'react-icons/md'
 
 interface MediaDraft {
     file: File
@@ -56,18 +57,6 @@ export const Composer = (props: Props) => {
         }
     }, [])
 
-    // モードに応じたラベル
-    const getCancelLabel = () => {
-        switch (props.mode) {
-            case 'reply':
-                return 'リプライをキャンセル'
-            case 'reroute':
-                return 'リルートをキャンセル'
-            default:
-                return 'キャンセル'
-        }
-    }
-
     const getSubmitLabel = () => {
         if (uploading) return 'アップロード中...'
         switch (props.mode) {
@@ -76,7 +65,7 @@ export const Composer = (props: Props) => {
             case 'reroute':
                 return 'リルート'
             default:
-                return '投稿'
+                return 'カレント'
         }
     }
 
@@ -334,6 +323,23 @@ export const Composer = (props: Props) => {
                                 overflow: 'auto'
                             }}
                         >
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant="text"
+                                    onClick={() => {
+                                        setWillClose(true)
+                                    }}
+                                    style={{
+                                        fontSize: '0.9rem',
+                                        padding: 0
+                                    }}
+                                >
+                                    キャンセル
+                                </Button>
+                            </div>
+
+                            <Divider />
+
                             <div>
                                 <TimelinePicker
                                     items={props.options}
@@ -351,7 +357,6 @@ export const Composer = (props: Props) => {
                                 <div
                                     style={{
                                         padding: '8px',
-                                        backgroundColor: CssVar.backdropBackground,
                                         borderRadius: '4px',
                                         borderLeft: '3px solid',
                                         borderLeftColor: CssVar.contentLink,
@@ -388,7 +393,7 @@ export const Composer = (props: Props) => {
                                         onChange={(e) => setDraft(e.target.value)}
                                         style={{
                                             width: '100%',
-                                            fontSize: '1.5rem',
+                                            fontSize: '1.2rem',
                                             boxSizing: 'border-box',
                                             border: 'none',
                                             outline: 'none',
@@ -448,42 +453,32 @@ export const Composer = (props: Props) => {
                                     ))}
                                 </div>
                             )}
-                        </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: CssVar.space(2)
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {/* 画像添付ボタン（通常投稿モードのみ） */}
+                                    {props.mode === 'normal' && (
+                                        <IconButton onClick={() => fileInputRef.current?.click()}>
+                                            <MdImage size={24} />
+                                        </IconButton>
+                                    )}
+                                </div>
                                 <Button
-                                    variant="text"
-                                    onClick={() => {
-                                        setWillClose(true)
-                                    }}
+                                    onClick={handleSubmit}
+                                    disabled={uploading}
+                                    endIcon={<MdSend />}
                                     style={{
-                                        color: CssVar.backdropText
+                                        minWidth: '100px'
                                     }}
                                 >
-                                    {getCancelLabel()}
+                                    {getSubmitLabel()}
                                 </Button>
-                                {/* 画像添付ボタン（通常投稿モードのみ） */}
-                                {props.mode === 'normal' && (
-                                    <IconButton
-                                        onClick={() => fileInputRef.current?.click()}
-                                        style={{
-                                            color: CssVar.backdropText
-                                        }}
-                                    >
-                                        <MdImage size={24} />
-                                    </IconButton>
-                                )}
                             </div>
-                            <Button onClick={handleSubmit} disabled={uploading}>
-                                {getSubmitLabel()}
-                            </Button>
                         </div>
                     </div>
 

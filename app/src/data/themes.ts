@@ -17,7 +17,7 @@ export const Themes: Record<string, Theme> = {
         },
         divider: '#e6e2df',
         space: '4px',
-        round: '8px',
+        round: '4px',
         variant: 'classic',
         meta: {
             name: 'light'
@@ -39,7 +39,7 @@ export const Themes: Record<string, Theme> = {
         },
         divider: '#e6e2df',
         space: '4px',
-        round: '8px',
+        round: '4px',
         variant: 'classic',
         meta: {
             name: 'darkgray'
@@ -61,7 +61,7 @@ export const Themes: Record<string, Theme> = {
         },
         divider: '#e6e2df',
         space: '4px',
-        round: '8px',
+        round: '4px',
         variant: 'world',
         meta: {
             name: 'blue'
@@ -83,7 +83,7 @@ export const Themes: Record<string, Theme> = {
         },
         divider: '#e6e2df',
         space: '4px',
-        round: '8px',
+        round: '4px',
         variant: 'world',
         meta: {
             name: 'rainyday'
