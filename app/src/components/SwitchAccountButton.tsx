@@ -1,4 +1,3 @@
-import { HiOutlineDotsCircleHorizontal } from 'react-icons/hi'
 import { useClient } from '../contexts/Client'
 import { useSelect } from '../contexts/Select'
 import { Avatar, CssVar, IconButton, Text } from '@concrnt/ui'
@@ -6,6 +5,7 @@ import { ReactNode, useMemo } from 'react'
 import { useDrawer } from '../contexts/Drawer'
 import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
+import { HiSwitchHorizontal } from 'react-icons/hi'
 
 export const SwitchAccountButton = (): ReactNode => {
     const { client, reload } = useClient()
@@ -64,7 +64,7 @@ export const SwitchAccountButton = (): ReactNode => {
                 select('Switch Account', options, handler)
             }}
         >
-            <HiOutlineDotsCircleHorizontal size={20} color={CssVar.backdropText} />
+            <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
         </IconButton>
     )
 }

@@ -47,7 +47,7 @@ export const Sidebar = (props: Props) => {
                         backgroundColor: CssVar.backdropBackground,
                         color: CssVar.backdropText,
                         display: 'flex',
-                        padding: CssVar.space(2),
+                        padding: CssVar.space(1),
                         flexDirection: 'column',
                         gap: CssVar.space(1),
                         height: '100%',
@@ -58,7 +58,9 @@ export const Sidebar = (props: Props) => {
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                            gap: CssVar.space(1)
                         }}
                         onClick={() =>
                             props.onPush?.(
@@ -70,14 +72,19 @@ export const Sidebar = (props: Props) => {
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: CssVar.space(1)
+                                gap: CssVar.space(2)
                             }}
                         >
                             <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
-                            <div style={{ flex: 1 }} />
+                            <Text
+                                style={{
+                                    flex: 1
+                                }}
+                            >
+                                {client?.profile.username || 'Unknown User'}
+                            </Text>
                             <SwitchAccountButton />
                         </div>
-                        <Text variant="h2">{client?.profile.username || 'Unknown User'}</Text>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
                     <Divider />
