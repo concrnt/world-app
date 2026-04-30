@@ -1,4 +1,4 @@
-import { Document } from '@concrnt/client'
+import { Document, SignedDocument } from '@concrnt/client'
 import { Schemas } from './schemas'
 import { LikeAssociationSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
@@ -89,7 +89,7 @@ export class Message<T> implements Document<T> {
         return message
     }
 
-    async favorite(client: Client): Promise<void> {
+    async favorite(client: Client): Promise<SignedDocument> {
         const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.value.domain)
         console.log('fav author domain', authorDomain)
 

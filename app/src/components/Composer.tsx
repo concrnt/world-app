@@ -110,7 +110,7 @@ export const Composer = (props: Props) => {
         if (!client) return
 
         const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
-        // const activityTimeline = `cckv://${client.ccid}/concrnt.world/main/activity-timeline`
+        const activityTimeline = semantics.activityTimeline(client.ccid, client.currentProfile)
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
         let success = false
@@ -133,8 +133,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
-                            replyToMessageId: props.targetMessage.uri,
-                            replyToMessageAuthor: props.targetMessage.author
+                            replyToMessageId: props.targetMessage.uri
                         },
                         author: client.ccid,
                         distributes,
@@ -146,19 +145,17 @@ export const Composer = (props: Props) => {
                     console.log('Reply submitted, uri:', replyMessageUri)
 
                     // リプライアソシエーションを作成
-                    /*
                     const targetAuthorDomain = await client
                         .getUser(props.targetMessage.author)
                         .then((user) => user?.domain)
-                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+                    const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 
                     const associationDocument = {
                         author: client.ccid,
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: replyMessageUri,
-                            messageAuthor: client.ccid
+                            messageId: replyMessageUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: new Date()
@@ -167,7 +164,6 @@ export const Composer = (props: Props) => {
                     console.log('Submitting reply association:', associationDocument)
                     await client.api.commit(associationDocument, targetAuthorDomain)
                     console.log('Reply association submitted')
-                    */
                     break
                 }
                 case 'reroute': {
@@ -184,8 +180,7 @@ export const Composer = (props: Props) => {
                         key: rerouteMessageUri,
                         schema: Schemas.rerouteMessage,
                         value: {
-                            rerouteMessageId: props.targetMessage.uri,
-                            rerouteMessageAuthor: props.targetMessage.author
+                            rerouteMessageId: props.targetMessage.uri
                         },
                         author: client.ccid,
                         distributes,
@@ -197,19 +192,17 @@ export const Composer = (props: Props) => {
                     console.log('Reroute submitted, uri:', rerouteMessageUri)
 
                     // リルートアソシエーションを作成
-                    /*
                     const targetAuthorDomain = await client
                         .getUser(props.targetMessage.author)
                         .then((user) => user?.domain)
-                    const notifyTimeline = `cckv://${props.targetMessage.author}/concrnt.world/main/notify-timeline`
+                    const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 
                     const associationDocument = {
                         author: client.ccid,
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: rerouteMessageUri,
-                            messageAuthor: client.ccid
+                            messageId: rerouteMessageUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: new Date()
@@ -218,7 +211,6 @@ export const Composer = (props: Props) => {
                     console.log('Submitting reroute association:', associationDocument)
                     await client.api.commit(associationDocument, targetAuthorDomain)
                     console.log('Reroute association submitted')
-                    */
                     break
                 }
                 default: {

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import { MessageProps } from './types'
 import { ReplyAssociationSchema, Message } from '@concrnt/worldlib'
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar, CfmRenderer, Chip } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { useClient } from '../../contexts/Client'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
 import { MdReply } from 'react-icons/md'
-import { CssVar } from '../../types/Theme'
 import { MessageLayout } from './MessageLayout'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
@@ -99,21 +98,9 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                     }
                     headerLeft={<div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>}
                 >
-                    <div
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            backgroundColor: CssVar.backdropBackground,
-                            borderRadius: '4px',
-                            padding: '2px 8px',
-                            fontSize: '12px',
-                            width: 'fit-content'
-                        }}
-                    >
-                        <MdReply size={12} />
-                        <span>{targetMessage?.authorUser?.profile.username}</span>
-                    </div>
+                    <Chip headElement={<MdReply size={12} />}>
+                        {targetMessage?.authorUser?.profile.username || 'Unknown'}
+                    </Chip>
                     <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
                 </MessageLayout>
             )}

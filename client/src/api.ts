@@ -542,7 +542,7 @@ export class Api {
         return this.fetchHost<T>(host, template, init)
     }
 
-    async commit<T>(document: Document<T>, domain?: string, opts?: { useMasterkey: boolean }): Promise<void> {
+    async commit<T>(document: Document<T>, domain?: string, opts?: { useMasterkey: boolean }): Promise<SignedDocument> {
         const docString = JSON.stringify(document)
         let signedDoc: Partial<SignedDocument> | undefined
 
@@ -590,9 +590,9 @@ export class Api {
                 }
                 return response.json()
             })
-            .then((_) => {
-                // TODO: use result
+            .then((sd) => {
                 if (document.key) this.cache.invalidate(document.key)
+                return sd
             })
             .catch((error) => {
                 console.error('Error committing:', error)
@@ -609,7 +609,7 @@ export class Api {
             createdAt: new Date()
         }
 
-        return this.commit(documentObj, domain)
+        await this.commit(documentObj, domain)
     }
 
     // ---
