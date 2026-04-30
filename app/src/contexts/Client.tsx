@@ -49,14 +49,9 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         const authProvider = await TauriAuthProvider.create()
         const kvs = new InMemoryKVS()
-        Client.create(domain, authProvider, kvs, name)
-            .then((client) => {
-                setClient(client)
-            })
-            .catch((e) => {
-                console.error(e)
-                setClient(null)
-            })
+        Client.create(domain, authProvider, kvs, name).then((client) => {
+            setClient(client)
+        })
     }, [])
 
     useEffect(() => {

@@ -92,6 +92,8 @@ const HomeMain = ({
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
 
+    const pin = pinnedLists.find((pin) => pin.uri === selectedTabUri)
+
     return (
         <>
             {pinnedLists.length > 1 && (
@@ -120,7 +122,7 @@ const HomeMain = ({
                     ))}
                 </Tabs>
             )}
-            <Timeline ref={ref} pin={pinnedLists.find((pin) => pin.uri === selectedTabUri)!} />
+            {pin && <Timeline ref={ref} pin={pin} />}
         </>
     )
 }

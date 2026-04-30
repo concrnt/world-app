@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core'
 import { ReactNode } from 'react'
 import { type FallbackProps } from 'react-error-boundary'
 
@@ -25,6 +26,15 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
                 Error: {(error as any)?.message}
                 Stack: {(error as any)?.stack}
             </pre>
+            <button
+                onClick={async () => {
+                    localStorage.clear()
+                    await invoke('clear_session')
+                    location.reload()
+                }}
+            >
+                Reset
+            </button>
         </div>
     )
 }

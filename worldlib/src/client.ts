@@ -20,7 +20,6 @@ import { Message } from './message'
 import { Timeline } from './timeline'
 import { semantics } from './semantics'
 import { Schemas } from './schemas'
-import { isFulfilled } from './util'
 import { CachedPromise } from './cachedPromise'
 
 const cacheLifetime = 5 * 60 * 1000
@@ -111,7 +110,7 @@ export class Client {
                 if (err instanceof NotFoundError) {
                     const initial = [
                         {
-                            uri: uri,
+                            uri: semantics.homeList(this.ccid, this.currentProfile),
                             defaultPostHome: true,
                             defaultPostTimelines: []
                         }
@@ -272,6 +271,8 @@ export class Client {
                 throw err
             }
         })
+
+        await client.pinnedLists.value() // pinnedlistが初期化されるまでブロック
 
         return client
     }
