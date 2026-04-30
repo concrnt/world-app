@@ -1,5 +1,6 @@
 export * from './Avatar'
 export * from './Button'
+export * from './ButtonBase'
 export * from './CCWallpaper'
 export * from './CfmRenderer'
 export * from './Checkbox'

@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { ButtonBase } from './ButtonBase'
 
 interface Props {
     children: ReactNode
@@ -29,39 +29,15 @@ const baseContentStyle: CSSProperties = {
 }
 
 const interactiveStyle: CSSProperties = {
-    backgroundColor: 'transparent',
-    border: 'none',
     textAlign: 'left',
-    cursor: 'pointer',
-    touchAction: 'manipulation',
-    WebkitTapHighlightColor: 'transparent',
-    userSelect: 'none'
+    cursor: 'pointer'
 }
 
 const pressedStyle: CSSProperties = {
     backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.16)`,
     filter: 'brightness(0.9)'
 }
-
-const disabledStyle: CSSProperties = {
-    opacity: 0.45,
-    pointerEvents: 'none'
-}
-
 export const ListItem = ({ children, icon, secondaryAction, onClick, disabled = false, style }: Props) => {
-    const [pressed, setPressed] = useState(false)
-
-    const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
-        if (disabled) return
-
-        e.currentTarget.setPointerCapture(e.pointerId)
-        setPressed(true)
-    }
-
-    const resetPressed = () => {
-        setPressed(false)
-    }
-
     const content = (
         <>
             {icon ? (
@@ -103,23 +79,17 @@ export const ListItem = ({ children, icon, secondaryAction, onClick, disabled = 
     return (
         <li style={{ ...baseContainerStyle, ...style }}>
             {onClick ? (
-                <button
+                <ButtonBase
                     disabled={disabled}
                     onClick={onClick}
-                    onPointerDown={handlePointerDown}
-                    onPointerUp={resetPressed}
-                    onPointerCancel={resetPressed}
-                    onPointerLeave={resetPressed}
-                    onBlur={resetPressed}
+                    pressedStyle={pressedStyle}
                     style={{
                         ...baseContentStyle,
-                        ...interactiveStyle,
-                        ...(pressed && !disabled ? pressedStyle : undefined),
-                        ...(disabled ? disabledStyle : undefined)
+                        ...interactiveStyle
                     }}
                 >
                     {content}
-                </button>
+                </ButtonBase>
             ) : (
                 <div style={baseContentStyle}>{content}</div>
             )}

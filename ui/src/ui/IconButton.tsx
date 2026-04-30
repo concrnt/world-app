@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { ButtonBase } from './ButtonBase'
 
 interface Props {
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -10,36 +11,55 @@ interface Props {
 }
 
 export const IconButton = (props: Props) => {
+    const pressedStyle: CSSProperties =
+        props.variant === 'contained'
+            ? {
+                  filter: 'brightness(0.85)'
+              }
+            : {
+                  backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.12)`
+              }
+
+    const transparentStyle: CSSProperties = {
+        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0)`,
+        padding: '8px',
+        fontSize: '16px',
+        margin: '4px',
+        color: CssVar.contentText,
+        borderRadius: '999px',
+        width: '32px',
+        height: '32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxSizing: 'border-box'
+    }
+
     switch (props.variant) {
         default:
         case 'transparent':
             return (
-                <button
+                <ButtonBase
                     disabled={props.disabled}
                     onClick={props.onClick}
+                    pressedStyle={pressedStyle}
                     style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: props.disabled ? 'not-allowed' : 'pointer',
-                        padding: '4px',
-                        fontSize: '16px',
-                        margin: '4px',
-                        color: CssVar.contentText,
+                        ...transparentStyle,
                         ...props.style
                     }}
                 >
                     {props.children}
-                </button>
+                </ButtonBase>
             )
         case 'contained':
             return (
-                <button
+                <ButtonBase
                     disabled={props.disabled}
                     onClick={props.onClick}
+                    pressedStyle={pressedStyle}
                     style={{
                         backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.8)`,
                         color: CssVar.uiText,
-                        border: 'none',
                         borderRadius: '100%',
                         padding: '8px',
                         fontSize: '16px',
@@ -50,7 +70,7 @@ export const IconButton = (props: Props) => {
                     }}
                 >
                     {props.children}
-                </button>
+                </ButtonBase>
             )
     }
 }

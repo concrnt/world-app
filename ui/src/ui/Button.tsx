@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { ButtonBase } from './ButtonBase'
 
 interface Props {
     onClick?: (e: MouseEvent<HTMLButtonElement>) => void
@@ -21,10 +21,7 @@ const baseStyle: CSSProperties = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: CssVar.space(1),
-
-    touchAction: 'manipulation',
-    WebkitTapHighlightColor: 'transparent',
-    userSelect: 'none'
+    cursor: 'pointer'
 }
 
 const variantStyles = {
@@ -44,16 +41,6 @@ const variantStyles = {
         color: CssVar.contentLink
     }
 } satisfies Record<NonNullable<Props['variant']>, CSSProperties>
-
-const pressedStyle: CSSProperties = {
-    filter: 'brightness(0.75)'
-}
-
-const disabledStyle: CSSProperties = {
-    opacity: 0.45,
-    pointerEvents: 'none'
-}
-
 export const Button = ({
     onClick,
     children,
@@ -63,39 +50,29 @@ export const Button = ({
     endIcon,
     style
 }: Props) => {
-    const [pressed, setPressed] = useState(false)
-
-    const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
-        if (disabled) return
-
-        e.currentTarget.setPointerCapture(e.pointerId)
-        setPressed(true)
-    }
-
-    const resetPressed = () => {
-        setPressed(false)
-    }
+    const pressedStyle: CSSProperties =
+        variant === 'text'
+            ? {
+                  backgroundColor: `rgb(from ${CssVar.contentLink} r g b / 0.12)`
+              }
+            : {
+                  filter: 'brightness(0.75)'
+              }
 
     return (
-        <button
+        <ButtonBase
             disabled={disabled}
             onClick={onClick}
-            onPointerDown={handlePointerDown}
-            onPointerUp={resetPressed}
-            onPointerCancel={resetPressed}
-            onPointerLeave={resetPressed}
-            onBlur={resetPressed}
+            pressedStyle={pressedStyle}
             style={{
                 ...baseStyle,
                 ...variantStyles[variant],
-                ...style,
-                ...(pressed && !disabled ? pressedStyle : undefined),
-                ...(disabled ? disabledStyle : undefined)
+                ...style
             }}
         >
             {startIcon}
             {children}
             {endIcon}
-        </button>
+        </ButtonBase>
     )
 }

@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { ButtonBase } from './ButtonBase'
 
 interface Props {
-    onClick?: () => void
+    onClick?: (e: MouseEvent<HTMLButtonElement>) => void
     children: ReactNode
     variant?: 'contained' | 'outlined'
     disabled?: boolean
@@ -11,24 +12,44 @@ interface Props {
     style?: React.CSSProperties
 }
 
+const baseStyle: CSSProperties = {
+    flexShrink: 0,
+    color: 'rgb(41, 46, 36)',
+    fontSize: '16px',
+    height: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '16px',
+    padding: '0 4px',
+    width: 'fit-content'
+}
+
+const variantStyles = {
+    contained: {
+        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+        border: '1px solid transparent'
+    },
+    outlined: {
+        border: `1px solid ${CssVar.divider}`
+    }
+} satisfies Record<NonNullable<Props['variant']>, CSSProperties>
+
+const pressedStyle: CSSProperties = {
+    filter: 'brightness(0.92)'
+}
+
 export const Chip = (props: Props) => {
     switch (props.variant) {
         case 'outlined':
             return (
-                <div
+                <ButtonBase
+                    disabled={props.disabled}
                     onClick={props.onClick}
+                    pressedStyle={pressedStyle}
                     style={{
-                        flexShrink: 0,
-                        border: `1px solid ${CssVar.divider}`,
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 4px',
-                        width: 'fit-content',
+                        ...baseStyle,
+                        ...variantStyles.outlined,
                         ...props.style
                     }}
                 >
@@ -59,26 +80,18 @@ export const Chip = (props: Props) => {
                     >
                         {props.tailElement}
                     </div>
-                </div>
+                </ButtonBase>
             )
         case 'contained':
         default:
             return (
-                <div
+                <ButtonBase
+                    disabled={props.disabled}
                     onClick={props.onClick}
+                    pressedStyle={pressedStyle}
                     style={{
-                        flexShrink: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                        color: 'rgb(41, 46, 36)',
-                        fontSize: '16px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '16px',
-                        padding: '0 4px',
-                        width: 'fit-content',
-                        border: '1px solid transparent',
+                        ...baseStyle,
+                        ...variantStyles.contained,
                         ...props.style
                     }}
                 >
@@ -109,7 +122,7 @@ export const Chip = (props: Props) => {
                     >
                         {props.tailElement}
                     </div>
-                </div>
+                </ButtonBase>
             )
     }
 }
