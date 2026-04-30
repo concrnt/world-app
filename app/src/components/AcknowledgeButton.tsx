@@ -1,6 +1,7 @@
 import { Button } from '@concrnt/ui'
-import { useClient, useClientValue } from '../contexts/Client'
+import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
     ccid: string
@@ -10,7 +11,7 @@ interface Props {
 export const AcknowledgeButton = (props: Props) => {
     const { client } = useClient()
 
-    const [acknowledging] = useClientValue('acknowledging')
+    const [acknowledging] = useSubscribe(client.acknowledging)
     const acknowledged = acknowledging.find((a) => a.associate === semantics.user(props.ccid))
 
     if (!client || client.ccid === props.ccid) return null

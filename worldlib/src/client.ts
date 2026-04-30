@@ -31,6 +31,28 @@ interface Cache<T> {
 
 export type PinnedListItem = PinnedListsSchema[number]
 
+export class PinnedListItemClass implements PinnedListItem {
+    client: Client
+    uri: string
+    defaultPostHome: boolean
+    defaultPostTimelines: string[]
+
+    list = new CachedPromise<List>(async () => {
+        const list = await this.client.getList(this.uri)
+        if (!list) {
+            throw new Error('Pinned list not found: ' + this.uri)
+        }
+        return list
+    })
+
+    constructor(client: Client, item: PinnedListItem) {
+        this.client = client
+        this.uri = item.uri
+        this.defaultPostHome = item.defaultPostHome
+        this.defaultPostTimelines = item.defaultPostTimelines
+    }
+}
+
 export class Client {
     api: Api
     ccid: string
@@ -44,15 +66,23 @@ export class Client {
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
         const results = await this.api.query({
-            prefix: semantics.lists(this.ccid, this.currentProfile),
+            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
             schema: Schemas.communityTimeline,
             limit: 100
         })
-        const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
-        return timelines
-            .filter(isFulfilled)
-            .map((r) => r.value)
-            .filter((t): t is Timeline => t !== null)
+
+        const timelines = await Promise.allSettled(
+            Array.from(results.values()).map((sd) => Timeline.loadFromReferenceSD(this, sd))
+        )
+
+        const uniqueResults = new Map<string, Timeline>()
+        for (const r of timelines) {
+            if (r.status === 'fulfilled' && r.value) {
+                uniqueResults.set(r.value.uri, r.value)
+            }
+        }
+
+        return Array.from(uniqueResults.values())
     })
 
     acknowledging = new CachedPromise<Document<Acknowledge>[]>(async () => {
@@ -72,6 +102,37 @@ export class Client {
         return results.map((sd) => sd.cckv.substring(prefix.length))
     })
 
+    pinnedLists = new CachedPromise<PinnedListItemClass[]>(async () => {
+        const uri = semantics.lists(this.ccid, this.currentProfile)
+        const item = await this.api
+            .getDocument<PinnedListsSchema>(uri)
+            .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
+            .catch((err) => {
+                if (err instanceof NotFoundError) {
+                    const initial = [
+                        {
+                            uri: uri,
+                            defaultPostHome: true,
+                            defaultPostTimelines: []
+                        }
+                    ]
+                    const document: Document<PinnedListsSchema> = {
+                        key: uri,
+                        author: this.ccid,
+                        schema: Schemas.pinnedLists,
+                        value: initial,
+                        createdAt: new Date()
+                    }
+                    this.api.commit(document)
+                    return initial
+                } else {
+                    throw err
+                }
+            })
+
+        return item.map((i) => new PinnedListItemClass(this, i))
+    })
+
     profiles: Record<string, Document<ProfileSchema>> = {}
     get profile(): ProfileSchema {
         return (
@@ -80,7 +141,6 @@ export class Client {
             }
         )
     }
-    pinnedLists: PinnedListItem[] = []
 
     // =====================================================================
 
@@ -207,39 +267,11 @@ export class Client {
                 }
                 api.commit(document)
 
-                return new List(semantics.homeList(ccid, profile), document.value.name)
+                return new List(client, semantics.homeList(ccid, profile), document.value.name)
             } else {
                 throw err
             }
         })
-
-        client.pinnedLists = await client.api
-            .getDocument<PinnedListsSchema>(semantics.lists(ccid, profile))
-            .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
-            .catch((err) => {
-                if (err instanceof NotFoundError) {
-                    const initial = [
-                        {
-                            uri: semantics.homeTimeline(ccid, profile),
-                            defaultPostHome: true,
-                            defaultPostTimelines: []
-                        }
-                    ]
-                    const document: Document<PinnedListsSchema> = {
-                        key: semantics.lists(ccid, profile),
-                        author: ccid,
-                        schema: Schemas.pinnedLists,
-                        value: initial,
-                        createdAt: new Date()
-                    }
-                    api.commit(document)
-                    return initial
-                } else {
-                    throw err
-                }
-            })
-
-        // =====================
 
         return client
     }
@@ -397,7 +429,7 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists = newValue
+        this.pinnedLists.reload()
     }
 
     async addPin(uri: string, options?: { defaultPostHome?: boolean; defaultPostTimelines?: string[] }): Promise<void> {
@@ -419,7 +451,7 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists = newValue
+        this.pinnedLists.reload()
     }
 
     async updatePinnedList(
@@ -446,6 +478,6 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists = newValue
+        this.pinnedLists.reload()
     }
 }

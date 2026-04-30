@@ -12,6 +12,7 @@ import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { CssVar } from '../types/Theme'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 export const ListsView = () => {
     const { client } = useClient()
@@ -75,9 +76,8 @@ const Lists = (props: ListsProps) => {
     const drawer = useDrawer()
 
     const { client } = useClient()
-    const [_updater, setUpdater] = useState(0)
 
-    const pinnedLists = client?.pinnedLists ?? []
+    const [pinnedLists] = useSubscribe(client.pinnedLists)
 
     return (
         <div style={{ padding: '8px' }}>
@@ -105,20 +105,16 @@ const Lists = (props: ListsProps) => {
                     }
                 >
                     <Text>{list.title}</Text>
-                    <Text>アイテム数: {list.items.length}</Text>
+                    <Text>アイテム数: {/*list.items.length*/}</Text>
                     <IconButton
                         onClick={(e) => {
                             e.stopPropagation()
                             if (pinnedLists.find((p) => p.uri === list.uri)) {
                                 // unpin
-                                client?.removePin(list.uri).then(() => {
-                                    setUpdater((u) => u + 1)
-                                })
+                                client?.removePin(list.uri)
                             } else {
                                 // pin
-                                client?.addPin(list.uri).then(() => {
-                                    setUpdater((u) => u + 1)
-                                })
+                                client?.addPin(list.uri)
                             }
                         }}
                     >

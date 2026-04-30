@@ -1,19 +1,25 @@
 import { CDID, Document, SignedDocument } from '@concrnt/client'
 import { Client } from './client'
-import { Schemas } from './schemas'
 import { ListSchema } from './schemas/list'
-import { Timeline } from './timeline'
-import { isFulfilled, isNonNull } from './util'
+import { CachedPromise } from './cachedPromise'
 
 export class List {
+    client: Client
     uri: string
 
     title: string
 
-    items: string[] = []
-    communityIds: string[] = []
+    items = new CachedPromise<string[]>(async () => {
+        const items = await this.client.api.query({
+            prefix: this.uri
+        })
 
-    constructor(uri: string, title: string) {
+        const documents = items.map((i) => JSON.parse(i.document))
+        return documents.map((d) => d.value.href)
+    })
+
+    constructor(client: Client, uri: string, title: string) {
+        this.client = client
         this.uri = uri
         this.title = title
     }
@@ -23,39 +29,16 @@ export class List {
         if (!res) {
             return null
         }
-        const list = new List(uri, res.value.name)
-        await list.loadItems(client)
+        const list = new List(client, uri, res.value.name)
 
         return list
     }
 
     static async loadFromSD(client: Client, sd: SignedDocument): Promise<List> {
         const doc = JSON.parse(sd.document)
-        const list = new List(sd.cckv ?? sd.ccfs, doc.value.name)
+        const list = new List(client, sd.cckv ?? sd.ccfs, doc.value.name)
 
-        await list.loadItems(client)
         return list
-    }
-
-    async loadItems(client: Client): Promise<void> {
-        const items = await client.api.query({
-            prefix: this.uri
-        })
-
-        const documents = items.map((i) => JSON.parse(i.document))
-        this.items = documents.map((d) => d.value.href)
-        this.communityIds = documents
-            .filter((d) => d.value.schema === Schemas.communityTimeline)
-            .map((d) => d.value.href)
-    }
-
-    communities(client: Client): Promise<Timeline[]> {
-        return Promise.allSettled(this.communityIds.map((id) => Timeline.load(client, id))).then((results) =>
-            results
-                .filter(isFulfilled)
-                .map((r) => r.value)
-                .filter(isNonNull)
-        )
     }
 
     async addItem(client: Client, item: string, schema?: string): Promise<void> {
@@ -84,8 +67,7 @@ export class List {
         }
 
         await client.api.commit(document)
-        await this.loadItems(client)
-
+        this.items.reload()
         client.knownCommunities.reload()
     }
 
@@ -99,8 +81,7 @@ export class List {
         key += hash
 
         await client.api.delete(key)
-        await this.loadItems(client)
-
+        this.items.reload()
         client.knownCommunities.reload()
     }
 }

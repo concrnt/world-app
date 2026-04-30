@@ -44,7 +44,6 @@ export const ClassicExplorer = () => {
                 })
 
                 setCommunities(mapped)
-                console.log('Fetched communities:', results)
             })
             .catch((error) => {
                 console.error('Error fetching communities:', error)

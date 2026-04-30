@@ -117,12 +117,9 @@ export class Socket {
     distribute(uri: string, event: RealtimeEvent) {
         for (const [prefix, callbacks] of this.subscriptions.entries()) {
             if (uri.startsWith(prefix)) {
-                console.log('distributing event for prefix:', prefix)
                 callbacks.forEach((callback) => {
                     callback(event)
                 })
-            } else {
-                console.log('not distributing event for prefix:', prefix)
             }
         }
     }

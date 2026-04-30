@@ -47,6 +47,7 @@ export interface SignedDocument {
     ccfs: string
     document: string
     proof: Proof
+    references?: Record<string, SignedDocument>
 }
 
 export interface Entity {

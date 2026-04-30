@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
-import { useClient, useClientValue } from '../contexts/Client'
+import { useClient } from '../contexts/Client'
 
 // import { MdSearch } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
@@ -16,6 +16,7 @@ import { AcknowledgeList } from '../components/AcknowledgeList'
 import { TextLoader } from '../components/TextLoader'
 import { useSelect } from '../contexts/Select'
 import { useConfirm } from '../contexts/Confirm'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
     ccid: string
@@ -32,7 +33,7 @@ export const ProfileView = (props: Props) => {
     const drawer = useDrawer()
     const confirm = useConfirm()
 
-    const [blocks] = useClientValue('blocks')
+    const [blocks] = useSubscribe(client.blocks)
     const isBlocking = blocks.includes(props.ccid)
 
     const userPromise = useMemo(() => {

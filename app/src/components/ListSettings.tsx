@@ -1,9 +1,10 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
-import { useClient, useClientValue } from '../contexts/Client'
+import { useClient } from '../contexts/Client'
 import { List, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
     uri: string
@@ -13,7 +14,7 @@ interface Props {
 export const ListSettings = (props: Props) => {
     const { client } = useClient()
 
-    const pinnedLists = client?.pinnedLists ?? []
+    const [pinnedLists] = useSubscribe(client.pinnedLists)
     const pin = pinnedLists.find((pin) => pin.uri === props.uri)
 
     const [list, setList] = useState<List | null>(null)
@@ -85,7 +86,10 @@ export const ListSettings = (props: Props) => {
 }
 
 const DefaultPostTimelines = (props: { selected: string[]; setSelected: (timelines: string[]) => void }) => {
-    const [knownCommunities] = useClientValue('knownCommunities')
+    const { client } = useClient()
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
+
+    console.log('knownCommunities', knownCommunities)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>

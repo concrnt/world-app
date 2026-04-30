@@ -1,18 +1,11 @@
-import { List } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { Suspense, use, useMemo, useState } from 'react'
-import { Checkbox, Text } from '@concrnt/ui'
+import { Suspense } from 'react'
+import { Checkbox, Text, List, ListItem } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
+import { useSubscribe } from '../hooks/useSubscribe'
+import { PinnedListItemClass } from '@concrnt/worldlib'
 
 export const Subscription = ({ target }: { target: string }) => {
-    const { client } = useClient()
-
-    const [updater, setUpdater] = useState(0)
-    const listsPromise = useMemo(() => {
-        if (!client) return Promise.resolve([])
-        return client.getLists()
-    }, [client, updater])
-
     return (
         <div
             style={{
@@ -23,40 +16,33 @@ export const Subscription = ({ target }: { target: string }) => {
         >
             <Text variant="h3">リストに追加</Text>
             <Suspense fallback={<Text>Loading...</Text>}>
-                <Lists listsPromise={listsPromise} target={target} reload={() => setUpdater((u) => u + 1)} />
+                <Lists target={target} />
             </Suspense>
         </div>
     )
 }
 
-const Lists = ({
-    listsPromise,
-    target,
-    reload
-}: {
-    listsPromise: Promise<List[]>
-    target: string
-    reload: () => void
-}) => {
-    const lists = use(listsPromise)
+const Lists = ({ target }: { target: string }) => {
+    const { client } = useClient()
+    const [pinnedLists] = useSubscribe(client.pinnedLists)
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            {lists.map((list) => (
-                <ListItem key={list.uri} list={list} target={target} reload={reload} />
+        <List>
+            {pinnedLists.map((pin) => (
+                <ListElem key={pin.uri} pin={pin} target={target} />
             ))}
-        </div>
+        </List>
     )
 }
 
-const ListItem = ({ list, target, reload }: { list: List; target: string; reload: () => void }) => {
+const ListElem = ({ pin, target }: { pin: PinnedListItemClass; target: string }) => {
     const { client } = useClient()
-    const contains = list.items?.includes(target) ?? false
-
-    console.log('ListItem', { list, target, contains })
+    const [list] = useSubscribe(pin.list)
+    const [items] = useSubscribe(list.items)
+    const contains = items.includes(target) ?? false
 
     return (
-        <div
+        <ListItem
             style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -71,18 +57,14 @@ const ListItem = ({ list, target, reload }: { list: List; target: string; reload
                     if (!client) return
                     if (checked) {
                         // add
-                        list.addItem(client, target).then(() => {
-                            reload()
-                        })
+                        list.addItem(client, target)
                     } else {
                         // remove
-                        list.removeItem(client, target).then(() => {
-                            reload()
-                        })
+                        list.removeItem(client, target)
                     }
                 }}
             />
             <Text>{list.title}</Text>
-        </div>
+        </ListItem>
     )
 }

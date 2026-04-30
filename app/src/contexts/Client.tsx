@@ -1,22 +1,12 @@
 import { invoke } from '@tauri-apps/api/core'
-import {
-    createContext,
-    ReactNode,
-    use,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-    useSyncExternalStore
-} from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import { CachedPromise, Client } from '@concrnt/worldlib'
+import { Client } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { InMemoryKVS } from '@concrnt/client'
 
 export interface ClientContextState {
-    client?: Client
+    client: Client
     reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
 }
@@ -28,7 +18,7 @@ interface Props {
 }
 
 const ClientContext = createContext<ClientContextState>({
-    client: undefined,
+    client: {} as Client,
     reload: async () => {},
     logout: async () => {}
 })
@@ -97,42 +87,6 @@ export const ClientProvider = (props: Props): ReactNode => {
     }
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
-}
-
-type CachedPromiseValue<T> = T extends CachedPromise<infer V> ? V : never
-type CachedPromiseKeys<T> = {
-    [K in keyof T]: T[K] extends CachedPromise<any> ? K : never
-}[keyof T]
-type ClientCachedValue<K extends CachedPromiseKeys<Client>> = CachedPromiseValue<Client[K]>
-
-export function useClientValue<K extends CachedPromiseKeys<Client>>(
-    key: K
-): [value: ClientCachedValue<K>, reload: () => void] {
-    const { client } = useContext(ClientContext)
-
-    if (!client) {
-        throw new Error('Client not found')
-    }
-
-    const cachedPromise = client[key] as CachedPromise<ClientCachedValue<K>>
-
-    const subscribe = (callback: () => void) => {
-        cachedPromise.subscribe(callback)
-
-        return () => {
-            cachedPromise.unsubscribe(callback)
-        }
-    }
-
-    const reload = () => {
-        cachedPromise.reload()
-    }
-
-    const snapshot = useSyncExternalStore<Promise<ClientCachedValue<K>>>(subscribe, () => cachedPromise.value())
-
-    const value = use(snapshot)
-
-    return [value, reload]
 }
 
 export function useClient(): ClientContextState {

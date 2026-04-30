@@ -545,13 +545,24 @@ export class Api {
     async commit<T>(document: Document<T>, domain?: string, opts?: { useMasterkey: boolean }): Promise<void> {
         const docString = JSON.stringify(document)
         let signedDoc: Partial<SignedDocument> | undefined
+
+        let references = undefined
+        if (document.schema === 'https://schema.concrnt.net/reference.json') {
+            const ref = document.value as unknown as { href: string }
+            const target = await this.getResource<SignedDocument>(ref.href)
+            references = {
+                [ref.href]: target
+            }
+        }
+
         if (opts?.useMasterkey) {
             signedDoc = {
                 document: docString,
                 proof: {
                     type: 'concrnt-ecrecover-direct',
                     signature: await this.authProvider.signMaster(docString)
-                }
+                },
+                references
             }
         } else {
             const [signature, keyid] = await this.authProvider.signSub(docString)
@@ -561,7 +572,8 @@ export class Api {
                     type: 'concrnt-ecrecover-subkey',
                     signature: signature,
                     key: `cckv://${this.authProvider.getCCID()}/keys/${keyid}`
-                }
+                },
+                references
             }
         }
 
