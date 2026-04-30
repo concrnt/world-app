@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 
 import { useClient } from '../contexts/Client'
 
-import { ListItem, Divider, Text, useTheme } from '@concrnt/ui'
+import { ListItem, Divider, Text, useTheme, List } from '@concrnt/ui'
 import { Avatar } from '@concrnt/ui'
 
 import { SettingsView } from '../views/Settings'
@@ -47,9 +47,9 @@ export const Sidebar = (props: Props) => {
                         backgroundColor: CssVar.backdropBackground,
                         color: CssVar.backdropText,
                         display: 'flex',
-                        padding: '16px',
+                        padding: CssVar.space(2),
                         flexDirection: 'column',
-                        gap: '16px',
+                        gap: CssVar.space(1),
                         height: '100%',
                         borderRadius: '0 8px 8px 0'
                     }}
@@ -70,7 +70,7 @@ export const Sidebar = (props: Props) => {
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: CssVar.space(1)
                             }}
                         >
                             <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
@@ -81,12 +81,10 @@ export const Sidebar = (props: Props) => {
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
                     <Divider />
-                    <div
+                    <List
                         style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '16px',
-                            overflowY: 'auto'
+                            color: CssVar.backdropText,
+                            fontSize: '1.25rem'
                         }}
                     >
                         <ListItem
@@ -114,7 +112,7 @@ export const Sidebar = (props: Props) => {
                         <ListItem icon={<MdSettings size={24} />} onClick={() => props.onPush?.(<SettingsView />)}>
                             設定
                         </ListItem>
-                    </div>
+                    </List>
                 </div>
             </div>
         </>
