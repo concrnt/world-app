@@ -11,7 +11,8 @@ export const Subscription = ({ target }: { target: string }) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: CssVar.space(4)
+                gap: CssVar.space(4),
+                width: '100%'
             }}
         >
             <Text variant="h3">リストに追加</Text>
@@ -50,20 +51,22 @@ const ListElem = ({ pin, target }: { pin: PinnedListItemClass; target: string })
                 padding: `${CssVar.space(2)} 0`,
                 borderBottom: `1px solid ${CssVar.divider}`
             }}
+            secondaryAction={
+                <Checkbox
+                    checked={contains}
+                    onChange={(checked) => {
+                        if (!client) return
+                        if (checked) {
+                            // add
+                            list.addItem(client, target)
+                        } else {
+                            // remove
+                            list.removeItem(client, target)
+                        }
+                    }}
+                />
+            }
         >
-            <Checkbox
-                checked={contains}
-                onChange={(checked) => {
-                    if (!client) return
-                    if (checked) {
-                        // add
-                        list.addItem(client, target)
-                    } else {
-                        // remove
-                        list.removeItem(client, target)
-                    }
-                }}
-            />
             <Text>{list.title}</Text>
         </ListItem>
     )
