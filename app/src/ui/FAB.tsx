@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode } from 'react'
+import { CSSProperties, ReactNode, useState, PointerEvent } from 'react'
 import { useOverlay } from '../contexts/Overlay'
 import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
@@ -15,12 +15,28 @@ export const FAB = (props: Props) => {
     const overlay = useOverlay()
     const activity = useActivity()
 
+    const [pressed, setPressed] = useState(false)
+
+    const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setPressed(true)
+    }
+
+    const resetPressed = () => {
+        setPressed(false)
+    }
+
     if (!overlay.slot) return null
 
     return createPortal(
         activity !== 'hidden' && (
             <motion.button
                 onClick={props.onClick}
+                onPointerDown={handlePointerDown}
+                onPointerUp={resetPressed}
+                onPointerCancel={resetPressed}
+                onPointerLeave={resetPressed}
+                onBlur={resetPressed}
                 style={{
                     backgroundColor: CssVar.uiBackground,
                     border: 'none',
@@ -37,6 +53,7 @@ export const FAB = (props: Props) => {
                     position: 'fixed',
                     bottom: `calc(4rem + env(safe-area-inset-bottom))`,
                     right: '1rem',
+                    ...(pressed && { filter: 'brightness(0.9)' }),
                     ...props.style
                 }}
                 initial={{ scale: 0 }}

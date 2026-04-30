@@ -19,10 +19,15 @@ export const TextField = (props: Props) => {
                 padding: '8px',
                 fontSize: '16px',
                 borderRadius: '4px',
-                borderColor: CssVar.divider,
+                border: `1px solid ${CssVar.divider}`,
                 backgroundColor: CssVar.contentBackground,
                 color: CssVar.contentText,
-                width: '100%'
+                width: '100%',
+
+                boxShadow: 'none',
+                outline: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none'
             }}
         />
     )
