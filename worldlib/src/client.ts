@@ -36,10 +36,10 @@ export class PinnedListItemClass implements PinnedListItem {
     defaultPostHome: boolean
     defaultPostTimelines: string[]
 
-    list = new CachedPromise<List>(async () => {
+    list = new CachedPromise<List | null>(async () => {
         const list = await this.client.getList(this.uri)
         if (!list) {
-            throw new Error('Pinned list not found: ' + this.uri)
+            return null
         }
         return list
     })

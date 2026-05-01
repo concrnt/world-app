@@ -5,8 +5,8 @@ import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
 import { Header } from '../ui/Header'
-import { View, Tabs, Tab } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
+import { View, Tabs, Tab, Text } from '@concrnt/ui'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
@@ -14,7 +14,7 @@ import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { MdTune } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 import { useComposer } from '../contexts/Composer'
-import { PinnedListItemClass, semantics } from '@concrnt/worldlib'
+import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
 import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
@@ -39,7 +39,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 />
             )
         }
-    }, [client])
+    }, [client, drawer])
 
     return (
         <>
@@ -122,25 +122,33 @@ const HomeMain = ({
                     ))}
                 </Tabs>
             )}
-            {pin && <Timeline ref={ref} pin={pin} />}
+            {pin && <TimelineWrap ref={ref} pin={pin} />}
         </>
     )
 }
 
-const Timeline = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
-    const { client } = useClient()
+const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
     const [list] = useSubscribe(props.pin.list)
-    const [items] = useSubscribe(list.items)
+
+    if (!list) return <Text>リストが見つかりませんでした</Text>
+
+    return (
+        <>
+            <Timeline ref={props.ref} list={list} />
+            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} />
+        </>
+    )
+}
+
+const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
+    const { client } = useClient()
+
+    const [items] = useSubscribe(props.list.items)
 
     const self = semantics.homeTimeline(client.ccid, client.currentProfile)
     const timelines = [...new Set([self, ...items])]
 
-    return (
-        <>
-            <RealtimeTimeline ref={props.ref} timelines={timelines} />
-            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} />
-        </>
-    )
+    return <RealtimeTimeline ref={props.ref} timelines={timelines} />
 }
 
 const InnerFab = (props: { defaultPostTimelines: string[] }) => {
