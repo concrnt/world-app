@@ -11,7 +11,8 @@ import {
     AuthProvider,
     KVS,
     SignedDocument,
-    Acknowledge
+    Acknowledge,
+    fetchWithTimeout
 } from '@concrnt/client'
 import { ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
@@ -160,6 +161,11 @@ export class Client {
         cacheEngine: KVS,
         profile: string = 'main'
     ): Promise<Client> {
+        await fetchWithTimeout(`https://${host}/.well-known/concrnt`, {}, 5000).catch((err) => {
+            console.error(`server ${host} is offline`, err)
+            throw new Error(`server ${host} is offline`)
+        })
+
         const api = new Api(host, authProvider, cacheEngine)
 
         const server = await api.getServer(host)
@@ -171,7 +177,7 @@ export class Client {
         client.updateProfiles()
 
         // ==== Default kit ====
-        api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
+        await api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document = {
@@ -198,7 +204,7 @@ export class Client {
             throw err
         })
 
-        api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
+        await api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
                 const document = {
@@ -225,7 +231,7 @@ export class Client {
             throw err
         })
 
-        api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
+        await api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
                 const document = {
@@ -252,7 +258,7 @@ export class Client {
             throw err
         })
 
-        List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
+        await List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home list not found, creating a new one...')
                 const document: Document<ListSchema> = {

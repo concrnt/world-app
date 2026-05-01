@@ -4,6 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { Client } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { InMemoryKVS } from '@concrnt/client'
+import { Button } from '@concrnt/ui'
 
 export interface ClientContextState {
     client: Client
@@ -31,6 +32,7 @@ interface SessionState {
 
 export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client | null | undefined>(undefined)
+    const [isOffline, setIsOffline] = useState(false)
 
     const reload = useCallback(async (name?: string) => {
         const session = await invoke<SessionState | undefined>('get_session')
@@ -49,9 +51,16 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         const authProvider = await TauriAuthProvider.create()
         const kvs = new InMemoryKVS()
-        Client.create(domain, authProvider, kvs, name).then((client) => {
-            setClient(client)
-        })
+        Client.create(domain, authProvider, kvs, name)
+            .then((client) => {
+                setClient(client)
+            })
+            .catch((err) => {
+                console.error('Failed to create client', err)
+                if (err instanceof Error && err.message === `server ${domain} is offline`) {
+                    setIsOffline(true)
+                }
+            })
     }, [])
 
     useEffect(() => {
@@ -72,6 +81,32 @@ export const ClientProvider = (props: Props): ReactNode => {
             logout
         }
     }, [client, reload, logout])
+
+    if (isOffline) {
+        return (
+            <div
+                style={{
+                    width: '100vw',
+                    height: '100dvh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}
+            >
+                サーバーはオフラインです
+                <Button
+                    onClick={async () => {
+                        await logout()
+                        window.location.reload()
+                    }}
+                >
+                    ログアウト
+                </Button>
+            </div>
+        )
+    }
 
     if (client === undefined) {
         return props.loading

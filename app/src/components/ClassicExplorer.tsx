@@ -5,7 +5,7 @@ import { TimelineCard } from './TimelineCard'
 import { Document, Server } from '@concrnt/client'
 import { Text } from '@concrnt/ui'
 
-export const ClassicExplorer = () => {
+export const ClassicExplorer = (props: { updater?: any }) => {
     const { client } = useClient()
 
     const [servers, setServers] = useState<Server[]>([])
@@ -48,7 +48,7 @@ export const ClassicExplorer = () => {
             .catch((error) => {
                 console.error('Error fetching communities:', error)
             })
-    }, [client, selectedServer])
+    }, [client, selectedServer, props.updater])
 
     return (
         <>

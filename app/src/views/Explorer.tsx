@@ -14,6 +14,12 @@ import { CssVar } from '../types/Theme'
 export const ExplorerView = () => {
     const drawer = useDrawer()
 
+    const [updater, setUpdater] = useState(0)
+
+    const reload = () => {
+        setUpdater((prev) => prev + 1)
+    }
+
     return (
         <>
             <View>
@@ -28,7 +34,7 @@ export const ExplorerView = () => {
                         overflowY: 'auto'
                     }}
                 >
-                    <ClassicExplorer />
+                    <ClassicExplorer updater={updater} />
                 </div>
             </View>
             <FAB
@@ -38,6 +44,7 @@ export const ExplorerView = () => {
                         <CommunityCreator
                             onComplete={() => {
                                 drawer.close()
+                                reload()
                             }}
                         />
                     )
@@ -62,7 +69,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
         const key = Date.now().toString()
 
         const document: Document<CommunityTimelineSchema> = {
-            key: semantics.community(client.ccid, key),
+            key: semantics.community(client.server.domain, key),
             schema: Schemas.communityTimeline,
             value,
             author: client.ccid,
