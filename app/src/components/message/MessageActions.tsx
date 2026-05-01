@@ -13,6 +13,7 @@ import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { useDrawer } from '../../contexts/Drawer'
+import { useConfirm } from '../../contexts/Confirm'
 
 interface Props {
     message: Message<any>
@@ -28,6 +29,7 @@ export const MessageActions = (props: Props) => {
     const composer = useComposer()
     const { select } = useSelect()
     const drawer = useDrawer()
+    const confirm = useConfirm()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -143,7 +145,15 @@ export const MessageActions = (props: Props) => {
                         (key) => {
                             switch (key) {
                                 case 'delete':
-                                    client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                                    confirm.open(
+                                        '本当にこの投稿を削除しますか？',
+                                        () => {
+                                            client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                                        },
+                                        {
+                                            confirmText: '削除'
+                                        }
+                                    )
                                     break
                                 case 'report':
                                     drawer.open(
