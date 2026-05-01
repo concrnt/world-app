@@ -2,7 +2,7 @@ import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
 import { RerouteMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, Text, IconButton } from '@concrnt/ui'
+import { Avatar, Text, IconButton, ListItem } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
@@ -46,17 +46,16 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <IconButton
                     onClick={(e) => {
                         e.stopPropagation()
-                        select(
-                            '',
-                            {
-                                delete: <Text>リルートを削除</Text>
-                            },
-                            (key) => {
-                                if (key === 'delete') {
-                                    client?.api.delete(props.message.uri).then(() => hapticSuccess())
-                                }
-                            }
-                        )
+                        select('', [
+                            <ListItem
+                                key="delete"
+                                onClick={() => {
+                                    client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                }}
+                            >
+                                <Text>リルートを削除</Text>
+                            </ListItem>
+                        ])
                     }}
                     style={{
                         padding: 0,

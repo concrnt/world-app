@@ -1,5 +1,17 @@
-import { useMemo, useState } from 'react'
-import { Avatar, CCWallpaper, IconButton, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
+import { ReactNode, useMemo, useState } from 'react'
+import {
+    Avatar,
+    CCWallpaper,
+    IconButton,
+    Text,
+    View,
+    Button,
+    Tabs,
+    Tab,
+    Divider,
+    useTheme,
+    ListItem
+} from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
 // import { MdSearch } from 'react-icons/md'
@@ -93,6 +105,54 @@ export const ProfileView = (props: Props) => {
         }
     }, [props.ccid, props.profileName, tab])
 
+    const selectOptions = useMemo(() => {
+        const options: ReactNode[] = []
+        if (!isMe) {
+            if (isBlocking) {
+                options.push(
+                    <ListItem
+                        onClick={() => {
+                            confirm.open(
+                                '本当にこのユーザーのブロックを解除しますか？',
+                                () => {
+                                    client?.unblock(props.ccid)
+                                },
+                                {
+                                    description:
+                                        'ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。',
+                                    confirmText: 'ブロック解除'
+                                }
+                            )
+                        }}
+                    >
+                        <Text>ブロック解除</Text>
+                    </ListItem>
+                )
+            } else {
+                options.push(
+                    <ListItem
+                        onClick={() => {
+                            confirm.open(
+                                '本当にこのユーザーをブロックしますか？',
+                                () => {
+                                    client?.block(props.ccid)
+                                },
+                                {
+                                    description:
+                                        'ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。',
+                                    confirmText: 'ブロック'
+                                }
+                            )
+                        }}
+                    >
+                        <Text>ブロック</Text>
+                    </ListItem>
+                )
+            }
+        }
+        return options
+    }, [client, confirm, isBlocking, props.ccid, isMe])
+
     return (
         <View>
             <QueryTimeline
@@ -137,58 +197,16 @@ export const ProfileView = (props: Props) => {
                                         <MdSearch size={24} />
                                     </IconButton>
                                     */}
-                                    <IconButton
-                                        variant="contained"
-                                        onClick={() => {
-                                            const options: Record<string, React.ReactNode> = {}
-                                            if (!isMe) {
-                                                if (isBlocking) {
-                                                    options['unblock'] = <Text>ブロック解除</Text>
-                                                } else {
-                                                    options['block'] = <Text>ブロック</Text>
-                                                }
-                                            }
-
-                                            select('', options, (key) => {
-                                                switch (key) {
-                                                    case 'block': {
-                                                        confirm.open(
-                                                            '本当にこのユーザーをブロックしますか？',
-                                                            () => {
-                                                                client?.block(props.ccid).then(() => {
-                                                                    //setUpdateBlock((b) => b + 1)
-                                                                })
-                                                            },
-                                                            {
-                                                                description:
-                                                                    'ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。',
-                                                                confirmText: 'ブロック'
-                                                            }
-                                                        )
-                                                        break
-                                                    }
-                                                    case 'unblock': {
-                                                        confirm.open(
-                                                            '本当にこのユーザーのブロックを解除しますか？',
-                                                            () => {
-                                                                client?.unblock(props.ccid).then(() => {
-                                                                    //setUpdateBlock((b) => b + 1)
-                                                                })
-                                                            },
-                                                            {
-                                                                description:
-                                                                    'ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。',
-                                                                confirmText: 'ブロック解除'
-                                                            }
-                                                        )
-                                                        break
-                                                    }
-                                                }
-                                            })
-                                        }}
-                                    >
-                                        <MdMoreHoriz size={24} />
-                                    </IconButton>
+                                    {selectOptions.length > 0 && (
+                                        <IconButton
+                                            variant="contained"
+                                            onClick={() => {
+                                                select('', selectOptions)
+                                            }}
+                                        >
+                                            <MdMoreHoriz size={24} />
+                                        </IconButton>
+                                    )}
                                 </div>
                             </CCWallpaper>
                             <Avatar

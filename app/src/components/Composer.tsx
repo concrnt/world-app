@@ -58,7 +58,7 @@ export const Composer = (props: Props) => {
     }, [])
 
     const getSubmitLabel = () => {
-        if (uploading) return 'アップロード中...'
+        if (uploading) return '送信中...'
         switch (props.mode) {
             case 'reply':
                 return 'リプライ'
@@ -112,6 +112,8 @@ export const Composer = (props: Props) => {
         const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
         const activityTimeline = semantics.activityTimeline(client.ccid, client.currentProfile)
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
+        const key = Date.now().toString()
+        const newPostUri = semantics.post(client.ccid, client.currentProfile, key)
 
         let success = false
         try {
@@ -126,10 +128,9 @@ export const Composer = (props: Props) => {
                     }
 
                     // リプライメッセージを作成
-                    const key = Date.now().toString()
-                    const replyMessageUri = semantics.post(client.ccid, 'main', key)
+
                     const replyDocument = {
-                        key: replyMessageUri,
+                        key: newPostUri,
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
@@ -140,9 +141,7 @@ export const Composer = (props: Props) => {
                         createdAt: new Date()
                     }
 
-                    console.log('Submitting reply:', replyDocument)
                     await client.api.commit(replyDocument)
-                    console.log('Reply submitted, uri:', replyMessageUri)
 
                     // リプライアソシエーションを作成
                     const targetAuthorDomain = await client
@@ -155,15 +154,13 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: replyMessageUri
+                            messageId: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: new Date()
                     }
 
-                    console.log('Submitting reply association:', associationDocument)
                     await client.api.commit(associationDocument, targetAuthorDomain)
-                    console.log('Reply association submitted')
                     break
                 }
                 case 'reroute': {
@@ -174,10 +171,8 @@ export const Composer = (props: Props) => {
                     }
 
                     // リルートメッセージを作成
-                    const key = Date.now().toString()
-                    const rerouteMessageUri = semantics.post(client.ccid, 'main', key)
                     const rerouteDocument = {
-                        key: rerouteMessageUri,
+                        key: newPostUri,
                         schema: Schemas.rerouteMessage,
                         value: {
                             rerouteMessageId: props.targetMessage.uri
@@ -187,9 +182,7 @@ export const Composer = (props: Props) => {
                         createdAt: new Date()
                     }
 
-                    console.log('Submitting reroute:', rerouteDocument)
                     await client.api.commit(rerouteDocument)
-                    console.log('Reroute submitted, uri:', rerouteMessageUri)
 
                     // リルートアソシエーションを作成
                     const targetAuthorDomain = await client
@@ -202,20 +195,17 @@ export const Composer = (props: Props) => {
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: rerouteMessageUri
+                            messageId: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: new Date()
                     }
 
-                    console.log('Submitting reroute association:', associationDocument)
                     await client.api.commit(associationDocument, targetAuthorDomain)
-                    console.log('Reroute association submitted')
                     break
                 }
                 default: {
                     // 通常の投稿
-                    const key = Date.now().toString()
 
                     // 画像がある場合は mediaMessage、なければ markdownMessage
                     if (mediaDrafts.length > 0) {
@@ -231,7 +221,7 @@ export const Composer = (props: Props) => {
                         )
 
                         const document = {
-                            key: semantics.post(client.ccid, 'main', key),
+                            key: newPostUri,
                             schema: Schemas.mediaMessage,
                             value: {
                                 body: draft,
@@ -244,7 +234,7 @@ export const Composer = (props: Props) => {
                         await client.api.commit(document)
                     } else {
                         const document = {
-                            key: semantics.post(client.ccid, 'main', key),
+                            key: newPostUri,
                             schema: Schemas.markdownMessage,
                             value: {
                                 body: draft

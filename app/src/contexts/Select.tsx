@@ -1,10 +1,11 @@
 import { animate, AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { Text } from '@concrnt/ui'
+import { createContext, Fragment, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { Text, List } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 
 interface SelectContextState {
-    select: (title: string, options: Record<string, ReactNode>, callback: (selected: string) => void) => void
+    select: (title: string, options: ReactNode[]) => void
+    close: () => void
 }
 
 interface Props {
@@ -12,7 +13,8 @@ interface Props {
 }
 
 const SelectContext = createContext<SelectContextState>({
-    select: (_title: string, _options: Record<string, ReactNode>, _callback: (selected: string) => void) => {}
+    select: (_title: string, _options: ReactNode[]) => {},
+    close: () => {}
 })
 
 export const SelectProvider = (props: Props) => {
@@ -20,40 +22,35 @@ export const SelectProvider = (props: Props) => {
     const dragControls = useDragControls()
 
     const [title, setTitle] = useState<string>('')
-    const [selection, setSelection] = useState<Record<string, ReactNode> | undefined>(undefined)
-    const [callback, setCallback] = useState<((selected: string) => void) | undefined>(undefined)
+    const [options, setSelection] = useState<ReactNode[]>([])
 
-    const height = Object.keys(selection ?? {}).length * 56 + 30 + 48 // Approximate height calculation
+    const height = Object.keys(options).length * 56 + 30 + 48 // Approximate height calculation
 
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
 
     const close = () => {
         setTitle('')
-        setSelection(undefined)
-        setCallback(undefined)
+        setSelection([])
     }
 
-    const select = useCallback(
-        (title: string, options: Record<string, ReactNode>, callback: (selected: string) => void) => {
-            setTitle(title)
-            setSelection(options)
-            setCallback(() => callback)
-        },
-        []
-    )
+    const select = useCallback((title: string, options: ReactNode[]) => {
+        setTitle(title)
+        setSelection(options)
+    }, [])
 
     const value = useMemo(
         () => ({
-            select
+            select,
+            close
         }),
-        [select]
+        [select, close]
     )
 
     return (
         <>
             <SelectContext.Provider value={value}>{props.children}</SelectContext.Provider>
             <AnimatePresence>
-                {selection && (
+                {options.length > 0 && (
                     <>
                         <motion.div
                             style={{
@@ -135,32 +132,18 @@ export const SelectProvider = (props: Props) => {
                                 <div
                                     style={{
                                         height: '30px',
-                                        borderBottom: `1px solid ${CssVar.divider}`
+                                        borderBottom: `1px solid ${CssVar.divider}`,
+                                        padding: `0 ${CssVar.space(2)}`
                                     }}
                                 >
                                     <Text>{title}</Text>
                                 </div>
                             )}
-                            <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
-                                {Object.keys(selection).map((key) => (
-                                    <div
-                                        key={key}
-                                        style={{
-                                            padding: '16px',
-                                            height: '56px',
-                                            borderBottom: `1px solid ${CssVar.divider}`
-                                        }}
-                                        onClick={() => {
-                                            if (callback) {
-                                                callback(key)
-                                            }
-                                            close()
-                                        }}
-                                    >
-                                        {selection[key]}
-                                    </div>
+                            <List style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+                                {options.map((opt, i) => (
+                                    <Fragment key={i}>{opt}</Fragment>
                                 ))}
-                            </div>
+                            </List>
                         </motion.div>
                     </>
                 )}

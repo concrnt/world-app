@@ -1,4 +1,4 @@
-import { Button, Text } from '@concrnt/ui'
+import { Button, ListItem, Text } from '@concrnt/ui'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
@@ -136,38 +136,40 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    select(
-                        '',
-                        {
-                            delete: <Text>投稿を削除</Text>,
-                            report: <Text>投稿を通報</Text>
-                        },
-                        (key) => {
-                            switch (key) {
-                                case 'delete':
-                                    confirm.open(
-                                        '本当にこの投稿を削除しますか？',
-                                        () => {
-                                            client?.api.delete(props.message.uri).then(() => hapticSuccess())
-                                        },
-                                        {
-                                            confirmText: '削除'
-                                        }
-                                    )
-                                    break
-                                case 'report':
-                                    drawer.open(
-                                        <Report
-                                            targetURI={props.message.uri}
-                                            onSend={() => {
-                                                drawer.close()
-                                                hapticSuccess()
-                                            }}
-                                        />
-                                    )
-                            }
-                        }
-                    )
+                    select('', [
+                        <ListItem
+                            key="delete"
+                            onClick={() => {
+                                confirm.open(
+                                    '本当にこの投稿を削除しますか？',
+                                    () => {
+                                        client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                                    },
+                                    {
+                                        confirmText: '削除'
+                                    }
+                                )
+                            }}
+                        >
+                            <Text>投稿を削除</Text>
+                        </ListItem>,
+                        <ListItem
+                            key="abuse"
+                            onClick={() => {
+                                drawer.open(
+                                    <Report
+                                        targetURI={props.message.uri}
+                                        onSend={() => {
+                                            drawer.close()
+                                            hapticSuccess()
+                                        }}
+                                    />
+                                )
+                            }}
+                        >
+                            通報
+                        </ListItem>
+                    ])
                 }}
             >
                 <MdMoreHoriz size={20} />

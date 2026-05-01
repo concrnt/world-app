@@ -27,6 +27,10 @@ export const HomeView = (props: ScrollViewProps) => {
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client.ccid, client.currentProfile))
 
+    useEffect(() => {
+        setSelectedTabUri(semantics.homeList(client.ccid, client.currentProfile))
+    }, [client])
+
     // fix default settings
     useEffect(() => {
         if (!client) return

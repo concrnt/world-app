@@ -6,7 +6,7 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, Text, IconButton } from '@concrnt/ui'
+import { Avatar, CfmRenderer, Text, IconButton, ListItem } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
@@ -42,17 +42,16 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             <IconButton
                 onClick={(e) => {
                     e.stopPropagation()
-                    select(
-                        '',
-                        {
-                            delete: <Text>投稿を削除</Text>
-                        },
-                        (key) => {
-                            if (key === 'delete') {
-                                client?.api.delete(message.uri).then(() => hapticSuccess())
-                            }
-                        }
-                    )
+                    select('', [
+                        <ListItem
+                            key="delete"
+                            onClick={() => {
+                                client.api.delete(message.uri).then(() => hapticSuccess())
+                            }}
+                        >
+                            <Text>投稿を削除</Text>
+                        </ListItem>
+                    ])
                 }}
                 style={{
                     padding: 0,

@@ -36,7 +36,8 @@ export const ProfileEditor = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: CssVar.space(4)
+                gap: CssVar.space(4),
+                width: '100%'
             }}
         >
             <div
