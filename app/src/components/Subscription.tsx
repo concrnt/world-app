@@ -4,6 +4,7 @@ import { Checkbox, Text, List, ListItem } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { PinnedListItemClass } from '@concrnt/worldlib'
+import { List as ListType } from '@concrnt/worldlib'
 
 export const Subscription = ({ target }: { target: string }) => {
     return (
@@ -30,15 +31,22 @@ const Lists = ({ target }: { target: string }) => {
     return (
         <List>
             {pinnedLists.map((pin) => (
-                <ListElem key={pin.uri} pin={pin} target={target} />
+                <Pin key={pin.uri} pin={pin} target={target} />
             ))}
         </List>
     )
 }
 
-const ListElem = ({ pin, target }: { pin: PinnedListItemClass; target: string }) => {
-    const { client } = useClient()
+const Pin = ({ pin, target }: { pin: PinnedListItemClass; target: string }) => {
     const [list] = useSubscribe(pin.list)
+    if (!list) return null
+
+    return <Item list={list} target={target} />
+}
+
+const Item = ({ list, target }: { list: ListType; target: string }) => {
+    const { client } = useClient()
+
     const [items] = useSubscribe(list.items)
     const contains = items.includes(target) ?? false
 
