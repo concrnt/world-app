@@ -42,6 +42,7 @@ export const ProfileView = (props: Props) => {
         return client.getUser(props.ccid).catch(() => null)
     }, [client, props.ccid])
 
+    const [reload, setReload] = useState(0)
     const profilePromise = useMemo(() => {
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
@@ -60,7 +61,7 @@ export const ProfileView = (props: Props) => {
                 }
                 return tmp
             })
-    }, [client, props.ccid, props.profileName])
+    }, [client, props.ccid, props.profileName, reload])
 
     return (
         <View>
@@ -70,6 +71,9 @@ export const ProfileView = (props: Props) => {
                     userPromise={userPromise}
                     profilePromise={profilePromise}
                     profileName={props.profileName ?? 'main'}
+                    reload={() => {
+                        setReload((prev) => prev + 1)
+                    }}
                 />
             </Suspense>
         </View>
@@ -81,6 +85,7 @@ interface InnerProps {
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema>>
     profileName: string
+    reload: () => void
 }
 
 const Inner = (props: InnerProps) => {
@@ -90,7 +95,15 @@ const Inner = (props: InnerProps) => {
         return <Text>ユーザーが見つかりませんでした</Text>
     }
 
-    return <Body ccid={props.ccid} user={user} profilePromise={props.profilePromise} profileName={props.profileName} />
+    return (
+        <Body
+            ccid={props.ccid}
+            user={user}
+            profilePromise={props.profilePromise}
+            profileName={props.profileName}
+            reload={props.reload}
+        />
+    )
 }
 
 interface BodyProps {
@@ -98,6 +111,7 @@ interface BodyProps {
     user: User
     profilePromise: Promise<Document<ProfileSchema>>
     profileName: string
+    reload: () => void
 }
 
 const Body = (props: BodyProps) => {
@@ -279,8 +293,14 @@ const Body = (props: BodyProps) => {
                                     onClick={() =>
                                         drawer.open(
                                             <ProfileEditor
+                                                initial={profile.value}
                                                 targetURI={semantics.profile(props.ccid, props.profileName ?? 'main')}
-                                                onComplete={() => drawer.close()}
+                                                onComplete={() => {
+                                                    // TODO: useSubscribeパターンに移行する
+                                                    props.reload()
+                                                    client.updateProfiles()
+                                                    drawer.close()
+                                                }}
                                             />
                                         )
                                     }
