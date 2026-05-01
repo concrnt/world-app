@@ -2,15 +2,39 @@ import { type FQDN, CCID, Entity, Document } from '@concrnt/client'
 import { ProfileSchema } from './schemas/'
 import { Client } from './client'
 import { semantics } from './semantics'
+import { CachedPromise } from './cachedPromise'
 
 export class User {
+    client: Client
     domain: FQDN
     profile: Partial<ProfileSchema>
 
     ccid: CCID
     alias?: string
 
-    constructor(domain: FQDN, entity: Document<Entity>, profile?: ProfileSchema) {
+    stats = new CachedPromise<{ acknowledging: number; acknowledged: number }>(async () => {
+        const acknowledging = await this.client.api.requestConcrntApi<Record<string, number>>(
+            this.client.server.domain,
+            'net.concrnt.core.acknowledge-counts',
+            {
+                from: this.ccid
+            }
+        )
+        const acknowledged = await this.client.api.requestConcrntApi<Record<string, number>>(
+            this.client.server.domain,
+            'net.concrnt.core.acknowledge-counts',
+            {
+                to: this.ccid
+            }
+        )
+        return {
+            acknowledging: acknowledging['world.concrnt.ack'] ?? 0,
+            acknowledged: acknowledged['world.concrnt.ack'] ?? 0
+        }
+    })
+
+    constructor(client: Client, domain: FQDN, entity: Document<Entity>, profile?: ProfileSchema) {
+        this.client = client
         this.domain = domain
         this.profile = profile || {}
         this.ccid = entity.author
@@ -29,27 +53,6 @@ export class User {
                 return undefined
             })
 
-        return new User(entity.value.domain, entity, profile?.value)
-    }
-
-    async GetStats(client: Client): Promise<{ acknowledging: number; acknowledged: number }> {
-        const acknowledging = await client.api.requestConcrntApi<Record<string, number>>(
-            client.server.domain,
-            'net.concrnt.core.acknowledge-counts',
-            {
-                from: this.ccid
-            }
-        )
-        const acknowledged = await client.api.requestConcrntApi<Record<string, number>>(
-            client.server.domain,
-            'net.concrnt.core.acknowledge-counts',
-            {
-                to: this.ccid
-            }
-        )
-        return {
-            acknowledging: acknowledging['world.concrnt.ack'] ?? 0,
-            acknowledged: acknowledged['world.concrnt.ack'] ?? 0
-        }
+        return new User(client, entity.value.domain, entity, profile?.value)
     }
 }

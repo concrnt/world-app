@@ -32,8 +32,9 @@ export const TimelineView = (props: Props) => {
             <FAB
                 onClick={() => {
                     hapticLight()
-                    timelinePromise.then(() => {
-                        composer.open([props.uri], [])
+                    timelinePromise.then((t) => {
+                        const options = t ? [t] : []
+                        composer.open([props.uri], options)
                     })
                 }}
             >
