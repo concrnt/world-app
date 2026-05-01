@@ -1,8 +1,8 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { Header } from '../ui/Header'
-import { View, Text, IconButton, Button, TextField } from '@concrnt/ui'
+import { View, Text, IconButton, Button, TextField, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { List, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
+import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { MdPlaylistAdd } from 'react-icons/md'
 
@@ -67,7 +67,7 @@ export const ListsView = () => {
 }
 
 interface ListsProps {
-    listsPromise: Promise<List[]>
+    listsPromise: Promise<ListType[]>
     onUpdate?: () => void
 }
 
@@ -80,17 +80,12 @@ const Lists = (props: ListsProps) => {
     const [pinnedLists] = useSubscribe(client.pinnedLists)
 
     return (
-        <div style={{ padding: '8px' }}>
+        <List>
             {lists.map((list) => (
-                <div
+                <ListItem
                     key={list.uri}
                     style={{
-                        border: '1px solid #ccc',
-                        padding: 10,
-                        marginBottom: 10,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
+                        height: '2rem'
                     }}
                     onClick={() =>
                         drawer.open(
@@ -103,26 +98,27 @@ const Lists = (props: ListsProps) => {
                             />
                         )
                     }
+                    secondaryAction={
+                        <IconButton
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (pinnedLists.find((p) => p.uri === list.uri)) {
+                                    // unpin
+                                    client?.removePin(list.uri)
+                                } else {
+                                    // pin
+                                    client?.addPin(list.uri)
+                                }
+                            }}
+                        >
+                            {pinnedLists.find((p) => p.uri === list.uri) ? <RiPushpinFill /> : <RiPushpinLine />}
+                        </IconButton>
+                    }
                 >
                     <Text>{list.title}</Text>
-                    <Text>アイテム数: {/*list.items.length*/}</Text>
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (pinnedLists.find((p) => p.uri === list.uri)) {
-                                // unpin
-                                client?.removePin(list.uri)
-                            } else {
-                                // pin
-                                client?.addPin(list.uri)
-                            }
-                        }}
-                    >
-                        {pinnedLists.find((p) => p.uri === list.uri) ? <RiPushpinFill /> : <RiPushpinLine />}
-                    </IconButton>
-                </div>
+                </ListItem>
             ))}
-        </div>
+        </List>
     )
 }
 
@@ -135,7 +131,8 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: CssVar.space(4)
+                gap: CssVar.space(4),
+                width: '100%'
             }}
         >
             <div
