@@ -1,4 +1,5 @@
 
+import { CssVar, Text } from "@concrnt/ui"
 import { useEffect } from 'react'
 import { QRSetup } from '../components/QRSetup'
 import { string2Uint8Array } from '../util'
@@ -93,9 +94,26 @@ export const Login = () => {
     }, [])
 
     return (
-        <div>
-            <QRSetup
-            />
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                gap: CssVar.space(4),
+                padding: CssVar.space(4),
+            }}
+        >
+            <div
+                style={{
+                    border: `1px solid ${CssVar.divider}`,
+                    borderRadius: CssVar.round(1),
+                }}
+            >
+                <Text variant="h2">ログイン</Text>
+                <QRSetup />
+            </div>
         </div>
     )
 }

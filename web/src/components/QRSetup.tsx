@@ -1,11 +1,12 @@
 
-import { ComputeCKID, DeriveIdentity, GenerateIdentity } from "@concrnt/client"
-import { Button, Text } from "@concrnt/ui"
-import { emojihash, SignalLoginReceiver } from "@concrnt/worldlib"
+import { Api, ComputeCKID, DeriveIdentity, type Document, GenerateIdentity, InMemoryAuthProvider, InMemoryKVS } from "@concrnt/client"
+import { Button, CssVar, Passport, Text } from "@concrnt/ui"
+import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from "@concrnt/worldlib"
 import { useEffect, useRef, useState } from "react"
 import { QRCode } from 'react-qrcode-logo'
 import { usePersistent } from "../hooks/usePersistent"
 import { string2Uint8Array } from "../util"
+import Tilt from 'react-parallax-tilt'
 
 export const QRSetup = () => {
 
@@ -15,8 +16,9 @@ export const QRSetup = () => {
     const [ccid, setCCID] = useState<string>('')
     const [domain, setDomain] = useState<string>('')
 
+    const [profile, setProfile] = useState<Document<ProfileSchema> | null>(null)
+
     const [keyFingerprint, setKeyFingerprint] = useState<string>()
-    const [keyURI, setKeyURI] = useState<string>('')
 
     const [_domain, setPersistentDomain] = usePersistent<string>('Domain')
     const [_subkey, setPersistentSubkey] = usePersistent<string>('SubKey')
@@ -44,6 +46,16 @@ export const QRSetup = () => {
         const keyGenerationCallback = async (ccid: string, domain: string): Promise<string> => {
             setCCID(ccid)
             setDomain(d = domain)
+
+            const authProvider = new InMemoryAuthProvider()
+            const kvs = new InMemoryKVS()
+            const api = new Api(domain, authProvider, kvs)
+
+            api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main'), domain).then((doc) => {
+                if (doc) {
+                    setProfile(doc)
+                }
+            })
 
             const keyType = await waitForKeyTypeSelection(ccid, domain)
             
@@ -126,7 +138,6 @@ export const QRSetup = () => {
             signalURL,
             keyGenerationCallback,
             (keyURI: string) => {
-                setKeyURI(keyURI)
 
                 setPersistentDomain(d)
                 setPersistentSubkey(subkey)
@@ -144,70 +155,111 @@ export const QRSetup = () => {
     return <div
         style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
         }}
     >
 
-        <div
-            style={{
-                width: "200px",
-                height: "200px",
-                margin: '0 auto'
-            }}
-        >
-            <QRCode
-                value={signalURL}
-                size={500}
-                ecLevel="L"
-                quietZone={50}
+        <div>
+            <div
                 style={{
-                    width: '100%',
-                    height: '100%'
+                    width: "200px",
+                    height: "200px",
+                    margin: '0 auto'
                 }}
-                fgColor={'black'}
-                bgColor={'transparent'}
-            />
+            >
+                <QRCode
+                    value={signalURL}
+                    size={500}
+                    ecLevel="L"
+                    quietZone={50}
+                    style={{
+                        width: '100%',
+                        height: '100%'
+                    }}
+                    fgColor={'black'}
+                    bgColor={'transparent'}
+                />
+
+            </div>
+
         </div>
-        <Text>{sessionID}</Text>
-        <Text>CCID: {ccid}</Text>
-        <Text>Domain: {domain}</Text>
-        <Text>Key URI: {keyURI}</Text>
-        <Text>Key Fingerprint: {keyFingerprint}</Text>
 
+        <div>
 
-        {pendingKeyGeneration && 
-            <div>
-                <Text>パスキーを利用しますか？</Text>
-                <Button
-                    onClick={() => {
-                        if (keyTypeSelectionRef.current) {
-                            keyTypeSelectionRef.current('instant')
-                        }
+            {!ccid &&
+                <Text>Concrntアプリで<wbr/>QRコードをスキャンしてください</Text>
+            }
+
+            {pendingKeyGeneration && 
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: CssVar.space(2),
                     }}
-                >
-                    いいえ
-                </Button>
-                <Button
-                    onClick={() => {
-                        if (keyTypeSelectionRef.current) {
-                            keyTypeSelectionRef.current('passkey')
-                        }
-                    }}
-                >
-                    はい
-                </Button>
-            </div>
-        }
+            >
+                    <Text variant="h4">パスキーを利用しますか？</Text>
+                    <Text>
+                        パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。
+                    </Text>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: CssVar.space(2),
+                        }}
+                    >
+                    <Button
+                        onClick={() => {
+                            if (keyTypeSelectionRef.current) {
+                                keyTypeSelectionRef.current('instant')
+                            }
+                        }}
+                    >
+                        いいえ
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            if (keyTypeSelectionRef.current) {
+                                keyTypeSelectionRef.current('passkey')
+                            }
+                        }}
+                    >
+                        はい
+                    </Button>
+                    </div>
+                </div>
+            }
 
-        {ccid && domain && !pendingKeyGeneration &&
-            <div>
-                <Text>端末で表示されている絵文字を確認し、同じであれば「はい」を選択してください。</Text>
-            </div>
-        }
+            {ccid && domain && !pendingKeyGeneration &&
+                <div>
+                    <div
+                        style={{
+                            width: '40vw',
+                        }}
+                    >
+                        <Tilt glareEnable={true} glareBorderRadius="5%">
+                            <Passport
+                                ccid={ccid}
+                                name={profile?.value.username ?? 'No Name'}
+                                avatar={profile?.value.avatar ?? ''}
+                                host={domain ?? 'Unknown'}
+                                cdate={''}
+                            />
+                        </Tilt>
+                    </div>
+                    <Text style={{fontSize: '2rem'}}>{keyFingerprint}</Text>
+                    <Text>端末で表示されている絵文字を確認し、同じであれば端末で「はい」を選択してください。</Text>
+                </div>
+            }
 
-
+        </div>
     </div>
 }
 
