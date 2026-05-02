@@ -209,6 +209,9 @@ export class Client {
                                 params: {
                                     entities: [ccid]
                                 }
+                            },
+                            {
+                                url: 'https://policy.concrnt.world/t/write-public.json'
                             }
                         ]
                     }
