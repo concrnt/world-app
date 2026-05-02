@@ -11,7 +11,7 @@ import { QRSetup } from './QRSetup'
 
 export const IDView = () => {
     const { client } = useClient()
-    const { push } = useStack()
+    const stack = useStack()
 
     if (!client) return null
 
@@ -43,7 +43,15 @@ export const IDView = () => {
                 <Button
                     startIcon={<MdQrCodeScanner />}
                     onClick={() => {
-                        push(<QRSetup />)
+                        stack.push(
+                            <QRSetup
+                                onComplete={() => {
+                                    setTimeout(() => {
+                                        stack.pop()
+                                    }, 1000)
+                                }}
+                            />
+                        )
                     }}
                 >
                     他デバイスでログイン

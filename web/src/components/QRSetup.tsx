@@ -1,7 +1,7 @@
 
 import { ComputeCKID, type Identity } from "@concrnt/client"
 import { Text } from "@concrnt/ui"
-import { SignalLoginReceiver } from "@concrnt/worldlib"
+import { emojihash, SignalLoginReceiver } from "@concrnt/worldlib"
 import { useEffect, useState } from "react"
 import { QRCode } from 'react-qrcode-logo'
 import { usePersistent } from "../hooks/usePersistent"
@@ -19,6 +19,7 @@ export const QRSetup = (props: Props) => {
     const [ccid, setCCID] = useState<string>('')
     const [domain, setDomain] = useState<string>('')
 
+    const [keyFingerprint, setKeyFingerprint] = useState<string>()
     const [keyURI, setKeyURI] = useState<string>('')
 
     const [_domain, setPersistentDomain] = usePersistent<string>('Domain')
@@ -34,6 +35,8 @@ export const QRSetup = (props: Props) => {
             setCCID(c = ccid)
             setDomain(d = domain)
             const keyID = ComputeCKID(props.identity.publicKey)
+            setKeyFingerprint(emojihash(keyID))
+
             return keyID
         }
 
@@ -92,6 +95,7 @@ export const QRSetup = (props: Props) => {
         <Text>CCID: {ccid}</Text>
         <Text>Domain: {domain}</Text>
         <Text>Key URI: {keyURI}</Text>
+        <Text>Key Fingerprint: {keyFingerprint}</Text>
     </div>
 
 
