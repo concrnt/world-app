@@ -17,11 +17,13 @@ import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
 import { MdBadge } from 'react-icons/md'
+import { SiActivitypub } from 'react-icons/si'
 
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
 import { IDView } from '../views/ID'
+import { Activitypub } from '../views/Activitypub'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -115,6 +117,9 @@ export const Sidebar = (props: Props) => {
                         </ListItem>
                         <ListItem icon={<MdBadge size={24} />} onClick={() => props.onPush?.(<IDView />)}>
                             ID管理
+                        </ListItem>
+                        <ListItem icon={<SiActivitypub size={24} />} onClick={() => props.onPush?.(<Activitypub />)}>
+                            ActivityPub
                         </ListItem>
                         <ListItem icon={<MdSettings size={24} />} onClick={() => props.onPush?.(<SettingsView />)}>
                             設定
