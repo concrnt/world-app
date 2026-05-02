@@ -5,9 +5,13 @@ import { invoke } from '@tauri-apps/api/core'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
+import { MdQrCodeScanner } from 'react-icons/md'
+import { useStack } from '../layouts/Stack'
+import { QRSetup } from './QRSetup'
 
 export const IDView = () => {
     const { client } = useClient()
+    const { push } = useStack()
 
     if (!client) return null
 
@@ -35,6 +39,15 @@ export const IDView = () => {
                         />
                     </Tilt>
                 </div>
+
+                <Button
+                    startIcon={<MdQrCodeScanner />}
+                    onClick={() => {
+                        push(<QRSetup />)
+                    }}
+                >
+                    他デバイスでログイン
+                </Button>
 
                 <Button
                     onClick={() => {

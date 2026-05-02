@@ -97,6 +97,14 @@ export const ClientProvider = (props: Props): ReactNode => {
             >
                 サーバーはオフラインです
                 <Button
+                    onClick={() => {
+                        setIsOffline(false)
+                        reload()
+                    }}
+                >
+                    再試行
+                </Button>
+                <Button
                     onClick={async () => {
                         await logout()
                         window.location.reload()

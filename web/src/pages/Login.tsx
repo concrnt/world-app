@@ -1,10 +1,10 @@
 
-import { QRCode } from 'react-qrcode-logo'
 import { Button, Text, TextField } from '@concrnt/ui'
 import { useState } from 'react'
 import { type Document, type Identity, GenerateIdentity, ComputeCKID, InMemoryKVS, Api, InMemoryAuthProvider } from '@concrnt/client'
 import { usePersistent } from '../hooks/usePersistent'
 import { semantics } from '@concrnt/worldlib'
+import { QRSetup } from '../components/QRSetup'
 
 export const Login = () => {
 
@@ -16,39 +16,14 @@ export const Login = () => {
 
     const keyID = ComputeCKID(identity.publicKey)
 
-    const [sessionID, _] = useState<string>(crypto.randomUUID())
-
-    const request = {
-        type: 'subkey_request',
-        key: keyID,
-        response: `https://signal.concrnt.net/channel/$${sessionID}`
-    }
-
     const [domainDraft, setDomainDraft] = useState<string>('v2dev.concrnt.net')
 
     return (
         <div>
             <Text variant="h3">{keyID}</Text>
-            <div
-                style={{
-                    width: "200px",
-                    height: "200px",
-                    margin: '0 auto'
-                }}
-            >
-                <QRCode
-                    value={JSON.stringify(request)}
-                    size={500}
-                    ecLevel="L"
-                    quietZone={50}
-                    style={{
-                        width: '100%',
-                        height: '100%'
-                    }}
-                    fgColor={'black'}
-                    bgColor={'transparent'}
-                />
-            </div>
+            <QRSetup
+                identity={identity}
+            />
         
             <div>
                 <Text variant="h3">
