@@ -549,9 +549,11 @@ export class Api {
         let references = undefined
         if (document.schema === 'https://schema.concrnt.net/reference.json') {
             const ref = document.value as unknown as { href: string }
-            const target = await this.getResource<SignedDocument>(ref.href)
-            references = {
-                [ref.href]: target
+            if (ref.href.startsWith('cckv://') || ref.href.startsWith('ccfs://')) {
+                const target = await this.getResource<SignedDocument>(ref.href)
+                references = {
+                    [ref.href]: target
+                }
             }
         }
 
