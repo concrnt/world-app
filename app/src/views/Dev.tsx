@@ -1,19 +1,14 @@
 import { useState } from 'react'
-import { View, Button, Divider, Skeleton, ConcrntLogo } from '@concrnt/ui'
+import { Button, TextField, View, Text } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
-import { useScanner } from '../contexts/Scanner'
-import { AvatarUploader } from '../components/AvatarUploader'
-import { MessageLayout } from '../components/message/MessageLayout'
-import { invoke } from '@tauri-apps/api/core'
 import { useClient } from '../contexts/Client'
 
 export const DevView = () => {
     const { client } = useClient()
-    const { scan } = useScanner()
-    const [scanned, setScanned] = useState<string>('')
 
-    const [avatar, setAvatar] = useState<string>('')
+    const [uriDraft, setURIDraft] = useState('')
+    const [result, setResult] = useState<string>('')
 
     return (
         <View>
@@ -28,86 +23,19 @@ export const DevView = () => {
                     overflowY: 'auto'
                 }}
             >
+                <Text variant="h3">Delete</Text>
+                <TextField value={uriDraft} onChange={(e) => setURIDraft(e.target.value)} placeholder="URI to delete" />
                 <Button
                     onClick={() => {
-                        scan().then((result) => {
-                            if (result) {
-                                setScanned(result)
-                                console.log('Scanned:', result)
-                            } else {
-                                console.log('No scan result')
-                            }
+                        client.api.delete(uriDraft).then((res) => {
+                            setResult(JSON.stringify(res, null, 2))
                         })
                     }}
                 >
-                    Scan
+                    Delete
                 </Button>
 
-                <Button
-                    onClick={() => {
-                        window.location.reload()
-                    }}
-                >
-                    Reload
-                </Button>
-
-                <pre>
-                    <code>{scanned}</code>
-                </pre>
-
-                <Divider />
-
-                <AvatarUploader
-                    src={avatar}
-                    onChange={(url) => {
-                        setAvatar(url)
-                        console.log('Avatar URL:', url)
-                    }}
-                />
-
-                <MessageLayout
-                    left={
-                        <Skeleton
-                            style={{
-                                width: '40px',
-                                height: '40px'
-                            }}
-                        />
-                    }
-                    headerLeft={
-                        <Skeleton
-                            style={{
-                                height: '1rem'
-                            }}
-                        />
-                    }
-                >
-                    <Skeleton
-                        style={{
-                            height: '3rem'
-                        }}
-                    />
-                </MessageLayout>
-                <ConcrntLogo size="100px" upperColor="#0476d9" lowerColor="#0476d9" frameColor="#0476d9" spinning />
-
-                <Button
-                    onClick={() => {
-                        invoke('backup_masterkey', {
-                            template: `Concrnt ログイン情報
-このファイルは Concrnt のログイン情報をバックアップするためのものです。
-このファイルを安全な場所に保管してください。
-
-CCID: \${ccid}
-マスターキー: \${mnemonic_ja}
-バックアップ時登録サーバー: ${client?.server.domain ?? 'N/A'}
-
-もし、マスターキーを紛失した場合、アカウントを復元することができなくなります。
-また、この内容を他人に知られると、アカウントが永久に乗っ取られる可能性があります。安全な場所に保管してください。`
-                        })
-                    }}
-                >
-                    bakup keys
-                </Button>
+                <pre>{result}</pre>
             </div>
         </View>
     )

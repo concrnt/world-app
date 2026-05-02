@@ -4,18 +4,24 @@ import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { useStack } from '../layouts/Stack'
 import { ApView } from './ApView'
+import { NotFoundError } from '@concrnt/client'
+import { Schemas } from '@concrnt/worldlib'
 
-interface APSettings {
+interface ApSettings {
     id: string
     ccid: string
     enabled: boolean
     listenTimelines: string[]
 }
 
+interface ApServerInfo {
+    serviceAccountId: string
+}
+
 export const Activitypub = () => {
     const { client } = useClient()
 
-    const [settings, setSettings] = useState<APSettings | undefined | null>(undefined)
+    const [settings, setSettings] = useState<ApSettings | undefined | null>(undefined)
     const [idDraft, setIDDraft] = useState('')
     const idOk = idDraft.length > 0 && idDraft.match(/^[a-zA-Z0-9_]+$/)
 
@@ -25,7 +31,7 @@ export const Activitypub = () => {
 
     useEffect(() => {
         client.api
-            .fetchWithCredential<APSettings>(client.server.domain, '/ap/api/settings')
+            .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/settings')
             .then((res) => {
                 setSettings(res)
             })
@@ -42,6 +48,45 @@ export const Activitypub = () => {
             .catch((err) => {
                 console.log(err)
             })
+
+        client.api
+            .fetchWithCredential<ApServerInfo>(client.server.domain, '/ap/api/info')
+            .then((res) => {
+                const inboxUri = `cckv://${client.ccid}/activitypub.concrnt.world/inbox`
+
+                client.api
+                    .getDocument(inboxUri)
+                    .then((_doc) => {})
+                    .catch((err) => {
+                        if (err instanceof NotFoundError) {
+                            console.log('Inbox not found. creating...')
+                            const document = {
+                                key: inboxUri,
+                                author: client.ccid,
+                                schema: Schemas.userTimeline,
+                                value: {},
+                                createdAt: new Date(),
+                                policy: {
+                                    entries: [
+                                        {
+                                            url: 'https://policy.concrnt.world/t/allow-writers.json',
+                                            params: {
+                                                entities: [res.serviceAccountId]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+
+                            client.api.commit(document)
+                        }
+                    })
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+
+        // const inboxUri = `cckv://${client.ccid}/activitypub.concrnt.world/inbox`
     }, [])
 
     return (
@@ -60,7 +105,7 @@ export const Activitypub = () => {
                         disabled={!idOk}
                         onClick={() => {
                             client.api
-                                .fetchWithCredential<APSettings>(client.server.domain, '/ap/api/setup', {
+                                .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/setup', {
                                     method: 'POST',
                                     body: JSON.stringify({
                                         id: idDraft

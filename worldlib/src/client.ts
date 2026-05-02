@@ -180,23 +180,12 @@ export class Client {
         await api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
-                const document = {
+                const document: Document<any> = {
                     key: semantics.homeTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
-                    createdAt: new Date(),
-                    policies: [
-                        {
-                            url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
-                            params: {
-                                readListMode: false,
-                                reader: [],
-                                writeListMode: true,
-                                writer: [ccid]
-                            }
-                        }
-                    ]
+                    createdAt: new Date()
                 }
                 api.commit(document)
                 return document
@@ -207,23 +196,22 @@ export class Client {
         await api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
-                const document = {
+                const document: Document<any> = {
                     key: semantics.notificationTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
                     createdAt: new Date(),
-                    policies: [
-                        {
-                            url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
-                            params: {
-                                readListMode: true,
-                                reader: [ccid],
-                                writeListMode: false,
-                                writer: []
+                    policy: {
+                        entries: [
+                            {
+                                url: 'https://policy.concrnt.world/t/restrict-readers.json',
+                                params: {
+                                    entities: [ccid]
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
                 api.commit(document)
                 return document
@@ -234,23 +222,12 @@ export class Client {
         await api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
-                const document = {
+                const document: Document<any> = {
                     key: semantics.activityTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
                     value: {},
-                    createdAt: new Date(),
-                    policies: [
-                        {
-                            url: 'https://policy.concrnt.world/t/inline-allow-deny.json',
-                            params: {
-                                readListMode: false,
-                                reader: [],
-                                writeListMode: true,
-                                writer: [ccid]
-                            }
-                        }
-                    ]
+                    createdAt: new Date()
                 }
                 api.commit(document)
                 return document

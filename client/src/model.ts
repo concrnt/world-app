@@ -27,7 +27,11 @@ export interface Document<T> {
     associate?: string
     associationVariant?: string
 
-    policies?: Policy[]
+    policy?: PolicySet
+}
+
+interface PolicySet {
+    entries: Policy[]
 }
 
 export interface Policy {
