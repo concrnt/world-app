@@ -1,12 +1,12 @@
 import { Avatar, Button, CCWallpaper, CssVar, useTheme, View, Text } from '@concrnt/ui'
-import { Person } from '@fedify/vocab'
 import { useNavigation } from '../contexts/Navigation'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
+import { ApObject } from '../utils/activitypub'
 
 interface Props {
-    person: Person
+    person: ApObject
 }
 
 export const ApPerson = ({ person }: Props) => {
@@ -15,10 +15,6 @@ export const ApPerson = ({ person }: Props) => {
     const { client } = useClient()
 
     console.log(person)
-
-    person.getIcon().then((icon) => {
-        console.log('icon', icon?.url?.href)
-    })
 
     const [followings, setFollowings] = useState<string[]>([])
     const followed = followings.includes(person.id?.toString() ?? '')
@@ -42,7 +38,7 @@ export const ApPerson = ({ person }: Props) => {
                 }}
             >
                 <CCWallpaper
-                    src={person.getImage().then((image) => image?.url?.href?.toString())}
+                    src={person.getImages()[0]?.url}
                     style={{
                         paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                         height: '150px'
@@ -79,7 +75,7 @@ export const ApPerson = ({ person }: Props) => {
                         transform: 'translateY(-50%)',
                         left: CssVar.space(2)
                     }}
-                    src={person.getIcon().then((icon) => icon?.url?.href?.toString())}
+                    src={person.getIcons()[0]?.url}
                 />
                 <div
                     style={{
@@ -145,7 +141,7 @@ export const ApPerson = ({ person }: Props) => {
                             {person.name || 'Anonymous'}
                         </Text>
                         <Text>
-                            @{person.preferredUsername}@{person.id?.host ?? 'unknown'}
+                            @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}
                         </Text>
                     </div>
                     <div>

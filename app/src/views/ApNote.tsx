@@ -1,8 +1,8 @@
 import { View } from '@concrnt/ui'
-import { Note } from '@fedify/vocab'
+import { ApObject } from '../utils/activitypub'
 
 interface Props {
-    note: Note
+    note: ApObject
 }
 
 export const ApNote = (props: Props) => {
