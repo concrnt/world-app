@@ -2,6 +2,8 @@ import { Avatar, Button, CCWallpaper, CssVar, useTheme, View, Text } from '@conc
 import { Person } from '@fedify/vocab'
 import { useNavigation } from '../contexts/Navigation'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import { useEffect, useState } from 'react'
+import { useClient } from '../contexts/Client'
 
 interface Props {
     person: Person
@@ -10,12 +12,27 @@ interface Props {
 export const ApPerson = ({ person }: Props) => {
     const theme = useTheme()
     const navigation = useNavigation()
+    const { client } = useClient()
 
     console.log(person)
 
     person.getIcon().then((icon) => {
         console.log('icon', icon?.url?.href)
     })
+
+    const [followings, setFollowings] = useState<string[]>([])
+    const followed = followings.includes(person.id?.toString() ?? '')
+
+    const updateFollowings = () => {
+        client.api.fetchWithCredential<string[]>(client.server.domain, '/ap/api/following').then((response) => {
+            setFollowings(response)
+            console.log('followings', response)
+        })
+    }
+
+    useEffect(() => {
+        updateFollowings()
+    }, [])
 
     return (
         <View>
@@ -80,7 +97,42 @@ export const ApPerson = ({ person }: Props) => {
                             justifyContent: 'flex-end'
                         }}
                     >
-                        <Button>フォロー</Button>
+                        {followed ? (
+                            <Button
+                                onClick={() => {
+                                    client.api
+                                        .fetchWithCredential(client.server.domain, '/ap/api/unfollow', {
+                                            method: 'POST',
+                                            body: JSON.stringify({
+                                                target: person.id?.toString()
+                                            })
+                                        })
+                                        .then((response) => {
+                                            console.log('unfollow response', response)
+                                            updateFollowings()
+                                        })
+                                }}
+                            >
+                                フォロー解除
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => {
+                                    client.api
+                                        .fetchWithCredential(client.server.domain, '/ap/api/follow', {
+                                            method: 'POST',
+                                            body: JSON.stringify({
+                                                target: person.id?.toString()
+                                            })
+                                        })
+                                        .then((response) => {
+                                            console.log('follow response', response)
+                                        })
+                                }}
+                            >
+                                フォロー
+                            </Button>
+                        )}
                     </div>
                     <div>
                         <Text
