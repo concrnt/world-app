@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useScanner } from '../contexts/Scanner'
 import { Button, View } from '@concrnt/ui'
 import { semantics, SignalLoginSender } from '@concrnt/worldlib'
@@ -10,6 +10,7 @@ export const QRSetup = () => {
     const { client } = useClient()
 
     const [_completed, setCompleted] = useState(false)
+    const initialized = useRef(false)
 
     const keyCreationCallback = async (ckid: string): Promise<string> => {
         const uri = semantics.subkey(client.ccid, ckid)
@@ -36,11 +37,11 @@ export const QRSetup = () => {
         })
     }
 
-    /*
     useEffect(() => {
+        if (initialized.current) return
+        initialized.current = true
         scan().then(scanCallback)
     }, [scan])
-    */
 
     return (
         <View>

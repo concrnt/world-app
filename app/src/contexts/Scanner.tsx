@@ -48,7 +48,7 @@ export const ScannerProvider = (props: Props) => {
         () => ({
             scan: scanWrapper
         }),
-        [scan]
+        [scanWrapper]
     )
 
     return (
