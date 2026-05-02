@@ -1,113 +1,101 @@
 
-import { Button, Text, TextField } from '@concrnt/ui'
-import { useState } from 'react'
-import { type Document, type Identity, GenerateIdentity, ComputeCKID, InMemoryKVS, Api, InMemoryAuthProvider } from '@concrnt/client'
-import { usePersistent } from '../hooks/usePersistent'
-import { semantics } from '@concrnt/worldlib'
+import { useEffect } from 'react'
 import { QRSetup } from '../components/QRSetup'
+import { string2Uint8Array } from '../util'
+import { Api, DeriveIdentity, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 
 export const Login = () => {
 
-    const [identity, _setIdentity] = useState<Identity>(GenerateIdentity())
 
-    const [_domain, setDomain] = usePersistent<string>('Domain')
-    const [_prvkey, setPrivateKey] = usePersistent<string>('PrivateKey')
-    const [_subkey, setSubkey] = usePersistent<string>('SubKey')
+    useEffect(() => {
+        // receive passkey
+        const run = async () => {
+            const challenge = new Uint8Array(32)
+            crypto.getRandomValues(challenge)
+            const cred = await navigator.credentials.get({
+                publicKey: {
+                    challenge: challenge,
+                    rpId: window.location.hostname,
+                    userVerification: 'required',
+                    extensions: {
+                        prf: {
+                            eval: {
+                                first: string2Uint8Array('concrnt-world-passkey')
+                            }
+                        }
+                    }
+                }
+            })
 
-    const keyID = ComputeCKID(identity.publicKey)
+            console.log('cred', cred)
+            if (!cred) {
+                console.error('Failed to get passkey')
+                // enqueueSnackbar('Failed to get passkey.', { variant: 'error' })
+                alert('Failed to get passkey.')
+                return
+            }
 
-    const [domainDraft, setDomainDraft] = useState<string>('v2dev.concrnt.net')
+            // @ts-ignore
+            const userHandle = cred.response?.userHandle
+            if (!userHandle) {
+                console.error('No user handle found in passkey response')
+                // enqueueSnackbar('No user handle found in passkey response.', { variant: 'error' })
+                alert('No user handle found in passkey response.')
+                return
+            }
+
+            let ccid = new TextDecoder().decode(userHandle)
+            let domain = 'cc2.tunnel.anthrotech.dev'
+            const split = ccid.split('@')
+            if (split.length === 2) {
+                ccid = split[0]
+                domain = split[1]
+            }
+
+            const authProvider = new InMemoryAuthProvider()
+            const kvs = new InMemoryKVS()
+            const api = new Api(domain, authProvider, kvs)
+
+            const entity = await api.getEntity(ccid)
+            if (!entity) {
+                console.error('No entity found for CCID:', ccid)
+                alert('No entity found for provided passkey.')
+                return
+            }
+            domain = entity.value.domain
+
+            // @ts-ignore
+            const credentialResults = cred.getClientExtensionResults()
+            console.log('Credential Results:', credentialResults)
+            const prfRes = credentialResults?.prf?.results
+            if (!prfRes?.first) {
+                console.error('No PRF first result found')
+                alert('Provided passkey is not supported.')
+                return
+            }
+
+            console.log('PRF First:', prfRes.first)
+            const firstBuf = new Uint8Array(prfRes.first)
+            console.log('source:', prfRes.first)
+
+            const identity = DeriveIdentity(firstBuf)
+            console.log('Derived Identity:', identity)
+
+
+            const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
+
+            localStorage.setItem('Domain', JSON.stringify(domain))
+            localStorage.setItem('SubKey', JSON.stringify(subkeyStr))
+            window.location.href = '/'
+        }
+
+        run()
+    }, [])
 
     return (
         <div>
-            <Text variant="h3">{keyID}</Text>
             <QRSetup
-                identity={identity}
             />
-        
-            <div>
-                <Text variant="h3">
-                    Developer Option
-                </Text>
-
-                <TextField
-                    value={domainDraft}
-                    onChange={(e) => setDomainDraft(e.target.value)}
-                />
-
-                <Button
-                    onClick={async () => {
-                        const ccid = identity.CCID
-                        console.log('Identity:', identity)
-
-                        const domain = domainDraft
-
-                        const authProvider = new InMemoryAuthProvider(identity.privateKey)
-                        const kvs = new InMemoryKVS()
-                        const api = new Api(domain, authProvider, kvs)
-
-                        const document = {
-                            author: ccid,
-                            schema: 'https://schema.concrnt.net/entity.json',
-                            value: {
-                                domain
-                            },
-                            createdAt: new Date().toISOString()
-                        }
-
-                        const docString = JSON.stringify(document)
-                        const signature = await authProvider.signMaster(docString)
-
-                        const request = {
-                            document: docString,
-                            proof: {
-                                type: 'concrnt-ecrecover-direct',
-                                signature,
-                            },
-                            meta: {}
-                        }
-
-                        await api.requestConcrntApi(
-                            domain,
-                            'net.concrnt.world.register',
-                            {},
-                            {
-                                method: 'POST',
-                                body: JSON.stringify(request),
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            }
-                        )
-                        console.log('Registered')
-
-                        const subkeyIdentity = GenerateIdentity()
-                        const subkey = `concrnt-subkey ${subkeyIdentity.privateKey} ${ccid}@${domain}`
-                        const ckid = ComputeCKID(subkeyIdentity.publicKey)
-
-                        const subkeyDoc: Document<any> = {
-                            key: semantics.subkey(ccid, ckid),
-                            author: ccid,
-                            schema: 'https://schema.concrnt.net/subkey.json',
-                            value: {
-                                ckid
-                            },
-                            createdAt: new Date()
-                        }
-
-                        await api.commit(subkeyDoc, domain, { useMasterkey: true })
-                        console.log('Subkey Registered')
-
-                        setDomain(domain)
-                        setPrivateKey(identity.privateKey)
-                        setSubkey(subkey)
-
-                        window.location.href = '/'
-                    }}
-                >
-                    Quick Setup
-                </Button>
-            </div>
         </div>
     )
 }
