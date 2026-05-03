@@ -3,7 +3,6 @@ import { Button, TextField, View, Text, Divider } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
-import { User } from '@concrnt/worldlib'
 import { UserPicker } from '../components/UserPicker'
 
 export const DevView = () => {
