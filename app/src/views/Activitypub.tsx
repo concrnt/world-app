@@ -1,4 +1,4 @@
-import { View, Text, TextField, Button, Divider } from '@concrnt/ui'
+import { View, Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
@@ -6,6 +6,9 @@ import { useStack } from '../layouts/Stack'
 import { ApView } from './ApView'
 import { NotFoundError } from '@concrnt/client'
 import { Schemas } from '@concrnt/worldlib'
+import { MdPlaylistAdd } from 'react-icons/md'
+import { Subscription } from '../components/Subscription'
+import { useDrawer } from '../contexts/Drawer'
 
 interface ApSettings {
     id: string
@@ -20,6 +23,7 @@ interface ApServerInfo {
 
 export const Activitypub = () => {
     const { client } = useClient()
+    const drawer = useDrawer()
 
     const [settings, setSettings] = useState<ApSettings | undefined | null>(undefined)
     const [idDraft, setIDDraft] = useState('')
@@ -129,6 +133,17 @@ export const Activitypub = () => {
                     <Text>あなたのID: {settings.id}</Text>
 
                     <Divider />
+
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            drawer.open(
+                                <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
+                            )
+                        }}
+                    >
+                        <MdPlaylistAdd size={24} />
+                    </IconButton>
 
                     <TextField value={lookupDraft} onChange={(e) => setLookupDraft(e.target.value)} />
                     <Button

@@ -20,11 +20,7 @@ export const ApView = (props: Props) => {
     }, [props.uri, client])
 
     if (!ld) {
-        return (
-            <View>
-                <p>Loading...</p>
-            </View>
-        )
+        return <View></View>
     }
 
     switch (ld.type) {

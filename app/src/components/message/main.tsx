@@ -1,4 +1,4 @@
-import { ReactNode, use } from 'react'
+import { ReactNode, Suspense, use, useMemo } from 'react'
 
 import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
@@ -12,6 +12,8 @@ import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
 import { OnelineMessage } from './OnelineMessage'
+import { ApObject } from '../../utils/activitypub'
+import { ActivitypubNote } from './ActivitypubNote'
 
 interface Props {
     uri?: string
@@ -22,6 +24,43 @@ interface Props {
 }
 
 export const MessageContainer = (props: Props): ReactNode | null => {
+    if (!props.uri) return <ConcrntMessage {...props} />
+
+    if (props.uri.startsWith('cckv://') || props.uri.startsWith('ccfs://')) {
+        return <ConcrntMessage {...props} />
+    }
+
+    if (props.uri.startsWith('activity://')) {
+        return <ActivityMessage uri={props.uri} />
+    }
+
+    return (
+        <div
+            style={{
+                overflow: 'hidden'
+            }}
+        >
+            <Text>Unsupported message URI: {props.uri}</Text>
+        </div>
+    )
+}
+
+const ActivityMessage = (props: { uri: string }) => {
+    const { client } = useClient()
+    const notePromise = useMemo(() => {
+        return client.api
+            .fetchWithCredential<ApObject>(client.server.domain, `/ap/api/resolve?uri=${encodeURIComponent(props.uri)}`)
+            .then(async (res) => new ApObject(res))
+    }, [props.uri, client])
+
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ActivitypubNote notePromise={notePromise} />
+        </Suspense>
+    )
+}
+
+const ConcrntMessage = (props: Props) => {
     const { client } = useClient()
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
