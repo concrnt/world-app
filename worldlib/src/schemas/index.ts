@@ -5,6 +5,8 @@ export * from './plaintextMessage'
 export * from './mediaMessage'
 export * from './gfmMessage'
 
+export * from './apNote'
+
 export * from './likeAssociation'
 export * from './mentionAssociation'
 export * from './replyAssociation'

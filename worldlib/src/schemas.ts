@@ -7,6 +7,8 @@ export const Schemas = {
     gfmMessage: 'https://schema.concrnt.world/m/gfm.json',
     mfmMessage: 'https://schema.concrnt.world/m/mfm.json',
 
+    apNote: 'https://schema.concrnt.world/ap/note.json',
+
     likeAssociation: 'https://schema.concrnt.world/a/like.json',
     mentionAssociation: 'https://schema.concrnt.world/a/mention.json',
     replyAssociation: 'https://schema.concrnt.world/a/reply.json',
