@@ -10,6 +10,21 @@ interface Props {
 }
 
 export const ApNote = (props: Props) => {
+    if (!props.note.attributedTo) {
+        return (
+            <View>
+                <Header>ActivityPub Note</Header>
+                <div
+                    style={{
+                        padding: CssVar.space(2)
+                    }}
+                >
+                    <p>Invalid note: attributedTo is missing</p>
+                </div>
+            </View>
+        )
+    }
+
     return (
         <View>
             <Header>ActivityPub Note</Header>
@@ -19,7 +34,7 @@ export const ApNote = (props: Props) => {
                 }}
             >
                 <Suspense fallback={<MessageSkeleton />}>
-                    <ActivitypubNote notePromise={Promise.resolve(props.note)} />
+                    <ActivitypubNote noteURL={props.note.id} actorURL={props.note.attributedTo} />
                 </Suspense>
             </div>
         </View>

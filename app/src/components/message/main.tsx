@@ -1,8 +1,8 @@
-import { ReactNode, Suspense, use, useMemo } from 'react'
+import { ReactNode, use } from 'react'
 
 import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
-import { Schemas } from '@concrnt/worldlib'
+import { ApNoteSchema, Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
@@ -12,7 +12,6 @@ import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
 import { OnelineMessage } from './OnelineMessage'
-import { ApObject } from '../../utils/activitypub'
 import { ActivitypubNote } from './ActivitypubNote'
 
 interface Props {
@@ -24,43 +23,6 @@ interface Props {
 }
 
 export const MessageContainer = (props: Props): ReactNode | null => {
-    if (!props.uri) return <ConcrntMessage {...props} />
-
-    if (props.uri.startsWith('cckv://') || props.uri.startsWith('ccfs://')) {
-        return <ConcrntMessage {...props} />
-    }
-
-    if (props.uri.startsWith('activity://')) {
-        return <ActivityMessage uri={props.uri} />
-    }
-
-    return (
-        <div
-            style={{
-                overflow: 'hidden'
-            }}
-        >
-            <Text>Unsupported message URI: {props.uri}</Text>
-        </div>
-    )
-}
-
-const ActivityMessage = (props: { uri: string }) => {
-    const { client } = useClient()
-    const notePromise = useMemo(() => {
-        return client.api
-            .fetchWithCredential<ApObject>(client.server.domain, `/ap/api/resolve?uri=${encodeURIComponent(props.uri)}`)
-            .then(async (res) => new ApObject(res))
-    }, [props.uri, client])
-
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ActivitypubNote notePromise={notePromise} />
-        </Suspense>
-    )
-}
-
-const ConcrntMessage = (props: Props) => {
     const { client } = useClient()
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
@@ -88,6 +50,16 @@ const ConcrntMessage = (props: Props) => {
             return <ReplyAssociation message={message} />
         case Schemas.rerouteAssociation:
             return <RerouteAssociation message={message} />
+        case Schemas.apNote: {
+            const noteMessage = message as Message<ApNoteSchema>
+            return (
+                <ActivitypubNote
+                    actorURL={noteMessage.value.actorURL}
+                    noteURL={noteMessage.value.noteURL}
+                    message={message}
+                />
+            )
+        }
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
             return <LegacyNoteMessage message={message} />
         default:

@@ -7,37 +7,65 @@ import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
+import { PostedTimelines } from './PostedTimelines'
+import { MessageActions } from './MessageActions'
+import { ApNoteSchema, Message } from '@concrnt/worldlib'
 
 interface Props {
-    notePromise: Promise<ApObject>
+    actorURL: string
+    noteURL: string
+    message?: Message<ApNoteSchema>
 }
 
 export const ActivitypubNote = (props: Props) => {
     const { client } = useClient()
-    const note = use(props.notePromise)
 
-    const authorPromise = useMemo(() => {
-        if (!note.attributedTo) return Promise.resolve(null)
+    const notePromise = useMemo(() => {
         return client.api
             .fetchWithCredential<ApObject>(
                 client.server.domain,
-                `/ap/api/resolve?uri=${encodeURIComponent(note.attributedTo)}`
+                `/ap/api/resolve?uri=${encodeURIComponent(props.noteURL)}`
             )
             .then(async (res) => new ApObject(res))
-    }, [note, client])
+    }, [client, props.noteURL])
+
+    const authorPromise = useMemo(() => {
+        return client.api
+            .fetchWithCredential<ApObject>(
+                client.server.domain,
+                `/ap/api/resolve?uri=${encodeURIComponent(props.actorURL)}`
+            )
+            .then(async (res) => new ApObject(res))
+    }, [client, props.actorURL])
 
     return (
         <Suspense fallback={<MessageSkeleton />}>
-            <Note note={note} authorPromise={authorPromise} />
+            <Note notePromise={notePromise} authorPromise={authorPromise} message={props.message} />
         </Suspense>
     )
 }
 
-const Note = (props: { note: ApObject; authorPromise: Promise<ApObject | null> }) => {
+const Note = (props: {
+    notePromise: Promise<ApObject | null>
+    authorPromise: Promise<ApObject | null>
+    message?: Message<ApNoteSchema>
+}) => {
     const { push } = useStack()
 
-    const note = props.note
+    const note = use(props.notePromise)
     const author = use(props.authorPromise)
+
+    if (!note) {
+        return (
+            <div
+                style={{
+                    padding: CssVar.space(2)
+                }}
+            >
+                <Text>Note not found</Text>
+            </div>
+        )
+    }
 
     return (
         <MessageLayout
@@ -66,16 +94,39 @@ const Note = (props: { note: ApObject; authorPromise: Promise<ApObject | null> }
             headerRight={note.published && <TimeDiff date={new Date(note.published)} />}
         >
             <CfmRenderer messagebody={note.content ?? ''} emojiDict={{}} />
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row-reverse',
-                    justifyContent: 'space-between',
-                    alignItems: 'stretch',
-                    flexWrap: 'wrap',
-                    gap: CssVar.space(1)
-                }}
-            ></div>
+            {props.message && (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                        alignItems: 'stretch',
+                        flexWrap: 'wrap',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <PostedTimelines message={props.message} />
+                    </div>
+                    <div
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start'
+                        }}
+                    >
+                        <MessageActions message={props.message} />
+                    </div>
+                </div>
+            )}
         </MessageLayout>
     )
 }
