@@ -37,6 +37,7 @@ export const HomeView = (props: ScrollViewProps) => {
         if (!(client.currentProfile in client.profiles)) {
             drawer.open(
                 <ProfileEditor
+                    noLoading
                     title="プロフィールを設定しましょう！"
                     targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
                     onComplete={() => drawer.close()}

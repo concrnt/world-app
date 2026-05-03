@@ -383,6 +383,10 @@ export class Api {
     }
 
     async getEntity(ccid: string, hint?: string): Promise<Document<Entity>> {
+        if (ccid.startsWith('cckv://')) {
+            ccid = ccid.replace('cckv://', '').split('/')[0]
+        }
+
         const uri = hint ? `cckv://${ccid}@${hint}` : `cckv://${ccid}`
 
         const server = await this.getServer(this.defaultHost)

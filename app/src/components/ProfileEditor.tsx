@@ -1,35 +1,77 @@
-import { useRef, useState } from 'react'
-import { Avatar, Button, CCWallpaper, Text, TextField } from '@concrnt/ui'
+import { useEffect, useRef, useState } from 'react'
+import { Document } from '@concrnt/client'
+import { Avatar, Button, CCWallpaper, Checkbox, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
 import { useImageCropper } from '../contexts/ImageCropper'
 import { ProfileSchema } from '@concrnt/worldlib'
+import { UserPicker } from './UserPicker'
 
 interface Props {
     onComplete?: () => void
     targetURI: string
-    initial?: ProfileSchema
     title?: string
+    noLoading?: boolean
 }
 
 export const ProfileEditor = (props: Props) => {
     const { client } = useClient()
     const cropper = useImageCropper()
 
-    const [username, setUsername] = useState<string>(props.initial?.username || '')
-    const [description, setDescription] = useState<string>(props.initial?.description || '')
+    const [loading, setLoading] = useState<boolean>(!!props.noLoading)
 
-    const [avatar, setAvatar] = useState<string>(props.initial?.avatar || '')
-    const [banner, setBanner] = useState<string>(props.initial?.banner || '')
+    const [username, setUsername] = useState<string>('')
+    const [description, setDescription] = useState<string>('')
+
+    const [avatar, setAvatar] = useState<string>('')
+    const [banner, setBanner] = useState<string>('')
 
     const [avatarDraft, setAvatarDraft] = useState<File | null>(null)
     const [bannerDraft, setBannerDraft] = useState<File | null>(null)
+
+    const [restricted, setRestricted] = useState<boolean>(false)
+    const [members, setMembers] = useState<string[]>([])
 
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const bannerInputRef = useRef<HTMLInputElement>(null)
 
     const [saving, setSaving] = useState<boolean>(false)
+
+    useEffect(() => {
+        if (props.noLoading) return
+        client.api
+            .getDocument<ProfileSchema>(props.targetURI)
+            .then((doc) => {
+                if (doc) {
+                    setUsername(doc.value.username ?? '')
+                    setDescription(doc.value.description ?? '')
+                    setAvatar(doc.value.avatar ?? '')
+                    setBanner(doc.value.banner ?? '')
+
+                    if (doc.policy?.entries?.length == 1) {
+                        const policy = doc.policy.entries[0]
+                        if (policy.url === 'https://policy.concrnt.world/t/restrict-readers.json') {
+                            setRestricted(true)
+                            setMembers(policy.params.entities ?? [])
+                        } else {
+                            setRestricted(false)
+                            setMembers([])
+                        }
+                    } else {
+                        setRestricted(false)
+                        setMembers([])
+                    }
+                }
+            })
+            .finally(() => {
+                setLoading(false)
+            })
+    }, [client, props.targetURI])
+
+    if (loading) {
+        return <div>最新のプロフィールを読み込んでいます...</div>
+    }
 
     return (
         <div
@@ -53,17 +95,33 @@ export const ProfileEditor = (props: Props) => {
                     onClick={async () => {
                         if (!client) return
                         setSaving(true)
-                        const document = {
+                        const document: Document<ProfileSchema> = {
                             key: props.targetURI,
                             schema: 'https://schema.concrnt.world/p/main.json',
                             value: {
                                 username: username,
                                 description: description,
-                                avatar: props.initial?.avatar,
-                                banner: props.initial?.banner
+                                avatar: avatar,
+                                banner: banner
                             },
                             author: client.ccid,
                             createdAt: new Date()
+                        }
+
+                        if (restricted) {
+                            document.policy = {
+                                entries: [
+                                    {
+                                        url: 'https://policy.concrnt.world/t/restrict-readers.json',
+                                        params: {
+                                            entities: members
+                                        },
+                                        defaults: {
+                                            'record:read': 'no'
+                                        }
+                                    }
+                                ]
+                            }
                         }
 
                         if (avatarDraft) {
@@ -97,6 +155,31 @@ export const ProfileEditor = (props: Props) => {
             <Avatar ccid={client?.ccid || ''} src={avatar} onClick={() => avatarInputRef.current?.click()} />
             <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
             <TextField placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}
+            >
+                <Text>アカウントを非公開にする</Text>
+                <Checkbox
+                    checked={restricted}
+                    onChange={(c) => {
+                        setRestricted(c)
+                    }}
+                />
+            </div>
+            {restricted && (
+                <>
+                    <Text>閲覧可能ユーザーを選択</Text>
+                    <Text variant="caption">
+                        ユーザーを選択するには、まずそのユーザーをフォローする必要があります。
+                    </Text>
+                    <UserPicker selected={members} setSelected={setMembers} />
+                </>
+            )}
 
             <input
                 hidden

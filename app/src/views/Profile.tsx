@@ -29,6 +29,7 @@ import { AcknowledgeList } from '../components/AcknowledgeList'
 import { useSelect } from '../contexts/Select'
 import { useConfirm } from '../contexts/Confirm'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { ProfileName } from '../components/ProfileName'
 
 interface Props {
     ccid: string
@@ -293,7 +294,6 @@ const Body = (props: BodyProps) => {
                                     onClick={() =>
                                         drawer.open(
                                             <ProfileEditor
-                                                initial={profile.value}
                                                 targetURI={semantics.profile(props.ccid, props.profileName ?? 'main')}
                                                 onComplete={() => {
                                                     // TODO: useSubscribeパターンに移行する
@@ -327,7 +327,7 @@ const Body = (props: BodyProps) => {
                                     textDecoration: isBlocking ? 'line-through' : undefined
                                 }}
                             >
-                                {profile.value.username || 'Anonymous'}
+                                <ProfileName document={profile} />
                             </Text>
                             <Text>{props.user?.alias ? props.user.alias : null}</Text>
                         </div>

@@ -24,6 +24,7 @@ import { CssVar } from '../types/Theme'
 import { SwitchAccountButton } from './SwitchAccountButton'
 import { IDView } from '../views/ID'
 import { Activitypub } from '../views/Activitypub'
+import { ProfileName } from './ProfileName'
 
 interface Props {
     onPush?: (view: ReactNode) => void
@@ -78,13 +79,10 @@ export const Sidebar = (props: Props) => {
                             }}
                         >
                             <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
-                            <Text
-                                style={{
-                                    flex: 1
-                                }}
-                            >
-                                {client?.profile.username || 'Unknown User'}
+                            <Text>
+                                <ProfileName document={client?.profileDocument} />
                             </Text>
+                            <div style={{ flex: 1 }} />
                             <SwitchAccountButton />
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>

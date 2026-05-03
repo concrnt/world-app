@@ -89,6 +89,12 @@ export class Client {
         return this.getAcknowledging(this.ccid)
     })
 
+    acknowledgingUsers = new CachedPromise<User[]>(async () => {
+        const acks = await this.getAcknowledging(this.ccid)
+        const users = await Promise.all(acks.map((ack) => this.getUser(ack.associate!)))
+        return users.filter((u): u is User => u !== null)
+    })
+
     acknowledgers = new CachedPromise<Document<Acknowledge>[]>(async () => {
         return this.getAcknowledgers(this.ccid)
     })
@@ -140,6 +146,10 @@ export class Client {
                 username: 'Anonymous'
             }
         )
+    }
+
+    get profileDocument(): Document<ProfileSchema> | null {
+        return this.profiles[this.currentProfile] ?? null
     }
 
     // =====================================================================
@@ -358,6 +368,7 @@ export class Client {
         }
         await this.api.commit(document)
         this.acknowledging.reload()
+        this.acknowledgingUsers.reload()
     }
 
     async UnAcknowledge(to: string): Promise<void> {
@@ -372,6 +383,7 @@ export class Client {
         }
         await this.api.commit(document)
         this.acknowledging.reload()
+        this.acknowledgingUsers.reload()
     }
 
     getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {

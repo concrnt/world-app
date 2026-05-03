@@ -7,6 +7,7 @@ import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
 import { HiSwitchHorizontal } from 'react-icons/hi'
 import { MdPersonAdd } from 'react-icons/md'
+import { ProfileName } from './ProfileName'
 
 export const SwitchAccountButton = (): ReactNode => {
     const { client, reload } = useClient()
@@ -32,7 +33,17 @@ export const SwitchAccountButton = (): ReactNode => {
                         drawer.close()
                     }}
                 >
-                    <Text>{profile.value.username}</Text>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1)
+                        }}
+                    >
+                        <Text>
+                            <ProfileName document={profile} />
+                        </Text>
+                    </div>
                 </ListItem>
             )
         }
@@ -47,6 +58,7 @@ export const SwitchAccountButton = (): ReactNode => {
                 onClick={() => {
                     drawer.open(
                         <ProfileEditor
+                            noLoading
                             onComplete={() => {
                                 close()
                                 drawer.close()

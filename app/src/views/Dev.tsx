@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import { Button, TextField, View, Text } from '@concrnt/ui'
+import { Button, TextField, View, Text, Divider } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
+import { User } from '@concrnt/worldlib'
+import { UserPicker } from '../components/UserPicker'
 
 export const DevView = () => {
     const { client } = useClient()
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
+
+    const [selected, setSelected] = useState<string[]>([])
 
     return (
         <View>
@@ -23,6 +27,20 @@ export const DevView = () => {
                     overflowY: 'auto'
                 }}
             >
+                <UserPicker selected={selected} setSelected={setSelected} />
+
+                <Divider />
+
+                <Button
+                    onClick={() => {
+                        window.location.reload()
+                    }}
+                >
+                    Reload
+                </Button>
+
+                <Divider />
+
                 <Text variant="h3">Delete</Text>
                 <TextField value={uriDraft} onChange={(e) => setURIDraft(e.target.value)} placeholder="URI to delete" />
                 <Button
