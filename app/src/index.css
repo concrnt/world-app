@@ -33,3 +33,20 @@ body {
     height: 100%;
 }
 
+:root {
+  --content-text: #000000;
+  --content-link: #000000;
+  --content-background: #ffffff;
+
+  --ui-text: #ffffff;
+  --ui-background: #0476d9;
+
+  --backdrop-text: #ffffff;
+  --backdrop-background: #023059;
+
+  --divider: #e6e2df;
+
+  --space: 4px;
+  --round: 4px;
+}
+

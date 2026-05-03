@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react'
+import { createContext, useContext, useLayoutEffect, useMemo } from 'react'
 import { type Theme } from '../types/Theme'
 import { Themes } from '../data/Themes'
 
@@ -10,36 +10,37 @@ interface Props {
 
 const defaultTheme: Theme = {
     content: {
-        text: '#292e24',
-        link: '#265E2C',
-        background: '#fffcfa'
+        text: '#000000',
+        link: '#000000',
+        background: '#ffffff'
     },
     ui: {
         text: '#ffffff',
-        background: '#292e24'
+        background: '#0476d9'
     },
     backdrop: {
-        text: '#292e24',
-        background: '#12a129'
+        text: '#ffffff',
+        background: '#023059'
     },
     divider: '#e6e2df',
-    variant: 'classic',
     space: '4px',
-    round: '8px'
+    round: '4px',
+    variant: 'world',
+    meta: {
+        name: 'blue'
+    }
 }
 
 interface ThemeContextState {
     variant: 'classic' | 'world'
 }
 
-const ThemeContext = createContext<ThemeContextState>({
-    variant: 'classic'
-})
+const ThemeContext = createContext<ThemeContextState>(defaultTheme)
 
 export const ThemeProvider = (props: Props) => {
     const theme = useMemo(() => Themes[props.themeName] ?? props.theme ?? defaultTheme, [props.themeName, props.theme])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         document.documentElement.style.setProperty('--content-text', theme.content.text)
         document.documentElement.style.setProperty('--content-link', theme.content.link)
         document.documentElement.style.setProperty('--content-background', theme.content.background)

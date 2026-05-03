@@ -21,14 +21,7 @@ import { WelcomeView } from './views/Welcome'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <ClientProvider
-            loading={<LoadingFull />}
-            failed={
-                <ThemeProvider>
-                    <WelcomeView />
-                </ThemeProvider>
-            }
-        >
+        <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
             <PreferenceProvider>
                 <ThemeProvider>
                     <ConfirmProvider>
