@@ -2,10 +2,9 @@ import { type MessageProps } from '../types'
 
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 
-export const LegacyNoteMessage = (props: MessageProps<any>) => {
-
+export const LegacyNoteMessage = (props: MessageProps<{ body: string }>) => {
     const message = props.message
-    const legacyMessage = JSON.parse(message.value.body)
+    const legacyMessage = JSON.parse(message.value.body) as { body?: string }
 
     return (
         <div
@@ -51,7 +50,7 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                     </div>
                     <div>{new Date(message.createdAt).toLocaleString()}</div>
                 </div>
-                <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />
+                <CfmRenderer messagebody={legacyMessage.body ?? ''} emojiDict={{}} />
                 {/*
                 <pre>
                     {JSON.stringify(message, null, 2)}

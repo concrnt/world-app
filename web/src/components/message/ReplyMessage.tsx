@@ -5,7 +5,8 @@ import { type Message, type ReplyMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
-import { formatTimestamp, MessageDestinations } from './common'
+import { MessageDestinations } from './common'
+import { formatTimestamp } from './utils'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { client } = useClient()

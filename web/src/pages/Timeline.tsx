@@ -14,7 +14,7 @@ export const Timeline = () => {
     const [title, setTitle] = useState('Timeline')
 
     const timelineUri = uri ? decodeURIComponent(uri) : null
-    const timelines = timelineUri ? [timelineUri] : []
+    const timelines = useMemo(() => (timelineUri ? [timelineUri] : []), [timelineUri])
 
     const timelinePromise = useMemo(() => {
         if (!client || !timelineUri) return null
@@ -51,7 +51,7 @@ export const Timeline = () => {
                 minHeight: 0
             }}
         >
-                <Header>{title}</Header>
+            <Header>{title}</Header>
             <div
                 style={{
                     display: 'flex',

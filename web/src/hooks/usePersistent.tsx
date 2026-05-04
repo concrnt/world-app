@@ -1,12 +1,11 @@
-import { useCallback, useState } from 'react'
-function parseJsonSafely(input: string): any {
-    let parsed: any = null
+import { useState } from 'react'
+
+function parseJsonSafely(input: string): unknown {
     try {
-        parsed = JSON.parse(input)
-    } catch (e) {
-        // Do nothing ;)
+        return JSON.parse(input)
+    } catch {
+        return undefined
     }
-    return parsed
 }
 
 export function usePersistent<T>(key: string, init?: T): [value: T, update: (updator: T | ((old: T) => T)) => void] {
@@ -14,7 +13,7 @@ export function usePersistent<T>(key: string, init?: T): [value: T, update: (upd
         (() => {
             const cached = localStorage.getItem(key)
             if (cached) {
-                return parseJsonSafely(cached) ?? init
+                return (parseJsonSafely(cached) as T | undefined) ?? init
             } else {
                 if (init) localStorage.setItem(key, JSON.stringify(init))
                 return init
@@ -22,7 +21,7 @@ export function usePersistent<T>(key: string, init?: T): [value: T, update: (upd
         })()
     )
 
-    const update = useCallback((updator: T | ((old: T) => T)): void => {
+    const update = (updator: T | ((old: T) => T)): void => {
         if (typeof updator === 'function') {
             setValue((old) => {
                 const newValue = (updator as (old: T) => T)(old)
@@ -33,7 +32,7 @@ export function usePersistent<T>(key: string, init?: T): [value: T, update: (upd
             setValue(updator)
             localStorage.setItem(key, JSON.stringify(updator))
         }
-    }, [])
+    }
 
     return [value, update]
 }

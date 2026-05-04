@@ -2,7 +2,7 @@ import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
 import type { LikeAssociationSchema } from '@concrnt/worldlib'
 import type { MessageProps } from './types'
-import { formatTimestamp } from './common'
+import { formatTimestamp } from './utils'
 
 export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
     const navigate = useNavigate()

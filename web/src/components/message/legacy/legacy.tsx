@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 
 interface Props {
-    message: any
+    message: {
+        document?: string
+    }
 }
 
 export const LegacyMessage = (props: Props) => {

@@ -5,7 +5,8 @@ import { type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
-import { MessageDestinations, formatTimestamp } from './common'
+import { MessageDestinations } from './common'
+import { formatTimestamp } from './utils'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { client } = useClient()

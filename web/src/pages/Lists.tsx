@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, CssVar, Tab, Tabs, Text, TextField, View } from '@concrnt/ui'
 import type { Document } from '@concrnt/client'
 import { List as ListModel, Schemas, semantics, type ListSchema, type Timeline } from '@concrnt/worldlib'
@@ -11,31 +11,9 @@ import { ListSettings } from '../components/ListSettings'
 
 export const Lists = () => {
     const { client } = useClient()
-    const [lists, setLists] = useState<ListModel[]>([])
-    const [loading, setLoading] = useState(true)
     const [editingList, setEditingList] = useState<ListModel | null>(null)
     const [newListOpen, setNewListOpen] = useState(false)
     const [reloadKey, setReloadKey] = useState(0)
-
-    useEffect(() => {
-        if (!client) return
-        let isCancelled = false
-        setLoading(true)
-        void client
-            .getLists()
-            .then((nextLists) => {
-                if (isCancelled) return
-                setLists(nextLists)
-            })
-            .finally(() => {
-                if (isCancelled) return
-                setLoading(false)
-            })
-
-        return () => {
-            isCancelled = true
-        }
-    }, [client, reloadKey])
 
     if (!client) return null
 
@@ -72,17 +50,11 @@ export const Lists = () => {
                     padding: CssVar.space(4)
                 }}
             >
-                {loading && <Text>Loading lists...</Text>}
-                {!loading && lists.length === 0 && <Text>まだリストがありません。</Text>}
-                {!loading &&
-                    lists.map((list) => (
-                        <ListCard
-                            key={list.uri}
-                            list={list}
-                            onEdit={() => setEditingList(list)}
-                            onReload={() => setReloadKey((value) => value + 1)}
-                        />
-                    ))}
+                <ListsBody
+                    key={`${client.ccid}:${client.currentProfile}:${reloadKey}`}
+                    onEdit={(list) => setEditingList(list)}
+                    onReload={() => setReloadKey((value) => value + 1)}
+                />
             </div>
 
             {editingList && (
@@ -106,6 +78,48 @@ export const Lists = () => {
                 />
             )}
         </View>
+    )
+}
+
+const ListsBody = (props: { onEdit: (list: ListModel) => void; onReload: () => void }) => {
+    const { client } = useClient()
+    const [lists, setLists] = useState<ListModel[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (!client) return
+        let isCancelled = false
+
+        void client
+            .getLists()
+            .then((nextLists) => {
+                if (isCancelled) return
+                setLists(nextLists)
+            })
+            .finally(() => {
+                if (isCancelled) return
+                setLoading(false)
+            })
+
+        return () => {
+            isCancelled = true
+        }
+    }, [client])
+
+    if (loading) {
+        return <Text>Loading lists...</Text>
+    }
+
+    if (lists.length === 0) {
+        return <Text>まだリストがありません。</Text>
+    }
+
+    return (
+        <>
+            {lists.map((list) => (
+                <ListCard key={list.uri} list={list} onEdit={() => props.onEdit(list)} onReload={props.onReload} />
+            ))}
+        </>
     )
 }
 
@@ -233,34 +247,12 @@ const ListEditorModal = (props: { list: ListModel; onClose: () => void; onComple
     const [pinnedLists] = useSubscribe(client!.pinnedLists)
     const [knownCommunities] = useSubscribe(client!.knownCommunities)
     const [currentItems] = useSubscribe(props.list.items)
-    const [selectedItems, setSelectedItems] = useState<string[]>(currentItems)
     const [tab, setTab] = useState<'items' | 'pinned'>('items')
-
-    useEffect(() => {
-        setSelectedItems(currentItems)
-    }, [currentItems, props.list.uri])
 
     if (!client) return null
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.list.uri)
     const isHomeList = props.list.uri === semantics.homeList(client.ccid, client.currentProfile)
-
-    const saveItems = async () => {
-        const currentSet = new Set(currentItems)
-        const nextSet = new Set(selectedItems)
-
-        for (const uri of selectedItems) {
-            if (!currentSet.has(uri)) {
-                await props.list.addItem(client, uri, Schemas.communityTimeline)
-            }
-        }
-
-        for (const uri of currentItems) {
-            if (!nextSet.has(uri)) {
-                await props.list.removeItem(client, uri)
-            }
-        }
-    }
 
     const deleteList = async () => {
         const refs = await client.api.query({
@@ -312,30 +304,18 @@ const ListEditorModal = (props: { list: ListModel; onClose: () => void; onComple
                     }}
                 >
                     {tab === 'items' && (
-                        <>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                                <Text variant="h3">リスト内容</Text>
-                                <TimelinePicker
-                                    items={knownCommunities}
-                                    selected={selectedItems}
-                                    setSelected={setSelectedItems}
-                                    keyFunc={(item: Timeline) => item.uri}
-                                    labelFunc={(item: Timeline) => item.name}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: CssVar.space(2) }}>
-                                <Button
-                                    variant="outlined"
-                                    disabled={isHomeList}
-                                    onClick={() => {
-                                        void deleteList().then(props.onComplete)
-                                    }}
-                                >
-                                    リストを削除
-                                </Button>
-                                <Button onClick={() => void saveItems().then(props.onComplete)}>保存</Button>
-                            </div>
-                        </>
+                        <ListItemsEditor
+                            key={`${props.list.uri}:${currentItems.join('|')}`}
+                            currentItems={currentItems}
+                            knownCommunities={knownCommunities}
+                            isHomeList={isHomeList}
+                            onDelete={() => {
+                                void deleteList().then(props.onComplete)
+                            }}
+                            onSave={(selectedItems) => {
+                                void saveItemsForSelection(selectedItems).then(props.onComplete)
+                            }}
+                        />
                     )}
 
                     {tab === 'pinned' && (
@@ -359,5 +339,53 @@ const ListEditorModal = (props: { list: ListModel; onClose: () => void; onComple
                 </div>
             </div>
         </Modal>
+    )
+
+    async function saveItemsForSelection(selectedItems: string[]) {
+        const currentSet = new Set(currentItems)
+        const nextSet = new Set(selectedItems)
+
+        for (const uri of selectedItems) {
+            if (!currentSet.has(uri)) {
+                await props.list.addItem(client, uri, Schemas.communityTimeline)
+            }
+        }
+
+        for (const uri of currentItems) {
+            if (!nextSet.has(uri)) {
+                await props.list.removeItem(client, uri)
+            }
+        }
+    }
+}
+
+const ListItemsEditor = (props: {
+    currentItems: string[]
+    knownCommunities: Timeline[]
+    isHomeList: boolean
+    onDelete: () => void
+    onSave: (selectedItems: string[]) => void
+}) => {
+    const [selectedItems, setSelectedItems] = useState<string[]>(props.currentItems)
+
+    return (
+        <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h3">リスト内容</Text>
+                <TimelinePicker
+                    items={props.knownCommunities}
+                    selected={selectedItems}
+                    setSelected={setSelectedItems}
+                    keyFunc={(item: Timeline) => item.uri}
+                    labelFunc={(item: Timeline) => item.name}
+                />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: CssVar.space(2) }}>
+                <Button variant="outlined" disabled={props.isHomeList} onClick={props.onDelete}>
+                    リストを削除
+                </Button>
+                <Button onClick={() => props.onSave(selectedItems)}>保存</Button>
+            </div>
+        </>
     )
 }

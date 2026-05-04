@@ -1,16 +1,14 @@
-
-import { Api, ComputeCKID, DeriveIdentity, type Document, GenerateIdentity, InMemoryAuthProvider, InMemoryKVS } from "@concrnt/client"
-import { Button, CssVar, Passport, Text } from "@concrnt/ui"
-import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from "@concrnt/worldlib"
-import { useEffect, useRef, useState } from "react"
+import { Api, ComputeCKID, DeriveIdentity, type Document, GenerateIdentity, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
+import { Button, CssVar, Passport, Text } from '@concrnt/ui'
+import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from '@concrnt/worldlib'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { QRCode } from 'react-qrcode-logo'
-import { usePersistent } from "../hooks/usePersistent"
-import { string2Uint8Array } from "../util"
+import { usePersistent } from '../hooks/usePersistent'
+import { string2Uint8Array } from '../util'
 import Tilt from 'react-parallax-tilt'
 
 export const QRSetup = () => {
-
-    const [sessionID, _] = useState<string>(crypto.randomUUID())
+    const sessionID = useMemo(() => crypto.randomUUID(), [])
     const signalURL = `wss://signal.concrnt.net/${sessionID}`
 
     const [ccid, setCCID] = useState<string>('')
@@ -20,14 +18,14 @@ export const QRSetup = () => {
 
     const [keyFingerprint, setKeyFingerprint] = useState<string>()
 
-    const [_domain, setPersistentDomain] = usePersistent<string>('Domain')
-    const [_subkey, setPersistentSubkey] = usePersistent<string>('SubKey')
+    const [, setPersistentDomain] = usePersistent<string>('Domain')
+    const [, setPersistentSubkey] = usePersistent<string>('SubKey')
 
     const keyTypeSelectionRef = useRef<((typ: 'instant' | 'passkey') => void) | null>(null)
-    const [pendingKeyGeneration, setPendingKeyGeneration] = useState<{ccid: string, domain: string} | null>(null)
+    const [pendingKeyGeneration, setPendingKeyGeneration] = useState<{ ccid: string; domain: string } | null>(null)
 
     const waitForKeyTypeSelection = (ccid: string, domain: string): Promise<'instant' | 'passkey'> => {
-        setPendingKeyGeneration({ccid, domain})
+        setPendingKeyGeneration({ ccid, domain })
         return new Promise((resolve) => {
             keyTypeSelectionRef.current = (typ: 'instant' | 'passkey') => {
                 resolve(typ)
@@ -58,7 +56,7 @@ export const QRSetup = () => {
             })
 
             const keyType = await waitForKeyTypeSelection(ccid, domain)
-            
+
             console.log('Selected key type:', keyType)
 
             if (keyType === 'passkey') {
@@ -81,7 +79,7 @@ export const QRSetup = () => {
                         user: {
                             id: string2Uint8Array(id),
                             name: ccid,
-                            displayName: 'concrnt' 
+                            displayName: 'concrnt'
                         },
                         authenticatorSelection: {
                             userVerification: 'required',
@@ -102,8 +100,17 @@ export const QRSetup = () => {
                     throw new Error('Failed to create credential')
                 }
 
-                //@ts-ignore
-                const credentialResults = cred.getClientExtensionResults()
+                const credentialResults = (
+                    cred as PublicKeyCredential & {
+                        getClientExtensionResults: () => AuthenticationExtensionsClientOutputs & {
+                            prf?: {
+                                results?: {
+                                    first?: ArrayBuffer
+                                }
+                            }
+                        }
+                    }
+                ).getClientExtensionResults()
                 console.log('Credential Results:', credentialResults)
 
                 const prfRes = credentialResults?.prf?.results
@@ -113,7 +120,7 @@ export const QRSetup = () => {
                 }
                 console.log('PRF First:', prfRes.first)
 
-                const firstBuf = new Uint8Array(prfRes.first)
+                const firstBuf = prfRes.first instanceof ArrayBuffer ? new Uint8Array(prfRes.first) : new Uint8Array(prfRes.first.buffer)
                 const identity = DeriveIdentity(firstBuf)
 
                 const keyID = ComputeCKID(identity.publicKey)
@@ -137,8 +144,7 @@ export const QRSetup = () => {
         const receiver = new SignalLoginReceiver(
             signalURL,
             keyGenerationCallback,
-            (keyURI: string) => {
-
+            () => {
                 setPersistentDomain(d)
                 setPersistentSubkey(subkey)
 
@@ -150,7 +156,7 @@ export const QRSetup = () => {
             receiver.dispose()
         }
 
-    }, [signalURL])
+    }, [setPersistentDomain, setPersistentSubkey, signalURL])
 
     return <div
         style={{
@@ -262,5 +268,3 @@ export const QRSetup = () => {
         </div>
     </div>
 }
-
-

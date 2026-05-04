@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import type { MarkdownMessageSchema } from '@concrnt/worldlib'
 import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
-import { formatTimestamp, MessageDestinations } from './common'
+import { MessageDestinations } from './common'
+import { formatTimestamp } from './utils'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const navigate = useNavigate()

@@ -2,7 +2,16 @@ import { type ReactNode, use } from 'react'
 
 import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
-import { Schemas } from '@concrnt/worldlib'
+import {
+    Message as WorldMessage,
+    Schemas,
+    type MarkdownMessageSchema,
+    type MediaMessageSchema,
+    type ReplyAssociationSchema,
+    type ReplyMessageSchema,
+    type RerouteAssociationSchema,
+    type RerouteMessageSchema
+} from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
@@ -26,27 +35,29 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     if (!props.uri && !props.content) return <div>No message specified</div>
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
-    const message = props.content ? JSON.parse(props.content) : use(client.getMessage<any>(props.uri!, sourceDomain))
+    const message = props.content
+        ? (JSON.parse(props.content) as WorldMessage<unknown>)
+        : use(client.getMessage<unknown>(props.uri!, sourceDomain))
 
     if (!message) return <div>Message not found</div>
 
     switch (message.schema) {
         case Schemas.markdownMessage:
-            return <MarkdownMessage message={message} />
+            return <MarkdownMessage message={message as WorldMessage<MarkdownMessageSchema>} />
         case Schemas.mediaMessage:
-            return <MediaMessage message={message} />
+            return <MediaMessage message={message as WorldMessage<MediaMessageSchema>} />
         case Schemas.replyMessage:
-            return <ReplyMessage message={message} />
+            return <ReplyMessage message={message as WorldMessage<ReplyMessageSchema>} />
         case Schemas.rerouteMessage:
-            return <RerouteMessage message={message} />
+            return <RerouteMessage message={message as WorldMessage<RerouteMessageSchema>} />
         case Schemas.likeAssociation:
             return <LikeAssociation message={message} />
         case Schemas.replyAssociation:
-            return <ReplyAssociation message={message} />
+            return <ReplyAssociation message={message as WorldMessage<ReplyAssociationSchema>} />
         case Schemas.rerouteAssociation:
-            return <RerouteAssociation message={message} />
+            return <RerouteAssociation message={message as WorldMessage<RerouteAssociationSchema>} />
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
-            return <LegacyNoteMessage message={message} />
+            return <LegacyNoteMessage message={message as WorldMessage<{ body: string }>} />
         default:
             return (
                 <div>

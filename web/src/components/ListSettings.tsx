@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Button, CssVar, Text } from '@concrnt/ui'
 import type { Timeline } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
@@ -14,11 +14,6 @@ export const ListSettings = (props: Props) => {
     const { client } = useClient()
     const [pinnedLists] = useSubscribe(client!.pinnedLists)
     const pin = pinnedLists.find((item) => item.uri === props.uri)
-    const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
-
-    useEffect(() => {
-        setPostTimelines(pin?.defaultPostTimelines ?? [])
-    }, [pin])
 
     if (!client || !pin) {
         return (
@@ -26,6 +21,21 @@ export const ListSettings = (props: Props) => {
                 <Text>リスト設定を表示できませんでした。</Text>
             </div>
         )
+    }
+
+    const stateKey = `${pin.uri}:${pin.defaultPostTimelines.join('|')}`
+
+    return <ListSettingsBody key={stateKey} uri={props.uri} onComplete={props.onComplete} />
+}
+
+const ListSettingsBody = (props: Props) => {
+    const { client } = useClient()
+    const [pinnedLists] = useSubscribe(client!.pinnedLists)
+    const pin = pinnedLists.find((item) => item.uri === props.uri)
+    const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
+
+    if (!client || !pin) {
+        return null
     }
 
     return (

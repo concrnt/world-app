@@ -1,64 +1,28 @@
 import { Text, CssVar } from '@concrnt/ui'
-import { useEffect, useState } from 'react'
+import { use, useMemo } from 'react'
 import type { Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
-
-export const isSystemTimeline = (uri: string) => {
-    return (
-        uri.includes('/home-timeline') ||
-        uri.includes('/activity-timeline') ||
-        uri.includes('/notify-timeline')
-    )
-}
-
-export const getCommunityDestinations = (message: Message<unknown>) => {
-    return (message.distributes ?? []).filter((uri) => !isSystemTimeline(uri))
-}
-
-export const formatTimestamp = (date: Date) => {
-    return new Intl.DateTimeFormat('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    }).format(date)
-}
-
-export const extractMessageBody = (message: Message<unknown>) => {
-    const value = message.value as Record<string, unknown>
-    return typeof value.body === 'string' ? value.body : ''
-}
+import { getCommunityDestinations } from './utils'
 
 export const MessageDestinations = (props: { message: Message<unknown> }) => {
     const { client } = useClient()
-    const [labels, setLabels] = useState<string[]>([])
-
-    useEffect(() => {
+    const hasHomeDestination = props.message.distributes?.some((uri) => uri.includes('/home-timeline'))
+    const labelsPromise = useMemo(() => {
         const targets = getCommunityDestinations(props.message)
         if (!client || targets.length === 0) {
-            setLabels([])
-            return
+            return Promise.resolve([] as string[])
         }
 
-        let isCancelled = false
-
-        void Promise.all(
+        return Promise.all(
             targets.map(async (uri) => {
                 const timeline = await client.getTimeline(uri)
                 return timeline?.name ?? uri
             })
-        ).then((nextLabels) => {
-            if (isCancelled) return
-            setLabels(nextLabels)
-        })
-
-        return () => {
-            isCancelled = true
-        }
+        )
     }, [client, props.message])
+    const labels = use(labelsPromise)
 
-    if (labels.length === 0 && !props.message.distributes?.some((uri) => uri.includes('/home-timeline'))) {
+    if (labels.length === 0 && !hasHomeDestination) {
         return null
     }
 

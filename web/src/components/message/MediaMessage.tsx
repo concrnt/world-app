@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import type { MediaMessageSchema } from '@concrnt/worldlib'
 import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
-import { formatTimestamp, MessageDestinations } from './common'
+import { MessageDestinations } from './common'
+import { formatTimestamp } from './utils'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const navigate = useNavigate()

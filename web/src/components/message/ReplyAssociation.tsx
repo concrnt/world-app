@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { type Message, type ReplyAssociationSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import type { MessageProps } from './types'
-import { formatTimestamp } from './common'
+import { formatTimestamp } from './utils'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
     const { client } = useClient()

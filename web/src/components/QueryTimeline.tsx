@@ -19,6 +19,12 @@ interface QueryItem {
 }
 
 export const QueryTimeline = (props: Props) => {
+    const stateKey = `${props.prefix}:${props.query?.schema ?? ''}`
+
+    return <QueryTimelineBody key={stateKey} {...props} />
+}
+
+const QueryTimelineBody = (props: Props) => {
     const { client } = useClient()
     const [items, setItems] = useState<QueryItem[]>([])
     const [loading, setLoading] = useState(true)
@@ -29,9 +35,6 @@ export const QueryTimeline = (props: Props) => {
     useEffect(() => {
         if (!client) return
         let isCancelled = false
-        setLoading(true)
-        setItems([])
-        setHasMore(false)
 
         void client
             .api.query({

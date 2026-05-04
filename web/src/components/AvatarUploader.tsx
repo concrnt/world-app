@@ -13,10 +13,6 @@ export const AvatarUploader = (props: Props) => {
     const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined)
 
     useEffect(() => {
-        setPreviewUrl(undefined)
-    }, [props.src])
-
-    useEffect(() => {
         return () => {
             if (previewUrl) {
                 URL.revokeObjectURL(previewUrl)

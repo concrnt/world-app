@@ -10,6 +10,12 @@ interface Props {
 }
 
 export const RealtimeTimeline = (props: Props) => {
+    const stateKey = props.timelines.join('|')
+
+    return <RealtimeTimelineBody key={stateKey} {...props} />
+}
+
+const RealtimeTimelineBody = (props: Props) => {
     const { client } = useClient()
     const loadingRef = useRef(true)
     const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -21,10 +27,6 @@ export const RealtimeTimeline = (props: Props) => {
 
     useEffect(() => {
         let isCancelled = false
-        setIsInitialLoading(true)
-        setIsLoadingMore(false)
-        setHasMoreData(false)
-        setItems([])
         loadingRef.current = true
 
         const request = async () => {

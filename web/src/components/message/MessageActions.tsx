@@ -3,7 +3,7 @@ import { Schemas, type Message } from '@concrnt/worldlib'
 import { MdMoreHoriz, MdReply, MdRepeat, MdStar, MdStarOutline } from 'react-icons/md'
 import { useClient } from '../../contexts/Client'
 import { useComposerLauncher } from '../../contexts/Composer'
-import { getCommunityDestinations } from './common'
+import { getCommunityDestinations } from './utils'
 
 export const MessageActions = (props: { message: Message<unknown> }) => {
     const { client } = useClient()
