@@ -1,13 +1,12 @@
-import { type MessageProps } from './types'
-import { type MediaMessageSchema } from '@concrnt/worldlib'
-
-import { Avatar, CfmRenderer, IconButton } from '@concrnt/ui'
-
-import { MdMoreHoriz } from 'react-icons/md'
+import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import type { MediaMessageSchema } from '@concrnt/worldlib'
+import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
+import { formatTimestamp, MessageDestinations } from './common'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
-
+    const navigate = useNavigate()
     const message = props.message
     const medias = message.value.medias ?? []
 
@@ -16,91 +15,85 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px'
+                gap: CssVar.space(2)
             }}
         >
-            <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
+            <button
+                type="button"
+                onClick={() => navigate(`/profile/${encodeURIComponent(message.author)}`)}
+                style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+            >
+                <Avatar ccid={message.author} src={message.authorProfile.avatar} />
+            </button>
             <div
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '4px',
-                    flex: 1
+                    gap: CssVar.space(2),
+                    flex: 1,
+                    minWidth: 0
                 }}
             >
                 <div
                     style={{
                         display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '8px'
+                        alignItems: 'baseline',
+                        gap: CssVar.space(2),
+                        flexWrap: 'wrap'
                     }}
                 >
-                    <div
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${encodeURIComponent(message.author)}`)}
                         style={{
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {message.authorUser?.profile.username}
-                    </div>
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            /*
-                            select(
-                                '',
-                                {
-                                    delete: <Text>投稿を削除</Text>
-                                },
-                                (key) => {
-                                    if (key === 'delete') {
-                                        client?.api.delete(message.uri)
-                                    }
-                                }
-                            )
-                            */
-                        }}
-                        style={{
+                            border: 'none',
+                            backgroundColor: 'transparent',
                             padding: 0,
-                            margin: 0
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            color: CssVar.contentText
                         }}
                     >
-                        <MdMoreHoriz size={15} />
-                    </IconButton>
+                        {message.authorProfile.username}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/post/${encodeURIComponent(message.uri)}`)}
+                        style={{
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: CssVar.contentText,
+                            opacity: 0.72
+                        }}
+                    >
+                        <Text variant="caption">{formatTimestamp(message.createdAt)}</Text>
+                    </button>
                 </div>
 
-                {/* テキスト本文 */}
                 {message.value.body && <CfmRenderer messagebody={message.value.body} emojiDict={{}} />}
 
-                {/* 画像表示 */}
                 {medias.length > 0 && (
                     <div
                         style={{
                             display: 'grid',
                             gridTemplateColumns: medias.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-                            gap: '4px',
-                            marginTop: '8px'
+                            gap: CssVar.space(1)
                         }}
                     >
-                        {medias.map((media, index) => (
-                            <div
-                                key={index}
+                        {medias.map((media) => (
+                            <button
+                                key={media.mediaURL}
+                                type="button"
+                                onClick={() => navigate(`/post/${encodeURIComponent(message.uri)}`)}
                                 style={{
-                                    position: 'relative',
+                                    border: 'none',
+                                    backgroundColor: 'transparent',
+                                    padding: 0,
                                     overflow: 'hidden',
-                                    borderRadius: '8px',
-                                    aspectRatio: medias.length === 1 ? 'auto' : '1'
-                                }}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    /*
-                                    const imageMedias = medias.filter((m) => m.mediaType.startsWith('image/'))
-                                    const viewerIndex = imageMedias.findIndex((m) => m.mediaURL === media.mediaURL)
-                                    if (media.mediaType.startsWith('image/')) {
-                                        mediaViewer.open(imageMedias, viewerIndex >= 0 ? viewerIndex : 0)
-                                    }
-                                    */
+                                    borderRadius: CssVar.round(1),
+                                    cursor: 'pointer'
                                 }}
                             >
                                 {media.mediaType.startsWith('image/') ? (
@@ -109,28 +102,19 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                                         alt={media.altText ?? ''}
                                         style={{
                                             width: '100%',
-                                            height: medias.length === 1 ? 'auto' : '100%',
-                                            maxHeight: medias.length === 1 ? '300px' : undefined,
-                                            objectFit: 'cover',
-                                            cursor: 'pointer'
-                                        }}
-                                    />
-                                ) : media.mediaType.startsWith('video/') ? (
-                                    <video
-                                        src={media.mediaURL}
-                                        controls
-                                        style={{
-                                            width: '100%',
-                                            maxHeight: '300px'
+                                            height: medias.length === 1 ? 'auto' : '200px',
+                                            objectFit: 'cover'
                                         }}
                                     />
                                 ) : (
-                                    <div>Unsupported media type: {media.mediaType}</div>
+                                    <video src={media.mediaURL} controls style={{ width: '100%', maxHeight: '300px' }} />
                                 )}
-                            </div>
+                            </button>
                         ))}
                     </div>
                 )}
+
+                <MessageDestinations message={message} />
                 <MessageActions message={message} />
             </div>
         </div>

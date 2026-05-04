@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Avatar, Button, CssVar, Text } from '@concrnt/ui'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useComposerLauncher } from '../contexts/Composer'
 import { useClient } from '../contexts/Client'
 
@@ -18,6 +18,7 @@ const sidebarLinkStyle = (active: boolean): CSSProperties => ({
 export const Sidebar = () => {
     const { client, logout } = useClient()
     const composer = useComposerLauncher()
+    const navigate = useNavigate()
 
     return (
         <div
@@ -34,11 +35,16 @@ export const Sidebar = () => {
             }}
         >
             <div
+                onClick={() => {
+                    if (!client) return
+                    navigate(`/profile/${encodeURIComponent(client.ccid)}`)
+                }}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: CssVar.space(3),
-                    padding: CssVar.space(2)
+                    padding: CssVar.space(2),
+                    cursor: 'pointer'
                 }}
             >
                 <Avatar ccid={client?.ccid ?? ''} src={client?.profile.avatar} />
@@ -78,7 +84,7 @@ export const Sidebar = () => {
                 }}
             >
                 <Button
-                    onClick={composer.open}
+                    onClick={() => composer.open()}
                     style={{
                         width: '100%'
                     }}

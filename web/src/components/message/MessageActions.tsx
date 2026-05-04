@@ -1,26 +1,19 @@
 import { Button } from '@concrnt/ui'
 import { Schemas, type Message } from '@concrnt/worldlib'
-
-import { MdStar } from 'react-icons/md'
-import { MdStarOutline } from 'react-icons/md'
-import { MdReply } from 'react-icons/md'
-import { MdRepeat } from 'react-icons/md'
+import { MdMoreHoriz, MdReply, MdRepeat, MdStar, MdStarOutline } from 'react-icons/md'
 import { useClient } from '../../contexts/Client'
+import { useComposerLauncher } from '../../contexts/Composer'
+import { getCommunityDestinations } from './common'
 
-
-interface Props {
-    message: Message<any>
-}
-
-
-export const MessageActions = (props: Props) => {
-
+export const MessageActions = (props: { message: Message<unknown> }) => {
     const { client } = useClient()
+    const composer = useComposerLauncher()
 
-    const ownFavorite = props.message.ownAssociations.find((a) => a.schema === Schemas.likeAssociation)
+    const ownFavorite = props.message.ownAssociations.find((association) => association.schema === Schemas.likeAssociation)
     const likeCount = props.message.associationCounts?.[Schemas.likeAssociation] ?? 0
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
+    const communityDestinations = getCommunityDestinations(props.message)
 
     return (
         <div
@@ -28,15 +21,16 @@ export const MessageActions = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexWrap: 'wrap'
             }}
         >
-            {/* リプライボタン */}
             <Button
                 variant="text"
-                onClick={(e) => {
-                    e.stopPropagation()
-                    // composer.open([], [], 'reply', message)
+                onClick={(event) => {
+                    event.stopPropagation()
+                    composer.setAdditionalDestinations(communityDestinations)
+                    composer.open('reply', props.message)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -44,12 +38,12 @@ export const MessageActions = (props: Props) => {
                 {replyCount > 0 && <span style={{ marginLeft: '4px' }}>{replyCount}</span>}
             </Button>
 
-            {/* リルートボタン */}
             <Button
                 variant="text"
-                onClick={(e) => {
-                    e.stopPropagation()
-                    // composer.open([], [], 'reroute', message)
+                onClick={(event) => {
+                    event.stopPropagation()
+                    composer.setAdditionalDestinations(communityDestinations)
+                    composer.open('reroute', props.message)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -57,16 +51,16 @@ export const MessageActions = (props: Props) => {
                 {rerouteCount > 0 && <span style={{ marginLeft: '4px' }}>{rerouteCount}</span>}
             </Button>
 
-            {/* いいねボタン */}
             <Button
                 variant="text"
-                onClick={(e) => {
-                    e.stopPropagation()
+                onClick={(event) => {
+                    event.stopPropagation()
                     if (!client) return
+
                     if (ownFavorite) {
-                        //client?.unfavorite(message)
+                        void client.api.delete(ownFavorite.ccfs)
                     } else {
-                        props.message.favorite(client)
+                        void props.message.favorite(client)
                     }
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
@@ -74,8 +68,39 @@ export const MessageActions = (props: Props) => {
                 {ownFavorite ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
                 <span style={{ marginLeft: '4px' }}>{likeCount}</span>
             </Button>
+
+            <Button
+                variant="text"
+                onClick={async (event) => {
+                    event.stopPropagation()
+                    if (!client) return
+
+                    if (props.message.author === client.ccid) {
+                        if (window.confirm('この投稿を削除しますか？')) {
+                            await client.api.delete(props.message.uri)
+                        }
+                        return
+                    }
+
+                    const reason = window.prompt('通報理由を入力してください')
+                    if (!reason) return
+
+                    const parsed = new URL(props.message.uri)
+                    const entity = await client.api.getEntity(parsed.host)
+                    await client.api.callConcrntApi(entity.value.domain, 'net.concrnt.core.abuse', {}, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            target: props.message.uri,
+                            body: reason
+                        })
+                    })
+                }}
+            >
+                <MdMoreHoriz size={20} />
+            </Button>
         </div>
     )
 }
-
-

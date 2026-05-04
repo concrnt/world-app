@@ -1,76 +1,72 @@
-import { type MessageProps } from './types'
-import { type RerouteAssociationSchema } from '@concrnt/worldlib'
-import { Avatar, CfmRenderer } from '@concrnt/ui'
-import { MdRepeat } from 'react-icons/md'
+import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import type { RerouteAssociationSchema } from '@concrnt/worldlib'
+import type { MessageProps } from './types'
+import { formatTimestamp } from './common'
 
 export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
+    const navigate = useNavigate()
     const message = props.message
-
-    // アソシエーションのターゲット（リルートされた元の投稿）
     const targetMessage = message.associationTarget
-
-    // リルートしたユーザー
-    const rerouteAuthor = message.authorUser
 
     return (
         <div
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
-                cursor: 'pointer'
+                gap: CssVar.space(2)
             }}
         >
-            {/* 上部: リルートしたユーザーの情報 */}
             <div
                 style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '12px',
-                    opacity: 0.7,
-                    paddingLeft: '48px'
+                    gap: CssVar.space(2),
+                    paddingLeft: `calc(40px + ${CssVar.space(2)})`,
+                    opacity: 0.72
                 }}
             >
-                <Avatar
-                    ccid={message.author}
-                    src={rerouteAuthor?.profile.avatar}
-                    style={{ width: '16px', height: '16px' }}
-                />
-                <MdRepeat size={14} />
-                <span
-                    style={{ cursor: 'pointer' }}
-                >
-                    {rerouteAuthor?.profile.username} がリルートしました
-                </span>
+                <Text variant="caption">{message.authorProfile.username} がリルートしました</Text>
+                <Text variant="caption">{formatTimestamp(message.createdAt)}</Text>
             </div>
-
-            {/* 下部: 元の投稿 */}
             {targetMessage && (
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        gap: '8px'
+                        gap: CssVar.space(2)
                     }}
                 >
-                    <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
-                    <div
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${encodeURIComponent(targetMessage.author)}`)}
+                        style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                    >
+                        <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile.avatar} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/post/${encodeURIComponent(targetMessage.uri)}`)}
                         style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            textAlign: 'left',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: CssVar.contentText,
                             flex: 1
                         }}
                     >
-                        <div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>
-                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                    </div>
+                        <Text>{targetMessage.authorProfile.username}</Text>
+                        {'body' in (targetMessage.value as Record<string, unknown>) && (
+                            <CfmRenderer
+                                messagebody={String((targetMessage.value as Record<string, unknown>).body ?? '')}
+                                emojiDict={{}}
+                            />
+                        )}
+                    </button>
                 </div>
             )}
-
-            {/* ローディング */}
-            {!targetMessage && <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
         </div>
     )
 }

@@ -1,113 +1,82 @@
 import { useEffect, useState } from 'react'
-import { type MessageProps } from './types'
-import { type ReplyAssociationSchema, Message } from '@concrnt/worldlib'
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import { type Message, type ReplyAssociationSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
-import { MdReply } from 'react-icons/md'
+import type { MessageProps } from './types'
+import { formatTimestamp } from './common'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
     const { client } = useClient()
+    const navigate = useNavigate()
     const message = props.message
-
-    // アソシエーションのターゲット（リプライされた元の投稿）
-    const targetMessage = message.associationTarget
-
-    // リプライしたユーザー
-    const replyAuthor = message.authorUser
-
-    // リプライメッセージのID（valueから取得）
     const replyMessageId = message.value.messageId
-
-    // リプライメッセージを取得
-    const [replyMessage, setReplyMessage] = useState<Message<any> | null>(null)
+    const [replyMessage, setReplyMessage] = useState<Message<unknown> | null>(null)
 
     useEffect(() => {
-        if (replyMessageId && client) {
-            client.getMessage<any>(replyMessageId).then((msg) => {
-                setReplyMessage(msg)
-            })
-        }
-    }, [replyMessageId, client])
+        if (!replyMessageId || !client) return
+        void client.getMessage<unknown>(replyMessageId).then((nextMessage) => {
+            setReplyMessage(nextMessage)
+        })
+    }, [client, replyMessageId])
 
     return (
         <div
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
-                cursor: 'pointer'
+                gap: CssVar.space(2)
             }}
         >
-            {/* 元の投稿（リプライされた側）を小さく表示 */}
-            {targetMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '12px',
-                        opacity: 0.7,
-                        paddingLeft: '48px',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        textOverflow: 'ellipsis'
-                    }}
-                >
-                    <Avatar
-                        ccid={targetMessage.author}
-                        src={targetMessage.authorUser?.profile.avatar}
-                        style={{ width: '16px', height: '16px' }}
-                    />
-                    <span>{targetMessage.value.body}</span>
-                </div>
-            )}
-
-            {/* リプライメッセージを表示 */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: CssVar.space(2),
+                    paddingLeft: `calc(40px + ${CssVar.space(2)})`,
+                    opacity: 0.72
+                }}
+            >
+                <Text variant="caption">{message.authorProfile.username} が返信しました</Text>
+                <Text variant="caption">{formatTimestamp(message.createdAt)}</Text>
+            </div>
             {replyMessage && (
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        gap: '8px'
+                        gap: CssVar.space(2)
                     }}
                 >
-                    <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
-                    <div
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${encodeURIComponent(replyMessage.author)}`)}
+                        style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                    >
+                        <Avatar ccid={replyMessage.author} src={replyMessage.authorProfile.avatar} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/post/${encodeURIComponent(replyMessage.uri)}`)}
                         style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            textAlign: 'left',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: CssVar.contentText,
                             flex: 1
                         }}
                     >
-                        <div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>
-
-                        {/* リプライ先の表示 */}
-                        <div
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: CssVar.backdropBackground,
-                                borderRadius: '4px',
-                                padding: '2px 8px',
-                                fontSize: '12px',
-                                width: 'fit-content'
-                            }}
-                        >
-                            <MdReply size={12} />
-                            <span>{targetMessage?.authorUser?.profile.username}</span>
-                        </div>
-
-                        {/* リプライ本文 */}
-                        <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
-                    </div>
+                        <Text>{replyMessage.authorProfile.username}</Text>
+                        {'body' in (replyMessage.value as Record<string, unknown>) && (
+                            <CfmRenderer
+                                messagebody={String((replyMessage.value as Record<string, unknown>).body ?? '')}
+                                emojiDict={{}}
+                            />
+                        )}
+                    </button>
                 </div>
-            )}
-
-            {/* ローディング */}
-            {!replyMessage && replyMessageId && (
-                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>
             )}
         </div>
     )

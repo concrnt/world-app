@@ -1,10 +1,13 @@
 import { Suspense, useEffect, useState } from 'react'
-import { CssVar, Tab, Tabs, Text, View } from '@concrnt/ui'
+import { Button, CssVar, Tab, Tabs, Text, View } from '@concrnt/ui'
 import { semantics, type List, type PinnedListItemClass } from '@concrnt/worldlib'
+import { MdTune } from 'react-icons/md'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { useComposerLauncher } from '../contexts/Composer'
 import { useClient } from '../contexts/Client'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { ListSettings } from '../components/ListSettings'
+import { Modal } from '../components/Modal'
 import { Header } from '../ui/Header'
 
 export const Home = () => {
@@ -12,6 +15,7 @@ export const Home = () => {
     const homeListUri = semantics.homeList(client!.ccid, client!.currentProfile)
     const [manualSelectedTabUri, setManualSelectedTabUri] = useState<string | null>(null)
     const selectedTabUri = manualSelectedTabUri ?? homeListUri
+    const [settingsOpen, setSettingsOpen] = useState(false)
 
     if (!client) return null
 
@@ -23,10 +27,33 @@ export const Home = () => {
                 minHeight: 0
             }}
         >
-            <Header>Home</Header>
+            <Header
+                right={
+                    <Button
+                        variant="text"
+                        onClick={() => {
+                            setSettingsOpen(true)
+                        }}
+                    >
+                        <MdTune size={20} />
+                    </Button>
+                }
+            >
+                Home
+            </Header>
             <Suspense fallback={<PageStatus label="ホームを読み込んでいます..." />}>
                 <HomeBody selectedTabUri={selectedTabUri} setSelectedTabUri={setManualSelectedTabUri} />
             </Suspense>
+            {settingsOpen && (
+                <Modal title="リスト設定" onClose={() => setSettingsOpen(false)} width="560px">
+                    <ListSettings
+                        uri={selectedTabUri}
+                        onComplete={() => {
+                            setSettingsOpen(false)
+                        }}
+                    />
+                </Modal>
+            )}
         </View>
     )
 }

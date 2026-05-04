@@ -1,146 +1,111 @@
 import { useEffect, useState } from 'react'
+import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import { type Message, type ReplyMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
-import { type MessageProps } from './types'
-import { type ReplyMessageSchema, Message } from '@concrnt/worldlib'
-
-import { Avatar, CfmRenderer, IconButton, CssVar } from '@concrnt/ui'
-
-import { MdMoreHoriz } from 'react-icons/md'
-import { MdReply } from 'react-icons/md'
+import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
+import { formatTimestamp, MessageDestinations } from './common'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { client } = useClient()
-
+    const navigate = useNavigate()
     const message = props.message
-
-    // リプライ先のメッセージ情報
     const replyToId = message.value.replyToMessageId
-    // const replyToAuthor = message.value.replyToMessageAuthor
-
-    // リプライ先のメッセージを取得
-    const [replyToMessage, setReplyToMessage] = useState<Message<any> | null>(null)
+    const [replyToMessage, setReplyToMessage] = useState<Message<unknown> | null>(null)
 
     useEffect(() => {
-        if (replyToId && client) {
-            client.getMessage<any>(replyToId).then((msg) => {
-                setReplyToMessage(msg)
-            })
-        }
-    }, [replyToId, client])
+        if (!replyToId || !client) return
+        void client.getMessage<unknown>(replyToId).then((nextMessage) => {
+            setReplyToMessage(nextMessage)
+        })
+    }, [client, replyToId])
 
     return (
         <div
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: '8px',
-                contentVisibility: 'auto'
-            }}
-            onClick={(e) => {
-                e.stopPropagation()
-                // push(<PostView uri={message.uri} />)
+                gap: CssVar.space(2)
             }}
         >
-            <div
-                onClick={(e) => {
-                    e.stopPropagation()
-                    // push(<ProfileView id={message.author} />)
-                }}
+            <button
+                type="button"
+                onClick={() => navigate(`/profile/${encodeURIComponent(message.author)}`)}
+                style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
             >
-                <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
-            </div>
+                <Avatar ccid={message.author} src={message.authorProfile.avatar} />
+            </button>
             <div
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '4px',
-                    flex: 1
+                    gap: CssVar.space(2),
+                    flex: 1,
+                    minWidth: 0
                 }}
             >
                 <div
                     style={{
                         display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '8px'
+                        alignItems: 'baseline',
+                        gap: CssVar.space(2),
+                        flexWrap: 'wrap'
                     }}
                 >
-                    <div
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${encodeURIComponent(message.author)}`)}
                         style={{
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {message.authorUser?.profile.username}
-                    </div>
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            /*
-                            select(
-                                '',
-                                {
-                                    delete: <Text>投稿を削除</Text>
-                                },
-                                (key) => {
-                                    if (key === 'delete') {
-                                        client?.api.delete(message.uri)
-                                    }
-                                }
-                            )
-                            */
-                        }}
-                        style={{
+                            border: 'none',
+                            backgroundColor: 'transparent',
                             padding: 0,
-                            margin: 0
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            color: CssVar.contentText
                         }}
                     >
-                        <MdMoreHoriz size={15} />
-                    </IconButton>
+                        {message.authorProfile.username}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/post/${encodeURIComponent(message.uri)}`)}
+                        style={{
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: CssVar.contentText,
+                            opacity: 0.72
+                        }}
+                    >
+                        <Text variant="caption">{formatTimestamp(message.createdAt)}</Text>
+                    </button>
                 </div>
 
-                {/* リプライ先の引用表示 */}
                 {replyToMessage && (
-                    <div
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/post/${encodeURIComponent(replyToId)}`)}
                         style={{
-                            padding: '8px',
-                            backgroundColor: CssVar.backdropBackground,
-                            borderRadius: '4px',
-                            borderLeft: '3px solid',
-                            borderLeftColor: CssVar.contentLink,
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            // push(<PostView uri={replyToId} />)
+                            border: `1px solid ${CssVar.divider}`,
+                            borderRadius: CssVar.round(1),
+                            backgroundColor: 'transparent',
+                            padding: CssVar.space(2),
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            color: CssVar.contentText
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                            <MdReply size={12} />
-                            <Avatar
-                                ccid={replyToMessage.author}
-                                src={replyToMessage.authorUser?.profile.avatar}
-                                style={{ width: '16px', height: '16px' }}
-                            />
-                            <span style={{ fontWeight: 'bold' }}>{replyToMessage.authorUser?.profile.username}</span>
-                        </div>
-                        <div
-                            style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical'
-                            }}
-                        >
-                            <CfmRenderer messagebody={replyToMessage.value.body} emojiDict={{}} />
-                        </div>
-                    </div>
+                        <Text variant="caption">返信先: {replyToMessage.authorProfile.username}</Text>
+                        {'body' in (replyToMessage.value as Record<string, unknown>) && (
+                            <Text>{String((replyToMessage.value as Record<string, unknown>).body ?? '')}</Text>
+                        )}
+                    </button>
                 )}
 
                 <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+                <MessageDestinations message={message} />
                 <MessageActions message={message} />
             </div>
         </div>

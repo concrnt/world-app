@@ -1,11 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { Button, CssVar, Text } from '@concrnt/ui'
+import type { Message } from '@concrnt/worldlib'
 import { Composer } from '../components/Composer'
+import { Modal } from '../components/Modal'
+
+export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
 interface ComposerContextState {
-    open: () => void
+    open: (mode?: ComposerMode, targetMessage?: Message<unknown>) => void
     close: () => void
     setAdditionalDestinations: (destinations: string[]) => void
 }
@@ -19,13 +22,21 @@ const ComposerContext = createContext<ComposerContextState>({
 export const ComposerProvider = (props: { children: ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [additionalDestinations, setAdditionalDestinations] = useState<string[]>([])
+    const [mode, setMode] = useState<ComposerMode>('normal')
+    const [targetMessage, setTargetMessage] = useState<Message<unknown> | undefined>(undefined)
+    const [seed, setSeed] = useState(0)
 
-    const open = useCallback(() => {
+    const open = useCallback((nextMode: ComposerMode = 'normal', nextTargetMessage?: Message<unknown>) => {
+        setMode(nextMode)
+        setTargetMessage(nextTargetMessage)
+        setSeed((value) => value + 1)
         setIsOpen(true)
     }, [])
 
     const close = useCallback(() => {
         setIsOpen(false)
+        setMode('normal')
+        setTargetMessage(undefined)
     }, [])
 
     const value = useMemo(
@@ -41,50 +52,15 @@ export const ComposerProvider = (props: { children: ReactNode }) => {
         <ComposerContext.Provider value={value}>
             {props.children}
             {isOpen && (
-                <div
-                    onClick={close}
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 1000,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: CssVar.space(4),
-                        backgroundColor: 'rgba(0, 0, 0, 0.4)'
-                    }}
-                >
-                    <div
-                        onClick={(event) => event.stopPropagation()}
-                        style={{
-                            width: '100%',
-                            maxWidth: '720px',
-                            maxHeight: 'min(80dvh, 720px)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            borderRadius: CssVar.round(1),
-                            overflow: 'hidden',
-                            color: CssVar.contentText,
-                            backgroundColor: CssVar.contentBackground
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: CssVar.space(3),
-                                color: CssVar.uiText,
-                                backgroundColor: CssVar.uiBackground,
-                                borderBottom: `1px solid ${CssVar.divider}`
-                            }}
-                        >
-                            <Text style={{ color: CssVar.uiText }}>New Post</Text>
-                            <Button onClick={close}>閉じる</Button>
-                        </div>
-                        <Composer additionalDestinations={additionalDestinations} onPosted={close} />
-                    </div>
-                </div>
+                <Modal title={mode === 'reply' ? 'Reply' : mode === 'reroute' ? 'Reroute' : 'New Post'} onClose={close}>
+                    <Composer
+                        key={seed}
+                        initialDestinations={additionalDestinations}
+                        mode={mode}
+                        targetMessage={targetMessage}
+                        onPosted={close}
+                    />
+                </Modal>
             )}
         </ComposerContext.Provider>
     )

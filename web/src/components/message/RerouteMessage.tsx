@@ -1,104 +1,118 @@
 import { useEffect, useState } from 'react'
+import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import { type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
-import { type MessageProps } from './types'
-import { type RerouteMessageSchema, Message } from '@concrnt/worldlib'
-
-import { Avatar, CfmRenderer, IconButton } from '@concrnt/ui'
-
-import { MdMoreHoriz } from 'react-icons/md'
-import { MdRepeat } from 'react-icons/md'
+import type { MessageProps } from './types'
 import { MessageActions } from './MessageActions'
+import { MessageDestinations, formatTimestamp } from './common'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { client } = useClient()
-
+    const navigate = useNavigate()
     const message = props.message
-
-    // リルート元のメッセージ情報
     const rerouteId = message.value.rerouteMessageId
-    // const rerouteAuthor = message.value.rerouteMessageAuthor
-
-    // リルート元のメッセージを取得
-    const [rerouteMessage, setRerouteMessage] = useState<Message<any> | null>(null)
+    const [rerouteMessage, setRerouteMessage] = useState<Message<unknown> | null>(null)
 
     useEffect(() => {
-        if (rerouteId && client) {
-            client.getMessage<any>(rerouteId).then((msg) => {
-                setRerouteMessage(msg)
-            })
-        }
-    }, [rerouteId, client])
+        if (!rerouteId || !client) return
+        void client.getMessage<unknown>(rerouteId).then((nextMessage) => {
+            setRerouteMessage(nextMessage)
+        })
+    }, [client, rerouteId])
 
     return (
         <div
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
-                contentVisibility: 'auto'
+                gap: CssVar.space(2)
             }}
         >
-            {/* リルートしたユーザーのヘッダー */}
             <div
                 style={{
                     display: 'flex',
-                    flexDirection: 'row',
                     alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '12px',
-                    opacity: 0.7,
-                    paddingLeft: '48px'
+                    gap: CssVar.space(2),
+                    paddingLeft: `calc(40px + ${CssVar.space(2)})`,
+                    opacity: 0.72
                 }}
             >
-                <MdRepeat size={14} />
-                <span>
-                    {message.authorUser?.profile.username} がリルート
-                </span>
-                <div style={{ flex: 1 }} />
-                <IconButton
-                    style={{
-                        padding: 0,
-                        margin: 0
-                    }}
-                >
-                    <MdMoreHoriz size={15} />
-                </IconButton>
+                <Text variant="caption">{message.authorProfile.username} がリルート</Text>
+                <Text variant="caption">{formatTimestamp(message.createdAt)}</Text>
             </div>
 
-            {/* リルート元のメッセージを表示 */}
             {rerouteMessage && (
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        gap: '8px',
-                        cursor: 'pointer'
+                        gap: CssVar.space(2)
                     }}
                 >
-                    <Avatar ccid={rerouteMessage.author} src={rerouteMessage.authorUser?.profile.avatar} />
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${encodeURIComponent(rerouteMessage.author)}`)}
+                        style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                    >
+                        <Avatar ccid={rerouteMessage.author} src={rerouteMessage.authorProfile.avatar} />
+                    </button>
                     <div
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '4px',
+                            gap: CssVar.space(2),
                             flex: 1
                         }}
                     >
                         <div
                             style={{
-                                fontWeight: 'bold'
+                                display: 'flex',
+                                alignItems: 'baseline',
+                                gap: CssVar.space(2),
+                                flexWrap: 'wrap'
                             }}
                         >
-                            {rerouteMessage.authorUser?.profile.username}
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/profile/${encodeURIComponent(rerouteMessage.author)}`)}
+                                style={{
+                                    border: 'none',
+                                    backgroundColor: 'transparent',
+                                    padding: 0,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    color: CssVar.contentText
+                                }}
+                            >
+                                {rerouteMessage.authorProfile.username}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/post/${encodeURIComponent(rerouteId)}`)}
+                                style={{
+                                    border: 'none',
+                                    backgroundColor: 'transparent',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                    color: CssVar.contentText,
+                                    opacity: 0.72
+                                }}
+                            >
+                                <Text variant="caption">{formatTimestamp(rerouteMessage.createdAt)}</Text>
+                            </button>
                         </div>
-                        <CfmRenderer messagebody={rerouteMessage.value.body} emojiDict={{}} />
+                        {'body' in (rerouteMessage.value as Record<string, unknown>) && (
+                            <CfmRenderer
+                                messagebody={String((rerouteMessage.value as Record<string, unknown>).body ?? '')}
+                                emojiDict={{}}
+                            />
+                        )}
+                        <MessageDestinations message={rerouteMessage} />
                         <MessageActions message={message} />
                     </div>
                 </div>
             )}
-
-            {/* ローディング中 */}
-            {!rerouteMessage && rerouteId && <div style={{ paddingLeft: '48px', opacity: 0.5 }}>読み込み中...</div>}
         </div>
     )
 }
