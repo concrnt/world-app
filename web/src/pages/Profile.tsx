@@ -4,6 +4,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Schemas, semantics, type ProfileSchema, type User } from '@concrnt/worldlib'
 import type { Document } from '@concrnt/client'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
+import { Modal } from '../components/Modal'
+import { ProfileEditor } from '../components/ProfileEditor'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { useClient } from '../contexts/Client'
 import { Header } from '../ui/Header'
@@ -61,6 +63,7 @@ const ProfileBody = (props: {
     const { client } = useClient()
     const navigate = useNavigate()
     const [tab, setTab] = useState<ProfileTab>('posts')
+    const [editorOpen, setEditorOpen] = useState(false)
     const user = use(props.userPromise)
     const profile = use(props.profilePromise)
 
@@ -138,7 +141,12 @@ const ProfileBody = (props: {
                             </div>
                         </div>
                         {client.ccid === props.ccid ? (
-                            <Button variant="outlined" disabled>
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setEditorOpen(true)
+                                }}
+                            >
                                 Edit Profile
                             </Button>
                         ) : (
@@ -189,6 +197,21 @@ const ProfileBody = (props: {
                     />
                 </div>
             </div>
+            {client.ccid === props.ccid && editorOpen && (
+                <Modal title="プロフィールを編集" onClose={() => setEditorOpen(false)} width="720px">
+                    <ProfileEditor
+                        profileName={props.profileName}
+                        onComplete={(nextProfileName) => {
+                            setEditorOpen(false)
+                            if (nextProfileName !== client.currentProfile) {
+                                void navigate(
+                                    `/profile/${encodeURIComponent(props.ccid)}?profile=${encodeURIComponent(nextProfileName)}`
+                                )
+                            }
+                        }}
+                    />
+                </Modal>
+            )}
         </>
     )
 }
