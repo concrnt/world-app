@@ -1,6 +1,6 @@
 import { Suspense, use } from 'react'
 import { Avatar, Button, CCWallpaper, CssVar, Tab, Tabs, Text, View } from '@concrnt/ui'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Schemas, semantics, type ProfileSchema, type User } from '@concrnt/worldlib'
 import type { Document } from '@concrnt/client'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
@@ -14,11 +14,13 @@ type ProfileTab = 'posts' | 'media' | 'activity'
 export const Profile = () => {
     const { client } = useClient()
     const { ccid } = useParams()
+    const [searchParams] = useSearchParams()
     const targetCcid = decodeURIComponent(ccid ?? client!.ccid)
+    const profileName = searchParams.get('profile') ?? (targetCcid === client!.ccid ? client!.currentProfile : 'main')
 
     const userPromise = client!.getUser(targetCcid).catch(() => null)
     const profilePromise = client!.api
-        .getDocument<ProfileSchema>(semantics.profile(targetCcid, 'main'))
+        .getDocument<ProfileSchema>(semantics.profile(targetCcid, profileName))
         .catch(() => null)
 
     return (
@@ -39,7 +41,12 @@ export const Profile = () => {
                 Profile
             </Header>
             <Suspense fallback={<ProfileStatus label="プロフィールを読み込んでいます..." />}>
-                <ProfileBody ccid={targetCcid} userPromise={userPromise} profilePromise={profilePromise} />
+                <ProfileBody
+                    ccid={targetCcid}
+                    profileName={profileName}
+                    userPromise={userPromise}
+                    profilePromise={profilePromise}
+                />
             </Suspense>
         </View>
     )
@@ -47,10 +54,12 @@ export const Profile = () => {
 
 const ProfileBody = (props: {
     ccid: string
+    profileName: string
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema> | null>
 }) => {
     const { client } = useClient()
+    const navigate = useNavigate()
     const [tab, setTab] = useState<ProfileTab>('posts')
     const user = use(props.userPromise)
     const profile = use(props.profilePromise)
@@ -68,8 +77,8 @@ const ProfileBody = (props: {
 
     const prefix =
         tab === 'activity'
-            ? semantics.activityTimeline(props.ccid, 'main')
-            : semantics.homeTimeline(props.ccid, 'main')
+            ? semantics.activityTimeline(props.ccid, props.profileName)
+            : semantics.homeTimeline(props.ccid, props.profileName)
 
     const query = tab === 'media' ? { schema: Schemas.mediaMessage } : undefined
 
@@ -137,11 +146,16 @@ const ProfileBody = (props: {
                         )}
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                        <Text>{profileValue.description || '説明はまだありません。'}</Text>
-                        <ProfileStats user={user} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                            <Text>{profileValue.description || '説明はまだありません。'}</Text>
+                            <ProfileStats
+                                user={user}
+                                onOpen={(tab) =>
+                                    navigate(`/contacts/${encodeURIComponent(props.ccid)}?tab=${encodeURIComponent(tab)}`)
+                                }
+                            />
+                        </div>
                     </div>
-                </div>
 
                 <Tabs
                     style={{
@@ -179,7 +193,7 @@ const ProfileBody = (props: {
     )
 }
 
-const ProfileStats = (props: { user: User }) => {
+const ProfileStats = (props: { user: User; onOpen: (tab: 'acknowledging' | 'acknowledgers') => void }) => {
     const [stats] = [use(props.user.stats.value())]
 
     return (
@@ -189,8 +203,32 @@ const ProfileStats = (props: { user: User }) => {
                 gap: CssVar.space(3)
             }}
         >
-            <Text variant="caption">{stats.acknowledging} フォロー</Text>
-            <Text variant="caption">{stats.acknowledged} フォロワー</Text>
+            <button
+                type="button"
+                onClick={() => props.onOpen('acknowledging')}
+                style={{
+                    padding: 0,
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: CssVar.contentText,
+                    cursor: 'pointer'
+                }}
+            >
+                <Text variant="caption">{stats.acknowledging} フォロー</Text>
+            </button>
+            <button
+                type="button"
+                onClick={() => props.onOpen('acknowledgers')}
+                style={{
+                    padding: 0,
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: CssVar.contentText,
+                    cursor: 'pointer'
+                }}
+            >
+                <Text variant="caption">{stats.acknowledged} フォロワー</Text>
+            </button>
         </div>
     )
 }

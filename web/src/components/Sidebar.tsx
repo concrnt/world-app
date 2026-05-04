@@ -1,8 +1,10 @@
 import type { CSSProperties } from 'react'
 import { Avatar, Button, CssVar, Text } from '@concrnt/ui'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { MdManageSearch, MdNotifications, MdPeople } from 'react-icons/md'
 import { useComposerLauncher } from '../contexts/Composer'
 import { useClient } from '../contexts/Client'
+import { SwitchAccountButton } from './SwitchAccountButton'
 
 const sidebarLinkStyle = (active: boolean): CSSProperties => ({
     display: 'block',
@@ -55,11 +57,11 @@ export const Sidebar = () => {
                         flexDirection: 'column',
                         gap: CssVar.space(1)
                     }}
-                >
-                    <Text
-                        variant="h3"
-                        style={{
-                            color: CssVar.backdropText
+                    >
+                        <Text
+                            variant="h3"
+                            style={{
+                                color: CssVar.backdropText
                         }}
                     >
                         {client?.profile.username ?? 'Anonymous'}
@@ -74,6 +76,7 @@ export const Sidebar = () => {
                         {client?.server.domain ?? 'Unknown Server'}
                     </Text>
                 </div>
+                <SwitchAccountButton />
             </div>
 
             <nav
@@ -97,8 +100,26 @@ export const Sidebar = () => {
                 <NavLink to="/explorer" style={({ isActive }) => sidebarLinkStyle(isActive)}>
                     Explorer
                 </NavLink>
+                <NavLink to="/notifications" style={({ isActive }) => sidebarLinkStyle(isActive)}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                        <MdNotifications size={18} />
+                        Notifications
+                    </span>
+                </NavLink>
+                <NavLink to="/contacts" style={({ isActive }) => sidebarLinkStyle(isActive)}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                        <MdPeople size={18} />
+                        Contacts
+                    </span>
+                </NavLink>
                 <NavLink to="/lists" style={({ isActive }) => sidebarLinkStyle(isActive)}>
                     Lists
+                </NavLink>
+                <NavLink to="/query" style={({ isActive }) => sidebarLinkStyle(isActive)}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                        <MdManageSearch size={18} />
+                        Query
+                    </span>
                 </NavLink>
                 <NavLink to="/settings" style={({ isActive }) => sidebarLinkStyle(isActive)}>
                     Settings

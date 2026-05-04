@@ -17,6 +17,9 @@ import { ComposerProvider } from './contexts/Composer.tsx'
 import { Post } from './pages/Post.tsx'
 import { Profile } from './pages/Profile.tsx'
 import { Lists } from './pages/Lists.tsx'
+import { Notifications } from './pages/Notifications.tsx'
+import { Contacts } from './pages/Contacts.tsx'
+import { Query } from './pages/Query.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -35,8 +38,12 @@ createRoot(document.getElementById('root')!).render(
                                 }>
                                     <Route index element={<Home />} />
                                     <Route path="/explorer" element={<Explorer />} />
+                                    <Route path="/notifications" element={<Notifications />} />
+                                    <Route path="/contacts" element={<Contacts />} />
+                                    <Route path="/contacts/:ccid" element={<Contacts />} />
                                     <Route path="/timeline/:uri" element={<Timeline />} />
                                     <Route path="/lists" element={<Lists />} />
+                                    <Route path="/query" element={<Query />} />
                                     <Route path="/post/:uri" element={<Post />} />
                                     <Route path="/profile/:ccid" element={<Profile />} />
                                     <Route path="/settings" element={<Settings />} />
