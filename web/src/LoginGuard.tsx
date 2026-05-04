@@ -1,23 +1,40 @@
-import type { ReactNode } from "react"
-import { useClient } from "./contexts/Client"
-import { Navigate, useLocation } from "react-router-dom"
-
+import type { ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
+import { ClientStatusScreen } from './components/ClientStatusScreen'
+import { useClient } from './contexts/Client'
 
 interface Props {
     children: ReactNode
     redirect: string
 }
 
-
 export const LoginGuard = (props: Props) => {
+    const { status, error, reload, logout } = useClient()
 
-    const { client } = useClient()
+    if (status === 'loading') {
+        return <ClientStatusScreen title="Concrnt" description="保存されているセッションを確認しています。" />
+    }
 
-    if (!client?.api.authProvider.canSignMaster() && !client?.api.authProvider.canSignSub()) {
-        return <Navigate to={props.redirect} state={{ from: useLocation() }} replace={true} />
+    if (status === 'failed') {
+        return (
+            <ClientStatusScreen
+                title="接続できませんでした"
+                description={error ?? 'クライアントの初期化に失敗しました。'}
+                primaryLabel="再試行"
+                onPrimary={() => {
+                    void reload()
+                }}
+                secondaryLabel="保存済みセッションを破棄する"
+                onSecondary={() => {
+                    void logout()
+                }}
+            />
+        )
+    }
+
+    if (status !== 'ready') {
+        return <Navigate to={props.redirect} replace={true} />
     }
 
     return props.children
 }
-
-

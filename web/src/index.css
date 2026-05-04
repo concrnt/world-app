@@ -7,9 +7,28 @@
 
 html {
     font-family: "Hiragino Sans W3", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "メイリオ", Meiryo, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+    background: var(--backdrop-background);
+}
+
+html,
+body,
+#root {
+    min-height: 100dvh;
 }
 
 body {
     font-size: 16px;
+    background: var(--backdrop-background);
+    color: var(--content-text);
 }
 
+a {
+    color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}

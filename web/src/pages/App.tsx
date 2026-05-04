@@ -1,40 +1,50 @@
-import { Outlet } from "react-router-dom"
-import { Sidebar } from "../components/Sidebar"
+import { CssVar } from '@concrnt/ui'
+import { Outlet } from 'react-router-dom'
+import { Sidebar } from '../components/Sidebar'
 
 export const App = () => {
-    return <div
-        style={{
-            display: 'flex',
-            width: '100vw',
-            flexDirection: 'column',
-            alignItems: 'center',
-        }}
-    >
+    return (
         <div
             style={{
-                display: 'flex',
-                flex: 1,
-                maxWidth: '850px',
-                width: '100%',
-                height: '100%',
+                minHeight: '100dvh',
+                backgroundColor: CssVar.backdropBackground,
+                color: CssVar.backdropText
             }}
         >
             <div
                 style={{
-                    width: "250px",
+                    width: '100%',
+                    maxWidth: '1280px',
+                    minHeight: '100dvh',
+                    margin: '0 auto',
+                    padding: CssVar.space(2),
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'stretch',
+                    gap: CssVar.space(2),
+                    boxSizing: 'border-box'
                 }}
             >
-                <Sidebar />
-            </div>
-            <div
-                style={{
-                    flex: 1,
-                    overflow: 'hidden',
-                }}
-            >
-                <Outlet />
+                <div
+                    style={{
+                        flex: '0 1 260px',
+                        minWidth: '220px',
+                        maxWidth: '100%'
+                    }}
+                >
+                    <Sidebar />
+                </div>
+                <div
+                    style={{
+                        flex: '1 1 720px',
+                        minWidth: 0,
+                        minHeight: `calc(100dvh - (${CssVar.space(2)} * 2))`,
+                        display: 'flex'
+                    }}
+                >
+                    <Outlet />
+                </div>
             </div>
         </div>
-    </div>
+    )
 }
-

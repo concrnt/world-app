@@ -1,4 +1,4 @@
-import type { ChangeEvent, CSSProperties, FocusEvent, ReactNode } from 'react'
+import type { CSSProperties } from 'react'
 import type { FieldProps, RJSFSchema, StrictRJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils'
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
@@ -6,13 +6,21 @@ import { Suspense, use, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
-import { Button, ConcrntLogo, CssVar, Text } from '@concrnt/ui'
+import { CssVar, Text } from '@concrnt/ui'
+import { AuthActions, AuthButton, AuthScreen, PageHeader, authStyles } from '../components/AuthLayout'
+
+interface RegisterServer {
+    domain: string
+    meta: {
+        captchaSiteKey?: string
+    }
+}
 
 export const Register = () => {
     const serverPromise = useMemo(() => {
         return fetch('.well-known/concrnt').then((response) => {
             if (response.ok) {
-                return response.json()
+                return response.json() as Promise<RegisterServer>
             }
 
             throw new Error('Something went wrong')
@@ -20,9 +28,7 @@ export const Register = () => {
     }, [])
 
     const tosPromise = useMemo(() => {
-        return fetch('/tos', {
-            method: 'GET'
-        }).then((response) => {
+        return fetch('/tos').then((response) => {
             if (response.ok) {
                 return response.text()
             }
@@ -32,9 +38,7 @@ export const Register = () => {
     }, [])
 
     const codeOfConductPromise = useMemo(() => {
-        return fetch('/code-of-conduct', {
-            method: 'GET'
-        }).then((response) => {
+        return fetch('/code-of-conduct').then((response) => {
             if (response.ok) {
                 return response.text()
             }
@@ -44,9 +48,7 @@ export const Register = () => {
     }, [])
 
     const schemaPromise = useMemo(() => {
-        return fetch('/register-template', {
-            method: 'GET'
-        }).then((response) => {
+        return fetch('/register-template').then((response) => {
             if (response.ok) {
                 return response.json()
             }
@@ -67,8 +69,8 @@ export const Register = () => {
     )
 }
 
-export const Inner = (props: {
-    serverPromise: Promise<any>
+const Inner = (props: {
+    serverPromise: Promise<RegisterServer>
     tosPromise: Promise<string>
     codeOfConductPromise: Promise<string>
     schemaPromise: Promise<RJSFSchema>
@@ -83,7 +85,7 @@ export const Inner = (props: {
     const [processing, setProcessing] = useState(false)
     const [success, setSuccess] = useState(false)
     const [captcha, setCaptcha] = useState('')
-    const [formData, setFormData] = useState<any>({})
+    const [formData, setFormData] = useState<Record<string, unknown>>({})
     const formShellRef = useRef<HTMLDivElement | null>(null)
 
     const encodedDocument = searchParams.get('document')
@@ -101,7 +103,6 @@ export const Inner = (props: {
         }
     }, [registration])
 
-    const ccaddr = signedObj?.author ?? ''
     const hasValidRequest = Boolean(registration && signature && signedObj)
 
     const uiSchema = useMemo<UiSchema>(() => {
@@ -112,7 +113,7 @@ export const Inner = (props: {
         }
     }, [])
 
-    const register = async (meta: any) => {
+    const register = async (meta: Record<string, unknown>) => {
         if (!registration || !signature) return
 
         setProcessing(true)
@@ -136,7 +137,7 @@ export const Inner = (props: {
                 body: JSON.stringify(request),
                 headers: {
                     'Content-Type': 'application/json',
-                    'captcha': captcha
+                    captcha
                 }
             })
 
@@ -163,9 +164,7 @@ export const Inner = (props: {
                         登録完了
                     </Text>
                     <Text style={styles.successDescription}>
-                        {callback
-                            ? 'この画面を閉じて、元のアプリに戻ることができます。'
-                            : 'この画面を閉じて、元のアプリに戻ることができます。'}
+                        この画面を閉じて、元のアプリに戻ることができます。
                     </Text>
                 </div>
             </AuthScreen>
@@ -175,10 +174,7 @@ export const Inner = (props: {
     return (
         <AuthScreen align="top">
             <RegisterPageStyle />
-            <PageHeader
-                title="アカウント登録"
-                description={domain}
-            />
+            <PageHeader title="アカウント登録" description={domain} />
 
             <div style={authStyles.section}>
                 {!hasValidRequest && (
@@ -200,15 +196,15 @@ export const Inner = (props: {
                 </Text>
 
                 <div className="register-form-shell" ref={formShellRef}>
-                    <Form<RJSFSchema, any, StrictRJSFSchema>
+                    <Form<RJSFSchema, Record<string, unknown>, StrictRJSFSchema>
                         schema={schema}
                         uiSchema={uiSchema}
                         validator={validator}
-                        onSubmit={(e) => {
-                            void register(e.formData)
+                        onSubmit={(event) => {
+                            void register(event.formData)
                         }}
                         formData={formData}
-                        onChange={(e) => setFormData(e.formData)}
+                        onChange={(event) => setFormData(event.formData)}
                         templates={{
                             FieldTemplate: RegisterFieldTemplate
                         }}
@@ -238,28 +234,6 @@ export const Inner = (props: {
                 </div>
             </div>
         </AuthScreen>
-    )
-}
-
-const PageHeader = (props: { title: string; description?: ReactNode; brandOnly?: boolean }) => {
-    return (
-        <div style={styles.pageHeaderWrap}>
-            <div style={styles.pageHeader}>
-                <div style={styles.brandRow}>
-                    <ConcrntLogo
-                        size="36px"
-                        upperColor={CssVar.uiText}
-                        lowerColor={CssVar.uiText}
-                        frameColor={CssVar.uiText}
-                    />
-                    <Text style={styles.wordmark}>Concrnt</Text>
-                </div>
-                <div style={styles.pageHeaderText}>
-                    <AuthHeader title={props.title} compact={props.brandOnly} />
-                </div>
-            </div>
-            {props.description && <Text style={styles.pageHeaderMeta}>{props.description}</Text>}
-        </div>
     )
 }
 
@@ -342,9 +316,9 @@ const TextWidget = (props: WidgetProps) => {
             disabled={disabled || readonly}
             placeholder={placeholder}
             value={typeof value === 'string' ? value : value ?? ''}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={(e) => onBlur(id, e.target.value)}
-            onFocus={(e) => onFocus(id, e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={(event) => onBlur(id, event.target.value)}
+            onFocus={(event) => onFocus(id, event.target.value)}
             style={styles.input}
         />
     )
@@ -361,9 +335,9 @@ const TextareaWidget = (props: WidgetProps) => {
             disabled={disabled || readonly}
             placeholder={placeholder}
             value={typeof value === 'string' ? value : value ?? ''}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={(e) => onBlur(id, e.target.value)}
-            onFocus={(e) => onFocus(id, e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={(event) => onBlur(id, event.target.value)}
+            onFocus={(event) => onFocus(id, event.target.value)}
             style={styles.textarea}
         />
     )
@@ -378,9 +352,9 @@ const SelectWidget = (props: WidgetProps) => {
             required={required}
             disabled={disabled || readonly}
             value={value ?? ''}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={(e) => onBlur(id, e.target.value)}
-            onFocus={(e) => onFocus(id, e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={(event) => onBlur(id, event.target.value)}
+            onFocus={(event) => onFocus(id, event.target.value)}
             style={styles.select}
         >
             <option value="" disabled>
@@ -406,9 +380,9 @@ const CheckboxWidget = (props: WidgetProps) => {
                 type="checkbox"
                 checked={Boolean(value)}
                 disabled={disabled || readonly}
-                onChange={(e) => onChange(e.target.checked)}
-                onBlur={(e) => onBlur(id, e.target.checked)}
-                onFocus={(e) => onFocus(id, e.target.checked)}
+                onChange={(event) => onChange(event.target.checked)}
+                onBlur={(event) => onBlur(id, event.target.checked)}
+                onFocus={(event) => onFocus(id, event.target.checked)}
             />
             <Text style={{ color: CssVar.uiText }}>{label}</Text>
         </label>
@@ -425,143 +399,6 @@ const widgets = {
     CheckboxWidget
 }
 
-const AuthScreen = (props: { children: ReactNode; align?: 'center' | 'top' }) => {
-    return (
-        <div
-            style={{
-                minHeight: '100dvh',
-                width: '100dvw',
-                padding: `calc(env(safe-area-inset-top) + ${CssVar.space(8)}) ${CssVar.space(5)} calc(env(safe-area-inset-bottom) + ${CssVar.space(5)})`,
-                color: CssVar.uiText,
-                backgroundColor: CssVar.uiBackground,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: props.align === 'top' ? 'flex-start' : 'center',
-                overflowY: 'auto',
-                boxSizing: 'border-box'
-            }}
-        >
-            <div
-                style={{
-                    width: '100%',
-                    maxWidth: 440,
-                    minHeight: props.align === 'top' ? 'auto' : 520,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: props.align === 'top' ? 'flex-start' : 'center',
-                    gap: CssVar.space(5)
-                }}
-            >
-                {props.children}
-            </div>
-        </div>
-    )
-}
-
-const AuthHeader = (props: { title: string; description?: ReactNode; compact?: boolean }) => {
-    return (
-        <div
-            style={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                textAlign: 'right',
-                gap: CssVar.space(1)
-            }}
-        >
-            <Text
-                variant="h1"
-                style={{
-                    color: CssVar.uiText,
-                    fontSize: props.compact ? '1.35rem' : '1.45rem',
-                    lineHeight: 1.2,
-                    margin: 0
-                }}
-            >
-                {props.title}
-            </Text>
-            {props.description && (
-                <Text
-                    style={{
-                        color: CssVar.uiText,
-                        opacity: 0.78,
-                        lineHeight: 1.6,
-                        fontSize: '0.95rem',
-                        margin: 0
-                    }}
-                >
-                    {props.description}
-                </Text>
-            )}
-        </div>
-    )
-}
-
-const AuthActions = (props: { children: ReactNode; fixedBottom?: boolean }) => {
-    return (
-        <div
-            style={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                gap: CssVar.space(3),
-                marginTop: props.fixedBottom ? 'auto' : CssVar.space(2)
-            }}
-        >
-            {props.children}
-        </div>
-    )
-}
-
-const AuthButton = (props: {
-    children: ReactNode
-    onClick?: () => void
-    disabled?: boolean
-}) => {
-    return (
-        <Button
-            disabled={props.disabled}
-            onClick={props.onClick}
-            style={{
-                width: '100%',
-                minHeight: 48,
-                color: CssVar.uiBackground,
-                backgroundColor: CssVar.uiText,
-                border: 'none',
-                fontSize: '1rem',
-                fontWeight: 700
-            }}
-        >
-            {props.children}
-        </Button>
-    )
-}
-
-const authStyles = {
-    section: {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        gap: CssVar.space(3)
-    } satisfies CSSProperties,
-    inputGroup: {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: CssVar.space(2)
-    } satisfies CSSProperties,
-    status: {
-        minHeight: 24,
-        color: CssVar.uiText,
-        opacity: 0.78
-    } satisfies CSSProperties,
-}
-
 const styles: Record<string, CSSProperties> = {
     sectionTitle: {
         color: CssVar.uiText,
@@ -569,47 +406,6 @@ const styles: Record<string, CSSProperties> = {
         lineHeight: 1.3,
         margin: 0,
         textAlign: 'left'
-    },
-    pageHeader: {
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: CssVar.space(3)
-    },
-    pageHeaderWrap: {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: CssVar.space(1)
-    },
-    brandRow: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: CssVar.space(2),
-        flexShrink: 0,
-        minHeight: 36
-    },
-    wordmark: {
-        fontSize: '28px',
-        lineHeight: 1,
-        color: CssVar.uiText,
-        fontWeight: 700,
-        margin: 0
-    },
-    pageHeaderText: {
-        width: 'fit-content',
-        maxWidth: '60%',
-        marginLeft: 'auto'
-    },
-    pageHeaderMeta: {
-        width: '100%',
-        textAlign: 'right',
-        color: CssVar.uiText,
-        opacity: 0.78,
-        fontSize: '0.95rem',
-        lineHeight: 1.6,
-        margin: 0
     },
     successWrap: {
         width: '100%',
@@ -660,9 +456,9 @@ const styles: Record<string, CSSProperties> = {
         overflowX: 'auto'
     },
     input: {
-        padding: '8px',
+        padding: CssVar.space(2),
         fontSize: '16px',
-        borderRadius: '4px',
+        borderRadius: CssVar.round(1),
         borderColor: CssVar.divider,
         backgroundColor: CssVar.contentBackground,
         color: CssVar.contentText,
@@ -670,9 +466,9 @@ const styles: Record<string, CSSProperties> = {
         boxSizing: 'border-box'
     },
     textarea: {
-        padding: '8px',
+        padding: CssVar.space(2),
         fontSize: '16px',
-        borderRadius: '4px',
+        borderRadius: CssVar.round(1),
         borderColor: CssVar.divider,
         backgroundColor: CssVar.contentBackground,
         color: CssVar.contentText,
@@ -682,9 +478,9 @@ const styles: Record<string, CSSProperties> = {
         boxSizing: 'border-box'
     },
     select: {
-        padding: '8px',
+        padding: CssVar.space(2),
         fontSize: '16px',
-        borderRadius: '4px',
+        borderRadius: CssVar.round(1),
         borderColor: CssVar.divider,
         backgroundColor: CssVar.contentBackground,
         color: CssVar.contentText,

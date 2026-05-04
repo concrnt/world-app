@@ -9,37 +9,43 @@ import { Register } from './pages/Register.tsx'
 import { Timeline } from './pages/Timeline.tsx'
 import { ClientProvider } from './contexts/Client.tsx'
 import { LoginGuard } from './LoginGuard.tsx'
-import { ThemeProvider } from '@concrnt/ui'
 import { Explorer } from './pages/Explorer.tsx'
 import { Settings } from './pages/Settings.tsx'
+import { PreferenceProvider } from './contexts/Preference.tsx'
+import { ThemeProvider } from './contexts/Theme.tsx'
+import { ComposerProvider } from './contexts/Composer.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <ClientProvider>
+        <PreferenceProvider>
             <ThemeProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/" element={
-                            <LoginGuard
-                                redirect="/login"
-                            >
-                                <App />
-                            </LoginGuard>
-                        }>
-                            <Route index element={<Home />} />
-                            <Route path="/explorer" element={<Explorer />} />
-                            <Route path="/timeline/:uri" element={<Timeline />} />
-                            <Route path="/settings" element={<Settings />} />
-                        </Route>
-                        <Route path="/login" element={
-                            <Login />
-                        } />
-                        <Route path="/register" element={
-                            <Register />
-                        } />
-                    </Routes>
-                </BrowserRouter>
+                <ClientProvider>
+                    <ComposerProvider>
+                        <BrowserRouter>
+                            <Routes>
+                                <Route path="/" element={
+                                    <LoginGuard
+                                        redirect="/login"
+                                    >
+                                        <App />
+                                    </LoginGuard>
+                                }>
+                                    <Route index element={<Home />} />
+                                    <Route path="/explorer" element={<Explorer />} />
+                                    <Route path="/timeline/:uri" element={<Timeline />} />
+                                    <Route path="/settings" element={<Settings />} />
+                                </Route>
+                                <Route path="/login" element={
+                                    <Login />
+                                } />
+                                <Route path="/register" element={
+                                    <Register />
+                                } />
+                            </Routes>
+                        </BrowserRouter>
+                    </ComposerProvider>
+                </ClientProvider>
             </ThemeProvider>
-        </ClientProvider>
+        </PreferenceProvider>
     </StrictMode>,
 )

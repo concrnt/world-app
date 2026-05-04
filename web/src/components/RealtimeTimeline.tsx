@@ -1,10 +1,9 @@
-import { Fragment, Suspense, useEffect, useState } from 'react'
-import { useClient } from '../contexts/Client'
-import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { TimelineReader } from '@concrnt/client'
-import { MessageContainer } from './message'
-import { Divider, Text } from '@concrnt/ui'
+import { Fragment, Suspense, useEffect, useRef, useState } from 'react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
+import { TimelineReader } from '@concrnt/client'
+import { CssVar, Divider, Text } from '@concrnt/ui'
+import { useClient } from '../contexts/Client'
+import { MessageContainer } from './message'
 
 interface Props {
     timelines: string[]
@@ -12,55 +11,116 @@ interface Props {
 
 export const RealtimeTimeline = (props: Props) => {
     const { client } = useClient()
-
-    // eslint-disable-next-line prefer-const
-    let [loading, setLoading] = useState(true)
-    const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
+    const loadingRef = useRef(true)
+    const scrollRef = useRef<HTMLDivElement | null>(null)
+    const readerRef = useRef<TimelineReader | undefined>(undefined)
+    const [items, setItems] = useState<TimelineReader['body']>([])
+    const [isInitialLoading, setIsInitialLoading] = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [hasMoreData, setHasMoreData] = useState(false)
 
     useEffect(() => {
-        console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
+        setIsInitialLoading(true)
+        setIsLoadingMore(false)
+        setHasMoreData(false)
+        setItems([])
+        loadingRef.current = true
+
         const request = async () => {
-            if (!client) return
+            if (!client) return undefined
 
-            return client.newTimelineReader().then((t) => {
-                if (isCancelled) return
-                t.onUpdate = () => {
-                    update()
-                }
+            const timelineReader = await client.newTimelineReader()
+            if (isCancelled) {
+                timelineReader.dispose()
+                return undefined
+            }
 
-                reader.current = t
-                t.listen(props.timelines).finally(() => {
-                    setLoading((loading = false))
+            timelineReader.onUpdate = () => {
+                setItems([...timelineReader.body])
+            }
+
+            readerRef.current = timelineReader
+
+            timelineReader
+                .listen(props.timelines)
+                .then((hasMore) => {
+                    if (isCancelled) return
+                    setItems([...timelineReader.body])
+                    setHasMoreData(hasMore)
                 })
-                return t
-            })
+                .finally(() => {
+                    if (isCancelled) return
+                    loadingRef.current = false
+                    setIsInitialLoading(false)
+                })
+
+            return timelineReader
         }
-        const mt = request()
+
+        const pending = request()
+
         return () => {
             isCancelled = true
-            mt.then((t) => {
-                t?.dispose()
+            pending.then((timelineReader) => {
+                timelineReader?.dispose()
             })
         }
-    }, [client, reader, props.timelines, update])
+    }, [client, props.timelines])
+
+    useEffect(() => {
+        const element = scrollRef.current
+        if (!element) return
+        if (isInitialLoading) return
+
+        const handleScroll = () => {
+            if (element.scrollHeight - element.scrollTop - element.clientHeight > 500) return
+            if (loadingRef.current || !hasMoreData || !readerRef.current) return
+
+            loadingRef.current = true
+            setIsLoadingMore(true)
+            readerRef.current
+                .readMore(8)
+                .then((hasMore) => {
+                    setItems([...(readerRef.current?.body ?? [])])
+                    setHasMoreData(hasMore)
+                })
+                .finally(() => {
+                    loadingRef.current = false
+                    setIsLoadingMore(false)
+                })
+        }
+
+        element.addEventListener('scroll', handleScroll)
+        return () => {
+            element.removeEventListener('scroll', handleScroll)
+        }
+    }, [hasMoreData, isInitialLoading])
+
+    const isEmpty = !isInitialLoading && items.length === 0
 
     return (
         <div
+            ref={scrollRef}
             style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                padding: '8px 0',
+                flexDirection: 'column'
             }}
         >
-            {reader.current?.body.map((item) => (
+            {isInitialLoading && (
+                <TimelineStatus label="Loading timeline..." />
+            )}
+
+            {items.map((item) => (
                 <Fragment key={item.timestamp.getTime() ?? item.href}>
                     <ErrorBoundary FallbackComponent={renderError}>
-                        <Suspense fallback={<Text>Loading...</Text>}>
+                        <Suspense fallback={<TimelineStatus label="Loading message..." compact={true} />}>
                             <div
                                 style={{
-                                    padding: '0 8px',
+                                    padding: `${CssVar.space(3)} ${CssVar.space(3)} 0`,
                                     contentVisibility: 'auto'
                                 }}
                             >
@@ -76,29 +136,45 @@ export const RealtimeTimeline = (props: Props) => {
                     <Divider />
                 </Fragment>
             ))}
-            <div
+
+            {isEmpty && <TimelineStatus label="表示できる投稿がまだありません。" />}
+            {isLoadingMore && <TimelineStatus label="過去の投稿を読み込んでいます..." compact={true} />}
+            {!isInitialLoading && !hasMoreData && !isEmpty && <TimelineStatus label="タイムラインの末尾です。" compact={true} />}
+        </div>
+    )
+}
+
+const TimelineStatus = (props: { label: string; compact?: boolean }) => {
+    return (
+        <div
+            style={{
+                padding: props.compact ? CssVar.space(3) : CssVar.space(5),
+                minHeight: props.compact ? undefined : '160px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center'
+            }}
+        >
+            <Text
                 style={{
-                    padding: '8px',
-                    fontSize: '12px',
-                    color: '#888',
-                    width: '100%',
-                    height: '100px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    opacity: 0.72
                 }}
             >
-                Loading...
-            </div>
+                {props.label}
+            </Text>
         </div>
     )
 }
 
 const renderError = ({ error }: FallbackProps) => {
     return (
-        <div>
-            {(error as any)?.message}
-            <pre>{(error as any)?.stack}</pre>
+        <div
+            style={{
+                padding: CssVar.space(3)
+            }}
+        >
+            <Text>{error instanceof Error ? error.message : 'Failed to render message.'}</Text>
         </div>
     )
 }
