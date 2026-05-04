@@ -97,6 +97,9 @@ export const Sidebar = () => {
                 <NavLink to="/explorer" style={({ isActive }) => sidebarLinkStyle(isActive)}>
                     Explorer
                 </NavLink>
+                <NavLink to="/lists" style={({ isActive }) => sidebarLinkStyle(isActive)}>
+                    Lists
+                </NavLink>
                 <NavLink to="/settings" style={({ isActive }) => sidebarLinkStyle(isActive)}>
                     Settings
                 </NavLink>

@@ -1,8 +1,9 @@
-import { Suspense, use, useMemo } from 'react'
-import { CssVar, Text, View } from '@concrnt/ui'
+import { Suspense, use, useMemo, useState } from 'react'
+import { Button, CssVar, Text, View } from '@concrnt/ui'
 import type { Document, Server, SignedDocument } from '@concrnt/client'
 import { Link, useLocation } from 'react-router-dom'
 import { Schemas, semantics, type CommunityTimelineSchema } from '@concrnt/worldlib'
+import { AddToListModal } from '../components/AddToListModal'
 import { useClient } from '../contexts/Client'
 import { Header } from '../ui/Header'
 
@@ -109,51 +110,86 @@ const ServerList = ({ serversPromise }: { serversPromise: Promise<Server[]> }) =
 
 const CommunityList = ({ communitiesPromise }: { communitiesPromise: Promise<SignedDocument[]> }) => {
     const communities = use(communitiesPromise)
+    const [selectedCommunity, setSelectedCommunity] = useState<{ uri: string; name: string } | null>(null)
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: CssVar.space(2)
-            }}
-        >
-            {communities.map((community) => {
-                const document = JSON.parse(community.document) as Document<CommunityTimelineSchema>
+        <>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(2)
+                }}
+            >
+                {communities.map((community) => {
+                    const document = JSON.parse(community.document) as Document<CommunityTimelineSchema>
 
-                return (
-                    <Link
-                        key={community.cckv}
-                        to={`/timeline/${encodeURIComponent(community.cckv)}`}
-                        style={{
-                            display: 'block',
-                            padding: CssVar.space(3),
-                            borderRadius: CssVar.round(1),
-                            border: `1px solid ${CssVar.divider}`,
-                            color: CssVar.contentText,
-                            textDecoration: 'none'
-                        }}
-                    >
-                        <Text
-                            variant="h3"
+                    return (
+                        <div
+                            key={community.cckv}
                             style={{
-                                marginBottom: CssVar.space(1)
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: CssVar.space(2),
+                                padding: CssVar.space(3),
+                                borderRadius: CssVar.round(1),
+                                border: `1px solid ${CssVar.divider}`
                             }}
                         >
-                            {document.value.name}
-                        </Text>
-                        {document.value.description && (
-                            <Text
+                            <Link
+                                to={`/timeline/${encodeURIComponent(community.cckv)}`}
                                 style={{
-                                    opacity: 0.78
+                                    color: CssVar.contentText,
+                                    textDecoration: 'none'
                                 }}
                             >
-                                {document.value.description}
-                            </Text>
-                        )}
-                    </Link>
-                )
-            })}
-        </div>
+                                <Text
+                                    variant="h3"
+                                    style={{
+                                        marginBottom: CssVar.space(1)
+                                    }}
+                                >
+                                    {document.value.name}
+                                </Text>
+                                {document.value.description && (
+                                    <Text
+                                        style={{
+                                            opacity: 0.78
+                                        }}
+                                    >
+                                        {document.value.description}
+                                    </Text>
+                                )}
+                            </Link>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end'
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setSelectedCommunity({
+                                            uri: community.cckv,
+                                            name: document.value.name
+                                        })
+                                    }}
+                                >
+                                    リストに追加
+                                </Button>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+            {selectedCommunity && (
+                <AddToListModal
+                    targetUri={selectedCommunity.uri}
+                    targetName={selectedCommunity.name}
+                    onClose={() => setSelectedCommunity(null)}
+                />
+            )}
+        </>
     )
 }

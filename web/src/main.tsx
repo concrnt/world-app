@@ -16,6 +16,7 @@ import { ThemeProvider } from './contexts/Theme.tsx'
 import { ComposerProvider } from './contexts/Composer.tsx'
 import { Post } from './pages/Post.tsx'
 import { Profile } from './pages/Profile.tsx'
+import { Lists } from './pages/Lists.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
                                     <Route index element={<Home />} />
                                     <Route path="/explorer" element={<Explorer />} />
                                     <Route path="/timeline/:uri" element={<Timeline />} />
+                                    <Route path="/lists" element={<Lists />} />
                                     <Route path="/post/:uri" element={<Post />} />
                                     <Route path="/profile/:ccid" element={<Profile />} />
                                     <Route path="/settings" element={<Settings />} />
