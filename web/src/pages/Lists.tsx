@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Button, CssVar, Tab, Tabs, Text, TextField, View } from '@concrnt/ui'
 import type { Document } from '@concrnt/client'
 import { List as ListModel, Schemas, semantics, type ListSchema, type Timeline } from '@concrnt/worldlib'
@@ -58,14 +58,16 @@ export const Lists = () => {
             </div>
 
             {editingList && (
-                <ListEditorModal
-                    list={editingList}
-                    onClose={() => setEditingList(null)}
-                    onComplete={() => {
-                        setEditingList(null)
-                        setReloadKey((value) => value + 1)
-                    }}
-                />
+                <Suspense fallback={<ModalStatus title="Loading..." label="Loading list editor..." onClose={() => setEditingList(null)} />}>
+                    <ListEditorModal
+                        list={editingList}
+                        onClose={() => setEditingList(null)}
+                        onComplete={() => {
+                            setEditingList(null)
+                            setReloadKey((value) => value + 1)
+                        }}
+                    />
+                </Suspense>
             )}
 
             {newListOpen && (
@@ -117,9 +119,38 @@ const ListsBody = (props: { onEdit: (list: ListModel) => void; onReload: () => v
     return (
         <>
             {lists.map((list) => (
-                <ListCard key={list.uri} list={list} onEdit={() => props.onEdit(list)} onReload={props.onReload} />
+                <Suspense key={list.uri} fallback={<ListCardFallback />}>
+                    <ListCard list={list} onEdit={() => props.onEdit(list)} onReload={props.onReload} />
+                </Suspense>
             ))}
         </>
+    )
+}
+
+const ListCardFallback = () => {
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(2),
+                padding: CssVar.space(3),
+                borderRadius: CssVar.round(1),
+                border: `1px solid ${CssVar.divider}`
+            }}
+        >
+            <Text>Loading list...</Text>
+        </div>
+    )
+}
+
+const ModalStatus = (props: { title: string; label: string; onClose: () => void }) => {
+    return (
+        <Modal title={props.title} onClose={props.onClose} width="720px">
+            <div style={{ padding: CssVar.space(4) }}>
+                <Text>{props.label}</Text>
+            </div>
+        </Modal>
     )
 }
 

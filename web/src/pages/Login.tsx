@@ -1,11 +1,13 @@
+import { lazy, Suspense } from 'react'
 import { Api, DeriveIdentity, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 import { CssVar, Text } from '@concrnt/ui'
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { QRSetup } from '../components/QRSetup'
 import { AuthActions, AuthBrand, AuthButton, AuthScreen, AuthTextButton, PageHeader } from '../components/AuthLayout'
 import { useClient } from '../contexts/Client'
 import { string2Uint8Array } from '../util'
+
+const QRSetup = lazy(async () => import('../components/QRSetup').then((module) => ({ default: module.QRSetup })))
 
 const getEntityFromPasskey = async (ccid: string, domain: string) => {
     const authProvider = new InMemoryAuthProvider()
@@ -137,7 +139,9 @@ export const Login = () => {
                         padding: `${CssVar.space(2)} 0`
                     }}
                 >
-                    <QRSetup />
+                    <Suspense fallback={<Text>QR ログインを準備しています...</Text>}>
+                        <QRSetup />
+                    </Suspense>
                 </div>
                 <AuthActions>
                     <AuthTextButton onClick={() => setMode('menu')}>戻る</AuthTextButton>
