@@ -1,9 +1,9 @@
 import { Suspense, use, useMemo, useState } from 'react'
-import { Button, CssVar, Text, View } from '@concrnt/ui'
+import { Button, CssVar, Popup, Text, View } from '@concrnt/ui'
 import type { Document, Server, SignedDocument } from '@concrnt/client'
 import { Link, useLocation } from 'react-router-dom'
 import { Schemas, semantics, type CommunityTimelineSchema } from '@concrnt/worldlib'
-import { AddToListModal } from '../components/AddToListModal'
+import { AddToListPopup } from '../components/AddToListPopup'
 import { useClient } from '../contexts/Client'
 import { Header } from '../ui/Header'
 
@@ -167,29 +167,50 @@ const CommunityList = ({ communitiesPromise }: { communitiesPromise: Promise<Sig
                                     justifyContent: 'flex-end'
                                 }}
                             >
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => {
-                                        setSelectedCommunity({
-                                            uri: community.cckv,
-                                            name: document.value.name
-                                        })
+                                <Popup
+                                    open={selectedCommunity?.uri === community.cckv}
+                                    onOpenChange={(open) => {
+                                        setSelectedCommunity(
+                                            open
+                                                ? {
+                                                      uri: community.cckv,
+                                                      name: document.value.name
+                                                  }
+                                                : null
+                                        )
+                                    }}
+                                    trigger={
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => {
+                                                setSelectedCommunity((current) =>
+                                                    current?.uri === community.cckv
+                                                        ? null
+                                                        : {
+                                                              uri: community.cckv,
+                                                              name: document.value.name
+                                                          }
+                                                )
+                                            }}
+                                        >
+                                            リストに追加
+                                        </Button>
+                                    }
+                                    popupStyle={{
+                                        width: 'min(360px, calc(100vw - 32px))'
                                     }}
                                 >
-                                    リストに追加
-                                </Button>
+                                    <AddToListPopup
+                                        targetUri={community.cckv}
+                                        targetName={document.value.name}
+                                        onClose={() => setSelectedCommunity(null)}
+                                    />
+                                </Popup>
                             </div>
                         </div>
                     )
                 })}
             </div>
-            {selectedCommunity && (
-                <AddToListModal
-                    targetUri={selectedCommunity.uri}
-                    targetName={selectedCommunity.name}
-                    onClose={() => setSelectedCommunity(null)}
-                />
-            )}
         </>
     )
 }
