@@ -24,6 +24,8 @@ const ClientContext = createContext<ClientContextState>({
     logout: async () => {}
 })
 
+const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
+
 interface SessionState {
     ccid: string
     ckid: string
@@ -35,6 +37,7 @@ export const ClientProvider = (props: Props): ReactNode => {
     const [isOffline, setIsOffline] = useState(false)
 
     const reload = useCallback(async (name?: string) => {
+        console.log('Reloading client for profile', name)
         const session = await invoke<SessionState | undefined>('get_session')
         console.log('session', session)
         if (!session) {
@@ -51,8 +54,9 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         const authProvider = await TauriAuthProvider.create()
         const kvs = new InMemoryKVS()
-        Client.create(domain, authProvider, kvs, name)
+        await Client.create(domain, authProvider, kvs, name)
             .then((client) => {
+                console.log('Client created successfully')
                 setClient(client)
             })
             .catch((err) => {
@@ -117,11 +121,11 @@ export const ClientProvider = (props: Props): ReactNode => {
     }
 
     if (client === undefined) {
-        return props.loading
+        return <ReloadClientContext.Provider value={reload}>{props.loading}</ReloadClientContext.Provider>
     }
 
     if (client === null) {
-        return props.failed
+        return <ReloadClientContext.Provider value={reload}>{props.failed}</ReloadClientContext.Provider>
     }
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
@@ -129,4 +133,8 @@ export const ClientProvider = (props: Props): ReactNode => {
 
 export function useClient(): ClientContextState {
     return useContext(ClientContext)
+}
+
+export function useReloadClient(): () => void {
+    return useContext(ReloadClientContext)
 }

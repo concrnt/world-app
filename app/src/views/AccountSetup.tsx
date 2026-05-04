@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
-import { useClient } from '../contexts/Client'
+import { useReloadClient } from '../contexts/Client'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
@@ -17,12 +17,13 @@ interface Props {
 }
 
 export const AccountSetup = (props: Props) => {
-    const { reload } = useClient()
+    const reload = useReloadClient()
     const reset = useResetPreference()
 
     const [domain, setDomain] = useState<string>(props.entrypoint)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
+    const [finalizing, setFinalizing] = useState(false)
 
     const serverInput = useRef<HTMLInputElement>(null)
 
@@ -183,7 +184,9 @@ export const AccountSetup = (props: Props) => {
                     />
                     <AuthActions fixedBottom>
                         <AuthButton
+                            disabled={finalizing}
                             onClick={async () => {
+                                setFinalizing(true)
                                 const ccid = await invoke('has_masterkey')
                                 if (typeof ccid !== 'string') {
                                     alert('プログラムエラー: CCIDが見つかりません')
@@ -207,14 +210,19 @@ export const AccountSetup = (props: Props) => {
                                     createdAt: new Date()
                                 }
 
+                                console.log('Committing subkey document:', subkeyDoc)
                                 await api.commit(subkeyDoc, domain, { useMasterkey: true })
+                                console.log('Subkey document committed')
                                 await invoke('set_domain', { domain })
+                                console.log('Domain set in backend')
 
                                 reset()
-                                reload()
+                                console.log('Preferences reset')
+                                await reload()
+                                console.log('Client reloaded')
                             }}
                         >
-                            完了
+                            {finalizing ? '登録中...' : '完了'}
                         </AuthButton>
                     </AuthActions>
                 </>

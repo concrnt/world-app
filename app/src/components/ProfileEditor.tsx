@@ -19,7 +19,7 @@ export const ProfileEditor = (props: Props) => {
     const { client } = useClient()
     const cropper = useImageCropper()
 
-    const [loading, setLoading] = useState<boolean>(!!props.noLoading)
+    const [loading, setLoading] = useState<boolean>(!props.noLoading)
 
     const [username, setUsername] = useState<string>('')
     const [description, setDescription] = useState<string>('')
