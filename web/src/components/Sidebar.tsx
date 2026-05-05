@@ -6,6 +6,10 @@ import { ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
 import { Avatar } from '@concrnt/ui'
 
 import { MdPerson } from 'react-icons/md'
+import { MdHome } from 'react-icons/md'
+import { MdExplore } from 'react-icons/md'
+import { MdNotifications } from 'react-icons/md'
+import { MdContacts } from 'react-icons/md'
 import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
@@ -90,16 +94,26 @@ export const Sidebar = (props: Props) => {
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
                     <Divider />
-                    <Button
-                        onClick={() => {
-                            const home = semantics.homeTimeline(client.ccid, client.currentProfile)
-                            composer.open([home])
+                    <List
+                        style={{
+                            color: CssVar.backdropText,
+                            fontSize: '1.25rem'
                         }}
-                        style={{ width: '100%' }}
                     >
-                        <MdCreate size={20} />
-                        投稿
-                    </Button>
+                        <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>
+                            ホーム
+                        </ListItem>
+                        <ListItem icon={<MdExplore size={24} />} onClick={() => go('/explorer')}>
+                            エクスプローラー
+                        </ListItem>
+                        <ListItem icon={<MdNotifications size={24} />} onClick={() => go('/notifications')}>
+                            通知
+                        </ListItem>
+                        <ListItem icon={<MdContacts size={24} />} onClick={() => go('/contacts')}>
+                            コンタクト
+                        </ListItem>
+                    </List>
+                    <Divider />
                     <List
                         style={{
                             color: CssVar.backdropText,
@@ -131,6 +145,17 @@ export const Sidebar = (props: Props) => {
                             設定
                         </ListItem>
                     </List>
+                    <div style={{ flex: 1 }} />
+                    <Button
+                        onClick={() => {
+                            const home = semantics.homeTimeline(client.ccid, client.currentProfile)
+                            composer.open([home])
+                        }}
+                        style={{ width: '100%' }}
+                    >
+                        <MdCreate size={20} />
+                        投稿
+                    </Button>
                 </div>
             </div>
         </>

@@ -3,13 +3,18 @@ import { Sidebar } from '../components/Sidebar'
 import { CssVar } from '../types/Theme'
 import { StackLayout } from '../layouts/Stack'
 
+const GAP = CssVar.space(2)
+
 export const AppShell = () => {
     return (
         <div
             style={{
                 display: 'flex',
                 width: '100vw',
+                minHeight: '100dvh',
                 height: '100dvh',
+                paddingTop: GAP,
+                boxSizing: 'border-box',
                 backgroundColor: CssVar.backdropBackground,
                 justifyContent: 'center'
             }}
@@ -21,6 +26,7 @@ export const AppShell = () => {
                     maxWidth: '1180px',
                     minWidth: 0,
                     width: '100%',
+                    minHeight: `calc(100dvh - ${GAP})`,
                     height: '100%'
                 }}
             >
@@ -28,6 +34,7 @@ export const AppShell = () => {
                     style={{
                         width: '250px',
                         flex: '0 0 250px',
+                        minHeight: `calc(100dvh - ${GAP})`,
                         height: '100%'
                     }}
                 >
@@ -37,6 +44,7 @@ export const AppShell = () => {
                     style={{
                         flex: 1,
                         minWidth: 0,
+                        minHeight: `calc(100dvh - ${GAP})`,
                         height: '100%',
                         overflow: 'hidden'
                     }}
