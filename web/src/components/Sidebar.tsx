@@ -1,5 +1,3 @@
-import { ReactNode } from 'react'
-
 import { useClient } from '../contexts/Client'
 
 import { ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
@@ -26,21 +24,13 @@ import { useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
 import { semantics } from '@concrnt/worldlib'
 
-interface Props {
-    onPush?: (view: ReactNode) => void
-}
-
-export const Sidebar = (props: Props) => {
+export const Sidebar = () => {
     const theme = useTheme()
     const { client } = useClient()
     const navigate = useNavigate()
     const composer = useComposer()
 
-    const go = (path: string, fallback?: ReactNode) => {
-        if (props.onPush && fallback) {
-            props.onPush(fallback)
-            return
-        }
+    const go = (path: string) => {
         navigate(path)
     }
 
