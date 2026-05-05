@@ -1,61 +1,62 @@
-import { useEffect, useState } from 'react'
 import { useClient } from '../../contexts/Client'
-import { type MessageProps } from './types'
-import { type RerouteMessageSchema, Message } from '@concrnt/worldlib'
+import { MessageProps } from './types'
+import { RerouteMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, IconButton } from '@concrnt/ui'
+import { Avatar, Text, IconButton, ListItem } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
-import { MessageActions } from './MessageActions'
+import { useSelect } from '../../contexts/Select'
+import { hapticSuccess } from '../../utils/haptics'
+import { OnelineMessageLayout } from './OnelineLayout'
+import { MessageContainer } from './main'
+import { TimeDiff } from '../TimeDiff'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { client } = useClient()
-
-    const message = props.message
-
-    // リルート元のメッセージ情報
-    const rerouteId = message.value.rerouteMessageId
-    // const rerouteAuthor = message.value.rerouteMessageAuthor
-
-    // リルート元のメッセージを取得
-    const [rerouteMessage, setRerouteMessage] = useState<Message<any> | null>(null)
-
-    useEffect(() => {
-        if (rerouteId && client) {
-            client.getMessage<any>(rerouteId).then((msg) => {
-                setRerouteMessage(msg)
-            })
-        }
-    }, [rerouteId, client])
+    const { select } = useSelect()
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                contentVisibility: 'auto'
-            }}
-        >
-            {/* リルートしたユーザーのヘッダー */}
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '12px',
-                    opacity: 0.7,
-                    paddingLeft: '48px'
-                }}
+        <div>
+            <OnelineMessageLayout
+                left={
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            opacity: 0.7
+                        }}
+                    >
+                        <MdRepeat size={14} />
+                        <Avatar
+                            ccid={props.message.author}
+                            src={props.message.authorUser?.profile.avatar}
+                            style={{ width: '16px', height: '16px' }}
+                        />
+                    </div>
+                }
             >
-                <MdRepeat size={14} />
-                <span>
-                    {message.authorUser?.profile.username} がリルート
-                </span>
+                <Text variant="caption">
+                    {props.message.authorUser?.profile.username || 'Anonymous'}さんがリルートしました
+                </Text>
                 <div style={{ flex: 1 }} />
                 <IconButton
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        select('', [
+                            <ListItem
+                                key="delete"
+                                onClick={() => {
+                                    client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                }}
+                            >
+                                <Text>リルートを削除</Text>
+                            </ListItem>
+                        ])
+                    }}
                     style={{
                         padding: 0,
                         margin: 0
@@ -63,42 +64,9 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 >
                     <MdMoreHoriz size={15} />
                 </IconButton>
-            </div>
-
-            {/* リルート元のメッセージを表示 */}
-            {rerouteMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Avatar ccid={rerouteMessage.author} src={rerouteMessage.authorUser?.profile.avatar} />
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div
-                            style={{
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            {rerouteMessage.authorUser?.profile.username}
-                        </div>
-                        <CfmRenderer messagebody={rerouteMessage.value.body} emojiDict={{}} />
-                        <MessageActions message={message} />
-                    </div>
-                </div>
-            )}
-
-            {/* ローディング中 */}
-            {!rerouteMessage && rerouteId && <div style={{ paddingLeft: '48px', opacity: 0.5 }}>読み込み中...</div>}
+                <TimeDiff date={props.message.createdAt} />
+            </OnelineMessageLayout>
+            <MessageContainer uri={props.message.value.rerouteMessageId} />
         </div>
     )
 }

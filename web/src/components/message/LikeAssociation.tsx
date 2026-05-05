@@ -1,9 +1,14 @@
-import { type MessageProps } from './types'
-import { type LikeAssociationSchema } from '@concrnt/worldlib'
+import { MessageProps } from './types'
+import { LikeAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { useStack } from '../../layouts/Stack'
+import { PostView } from '../../views/Post'
+import { ProfileView } from '../../views/Profile'
 import { MdStar } from 'react-icons/md'
+import { MessageLayout } from './MessageLayout'
 
 export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
+    const { push } = useStack()
     const message = props.message
 
     // アソシエーションのターゲット（お気に入り登録された投稿）
@@ -19,6 +24,11 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                 flexDirection: 'column',
                 gap: '4px',
                 cursor: 'pointer'
+            }}
+            onClick={() => {
+                if (targetMessage) {
+                    push(<PostView uri={targetMessage.uri} />)
+                }
             }}
         >
             {/* 上部: お気に入り登録したユーザーの情報 */}
@@ -39,6 +49,12 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                 />
                 <MdStar size={14} />
                 <span
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        if (likeAuthor) {
+                            push(<ProfileView ccid={likeAuthor.ccid} />)
+                        }
+                    }}
                     style={{ cursor: 'pointer' }}
                 >
                     {likeAuthor?.profile.username} がお気に入りに登録しました
@@ -47,26 +63,21 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
 
             {/* 下部: 元の投稿 */}
             {targetMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px'
-                    }}
+                <MessageLayout
+                    left={
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                push(<ProfileView ccid={targetMessage.author} />)
+                            }}
+                        >
+                            <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
+                        </div>
+                    }
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>}
                 >
-                    <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>
-                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                    </div>
-                </div>
+                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
+                </MessageLayout>
             )}
 
             {/* ローディング */}

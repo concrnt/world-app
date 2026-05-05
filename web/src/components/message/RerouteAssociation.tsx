@@ -1,9 +1,14 @@
-import { type MessageProps } from './types'
-import { type RerouteAssociationSchema } from '@concrnt/worldlib'
+import { MessageProps } from './types'
+import { RerouteAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { useStack } from '../../layouts/Stack'
+import { PostView } from '../../views/Post'
+import { ProfileView } from '../../views/Profile'
 import { MdRepeat } from 'react-icons/md'
+import { MessageLayout } from './MessageLayout'
 
 export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
+    const { push } = useStack()
     const message = props.message
 
     // アソシエーションのターゲット（リルートされた元の投稿）
@@ -12,6 +17,9 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
     // リルートしたユーザー
     const rerouteAuthor = message.authorUser
 
+    // リルートメッセージのID（valueから取得）
+    const rerouteMessageId = message.value.messageId
+
     return (
         <div
             style={{
@@ -19,6 +27,11 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 flexDirection: 'column',
                 gap: '4px',
                 cursor: 'pointer'
+            }}
+            onClick={() => {
+                if (rerouteMessageId) {
+                    push(<PostView uri={rerouteMessageId} />)
+                }
             }}
         >
             {/* 上部: リルートしたユーザーの情報 */}
@@ -39,6 +52,12 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 />
                 <MdRepeat size={14} />
                 <span
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        if (rerouteAuthor) {
+                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
+                        }
+                    }}
                     style={{ cursor: 'pointer' }}
                 >
                     {rerouteAuthor?.profile.username} がリルートしました
@@ -47,26 +66,24 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
 
             {/* 下部: 元の投稿 */}
             {targetMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px'
+                <MessageLayout
+                    onClick={() => {
+                        push(<PostView uri={targetMessage.uri} />)
                     }}
+                    left={
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                push(<ProfileView ccid={targetMessage.author} />)
+                            }}
+                        >
+                            <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
+                        </div>
+                    }
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>}
                 >
-                    <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>
-                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                    </div>
-                </div>
+                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
+                </MessageLayout>
             )}
 
             {/* ローディング */}
