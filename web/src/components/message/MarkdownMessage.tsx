@@ -1,87 +1,77 @@
-import { type MessageProps } from './types'
-import { type MarkdownMessageSchema } from '@concrnt/worldlib'
+import { MessageProps } from './types'
+import { MarkdownMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, IconButton } from '@concrnt/ui'
+import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
-import { MdMoreHoriz } from 'react-icons/md'
 import { MessageActions } from './MessageActions'
+import { MessageLayout } from './MessageLayout'
+import { TimeDiff } from '../TimeDiff'
+import { PostedTimelines } from './PostedTimelines'
+import { useNavigate } from 'react-router-dom'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
+    const navigate = useNavigate()
 
     const message = props.message
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '8px'
+        <MessageLayout
+            onClick={() => {
+                navigate('/post/' + encodeURIComponent(message.uri))
             }}
-            onClick={(e) => {
-                e.stopPropagation()
-                // push(<PostView uri={message.uri} />)
-            }}
+            left={
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        navigate('/profile/' + message.author)
+                    }}
+                >
+                    <Avatar ccid={message.author} src={message.authorProfile?.avatar} />
+                </div>
+            }
+            headerLeft={
+                <div
+                    style={{
+                        fontWeight: 'bold'
+                    }}
+                >
+                    {message.authorProfile?.username || 'Anonymous'}
+                </div>
+            }
+            headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <div
-                onClick={(e) => {
-                    e.stopPropagation()
-                    // push(<ProfileView id={message.author} />)
-                }}
-            >
-                <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
-            </div>
+            <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
             <div
                 style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    flex: 1
+                    flexDirection: 'row-reverse',
+                    justifyContent: 'space-between',
+                    alignItems: 'stretch',
+                    flexWrap: 'wrap',
+                    gap: CssVar.space(1)
                 }}
             >
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '8px'
+                        alignItems: 'center'
                     }}
                 >
-                    <div
-                        style={{
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {message.authorUser?.profile.username}
-                    </div>
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            /*
-                            select(
-                                '',
-                                {
-                                    delete: <Text>投稿を削除</Text>
-                                },
-                                (key) => {
-                                    if (key === 'delete') {
-                                        client?.api.delete(message.uri)
-                                    }
-                                }
-                            )
-                            */
-                        }}
-                        style={{
-                            padding: 0,
-                            margin: 0
-                        }}
-                    >
-                        <MdMoreHoriz size={15} />
-                    </IconButton>
+                    <PostedTimelines message={message} />
                 </div>
-                <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
-                <MessageActions message={message} />
+                <div
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start'
+                    }}
+                >
+                    <MessageActions message={message} />
+                </div>
             </div>
-        </div>
+        </MessageLayout>
     )
 }

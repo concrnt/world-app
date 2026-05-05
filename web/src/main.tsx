@@ -1,45 +1,120 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import ReactDOM from 'react-dom/client'
 import './index.css'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import { Home } from './pages/Home.tsx'
-import { Login } from './pages/Login.tsx'
-import { App } from './pages/App.tsx'
-import { Register } from './pages/Register.tsx'
-import { Timeline } from './pages/Timeline.tsx'
-import { ClientProvider } from './contexts/Client.tsx'
-import { LoginGuard } from './LoginGuard.tsx'
-import { ThemeProvider } from '@concrnt/ui'
-import { Explorer } from './pages/Explorer.tsx'
-import { Settings } from './pages/Settings.tsx'
+import { EmergencyKit } from './components/EmergencyKit'
+import { ErrorBoundary } from 'react-error-boundary'
+import { ScannerProvider } from './contexts/Scanner'
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 
-createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-        <ClientProvider>
-            <ThemeProvider>
-                <BrowserRouter>
+import { LoadingFull } from './components/LoadingFull'
+import { ClientProvider } from './contexts/Client'
+import { ThemeProvider } from './contexts/Theme'
+import { PreferenceProvider } from './contexts/Preference'
+import { SelectProvider } from './contexts/Select'
+import { DrawerProvider } from './contexts/Drawer'
+import { OverlayProvider } from './contexts/Overlay'
+import { ComposerProvider } from './contexts/Composer'
+import { MediaViewerProvider } from './contexts/MediaViewer'
+import { ImageCropperProvider } from './contexts/ImageCropper'
+import TickerProvider from './contexts/Ticer'
+import { ConfirmProvider } from './contexts/Confirm'
+import { WelcomeView } from './views/Welcome'
+import { AppShell } from './pages/App'
+import { HomeView } from './views/Home'
+import { ExplorerView } from './views/Explorer'
+import { NotificationsView } from './views/Notifications'
+import { ContactsView } from './views/Contacts'
+import { SettingsView } from './views/Settings'
+import { ProfileView } from './views/Profile'
+import { PostView } from './views/Post'
+import { TimelineView } from './views/Timeline'
+import { ListsView } from './views/Lists'
+import { QueryView } from './views/Query'
+import { DevView } from './views/Dev'
+import { IDView } from './views/ID'
+import { Activitypub } from './views/Activitypub'
+import { ApView } from './views/ApView'
+import { Login } from './pages/Login'
+import { Register } from './pages/Register'
+
+const ProfileRoute = () => {
+    const { ccid = '', profile } = useParams()
+    return <ProfileView ccid={ccid} profileName={profile} />
+}
+
+const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' }) => {
+    const { uri = '' } = useParams()
+    const decoded = decodeURIComponent(uri)
+
+    switch (kind) {
+        case 'post':
+            return <PostView uri={decoded} />
+        case 'timeline':
+            return <TimelineView uri={decoded} />
+        case 'apView':
+            return <ApView uri={decoded} />
+    }
+}
+
+const AuthedRoutes = () => (
+    <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
+        <ConfirmProvider>
+            <ImageCropperProvider>
+                <DrawerProvider>
+                    <SelectProvider>
+                        <ComposerProvider>
+                            <ScannerProvider>
+                                <OverlayProvider>
+                                    <MediaViewerProvider>
+                                        <TickerProvider>
+                                            <Routes>
+                                                <Route path="/" element={<AppShell />}>
+                                                    <Route index element={<HomeView />} />
+                                                    <Route path="explorer" element={<ExplorerView />} />
+                                                    <Route path="notifications" element={<NotificationsView />} />
+                                                    <Route path="contacts" element={<ContactsView />} />
+                                                    <Route path="settings" element={<SettingsView />} />
+                                                    <Route path="profile/:ccid/:profile?" element={<ProfileRoute />} />
+                                                    <Route path="post/:uri" element={<UriRoute kind="post" />} />
+                                                    <Route path="timeline/:uri" element={<UriRoute kind="timeline" />} />
+                                                    <Route path="lists" element={<ListsView />} />
+                                                    <Route path="lists/:uri" element={<ListsView />} />
+                                                    <Route path="query" element={<QueryView />} />
+                                                    <Route path="dev" element={<DevView />} />
+                                                    <Route path="id" element={<IDView />} />
+                                                    <Route path="activitypub" element={<Activitypub />} />
+                                                    <Route path="activitypub/person/:uri" element={<UriRoute kind="apView" />} />
+                                                    <Route path="activitypub/note/:uri" element={<UriRoute kind="apView" />} />
+                                                    <Route
+                                                        path="activitypub/view/:uri"
+                                                        element={<UriRoute kind="apView" />}
+                                                    />
+                                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                                </Route>
+                                            </Routes>
+                                        </TickerProvider>
+                                    </MediaViewerProvider>
+                                </OverlayProvider>
+                            </ScannerProvider>
+                        </ComposerProvider>
+                    </SelectProvider>
+                </DrawerProvider>
+            </ImageCropperProvider>
+        </ConfirmProvider>
+    </ClientProvider>
+)
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <ErrorBoundary FallbackComponent={EmergencyKit}>
+        <BrowserRouter>
+            <PreferenceProvider>
+                <ThemeProvider>
                     <Routes>
-                        <Route path="/" element={
-                            <LoginGuard
-                                redirect="/login"
-                            >
-                                <App />
-                            </LoginGuard>
-                        }>
-                            <Route index element={<Home />} />
-                            <Route path="/explorer" element={<Explorer />} />
-                            <Route path="/timeline/:uri" element={<Timeline />} />
-                            <Route path="/settings" element={<Settings />} />
-                        </Route>
-                        <Route path="/login" element={
-                            <Login />
-                        } />
-                        <Route path="/register" element={
-                            <Register />
-                        } />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="*" element={<AuthedRoutes />} />
                     </Routes>
-                </BrowserRouter>
-            </ThemeProvider>
-        </ClientProvider>
-    </StrictMode>,
+                </ThemeProvider>
+            </PreferenceProvider>
+        </BrowserRouter>
+    </ErrorBoundary>
 )

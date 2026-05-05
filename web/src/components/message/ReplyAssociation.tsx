@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { type MessageProps } from './types'
-import { type ReplyAssociationSchema, Message } from '@concrnt/worldlib'
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { MessageProps } from './types'
+import { ReplyAssociationSchema, Message } from '@concrnt/worldlib'
+import { Avatar, CfmRenderer, Chip } from '@concrnt/ui'
 import { useClient } from '../../contexts/Client'
+import { useNavigate } from 'react-router-dom'
 import { MdReply } from 'react-icons/md'
+import { MessageLayout } from './MessageLayout'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
+    const navigate = useNavigate()
     const { client } = useClient()
     const message = props.message
 
@@ -37,6 +40,11 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                 gap: '4px',
                 cursor: 'pointer'
             }}
+            onClick={() => {
+                if (replyMessageId) {
+                    navigate('/post/' + encodeURIComponent(replyMessageId))
+                }
+            }}
         >
             {/* 元の投稿（リプライされた側）を小さく表示 */}
             {targetMessage && (
@@ -52,6 +60,10 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                         whiteSpace: 'nowrap',
                         textOverflow: 'ellipsis'
                     }}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                    }}
                 >
                     <Avatar
                         ccid={targetMessage.author}
@@ -64,45 +76,31 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
 
             {/* リプライメッセージを表示 */}
             {replyMessage && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '8px'
+                <MessageLayout
+                    onClick={() => {
+                        if (replyMessageId) {
+                            navigate('/post/' + encodeURIComponent(replyMessageId))
+                        }
                     }}
-                >
-                    <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            flex: 1
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>
-
-                        {/* リプライ先の表示 */}
+                    left={
                         <div
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: CssVar.backdropBackground,
-                                borderRadius: '4px',
-                                padding: '2px 8px',
-                                fontSize: '12px',
-                                width: 'fit-content'
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (replyAuthor) {
+                                    navigate('/profile/' + replyAuthor.ccid)
+                                }
                             }}
                         >
-                            <MdReply size={12} />
-                            <span>{targetMessage?.authorUser?.profile.username}</span>
+                            <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
                         </div>
-
-                        {/* リプライ本文 */}
-                        <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
-                    </div>
-                </div>
+                    }
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>}
+                >
+                    <Chip headElement={<MdReply size={12} />}>
+                        {targetMessage?.authorUser?.profile.username || 'Unknown'}
+                    </Chip>
+                    <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
+                </MessageLayout>
             )}
 
             {/* ローディング */}

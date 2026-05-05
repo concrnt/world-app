@@ -1,39 +1,31 @@
-import { type MessageProps } from '../types'
+import { MessageProps } from '../types'
 
 import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { MessageLayout } from '../MessageLayout'
+import { useNavigate } from 'react-router-dom'
 
 export const LegacyNoteMessage = (props: MessageProps<any>) => {
+    const navigate = useNavigate()
 
     const message = props.message
     const legacyMessage = JSON.parse(message.value.body)
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '8px',
-                contentVisibility: 'auto'
+        <MessageLayout
+            onClick={() => {
+                navigate('/post/' + encodeURIComponent(message.uri))
             }}
-            onClick={(e) => {
-                e.stopPropagation()
-            }}
-        >
-            <div
-                onClick={(e) => {
-                    e.stopPropagation()
-                }}
-            >
-                <Avatar ccid={message.author} />
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    flex: 1
-                }}
-            >
+            left={
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        navigate('/profile/' + message.author)
+                    }}
+                >
+                    <Avatar ccid={message.author} />
+                </div>
+            }
+            headerLeft={
                 <div
                     style={{
                         display: 'flex',
@@ -51,13 +43,14 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                     </div>
                     <div>{new Date(message.createdAt).toLocaleString()}</div>
                 </div>
-                <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />
-                {/*
-                <pre>
-                    {JSON.stringify(message, null, 2)}
-                </pre>
-                */}
-            </div>
-        </div>
+            }
+        >
+            <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />
+            {/*
+            <pre>
+                {JSON.stringify(message, null, 2)}
+            </pre>
+            */}
+        </MessageLayout>
     )
 }
