@@ -13,8 +13,7 @@ import {
     User
 } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
-import { useStack } from '../layouts/Stack'
-import { ProfileView } from './Profile'
+import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
 import { TimeDiff } from '../components/TimeDiff'
 
@@ -26,7 +25,7 @@ interface Props {
 
 export const PostView = (props: Props) => {
     const { client } = useClient()
-    const { push } = useStack()
+    const navigate = useNavigate()
     const [tab, setTab] = useState<PostTab>('replies')
 
     // --- Replies / Reroutes / Favorites ---
@@ -217,7 +216,7 @@ export const PostView = (props: Props) => {
                                     key={reroute.ccfs}
                                     ccid={reroute.author}
                                     date={reroute.createdAt}
-                                    onClick={() => push(<ProfileView ccid={reroute.author} />)}
+                                    onClick={() => navigate('/profile/' + reroute.author)}
                                 >
                                     がリルートしました
                                 </AssociationUserItem>
@@ -237,7 +236,7 @@ export const PostView = (props: Props) => {
                                     key={fav.ccfs}
                                     ccid={fav.author}
                                     date={fav.createdAt}
-                                    onClick={() => push(<ProfileView ccid={fav.author} />)}
+                                    onClick={() => navigate('/profile/' + fav.author)}
                                 >
                                     がお気に入りに登録しました
                                 </AssociationUserItem>
@@ -317,7 +316,7 @@ export const PostView = (props: Props) => {
                                                 key={member.ccfs}
                                                 ccid={member.author}
                                                 date={member.createdAt}
-                                                onClick={() => push(<ProfileView ccid={member.author} />)}
+                                                onClick={() => navigate('/profile/' + member.author)}
                                             />
                                         ))}
                                 </>

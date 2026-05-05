@@ -11,10 +11,8 @@ import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
 import { MdStar, MdEmojiEmotions } from 'react-icons/md'
-import { useStack } from '../layouts/Stack'
-import { PostView } from '../views/Post'
-import { ProfileView } from '../views/Profile'
 import { PullToRefresh } from './PullToRefresh'
+import { useNavigate } from 'react-router-dom'
 
 // 通知を集約した表示単位
 // - summarised-like: 同じ投稿に対する Like をまとめたもの
@@ -319,7 +317,7 @@ export const NotificationTimeline = (props: Props) => {
 // レイアウト: 左アイコンコラム (width: ICON_COLUMN_WIDTH, paddingLeft: ICON_COLUMN_PADDING_LEFT)
 //            + 右コンテンツコラム (flex: 1, アバター/文言/プレビューを縦積み)
 const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     // 集約グループ内の全 Message は同じ associationTarget を指している前提
     // （集約キーが `${associationTarget.uri}${KEY_SUFFIX_LIKE}` のため）
@@ -335,7 +333,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
             }}
             onClick={() => {
                 if (target) {
-                    push(<PostView uri={target.uri} />)
+                    navigate('/post/' + encodeURIComponent(target.uri))
                 }
             }}
         >
@@ -373,7 +371,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                             onClick={(e) => {
                                 e.stopPropagation()
                                 if (item.authorUser) {
-                                    push(<ProfileView ccid={item.authorUser.ccid} />)
+                                    navigate('/profile/' + item.authorUser.ccid)
                                 }
                             }}
                         >
@@ -425,7 +423,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
 // レイアウト: 左アイコンコラム (width: ICON_COLUMN_WIDTH, paddingLeft: ICON_COLUMN_PADDING_LEFT)
 //            + 右コンテンツコラム (絵文字ごとのグループ / 文言 / プレビューを縦積み)
 const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[] }) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     const target = props.items[0].associationTarget
     const firstAuthor = props.items[0].authorUser
@@ -450,7 +448,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
             }}
             onClick={() => {
                 if (target) {
-                    push(<PostView uri={target.uri} />)
+                    navigate('/post/' + encodeURIComponent(target.uri))
                 }
             }}
         >
@@ -506,7 +504,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         if (item.authorUser) {
-                                            push(<ProfileView ccid={item.authorUser.ccid} />)
+                                            navigate('/profile/' + item.authorUser.ccid)
                                         }
                                     }}
                                 >

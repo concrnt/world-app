@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react'
 import { MessageProps } from './types'
 import { ReplyAssociationSchema, Message } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer, Chip } from '@concrnt/ui'
-import { useStack } from '../../layouts/Stack'
 import { useClient } from '../../contexts/Client'
-import { PostView } from '../../views/Post'
-import { ProfileView } from '../../views/Profile'
+import { useNavigate } from 'react-router-dom'
 import { MdReply } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
     const { client } = useClient()
     const message = props.message
 
@@ -44,7 +42,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
             }}
             onClick={() => {
                 if (replyMessageId) {
-                    push(<PostView uri={replyMessageId} />)
+                    navigate('/post/' + encodeURIComponent(replyMessageId))
                 }
             }}
         >
@@ -64,7 +62,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                     }}
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<PostView uri={targetMessage.uri} />)
+                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
                     }}
                 >
                     <Avatar
@@ -81,7 +79,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                 <MessageLayout
                     onClick={() => {
                         if (replyMessageId) {
-                            push(<PostView uri={replyMessageId} />)
+                            navigate('/post/' + encodeURIComponent(replyMessageId))
                         }
                     }}
                     left={
@@ -89,7 +87,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                             onClick={(e) => {
                                 e.stopPropagation()
                                 if (replyAuthor) {
-                                    push(<ProfileView ccid={replyAuthor.ccid} />)
+                                    navigate('/profile/' + replyAuthor.ccid)
                                 }
                             }}
                         >

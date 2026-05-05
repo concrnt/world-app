@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
 import { CssVar } from '../types/Theme'
-import { StackLayout } from '../layouts/Stack'
 
 const GAP = CssVar.space(2)
 
@@ -49,9 +48,7 @@ export const AppShell = () => {
                         overflow: 'hidden'
                     }}
                 >
-                    <StackLayout>
-                        <Outlet />
-                    </StackLayout>
+                    <Outlet />
                 </main>
             </div>
         </div>

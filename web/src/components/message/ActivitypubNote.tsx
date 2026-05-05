@@ -1,10 +1,9 @@
 import { Suspense, use, useMemo } from 'react'
 import { ApObject } from '../../utils/activitypub'
-import { useStack } from '../../layouts/Stack'
 import { MessageLayout } from './MessageLayout'
 import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
-import { ApView } from '../../views/ApView'
+import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { PostedTimelines } from './PostedTimelines'
@@ -50,7 +49,7 @@ const Note = (props: {
     authorPromise: Promise<ApObject | null>
     message?: Message<ApNoteSchema>
 }) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     const note = use(props.notePromise)
     const author = use(props.authorPromise)
@@ -70,13 +69,13 @@ const Note = (props: {
     return (
         <MessageLayout
             onClick={() => {
-                push(<ApView uri={note.id} />)
+                navigate('/activitypub/view/' + encodeURIComponent(note.id))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (note.attributedTo) push(<ApView uri={note.attributedTo} />)
+                        if (note.attributedTo) navigate('/activitypub/view/' + encodeURIComponent(note.attributedTo))
                     }}
                 >
                     <Avatar ccid={note.attributedTo ?? ''} src={author?.getIcons()[0]?.url} />

@@ -2,9 +2,8 @@ import { View, Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
-import { useStack } from '../layouts/Stack'
-import { ApView } from './ApView'
 import { NotFoundError } from '@concrnt/client'
+import { useNavigate } from 'react-router-dom'
 import { Schemas } from '@concrnt/worldlib'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
@@ -24,14 +23,13 @@ interface ApServerInfo {
 export const Activitypub = () => {
     const { client } = useClient()
     const drawer = useDrawer()
+    const navigate = useNavigate()
 
     const [settings, setSettings] = useState<ApSettings | undefined | null>(undefined)
     const [idDraft, setIDDraft] = useState('')
     const idOk = idDraft.length > 0 && idDraft.match(/^[a-zA-Z0-9_]+$/)
 
     const [lookupDraft, setLookupDraft] = useState('')
-
-    const stack = useStack()
 
     useEffect(() => {
         client.api
@@ -148,7 +146,7 @@ export const Activitypub = () => {
                     <TextField value={lookupDraft} onChange={(e) => setLookupDraft(e.target.value)} />
                     <Button
                         onClick={() => {
-                            stack.push(<ApView uri={lookupDraft} />)
+                            navigate('/activitypub/view/' + encodeURIComponent(lookupDraft))
                         }}
                     >
                         照会

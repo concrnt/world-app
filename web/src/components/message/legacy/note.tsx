@@ -1,14 +1,11 @@
-import { useStack } from '../../../layouts/Stack'
 import { MessageProps } from '../types'
-
-import { ProfileView } from '../../../views/Profile'
-import { PostView } from '../../../views/Post'
 
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { MessageLayout } from '../MessageLayout'
+import { useNavigate } from 'react-router-dom'
 
 export const LegacyNoteMessage = (props: MessageProps<any>) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     const message = props.message
     const legacyMessage = JSON.parse(message.value.body)
@@ -16,13 +13,13 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
     return (
         <MessageLayout
             onClick={() => {
-                push(<PostView uri={message.uri} />)
+                navigate('/post/' + encodeURIComponent(message.uri))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={message.author} />)
+                        navigate('/profile/' + message.author)
                     }}
                 >
                     <Avatar ccid={message.author} />

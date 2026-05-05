@@ -4,8 +4,7 @@ import { isNonNullOrUndefined, User } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from './AcknowledgeButton'
-import { useStack } from '../layouts/Stack'
-import { ProfileView } from '../views/Profile'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
     targetCcid: string
@@ -83,9 +82,9 @@ export const AcknowledgeList = (props: Props) => {
 }
 
 const UserList = (props: { usersPromise: Promise<User[] | null> }) => {
-    const stack = useStack()
+    const navigate = useNavigate()
     const openProfile = (ccid: string) => {
-        stack.push(<ProfileView ccid={ccid} />)
+        navigate('/profile/' + ccid)
     }
 
     const users = use(props.usersPromise)

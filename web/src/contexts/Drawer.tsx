@@ -1,8 +1,7 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { animate } from 'motion'
 import { CssVar } from '../types/Theme'
-import { StackLayout, type StackLayoutRef } from '../layouts/Stack'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -39,18 +38,11 @@ export const DrawerProvider = (props: Props) => {
         setContent(null)
     }, [])
 
-    const stackRef = useRef<StackLayoutRef | null>(null)
-
-    // ドロワーが開いている間はAndroidバックボタンを横取りし、
-    // ドロワー内Stackのpop→ドロワーを閉じるの優先順で処理する
     useEffect(() => {
         if (!content) return
 
         const prev = (window as any).__concrntHandleBack
         ;(window as any).__concrntHandleBack = (): boolean => {
-            if (stackRef.current?.pop()) {
-                return true
-            }
             close()
             return true
         }
@@ -171,7 +163,7 @@ export const DrawerProvider = (props: Props) => {
                                     minHeight: 0
                                 }}
                             >
-                                <StackLayout ref={stackRef}>{content}</StackLayout>
+                                {content}
                             </div>
                         </motion.div>
                     </>

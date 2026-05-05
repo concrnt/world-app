@@ -1,12 +1,11 @@
 import { TextField, Button, View } from '@concrnt/ui'
-import { TimelineView } from '../views/Timeline'
 import { Header } from '../ui/Header'
-import { useStack } from '../layouts/Stack'
 import { useState } from 'react'
 import { CssVar } from '../types/Theme'
+import { useNavigate } from 'react-router-dom'
 
 export const QueryView = () => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     const [query, setQuery] = useState('')
 
@@ -24,7 +23,7 @@ export const QueryView = () => {
                 <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cckv://" />
                 <Button
                     onClick={() => {
-                        push?.(<TimelineView uri={query} />)
+                        navigate('/timeline/' + encodeURIComponent(query))
                     }}
                 >
                     照会

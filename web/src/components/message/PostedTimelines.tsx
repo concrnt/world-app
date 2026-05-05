@@ -1,14 +1,13 @@
 import { Message, Schemas } from '@concrnt/worldlib'
 import { TimelineTag } from '../TimelineTag'
-import { useStack } from '../../layouts/Stack'
-import { TimelineView } from '../../views/Timeline'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
     message: Message<any>
 }
 
 export const PostedTimelines = (props: Props) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     return (
         <>
@@ -22,7 +21,7 @@ export const PostedTimelines = (props: Props) => {
                     }}
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<TimelineView uri={uri} />)
+                        navigate('/timeline/' + encodeURIComponent(uri))
                     }}
                 />
             ))}

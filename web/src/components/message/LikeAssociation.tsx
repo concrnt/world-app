@@ -1,14 +1,12 @@
 import { MessageProps } from './types'
 import { LikeAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
-import { useStack } from '../../layouts/Stack'
-import { PostView } from '../../views/Post'
-import { ProfileView } from '../../views/Profile'
+import { useNavigate } from 'react-router-dom'
 import { MdStar } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
     const message = props.message
 
     // アソシエーションのターゲット（お気に入り登録された投稿）
@@ -27,7 +25,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             }}
             onClick={() => {
                 if (targetMessage) {
-                    push(<PostView uri={targetMessage.uri} />)
+                    navigate('/post/' + encodeURIComponent(targetMessage.uri))
                 }
             }}
         >
@@ -52,7 +50,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                     onClick={(e) => {
                         e.stopPropagation()
                         if (likeAuthor) {
-                            push(<ProfileView ccid={likeAuthor.ccid} />)
+                            navigate('/profile/' + likeAuthor.ccid)
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -68,7 +66,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={targetMessage.author} />)
+                                navigate('/profile/' + targetMessage.author)
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />

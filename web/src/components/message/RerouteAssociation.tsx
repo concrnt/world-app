@@ -1,14 +1,12 @@
 import { MessageProps } from './types'
 import { RerouteAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
-import { useStack } from '../../layouts/Stack'
-import { PostView } from '../../views/Post'
-import { ProfileView } from '../../views/Profile'
+import { useNavigate } from 'react-router-dom'
 import { MdRepeat } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
     const message = props.message
 
     // アソシエーションのターゲット（リルートされた元の投稿）
@@ -30,7 +28,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             }}
             onClick={() => {
                 if (rerouteMessageId) {
-                    push(<PostView uri={rerouteMessageId} />)
+                    navigate('/post/' + encodeURIComponent(rerouteMessageId))
                 }
             }}
         >
@@ -55,7 +53,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     onClick={(e) => {
                         e.stopPropagation()
                         if (rerouteAuthor) {
-                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
+                            navigate('/profile/' + rerouteAuthor.ccid)
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -68,13 +66,13 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             {targetMessage && (
                 <MessageLayout
                     onClick={() => {
-                        push(<PostView uri={targetMessage.uri} />)
+                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
                     }}
                     left={
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={targetMessage.author} />)
+                                navigate('/profile/' + targetMessage.author)
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />

@@ -3,8 +3,7 @@ import { CommunityTimelineSchema } from '@concrnt/worldlib'
 import { CCWallpaper, Text, IconButton } from '@concrnt/ui'
 
 import { MdPlaylistAdd } from 'react-icons/md'
-import { useStack } from '../layouts/Stack'
-import { TimelineView } from '../views/Timeline'
+import { useNavigate } from 'react-router-dom'
 import { useDrawer } from '../contexts/Drawer'
 import { Subscription } from './Subscription'
 
@@ -14,7 +13,7 @@ interface Props {
 }
 
 export const TimelineCard = (props: Props) => {
-    const { push } = useStack()
+    const navigate = useNavigate()
 
     const drawer = useDrawer()
 
@@ -45,7 +44,7 @@ export const TimelineCard = (props: Props) => {
                 }}
                 onClick={(e) => {
                     e.stopPropagation()
-                    push(<TimelineView uri={props.uri} />)
+                    navigate('/timeline/' + encodeURIComponent(props.uri))
                 }}
             >
                 <Text variant="h4">{props.document.value.name}</Text>
