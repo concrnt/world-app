@@ -25,7 +25,8 @@ export const AccountSetup = (props: Props) => {
     const reload = useReloadClient()
     const reset = useResetPreference()
 
-    const [domain, setDomain] = useState<string>(props.entrypoint)
+    const isConcrntWorld = window.location.hostname === 'concrnt.world' || window.location.hostname === 'localhost'
+    const [domain, setDomain] = useState<string>(isConcrntWorld ? props.entrypoint : window.location.hostname)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
@@ -111,7 +112,7 @@ export const AccountSetup = (props: Props) => {
                 <>
                     <AuthHeader
                         title="アカウントを作成"
-                        description="登録に使うサーバーを選んでから、ブラウザで登録を完了します。"
+                        description={isConcrntWorld ? "登録に使うサーバーを選んでから、ブラウザで登録を完了します。" : `${domain} でアカウントを登録します。`}
                     />
 
                     <div style={authStyles.passportWrap}>
@@ -127,54 +128,56 @@ export const AccountSetup = (props: Props) => {
                     </div>
 
                     <div style={authStyles.section}>
-                        <div style={authStyles.inputGroup}>
-                            <Text style={{ color: CssVar.uiText }}>
-                                {props.entrypoint === domain ? 'おすすめサーバー' : 'カスタムサーバー'}
-                            </Text>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'stretch',
-                                    width: '100%',
-                                    height: 44
-                                }}
-                            >
-                                <input
-                                    ref={serverInput}
-                                    type="text"
-                                    value={domain}
-                                    onChange={(e) => setDomain(e.target.value)}
+                        {isConcrntWorld && (
+                            <div style={authStyles.inputGroup}>
+                                <Text style={{ color: CssVar.uiText }}>
+                                    {props.entrypoint === domain ? 'おすすめサーバー' : 'カスタムサーバー'}
+                                </Text>
+                                <div
                                     style={{
-                                        flex: 1,
-                                        minWidth: 0,
-                                        padding: '8px 12px',
-                                        borderRadius: `${CssVar.round(1)} 0 0 ${CssVar.round(1)}`,
-                                        border: `1px solid ${CssVar.divider}`,
-                                        backgroundColor: CssVar.contentBackground,
-                                        color: CssVar.contentText,
-                                        fontSize: 16
-                                    }}
-                                />
-                                <button
-                                    type="button"
-                                    style={{
-                                        padding: '0 14px',
-                                        color: CssVar.uiBackground,
-                                        border: `1px solid ${CssVar.uiText}`,
-                                        borderLeft: 'none',
-                                        borderRadius: `0 ${CssVar.round(1)} ${CssVar.round(1)} 0`,
-                                        backgroundColor: CssVar.uiText,
-                                        fontSize: 14,
-                                        fontWeight: 700
-                                    }}
-                                    onClick={() => {
-                                        serverInput.current?.focus()
+                                        display: 'flex',
+                                        alignItems: 'stretch',
+                                        width: '100%',
+                                        height: 44
                                     }}
                                 >
-                                    変更
-                                </button>
+                                    <input
+                                        ref={serverInput}
+                                        type="text"
+                                        value={domain}
+                                        onChange={(e) => setDomain(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            minWidth: 0,
+                                            padding: '8px 12px',
+                                            borderRadius: `${CssVar.round(1)} 0 0 ${CssVar.round(1)}`,
+                                            border: `1px solid ${CssVar.divider}`,
+                                            backgroundColor: CssVar.contentBackground,
+                                            color: CssVar.contentText,
+                                            fontSize: 16
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        style={{
+                                            padding: '0 14px',
+                                            color: CssVar.uiBackground,
+                                            border: `1px solid ${CssVar.uiText}`,
+                                            borderLeft: 'none',
+                                            borderRadius: `0 ${CssVar.round(1)} ${CssVar.round(1)} 0`,
+                                            backgroundColor: CssVar.uiText,
+                                            fontSize: 14,
+                                            fontWeight: 700
+                                        }}
+                                        onClick={() => {
+                                            serverInput.current?.focus()
+                                        }}
+                                    >
+                                        変更
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <Text style={authStyles.status}>
                             {registrationPageOpened ? 'サーバー上でアカウントが作成されるのを待っています。登録が完了すると自動で次へ進みます。' : ''}
@@ -190,7 +193,7 @@ export const AccountSetup = (props: Props) => {
                         >
                             {registrationPageOpened
                                 ? '登録待機中...'
-                                : props.entrypoint === domain
+                                : isConcrntWorld && props.entrypoint === domain
                                   ? 'おすすめサーバーではじめる'
                                   : 'このサーバーではじめる'}
                         </AuthButton>
