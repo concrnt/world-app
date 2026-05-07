@@ -11,7 +11,6 @@ export const AppShell = () => {
                 display: 'flex',
                 width: '100vw',
                 minHeight: '100dvh',
-                height: '100dvh',
                 paddingTop: GAP,
                 boxSizing: 'border-box',
                 backgroundColor: CssVar.backdropBackground,
@@ -26,7 +25,6 @@ export const AppShell = () => {
                     minWidth: 0,
                     width: '100%',
                     minHeight: `calc(100dvh - ${GAP})`,
-                    height: '100%'
                 }}
             >
                 <aside
@@ -34,7 +32,6 @@ export const AppShell = () => {
                         width: '250px',
                         flex: '0 0 250px',
                         minHeight: `calc(100dvh - ${GAP})`,
-                        height: '100%'
                     }}
                 >
                     <Sidebar />
@@ -44,7 +41,6 @@ export const AppShell = () => {
                         flex: 1,
                         minWidth: 0,
                         minHeight: `calc(100dvh - ${GAP})`,
-                        height: '100%',
                         overflow: 'hidden'
                     }}
                 >

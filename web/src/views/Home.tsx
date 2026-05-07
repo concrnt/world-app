@@ -5,7 +5,7 @@ import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
 import { Header } from '../ui/Header'
-import { View, Tabs, Tab, Text, Button } from '@concrnt/ui'
+import { Tabs, Tab, Text, Button } from '@concrnt/ui'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
@@ -44,7 +44,7 @@ export const HomeView = (props: ScrollViewProps) => {
 
     return (
         <>
-            <View>
+            <div>
                 <Header
                     right={
                         <div
@@ -75,7 +75,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 <Suspense>
                     <HomeMain ref={props.ref} selectedTabUri={selectedTabUri} setSelectedTabUri={setSelectedTabUri} />
                 </Suspense>
-            </View>
+            </div>
         </>
     )
 }

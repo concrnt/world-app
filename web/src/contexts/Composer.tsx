@@ -66,18 +66,7 @@ export const ComposerProvider = (props: Props) => {
                     overflow: 'hidden'
                 }}
             >
-                <div
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        overflow: 'hidden'
-                    }}
-                >
-                    {props.children}
-                </div>
+                {props.children}
                 {showComposer && (
                     <div
                         style={{
