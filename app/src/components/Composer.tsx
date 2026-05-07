@@ -12,6 +12,8 @@ import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
 import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
+import { MdEmojiEmotions } from 'react-icons/md'
+import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
 
 interface MediaDraft {
     file: File
@@ -36,7 +38,9 @@ export const Composer = (props: Props) => {
     const [uploading, setUploading] = useState<boolean>(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
     const theme = useTheme()
+    const emojiPicker = useEmojiPicker()
 
     const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
         'composerViewportHeight',
@@ -369,6 +373,7 @@ export const Composer = (props: Props) => {
                                     }}
                                 >
                                     <textarea
+                                        ref={textareaRef}
                                         autoFocus
                                         value={draft}
                                         placeholder={getPlaceholder()}
@@ -447,6 +452,28 @@ export const Composer = (props: Props) => {
                                     {props.mode === 'normal' && (
                                         <IconButton onClick={() => fileInputRef.current?.click()}>
                                             <MdImage size={24} />
+                                        </IconButton>
+                                    )}
+                                    {/* 絵文字ピッカーボタン（リルート以外） */}
+                                    {props.mode !== 'reroute' && (
+                                        <IconButton
+                                            onClick={() => {
+                                                emojiPicker.open((emoji: Emoji) => {
+                                                    const ta = textareaRef.current
+                                                    if (ta) {
+                                                        const start = ta.selectionStart
+                                                        const end = ta.selectionEnd
+                                                        const insert = `:${emoji.shortcode}:`
+                                                        const newDraft =
+                                                            draft.slice(0, start) + insert + draft.slice(end)
+                                                        setDraft(newDraft)
+                                                    } else {
+                                                        setDraft((prev) => prev + `:${emoji.shortcode}:`)
+                                                    }
+                                                })
+                                            }}
+                                        >
+                                            <MdEmojiEmotions size={24} />
                                         </IconButton>
                                     )}
                                 </div>
