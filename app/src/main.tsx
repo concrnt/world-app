@@ -17,6 +17,7 @@ import { MediaViewerProvider } from './contexts/MediaViewer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
+import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -25,23 +26,25 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             <PreferenceProvider>
                 <ThemeProvider>
                     <ConfirmProvider>
-                        <ImageCropperProvider>
-                            <DrawerProvider>
-                                <SelectProvider>
-                                    <ComposerProvider>
-                                        <ScannerProvider>
-                                            <OverlayProvider>
-                                                <MediaViewerProvider>
-                                                    <TickerProvider>
-                                                        <App />
-                                                    </TickerProvider>
-                                                </MediaViewerProvider>
-                                            </OverlayProvider>
-                                        </ScannerProvider>
-                                    </ComposerProvider>
-                                </SelectProvider>
-                            </DrawerProvider>
-                        </ImageCropperProvider>
+                        <EmojiPickerProvider>
+                            <ImageCropperProvider>
+                                <DrawerProvider>
+                                    <SelectProvider>
+                                        <ComposerProvider>
+                                            <ScannerProvider>
+                                                <OverlayProvider>
+                                                    <MediaViewerProvider>
+                                                        <TickerProvider>
+                                                            <App />
+                                                        </TickerProvider>
+                                                    </MediaViewerProvider>
+                                                </OverlayProvider>
+                                            </ScannerProvider>
+                                        </ComposerProvider>
+                                    </SelectProvider>
+                                </DrawerProvider>
+                            </ImageCropperProvider>
+                        </EmojiPickerProvider>
                     </ConfirmProvider>
                 </ThemeProvider>
             </PreferenceProvider>
