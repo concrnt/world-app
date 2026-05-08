@@ -12,6 +12,7 @@ import { SelectProvider } from './contexts/Select'
 import { DrawerProvider } from './contexts/Drawer'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
+import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
@@ -61,6 +62,7 @@ const AuthedRoutes = () => (
                     <SelectProvider>
                         <ComposerProvider>
                                     <MediaViewerProvider>
+                                        <AudioPlayerProvider>
                                         <TickerProvider>
                                             <Routes>
                                                 <Route path="/" element={<AppShell />}>
@@ -88,6 +90,7 @@ const AuthedRoutes = () => (
                                                 </Route>
                                             </Routes>
                                         </TickerProvider>
+                                        </AudioPlayerProvider>
                                     </MediaViewerProvider>
                         </ComposerProvider>
                     </SelectProvider>

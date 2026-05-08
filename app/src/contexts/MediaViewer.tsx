@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
 
 import { MdClose } from 'react-icons/md'
+import { ModelViewer } from '../components/ModelViewer'
 
 export interface MediaItem {
     mediaURL: string
@@ -13,10 +14,12 @@ export interface MediaItem {
 
 interface MediaViewerState {
     open: (medias: MediaItem[], startIndex?: number) => void
+    openModel: (src: string) => void
 }
 
 const MediaViewerContext = createContext<MediaViewerState>({
-    open: () => {}
+    open: () => {},
+    openModel: () => {}
 })
 
 interface Props {
@@ -68,7 +71,9 @@ const getMidpoint = (t1: React.Touch, t2: React.Touch) => ({
 export const MediaViewerProvider = (props: Props) => {
     const [medias, setMedias] = useState<MediaItem[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
+    const [modelSrc, setModelSrc] = useState<string | null>(null)
     const isOpen = medias.length > 0
+    const isModelOpen = modelSrc !== null
 
     // --- motion values ---
     const mvOffsetX = useMotionValue(0)
@@ -155,6 +160,7 @@ export const MediaViewerProvider = (props: Props) => {
     const close = useCallback(() => {
         setMedias([])
         setCurrentIndex(0)
+        setModelSrc(null)
         resetMotion()
     }, [resetMotion])
 
@@ -412,7 +418,7 @@ export const MediaViewerProvider = (props: Props) => {
 
     // スクロール抑制
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen || isModelOpen) {
             document.body.style.overflow = 'hidden'
         } else {
             document.body.style.overflow = ''
@@ -420,7 +426,7 @@ export const MediaViewerProvider = (props: Props) => {
         return () => {
             document.body.style.overflow = ''
         }
-    }, [isOpen])
+    }, [isOpen, isModelOpen])
 
     useEffect(() => {
         gestureRef.current.gestureType = 'none'
@@ -430,7 +436,11 @@ export const MediaViewerProvider = (props: Props) => {
     const prevMedia = currentIndex > 0 ? medias[currentIndex - 1] : null
     const nextMedia = currentIndex < medias.length - 1 ? medias[currentIndex + 1] : null
 
-    const value = useMemo(() => ({ open }), [open])
+    const openModel = useCallback((src: string) => {
+        setModelSrc(src)
+    }, [])
+
+    const value = useMemo(() => ({ open, openModel }), [open, openModel])
 
     return (
         <MediaViewerContext.Provider value={value}>
@@ -630,6 +640,55 @@ export const MediaViewerProvider = (props: Props) => {
                         </div>
                     )}
                 </motion.div>
+            )}
+
+            {/* 3Dモデルビューワー */}
+            {isModelOpen && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100dvh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <ModelViewer
+                        src={modelSrc!}
+                        style={{
+                            backgroundColor: '#3f3f3f',
+                            width: '90vw',
+                            height: '80dvh',
+                            borderRadius: '8px'
+                        }}
+                    />
+
+                    <button
+                        onClick={() => setModelSrc(null)}
+                        style={{
+                            position: 'absolute',
+                            top: 'max(12px, env(safe-area-inset-top))',
+                            right: '12px',
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '40px',
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            color: 'white'
+                        }}
+                    >
+                        <MdClose size={24} />
+                    </button>
+                </div>
             )}
         </MediaViewerContext.Provider>
     )

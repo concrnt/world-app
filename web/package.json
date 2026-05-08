@@ -10,11 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/is-prop-valid": "^1.4.0",
     "@concrnt/cfm": "^0.0.0",
     "@concrnt/client": "workspace:*",
     "@concrnt/ui": "workspace:*",
     "@concrnt/worldlib": "workspace:*",
+    "@emotion/is-prop-valid": "^1.4.0",
+    "@google/model-viewer": "^4.2.0",
     "@rjsf/core": "^6.4.2",
     "@rjsf/utils": "^6.4.2",
     "@rjsf/validator-ajv8": "^6.4.2",

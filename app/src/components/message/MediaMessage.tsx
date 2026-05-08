@@ -6,8 +6,10 @@ import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
 import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
 
 import { useMediaViewer } from '../../contexts/MediaViewer'
+import { useAudioPlayer } from '../../contexts/AudioPlayer'
 import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
@@ -16,6 +18,7 @@ import { PostedTimelines } from './PostedTimelines'
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
     const mediaViewer = useMediaViewer()
+    const audioPlayer = useAudioPlayer()
 
     const message = props.message
 
@@ -69,10 +72,18 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                             }}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                const imageMedias = medias.filter((m) => m.mediaType.startsWith('image/'))
-                                const viewerIndex = imageMedias.findIndex((m) => m.mediaURL === media.mediaURL)
                                 if (media.mediaType.startsWith('image/')) {
+                                    const imageMedias = medias.filter((m) => m.mediaType.startsWith('image/'))
+                                    const viewerIndex = imageMedias.findIndex((m) => m.mediaURL === media.mediaURL)
                                     mediaViewer.open(imageMedias, viewerIndex >= 0 ? viewerIndex : 0)
+                                } else if (media.mediaType.startsWith('audio/')) {
+                                    if (audioPlayer.nowPlaying === media.mediaURL) {
+                                        audioPlayer.stop()
+                                    } else {
+                                        audioPlayer.play(media.mediaURL)
+                                    }
+                                } else if (media.mediaType.startsWith('model/')) {
+                                    mediaViewer.openModel(media.mediaURL)
                                 }
                             }}
                         >
@@ -97,6 +108,45 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                                         maxHeight: '300px'
                                     }}
                                 />
+                            ) : media.mediaType.startsWith('audio/') ? (
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        height: medias.length === 1 ? '80px' : '100%',
+                                        minHeight: '80px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {audioPlayer.nowPlaying === media.mediaURL ? (
+                                        <MdStop size={48} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+                                    ) : (
+                                        <MdPlayCircle size={48} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+                                    )}
+                                </div>
+                            ) : media.mediaType.startsWith('model/') ? (
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        height: medias.length === 1 ? '120px' : '100%',
+                                        minHeight: '100px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                                        cursor: 'pointer',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <MdViewInAr size={48} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+                                    <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>
+                                        3D Model
+                                    </span>
+                                </div>
                             ) : (
                                 <div>Unsupported media type: {media.mediaType}</div>
                             )}
