@@ -1,4 +1,4 @@
-import type { ChangeEvent, CSSProperties, FocusEvent, ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { FieldProps, RJSFSchema, StrictRJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils'
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
@@ -6,7 +6,7 @@ import { Suspense, use, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
-import { Button, ConcrntLogo, CssVar, Text } from '@concrnt/ui'
+import { Button, ConcrntLogo, CssVar, Text, TextField } from '@concrnt/ui'
 
 export const Register = () => {
     const serverPromise = useMemo(() => {
@@ -85,6 +85,7 @@ export const Inner = (props: {
     const [captcha, setCaptcha] = useState('')
     const [formData, setFormData] = useState<any>({})
     const formShellRef = useRef<HTMLDivElement | null>(null)
+    const [inviteCode, setInviteCode] = useState<string>(window.location.hash.replace('#', '') || "")
 
     const encodedDocument = searchParams.get('document')
     const registration = encodedDocument ? atob(encodedDocument.replace('-', '+').replace('_', '/')) : null
@@ -101,7 +102,6 @@ export const Inner = (props: {
         }
     }, [registration])
 
-    const ccaddr = signedObj?.author ?? ''
     const hasValidRequest = Boolean(registration && signature && signedObj)
 
     const uiSchema = useMemo<UiSchema>(() => {
@@ -128,7 +128,8 @@ export const Inner = (props: {
                     type: 'concrnt-ecrecover-direct',
                     signature
                 },
-                meta
+                meta,
+                inviteToken: server.registration === 'invite' ? inviteCode : undefined
             }
 
             await api.requestConcrntApi(domain, 'net.concrnt.world.register', {}, {
@@ -200,6 +201,13 @@ export const Inner = (props: {
                 </Text>
 
                 <div className="register-form-shell" ref={formShellRef}>
+                    {server.registration === 'invite' && <>
+                        <Text style={{ color: CssVar.uiText }}>招待コード</Text>
+                        <TextField
+                            value={inviteCode}
+                            onChange={(e) => setInviteCode(e.target.value)}
+                        />
+                    </>}
                     <Form<RJSFSchema, any, StrictRJSFSchema>
                         schema={schema}
                         uiSchema={uiSchema}
