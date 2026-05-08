@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Divider, IconButton, useTheme, Text } from '@concrnt/ui'
+import { Button, Divider, IconButton, useTheme, Text, CfmRenderer } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
@@ -12,6 +12,8 @@ import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
 import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
+import { MdEmojiEmotions } from 'react-icons/md'
+import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
 import { MdOutlineUploadFile } from "react-icons/md";
 import { CDID } from '@concrnt/client'
 
@@ -36,9 +38,12 @@ export const Composer = (props: Props) => {
     const [postHome, setPostHome] = useState<boolean>(true)
     const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>([])
     const [uploading, setUploading] = useState<boolean>(false)
+    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>({})
 
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
     const theme = useTheme()
+    const emojiPicker = useEmojiPicker()
 
     const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
         'composerViewportHeight',
@@ -138,7 +143,8 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
-                            replyToMessageId: props.targetMessage.uri
+                            replyToMessageId: props.targetMessage.uri,
+                            emojis: emojiDict
                         },
                         author: client.ccid,
                         distributes,
@@ -229,7 +235,8 @@ export const Composer = (props: Props) => {
                             schema: Schemas.mediaMessage,
                             value: {
                                 body: draft,
-                                medias: uploadedMedias
+                                medias: uploadedMedias,
+                                emojis: emojiDict
                             },
                             author: client.ccid,
                             distributes,
@@ -241,7 +248,8 @@ export const Composer = (props: Props) => {
                             key: newPostUri,
                             schema: Schemas.markdownMessage,
                             value: {
-                                body: draft
+                                body: draft,
+                                emojis: emojiDict
                             },
                             author: client.ccid,
                             distributes,
@@ -266,6 +274,7 @@ export const Composer = (props: Props) => {
         <AnimatePresence
             onExitComplete={() => {
                 setDraft('')
+                setEmojiDict({})
                 mediaDrafts.map((media) => media.previewUrl).filter(isNonNullOrUndefined)
                     .forEach((url) => URL.revokeObjectURL(url))
                 setMediaDrafts([])
@@ -374,6 +383,7 @@ export const Composer = (props: Props) => {
                                     }}
                                 >
                                     <textarea
+                                        ref={textareaRef}
                                         autoFocus
                                         value={draft}
                                         placeholder={getPlaceholder()}
@@ -391,6 +401,23 @@ export const Composer = (props: Props) => {
                                         }}
                                     />
                                 </div>
+                            )}
+
+                            {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
+                            {props.mode !== 'reroute' && draft.length > 0 && (
+                                <>
+                                    <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
+                                    <div
+                                        style={{
+                                            fontSize: '0.85rem',
+                                            opacity: 0.8,
+                                            maxHeight: '80px',
+                                            overflowY: 'auto'
+                                        }}
+                                    >
+                                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                                    </div>
+                                </>
                             )}
 
                             {/* 画像プレビュー */}
@@ -480,6 +507,32 @@ export const Composer = (props: Props) => {
                                     {props.mode === 'normal' && (
                                         <IconButton onClick={() => fileInputRef.current?.click()}>
                                             <MdImage size={24} />
+                                        </IconButton>
+                                    )}
+                                    {/* 絵文字ピッカーボタン（リルート以外） */}
+                                    {props.mode !== 'reroute' && (
+                                        <IconButton
+                                            onClick={() => {
+                                                emojiPicker.open((emoji: Emoji) => {
+                                                    const ta = textareaRef.current
+                                                    if (ta) {
+                                                        const start = ta.selectionStart
+                                                        const end = ta.selectionEnd
+                                                        const insert = `:${emoji.shortcode}:`
+                                                        const newDraft =
+                                                            draft.slice(0, start) + insert + draft.slice(end)
+                                                        setDraft(newDraft)
+                                                    } else {
+                                                        setDraft((prev) => prev + `:${emoji.shortcode}:`)
+                                                    }
+                                                    setEmojiDict((prev) => ({
+                                                        ...prev,
+                                                        [emoji.shortcode]: { imageURL: emoji.imageURL }
+                                                    }))
+                                                })
+                                            }}
+                                        >
+                                            <MdEmojiEmotions size={24} />
                                         </IconButton>
                                     )}
                                 </div>

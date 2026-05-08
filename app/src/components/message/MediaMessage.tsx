@@ -50,7 +50,9 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             }
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            {message.value.body && <CfmRenderer messagebody={message.value.body} emojiDict={{}} />}
+            {message.value.body && (
+                <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+            )}
 
             {medias.length > 0 && (
                 <div

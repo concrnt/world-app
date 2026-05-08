@@ -47,7 +47,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 }
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
-                <CfmRenderer messagebody={props.message.value.body} emojiDict={{}} />
+                <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
                 <div
                     style={{
                         display: 'flex',
