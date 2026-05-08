@@ -325,8 +325,14 @@ fn initialize_from_mnemonic(app_handle: tauri::AppHandle, mnemonic: &str) -> Res
 
 // save masterkey as textfile and pick user to save it in somewhere safe.
 #[tauri::command]
-async fn backup_masterkey(app_handle: tauri::AppHandle, template: &str) -> Result<(), Error> {
+async fn backup_masterkey(app_handle: tauri::AppHandle, template: &str, filename: &str) -> Result<(), Error> {
     let identity = retract_masterkey(app_handle.clone())?;
+
+    let filename = if filename.trim().is_empty() {
+        "concrnt_masterkey_backup.txt".to_string()
+    } else {
+        filename.trim().to_string()
+    };
 
     let content = template
         .replace("${mnemonic}", &identity.mnemonic)
@@ -336,7 +342,7 @@ async fn backup_masterkey(app_handle: tauri::AppHandle, template: &str) -> Resul
     app_handle
         .file_saver()
         .save_text_file(SaveTextFileRequest {
-            file_name: "concrnt_masterkey_backup.txt".into(),
+            file_name: filename,
             content: content.into(),
             mime_type: Some("text/plain".into()),
         })

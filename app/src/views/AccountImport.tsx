@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
+import { ResetSessionButton } from '../components/ResetSessionButton'
 
 interface Props {
     onBack?: () => void
@@ -51,17 +52,13 @@ export const AccountImport = (props: Props) => {
                         <Text style={authStyles.ccid}>CCID: {existingCCID}</Text>
                     </div>
                     <AuthActions fixedBottom>
-                        <AuthButton
-                            variant="outlined"
-                            danger
-                            onClick={async () => {
-                                await invoke('clear_all').then(async () => {
-                                    setUpdate((v) => v + 1)
-                                })
+                        <ResetSessionButton
+                            onDone={() => {
+                                setUpdate((v) => v + 1)
                             }}
                         >
                             端末のアカウント情報を削除
-                        </AuthButton>
+                        </ResetSessionButton>
                         <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
                     </AuthActions>
                 </>

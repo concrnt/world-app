@@ -16,6 +16,7 @@ import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
+import { ModalProvider } from './contexts/Modal'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
@@ -23,34 +24,36 @@ import { WelcomeView } from './views/Welcome'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
-            <PreferenceProvider>
-                <ThemeProvider>
-                    <ConfirmProvider>
-                        <EmojiPickerProvider>
-                            <ImageCropperProvider>
-                                <DrawerProvider>
-                                    <SelectProvider>
-                                        <ComposerProvider>
-                                            <ScannerProvider>
-                                                <OverlayProvider>
-                                                    <MediaViewerProvider>
-                                                        <AudioPlayerProvider>
-                                                            <TickerProvider>
-                                                                <App />
-                                                            </TickerProvider>
-                                                        </AudioPlayerProvider>
-                                                    </MediaViewerProvider>
-                                                </OverlayProvider>
-                                            </ScannerProvider>
-                                        </ComposerProvider>
-                                    </SelectProvider>
-                                </DrawerProvider>
-                            </ImageCropperProvider>
-                        </EmojiPickerProvider>
-                    </ConfirmProvider>
-                </ThemeProvider>
-            </PreferenceProvider>
-        </ClientProvider>
+        <ThemeProvider>
+            <ConfirmProvider>
+                <DrawerProvider>
+                    <ModalProvider>
+                        <SelectProvider>
+                            <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
+                                <PreferenceProvider>
+                                    <EmojiPickerProvider>
+                                        <ImageCropperProvider>
+                                            <ComposerProvider>
+                                                <ScannerProvider>
+                                                    <OverlayProvider>
+                                                        <MediaViewerProvider>
+                                                            <AudioPlayerProvider>
+                                                                <TickerProvider>
+                                                                    <App />
+                                                                </TickerProvider>
+                                                            </AudioPlayerProvider>
+                                                        </MediaViewerProvider>
+                                                    </OverlayProvider>
+                                                </ScannerProvider>
+                                            </ComposerProvider>
+                                        </ImageCropperProvider>
+                                    </EmojiPickerProvider>
+                                </PreferenceProvider>
+                            </ClientProvider>
+                        </SelectProvider>
+                    </ModalProvider>
+                </DrawerProvider>
+            </ConfirmProvider>
+        </ThemeProvider>
     </ErrorBoundary>
 )
