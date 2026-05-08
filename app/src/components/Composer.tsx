@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Divider, IconButton, useTheme } from '@concrnt/ui'
+import { Button, Divider, IconButton, useTheme, Text } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
-import { Message, Schemas, semantics } from '@concrnt/worldlib'
+import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -14,10 +14,11 @@ import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
+import { MdOutlineUploadFile } from 'react-icons/md'
 
 interface MediaDraft {
     file: File
-    previewUrl: string
+    previewUrl?: string
 }
 
 interface Props {
@@ -57,7 +58,10 @@ export const Composer = (props: Props) => {
     // クリーンアップ: プレビューURLを解放
     useEffect(() => {
         return () => {
-            mediaDrafts.forEach((media) => URL.revokeObjectURL(media.previewUrl))
+            mediaDrafts
+                .map((media) => media.previewUrl)
+                .filter(isNonNullOrUndefined)
+                .forEach((url) => URL.revokeObjectURL(url))
         }
     }, [])
 
@@ -89,12 +93,10 @@ export const Composer = (props: Props) => {
         const newMediaDrafts: MediaDraft[] = []
         for (let i = 0; i < files.length; i++) {
             const file = files[i]
-            if (file.type.startsWith('image/')) {
-                newMediaDrafts.push({
-                    file,
-                    previewUrl: URL.createObjectURL(file)
-                })
-            }
+            newMediaDrafts.push({
+                file,
+                previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+            })
         }
         setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
 
@@ -105,7 +107,7 @@ export const Composer = (props: Props) => {
     const removeMedia = (index: number) => {
         setMediaDrafts((prev) => {
             const removed = prev[index]
-            URL.revokeObjectURL(removed.previewUrl)
+            if (removed.previewUrl) URL.revokeObjectURL(removed.previewUrl)
             return prev.filter((_, i) => i !== index)
         })
     }
@@ -266,7 +268,10 @@ export const Composer = (props: Props) => {
         <AnimatePresence
             onExitComplete={() => {
                 setDraft('')
-                mediaDrafts.forEach((media) => URL.revokeObjectURL(media.previewUrl))
+                mediaDrafts
+                    .map((media) => media.previewUrl)
+                    .filter(isNonNullOrUndefined)
+                    .forEach((url) => URL.revokeObjectURL(url))
                 setMediaDrafts([])
                 props.onClose?.()
             }}
@@ -411,23 +416,53 @@ export const Composer = (props: Props) => {
                                                 height: '80px'
                                             }}
                                         >
-                                            <img
-                                                src={media.previewUrl}
-                                                alt={`preview ${index}`}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
+                                            {media.previewUrl ? (
+                                                <img
+                                                    src={media.previewUrl}
+                                                    alt={`preview ${index}`}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        backgroundColor: CssVar.uiBackground,
+                                                        borderRadius: '8px'
+                                                    }}
+                                                >
+                                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
+                                                    <Text
+                                                        style={{
+                                                            marginLeft: '4px',
+                                                            fontSize: '12px',
+                                                            color: CssVar.uiText
+                                                        }}
+                                                    >
+                                                        {media.file.name.length > 10
+                                                            ? media.file.name.slice(0, 7) +
+                                                              '...' +
+                                                              media.file.name.split('.').pop()
+                                                            : media.file.name}
+                                                    </Text>
+                                                </div>
+                                            )}
                                             <IconButton
                                                 onClick={() => removeMedia(index)}
                                                 style={{
                                                     position: 'absolute',
                                                     top: '-8px',
                                                     right: '-8px',
-                                                    backgroundColor: CssVar.contentBackground,
+                                                    backgroundColor: CssVar.divider,
                                                     borderRadius: '50%',
                                                     padding: '2px',
                                                     width: '24px',
@@ -492,14 +527,7 @@ export const Composer = (props: Props) => {
                     </div>
 
                     {/* 隠しファイル入力 */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        hidden
-                        onChange={handleFileSelect}
-                    />
+                    <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
                 </motion.div>
             )}
         </AnimatePresence>

@@ -10,6 +10,20 @@ interface PreSignResponse {
 }
 
 export const uploadImage = async (client: Client, file: File): Promise<string> => {
+
+    let fileType = file.type
+    if (!fileType) {
+        const ext = file.name.split('.').pop()?.toLowerCase()
+        switch (ext) {
+            case 'glb':
+                fileType = 'model/gltf-binary'
+                break
+            default:
+                fileType = 'application/octet-stream'
+                break
+        }
+    }
+
     const preSignReq = await client?.api.callConcrntApi<PreSignResponse>(
         client.api.defaultHost,
         'net.concrnt.storage.presign',
@@ -20,7 +34,7 @@ export const uploadImage = async (client: Client, file: File): Promise<string> =
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                contentType: file.type,
+                contentType: fileType,
                 size: file.size,
                 sha256: await file.arrayBuffer().then(async (buffer) => {
                     const hashBuffer = crypto.subtle.digest('SHA-256', buffer)
@@ -39,7 +53,7 @@ export const uploadImage = async (client: Client, file: File): Promise<string> =
     await fetch(preSignReq.content.url, {
         method: 'PUT',
         headers: {
-            'Content-Type': file.type
+            'Content-Type': fileType
         },
         body: file
     })
