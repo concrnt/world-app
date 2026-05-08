@@ -22,18 +22,21 @@ export function usePersistent<T>(key: string, init?: T): [value: T, update: (upd
         })()
     )
 
-    const update = useCallback((updator: T | ((old: T) => T)): void => {
-        if (typeof updator === 'function') {
-            setValue((old) => {
-                const newValue = (updator as (old: T) => T)(old)
-                localStorage.setItem(key, JSON.stringify(newValue))
-                return newValue
-            })
-        } else {
-            setValue(updator)
-            localStorage.setItem(key, JSON.stringify(updator))
-        }
-    }, [])
+    const update = useCallback(
+        (updator: T | ((old: T) => T)): void => {
+            if (typeof updator === 'function') {
+                setValue((old) => {
+                    const newValue = (updator as (old: T) => T)(old)
+                    localStorage.setItem(key, JSON.stringify(newValue))
+                    return newValue
+                })
+            } else {
+                setValue(updator)
+                localStorage.setItem(key, JSON.stringify(updator))
+            }
+        },
+        [key]
+    )
 
     return [value, update]
 }

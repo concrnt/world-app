@@ -57,9 +57,7 @@ CCID: ${client.ccid}
                     </Tilt>
                 </div>
 
-                <Button onClick={backupMasterKey}>
-                    マスターキーをバックアップ
-                </Button>
+                <Button onClick={backupMasterKey}>マスターキーをバックアップ</Button>
             </div>
         </View>
     )

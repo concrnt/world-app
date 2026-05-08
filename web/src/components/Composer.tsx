@@ -14,7 +14,7 @@ import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
-import { MdOutlineUploadFile } from "react-icons/md";
+import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
 
 interface MediaDraft {
@@ -60,7 +60,9 @@ export const Composer = (props: Props) => {
     // クリーンアップ: プレビューURLを解放
     useEffect(() => {
         return () => {
-            mediaDrafts.map((media) => media.previewUrl).filter(isNonNullOrUndefined)
+            mediaDrafts
+                .map((media) => media.previewUrl)
+                .filter(isNonNullOrUndefined)
                 .forEach((url) => URL.revokeObjectURL(url))
         }
     }, [])
@@ -275,7 +277,9 @@ export const Composer = (props: Props) => {
             onExitComplete={() => {
                 setDraft('')
                 setEmojiDict({})
-                mediaDrafts.map((media) => media.previewUrl).filter(isNonNullOrUndefined)
+                mediaDrafts
+                    .map((media) => media.previewUrl)
+                    .filter(isNonNullOrUndefined)
                     .forEach((url) => URL.revokeObjectURL(url))
                 setMediaDrafts([])
                 props.onClose?.()
@@ -438,44 +442,46 @@ export const Composer = (props: Props) => {
                                                 height: '80px'
                                             }}
                                         >
-                                            { media.previewUrl ? 
-                                            <img
-                                                src={media.previewUrl}
-                                                alt={`preview ${index}`}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                                :
-                                            <div
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    backgroundColor: CssVar.uiBackground,
-                                                    borderRadius: '8px'
-                                                }}
-                                            >
-                                                <MdOutlineUploadFile size={32} color={CssVar.uiText} />
-                                                <Text
+                                            {media.previewUrl ? (
+                                                <img
+                                                    src={media.previewUrl}
+                                                    alt={`preview ${index}`}
                                                     style={{
-                                                        marginLeft: '4px',
-                                                        fontSize: '12px',
-                                                        color: CssVar.uiText
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        backgroundColor: CssVar.uiBackground,
+                                                        borderRadius: '8px'
                                                     }}
                                                 >
-                                                    {media.file.name.length > 10
-                                                        ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
-                                                        : media.file.name}
-                                                </Text>
-                                            </div>
-                                            }
+                                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
+                                                    <Text
+                                                        style={{
+                                                            marginLeft: '4px',
+                                                            fontSize: '12px',
+                                                            color: CssVar.uiText
+                                                        }}
+                                                    >
+                                                        {media.file.name.length > 10
+                                                            ? media.file.name.slice(0, 7) +
+                                                              '...' +
+                                                              media.file.name.split('.').pop()
+                                                            : media.file.name}
+                                                    </Text>
+                                                </div>
+                                            )}
                                             <IconButton
                                                 onClick={() => removeMedia(index)}
                                                 style={{
@@ -551,14 +557,7 @@ export const Composer = (props: Props) => {
                     </div>
 
                     {/* 隠しファイル入力 */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="*"
-                        multiple
-                        hidden
-                        onChange={handleFileSelect}
-                    />
+                    <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
                 </motion.div>
             )}
         </AnimatePresence>

@@ -1,13 +1,10 @@
-
-import { CssVar, Text } from "@concrnt/ui"
+import { CssVar, Text } from '@concrnt/ui'
 import { useEffect } from 'react'
 import { QRSetup } from '../components/QRSetup'
 import { string2Uint8Array } from '../util'
 import { Api, DeriveIdentity, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 
 export const Login = () => {
-
-
     useEffect(() => {
         // receive passkey
         const run = async () => {
@@ -36,7 +33,7 @@ export const Login = () => {
                 return
             }
 
-            // @ts-ignore
+            // @ts-expect-error - userHandle is not yet in types
             const userHandle = cred.response?.userHandle
             if (!userHandle) {
                 console.error('No user handle found in passkey response')
@@ -65,7 +62,7 @@ export const Login = () => {
             }
             domain = entity.value.domain
 
-            // @ts-ignore
+            // @ts-expect-error - getClientExtensionResults is not yet in types
             const credentialResults = cred.getClientExtensionResults()
             console.log('Credential Results:', credentialResults)
             const prfRes = credentialResults?.prf?.results
@@ -81,7 +78,6 @@ export const Login = () => {
 
             const identity = DeriveIdentity(firstBuf)
             console.log('Derived Identity:', identity)
-
 
             const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
 
@@ -102,13 +98,13 @@ export const Login = () => {
                 justifyContent: 'center',
                 height: '100vh',
                 gap: CssVar.space(4),
-                padding: CssVar.space(4),
+                padding: CssVar.space(4)
             }}
         >
             <div
                 style={{
                     border: `1px solid ${CssVar.divider}`,
-                    borderRadius: CssVar.round(1),
+                    borderRadius: CssVar.round(1)
                 }}
             >
                 <Text variant="h2">ログイン</Text>
@@ -117,4 +113,3 @@ export const Login = () => {
         </div>
     )
 }
-

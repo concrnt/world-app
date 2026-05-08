@@ -1,6 +1,6 @@
 import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
 import { Api, InMemoryAuthProvider, InMemoryKVS, Document, Entity } from '@concrnt/client'
@@ -31,28 +31,31 @@ const readStoredString = (key: string): string | undefined => {
 }
 
 export const WelcomeView = () => {
-    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready'>('initial')
-    const [existingCCID, setExistingCCID] = useState<string | null>(null)
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
     const reset = useResetPreference()
     const [resolver, setResolver] = useState<string>(readStoredString('Domain') ?? entrypoint)
 
+    const masterKey = readStoredString('PrivateKey')
+    const subKey = readStoredString('SubKey')
+
+    const authProvider = useMemo(() => {
+        if (!masterKey && !subKey) return null
+        return new InMemoryAuthProvider(masterKey, subKey)
+    }, [updater, masterKey, subKey])
+
+    const existingCCID = useMemo(() => {
+        return authProvider?.getCCID()
+    }, [authProvider])
+
+    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready'>(
+        existingCCID ? 'initial' : 'welcome'
+    )
+
     useEffect(() => {
-        const masterKey = readStoredString('PrivateKey')
-        const subKey = readStoredString('SubKey')
+        if (!existingCCID) return
 
-        if (!masterKey && !subKey) {
-            setExistingCCID(null)
-            setUser(null)
-            setState('welcome')
-            return
-        }
-
-        const authProvider = new InMemoryAuthProvider(masterKey, subKey)
-        const ccid = authProvider.getCCID()
-        setExistingCCID(ccid)
-
+        const ccid = existingCCID
         const kvs = new InMemoryKVS()
         const api = new Api(resolver, new InMemoryAuthProvider(), kvs)
 
@@ -67,7 +70,7 @@ export const WelcomeView = () => {
             })
             setState(entity && subKey ? 'ready' : 'missing')
         })
-    }, [updater, resolver])
+    }, [updater, resolver, existingCCID, authProvider])
 
     const reload = () => {
         setUpdater((prev) => prev + 1)
@@ -187,7 +190,11 @@ const RecoveryView = (props: {
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>
                     <Text style={{ color: CssVar.uiText }}>サーバーアドレス</Text>
-                    <TextField value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="サーバーアドレスを入力" />
+                    <TextField
+                        value={domain}
+                        onChange={(e) => setDomain(e.target.value)}
+                        placeholder="サーバーアドレスを入力"
+                    />
                 </div>
                 <Text style={authStyles.status}>
                     {found ? '登録情報が見つかりました。' : '登録情報が見つかりませんでした。'}

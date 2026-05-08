@@ -62,9 +62,9 @@ const AuthedRoutes = () => (
                 <DrawerProvider>
                     <SelectProvider>
                         <EmojiPickerProvider>
-                        <ComposerProvider>
-                                    <MediaViewerProvider>
-                                        <AudioPlayerProvider>
+                            <ComposerProvider>
+                                <MediaViewerProvider>
+                                    <AudioPlayerProvider>
                                         <TickerProvider>
                                             <Routes>
                                                 <Route path="/" element={<AppShell />}>
@@ -75,15 +75,24 @@ const AuthedRoutes = () => (
                                                     <Route path="settings" element={<SettingsView />} />
                                                     <Route path="profile/:ccid/:profile?" element={<ProfileRoute />} />
                                                     <Route path="post/:uri" element={<UriRoute kind="post" />} />
-                                                    <Route path="timeline/:uri" element={<UriRoute kind="timeline" />} />
+                                                    <Route
+                                                        path="timeline/:uri"
+                                                        element={<UriRoute kind="timeline" />}
+                                                    />
                                                     <Route path="lists" element={<ListsView />} />
                                                     <Route path="lists/:uri" element={<ListsView />} />
                                                     <Route path="query" element={<QueryView />} />
                                                     <Route path="dev" element={<DevView />} />
                                                     <Route path="id" element={<IDView />} />
                                                     <Route path="activitypub" element={<Activitypub />} />
-                                                    <Route path="activitypub/person/:uri" element={<UriRoute kind="apView" />} />
-                                                    <Route path="activitypub/note/:uri" element={<UriRoute kind="apView" />} />
+                                                    <Route
+                                                        path="activitypub/person/:uri"
+                                                        element={<UriRoute kind="apView" />}
+                                                    />
+                                                    <Route
+                                                        path="activitypub/note/:uri"
+                                                        element={<UriRoute kind="apView" />}
+                                                    />
                                                     <Route
                                                         path="activitypub/view/:uri"
                                                         element={<UriRoute kind="apView" />}
@@ -92,9 +101,9 @@ const AuthedRoutes = () => (
                                                 </Route>
                                             </Routes>
                                         </TickerProvider>
-                                        </AudioPlayerProvider>
-                                    </MediaViewerProvider>
-                        </ComposerProvider>
+                                    </AudioPlayerProvider>
+                                </MediaViewerProvider>
+                            </ComposerProvider>
                         </EmojiPickerProvider>
                     </SelectProvider>
                 </DrawerProvider>

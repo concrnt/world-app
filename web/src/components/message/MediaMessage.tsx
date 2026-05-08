@@ -48,7 +48,9 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             }
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            {message.value.body && <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />}
+            {message.value.body && (
+                <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+            )}
 
             {medias.length > 0 && (
                 <div
@@ -141,7 +143,9 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                                     }}
                                 >
                                     <MdViewInAr size={48} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>3D Model</span>
+                                    <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>
+                                        3D Model
+                                    </span>
                                 </div>
                             ) : (
                                 <div>Unsupported media type: {media.mediaType}</div>

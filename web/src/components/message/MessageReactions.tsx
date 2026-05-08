@@ -46,7 +46,11 @@ export const MessageReactions = (props: Props) => {
                 }
             }
             if (!shortcode) {
-                shortcode = imageUrl.split('/').pop()?.replace(/\.\w+$/, '') ?? 'emoji'
+                shortcode =
+                    imageUrl
+                        .split('/')
+                        .pop()
+                        ?.replace(/\.\w+$/, '') ?? 'emoji'
             }
 
             await props.message.reaction(client, shortcode, imageUrl).catch((e) => {
@@ -78,12 +82,8 @@ export const MessageReactions = (props: Props) => {
                             gap: '4px',
                             padding: '2px 8px',
                             borderRadius: '12px',
-                            border: isOwn
-                                ? `1.5px solid ${CssVar.contentLink}`
-                                : `1px solid ${CssVar.divider}`,
-                            backgroundColor: isOwn
-                                ? `rgb(from ${CssVar.contentLink} r g b / 0.15)`
-                                : 'transparent',
+                            border: isOwn ? `1.5px solid ${CssVar.contentLink}` : `1px solid ${CssVar.divider}`,
+                            backgroundColor: isOwn ? `rgb(from ${CssVar.contentLink} r g b / 0.15)` : 'transparent',
                             cursor: 'pointer',
                             color: CssVar.contentText,
                             fontSize: '13px',

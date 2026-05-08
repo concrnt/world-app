@@ -85,7 +85,7 @@ export const Inner = (props: {
     const [captcha, setCaptcha] = useState('')
     const [formData, setFormData] = useState<any>({})
     const formShellRef = useRef<HTMLDivElement | null>(null)
-    const [inviteCode, setInviteCode] = useState<string>(window.location.hash.replace('#', '') || "")
+    const [inviteCode, setInviteCode] = useState<string>(window.location.hash.replace('#', '') || '')
 
     const encodedDocument = searchParams.get('document')
     const registration = encodedDocument ? atob(encodedDocument.replace('-', '+').replace('_', '/')) : null
@@ -132,14 +132,19 @@ export const Inner = (props: {
                 inviteToken: server.meta.registration === 'invite' ? inviteCode : undefined
             }
 
-            await api.requestConcrntApi(domain, 'net.concrnt.world.register', {}, {
-                method: 'POST',
-                body: JSON.stringify(request),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'captcha': captcha
+            await api.requestConcrntApi(
+                domain,
+                'net.concrnt.world.register',
+                {},
+                {
+                    method: 'POST',
+                    body: JSON.stringify(request),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        captcha: captcha
+                    }
                 }
-            })
+            )
 
             setSuccess(true)
 
@@ -176,10 +181,7 @@ export const Inner = (props: {
     return (
         <AuthScreen align="top">
             <RegisterPageStyle />
-            <PageHeader
-                title="アカウント登録"
-                description={domain}
-            />
+            <PageHeader title="アカウント登録" description={domain} />
 
             <div style={authStyles.section}>
                 {!hasValidRequest && (
@@ -201,13 +203,12 @@ export const Inner = (props: {
                 </Text>
 
                 <div className="register-form-shell" ref={formShellRef}>
-                    {server.meta.registration === 'invite' && <>
-                        <Text style={{ color: CssVar.uiText }}>招待コード</Text>
-                        <TextField
-                            value={inviteCode}
-                            onChange={(e) => setInviteCode(e.target.value)}
-                        />
-                    </>}
+                    {server.meta.registration === 'invite' && (
+                        <>
+                            <Text style={{ color: CssVar.uiText }}>招待コード</Text>
+                            <TextField value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+                        </>
+                    )}
                     <Form<RJSFSchema, any, StrictRJSFSchema>
                         schema={schema}
                         uiSchema={uiSchema}
@@ -236,7 +237,9 @@ export const Inner = (props: {
 
                         <AuthActions>
                             <AuthButton
-                                disabled={!hasValidRequest || (!!server.meta.captchaSiteKey && captcha === '') || processing}
+                                disabled={
+                                    !hasValidRequest || (!!server.meta.captchaSiteKey && captcha === '') || processing
+                                }
                                 onClick={() => formShellRef.current?.querySelector('form')?.requestSubmit()}
                             >
                                 {processing ? '登録中...' : '登録する'}
@@ -338,7 +341,8 @@ const RegisterFieldTemplate = (props: FieldProps) => {
 }
 
 const TextWidget = (props: WidgetProps) => {
-    const { id, value, required, disabled, readonly, autofocus, placeholder, onChange, onBlur, onFocus, options } = props
+    const { id, value, required, disabled, readonly, autofocus, placeholder, onChange, onBlur, onFocus, options } =
+        props
     const inputType = (options.inputType as string | undefined) ?? 'text'
 
     return (
@@ -349,7 +353,7 @@ const TextWidget = (props: WidgetProps) => {
             required={required}
             disabled={disabled || readonly}
             placeholder={placeholder}
-            value={typeof value === 'string' ? value : value ?? ''}
+            value={typeof value === 'string' ? value : (value ?? '')}
             onChange={(e) => onChange(e.target.value)}
             onBlur={(e) => onBlur(id, e.target.value)}
             onFocus={(e) => onFocus(id, e.target.value)}
@@ -368,7 +372,7 @@ const TextareaWidget = (props: WidgetProps) => {
             required={required}
             disabled={disabled || readonly}
             placeholder={placeholder}
-            value={typeof value === 'string' ? value : value ?? ''}
+            value={typeof value === 'string' ? value : (value ?? '')}
             onChange={(e) => onChange(e.target.value)}
             onBlur={(e) => onBlur(id, e.target.value)}
             onFocus={(e) => onFocus(id, e.target.value)}
@@ -426,7 +430,9 @@ const CheckboxWidget = (props: WidgetProps) => {
 const widgets = {
     TextWidget,
     EmailWidget: TextWidget,
-    PasswordWidget: (props: WidgetProps) => <TextWidget {...props} options={{ ...props.options, inputType: 'password' }} />,
+    PasswordWidget: (props: WidgetProps) => (
+        <TextWidget {...props} options={{ ...props.options, inputType: 'password' }} />
+    ),
     URLWidget: TextWidget,
     TextareaWidget,
     SelectWidget,
@@ -525,11 +531,7 @@ const AuthActions = (props: { children: ReactNode; fixedBottom?: boolean }) => {
     )
 }
 
-const AuthButton = (props: {
-    children: ReactNode
-    onClick?: () => void
-    disabled?: boolean
-}) => {
+const AuthButton = (props: { children: ReactNode; onClick?: () => void; disabled?: boolean }) => {
     return (
         <Button
             disabled={props.disabled}
@@ -567,7 +569,7 @@ const authStyles = {
         minHeight: 24,
         color: CssVar.uiText,
         opacity: 0.78
-    } satisfies CSSProperties,
+    } satisfies CSSProperties
 }
 
 const styles: Record<string, CSSProperties> = {

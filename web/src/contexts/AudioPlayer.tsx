@@ -124,16 +124,13 @@ export const AudioPlayerProvider = (props: Props) => {
         }
     }, [src, isPlaying])
 
-    const handleSeek = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const audio = audioRef.current
-            if (!audio) return
-            const time = Number(e.target.value)
-            audio.currentTime = time
-            setCurrentTime(time)
-        },
-        []
-    )
+    const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const audio = audioRef.current
+        if (!audio) return
+        const time = Number(e.target.value)
+        audio.currentTime = time
+        setCurrentTime(time)
+    }, [])
 
     const value = useMemo(() => ({ nowPlaying: src, play, stop }), [src, play, stop])
 

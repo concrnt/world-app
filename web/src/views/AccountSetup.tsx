@@ -1,7 +1,15 @@
 import { Text, CssVar } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
-import { Api, ComputeCKID, Document, GenerateIdentity, InMemoryAuthProvider, InMemoryKVS, type Identity } from '@concrnt/client'
+import {
+    Api,
+    ComputeCKID,
+    Document,
+    GenerateIdentity,
+    InMemoryAuthProvider,
+    InMemoryKVS,
+    type Identity
+} from '@concrnt/client'
 import { useReloadClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
@@ -13,7 +21,8 @@ interface Props {
     onBack?: () => void
 }
 
-const encodeRegistrationDocument = (input: string) => btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+const encodeRegistrationDocument = (input: string) =>
+    btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
 const storeWebSession = (domain: string, masterKey: string, subKey: string) => {
     localStorage.setItem('Domain', domain)
@@ -72,7 +81,11 @@ export const AccountSetup = (props: Props) => {
         const signature = await authProvider.signMaster(docString)
         const encodedDoc = encodeRegistrationDocument(docString)
 
-        window.open(`https://${targetDomain}/register?document=${encodedDoc}&signature=${signature}`, '_blank', 'noopener,noreferrer')
+        window.open(
+            `https://${targetDomain}/register?document=${encodedDoc}&signature=${signature}`,
+            '_blank',
+            'noopener,noreferrer'
+        )
         setRegistrationPageOpened(true)
     }
 
@@ -99,7 +112,11 @@ export const AccountSetup = (props: Props) => {
 
         await api.commit(subkeyDoc, domain, { useMasterkey: true })
 
-        storeWebSession(domain, identity.privateKey, `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`)
+        storeWebSession(
+            domain,
+            identity.privateKey,
+            `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
+        )
         reset()
         await reload()
     }
@@ -112,7 +129,11 @@ export const AccountSetup = (props: Props) => {
                 <>
                     <AuthHeader
                         title="アカウントを作成"
-                        description={isConcrntWorld ? "登録に使うサーバーを選んでから、ブラウザで登録を完了します。" : `${domain} でアカウントを登録します。`}
+                        description={
+                            isConcrntWorld
+                                ? '登録に使うサーバーを選んでから、ブラウザで登録を完了します。'
+                                : `${domain} でアカウントを登録します。`
+                        }
                     />
 
                     <div style={authStyles.passportWrap}>
@@ -180,7 +201,9 @@ export const AccountSetup = (props: Props) => {
                         )}
 
                         <Text style={authStyles.status}>
-                            {registrationPageOpened ? 'サーバー上でアカウントが作成されるのを待っています。登録が完了すると自動で次へ進みます。' : ''}
+                            {registrationPageOpened
+                                ? 'サーバー上でアカウントが作成されるのを待っています。登録が完了すると自動で次へ進みます。'
+                                : ''}
                         </Text>
                     </div>
 

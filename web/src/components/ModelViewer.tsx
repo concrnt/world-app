@@ -16,7 +16,15 @@ export const ModelViewer = (props: ModelViewerProps) => {
 
     if (!loaded) {
         return (
-            <div style={{ ...props.style, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)' }}>
+            <div
+                style={{
+                    ...props.style,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255,255,255,0.6)'
+                }}
+            >
                 Loading...
             </div>
         )

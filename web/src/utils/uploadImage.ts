@@ -10,7 +10,6 @@ interface PreSignResponse {
 }
 
 export const uploadImage = async (client: Client, file: File): Promise<[string, string]> => {
-
     let fileType = file.type
     if (!fileType) {
         const ext = file.name.split('.').pop()?.toLowerCase()

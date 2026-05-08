@@ -24,14 +24,14 @@ export const AppShell = () => {
                     maxWidth: '1180px',
                     minWidth: 0,
                     width: '100%',
-                    minHeight: `calc(100dvh - ${GAP})`,
+                    minHeight: `calc(100dvh - ${GAP})`
                 }}
             >
                 <aside
                     style={{
                         width: '250px',
                         flex: '0 0 250px',
-                        minHeight: `calc(100dvh - ${GAP})`,
+                        minHeight: `calc(100dvh - ${GAP})`
                     }}
                 >
                     <Sidebar />
