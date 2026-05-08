@@ -14,6 +14,7 @@ import { DrawerProvider } from './contexts/Drawer'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
+import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
@@ -34,9 +35,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                             <ScannerProvider>
                                                 <OverlayProvider>
                                                     <MediaViewerProvider>
-                                                        <TickerProvider>
-                                                            <App />
-                                                        </TickerProvider>
+                                                        <AudioPlayerProvider>
+                                                            <TickerProvider>
+                                                                <App />
+                                                            </TickerProvider>
+                                                        </AudioPlayerProvider>
                                                     </MediaViewerProvider>
                                                 </OverlayProvider>
                                             </ScannerProvider>
