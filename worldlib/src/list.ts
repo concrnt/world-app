@@ -47,7 +47,7 @@ export class List {
             schema = target.schema
         }
 
-        const hash = CDID.makeHash(new TextEncoder().encode(item))
+        const hash = CDID.newFromStringX(item)
 
         let key = this.uri
         if (!key.endsWith('/')) {
@@ -72,7 +72,7 @@ export class List {
     }
 
     async removeItem(client: Client, item: string): Promise<void> {
-        const hash = CDID.makeHash(new TextEncoder().encode(item))
+        const hash = CDID.newFromStringX(item)
 
         let key = this.uri
         if (!key.endsWith('/')) {

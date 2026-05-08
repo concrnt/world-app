@@ -120,7 +120,7 @@ export const Composer = (props: Props) => {
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
         const timestamp = new Date()
-        const hash = CDID.new(new TextEncoder().encode(draft), timestamp).toString()
+        const hash = CDID.newFromString(draft, timestamp).toString()
 
         const newPostUri = semantics.post(client.ccid, client.currentProfile, hash)
 

@@ -73,8 +73,31 @@ export class CDID {
 
     // -------- constructors --------
 
-    static new(data: Uint8Array, t: Date): CDID {
-        if (data.length !== 10) throw new Error('data must be 10 bytes')
+    static newFromString(s: string, t: Date): CDID {
+        const bytes = new TextEncoder().encode(s)
+        const hash = keccak_256.create()
+        hash.update(bytes)
+        const full = new Uint8Array(hash.arrayBuffer())
+
+        const cdid = new CDID(Kind.Time)
+        cdid.data.set(full.slice(0, 10))
+        cdid.setTime(t)
+        return cdid
+    }
+
+    static newFromStringX(s: string): CDID {
+        const bytes = new TextEncoder().encode(s)
+        const hash = keccak_256.create()
+        hash.update(bytes)
+        const full = new Uint8Array(hash.arrayBuffer())
+
+        const cdid = new CDID(Kind.Hash)
+        cdid.hash.set(full.slice(0, 15))
+        return cdid
+    }
+
+    static newFromHash(data: Uint8Array, t: Date): CDID {
+        if (data.length !== 10) throw new Error('hash must be 10 bytes')
 
         const c = new CDID(Kind.Time)
         c.data.set(data)
@@ -82,20 +105,12 @@ export class CDID {
         return c
     }
 
-    static newFromHash(data: Uint8Array): CDID {
+    static newFromHashX(data: Uint8Array): CDID {
         if (data.length !== 15) throw new Error('hash must be 15 bytes')
 
         const c = new CDID(Kind.Hash)
         c.hash.set(data)
         return c
-    }
-
-    static makeHash(input: Uint8Array): CDID {
-        const hash = keccak_256.create()
-        hash.update(input)
-        const full = new Uint8Array(hash.arrayBuffer())
-
-        return CDID.newFromHash(full.slice(0, 15))
     }
 
     // -------- time --------
@@ -155,7 +170,7 @@ export class CDID {
             const b = base32Decode(s.slice(1))
             if (b.length !== 15) throw new Error('invalid length')
 
-            return CDID.newFromHash(b)
+            return CDID.newFromHashX(b)
         } else {
             const b = base32Decode(s)
             if (b.length !== 16) throw new Error('invalid length')

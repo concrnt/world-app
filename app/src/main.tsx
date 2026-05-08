@@ -24,13 +24,20 @@ import { WelcomeView } from './views/Welcome'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <ThemeProvider>
-            <ConfirmProvider>
+        <ClientProvider
+            loading={<LoadingFull />}
+            failed={
                 <DrawerProvider>
-                    <ModalProvider>
-                        <SelectProvider>
-                            <ClientProvider loading={<LoadingFull />} failed={<WelcomeView />}>
-                                <PreferenceProvider>
+                    <WelcomeView />
+                </DrawerProvider>
+            }
+        >
+            <PreferenceProvider>
+                <ThemeProvider>
+                    <ConfirmProvider>
+                        <DrawerProvider>
+                            <ModalProvider>
+                                <SelectProvider>
                                     <EmojiPickerProvider>
                                         <ImageCropperProvider>
                                             <ComposerProvider>
@@ -48,12 +55,12 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                             </ComposerProvider>
                                         </ImageCropperProvider>
                                     </EmojiPickerProvider>
-                                </PreferenceProvider>
-                            </ClientProvider>
-                        </SelectProvider>
-                    </ModalProvider>
-                </DrawerProvider>
-            </ConfirmProvider>
-        </ThemeProvider>
+                                </SelectProvider>
+                            </ModalProvider>
+                        </DrawerProvider>
+                    </ConfirmProvider>
+                </ThemeProvider>
+            </PreferenceProvider>
+        </ClientProvider>
     </ErrorBoundary>
 )
