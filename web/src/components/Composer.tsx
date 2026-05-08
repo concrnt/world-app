@@ -13,6 +13,7 @@ import { uploadImage } from '../utils/uploadImage'
 import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
 import { MdOutlineUploadFile } from "react-icons/md";
+import { CDID } from '@concrnt/client'
 
 interface MediaDraft {
     file: File
@@ -112,8 +113,11 @@ export const Composer = (props: Props) => {
         const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
         const activityTimeline = semantics.activityTimeline(client.ccid, client.currentProfile)
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
-        const key = Date.now().toString()
-        const newPostUri = semantics.post(client.ccid, client.currentProfile, key)
+
+        const timestamp = new Date()
+        const hash = CDID.new(new TextEncoder().encode(draft), timestamp).toString()
+
+        const newPostUri = semantics.post(client.ccid, client.currentProfile, hash)
 
         let success = false
         try {
@@ -138,7 +142,7 @@ export const Composer = (props: Props) => {
                         },
                         author: client.ccid,
                         distributes,
-                        createdAt: new Date()
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(replyDocument)
@@ -157,7 +161,7 @@ export const Composer = (props: Props) => {
                             messageId: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
-                        createdAt: new Date()
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(associationDocument, targetAuthorDomain)
@@ -179,7 +183,7 @@ export const Composer = (props: Props) => {
                         },
                         author: client.ccid,
                         distributes,
-                        createdAt: new Date()
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(rerouteDocument)
@@ -198,7 +202,7 @@ export const Composer = (props: Props) => {
                             messageId: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
-                        createdAt: new Date()
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(associationDocument, targetAuthorDomain)
@@ -229,7 +233,7 @@ export const Composer = (props: Props) => {
                             },
                             author: client.ccid,
                             distributes,
-                            createdAt: new Date()
+                            createdAt: timestamp
                         }
                         await client.api.commit(document)
                     } else {
@@ -241,7 +245,7 @@ export const Composer = (props: Props) => {
                             },
                             author: client.ccid,
                             distributes,
-                            createdAt: new Date()
+                            createdAt: timestamp
                         }
                         await client.api.commit(document)
                     }
