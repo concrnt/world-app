@@ -8,6 +8,7 @@ import { useMediaViewer } from '../../contexts/MediaViewer'
 import { useAudioPlayer } from '../../contexts/AudioPlayer'
 import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
+import { MessageReactions } from './MessageReactions'
 import { TimeDiff } from '../TimeDiff'
 import { PostedTimelines } from './PostedTimelines'
 import { useNavigate } from 'react-router-dom'
@@ -149,6 +150,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                     ))}
                 </div>
             )}
+            <MessageReactions message={message} />
             <div
                 style={{
                     display: 'flex',

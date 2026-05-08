@@ -1,6 +1,6 @@
 import { Document, SignedDocument } from '@concrnt/client'
 import { Schemas } from './schemas'
-import { LikeAssociationSchema, ProfileSchema } from './schemas/'
+import { LikeAssociationSchema, ProfileSchema, ReactionAssociationSchema } from './schemas/'
 import { User } from './user'
 import { Client } from './client'
 import { Association } from './association'
@@ -103,6 +103,30 @@ export class Message<T> implements Document<T> {
             schema: Schemas.likeAssociation,
             associate: this.uri,
             value: {},
+            distributes,
+            createdAt: new Date()
+        }
+
+        return client.api.commit(document, authorDomain)
+    }
+
+    async reaction(client: Client, shortcode: string, imageUrl: string): Promise<SignedDocument> {
+        const authorDomain = await client.api.getEntity(this.author, this.hint).then((user) => user?.value.domain)
+
+        const distributes = [
+            semantics.activityTimeline(client.ccid, client.currentProfile),
+            semantics.notificationTimeline(this.author, this.authorProfileName || 'main')
+        ]
+
+        const document: Document<ReactionAssociationSchema> = {
+            author: client.ccid,
+            schema: Schemas.reactionAssociation,
+            associate: this.uri,
+            associationVariant: imageUrl,
+            value: {
+                shortcode,
+                imageUrl
+            },
             distributes,
             createdAt: new Date()
         }

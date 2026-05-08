@@ -27,7 +27,7 @@ export interface EmojiPackage extends RawEmojiPackage {
 // ---- Constants ----
 
 const TWEMOJI_URL = 'https://gist.githubusercontent.com/totegamma/6e1a047f54960f6bb7b946064664d793/raw/twemoji.json'
-const COLS = 7
+const COLS = 8
 
 // ---- Context ----
 
@@ -52,7 +52,6 @@ export const EmojiPickerProvider = (props: Props) => {
     const [query, setQuery] = useState('')
     const [activeTab, setActiveTab] = useState(0)
 
-    // キャッシュからの同期読み込みはuseState初期化子で行う（useEffect内の同期setStateを避ける）
     const [emojiPackages, setEmojiPackages] = useState<EmojiPackage[]>(() => {
         const pkgs: EmojiPackage[] = []
         for (const url of [TWEMOJI_URL]) {
@@ -71,18 +70,15 @@ export const EmojiPickerProvider = (props: Props) => {
     const [allEmojis, setAllEmojis] = useState<Emoji[]>(() => emojiPackages.flatMap((pkg) => pkg.emojis))
 
     const gridRef = useRef<HTMLDivElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
 
-    // ---- Emoji package loading ----
-    // TODO: usePreference実装後に emojiPackageURLs を設定から取得する
     const emojiPackageURLs = useMemo(() => [TWEMOJI_URL], [])
 
-    // キャッシュにないパッケージだけネットワークから取得
     useEffect(() => {
         let unmounted = false
 
         emojiPackageURLs.forEach((url) => {
             const cacheKey = `emojiPackage:${url}`
-            // キャッシュ済みならuseState初期化子で読み込み済み → スキップ
             if (localStorage.getItem(cacheKey)) return
 
             fetch(url, { signal: AbortSignal.timeout(5000) })
@@ -147,6 +143,8 @@ export const EmojiPickerProvider = (props: Props) => {
             setActiveTab(frequentEmojis.length > 0 ? 0 : 1)
             setQuery('')
             setIsOpen(true)
+            // auto focus search on next tick
+            setTimeout(() => searchInputRef.current?.focus(), 100)
         },
         [frequentEmojis.length]
     )
@@ -159,7 +157,6 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const selectEmoji = useCallback(
         (emoji: Emoji) => {
-            // よく使う絵文字を更新
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
             updated.unshift(emoji)
             setFrequentEmojis(updated.slice(0, 60))
@@ -182,8 +179,6 @@ export const EmojiPickerProvider = (props: Props) => {
         if (activeTab === 0) return frequentEmojis
         return emojiPackages[activeTab - 1]?.emojis ?? []
     }, [query, searchResults, activeTab, frequentEmojis, emojiPackages])
-
-    // ---- Rows for content-visibility ----
 
     const rows = useMemo(() => {
         const result: Emoji[][] = []
@@ -226,57 +221,40 @@ export const EmojiPickerProvider = (props: Props) => {
                             onClick={close}
                         />
 
-                        {/* Bottom sheet */}
+                        {/* Centered dialog */}
                         <motion.div
                             style={{
                                 position: 'fixed',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
                                 backgroundColor: CssVar.contentBackground,
                                 color: CssVar.contentText,
-                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
+                                borderRadius: CssVar.round(2),
                                 display: 'flex',
                                 flexDirection: 'column',
-                                maxHeight: '50vh',
-                                paddingBottom: 'env(safe-area-inset-bottom)',
-                                zIndex: 1001
+                                width: '380px',
+                                maxWidth: '90vw',
+                                maxHeight: '480px',
+                                zIndex: 1001,
+                                overflow: 'hidden'
                             }}
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.15 }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {/* Handle */}
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    padding: `${CssVar.space(2)} 0 ${CssVar.space(1)}`
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: '30px',
-                                        height: '6px',
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: CssVar.divider
-                                    }}
-                                />
-                            </div>
-
                             {/* Tabs */}
                             <div
                                 style={{
                                     display: 'flex',
                                     overflowX: 'auto',
                                     gap: CssVar.space(1),
-                                    padding: `0 ${CssVar.space(2)}`,
+                                    padding: `${CssVar.space(2)} ${CssVar.space(2)} 0`,
                                     flexShrink: 0
                                 }}
                             >
-                                {/* よく使うタブ or 検索結果タブ */}
                                 {query.length === 0 ? (
                                     <TabButton
                                         selected={activeTab === 0}
@@ -293,7 +271,6 @@ export const EmojiPickerProvider = (props: Props) => {
                                     </TabButton>
                                 )}
 
-                                {/* パッケージタブ */}
                                 {emojiPackages.map((pkg, index) => (
                                     <TabButton
                                         key={pkg.packageURL}
@@ -341,6 +318,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 >
                                     <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
                                     <input
+                                        ref={searchInputRef}
                                         type="text"
                                         placeholder="絵文字を検索..."
                                         value={query}
@@ -431,6 +409,14 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         cursor: 'pointer',
                                                         padding: '4px',
                                                         WebkitTapHighlightColor: 'transparent'
+                                                    }}
+                                                    onMouseOver={(e) => {
+                                                        ;(e.currentTarget as HTMLElement).style.backgroundColor =
+                                                            `rgb(from ${CssVar.contentText} r g b / 0.1)`
+                                                    }}
+                                                    onMouseOut={(e) => {
+                                                        ;(e.currentTarget as HTMLElement).style.backgroundColor =
+                                                            'transparent'
                                                     }}
                                                 >
                                                     <img

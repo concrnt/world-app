@@ -12,8 +12,10 @@ import { MdStarOutline } from 'react-icons/md'
 import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
+import { MdAddReaction } from 'react-icons/md'
 import { useDrawer } from '../../contexts/Drawer'
 import { useConfirm } from '../../contexts/Confirm'
+import { useEmojiPicker } from '../../contexts/EmojiPicker'
 
 interface Props {
     message: Message<any>
@@ -30,6 +32,7 @@ export const MessageActions = (props: Props) => {
     const { select } = useSelect()
     const drawer = useDrawer()
     const confirm = useConfirm()
+    const emojiPicker = useEmojiPicker()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -130,6 +133,24 @@ export const MessageActions = (props: Props) => {
             >
                 {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
                 <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
+            </Button>
+            {/* リアクションボタン */}
+            <Button
+                variant="text"
+                onClick={(e) => {
+                    e.stopPropagation()
+                    if (!client) return
+                    emojiPicker.open((emoji) => {
+                        hapticLight()
+                        props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
+                            console.error('Failed to add reaction:', err)
+                        })
+                        emojiPicker.close()
+                    })
+                }}
+                style={{ display: 'flex', alignItems: 'center' }}
+            >
+                <MdAddReaction size={20} />
             </Button>
             {/* メニュー */}
             <Button
