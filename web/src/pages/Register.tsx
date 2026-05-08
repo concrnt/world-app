@@ -201,7 +201,7 @@ export const Inner = (props: {
                 </Text>
 
                 <div className="register-form-shell" ref={formShellRef}>
-                    {server.registration === 'invite' && <>
+                    {server.meta.registration === 'invite' && <>
                         <Text style={{ color: CssVar.uiText }}>招待コード</Text>
                         <TextField
                             value={inviteCode}
