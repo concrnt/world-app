@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Divider, IconButton, useTheme, Text } from '@concrnt/ui'
+import { Button, Divider, IconButton, useTheme, Text, CfmRenderer } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { AnimatePresence, motion } from 'motion/react'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
@@ -38,6 +38,7 @@ export const Composer = (props: Props) => {
     const [postHome, setPostHome] = useState<boolean>(true)
     const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>([])
     const [uploading, setUploading] = useState<boolean>(false)
+    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>({})
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -144,7 +145,8 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
-                            replyToMessageId: props.targetMessage.uri
+                            replyToMessageId: props.targetMessage.uri,
+                            emojis: emojiDict
                         },
                         author: client.ccid,
                         distributes,
@@ -235,7 +237,8 @@ export const Composer = (props: Props) => {
                             schema: Schemas.mediaMessage,
                             value: {
                                 body: draft,
-                                medias: uploadedMedias
+                                medias: uploadedMedias,
+                                emojis: emojiDict
                             },
                             author: client.ccid,
                             distributes,
@@ -247,7 +250,8 @@ export const Composer = (props: Props) => {
                             key: newPostUri,
                             schema: Schemas.markdownMessage,
                             value: {
-                                body: draft
+                                body: draft,
+                                emojis: emojiDict
                             },
                             author: client.ccid,
                             distributes,
@@ -272,6 +276,7 @@ export const Composer = (props: Props) => {
         <AnimatePresence
             onExitComplete={() => {
                 setDraft('')
+                setEmojiDict({})
                 mediaDrafts
                     .map((media) => media.previewUrl)
                     .filter(isNonNullOrUndefined)
@@ -402,6 +407,23 @@ export const Composer = (props: Props) => {
                                 </div>
                             )}
 
+                            {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
+                            {props.mode !== 'reroute' && draft.length > 0 && (
+                                <>
+                                    <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
+                                    <div
+                                        style={{
+                                            fontSize: '0.85rem',
+                                            opacity: 0.8,
+                                            maxHeight: '80px',
+                                            overflowY: 'auto'
+                                        }}
+                                    >
+                                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                                    </div>
+                                </>
+                            )}
+
                             {/* 画像プレビュー */}
                             {mediaDrafts.length > 0 && (
                                 <div
@@ -509,6 +531,10 @@ export const Composer = (props: Props) => {
                                                     } else {
                                                         setDraft((prev) => prev + `:${emoji.shortcode}:`)
                                                     }
+                                                    setEmojiDict((prev) => ({
+                                                        ...prev,
+                                                        [emoji.shortcode]: { imageURL: emoji.imageURL }
+                                                    }))
                                                 })
                                             }}
                                         >

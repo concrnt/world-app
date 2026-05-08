@@ -41,7 +41,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             }
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
             <MessageReactions message={message} />
             <div
                 style={{

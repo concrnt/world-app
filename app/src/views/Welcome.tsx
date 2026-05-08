@@ -11,6 +11,7 @@ import { TauriAuthProvider } from '../lib/authProvider'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
+import { ResetSessionButton } from '../components/ResetSessionButton'
 
 //const entrypoint = 'cc2.tunnel.anthrotech.dev'
 const entrypoint = 'v2dev.concrnt.net'
@@ -157,15 +158,13 @@ export const WelcomeView = () => {
                         >
                             このアカウントで続行
                         </AuthButton>
-                        <AuthTextButton
-                            danger
-                            onClick={async () => {
-                                await invoke('clear_all')
+                        <ResetSessionButton
+                            onDone={async () => {
                                 reload()
                             }}
                         >
                             端末のアカウント情報をリセットする
-                        </AuthTextButton>
+                        </ResetSessionButton>
                     </AuthActions>
                 </AuthScreen>
             )
@@ -234,15 +233,13 @@ const RecoveryView = (props: {
                     >
                         新規登録する
                     </AuthButton>
-                    <AuthTextButton
-                        danger
-                        onClick={async () => {
-                            await invoke('clear_all')
+                    <ResetSessionButton
+                        onDone={() => {
                             props.reload()
                         }}
                     >
-                        端末のアカウント情報を削除
-                    </AuthTextButton>
+                        端末のアカウント情報をリセットする
+                    </ResetSessionButton>
                 </AuthActions>
             )}
         </AuthScreen>

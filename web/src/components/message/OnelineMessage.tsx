@@ -34,7 +34,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}
         >
-            <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
             <div style={{ flex: 1 }} />
             <IconButton
                 onClick={(e) => {

@@ -10,6 +10,7 @@ import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
 import { SelectProvider } from './contexts/Select'
 import { DrawerProvider } from './contexts/Drawer'
+import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
@@ -61,6 +62,7 @@ const AuthedRoutes = () => (
             <ImageCropperProvider>
                 <DrawerProvider>
                     <SelectProvider>
+                        <EmojiPickerProvider>
                         <ComposerProvider>
                             <EmojiPickerProvider>
                                     <MediaViewerProvider>
@@ -96,6 +98,7 @@ const AuthedRoutes = () => (
                                     </MediaViewerProvider>
                             </EmojiPickerProvider>
                         </ComposerProvider>
+                        </EmojiPickerProvider>
                     </SelectProvider>
                 </DrawerProvider>
             </ImageCropperProvider>
