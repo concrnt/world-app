@@ -9,6 +9,7 @@ import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
+import { MessageReactions } from './MessageReactions'
 import { TimeDiff } from '../TimeDiff'
 import { PostedTimelines } from './PostedTimelines'
 
@@ -44,6 +45,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             <CfmRenderer messagebody={message.value.body} emojiDict={{}} />
+            <MessageReactions message={message} />
             <div
                 style={{
                     display: 'flex',
