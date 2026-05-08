@@ -17,7 +17,6 @@ import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
-import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { AppShell } from './pages/App'
 import { HomeView } from './views/Home'
@@ -64,7 +63,6 @@ const AuthedRoutes = () => (
                     <SelectProvider>
                         <EmojiPickerProvider>
                         <ComposerProvider>
-                            <EmojiPickerProvider>
                                     <MediaViewerProvider>
                                         <AudioPlayerProvider>
                                         <TickerProvider>
@@ -96,7 +94,6 @@ const AuthedRoutes = () => (
                                         </TickerProvider>
                                         </AudioPlayerProvider>
                                     </MediaViewerProvider>
-                            </EmojiPickerProvider>
                         </ComposerProvider>
                         </EmojiPickerProvider>
                     </SelectProvider>
