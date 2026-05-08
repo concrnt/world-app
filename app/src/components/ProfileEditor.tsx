@@ -125,12 +125,12 @@ export const ProfileEditor = (props: Props) => {
                         }
 
                         if (avatarDraft) {
-                            const avatarUrl = await uploadImage(client, avatarDraft)
+                            const [avatarUrl] = await uploadImage(client, avatarDraft)
                             document.value.avatar = avatarUrl
                         }
 
                         if (bannerDraft) {
-                            const bannerUrl = await uploadImage(client, bannerDraft)
+                            const [bannerUrl] = await uploadImage(client, bannerDraft)
                             document.value.banner = bannerUrl
                         }
 

@@ -9,7 +9,7 @@ interface PreSignResponse {
     }
 }
 
-export const uploadImage = async (client: Client, file: File): Promise<string> => {
+export const uploadImage = async (client: Client, file: File): Promise<[string, string]> => {
     let fileType = file.type
     if (!fileType) {
         const ext = file.name.split('.').pop()?.toLowerCase()
@@ -57,5 +57,5 @@ export const uploadImage = async (client: Client, file: File): Promise<string> =
         body: file
     })
 
-    return preSignReq.content.file.url
+    return [preSignReq.content.file.url, fileType]
 }

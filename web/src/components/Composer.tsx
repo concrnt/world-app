@@ -212,10 +212,10 @@ export const Composer = (props: Props) => {
                         // 画像をアップロード
                         const uploadedMedias = await Promise.all(
                             mediaDrafts.map(async (media) => {
-                                const url = await uploadImage(client, media.file)
+                                const [url, typ] = await uploadImage(client, media.file)
                                 return {
                                     mediaURL: url,
-                                    mediaType: media.file.type
+                                    mediaType: typ
                                 }
                             })
                         )

@@ -218,10 +218,10 @@ export const Composer = (props: Props) => {
                         // 画像をアップロード
                         const uploadedMedias = await Promise.all(
                             mediaDrafts.map(async (media) => {
-                                const url = await uploadImage(client, media.file)
+                                const [url, typ] = await uploadImage(client, media.file)
                                 return {
                                     mediaURL: url,
-                                    mediaType: media.file.type
+                                    mediaType: typ
                                 }
                             })
                         )
@@ -527,7 +527,14 @@ export const Composer = (props: Props) => {
                     </div>
 
                     {/* 隠しファイル入力 */}
-                    <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        hidden
+                        onChange={handleFileSelect}
+                    />
                 </motion.div>
             )}
         </AnimatePresence>
