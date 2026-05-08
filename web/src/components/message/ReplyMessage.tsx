@@ -5,6 +5,7 @@ import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
+import { MessageReactions } from './MessageReactions'
 import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
 import { PostedTimelines } from './PostedTimelines'
@@ -48,6 +49,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
                 <CfmRenderer messagebody={props.message.value.body} emojiDict={{}} />
+                <MessageReactions message={props.message} />
                 <div
                     style={{
                         display: 'flex',
