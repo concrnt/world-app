@@ -129,7 +129,7 @@ export const Inner = (props: {
                     signature
                 },
                 meta,
-                inviteToken: server.registration === 'invite' ? inviteCode : undefined
+                inviteToken: server.meta.registration === 'invite' ? inviteCode : undefined
             }
 
             await api.requestConcrntApi(domain, 'net.concrnt.world.register', {}, {
