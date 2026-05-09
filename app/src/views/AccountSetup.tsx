@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { Text, CssVar } from '@concrnt/ui'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
@@ -10,6 +10,8 @@ import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
+import { useModal } from '../contexts/Modal'
+import { ServerSelector } from '../components/ServerSelector'
 
 interface Props {
     entrypoint: string
@@ -20,12 +22,12 @@ export const AccountSetup = (props: Props) => {
     const reload = useReloadClient()
     const reset = useResetPreference()
 
+    const modal = useModal()
+
     const [domain, setDomain] = useState<string>(props.entrypoint)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
-
-    const serverInput = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const timer = setInterval(async () => {
@@ -60,7 +62,7 @@ export const AccountSetup = (props: Props) => {
         return () => {
             clearInterval(timer)
         }
-    }, [registrationPageOpened])
+    }, [registrationPageOpened, domain, accountCreated])
 
     const openRegistrationPage = async (domain: string) => {
         const ccid: string = await invoke('initialize_master')
@@ -101,9 +103,9 @@ export const AccountSetup = (props: Props) => {
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
                                 ccid={'con1......................................'}
-                                name={'...'}
+                                name={'your name'}
                                 avatar={''}
-                                host={'TBD'}
+                                host={domain}
                                 cdate={new Date().toLocaleDateString()}
                             />
                         </Tilt>
@@ -122,22 +124,19 @@ export const AccountSetup = (props: Props) => {
                                     height: 44
                                 }}
                             >
-                                <input
-                                    ref={serverInput}
-                                    type="text"
-                                    value={domain}
-                                    onChange={(e) => setDomain(e.target.value)}
+                                <div
                                     style={{
                                         flex: 1,
                                         minWidth: 0,
                                         padding: '8px 12px',
                                         borderRadius: `${CssVar.round(1)} 0 0 ${CssVar.round(1)}`,
                                         border: `1px solid ${CssVar.divider}`,
-                                        backgroundColor: CssVar.contentBackground,
-                                        color: CssVar.contentText,
+                                        color: CssVar.uiText,
                                         fontSize: 16
                                     }}
-                                />
+                                >
+                                    {domain}
+                                </div>
                                 <button
                                     type="button"
                                     style={{
@@ -151,7 +150,16 @@ export const AccountSetup = (props: Props) => {
                                         fontWeight: 700
                                     }}
                                     onClick={() => {
-                                        serverInput.current?.focus()
+                                        modal.open(
+                                            <ServerSelector
+                                                initialServer={domain}
+                                                onSelected={(selected) => {
+                                                    setDomain(selected)
+                                                    modal.close()
+                                                }}
+                                                onCancel={() => modal.close()}
+                                            />
+                                        )
                                     }}
                                 >
                                     変更
@@ -218,7 +226,7 @@ export const AccountSetup = (props: Props) => {
 
                                 reset()
                                 console.log('Preferences reset')
-                                await reload()
+                                reload()
                                 console.log('Client reloaded')
                             }}
                         >
