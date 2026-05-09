@@ -1,7 +1,8 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { animate } from 'motion'
 import { CssVar } from '../types/Theme'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -23,7 +24,7 @@ export const DrawerProvider = (props: Props) => {
 
     const [content, setContent] = useState<ReactNode>(null)
 
-    const height = window.innerHeight * 0.8
+    const height = window.innerHeight * 0.9
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
 
     const open = useCallback(
@@ -45,6 +46,18 @@ export const DrawerProvider = (props: Props) => {
         }),
         [open, close]
     )
+
+    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
+        'composerViewportHeight',
+        visualViewport?.height ?? 0
+    )
+    useEffect(() => {
+        function handleResize(): void {
+            setViewportHeight(visualViewport?.height ?? 0)
+        }
+        visualViewport?.addEventListener('resize', handleResize)
+        return () => visualViewport?.removeEventListener('resize', handleResize)
+    }, [setViewportHeight])
 
     return (
         <>
@@ -114,7 +127,7 @@ export const DrawerProvider = (props: Props) => {
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    padding: `${CssVar.space(3)} 0`,
+                                    padding: `${CssVar.space(2)} 0`,
                                     position: 'relative'
                                 }}
                                 onPointerDown={(e) => {
@@ -125,8 +138,8 @@ export const DrawerProvider = (props: Props) => {
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        top: `-${CssVar.space(3)}`,
-                                        bottom: `-${CssVar.space(3)}`,
+                                        top: `-${CssVar.space(4)}`,
+                                        bottom: `-${CssVar.space(4)}`,
                                         left: 0,
                                         right: 0
                                     }}
@@ -142,12 +155,17 @@ export const DrawerProvider = (props: Props) => {
                             </div>
                             <div
                                 style={{
-                                    padding: `0 ${CssVar.space(4)}`,
                                     overflow: 'auto',
-                                    flex: 1
+                                    flex: 1,
+                                    height: '100%'
                                 }}
                             >
                                 {content}
+                                <div
+                                    style={{
+                                        height: `calc(100dvh - ${viewportHeight}px)`
+                                    }}
+                                />
                             </div>
                         </motion.div>
                     </>

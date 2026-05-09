@@ -78,7 +78,7 @@ export const ProfileEditor = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: CssVar.space(4),
+                gap: CssVar.space(2),
                 width: '100%'
             }}
         >
@@ -86,7 +86,8 @@ export const ProfileEditor = (props: Props) => {
                 style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    padding: `0 ${CssVar.space(2)}`
                 }}
             >
                 <Text variant="h3">{props.title ?? 'Profile'}</Text>
@@ -145,41 +146,73 @@ export const ProfileEditor = (props: Props) => {
                 </Button>
             </div>
 
-            <CCWallpaper
-                src={banner}
+            <div
                 style={{
-                    height: `150px`
+                    position: 'relative',
+                    paddingBottom: `calc(40px + ${CssVar.space(2)})`
                 }}
-                onClick={() => bannerInputRef.current?.click()}
-            />
-            <Avatar ccid={client?.ccid || ''} src={avatar} onClick={() => avatarInputRef.current?.click()} />
-            <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <TextField placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            >
+                <CCWallpaper
+                    src={banner}
+                    style={{
+                        height: `120px`
+                    }}
+                    onClick={() => bannerInputRef.current?.click()}
+                />
+                <Avatar
+                    style={{
+                        width: `80px`,
+                        height: `80px`,
+                        position: 'absolute',
+                        transform: 'translateY(-50%)',
+                        left: CssVar.space(4)
+                    }}
+                    ccid={client?.ccid || ''}
+                    src={avatar}
+                    onClick={() => avatarInputRef.current?.click()}
+                />
+            </div>
 
             <div
                 style={{
+                    padding: `0 ${CssVar.space(2)}`,
+                    gap: CssVar.space(2),
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
+                    flexDirection: 'column'
                 }}
             >
-                <Text>アカウントを非公開にする</Text>
-                <Checkbox
-                    checked={restricted}
-                    onChange={(c) => {
-                        setRestricted(c)
-                    }}
+                <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <TextField
+                    placeholder="Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                 />
+
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}
+                >
+                    <Text>アカウントを非公開にする</Text>
+                    <Checkbox
+                        checked={restricted}
+                        onChange={(c) => {
+                            setRestricted(c)
+                        }}
+                    />
+                </div>
+                {restricted && (
+                    <>
+                        <Text>閲覧可能ユーザーを選択</Text>
+                        <Text variant="caption">
+                            ユーザーを選択するには、まずそのユーザーをフォローする必要があります。
+                        </Text>
+                        <UserPicker selected={members} setSelected={setMembers} />
+                    </>
+                )}
             </div>
-            {restricted && (
-                <>
-                    <Text>閲覧可能ユーザーを選択</Text>
-                    <Text variant="caption">
-                        ユーザーを選択するには、まずそのユーザーをフォローする必要があります。
-                    </Text>
-                    <UserPicker selected={members} setSelected={setMembers} />
-                </>
-            )}
 
             <input
                 hidden
