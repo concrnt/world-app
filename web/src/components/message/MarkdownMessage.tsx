@@ -1,14 +1,12 @@
 import { MessageProps } from './types'
 import { MarkdownMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CfmRenderer } from '@concrnt/ui'
 
-import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
-import { MessageReactions } from './MessageReactions'
 import { TimeDiff } from '../TimeDiff'
-import { PostedTimelines } from './PostedTimelines'
 import { useNavigate } from 'react-router-dom'
+import { MessageFooter } from './Footer'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const navigate = useNavigate()
@@ -42,38 +40,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
-            <MessageReactions message={message} />
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row-reverse',
-                    justifyContent: 'space-between',
-                    alignItems: 'stretch',
-                    flexWrap: 'wrap',
-                    gap: CssVar.space(1)
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center'
-                    }}
-                >
-                    <PostedTimelines message={message} />
-                </div>
-                <div
-                    style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'flex-start'
-                    }}
-                >
-                    <MessageActions message={message} />
-                </div>
-            </div>
+            <MessageFooter message={message} />
         </MessageLayout>
     )
 }

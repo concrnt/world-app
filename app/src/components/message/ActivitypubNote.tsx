@@ -7,9 +7,8 @@ import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
-import { PostedTimelines } from './PostedTimelines'
-import { MessageActions } from './MessageActions'
 import { ApNoteSchema, Message } from '@concrnt/worldlib'
+import { MessageFooter } from './Footer'
 
 interface Props {
     actorURL: string
@@ -94,39 +93,7 @@ const Note = (props: {
             headerRight={note.published && <TimeDiff date={new Date(note.published)} />}
         >
             <CfmRenderer messagebody={note.content ?? ''} emojiDict={{}} />
-            {props.message && (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row-reverse',
-                        justifyContent: 'space-between',
-                        alignItems: 'stretch',
-                        flexWrap: 'wrap',
-                        gap: CssVar.space(1)
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <PostedTimelines message={props.message} />
-                    </div>
-                    <div
-                        style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start'
-                        }}
-                    >
-                        <MessageActions message={props.message} />
-                    </div>
-                </div>
-            )}
+            {props.message && <MessageFooter message={props.message} />}
         </MessageLayout>
     )
 }

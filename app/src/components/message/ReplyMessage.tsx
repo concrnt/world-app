@@ -7,12 +7,10 @@ import { PostView } from '../../views/Post'
 
 import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
-import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
-import { MessageReactions } from './MessageReactions'
 import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
-import { PostedTimelines } from './PostedTimelines'
+import { MessageFooter } from './Footer'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { push } = useStack()
@@ -52,38 +50,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
                 <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
-                <MessageReactions message={props.message} />
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row-reverse',
-                        justifyContent: 'space-between',
-                        alignItems: 'stretch',
-                        flexWrap: 'wrap',
-                        gap: CssVar.space(1)
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <PostedTimelines message={props.message} />
-                    </div>
-                    <div
-                        style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start'
-                        }}
-                    >
-                        <MessageActions message={props.message} />
-                    </div>
-                </div>
+                <MessageFooter message={props.message} />
             </MessageLayout>
         </div>
     )

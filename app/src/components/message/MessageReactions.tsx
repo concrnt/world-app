@@ -1,64 +1,83 @@
 import { Association, Message, ReactionAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { Document } from '@concrnt/client'
 import { useClient } from '../../contexts/Client'
 import { CssVar } from '../../types/Theme'
-import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { hapticLight } from '../../utils/haptics'
+import { startTransition } from 'react'
+import { ReactionState } from './Footer'
 
 interface Props {
     message: Message<any>
+    reactionState: ReactionState
+    updateReactionState: React.Dispatch<React.SetStateAction<ReactionState>>
 }
 
 export const MessageReactions = (props: Props) => {
     const { client } = useClient()
-    const emojiPicker = useEmojiPicker()
 
-    const reactionCounts = props.message.reactionCounts
-    if (!reactionCounts || Object.keys(reactionCounts).length === 0) {
-        return null
-    }
-
-    // 自分のリアクションを imageUrl → Association のマップにする
-    const ownReactions: Record<string, Association<ReactionAssociationSchema>> = {}
-    for (const assoc of props.message.ownAssociations) {
-        if (assoc.schema === Schemas.reactionAssociation) {
-            const value = assoc.value as ReactionAssociationSchema
-            ownReactions[value.imageUrl] = assoc as Association<ReactionAssociationSchema>
-        }
-    }
+    const { reactionCounts, ownReactions } = props.reactionState
 
     const handleReactionClick = async (imageUrl: string) => {
         if (!client) return
         hapticLight()
 
         if (ownReactions[imageUrl]) {
-            // 自分のリアクションを削除
-            await ownReactions[imageUrl].delete(client).catch((e) => {
-                console.error('Failed to delete reaction:', e)
+            startTransition(async () => {
+                props.updateReactionState((prev: ReactionState) => {
+                    const newOwnReactions = { ...prev.ownReactions }
+                    delete newOwnReactions[imageUrl]
+                    return {
+                        reactionCounts: {
+                            ...prev.reactionCounts,
+                            [imageUrl]: Math.max((prev.reactionCounts[imageUrl] || 1) - 1, 0)
+                        },
+                        ownReactions: newOwnReactions
+                    }
+                })
+                await ownReactions[imageUrl].delete(client).catch((e) => {
+                    console.error('Failed to delete reaction:', e)
+                })
             })
         } else {
-            // 同じ絵文字でリアクションを追加
-            // shortcodeが必要なので、既存のリアクションからvariantで取得するか、
-            // 無い場合はimageUrlから推測する
-            // emojiPickerのpackagesから探す
-            let shortcode = ''
-            for (const pkg of emojiPicker.packages) {
-                const found = pkg.emojis.find((e) => e.imageURL === imageUrl)
-                if (found) {
-                    shortcode = found.shortcode
-                    break
-                }
-            }
-            if (!shortcode) {
-                // URLの末尾からファイル名を推測
-                shortcode =
-                    imageUrl
-                        .split('/')
-                        .pop()
-                        ?.replace(/\.\w+$/, '') ?? 'emoji'
-            }
+            startTransition(async () => {
+                props.updateReactionState((prev: ReactionState) => {
+                    return {
+                        reactionCounts: {
+                            ...prev.reactionCounts,
+                            [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
+                        },
+                        ownReactions: {
+                            ...prev.ownReactions,
+                            [imageUrl]: new Association('dummy', {
+                                author: client.ccid,
+                                schema: Schemas.reactionAssociation,
+                                value: {
+                                    imageUrl,
+                                    shortcode: ''
+                                },
+                                createdAt: new Date()
+                            })
+                        }
+                    }
+                })
 
-            await props.message.reaction(client, shortcode, imageUrl).catch((e) => {
-                console.error('Failed to add reaction:', e)
+                const sds = await client.api
+                    .getAssociations(props.message.uri, {
+                        schema: Schemas.reactionAssociation,
+                        variant: imageUrl
+                    })
+                    .catch((e) => {
+                        console.error('Failed to fetch existing reactions:', e)
+                        return []
+                    })
+
+                if (sds.length == 0) return
+                const doc = JSON.parse(sds[0].document) as Document<ReactionAssociationSchema>
+                const shortcode = doc.value.shortcode
+
+                await props.message.reaction(client, shortcode, imageUrl).catch((e) => {
+                    console.error('Failed to add reaction:', e)
+                })
             })
         }
     }

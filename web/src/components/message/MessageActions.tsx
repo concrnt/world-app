@@ -16,9 +16,11 @@ import { MdAddReaction } from 'react-icons/md'
 import { useDrawer } from '../../contexts/Drawer'
 import { useConfirm } from '../../contexts/Confirm'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
+import { ReactionState } from './Footer'
 
 interface Props {
     message: Message<any>
+    updateReactionState: React.Dispatch<React.SetStateAction<ReactionState>>
 }
 
 interface LikeState {
@@ -142,9 +144,36 @@ export const MessageActions = (props: Props) => {
                     if (!client) return
                     emojiPicker.open((emoji) => {
                         hapticLight()
-                        props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
-                            console.error('Failed to add reaction:', err)
+
+                        startTransition(async () => {
+                            props.updateReactionState((prev: ReactionState): ReactionState => {
+                                const imageUrl = emoji.imageURL
+                                const shortcode = emoji.shortcode
+                                return {
+                                    reactionCounts: {
+                                        ...prev.reactionCounts,
+                                        [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
+                                    },
+                                    ownReactions: {
+                                        ...prev.ownReactions,
+                                        [imageUrl]: new Association('dummy', {
+                                            author: client.ccid,
+                                            schema: Schemas.reactionAssociation,
+                                            value: {
+                                                imageUrl,
+                                                shortcode
+                                            },
+                                            createdAt: new Date()
+                                        })
+                                    }
+                                }
+                            })
+
+                            await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
+                                console.error('Failed to add reaction:', err)
+                            })
                         })
+
                         emojiPicker.close()
                     })
                 }}

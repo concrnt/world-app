@@ -1,17 +1,15 @@
 import { MessageProps } from './types'
 import { MediaMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
 
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { useAudioPlayer } from '../../contexts/AudioPlayer'
-import { MessageActions } from './MessageActions'
 import { MessageLayout } from './MessageLayout'
-import { MessageReactions } from './MessageReactions'
 import { TimeDiff } from '../TimeDiff'
-import { PostedTimelines } from './PostedTimelines'
 import { useNavigate } from 'react-router-dom'
+import { MessageFooter } from './Footer'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const navigate = useNavigate()
@@ -154,38 +152,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                     ))}
                 </div>
             )}
-            <MessageReactions message={message} />
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row-reverse',
-                    justifyContent: 'space-between',
-                    alignItems: 'stretch',
-                    flexWrap: 'wrap',
-                    gap: CssVar.space(1)
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center'
-                    }}
-                >
-                    <PostedTimelines message={message} />
-                </div>
-                <div
-                    style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'flex-start'
-                    }}
-                >
-                    <MessageActions message={message} />
-                </div>
-            </div>
+            <MessageFooter message={message} />
         </MessageLayout>
     )
 }
