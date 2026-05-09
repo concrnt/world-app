@@ -41,3 +41,6 @@ tauri-plugin-barcode-scanner = "2"
 tauri-plugin-haptics = "2"
 tauri-plugin-file-saver = { verion="0.1.0", path = "../plugins/tauri-plugin-file-saver" }
 
+[target.'cfg(any(target_os = "ios"))'.dependencies]
+tauri-plugin-safari-scroll-killer = { version="0.1.0", path = "../plugins/tauri-plugin-safari-scroll-killer" }
+
