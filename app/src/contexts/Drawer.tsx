@@ -1,8 +1,7 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { animate } from 'motion'
 import { CssVar } from '../types/Theme'
-import { StackLayout, type StackLayoutRef } from '../layouts/Stack'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -38,26 +37,6 @@ export const DrawerProvider = (props: Props) => {
     const close = useCallback(() => {
         setContent(null)
     }, [])
-
-    const stackRef = useRef<StackLayoutRef | null>(null)
-
-    // ドロワーが開いている間はAndroidバックボタンを横取りし、
-    // ドロワー内Stackのpop→ドロワーを閉じるの優先順で処理する
-    useEffect(() => {
-        if (!content) return
-
-        const prev = (window as any).__concrntHandleBack
-        ;(window as any).__concrntHandleBack = (): boolean => {
-            if (stackRef.current?.pop()) {
-                return true
-            }
-            close()
-            return true
-        }
-        return () => {
-            ;(window as any).__concrntHandleBack = prev
-        }
-    }, [content, close])
 
     const value = useMemo(
         () => ({
@@ -95,9 +74,7 @@ export const DrawerProvider = (props: Props) => {
                                 paddingBottom: 'env(safe-area-inset-bottom)',
                                 borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                 height,
-                                y,
-                                display: 'flex',
-                                flexDirection: 'column'
+                                y
                             }}
                             drag="y"
                             dragControls={dragControls}
@@ -144,12 +121,12 @@ export const DrawerProvider = (props: Props) => {
                                     dragControls.start(e)
                                 }}
                             >
-                                {/* ハンドルの見た目は変えず、当たり判定を縦方向に拡張する透明レイヤー (上40px / 下8px) */}
+                                {/* ハンドルの見た目は変えず、当たり判定を縦方向に拡張する透明レイヤー */}
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        top: `-${CssVar.space(7)}`,
-                                        bottom: CssVar.space(1),
+                                        top: `-${CssVar.space(3)}`,
+                                        bottom: `-${CssVar.space(3)}`,
                                         left: 0,
                                         right: 0
                                     }}
@@ -166,12 +143,11 @@ export const DrawerProvider = (props: Props) => {
                             <div
                                 style={{
                                     padding: `0 ${CssVar.space(4)}`,
-                                    flex: 1,
-                                    display: 'flex',
-                                    minHeight: 0
+                                    overflow: 'auto',
+                                    flex: 1
                                 }}
                             >
-                                <StackLayout ref={stackRef}>{content}</StackLayout>
+                                {content}
                             </div>
                         </motion.div>
                     </>
