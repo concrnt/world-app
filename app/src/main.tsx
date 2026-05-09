@@ -27,9 +27,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <ClientProvider
             loading={<LoadingFull />}
             failed={
-                <DrawerProvider>
+                <ModalProvider>
                     <WelcomeView />
-                </DrawerProvider>
+                </ModalProvider>
             }
         >
             <PreferenceProvider>
