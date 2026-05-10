@@ -1,5 +1,6 @@
 export const semantics = {
     user: (ccid: string) => `cckv://${ccid}`,
+    settings: (owner: string) => `cckv://${owner}/concrnt.world/settings`,
     profile: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}`,
     profiles: (owner: string) => `cckv://${owner}/concrnt.world/profiles`,
     lists: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists`,

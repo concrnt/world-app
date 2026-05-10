@@ -1,5 +1,7 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useClient } from './Client'
+import { semantics } from '@concrnt/worldlib'
 
 export interface Preference {
     themeName: string
@@ -28,7 +30,36 @@ interface PreferenceProviderProps {
 }
 
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
+    const { client } = useClient()
     const [pref, setPref] = useLocalStorage<Preference>(`preference`, defaultPreference)
+    const [initialized, setInitialized] = useState<boolean>(false)
+
+    useEffect(() => {
+        if (!client) return
+        if (initialized) return
+        const isNoloadSettings = localStorage.getItem('noloadsettings')
+        if (isNoloadSettings) {
+            localStorage.removeItem('noloadsettings')
+            return
+        }
+
+        client.api
+            .getDocument<Preference>(semantics.settings(client.ccid))
+            .then((doc) => {
+                setInitialized(true)
+                if (!doc) return
+                const data = doc.value
+                if (!data) return
+                setPref({
+                    ...pref,
+                    ...data
+                })
+            })
+            .catch((e: any) => {
+                console.error('Failed to load settings from cckv', e)
+                setInitialized(true)
+            })
+    }, [])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })
@@ -49,6 +80,7 @@ export function usePreference<K extends keyof Preference>(
     key: K,
     silent: boolean = false
 ): [value: Preference[K], set: (value: Preference[K] | ((old: Preference[K]) => Preference[K])) => void] {
+    const { client } = useClient()
     const { preference, setPreference } = useContext(PreferenceContext)
 
     const set = useCallback(
@@ -65,6 +97,25 @@ export function usePreference<K extends keyof Preference>(
             } else {
                 setPreference({ ...preference })
             }
+
+            const document = {
+                key: semantics.settings(client.ccid),
+                author: client.ccid,
+                schema: 'https://schemas.concrnt.net/utils/settings',
+                value: preference,
+                createdAt: new Date(),
+                policy: {
+                    entries: [
+                        {
+                            url: 'https://policy.concrnt.world/private.json'
+                        }
+                    ]
+                }
+            }
+
+            client.api.commit(document).catch((e) => {
+                console.error('Failed to save settings to cckv', e)
+            })
         },
         [preference, setPreference, key, silent]
     )
