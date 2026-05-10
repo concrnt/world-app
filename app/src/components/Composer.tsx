@@ -10,6 +10,7 @@ import { CssVar } from '../types/Theme'
 import { ComposerMode } from '../contexts/Composer'
 import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
+import { computeBlurhash } from '../utils/computeBlurhash'
 import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
@@ -224,10 +225,14 @@ export const Composer = (props: Props) => {
                         // 画像をアップロード
                         const uploadedMedias = await Promise.all(
                             mediaDrafts.map(async (media) => {
-                                const [url, typ] = await uploadImage(client, media.file)
+                                const [[url, typ], blurhash] = await Promise.all([
+                                    uploadImage(client, media.file),
+                                    computeBlurhash(media.file)
+                                ])
                                 return {
                                     mediaURL: url,
-                                    mediaType: typ
+                                    mediaType: typ,
+                                    ...(blurhash ? { blurhash } : {})
                                 }
                             })
                         )
