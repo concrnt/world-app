@@ -10,6 +10,7 @@ import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
+import { AutoSummary } from '../AutoSummary'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { push } = useStack()
@@ -42,7 +43,9 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             }
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+            <AutoSummary body={message.value.body ?? ''}>
+                <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+            </AutoSummary>
             <MessageFooter message={message} />
         </MessageLayout>
     )
