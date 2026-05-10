@@ -8,6 +8,7 @@ import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
+import { AutoSummary } from '../AutoSummary'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const navigate = useNavigate()
@@ -46,8 +47,9 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 }
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
-                <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
-
+                <AutoSummary body={props.message.value.body ?? ''}>
+                    <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
+                </AutoSummary>
                 <MessageFooter message={props.message} />
             </MessageLayout>
         </div>
