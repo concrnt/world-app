@@ -514,8 +514,27 @@ export class Api {
         domain?: string
     ): Promise<SignedDocument[]> {
         let fqdn = domain
+        const key = query.prefix ?? query.parent
+        if (!key) {
+            throw new Error('prefix or parent is required')
+        }
         if (!fqdn) {
-            fqdn = this.defaultHost
+            const parsed = new URL(key)
+            const owner = parsed.host
+
+            fqdn = owner
+            if (IsCCID(fqdn)) {
+                const entity = await this.getEntity(owner)
+                fqdn = entity.value.domain
+            }
+            if (IsCSID(fqdn)) {
+                const server = await this.getServerByCSID(owner)
+                fqdn = server.domain
+            }
+        }
+
+        if (!fqdn) {
+            throw new Error('cannot determine server from query')
         }
 
         const server = await this.getServer(fqdn)
