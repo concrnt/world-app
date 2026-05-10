@@ -526,6 +526,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "concrnt"
+version = "0.1.0"
+dependencies = [
+ "bech32",
+ "bip32",
+ "bip39",
+ "hex",
+ "ripemd",
+ "secp256k1 0.29.1",
+ "serde",
+ "sha2",
+ "sha3",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5199,16 +5215,9 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 name = "world-app"
 version = "0.1.0"
 dependencies = [
- "bech32",
- "bip32",
- "bip39",
- "hex",
- "ripemd",
- "secp256k1 0.29.1",
+ "concrnt",
  "serde",
  "serde_json",
- "sha2",
- "sha3",
  "tauri",
  "tauri-build",
  "tauri-plugin-barcode-scanner",
@@ -5219,7 +5228,6 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-safari-scroll-killer",
  "tauri-plugin-store",
- "unicode-normalization",
 ]
 
 [[package]]
