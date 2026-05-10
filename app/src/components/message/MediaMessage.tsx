@@ -9,6 +9,7 @@ import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
 
 import { useMediaViewer } from '../../contexts/MediaViewer'
+import { BlurhashImage } from '../BlurhashImage'
 import { useAudioPlayer } from '../../contexts/AudioPlayer'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
@@ -92,8 +93,9 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                             }}
                         >
                             {media.mediaType.startsWith('image/') ? (
-                                <img
+                                <BlurhashImage
                                     src={media.mediaURL}
+                                    blurhash={media.blurhash}
                                     alt={media.altText ?? ''}
                                     style={{
                                         width: '100%',
