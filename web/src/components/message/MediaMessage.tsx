@@ -10,6 +10,7 @@ import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
+import { AutoSummary } from '../AutoSummary'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const navigate = useNavigate()
@@ -47,7 +48,9 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {message.value.body && (
-                <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                <AutoSummary body={message.value.body}>
+                    <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                </AutoSummary>
             )}
 
             {medias.length > 0 && (

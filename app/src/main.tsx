@@ -21,6 +21,7 @@ import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
+import { UrlSummaryProvider } from './contexts/UrlSummary'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
@@ -46,7 +47,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                         <MediaViewerProvider>
                                                             <AudioPlayerProvider>
                                                                 <TickerProvider>
-                                                                    <App />
+                                                                    <UrlSummaryProvider>
+                                                                        <App />
+                                                                    </UrlSummaryProvider>
                                                                 </TickerProvider>
                                                             </AudioPlayerProvider>
                                                         </MediaViewerProvider>

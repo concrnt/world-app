@@ -17,6 +17,7 @@ import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { ConfirmProvider } from './contexts/Confirm'
+import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { WelcomeView } from './views/Welcome'
 import { AppShell } from './pages/App'
 import { HomeView } from './views/Home'
@@ -66,40 +67,45 @@ const AuthedRoutes = () => (
                                 <MediaViewerProvider>
                                     <AudioPlayerProvider>
                                         <TickerProvider>
-                                            <Routes>
-                                                <Route path="/" element={<AppShell />}>
-                                                    <Route index element={<HomeView />} />
-                                                    <Route path="explorer" element={<ExplorerView />} />
-                                                    <Route path="notifications" element={<NotificationsView />} />
-                                                    <Route path="contacts" element={<ContactsView />} />
-                                                    <Route path="settings" element={<SettingsView />} />
-                                                    <Route path="profile/:ccid/:profile?" element={<ProfileRoute />} />
-                                                    <Route path="post/:uri" element={<UriRoute kind="post" />} />
-                                                    <Route
-                                                        path="timeline/:uri"
-                                                        element={<UriRoute kind="timeline" />}
-                                                    />
-                                                    <Route path="lists" element={<ListsView />} />
-                                                    <Route path="lists/:uri" element={<ListsView />} />
-                                                    <Route path="query" element={<QueryView />} />
-                                                    <Route path="dev" element={<DevView />} />
-                                                    <Route path="id" element={<IDView />} />
-                                                    <Route path="activitypub" element={<Activitypub />} />
-                                                    <Route
-                                                        path="activitypub/person/:uri"
-                                                        element={<UriRoute kind="apView" />}
-                                                    />
-                                                    <Route
-                                                        path="activitypub/note/:uri"
-                                                        element={<UriRoute kind="apView" />}
-                                                    />
-                                                    <Route
-                                                        path="activitypub/view/:uri"
-                                                        element={<UriRoute kind="apView" />}
-                                                    />
-                                                    <Route path="*" element={<Navigate to="/" replace />} />
-                                                </Route>
-                                            </Routes>
+                                            <UrlSummaryProvider>
+                                                <Routes>
+                                                    <Route path="/" element={<AppShell />}>
+                                                        <Route index element={<HomeView />} />
+                                                        <Route path="explorer" element={<ExplorerView />} />
+                                                        <Route path="notifications" element={<NotificationsView />} />
+                                                        <Route path="contacts" element={<ContactsView />} />
+                                                        <Route path="settings" element={<SettingsView />} />
+                                                        <Route
+                                                            path="profile/:ccid/:profile?"
+                                                            element={<ProfileRoute />}
+                                                        />
+                                                        <Route path="post/:uri" element={<UriRoute kind="post" />} />
+                                                        <Route
+                                                            path="timeline/:uri"
+                                                            element={<UriRoute kind="timeline" />}
+                                                        />
+                                                        <Route path="lists" element={<ListsView />} />
+                                                        <Route path="lists/:uri" element={<ListsView />} />
+                                                        <Route path="query" element={<QueryView />} />
+                                                        <Route path="dev" element={<DevView />} />
+                                                        <Route path="id" element={<IDView />} />
+                                                        <Route path="activitypub" element={<Activitypub />} />
+                                                        <Route
+                                                            path="activitypub/person/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub/note/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub/view/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route path="*" element={<Navigate to="/" replace />} />
+                                                    </Route>
+                                                </Routes>
+                                            </UrlSummaryProvider>
                                         </TickerProvider>
                                     </AudioPlayerProvider>
                                 </MediaViewerProvider>
