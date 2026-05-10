@@ -20,6 +20,7 @@
     "@rjsf/utils": "^6.4.2",
     "@rjsf/validator-ajv8": "^6.4.2",
     "@types/react-google-recaptcha": "^2.1.9",
+    "blurhash": "^2.0.5",
     "boring-avatars": "^2.0.4",
     "motion": "^12.36.0",
     "react": "^19.2.0",
