@@ -7,6 +7,7 @@ interface Props {
     children?: ReactNode
     leftOverride?: ReactNode
     right?: ReactNode
+    onTitleTap?: () => void
 }
 
 export const Header = (props: Props) => {
@@ -39,8 +40,10 @@ export const Header = (props: Props) => {
                 style={{
                     flexGrow: 1,
                     textAlign: 'center',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    cursor: props.onTitleTap ? 'pointer' : undefined
                 }}
+                onClick={props.onTitleTap}
             >
                 {props.children}
             </div>

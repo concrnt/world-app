@@ -2,7 +2,7 @@ import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, View, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Header } from '../ui/Header'
 import { useDrawer } from '../contexts/Drawer'
 import { MdAdd } from 'react-icons/md'
@@ -14,6 +14,7 @@ export const ExplorerView = () => {
     const drawer = useDrawer()
 
     const [updater, setUpdater] = useState(0)
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     const reload = () => {
         setUpdater((prev) => prev + 1)
@@ -23,6 +24,7 @@ export const ExplorerView = () => {
         <>
             <View>
                 <Header
+                    onTitleTap={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                     right={
                         <Button
                             variant="text"
@@ -44,6 +46,7 @@ export const ExplorerView = () => {
                     Explorer
                 </Header>
                 <div
+                    ref={scrollRef}
                     style={{
                         flex: 1,
                         display: 'flex',

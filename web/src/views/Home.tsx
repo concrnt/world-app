@@ -1,5 +1,5 @@
-import { startTransition, Suspense, useEffect, useState } from 'react'
-import { ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
+import { startTransition, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
@@ -20,6 +20,11 @@ import { useSubscribe } from '../hooks/useSubscribe'
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
     const drawer = useDrawer()
+
+    const scrollRef = useRef<ScrollViewHandle>(null)
+    useImperativeHandle(props.ref, () => ({
+        scrollToTop: () => scrollRef.current?.scrollToTop()
+    }))
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
 
@@ -50,6 +55,7 @@ export const HomeView = (props: ScrollViewProps) => {
         <>
             <View>
                 <Header
+                    onTitleTap={() => scrollRef.current?.scrollToTop()}
                     right={
                         <div
                             style={{
@@ -77,7 +83,7 @@ export const HomeView = (props: ScrollViewProps) => {
                     Home
                 </Header>
                 <Suspense>
-                    <HomeMain ref={props.ref} selectedTabUri={selectedTabUri} setSelectedTabUri={setSelectedTabUri} />
+                    <HomeMain ref={scrollRef} selectedTabUri={selectedTabUri} setSelectedTabUri={setSelectedTabUri} />
                 </Suspense>
             </View>
         </>
