@@ -113,11 +113,38 @@ export class Client {
         const item = await this.api
             .getDocument<PinnedListsSchema>(uri)
             .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
-            .catch((err) => {
+            .catch(async (err) => {
                 if (err instanceof NotFoundError) {
+                    // listから1つ選ぶ
+                    let key = ''
+                    const existingList = await this.api
+                        .query({
+                            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                            schema: Schemas.list,
+                            limit: 1
+                        })
+                        .catch(() => [])
+
+                    if (existingList.length > 0) {
+                        key = existingList[0].cckv
+                    } else {
+                        key = semantics.list(this.ccid, this.currentProfile, Date.now().toString())
+                        const document: Document<ListSchema> = {
+                            key: key,
+                            schema: Schemas.list,
+                            value: {
+                                name: 'home'
+                            },
+                            author: this.ccid,
+                            createdAt: new Date()
+                        }
+
+                        await this.api.commit(document)
+                    }
+
                     const initial = [
                         {
-                            uri: semantics.homeList(this.ccid, this.currentProfile),
+                            uri: key,
                             defaultPostHome: true,
                             defaultPostTimelines: []
                         }
@@ -246,26 +273,6 @@ export class Client {
                 return document
             }
             throw err
-        })
-
-        await List.load(client, semantics.homeList(ccid, profile)).catch((err) => {
-            if (err instanceof NotFoundError) {
-                console.log('Home list not found, creating a new one...')
-                const document: Document<ListSchema> = {
-                    key: semantics.homeList(ccid, profile),
-                    author: ccid,
-                    schema: Schemas.list,
-                    value: {
-                        name: 'Home'
-                    },
-                    createdAt: new Date()
-                }
-                api.commit(document)
-
-                return new List(client, semantics.homeList(ccid, profile), document.value.name)
-            } else {
-                throw err
-            }
         })
 
         await client.pinnedLists.value() // pinnedlistが初期化されるまでブロック

@@ -35,7 +35,7 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
     const [initialized, setInitialized] = useState<boolean>(false)
 
     useEffect(() => {
-        if (!client) return
+        if (!client || !client.api) return
         if (initialized) return
         const isNoloadSettings = localStorage.getItem('noloadsettings')
         if (isNoloadSettings) {

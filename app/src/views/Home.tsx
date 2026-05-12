@@ -25,11 +25,7 @@ export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
     const drawer = useDrawer()
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client.ccid, client.currentProfile))
-
-    useEffect(() => {
-        setSelectedTabUri(semantics.homeList(client.ccid, client.currentProfile))
-    }, [client])
+    const [selectedTabUri, setSelectedTabUri] = useState<string>('')
 
     // fix default settings
     useEffect(() => {
@@ -98,6 +94,12 @@ const HomeMain = ({
     const [pinnedLists] = useSubscribe(client.pinnedLists)
 
     const pin = pinnedLists.find((pin) => pin.uri === selectedTabUri)
+
+    useEffect(() => {
+        if (selectedTabUri === '' && pinnedLists.length > 0) {
+            setSelectedTabUri(pinnedLists[0].uri)
+        }
+    }, [selectedTabUri])
 
     return (
         <>

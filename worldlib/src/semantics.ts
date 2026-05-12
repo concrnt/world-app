@@ -6,7 +6,6 @@ export const semantics = {
     lists: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists`,
     list: (owner: string, profile: string, listId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/lists/${listId}`,
-    homeList: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists/home`,
     homeTimeline: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/home-timeline`,
     notificationTimeline: (owner: string, profile: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/notify-timeline`,
