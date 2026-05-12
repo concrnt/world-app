@@ -15,6 +15,7 @@ import { hapticSuccess } from '../utils/haptics'
 import { MdSend } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
+import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
 
@@ -410,6 +411,16 @@ export const Composer = (props: Props) => {
                                         }}
                                     />
                                 </div>
+                            )}
+
+                            {/* 絵文字サジェスト */}
+                            {props.mode !== 'reroute' && (
+                                <EmojiSuggestion
+                                    textareaRef={textareaRef}
+                                    text={draft}
+                                    setText={setDraft}
+                                    updateEmojiDict={setEmojiDict}
+                                />
                             )}
 
                             {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
