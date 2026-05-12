@@ -20,6 +20,7 @@
 
 ```
 # 開発
+$ pnpm build # 初回に付属ライブラリをビルドしておく必要がある
 $ pnpm tauri android dev
 
 # 本番ビルド
@@ -37,6 +38,7 @@ storeFile=<jksファイルのパス>
 
 ```
 # 開発
+$ pnpm build # 初回に付属ライブラリをビルドしておく必要がある
 $ pnpm tauri ios dev
 # 本番ビルド
 $ pnpm tauri ios build
