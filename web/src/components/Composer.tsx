@@ -47,34 +47,6 @@ export const Composer = (props: Props) => {
     const theme = useTheme()
     const emojiPicker = useEmojiPicker()
 
-    // 手打ちショートコードの自動解決（emojiDictRefで無限ループ回避）
-    const emojiDictRef = useRef(emojiDict)
-    emojiDictRef.current = emojiDict
-
-    useEffect(() => {
-        const shortcodeRegex = /:([\w+-]+):/g
-        const matches = [...draft.matchAll(shortcodeRegex)]
-        if (matches.length === 0) return
-
-        const currentDict = emojiDictRef.current
-        const newEntries: Record<string, { imageURL: string }> = {}
-        for (const match of matches) {
-            const code = match[1]
-            if (currentDict[code]) continue
-            for (const pkg of emojiPicker.packages) {
-                const found = pkg.emojis.find((e) => e.shortcode === code)
-                if (found) {
-                    newEntries[code] = { imageURL: found.imageURL }
-                    break
-                }
-            }
-        }
-
-        if (Object.keys(newEntries).length > 0) {
-            setEmojiDict((prev) => ({ ...prev, ...newEntries }))
-        }
-    }, [draft, emojiPicker.packages])
-
     const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
         'composerViewportHeight',
         visualViewport?.height ?? 0

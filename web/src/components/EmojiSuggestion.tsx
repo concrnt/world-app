@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
+import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
 
 interface Props {
@@ -10,39 +10,19 @@ interface Props {
     updateEmojiDict: React.Dispatch<React.SetStateAction<Record<string, { imageURL: string }>>>
 }
 
-export const EmojiSuggestion = (props: Props) => {
+export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }: Props) => {
     const emojiPicker = useEmojiPicker()
 
     const [cursorPos, setCursorPos] = useState<number>(0)
     const [forceOff, setForceOff] = useState(false)
-
-    // カーソル位置を追跡
-    useEffect(() => {
-        const ta = props.textareaRef.current
-        if (!ta) return
-
-        const updateCursor = () => {
-            setCursorPos(ta.selectionEnd ?? 0)
-            setForceOff(false)
-        }
-
-        ta.addEventListener('input', updateCursor)
-        ta.addEventListener('click', updateCursor)
-        ta.addEventListener('keyup', updateCursor)
-
-        return () => {
-            ta.removeEventListener('input', updateCursor)
-            ta.removeEventListener('click', updateCursor)
-            ta.removeEventListener('keyup', updateCursor)
-        }
-    }, [props.textareaRef])
+    const [selectedIndex, setSelectedIndex] = useState<number>(0)
 
     // カーソル前のテキストから `:query` パターンを検出
     const query = useMemo(() => {
-        const before = props.text.slice(0, cursorPos)
+        const before = text.slice(0, cursorPos)
         const match = /:(\w+)$/.exec(before)
         return match?.[1] ?? null
-    }, [props.text, cursorPos])
+    }, [text, cursorPos])
 
     // 検索結果
     const suggestions = useMemo(() => {
@@ -52,32 +32,108 @@ export const EmojiSuggestion = (props: Props) => {
 
     const showSuggestions = query !== null && suggestions.length > 0 && !forceOff
 
-    const onConfirm = (emoji: Emoji) => {
-        const before = props.text.slice(0, cursorPos)
-        const after = props.text.slice(cursorPos)
-        const colonPos = before.lastIndexOf(':')
-        if (colonPos === -1) return
-
-        const newText = before.slice(0, colonPos) + `:${emoji.shortcode}: ` + after
-        props.setText(newText)
-
-        props.updateEmojiDict((prev) => ({
-            ...prev,
-            [emoji.shortcode]: { imageURL: emoji.imageURL }
-        }))
-
-        setForceOff(true)
-
-        // カーソルを挿入位置の後ろに移動
-        requestAnimationFrame(() => {
-            const ta = props.textareaRef.current
-            if (ta) {
-                const newPos = colonPos + emoji.shortcode.length + 3 // `:shortcode: ` の長さ
-                ta.setSelectionRange(newPos, newPos)
-                ta.focus()
-            }
-        })
+    // query が変わったら選択をリセット（レンダー中のstate調整パターン）
+    const [prevQuery, setPrevQuery] = useState(query)
+    if (query !== prevQuery) {
+        setPrevQuery(query)
+        setSelectedIndex(0)
     }
+
+    const onConfirm = useCallback(
+        (index: number) => {
+            const before = text.slice(0, cursorPos)
+            const after = text.slice(cursorPos)
+            const colonPos = before.lastIndexOf(':')
+            if (colonPos === -1) return
+
+            const emoji = suggestions[index]
+            if (!emoji) return
+
+            const newText = before.slice(0, colonPos) + `:${emoji.shortcode}: ` + after
+            setText(newText)
+            setSelectedIndex(0)
+
+            updateEmojiDict((prev) => ({
+                ...prev,
+                [emoji.shortcode]: { imageURL: emoji.imageURL }
+            }))
+
+            setForceOff(true)
+
+            // カーソルを挿入位置の後ろに移動
+            requestAnimationFrame(() => {
+                const ta = textareaRef.current
+                if (ta) {
+                    const newPos = colonPos + emoji.shortcode.length + 3
+                    ta.setSelectionRange(newPos, newPos)
+                    ta.focus()
+                }
+            })
+        },
+        [text, cursorPos, suggestions, textareaRef, setText, updateEmojiDict]
+    )
+
+    // カーソル位置の追跡
+    useEffect(() => {
+        const ta = textareaRef.current
+        if (!ta) return
+
+        const updateCursor = () => {
+            setCursorPos(ta.selectionEnd ?? 0)
+            setForceOff(false)
+        }
+
+        ta.addEventListener('input', updateCursor)
+        ta.addEventListener('click', updateCursor)
+
+        return () => {
+            ta.removeEventListener('input', updateCursor)
+            ta.removeEventListener('click', updateCursor)
+        }
+    }, [textareaRef])
+
+    // keydown: Enter確定 + 矢印キー移動（サジェスト表示中のみ）
+    const onKeyDown = useCallback(
+        (e: KeyboardEvent) => {
+            setForceOff(false)
+            if (!showSuggestions) return
+
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault()
+                setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length)
+                return
+            }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault()
+                setSelectedIndex((prev) => (prev + 1) % suggestions.length)
+                return
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                onConfirm(selectedIndex)
+            }
+        },
+        [showSuggestions, suggestions.length, selectedIndex, onConfirm]
+    )
+
+    const onBlur = useCallback(() => {
+        setTimeout(() => {
+            setForceOff(true)
+        }, 100)
+    }, [])
+
+    useEffect(() => {
+        const ta = textareaRef.current
+        if (!ta) return
+
+        ta.addEventListener('keydown', onKeyDown)
+        ta.addEventListener('blur', onBlur)
+
+        return () => {
+            ta.removeEventListener('keydown', onKeyDown)
+            ta.removeEventListener('blur', onBlur)
+        }
+    }, [textareaRef, onKeyDown, onBlur])
 
     return (
         <AnimatePresence>
@@ -98,12 +154,12 @@ export const EmojiSuggestion = (props: Props) => {
                             WebkitOverflowScrolling: 'touch'
                         }}
                     >
-                        {suggestions.map((emoji) => (
+                        {suggestions.map((emoji, index) => (
                             <button
                                 key={emoji.shortcode}
                                 onMouseDown={(e) => {
-                                    e.preventDefault() // textareaのblurを防ぐ
-                                    onConfirm(emoji)
+                                    e.preventDefault()
+                                    onConfirm(index)
                                 }}
                                 style={{
                                     display: 'flex',
@@ -111,7 +167,10 @@ export const EmojiSuggestion = (props: Props) => {
                                     alignItems: 'center',
                                     gap: '2px',
                                     padding: CssVar.space(1),
-                                    border: 'none',
+                                    border:
+                                        index === selectedIndex
+                                            ? `2px solid ${CssVar.contentLink}`
+                                            : '2px solid transparent',
                                     background: `rgb(from ${CssVar.contentText} r g b / 0.06)`,
                                     borderRadius: CssVar.round(0.5),
                                     cursor: 'pointer',
