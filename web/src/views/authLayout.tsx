@@ -165,7 +165,7 @@ export const AuthButton = (props: {
             style={{
                 width: '100%',
                 minHeight: 48,
-                color: props.danger ? '#ff5b5b' : CssVar.uiBackground,
+                color: props.danger ? '#ff5b5b' : props.variant === 'outlined' ? CssVar.uiText : CssVar.uiBackground,
                 backgroundColor: props.variant === 'outlined' ? 'transparent' : CssVar.uiText,
                 border: props.variant === 'outlined' ? `1px solid ${props.danger ? '#ff5b5b' : CssVar.uiText}` : 'none',
                 fontSize: '1rem',

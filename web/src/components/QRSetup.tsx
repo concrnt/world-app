@@ -150,35 +150,49 @@ export const QRSetup = () => {
         <div
             style={{
                 display: 'flex',
-                flexDirection: 'row',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                gap: CssVar.space(4),
+                width: '100%',
+                maxWidth: 420,
+                margin: '0 auto'
             }}
         >
-            <div>
-                <div
+            <div
+                style={{
+                    width: 'min(220px, 70vw)',
+                    aspectRatio: '1 / 1',
+                    margin: '0 auto'
+                }}
+            >
+                <QRCode
+                    value={signalURL}
+                    size={500}
+                    ecLevel="L"
+                    quietZone={50}
                     style={{
-                        width: '200px',
-                        height: '200px',
-                        margin: '0 auto'
+                        width: '100%',
+                        height: '100%'
                     }}
-                >
-                    <QRCode
-                        value={signalURL}
-                        size={500}
-                        ecLevel="L"
-                        quietZone={50}
-                        style={{
-                            width: '100%',
-                            height: '100%'
-                        }}
-                        fgColor={'black'}
-                        bgColor={'transparent'}
-                    />
-                </div>
+                    fgColor={'white'}
+                    bgColor={'transparent'}
+                    qrStyle="fluid"
+                    eyeRadius={10}
+                />
             </div>
 
-            <div>
+            <div
+                style={{
+                    width: '100%',
+                    maxWidth: 380,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: CssVar.space(3),
+                    textAlign: 'center'
+                }}
+            >
                 {!ccid && (
                     <Text>
                         Concrntアプリで
@@ -194,7 +208,8 @@ export const QRSetup = () => {
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: CssVar.space(2)
+                            gap: CssVar.space(2),
+                            width: '100%'
                         }}
                     >
                         <Text variant="h4">パスキーを利用しますか？</Text>
@@ -205,7 +220,8 @@ export const QRSetup = () => {
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: CssVar.space(2)
+                                gap: CssVar.space(2),
+                                flexWrap: 'wrap'
                             }}
                         >
                             <Button
@@ -231,10 +247,19 @@ export const QRSetup = () => {
                 )}
 
                 {ccid && domain && !pendingKeyGeneration && (
-                    <div>
+                    <div
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: CssVar.space(2)
+                        }}
+                    >
                         <div
                             style={{
-                                width: '40vw'
+                                width: '100%',
+                                maxWidth: 360
                             }}
                         >
                             <Tilt glareEnable={true} glareBorderRadius="5%">
