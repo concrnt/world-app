@@ -13,16 +13,25 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { CssVar, Divider } from '@concrnt/ui'
+import { Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { RenderError } from './message/RenderError'
 import { Loading } from './message/Loading'
+import { MdArrowUpward } from 'react-icons/md'
+
+interface NewArrivalIcon {
+    id: string
+    author: string
+    src: string
+}
 
 interface Props extends ScrollViewProps {
     timelines: string[]
 }
+
+const SCROLL_HALT_THRESHOLD = 100
 
 export const RealtimeTimeline = (props: Props) => {
     const { client } = useClient()
@@ -39,18 +48,46 @@ export const RealtimeTimeline = (props: Props) => {
     const [hasMoreData, setHasMoreData] = useState<boolean>(false)
     const [initialLoaded, setInitialLoaded] = useState(false)
 
+    /** 新着バッジ用ステート */
+    const [newArrivals, setNewArrivals] = useState<NewArrivalIcon[]>([])
+    const newArrivalsRef = useRef<NewArrivalIcon[]>([])
+
+    // refとstateを同期
+    useEffect(() => {
+        newArrivalsRef.current = newArrivals
+    }, [newArrivals])
+
     useEffect(() => {
         console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
         setInitialLoaded(false)
+        setNewArrivals([])
         const request = async () => {
             if (!client) return
 
             return client.newTimelineReader().then((t) => {
                 if (isCancelled) return
+                t.haltUpdate = false
                 t.onUpdate = () => {
                     startTransition(() => {
                         update()
+                    })
+                }
+
+                t.onNewItem = (item) => {
+                    if (isCancelled) return
+                    if (!t.haltUpdate) return
+                    if (!item.href) return
+
+                    client.getMessage(item.href).then((msg) => {
+                        if (isCancelled) return
+                        if (!msg) return
+                        const icon = msg.authorProfile?.avatar
+                        if (!icon) return
+                        setNewArrivals((prev) => {
+                            if (prev.find((e) => e.src === icon)) return prev
+                            return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
+                        })
                     })
                 }
 
@@ -90,15 +127,24 @@ export const RealtimeTimeline = (props: Props) => {
     const onRefresh = useCallback(async () => {
         if (!reader.current) return
         console.log('Pull to refresh: reloading timeline')
+        setNewArrivals([])
         setIsFetching(true)
         try {
             await reader.current.reload()
-            // リロード完了後に少し待機して、ユーザーにフィードバックを見せる
             await new Promise((resolve) => setTimeout(resolve, 500))
         } finally {
             setIsFetching(false)
         }
     }, [reader])
+
+    /** 新着バッジクリック時の処理 */
+    const handleNewArrivalClick = useCallback(() => {
+        setNewArrivals([])
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        onRefresh()
+    }, [onRefresh])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -108,6 +154,11 @@ export const RealtimeTimeline = (props: Props) => {
         const handleScroll = () => {
             // PullToRefresh用にスクロール位置を記録
             scrollPositionRef.current = el.scrollTop
+
+            // haltUpdate制御：スクロールが閾値を超えたら自動更新を停止
+            if (reader.current) {
+                reader.current.haltUpdate = el.scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
+            }
 
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
                 if (loadingRef.current) return
@@ -141,65 +192,166 @@ export const RealtimeTimeline = (props: Props) => {
         }
     }, [scrollRef, reader, hasMoreData, initialLoaded])
 
+    const maxDisplayAvatars = 4
+    const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
+    const extraCount = newArrivals.length - maxDisplayAvatars
+
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
             <div
                 style={{
+                    position: 'relative',
                     display: 'flex',
+                    flex: 1,
                     flexDirection: 'column',
-                    gap: '8px',
-                    padding: '8px 0',
-                    overflowX: 'hidden',
-                    overflowY: 'auto',
-                    overscrollBehaviorY: 'none'
+                    overflow: 'hidden'
                 }}
-                ref={scrollRef}
             >
-                {!initialLoaded &&
-                    Array.from({ length: 10 }).map((_, i) => (
-                        <div key={i} style={{ padding: `0 ${CssVar.space(2)}` }}>
-                            <MessageSkeleton />
-                        </div>
-                    ))}
-                {reader.current?.body.map((item) => (
-                    <Fragment key={item.timestamp.getTime() ?? item.href}>
-                        <ErrorBoundary FallbackComponent={RenderError}>
-                            <div
-                                style={{
-                                    padding: `0 ${CssVar.space(2)}`,
-                                    contentVisibility: 'auto'
-                                }}
-                            >
-                                <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
-                                    <MessageContainer
-                                        uri={item.href}
-                                        source={item.source}
-                                        lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                                        content={item.content}
-                                    />
-                                </Suspense>
-                            </div>
-                        </ErrorBoundary>
-                        <Divider />
-                    </Fragment>
-                ))}
-                {loading && <Loading message={'Loading...'} />}
-                {!hasMoreData && (
-                    <div
+                {/* 新着バッジ */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: 0,
+                        right: 0,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                        transition: 'opacity 0.2s ease, transform 0.2s ease',
+                        opacity: newArrivals.length > 0 ? 1 : 0,
+                        transform: newArrivals.length > 0 ? 'scale(1)' : 'scale(0.8)'
+                    }}
+                >
+                    <button
+                        onClick={handleNewArrivalClick}
                         style={{
-                            padding: '8px',
-                            fontSize: '12px',
-                            color: '#888',
-                            width: '100%',
-                            height: '100px',
+                            pointerEvents: newArrivals.length > 0 ? 'auto' : 'none',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            gap: '4px',
+                            padding: '4px 12px',
+                            border: 'none',
+                            borderRadius: '100px',
+                            backgroundColor: CssVar.contentLink,
+                            color: '#fff',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            fontSize: '14px'
                         }}
                     >
-                        -- End of Timeline --
-                    </div>
-                )}
+                        <MdArrowUpward size={16} />
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {displayedArrivals.map((item, i) => (
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        marginLeft: i > 0 ? '-6px' : '0',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: '1.5px solid #fff',
+                                        width: '22px',
+                                        height: '22px',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    <Avatar
+                                        ccid={item.author}
+                                        src={item.src}
+                                        style={{
+                                            width: '22px',
+                                            height: '22px',
+                                            borderRadius: '50%'
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                            {extraCount > 0 && (
+                                <div
+                                    style={{
+                                        marginLeft: '-6px',
+                                        width: '22px',
+                                        height: '22px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'rgba(255,255,255,0.3)',
+                                        border: '1.5px solid #fff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        color: '#fff',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    +{extraCount}
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                </div>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        padding: '8px 0',
+                        overflowX: 'hidden',
+                        overflowY: 'auto',
+                        overscrollBehaviorY: 'none'
+                    }}
+                    ref={scrollRef}
+                >
+                    {!initialLoaded &&
+                        Array.from({ length: 10 }).map((_, i) => (
+                            <div key={i} style={{ padding: `0 ${CssVar.space(2)}` }}>
+                                <MessageSkeleton />
+                            </div>
+                        ))}
+                    {reader.current?.body.map((item) => (
+                        <Fragment key={item.timestamp.getTime() ?? item.href}>
+                            <ErrorBoundary FallbackComponent={RenderError}>
+                                <div
+                                    style={{
+                                        padding: `0 ${CssVar.space(2)}`,
+                                        contentVisibility: 'auto'
+                                    }}
+                                >
+                                    <Suspense
+                                        key={item.timestamp.getTime() ?? item.href}
+                                        fallback={<MessageSkeleton />}
+                                    >
+                                        <MessageContainer
+                                            uri={item.href}
+                                            source={item.source}
+                                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
+                                            content={item.content}
+                                        />
+                                    </Suspense>
+                                </div>
+                            </ErrorBoundary>
+                            <Divider />
+                        </Fragment>
+                    ))}
+                    {loading && <Loading message={'Loading...'} />}
+                    {!hasMoreData && (
+                        <div
+                            style={{
+                                padding: '8px',
+                                fontSize: '12px',
+                                color: '#888',
+                                width: '100%',
+                                height: '100px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            -- End of Timeline --
+                        </div>
+                    )}
+                </div>
             </div>
         </PullToRefresh>
     )
