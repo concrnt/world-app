@@ -130,7 +130,8 @@ export const DrawerProvider = (props: Props) => {
                                     display: 'flex',
                                     justifyContent: 'center',
                                     padding: `${CssVar.space(3)} 0`,
-                                    position: 'relative'
+                                    position: 'relative',
+                                    touchAction: 'none'
                                 }}
                                 onPointerDown={(e) => {
                                     dragControls.start(e)
