@@ -27,14 +27,14 @@ export interface Document<T> {
     associate?: string
     associationVariant?: string
 
-    policy?: PolicySet
-}
-
-interface PolicySet {
-    entries: Policy[]
+    policy?: Policy
 }
 
 export interface Policy {
+    entries: PolicyEntry[]
+}
+
+export interface PolicyEntry {
     url: string
     params?: any
     defaults?: Record<string, string>

@@ -10,6 +10,8 @@ import { WidgetProps } from '@rjsf/utils'
 import { TextareaWidget } from './TextAreaWidget'
 import { SelectWidget } from './SelectWidget'
 import { CheckboxWidget } from './CheckboxWidget'
+import { MediaInputWidget } from './MediaInputWidget'
+import { UserPickerWidget } from './UserPickerWidget'
 
 interface Props {
     schemaURL?: string
@@ -39,7 +41,9 @@ const widgets = {
     URLWidget: TextWidget,
     TextareaWidget,
     SelectWidget,
-    CheckboxWidget
+    CheckboxWidget,
+    mediaInput: MediaInputWidget,
+    userPicker: UserPickerWidget
 }
 
 export const CCEditor = (props: Props) => {
@@ -92,7 +96,10 @@ export const CCEditor = (props: Props) => {
                         schema={schema}
                         validator={validator}
                         formData={props.value}
-                        uiSchema={uiSchema}
+                        uiSchema={{
+                            ...uiSchema,
+                            ...schema.ui
+                        }}
                         widgets={widgets}
                         onChange={(e) => {
                             const errors = validator.rawValidation(schema, e.formData).errors
@@ -113,16 +120,14 @@ export const CCEditor = (props: Props) => {
                         </Button>
                     </Form>
                     <style>{`
-                        .cc-editor-form {
-                            display: flex;
-                            flex-direction: column;
-                            gap: ${CssVar.space(3)};
-                        }
                         .cc-editor-form fieldset {
                             border: none;
                             padding: 0;
                             margin: 0;
                             min-width: 0;
+                            display: flex;
+                            flex-direction: column;
+                            gap: ${CssVar.space(4)};
                         }
                     `}</style>
                 </>

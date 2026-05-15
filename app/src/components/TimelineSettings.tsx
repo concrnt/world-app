@@ -1,4 +1,4 @@
-import { Document } from '@concrnt/client'
+import { Document, Policy } from '@concrnt/client'
 import { Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
 import { Button, CCWallpaper, CssVar, Tab, Tabs, TextField } from '@concrnt/ui'
@@ -7,6 +7,7 @@ import { useClient } from '../contexts/Client'
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { Subscription } from './Subscription'
 import { CCEditor } from './CCEditor'
+import { PolicyEditor } from './PolicyEditor'
 
 interface Props {
     uri: string
@@ -94,8 +95,14 @@ const Inner = (props: InnerProps) => {
                     <Text>Settings</Text>
                 </Tab>
             </Tabs>
-            {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
-            {tab === 'settings' && <TimelineEditor timeline={timeline} />}
+            <div
+                style={{
+                    padding: CssVar.space(2)
+                }}
+            >
+                {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
+                {tab === 'settings' && <TimelineEditor timeline={timeline} />}
+            </div>
         </div>
     )
 }
@@ -108,16 +115,26 @@ const TimelineEditor = (props: EditorProps) => {
     const { client } = useClient()
     const [schemaDraft, setSchemaDraft] = useState<string>()
     const [valueDraft, setValueDraft] = useState<any>()
+    const [policyDraft, setPolicyDraft] = useState<Policy>()
     const [key, setKey] = useState<string>()
 
     useEffect(() => {
-        client.api.getDocument<any>(props.timeline.uri).then((timeline) => {
-            if (timeline) {
+        client.api
+            .getDocument<any>(props.timeline.uri)
+            .then((timeline) => {
+                if (!timeline) throw new Error('Timeline document not found')
                 setKey(timeline.key)
                 setValueDraft(timeline.value)
                 setSchemaDraft(timeline.schema)
-            }
-        })
+                setPolicyDraft(timeline.policy)
+            })
+            .catch((e) => {
+                console.error(e)
+                setKey(undefined)
+                setValueDraft(undefined)
+                setSchemaDraft(undefined)
+                setPolicyDraft(undefined)
+            })
     }, [props.timeline])
 
     const handleSave = () => {
@@ -133,7 +150,13 @@ const TimelineEditor = (props: EditorProps) => {
     }
 
     return (
-        <>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4)
+            }}
+        >
             <Text variant="h3">スキーマ</Text>
             <TextField
                 // error={!schemaDraft?.startsWith('https://')}
@@ -153,7 +176,10 @@ const TimelineEditor = (props: EditorProps) => {
                     }}
                 />
             </div>
+            <Text variant="h3">Policy</Text>
+            <PolicyEditor policy={policyDraft} setPolicy={setPolicyDraft} />
+
             <Button onClick={handleSave}>Save</Button>
-        </>
+        </div>
     )
 }

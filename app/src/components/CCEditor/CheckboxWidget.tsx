@@ -4,6 +4,8 @@ import type { WidgetProps } from '@rjsf/utils'
 export const CheckboxWidget = (props: WidgetProps) => {
     const { id, value, disabled, readonly, label, onChange, onBlur, onFocus } = props
 
+    console.log('CheckboxWidgetProps', props)
+
     return (
         <label
             htmlFor={id}
@@ -22,7 +24,7 @@ export const CheckboxWidget = (props: WidgetProps) => {
                 onBlur={(e) => onBlur(id, e.target.checked)}
                 onFocus={(e) => onFocus(id, e.target.checked)}
             />
-            <Text style={{ color: CssVar.uiText }}>{label}</Text>
+            <Text>{label}</Text>
         </label>
     )
 }

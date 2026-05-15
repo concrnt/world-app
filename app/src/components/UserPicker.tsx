@@ -11,6 +11,8 @@ import { hapticSelection } from '../utils/haptics'
 import { User } from '@concrnt/worldlib'
 import { useSubscribe } from '../hooks/useSubscribe'
 
+import { IoIosCloseCircle } from 'react-icons/io'
+
 interface Props {
     selected: string[]
     setSelected: (selected: string[]) => void
@@ -193,7 +195,15 @@ const UserChipBody = (props: BodyProps) => {
                     }}
                 />
             }
-            onClick={props.onClick}
+            tailElement={
+                <IoIosCloseCircle
+                    size={16}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        props.onClick()
+                    }}
+                />
+            }
         >
             {user.profile.username}
         </Chip>
