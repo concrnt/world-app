@@ -1,9 +1,12 @@
-import { CCWallpaper, CssVar } from '@concrnt/ui'
-import { useClient } from '../contexts/Client'
-import { Suspense, use, useMemo } from 'react'
+import { Document } from '@concrnt/client'
 import { Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
+import { Button, CCWallpaper, CssVar, Tab, Tabs, TextField } from '@concrnt/ui'
+
+import { useClient } from '../contexts/Client'
+import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { Subscription } from './Subscription'
+import { CCEditor } from './CCEditor'
 
 interface Props {
     uri: string
@@ -27,6 +30,8 @@ interface InnerProps {
 
 const Inner = (props: InnerProps) => {
     const timeline = use(props.timelinePromise)
+
+    const [tab, setTab] = useState<'subscriptions' | 'settings'>('subscriptions')
 
     if (!timeline) {
         return <>Timeline not found.</>
@@ -67,7 +72,88 @@ const Inner = (props: InnerProps) => {
                     </div>
                 </div>
             </CCWallpaper>
-            <Subscription target={timeline.uri} />
+            <Tabs>
+                <Tab
+                    selected={tab === 'subscriptions'}
+                    onClick={() => setTab('subscriptions')}
+                    groupId="timeline-settings"
+                    style={{
+                        color: CssVar.contentText
+                    }}
+                >
+                    <Text>Subscriptions</Text>
+                </Tab>
+                <Tab
+                    selected={tab === 'settings'}
+                    onClick={() => setTab('settings')}
+                    groupId="timeline-settings"
+                    style={{
+                        color: CssVar.contentText
+                    }}
+                >
+                    <Text>Settings</Text>
+                </Tab>
+            </Tabs>
+            {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
+            {tab === 'settings' && <TimelineEditor timeline={timeline} />}
         </div>
+    )
+}
+
+interface EditorProps {
+    timeline: Timeline
+}
+
+const TimelineEditor = (props: EditorProps) => {
+    const { client } = useClient()
+    const [schemaDraft, setSchemaDraft] = useState<string>()
+    const [valueDraft, setValueDraft] = useState<any>()
+    const [key, setKey] = useState<string>()
+
+    useEffect(() => {
+        client.api.getDocument<any>(props.timeline.uri).then((timeline) => {
+            if (timeline) {
+                setKey(timeline.key)
+                setValueDraft(timeline.value)
+                setSchemaDraft(timeline.schema)
+            }
+        })
+    }, [props.timeline])
+
+    const handleSave = () => {
+        if (!key || !schemaDraft) return
+        const document: Document<any> = {
+            key: key,
+            schema: schemaDraft,
+            value: valueDraft,
+            author: client.ccid,
+            createdAt: new Date()
+        }
+        client.api.commit(document)
+    }
+
+    return (
+        <>
+            <Text variant="h3">スキーマ</Text>
+            <TextField
+                // error={!schemaDraft?.startsWith('https://')}
+                // helperText={t('schemaDesc')}
+                value={schemaDraft}
+                onChange={(e) => {
+                    setSchemaDraft(e.target.value)
+                }}
+            />
+            <div>
+                <Text variant="h3">属性</Text>
+                <CCEditor
+                    schemaURL={schemaDraft}
+                    value={valueDraft}
+                    setValue={(e) => {
+                        setValueDraft(e)
+                    }}
+                />
+            </div>
+            <Button onClick={handleSave}>Save</Button>
+        </>
     )
 }
