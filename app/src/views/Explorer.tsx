@@ -27,6 +27,7 @@ export const ExplorerView = () => {
                         flexDirection: 'column',
                         gap: CssVar.space(2),
                         padding: CssVar.space(2),
+                        paddingBottom: '7rem',
                         overflowY: 'auto'
                     }}
                 >

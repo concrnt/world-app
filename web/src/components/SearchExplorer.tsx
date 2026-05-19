@@ -3,7 +3,7 @@ import { Text, TextField, CCWallpaper, Avatar, IconButton, Tab, Tabs, useTheme }
 import { CssVar } from '../types/Theme'
 import { useDrawer } from '../contexts/Drawer'
 import { Subscription } from './Subscription'
-import { MdPlaylistAdd, MdCasino } from 'react-icons/md'
+import { MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 
 // Crawler API base URL
@@ -61,7 +61,6 @@ export const SearchExplorer = () => {
     const [users, setUsers] = useState<UserHit[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [shuffleSeed, setShuffleSeed] = useState(0)
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const fetchData = useCallback(async (currentTab: TabType, currentQuery: string) => {
@@ -73,12 +72,12 @@ export const SearchExplorer = () => {
                 const res = await fetch(`${CRAWLER_URL}/api/v1/search/communities?q=${q}&limit=20`)
                 if (!res.ok) throw new Error(`HTTP ${res.status}`)
                 const data: SearchResponse<CommunityHit> = await res.json()
-                setCommunities(currentQuery === '' ? shuffleArray(data.hits) : data.hits)
+                setCommunities(data.hits)
             } else {
                 const res = await fetch(`${CRAWLER_URL}/api/v1/search/users?q=${q}&limit=20`)
                 if (!res.ok) throw new Error(`HTTP ${res.status}`)
                 const data: SearchResponse<UserHit> = await res.json()
-                setUsers(currentQuery === '' ? shuffleArray(data.hits) : data.hits)
+                setUsers(data.hits)
             }
         } catch {
             setError('検索サービスに接続できませんでした')
@@ -95,11 +94,7 @@ export const SearchExplorer = () => {
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current)
         }
-    }, [query, tab, shuffleSeed, fetchData])
-
-    const handleShuffle = () => {
-        setShuffleSeed((s) => s + 1)
-    }
+    }, [query, tab, fetchData])
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -151,30 +146,6 @@ export const SearchExplorer = () => {
             ) : (
                 <UserResultList users={users} />
             )}
-
-            {/* シャッフルボタン（空クエリ時のみ表示） */}
-            {!query && !loading && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: CssVar.space(2) }}>
-                    <button
-                        onClick={handleShuffle}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: CssVar.space(1),
-                            padding: `${CssVar.space(2)} ${CssVar.space(4)}`,
-                            borderRadius: CssVar.round(2),
-                            border: `1px solid ${CssVar.divider}`,
-                            backgroundColor: 'transparent',
-                            color: CssVar.contentText,
-                            cursor: 'pointer',
-                            fontSize: '0.9rem'
-                        }}
-                    >
-                        <MdCasino size={18} />
-                        シャッフル
-                    </button>
-                </div>
-            )}
         </div>
     )
 }
@@ -219,14 +190,7 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                 <Text variant="h4" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {community.name}
                 </Text>
-                <Text
-                    style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        opacity: 0.7
-                    }}
-                >
+                <Text style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.7 }}>
                     {community.description}
                 </Text>
                 {community.sourceServer && (
@@ -294,14 +258,7 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
                     <Text variant="h4" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {user.username ?? 'Anonymous'}
                     </Text>
-                    <Text
-                        style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            opacity: 0.7
-                        }}
-                    >
+                    <Text style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.7 }}>
                         {user.description}
                     </Text>
                     {user.sourceServer && (
@@ -313,15 +270,4 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
             </div>
         </div>
     )
-}
-
-// ─── Util ─────────────────────────────────────────────────────────────────────
-
-function shuffleArray<T>(arr: T[]): T[] {
-    const a = [...arr]
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[a[i], a[j]] = [a[j], a[i]]
-    }
-    return a
 }
