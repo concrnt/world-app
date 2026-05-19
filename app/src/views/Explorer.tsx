@@ -8,18 +8,12 @@ import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
-import { ClassicExplorer } from '../components/ClassicExplorer'
+import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()
-
-    const [updater, setUpdater] = useState(0)
     const scrollRef = useRef<HTMLDivElement>(null)
-
-    const reload = () => {
-        setUpdater((prev) => prev + 1)
-    }
 
     return (
         <>
@@ -33,10 +27,11 @@ export const ExplorerView = () => {
                         flexDirection: 'column',
                         gap: CssVar.space(2),
                         padding: CssVar.space(2),
+                        paddingBottom: '7rem',
                         overflowY: 'auto'
                     }}
                 >
-                    <ClassicExplorer updater={updater} />
+                    <SearchExplorer />
                 </div>
             </View>
             <FAB
@@ -46,7 +41,6 @@ export const ExplorerView = () => {
                         <CommunityCreator
                             onComplete={() => {
                                 drawer.close()
-                                reload()
                             }}
                         />
                     )
@@ -60,16 +54,12 @@ export const ExplorerView = () => {
 
 const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
     const [communityName, setCommunityName] = useState('')
-
     const [communityDescription, setCommunityDescription] = useState('')
-
     const { client } = useClient()
 
     const createCommunity = async (value: CommunityTimelineSchema) => {
         if (!client) return
-
         const key = Date.now().toString()
-
         const document: Document<CommunityTimelineSchema> = {
             key: semantics.community(client.server.domain, key),
             schema: Schemas.communityTimeline,
@@ -84,7 +74,6 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
                 ]
             }
         }
-
         await client.api.commit(document)
         console.log('Community created')
     }
