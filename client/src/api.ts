@@ -46,6 +46,7 @@ export class Api {
     defaultCacheTTL: number = Infinity
     negativeCacheTTL: number = 300
     tokens: Record<string, string> = {}
+    self: SignedDocument | null = null
 
     onResourceUpdated?: (id: string) => void
 
@@ -570,11 +571,19 @@ export class Api {
         let signedDoc: Partial<SignedDocument> | undefined
 
         let references = undefined
+        const ccid = this.authProvider.getCCID()
+        if (!this.self) {
+            this.self = await this.getResource<SignedDocument>(`cckv://${ccid}`)
+            console.log('fetched self document for reference resolution', this.self)
+        }
+        references = this.self ? { [`cckv://${ccid}`]: this.self } : undefined
+
         if (document.schema === 'https://schema.concrnt.net/reference.json') {
             const ref = document.value as unknown as { href: string }
             if (ref.href.startsWith('cckv://') || ref.href.startsWith('ccfs://')) {
                 const target = await this.getResource<SignedDocument>(ref.href)
                 references = {
+                    ...references,
                     [ref.href]: target
                 }
             }
