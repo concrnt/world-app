@@ -7,7 +7,7 @@ import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
-import { ComposerMode } from '../contexts/Composer'
+import { ComposerMode, DraftBuffer } from '../contexts/Composer'
 import { MdImage, MdClose } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
@@ -31,16 +31,25 @@ interface Props {
     options: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
+    draftBuffer?: DraftBuffer | null
+    onSaveDraft?: (buf: DraftBuffer) => void
+    onClearDraft?: () => void
 }
 
 export const Composer = (props: Props) => {
     const { client } = useClient()
     const [willClose, setWillClose] = useState<boolean>(false)
-    const [draft, setDraft] = useState<string>('')
-    const [postHome, setPostHome] = useState<boolean>(true)
-    const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>([])
+    const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
+    const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
+    const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>(() => {
+        if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
+        return props.draftBuffer.mediaDrafts.map((m) => ({
+            file: m.file,
+            previewUrl: m.file.type.startsWith('image/') ? URL.createObjectURL(m.file) : undefined
+        }))
+    })
     const [uploading, setUploading] = useState<boolean>(false)
-    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>({})
+    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>(props.draftBuffer?.emojiDict ?? {})
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -274,7 +283,10 @@ export const Composer = (props: Props) => {
             setUploading(false)
         }
 
-        if (success) hapticSuccess()
+        if (success) {
+            hapticSuccess()
+            props.onClearDraft?.()
+        }
         setWillClose(true)
     }
 
@@ -333,6 +345,12 @@ export const Composer = (props: Props) => {
                                 <Button
                                     variant="text"
                                     onClick={() => {
+                                        props.onSaveDraft?.({
+                                            draftText: draft,
+                                            mediaDrafts: mediaDrafts.map((m) => ({ file: m.file })),
+                                            emojiDict,
+                                            postHome
+                                        })
                                         setWillClose(true)
                                     }}
                                     style={{

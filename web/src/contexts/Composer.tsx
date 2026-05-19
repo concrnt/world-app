@@ -6,6 +6,13 @@ import { useSubscribe } from '../hooks/useSubscribe'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
+export interface DraftBuffer {
+    draftText: string
+    mediaDrafts: Array<{ file: File }>
+    emojiDict: Record<string, { imageURL: string }>
+    postHome: boolean
+}
+
 interface ComposerContextState {
     open: (destinations: string[], options?: Timeline[], mode?: ComposerMode, targetMessage?: Message<any>) => void
     close: () => void
@@ -28,6 +35,7 @@ export const ComposerProvider = (props: Props) => {
     const [options, setOptions] = useState<Timeline[]>([])
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
+    const [draftBuffer, setDraftBuffer] = useState<DraftBuffer | null>(null)
 
     const [knownCommunities] = useSubscribe(client.knownCommunities)
 
@@ -84,6 +92,9 @@ export const ComposerProvider = (props: Props) => {
                             options={options}
                             mode={mode}
                             targetMessage={targetMessage}
+                            draftBuffer={mode === 'normal' ? draftBuffer : null}
+                            onSaveDraft={setDraftBuffer}
+                            onClearDraft={() => setDraftBuffer(null)}
                         />
                     </div>
                 )}
