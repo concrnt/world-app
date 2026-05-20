@@ -26,7 +26,11 @@ export const AcknowledgeButton = (props: Props) => {
     }
 
     return (
-        <Button variant={acknowledged ? 'outlined' : 'contained'} onClick={handleClick}>
+        <Button
+            variant={acknowledged ? 'outlined' : 'contained'}
+            onClick={handleClick}
+            style={{ borderRadius: '999px' }}
+        >
             {acknowledged ? 'フォロー中' : 'フォロー'}
         </Button>
     )

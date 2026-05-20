@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Document } from '@concrnt/client'
-import { Avatar, Button, CCWallpaper, Checkbox, Text, TextField } from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, Switch, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
@@ -164,7 +164,7 @@ export const ProfileEditor = (props: Props) => {
                 }}
             >
                 <Text>アカウントを非公開にする</Text>
-                <Checkbox
+                <Switch
                     checked={restricted}
                     onChange={(c) => {
                         setRestricted(c)

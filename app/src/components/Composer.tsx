@@ -8,7 +8,7 @@ import { Timeline } from '@concrnt/worldlib'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
 import { ComposerMode, DraftBuffer } from '../contexts/Composer'
-import { MdImage, MdClose } from 'react-icons/md'
+import { MdImage, MdClose, MdVisibilityOff, MdDeleteOutline } from 'react-icons/md'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
 import { hapticSuccess } from '../utils/haptics'
@@ -543,8 +543,8 @@ export const Composer = (props: Props) => {
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {/* 画像添付ボタン（通常投稿モードのみ） */}
-                                    {props.mode === 'normal' && (
+                                    {/* 画像添付ボタン（リルート以外） */}
+                                    {props.mode !== 'reroute' && (
                                         <IconButton onClick={() => fileInputRef.current?.click()}>
                                             <MdImage size={24} />
                                         </IconButton>
@@ -573,6 +573,46 @@ export const Composer = (props: Props) => {
                                             }}
                                         >
                                             <MdEmojiEmotions size={24} />
+                                        </IconButton>
+                                    )}
+                                    {/* detailsタグ挿入ボタン（リルート以外） */}
+                                    {props.mode !== 'reroute' && (
+                                        <IconButton
+                                            onClick={() => {
+                                                const insert =
+                                                    '<details><summary>タップして表示</summary>\n\n</details>'
+                                                const ta = textareaRef.current
+                                                if (ta) {
+                                                    const start = ta.selectionStart
+                                                    const end = ta.selectionEnd
+                                                    const newDraft = draft.slice(0, start) + insert + draft.slice(end)
+                                                    setDraft(newDraft)
+                                                    requestAnimationFrame(() => {
+                                                        const cursorPos = start + insert.indexOf('\n\n') + 1
+                                                        ta.setSelectionRange(cursorPos, cursorPos)
+                                                        ta.focus()
+                                                    })
+                                                } else {
+                                                    setDraft((prev) => prev + insert)
+                                                }
+                                            }}
+                                        >
+                                            <MdVisibilityOff size={24} />
+                                        </IconButton>
+                                    )}
+                                    {/* ゴミ箱ボタン（リルート以外） */}
+                                    {props.mode !== 'reroute' && (
+                                        <IconButton
+                                            disabled={draft.length === 0 && mediaDrafts.length === 0}
+                                            onClick={() => {
+                                                setDraft('')
+                                                mediaDrafts.forEach((m) => {
+                                                    if (m.previewUrl) URL.revokeObjectURL(m.previewUrl)
+                                                })
+                                                setMediaDrafts([])
+                                            }}
+                                        >
+                                            <MdDeleteOutline size={24} />
                                         </IconButton>
                                     )}
                                 </div>

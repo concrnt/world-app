@@ -1,5 +1,6 @@
 import { View, Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { Header } from '../ui/Header'
+import { CssVar } from '../types/Theme'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { NotFoundError } from '@concrnt/client'
@@ -94,65 +95,69 @@ export const Activitypub = () => {
     return (
         <View>
             <Header>Activitypub設定</Header>
-            {settings === undefined && <p>読み込み中...</p>}
-            {settings === null && (
-                <div>
-                    <Text>Activitypub連携を有効化しましょう</Text>
-                    <Text>連携を有効化すると、Activitypub対応のSNSと繋がることができます。</Text>
-
-                    <Text>希望のID</Text>
-                    <TextField value={idDraft} onChange={(e) => setIDDraft(e.target.value)} />
-
-                    <Button
-                        disabled={!idOk}
-                        onClick={() => {
-                            client.api
-                                .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/setup', {
-                                    method: 'POST',
-                                    body: JSON.stringify({
-                                        id: idDraft
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(2),
+                    padding: CssVar.space(2)
+                }}
+            >
+                {settings === undefined && <Text>読み込み中...</Text>}
+                {settings === null && (
+                    <>
+                        <Text>Activitypub連携を有効化しましょう</Text>
+                        <Text>連携を有効化すると、Activitypub対応のSNSと繋がることができます。</Text>
+                        <Text>希望のID</Text>
+                        <TextField value={idDraft} onChange={(e) => setIDDraft(e.target.value)} />
+                        <Button
+                            disabled={!idOk}
+                            onClick={() => {
+                                client.api
+                                    .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/setup', {
+                                        method: 'POST',
+                                        body: JSON.stringify({
+                                            id: idDraft
+                                        })
                                     })
-                                })
-                                .then((res) => {
-                                    setSettings(res)
-                                })
-                                .catch((err) => {
-                                    console.log(err)
-                                })
-                        }}
-                    >
-                        有効化
-                    </Button>
-                </div>
-            )}
-            {settings && (
-                <div>
-                    <Text>Activitypub連携は有効化されています。</Text>
-                    <Text>あなたのID: {settings.id}</Text>
-
-                    <Divider />
-
-                    <IconButton
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            drawer.open(
-                                <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
-                            )
-                        }}
-                    >
-                        <MdPlaylistAdd size={24} />
-                    </IconButton>
-
-                    <TextField value={lookupDraft} onChange={(e) => setLookupDraft(e.target.value)} />
-                    <Button
-                        onClick={() => {
-                            navigate('/activitypub/view/' + encodeURIComponent(lookupDraft))
-                        }}
-                    >
-                        照会
-                    </Button>
-                </div>
-            )}
+                                    .then((res) => {
+                                        setSettings(res)
+                                    })
+                                    .catch((err) => {
+                                        console.log(err)
+                                    })
+                            }}
+                        >
+                            有効化
+                        </Button>
+                    </>
+                )}
+                {settings && (
+                    <>
+                        <Text>Activitypub連携は有効化されています。</Text>
+                        <Text>あなたのID: {settings.id}</Text>
+                        <Divider />
+                        <IconButton
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                drawer.open(
+                                    <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
+                                )
+                            }}
+                        >
+                            <MdPlaylistAdd size={24} />
+                        </IconButton>
+                        <TextField value={lookupDraft} onChange={(e) => setLookupDraft(e.target.value)} />
+                        <Button
+                            onClick={() => {
+                                navigate('/activitypub/view/' + encodeURIComponent(lookupDraft))
+                            }}
+                        >
+                            照会
+                        </Button>
+                    </>
+                )}
+            </div>
         </View>
     )
 }

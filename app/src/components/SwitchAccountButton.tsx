@@ -22,10 +22,14 @@ export const SwitchAccountButton = (): ReactNode => {
             result.push(
                 <ListItem
                     key={key}
-                    style={{
-                        height: '2rem'
-                    }}
-                    icon={<Avatar ccid={profile.author} src={profile.value.avatar} />}
+                    style={{ marginBottom: CssVar.space(1) }}
+                    icon={
+                        <Avatar
+                            ccid={profile.author}
+                            src={profile.value.avatar}
+                            style={{ width: '32px', height: '32px' }}
+                        />
+                    }
                     onClick={() => {
                         console.log('Switching account to', key)
                         reload(key)
@@ -37,7 +41,7 @@ export const SwitchAccountButton = (): ReactNode => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: CssVar.space(1)
+                            paddingLeft: CssVar.space(2)
                         }}
                     >
                         <Text>
@@ -51,10 +55,7 @@ export const SwitchAccountButton = (): ReactNode => {
         result.push(
             <ListItem
                 key={'$add'}
-                style={{
-                    height: '2rem'
-                }}
-                icon={<MdPersonAdd size={20} />}
+                icon={<MdPersonAdd size={24} />}
                 onClick={() => {
                     drawer.open(
                         <ProfileEditor

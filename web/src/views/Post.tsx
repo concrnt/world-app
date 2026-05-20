@@ -1,17 +1,24 @@
 import { MessageContainer } from '../components/message'
-import { Avatar, Divider, Tabs, Tab, Text, View } from '@concrnt/ui'
+import { Avatar, Button, Divider, IconButton, Tabs, Tab, Text, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { MdAddReaction, MdSend, MdImage, MdEmojiEmotions, MdVisibilityOff, MdDeleteOutline } from 'react-icons/md'
+import { Suspense, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useClient } from '../contexts/Client'
+import { CDID } from '@concrnt/client'
 import {
     Association,
     LikeAssociationSchema,
+    Message,
     ReactionAssociationSchema,
     ReplyAssociationSchema,
     RerouteAssociationSchema,
     Schemas,
+    semantics,
     User
 } from '@concrnt/worldlib'
+import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
+import { hapticSuccess } from '../utils/haptics'
+import { uploadImage } from '../utils/uploadImage'
 import { CssVar } from '../types/Theme'
 import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
@@ -26,7 +33,9 @@ interface Props {
 export const PostView = (props: Props) => {
     const { client } = useClient()
     const navigate = useNavigate()
+    const emojiPicker = useEmojiPicker()
     const [tab, setTab] = useState<PostTab>('replies')
+    const [message, setMessage] = useState<Message<any> | null>(null)
 
     // --- Replies / Reroutes / Favorites ---
     const [replies, setReplies] = useState<Association<ReplyAssociationSchema>[]>([])
@@ -44,6 +53,10 @@ export const PostView = (props: Props) => {
     const messagePromise = useMemo(() => {
         return client?.getMessage<any>(props.uri)
     }, [client, props.uri])
+
+    useEffect(() => {
+        messagePromise?.then((msg) => setMessage(msg ?? null))
+    }, [messagePromise])
 
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
@@ -182,6 +195,9 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'replies' && (
                         <>
+                            {message && (
+                                <InlineReplyEditor message={message} onSent={() => fetchAssociations('replies')} />
+                            )}
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
                                     <Text>リプライはまだありません</Text>
@@ -246,6 +262,35 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'reactions' && (
                         <>
+                            {/* リアクション追加エリア */}
+                            <div
+                                onClick={() => {
+                                    if (!client || !message) return
+                                    emojiPicker.open((emoji) => {
+                                        startTransition(async () => {
+                                            await message
+                                                .reaction(client, emoji.shortcode, emoji.imageURL)
+                                                .catch((err) => console.error('Failed to add reaction:', err))
+                                            fetchAssociations('reactions')
+                                        })
+                                        emojiPicker.close()
+                                    })
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
+                                    padding: CssVar.space(2),
+                                    border: `1px solid ${CssVar.divider}`,
+                                    borderRadius: CssVar.round(2),
+                                    cursor: 'pointer',
+                                    color: CssVar.contentText,
+                                    opacity: 0.6
+                                }}
+                            >
+                                <MdAddReaction size={18} />
+                                <span style={{ fontSize: '0.95rem' }}>リアクションを追加...</span>
+                            </div>
                             {Object.keys(reactionCounts).length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
                                     <Text>リアクションはまだありません</Text>
@@ -326,6 +371,180 @@ export const PostView = (props: Props) => {
                 </div>
             </View>
         </>
+    )
+}
+
+// --- インラインリプライエディタ ---
+
+interface InlineReplyEditorProps {
+    message: Message<any>
+    onSent: () => void
+}
+
+const InlineReplyEditor = ({ message, onSent }: InlineReplyEditorProps) => {
+    const { client } = useClient()
+    const emojiPicker = useEmojiPicker()
+    const [draft, setDraft] = useState('')
+    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>({})
+    const [submitting, setSubmitting] = useState(false)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleSubmit = async () => {
+        if (!client || !draft.trim()) return
+        setSubmitting(true)
+        try {
+            const timestamp = new Date()
+            const hash = CDID.newFromString(draft, timestamp).toString()
+            const newPostUri = semantics.post(client.ccid, client.currentProfile, hash)
+            const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
+            const activityTimeline = semantics.activityTimeline(client.ccid, client.currentProfile)
+            const communityDestinations =
+                message.distributes?.filter(
+                    (uri: string) =>
+                        !uri.includes('/main/home-timeline') &&
+                        !uri.includes('/main/activity-timeline') &&
+                        !uri.includes('/main/notify-timeline')
+                ) ?? []
+
+            await client.api.commit({
+                key: newPostUri,
+                schema: Schemas.replyMessage,
+                value: { body: draft, replyToMessageId: message.uri, emojis: emojiDict },
+                author: client.ccid,
+                distributes: [homeTimeline, ...communityDestinations],
+                createdAt: timestamp
+            })
+
+            const targetAuthorDomain = await client.getUser(message.author).then((u) => u?.domain)
+            const notifyTimeline = semantics.notificationTimeline(message.author, 'main')
+
+            await client.api.commit(
+                {
+                    author: client.ccid,
+                    schema: Schemas.replyAssociation,
+                    associate: message.uri,
+                    value: { messageId: newPostUri },
+                    distributes: [activityTimeline, notifyTimeline],
+                    createdAt: timestamp
+                },
+                targetAuthorDomain
+            )
+
+            hapticSuccess()
+            setDraft('')
+            setEmojiDict({})
+            onSent()
+        } catch (e) {
+            console.error('Reply failed:', e)
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    return (
+        <div
+            style={{
+                border: `1px solid ${CssVar.divider}`,
+                borderRadius: CssVar.round(2),
+                padding: CssVar.space(2),
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(1)
+            }}
+        >
+            <textarea
+                ref={textareaRef}
+                value={draft}
+                placeholder="返信を入力..."
+                onChange={(e) => setDraft(e.target.value)}
+                style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    fontSize: '1rem',
+                    boxSizing: 'border-box',
+                    border: 'none',
+                    outline: 'none',
+                    resize: 'none',
+                    background: 'transparent',
+                    color: CssVar.contentText
+                }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                    <IconButton onClick={() => fileInputRef.current?.click()}>
+                        <MdImage size={22} />
+                    </IconButton>
+                    <IconButton
+                        onClick={() => {
+                            emojiPicker.open((emoji: Emoji) => {
+                                const ta = textareaRef.current
+                                if (ta) {
+                                    const start = ta.selectionStart
+                                    const end = ta.selectionEnd
+                                    const insert = `:${emoji.shortcode}:`
+                                    setDraft((prev) => prev.slice(0, start) + insert + prev.slice(end))
+                                } else {
+                                    setDraft((prev) => prev + `:${emoji.shortcode}:`)
+                                }
+                                setEmojiDict((prev) => ({ ...prev, [emoji.shortcode]: { imageURL: emoji.imageURL } }))
+                            })
+                        }}
+                    >
+                        <MdEmojiEmotions size={22} />
+                    </IconButton>
+                    <IconButton
+                        onClick={() => {
+                            const insert = '<details><summary>タップして表示</summary>\n\n</details>'
+                            const ta = textareaRef.current
+                            if (ta) {
+                                const start = ta.selectionStart
+                                const end = ta.selectionEnd
+                                const newDraft = draft.slice(0, start) + insert + draft.slice(end)
+                                setDraft(newDraft)
+                                requestAnimationFrame(() => {
+                                    const cursorPos = start + insert.indexOf('\n\n') + 1
+                                    ta.setSelectionRange(cursorPos, cursorPos)
+                                    ta.focus()
+                                })
+                            } else {
+                                setDraft((prev) => prev + insert)
+                            }
+                        }}
+                    >
+                        <MdVisibilityOff size={22} />
+                    </IconButton>
+                    <IconButton
+                        disabled={draft.length === 0}
+                        onClick={() => {
+                            setDraft('')
+                            setEmojiDict({})
+                        }}
+                    >
+                        <MdDeleteOutline size={22} />
+                    </IconButton>
+                </div>
+                <Button onClick={handleSubmit} disabled={submitting || !draft.trim()} endIcon={<MdSend />}>
+                    {submitting ? '送信中...' : 'リプライ'}
+                </Button>
+            </div>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={async (e) => {
+                    if (!client || !e.target.files) return
+                    const files = Array.from(e.target.files)
+                    for (const file of files) {
+                        const [url] = await uploadImage(client, file)
+                        setDraft((prev) => prev + `\n![](${url})`)
+                    }
+                    e.target.value = ''
+                }}
+            />
+        </div>
     )
 }
 
