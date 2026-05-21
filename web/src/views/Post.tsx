@@ -1,20 +1,24 @@
 import { MessageContainer } from '../components/message'
 import { Avatar, Divider, Tabs, Tab, Text, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { MdAddReaction } from 'react-icons/md'
+import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import {
     Association,
     LikeAssociationSchema,
+    Message,
     ReactionAssociationSchema,
     ReplyAssociationSchema,
     RerouteAssociationSchema,
     Schemas,
     User
 } from '@concrnt/worldlib'
+import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
 import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { Composer } from '../components/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 
 type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
@@ -26,7 +30,9 @@ interface Props {
 export const PostView = (props: Props) => {
     const { client } = useClient()
     const navigate = useNavigate()
+    const emojiPicker = useEmojiPicker()
     const [tab, setTab] = useState<PostTab>('replies')
+    const [message, setMessage] = useState<Message<any> | null>(null)
 
     // --- Replies / Reroutes / Favorites ---
     const [replies, setReplies] = useState<Association<ReplyAssociationSchema>[]>([])
@@ -44,6 +50,10 @@ export const PostView = (props: Props) => {
     const messagePromise = useMemo(() => {
         return client?.getMessage<any>(props.uri)
     }, [client, props.uri])
+
+    useEffect(() => {
+        messagePromise?.then((msg) => setMessage(msg ?? null))
+    }, [messagePromise])
 
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
@@ -182,6 +192,22 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'replies' && (
                         <>
+                            {message && (
+                                <Composer
+                                    inline
+                                    mode="reply"
+                                    targetMessage={message}
+                                    destinations={
+                                        message.distributes?.filter(
+                                            (uri: string) =>
+                                                !uri.includes('/main/home-timeline') &&
+                                                !uri.includes('/main/activity-timeline') &&
+                                                !uri.includes('/main/notify-timeline')
+                                        ) ?? []
+                                    }
+                                    onPost={() => fetchAssociations('replies')}
+                                />
+                            )}
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
                                     <Text>リプライはまだありません</Text>
@@ -246,6 +272,35 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'reactions' && (
                         <>
+                            {/* リアクション追加エリア */}
+                            <div
+                                onClick={() => {
+                                    if (!client || !message) return
+                                    emojiPicker.open((emoji) => {
+                                        startTransition(async () => {
+                                            await message
+                                                .reaction(client, emoji.shortcode, emoji.imageURL)
+                                                .catch((err) => console.error('Failed to add reaction:', err))
+                                            fetchAssociations('reactions')
+                                        })
+                                        emojiPicker.close()
+                                    })
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
+                                    padding: CssVar.space(2),
+                                    border: `1px solid ${CssVar.divider}`,
+                                    borderRadius: CssVar.round(2),
+                                    cursor: 'pointer',
+                                    color: CssVar.contentText,
+                                    opacity: 0.6
+                                }}
+                            >
+                                <MdAddReaction size={18} />
+                                <span style={{ fontSize: '0.95rem' }}>リアクションを追加...</span>
+                            </div>
                             {Object.keys(reactionCounts).length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
                                     <Text>リアクションはまだありません</Text>

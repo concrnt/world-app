@@ -61,7 +61,8 @@ export const MessageFooter = (props: Props) => {
                         display: 'flex',
                         flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'flex-start'
+                        justifyContent: 'flex-start',
+                        marginLeft: `calc(${CssVar.space(2)} * -1)`
                     }}
                 >
                     <MessageActions message={props.message} updateReactionState={updateReactionState} />

@@ -132,7 +132,8 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: CssVar.space(4),
-                width: '100%'
+                width: '100%',
+                padding: CssVar.space(2)
             }}
         >
             <div
