@@ -20,7 +20,7 @@ export const Switch = ({ checked, onChange, disabled = false }: Props) => {
         position: 'relative',
         width: `${TRACK_WIDTH}px`,
         height: `${TRACK_HEIGHT}px`,
-        borderRadius: '999px',
+        borderRadius: CssVar.round(8),
         backgroundColor: checked ? CssVar.uiBackground : CssVar.divider,
         cursor: disabled ? 'default' : 'pointer',
         border: 'none',
@@ -49,7 +49,7 @@ export const Switch = ({ checked, onChange, disabled = false }: Props) => {
                     left: 0,
                     width: `${THUMB_SIZE}px`,
                     height: `${THUMB_SIZE}px`,
-                    borderRadius: '50%',
+                    borderRadius: CssVar.round(8),
                     backgroundColor: 'white',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
                 }}

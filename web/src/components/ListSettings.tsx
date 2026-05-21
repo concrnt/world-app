@@ -81,7 +81,15 @@ export const ListSettings = (props: Props) => {
                     ピン留め解除
                 </Button>
             ) : (
-                <Button>リストを削除</Button>
+                <Button
+                    onClick={() => {
+                        client?.api.delete(props.uri).then(() => {
+                            props.onComplete?.()
+                        })
+                    }}
+                >
+                    リストを削除
+                </Button>
             )}
         </div>
     )
