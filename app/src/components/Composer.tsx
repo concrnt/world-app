@@ -617,7 +617,7 @@ export const Composer = (props: Props) => {
                                 <div
                                     style={{
                                         padding: '8px',
-                                        borderRadius: '4px',
+                                        borderRadius: CssVar.round(1),
                                         borderLeft: '3px solid',
                                         borderLeftColor: CssVar.contentLink,
                                         fontSize: '14px'
@@ -720,7 +720,7 @@ export const Composer = (props: Props) => {
                                                         width: '100%',
                                                         height: '100%',
                                                         objectFit: 'cover',
-                                                        borderRadius: '8px'
+                                                        borderRadius: CssVar.round(2)
                                                     }}
                                                 />
                                             ) : (
@@ -733,7 +733,7 @@ export const Composer = (props: Props) => {
                                                         justifyContent: 'center',
                                                         alignItems: 'center',
                                                         backgroundColor: CssVar.uiBackground,
-                                                        borderRadius: '8px'
+                                                        borderRadius: CssVar.round(2)
                                                     }}
                                                 >
                                                     <MdOutlineUploadFile size={32} color={CssVar.uiText} />
@@ -759,7 +759,7 @@ export const Composer = (props: Props) => {
                                                     top: '-8px',
                                                     right: '-8px',
                                                     backgroundColor: CssVar.divider,
-                                                    borderRadius: '50%',
+                                                    borderRadius: CssVar.round(4),
                                                     padding: '2px',
                                                     width: '24px',
                                                     height: '24px'
