@@ -40,7 +40,7 @@ export const BlurhashImage = (props: BlurhashImageProps) => {
     }
 
     return (
-        <div style={{ position: 'relative', overflow: 'hidden', lineHeight: 0 }}>
+        <div style={{ position: 'relative', overflow: 'hidden', lineHeight: 0, width: '100%', height: '100%' }}>
             <canvas
                 ref={canvasRef}
                 width={BLURHASH_WIDTH}
