@@ -28,7 +28,8 @@ export const ExplorerView = () => {
                         gap: CssVar.space(2),
                         padding: CssVar.space(2),
                         paddingBottom: '7rem',
-                        overflowY: 'auto'
+                        overflowY: 'auto',
+                        touchAction: 'pan-y'
                     }}
                 >
                     <SearchExplorer />

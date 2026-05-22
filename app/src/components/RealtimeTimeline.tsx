@@ -299,7 +299,8 @@ export const RealtimeTimeline = (props: Props) => {
                         padding: '8px 0',
                         overflowX: 'hidden',
                         overflowY: 'auto',
-                        overscrollBehaviorY: 'none'
+                        overscrollBehaviorY: 'none',
+                        touchAction: 'pan-y'
                     }}
                     ref={scrollRef}
                 >

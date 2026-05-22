@@ -51,7 +51,6 @@ export const SidebarLayout = (props: Props) => {
                 style={{
                     position: 'absolute',
                     top: 0,
-                    touchAction: 'pan-y',
                     x
                 }}
                 drag="x"
@@ -62,17 +61,18 @@ export const SidebarLayout = (props: Props) => {
                 onDragEnd={(_, info) => {
                     const current = x.get()
 
-                    const v = info.velocity.x
+                    const vx = info.velocity.x
+                    const vy = info.velocity.y
 
                     const dx = info.offset.x
 
-                    const fast = Math.abs(v) > popVelocity
+                    const fast = Math.abs(vx) > popVelocity
                     const far = Math.abs(dx) > popDistance
 
                     let shouldOpen: boolean
 
                     if (fast) {
-                        shouldOpen = v > 0
+                        shouldOpen = vx > 0 && Math.abs(vx) > Math.abs(vy)
                     } else if (far) {
                         shouldOpen = dx > 0
                     } else {

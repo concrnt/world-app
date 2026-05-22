@@ -127,8 +127,8 @@ export const QueryTimeline = (props: Props) => {
                     gap: '8px',
                     overflowX: 'hidden',
                     overflowY: 'auto',
-                    // iOS の慣性スクロール跳ね返りを抑制して PullToRefresh との干渉を防ぐ
-                    overscrollBehaviorY: 'none'
+                    overscrollBehaviorY: 'none',
+                    touchAction: 'pan-y'
                 }}
                 ref={scrollRef}
             >
