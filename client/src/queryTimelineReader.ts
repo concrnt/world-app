@@ -57,7 +57,7 @@ export class QueryTimelineReader {
         const last = this.body[this.body.length - 1]
         const records = await this.api.query({
             prefix: this.prefix,
-            until: last.timestamp.toISOString(),
+            until: last.timestamp,
             limit: `${this.batch}`,
             ...this.query
         })

@@ -507,8 +507,8 @@ export class Api {
             prefix?: string
             parent?: string
             schema?: string
-            since?: string
-            until?: string
+            since?: Date
+            until?: Date
             limit?: string | number
             order?: string
         },
@@ -544,8 +544,8 @@ export class Api {
             prefix: query.prefix,
             parent: query.parent,
             schema: query.schema,
-            since: query.since,
-            until: query.until,
+            since: query.since ? query.since.toISOString() : undefined,
+            until: query.until ? query.until.toISOString() : undefined,
             limit: query.limit,
             order: query.order
         })
