@@ -104,7 +104,7 @@ export const MessageReactions = (props: Props) => {
                             alignItems: 'center',
                             gap: '4px',
                             padding: '2px 8px',
-                            borderRadius: '12px',
+                            borderRadius: CssVar.round(1),
                             border: isOwn ? `1.5px solid ${CssVar.contentLink}` : `1px solid ${CssVar.divider}`,
                             backgroundColor: isOwn ? `rgb(from ${CssVar.contentLink} r g b / 0.15)` : 'transparent',
                             cursor: 'pointer',
