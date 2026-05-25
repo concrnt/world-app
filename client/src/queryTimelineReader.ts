@@ -41,7 +41,7 @@ export class QueryTimelineReader {
                     }
                 })
 
-                if (Object.keys(items).length < limit) {
+                if (Object.keys(items).length == 0) {
                     hasMore = false
                 }
 
