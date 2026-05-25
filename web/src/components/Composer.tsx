@@ -320,11 +320,19 @@ export const Composer = (props: Props) => {
                         display: 'flex',
                         flexDirection: 'column',
                         padding: CssVar.space(2),
-                        gap: CssVar.space(2),
-                        border: `1px solid ${CssVar.divider}`,
-                        borderRadius: CssVar.round(2)
+                        gap: CssVar.space(2)
                     }}
                 >
+                    <TimelinePicker
+                        items={props.options ?? []}
+                        selected={props.destinations}
+                        setSelected={props.setDestinations ?? (() => {})}
+                        keyFunc={(item: Timeline) => item.uri}
+                        labelFunc={(item: Timeline) => item.name}
+                        postHome={postHome}
+                        setPostHome={setPostHome}
+                    />
+
                     {/* テキストエリア */}
                     {props.mode !== 'reroute' && (
                         <textarea
@@ -342,6 +350,12 @@ export const Composer = (props: Props) => {
                                 resize: 'none',
                                 background: 'transparent',
                                 color: CssVar.contentText
+                            }}
+                            onKeyDown={(e) => {
+                                if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && e.metaKey)) {
+                                    e.preventDefault()
+                                    handleSubmit()
+                                }
                             }}
                         />
                     )}

@@ -4,7 +4,7 @@ import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/Scrol
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
-import { Tabs, Tab, Text, Button } from '@concrnt/ui'
+import { Tabs, Tab, Text, Button, Divider } from '@concrnt/ui'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 
@@ -17,6 +17,7 @@ import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { Composer } from '../components/Composer'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client } = useClient()
@@ -28,14 +29,6 @@ export const HomeView = (props: ScrollViewProps) => {
     }))
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
-
-    /*
-    const [selectedTabUri, setSelectedTabUri] = useState<string>(semantics.homeList(client.ccid, client.currentProfile))
-
-    useEffect(() => {
-        setSelectedTabUri(semantics.homeList(client.ccid, client.currentProfile))
-    }, [client])
-    */
 
     // fix default settings
     useEffect(() => {
@@ -152,7 +145,8 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
 
     return (
         <>
-            <InlineComposer defaultPostTimelines={props.pin.defaultPostTimelines} />
+            <Composer inline mode="normal" destinations={props.pin.defaultPostTimelines} />
+            <Divider />
             <Timeline ref={props.ref} list={list} />
         </>
     )
@@ -167,70 +161,4 @@ const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
     const timelines = [...new Set([self, ...items])]
 
     return <RealtimeTimeline ref={props.ref} timelines={timelines} />
-}
-
-const InlineComposer = (props: { defaultPostTimelines: string[] }) => {
-    const { client } = useClient()
-    const [draft, setDraft] = useState('')
-    const [posting, setPosting] = useState(false)
-
-    const handleSubmit = async () => {
-        if (!draft.trim()) return
-
-        setPosting(true)
-        try {
-            const key = Date.now().toString()
-            const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
-            const distributes = [...new Set([homeTimeline, ...props.defaultPostTimelines])]
-
-            await client.api.commit({
-                key: semantics.post(client.ccid, client.currentProfile, key),
-                schema: Schemas.markdownMessage,
-                value: {
-                    body: draft
-                },
-                author: client.ccid,
-                distributes,
-                createdAt: new Date()
-            })
-            setDraft('')
-        } finally {
-            setPosting(false)
-        }
-    }
-
-    return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: CssVar.space(1),
-                padding: CssVar.space(2),
-                borderBottom: `1px solid ${CssVar.divider}`,
-                backgroundColor: CssVar.contentBackground
-            }}
-        >
-            <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="今、なにしてる？"
-                rows={3}
-                style={{
-                    width: '100%',
-                    resize: 'vertical',
-                    border: `1px solid ${CssVar.divider}`,
-                    borderRadius: CssVar.round(1),
-                    backgroundColor: CssVar.contentBackground,
-                    color: CssVar.contentText,
-                    padding: CssVar.space(1),
-                    font: 'inherit'
-                }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button disabled={!draft.trim() || posting} onClick={handleSubmit}>
-                    {posting ? '送信中...' : '投稿'}
-                </Button>
-            </div>
-        </div>
-    )
 }
