@@ -14,7 +14,11 @@ interface Props {
 const baseContainerStyle: CSSProperties = {
     listStyle: 'none',
     margin: 0,
-    padding: 0
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%'
 }
 
 const baseContentStyle: CSSProperties = {
@@ -62,17 +66,6 @@ export const ListItem = ({ children, icon, secondaryAction, onClick, disabled = 
             >
                 {children}
             </div>
-            {secondaryAction ? (
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        flexShrink: 0
-                    }}
-                >
-                    {secondaryAction}
-                </div>
-            ) : null}
         </>
     )
 
@@ -93,6 +86,17 @@ export const ListItem = ({ children, icon, secondaryAction, onClick, disabled = 
             ) : (
                 <div style={baseContentStyle}>{content}</div>
             )}
+            {secondaryAction ? (
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexShrink: 0
+                    }}
+                >
+                    {secondaryAction}
+                </div>
+            ) : null}
         </li>
     )
 }
