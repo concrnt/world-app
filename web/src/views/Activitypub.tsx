@@ -1,5 +1,4 @@
-import { View, Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
@@ -9,6 +8,8 @@ import { Schemas } from '@concrnt/worldlib'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { useDrawer } from '../contexts/Drawer'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 interface ApSettings {
     id: string

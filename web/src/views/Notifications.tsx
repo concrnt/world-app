@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
-import { View } from '@concrnt/ui'
-import { Header } from '../ui/Header'
 import { NotificationTimeline } from '../components/NotificationTimeline'
 import { NotificationFilter } from '../components/NotificationFilter'
 import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 import { ScrollViewHandle } from '../types/ScrollView'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const NotificationsView = () => {
     const { client } = useClient()

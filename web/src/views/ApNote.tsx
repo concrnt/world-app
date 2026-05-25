@@ -1,9 +1,10 @@
-import { CssVar, View } from '@concrnt/ui'
+import { CssVar } from '@concrnt/ui'
 import { ApObject } from '../utils/activitypub'
 import { ActivitypubNote } from '../components/message/ActivitypubNote'
 import { Suspense } from 'react'
-import { Header } from '../ui/Header'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 interface Props {
     note: ApObject

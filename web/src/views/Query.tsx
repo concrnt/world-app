@@ -1,8 +1,9 @@
-import { TextField, Button, View } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { TextField, Button } from '@concrnt/ui'
 import { useState } from 'react'
 import { CssVar } from '../types/Theme'
 import { useNavigate } from 'react-router-dom'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const QueryView = () => {
     const navigate = useNavigate()

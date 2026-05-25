@@ -1,9 +1,7 @@
 import { useClient } from '../contexts/Client'
 
-import { ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
-import { Avatar } from '@concrnt/ui'
+import { Avatar, ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
 
-import { MdPerson } from 'react-icons/md'
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
 import { MdNotifications } from 'react-icons/md'
@@ -47,14 +45,12 @@ export const Sidebar = () => {
             >
                 <div
                     style={{
-                        backgroundColor: CssVar.backdropBackground,
                         color: CssVar.backdropText,
                         display: 'flex',
-                        padding: CssVar.space(1),
+                        padding: CssVar.space(2),
                         flexDirection: 'column',
                         gap: CssVar.space(1),
-                        height: '100%',
-                        borderRadius: '0 8px 8px 0'
+                        height: '100%'
                     }}
                 >
                     <div
@@ -93,28 +89,14 @@ export const Sidebar = () => {
                         <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>
                             ホーム
                         </ListItem>
-                        <ListItem icon={<MdExplore size={24} />} onClick={() => go('/explorer')}>
-                            エクスプローラー
-                        </ListItem>
                         <ListItem icon={<MdNotifications size={24} />} onClick={() => go('/notifications')}>
                             通知
                         </ListItem>
                         <ListItem icon={<MdContacts size={24} />} onClick={() => go('/contacts')}>
                             コンタクト
                         </ListItem>
-                    </List>
-                    <Divider />
-                    <List
-                        style={{
-                            color: CssVar.backdropText,
-                            fontSize: '1.25rem'
-                        }}
-                    >
-                        <ListItem
-                            icon={<MdPerson size={24} />}
-                            onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
-                        >
-                            プロフィール
+                        <ListItem icon={<MdExplore size={24} />} onClick={() => go('/explorer')}>
+                            探索
                         </ListItem>
                         <ListItem icon={<MdList size={24} />} onClick={() => go('/lists')}>
                             リスト
@@ -146,6 +128,58 @@ export const Sidebar = () => {
                         <MdCreate size={20} />
                         投稿
                     </Button>
+
+                    <Divider
+                        style={{
+                            marginTop: CssVar.space(2)
+                        }}
+                    />
+
+                    <div
+                        style={{
+                            fontSize: '0.6rem',
+                            padding: CssVar.space(1),
+                            textAlign: 'center'
+                        }}
+                    >
+                        Concrnt World App 開発中β版
+                        <br />
+                        <a
+                            style={{
+                                color: CssVar.uiText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://square.concrnt.net/"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            ドキュメント
+                        </a>
+                        {' / '}
+                        <a
+                            style={{
+                                color: CssVar.uiText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://github.com/orgs/concrnt/discussions"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            フォーラム
+                        </a>
+                        {' / '}
+                        <a
+                            style={{
+                                color: CssVar.uiText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://github.com/totegamma/concurrent-world"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            GitHub
+                        </a>
+                    </div>
                 </div>
             </div>
         </>

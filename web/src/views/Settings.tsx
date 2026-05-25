@@ -1,10 +1,11 @@
-import { Button, View, Divider, Text } from '@concrnt/ui'
+import { Button, Divider, Text } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { Header } from '../ui/Header'
 import { ThemeCard } from '../components/ThemeCard'
 import { Themes } from '../data/themes'
 import { usePreference, useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
+import { Header } from '../components/Header'
+import { View } from '../components/View'
 
 export const SettingsView = () => {
     const { logout } = useClient()

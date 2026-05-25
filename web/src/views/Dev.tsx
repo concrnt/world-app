@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Button, TextField, View, Text, Divider } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { Button, TextField, Text, Divider } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const DevView = () => {
     const { client } = useClient()

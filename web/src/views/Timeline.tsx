@@ -1,5 +1,4 @@
-import { Button, View } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { Button } from '@concrnt/ui'
 import { useMemo, useRef } from 'react'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
@@ -7,6 +6,8 @@ import { useComposer } from '../contexts/Composer'
 import { MdCreate } from 'react-icons/md'
 import { TimelineTag } from '../components/TimelineTag'
 import { ScrollViewHandle } from '../types/ScrollView'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 interface Props {
     uri: string

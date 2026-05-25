@@ -1,7 +1,7 @@
-import { View } from '@concrnt/ui'
-import { Header } from '../ui/Header'
 import { useClient } from '../contexts/Client'
 import { AcknowledgeList } from '../components/AcknowledgeList'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const ContactsView = () => {
     const { client } = useClient()

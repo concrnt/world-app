@@ -1,6 +1,5 @@
 import { MessageContainer } from '../components/message'
-import { Avatar, Divider, Tabs, Tab, Text, View } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
 import { MdAddReaction } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useClient } from '../contexts/Client'
@@ -20,6 +19,8 @@ import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
 import { Composer } from '../components/Composer'
 import { TimeDiff } from '../components/TimeDiff'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 

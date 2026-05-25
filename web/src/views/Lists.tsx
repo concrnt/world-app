@@ -1,6 +1,5 @@
 import { Suspense, use, useMemo, useState } from 'react'
-import { Header } from '../ui/Header'
-import { View, Text, IconButton, Button, TextField, List, ListItem } from '@concrnt/ui'
+import { Text, IconButton, Button, TextField, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
@@ -12,6 +11,8 @@ import { ListSettings } from '../components/ListSettings'
 import { useDrawer } from '../contexts/Drawer'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const ListsView = () => {
     const { client } = useClient()

@@ -1,9 +1,10 @@
-import { View, Button } from '@concrnt/ui'
-import { Header } from '../ui/Header'
+import { Button } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const IDView = () => {
     const { client } = useClient()

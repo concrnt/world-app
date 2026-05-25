@@ -1,14 +1,15 @@
 import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { Text, View, Button, TextField } from '@concrnt/ui'
+import { Text, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
 import { useState, useRef } from 'react'
-import { Header } from '../ui/Header'
 import { useDrawer } from '../contexts/Drawer'
 import { MdAdd } from 'react-icons/md'
 import { hapticSuccess } from '../utils/haptics'
 import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
+import { View } from '../components/View'
+import { Header } from '../components/Header'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()

@@ -4,8 +4,9 @@ import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/Scrol
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
-import { Header } from '../ui/Header'
-import { Tabs, Tab, Text, Button, View } from '@concrnt/ui'
+import { Tabs, Tab, Text, Button } from '@concrnt/ui'
+import { Header } from '../components/Header'
+import { View } from '../components/View'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
