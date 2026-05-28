@@ -17,14 +17,6 @@ export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs
         })
 }
 
-export const parseCCURI = (uri: string): { owner: string; key: string } => {
-    const parsed = new URL(uri)
-    const owner = parsed.host
-    const key = parsed.pathname
-
-    return { owner, key }
-}
-
 export const renderUriTemplate = (server: Server, signature: string, args: Record<string, any>): string => {
     const templateStr = server.endpoints[signature]
     if (!templateStr) {

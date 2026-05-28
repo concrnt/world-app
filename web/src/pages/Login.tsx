@@ -18,7 +18,13 @@ import { semantics } from '@concrnt/worldlib'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from '../views/authLayout'
 import { useResetPreference } from '../contexts/Preference'
 
-const entrypoint = 'v2dev.concrnt.net'
+const resolveEntrypoint = (): string => {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost') {
+        return 'ariake.concrnt.net'
+    }
+    return hostname
+}
 
 type LoginMethod = 'qr' | 'passkey' | 'recovery'
 
@@ -95,6 +101,8 @@ export const Login = () => {
         reset()
         window.location.href = '/'
     }
+
+    const entrypoint = useMemo(() => resolveEntrypoint(), [])
 
     const startPasskeyLogin = async () => {
         if (!window.PublicKeyCredential || !navigator.credentials) {

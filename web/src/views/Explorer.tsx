@@ -10,16 +10,22 @@ import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
+import { usePersistent } from '../hooks/usePersistent'
+import { ClassicExplorer } from '../components/ClassicExplorer'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()
     const scrollRef = useRef<HTMLDivElement>(null)
 
+    const [classicMode, setClassicMode] = usePersistent('explorer-classic-mode', false)
+
     return (
         <>
             <View>
                 <Header
-                    onTitleTap={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onTitleTap={() => {
+                        setClassicMode((v) => !v)
+                    }}
                     right={
                         <Button
                             variant="text"
@@ -37,7 +43,7 @@ export const ExplorerView = () => {
                         </Button>
                     }
                 >
-                    Explorer
+                    {classicMode ? 'Explorer (Classic)' : 'Explorer'}
                 </Header>
                 <div
                     ref={scrollRef}
@@ -50,7 +56,7 @@ export const ExplorerView = () => {
                         overflowY: 'auto'
                     }}
                 >
-                    <SearchExplorer />
+                    {classicMode ? <ClassicExplorer /> : <SearchExplorer />}
                 </div>
             </View>
         </>

@@ -13,9 +13,6 @@ import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 import { ResetSessionButton } from '../components/ResetSessionButton'
 
-//const entrypoint = 'cc2.tunnel.anthrotech.dev'
-const entrypoint = 'v2dev.concrnt.net'
-
 /*
 - 完全に初期状態 <initial>
     -> 新規作成
@@ -30,6 +27,14 @@ const entrypoint = 'v2dev.concrnt.net'
     -> 別のアカウントにする (要注意)
 */
 
+const resolveEntrypoint = (): string => {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost') {
+        return 'ariake.concrnt.net'
+    }
+    return hostname
+}
+
 interface User {
     ccid: string
     entity?: Document<Entity>
@@ -42,7 +47,7 @@ export const WelcomeView = () => {
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
     const reset = useResetPreference()
-    const [resolver, setResolver] = useState<string>(entrypoint)
+    const [resolver, setResolver] = useState<string>(resolveEntrypoint())
 
     useEffect(() => {
         invoke('has_masterkey')
@@ -82,7 +87,7 @@ export const WelcomeView = () => {
         case 'initial':
             return <LoadingFull />
         case 'signup':
-            return <AccountSetup entrypoint={entrypoint} onBack={() => setState('welcome')} />
+            return <AccountSetup entrypoint={resolver} onBack={() => setState('welcome')} />
         case 'signin':
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
         case 'welcome':

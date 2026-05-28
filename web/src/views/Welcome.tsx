@@ -10,7 +10,13 @@ import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
-const entrypoint = 'v2dev.concrnt.net'
+const resolveEntrypoint = (): string => {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost') {
+        return 'ariake.concrnt.net'
+    }
+    return hostname
+}
 
 interface User {
     ccid: string
@@ -34,7 +40,7 @@ export const WelcomeView = () => {
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
     const reset = useResetPreference()
-    const [resolver, setResolver] = useState<string>(readStoredString('Domain') ?? entrypoint)
+    const [resolver, setResolver] = useState<string>(resolveEntrypoint())
 
     const masterKey = readStoredString('PrivateKey')
     const subKey = readStoredString('SubKey')
@@ -80,7 +86,7 @@ export const WelcomeView = () => {
         case 'initial':
             return <LoadingFull />
         case 'signup':
-            return <AccountSetup entrypoint={entrypoint} onBack={() => setState('welcome')} />
+            return <AccountSetup entrypoint={resolver} onBack={() => setState('welcome')} />
         case 'signin':
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
         case 'welcome':
