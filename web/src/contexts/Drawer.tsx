@@ -1,6 +1,5 @@
-import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'motion/react'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { animate } from 'motion'
 import { CssVar } from '../types/Theme'
 
 interface DrawerContextState {
@@ -18,20 +17,19 @@ const DrawerContext = createContext<DrawerContextState>({
 })
 
 export const DrawerProvider = (props: Props) => {
-    const y = useMotionValue(0)
-    const dragControls = useDragControls()
+    const x = useMotionValue(0)
 
     const [content, setContent] = useState<ReactNode>(null)
 
-    const height = window.innerHeight * 0.8
-    const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
+    const width = Math.min(window.innerWidth, 420)
+    const backdropOpacity = useTransform(x, [0, width], [0.5, 0])
 
     const open = useCallback(
         (c: ReactNode) => {
-            y.set(height)
+            x.set(width)
             setContent(c)
         },
-        [height, y]
+        [width, x]
     )
 
     const close = useCallback(() => {
@@ -64,7 +62,13 @@ export const DrawerProvider = (props: Props) => {
             <DrawerContext.Provider value={value}>{props.children}</DrawerContext.Provider>
             <AnimatePresence>
                 {content && (
-                    <>
+                    <motion.div
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            overflow: 'hidden'
+                        }}
+                    >
                         <motion.div
                             style={{
                                 position: 'absolute',
@@ -81,81 +85,22 @@ export const DrawerProvider = (props: Props) => {
                                 backgroundColor: CssVar.contentBackground,
                                 color: CssVar.contentText,
                                 position: 'absolute',
-                                bottom: 0,
-                                left: 0,
+                                top: 0,
                                 right: 0,
-                                paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
-                                height,
-                                y,
+                                bottom: 0,
+                                paddingRight: 'env(safe-area-inset-right)',
+                                borderRadius: `${CssVar.round(1)} 0 0 ${CssVar.round(1)}`,
+                                width,
+                                maxWidth: '100vw',
+                                x,
                                 display: 'flex',
                                 flexDirection: 'column'
                             }}
-                            drag="y"
-                            dragControls={dragControls}
-                            dragListener={false}
-                            dragConstraints={{ top: 0, bottom: height }}
-                            dragElastic={0}
-                            dragMomentum={false}
-                            initial={{ y: height }}
-                            animate={{ y: 0 }}
+                            initial={{ x: width }}
+                            animate={{ x: 0 }}
                             transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
-                            exit={{ y: height }}
-                            onDragEnd={(_, info) => {
-                                const current = y.get()
-                                const v = info.velocity.y
-                                const dy = info.offset.y
-
-                                const fast = Math.abs(v) > 50
-                                const far = Math.abs(dy) > height / 2
-
-                                let shouldClose = false
-                                if (fast) {
-                                    shouldClose = v > 0
-                                } else if (far) {
-                                    shouldClose = dy > 0
-                                } else {
-                                    shouldClose = current > height / 2
-                                }
-
-                                if (shouldClose) {
-                                    close()
-                                } else {
-                                    animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
-                                }
-                            }}
+                            exit={{ x: width }}
                         >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    padding: `${CssVar.space(3)} 0`,
-                                    position: 'relative',
-                                    touchAction: 'none'
-                                }}
-                                onPointerDown={(e) => {
-                                    dragControls.start(e)
-                                }}
-                            >
-                                {/* ハンドルの見た目は変えず、当たり判定を縦方向に拡張する透明レイヤー (上40px / 下8px) */}
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: `-${CssVar.space(7)}`,
-                                        bottom: CssVar.space(1),
-                                        left: 0,
-                                        right: 0
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        width: '30px',
-                                        height: '6px',
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: CssVar.divider
-                                    }}
-                                />
-                            </div>
                             <div
                                 style={{
                                     padding: `0 ${CssVar.space(4)}`,
@@ -167,7 +112,7 @@ export const DrawerProvider = (props: Props) => {
                                 {content}
                             </div>
                         </motion.div>
-                    </>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </>
