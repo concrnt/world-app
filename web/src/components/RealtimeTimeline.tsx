@@ -1,4 +1,14 @@
-import { memo, startTransition, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+    memo,
+    ReactNode,
+    startTransition,
+    Suspense,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    useState
+} from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -20,6 +30,7 @@ interface NewArrivalIcon {
 
 interface Props extends ScrollViewProps {
     timelines: string[]
+    headElement?: ReactNode
 }
 
 const SCROLL_HALT_THRESHOLD = 100
@@ -294,6 +305,7 @@ export const RealtimeTimeline = (props: Props) => {
                     }}
                     ref={scrollRef}
                 >
+                    {props.headElement}
                     {!initialLoaded &&
                         Array.from({ length: 10 }).map((_, i) => (
                             <div key={i} style={{ padding: `0 ${CssVar.space(2)}` }}>

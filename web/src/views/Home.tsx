@@ -1,10 +1,10 @@
-import { startTransition, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { ReactNode, startTransition, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
-import { Tabs, Tab, Text, Button, Divider } from '@concrnt/ui'
+import { Tabs, Tab, Text, Divider } from '@concrnt/ui'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 
@@ -12,7 +12,7 @@ import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 
 import { MdTune } from 'react-icons/md'
-import { PinnedListItemClass, semantics, List, Schemas } from '@concrnt/worldlib'
+import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -144,15 +144,20 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
     if (!list) return <Text>リストが見つかりませんでした</Text>
 
     return (
-        <>
-            <Composer inline mode="normal" destinations={props.pin.defaultPostTimelines} />
-            <Divider />
-            <Timeline ref={props.ref} list={list} />
-        </>
+        <Timeline
+            ref={props.ref}
+            list={list}
+            headElement={
+                <>
+                    <Composer inline mode="normal" destinations={props.pin.defaultPostTimelines} />
+                    <Divider />
+                </>
+            }
+        />
     )
 }
 
-const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
+const Timeline = (props: { list: List; ref?: ScrollViewRef; headElement?: ReactNode }) => {
     const { client } = useClient()
 
     const [items] = useSubscribe(props.list.items)
@@ -160,5 +165,5 @@ const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
     const self = semantics.homeTimeline(client.ccid, client.currentProfile)
     const timelines = [...new Set([self, ...items])]
 
-    return <RealtimeTimeline ref={props.ref} timelines={timelines} />
+    return <RealtimeTimeline ref={props.ref} timelines={timelines} headElement={props.headElement} />
 }
