@@ -1,8 +1,8 @@
-import { Fragment, ReactNode, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { memo, ReactNode, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { QueryTimelineReader } from '@concrnt/client'
+import { ChunklineItem, QueryTimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -134,21 +134,7 @@ export const QueryTimeline = (props: Props) => {
             >
                 {props.header}
                 {reader.current?.body.map((item) => (
-                    <Fragment key={item.href}>
-                        <ErrorBoundary FallbackComponent={RenderError}>
-                            <div
-                                style={{
-                                    padding: `0 ${CssVar.space(2)}`,
-                                    contentVisibility: 'auto'
-                                }}
-                            >
-                                <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
-                                    <MessageContainer uri={item.href} source={item.source} />
-                                </Suspense>
-                            </div>
-                        </ErrorBoundary>
-                        <Divider />
-                    </Fragment>
+                    <Cell key={item.timestamp.getTime() ?? item.href} item={item} />
                 ))}
                 {loading && <Loading message={'Loading...'} />}
                 {!hasMoreData && (
@@ -171,3 +157,28 @@ export const QueryTimeline = (props: Props) => {
         </PullToRefresh>
     )
 }
+
+interface CellProps {
+    item: ChunklineItem
+}
+
+const Cell = memo<CellProps>(({ item }: CellProps) => {
+    return (
+        <>
+            <ErrorBoundary FallbackComponent={RenderError}>
+                <div
+                    style={{
+                        padding: `0 ${CssVar.space(2)}`,
+                        contentVisibility: 'auto'
+                    }}
+                >
+                    <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
+                        <MessageContainer uri={item.href} source={item.source} />
+                    </Suspense>
+                </div>
+            </ErrorBoundary>
+            <Divider />
+        </>
+    )
+})
+Cell.displayName = 'QueryTimelineCell'

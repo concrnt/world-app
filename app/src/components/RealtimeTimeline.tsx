@@ -1,17 +1,8 @@
-import {
-    Fragment,
-    startTransition,
-    Suspense,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useRef,
-    useState
-} from 'react'
+import { memo, startTransition, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { TimelineReader } from '@concrnt/client'
+import { TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -311,29 +302,7 @@ export const RealtimeTimeline = (props: Props) => {
                             </div>
                         ))}
                     {reader.current?.body.map((item) => (
-                        <Fragment key={item.timestamp.getTime() ?? item.href}>
-                            <ErrorBoundary FallbackComponent={RenderError}>
-                                <div
-                                    style={{
-                                        padding: `0 ${CssVar.space(2)}`,
-                                        contentVisibility: 'auto'
-                                    }}
-                                >
-                                    <Suspense
-                                        key={item.timestamp.getTime() ?? item.href}
-                                        fallback={<MessageSkeleton />}
-                                    >
-                                        <MessageContainer
-                                            uri={item.href}
-                                            source={item.source}
-                                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                                            content={item.content}
-                                        />
-                                    </Suspense>
-                                </div>
-                            </ErrorBoundary>
-                            <Divider />
-                        </Fragment>
+                        <Cell key={item.href} item={item} />
                     ))}
                     {loading && <Loading message={'Loading...'} />}
                     {!hasMoreData && (
@@ -357,3 +326,33 @@ export const RealtimeTimeline = (props: Props) => {
         </PullToRefresh>
     )
 }
+
+interface CellProps {
+    item: TimelineItemWithUpdate
+}
+
+const Cell = memo(({ item }: CellProps) => {
+    return (
+        <>
+            <ErrorBoundary FallbackComponent={RenderError}>
+                <div
+                    style={{
+                        padding: `0 ${CssVar.space(2)}`,
+                        contentVisibility: 'auto'
+                    }}
+                >
+                    <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
+                        <MessageContainer
+                            uri={item.href}
+                            source={item.source}
+                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
+                            content={item.content}
+                        />
+                    </Suspense>
+                </div>
+            </ErrorBoundary>
+            <Divider />
+        </>
+    )
+})
+Cell.displayName = 'RealtimeTimelineCell'
