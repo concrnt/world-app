@@ -34,8 +34,14 @@ export const ListsView = () => {
             <View>
                 <Header
                     right={
-                        <Button
-                            variant="text"
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}
                             onClick={() => {
                                 drawer.open(
                                     <ListCreator
@@ -48,7 +54,7 @@ export const ListsView = () => {
                             }}
                         >
                             <MdPlaylistAdd size={22} />
-                        </Button>
+                        </div>
                     }
                 >
                     Lists
