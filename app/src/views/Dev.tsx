@@ -4,9 +4,13 @@ import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
+import { useStack } from '../layouts/Stack'
+import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './StoreMocks'
+import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
 
 export const DevView = () => {
     const { client } = useClient()
+    const stack = useStack()
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
@@ -27,6 +31,19 @@ export const DevView = () => {
                 }}
             >
                 <UserPicker selected={selected} setSelected={setSelected} />
+
+                <Divider />
+
+                <Text variant="h3">Store Mock</Text>
+                <Button startIcon={<MdHome />} onClick={() => stack.push(<StoreMockHomeView />)}>
+                    ホーム画面 mock
+                </Button>
+                <Button startIcon={<MdExplore />} onClick={() => stack.push(<StoreMockExplorerView />)}>
+                    探索画面 mock
+                </Button>
+                <Button startIcon={<MdBadge />} onClick={() => stack.push(<StoreMockIDView />)}>
+                    ID画面 mock
+                </Button>
 
                 <Divider />
 
