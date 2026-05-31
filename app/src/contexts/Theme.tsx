@@ -10,6 +10,8 @@ interface Props {
 
 export const ThemeProvider = (props: Props) => {
     const [themeName] = usePreference('themeName')
+    const [customThemes] = usePreference('customThemes')
+    const theme = props.theme ?? customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
-    return <BaseThemeProvider theme={props.theme ?? Themes[themeName]}>{props.children}</BaseThemeProvider>
+    return <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
 }

@@ -2,10 +2,12 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useClient } from './Client'
 import { semantics } from '@concrnt/worldlib'
+import type { Theme } from '../types/Theme'
 
 export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
+    customThemes: Record<string, Theme>
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
 }
@@ -13,6 +15,7 @@ export interface Preference {
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
+    customThemes: {},
     listOrder: {}
 }
 
@@ -62,7 +65,7 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
                 console.error('Failed to load settings from cckv', e)
                 setInitialized(true)
             })
-    }, [])
+    }, [client, initialized, pref, setPref])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })
@@ -120,7 +123,7 @@ export function usePreference<K extends keyof Preference>(
                 console.error('Failed to save settings to cckv', e)
             })
         },
-        [preference, setPreference, key, silent]
+        [client.api, client.ccid, preference, setPreference, key, silent]
     )
 
     const value = preference[key] ?? defaultPreference[key]
