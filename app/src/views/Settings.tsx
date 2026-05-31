@@ -10,7 +10,8 @@ import { useStack } from '../layouts/Stack'
 import { Activitypub } from './Activitypub'
 import { IDView } from './ID'
 import { DevView } from './Dev'
-import { MdBadge, MdChevronRight, MdPalette, MdTerminal } from 'react-icons/md'
+import { EmojiSettingsView } from './EmojiSettings'
+import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 
 const SettingsMenuItem = (props: { icon: ReactNode; children: ReactNode; onClick: () => void }) => (
@@ -53,6 +54,12 @@ export const SettingsView = () => {
                     </SettingsMenuItem>
                     <SettingsMenuItem icon={<MdBadge size={24} />} onClick={() => stack.push(<IDView />)}>
                         ID管理
+                    </SettingsMenuItem>
+                    <SettingsMenuItem
+                        icon={<MdEmojiEmotions size={24} />}
+                        onClick={() => stack.push(<EmojiSettingsView />)}
+                    >
+                        絵文字
                     </SettingsMenuItem>
                     <SettingsMenuItem icon={<MdTerminal size={24} />} onClick={() => stack.push(<DevView />)}>
                         開発者ツール
