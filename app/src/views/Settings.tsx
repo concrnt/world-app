@@ -32,6 +32,7 @@ export const SettingsView = () => {
                 style={{
                     flex: 1,
                     overflowY: 'auto',
+                    touchAction: 'pan-y',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: CssVar.space(3),
@@ -84,6 +85,7 @@ export const ThemeSettingsView = () => {
                 style={{
                     flex: 1,
                     overflowY: 'auto',
+                    touchAction: 'pan-y',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: CssVar.space(4),

@@ -62,7 +62,8 @@ export const IDView = () => {
                     gap: CssVar.space(2),
                     padding: CssVar.space(2),
                     flex: 1,
-                    overflowY: 'auto'
+                    overflowY: 'auto',
+                    touchAction: 'pan-y'
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(0.5) }}>
