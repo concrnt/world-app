@@ -53,16 +53,19 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
                 if (!doc) return
                 const data = doc.value
                 if (!data) return
+                const { customThemes: _legacyCustomThemes, ...settings } = data as Preference & {
+                    customThemes?: unknown
+                }
                 setPref({
                     ...pref,
-                    ...data
+                    ...settings
                 })
             })
             .catch((e: any) => {
                 console.error('Failed to load settings from cckv', e)
                 setInitialized(true)
             })
-    }, [])
+    }, [client, initialized, pref, setPref])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })
@@ -120,7 +123,7 @@ export function usePreference<K extends keyof Preference>(
                 console.error('Failed to save settings to cckv', e)
             })
         },
-        [preference, setPreference, key, silent]
+        [client.api, client.ccid, preference, setPreference, key, silent]
     )
 
     const value = preference[key] ?? defaultPreference[key]

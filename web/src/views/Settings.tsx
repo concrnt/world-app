@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button, Divider, Text, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { ThemeCard } from '../components/ThemeCard'
-import { Themes } from '../data/themes'
-import { usePreference, useResetPreference } from '../contexts/Preference'
+import { useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
@@ -73,38 +71,6 @@ export const SettingsView = () => {
                 >
                     Logout
                 </Button>
-            </div>
-        </View>
-    )
-}
-
-export const ThemeSettingsView = () => {
-    const [, setThemeName] = usePreference('themeName')
-
-    return (
-        <View>
-            <Header>テーマ設定</Header>
-            <div
-                style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: CssVar.space(4),
-                    padding: CssVar.space(4)
-                }}
-            >
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                        gap: CssVar.space(3)
-                    }}
-                >
-                    {Object.entries(Themes).map(([name, theme]) => (
-                        <ThemeCard key={theme.meta?.name} theme={theme} onClick={() => setThemeName(name)} />
-                    ))}
-                </div>
             </div>
         </View>
     )
