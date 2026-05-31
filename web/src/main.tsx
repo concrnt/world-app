@@ -26,6 +26,7 @@ import { ExplorerView } from './views/Explorer'
 import { NotificationsView } from './views/Notifications'
 import { ContactsView } from './views/Contacts'
 import { SettingsView, ThemeSettingsView } from './views/Settings'
+import { EmojiSettingsView } from './views/EmojiSettings'
 import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
 import { TimelineView } from './views/Timeline'
@@ -116,6 +117,14 @@ const AuthedRoutes = () => (
                                                             element={
                                                                 <SettingsBackProvider>
                                                                     <IDView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/emoji"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <EmojiSettingsView />
                                                                 </SettingsBackProvider>
                                                             }
                                                         />

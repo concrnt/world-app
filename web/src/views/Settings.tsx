@@ -8,7 +8,7 @@ import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { useNavigate } from 'react-router-dom'
-import { MdBadge, MdChevronRight, MdPalette, MdTerminal } from 'react-icons/md'
+import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 
 const SettingsMenuItem = (props: { icon: ReactNode; children: ReactNode; onClick: () => void }) => (
@@ -54,6 +54,9 @@ export const SettingsView = () => {
                     <SettingsMenuItem icon={<MdBadge size={24} />} onClick={() => navigate('/settings/id')}>
                         ID管理
                     </SettingsMenuItem>
+                    <SettingsMenuItem icon={<MdEmojiEmotions size={24} />} onClick={() => navigate('/settings/emoji')}>
+                        絵文字
+                    </SettingsMenuItem>
                     <SettingsMenuItem icon={<MdTerminal size={24} />} onClick={() => navigate('/settings/dev')}>
                         開発者ツール
                     </SettingsMenuItem>
@@ -76,7 +79,7 @@ export const SettingsView = () => {
 }
 
 export const ThemeSettingsView = () => {
-    const [_themeName, setThemeName] = usePreference('themeName')
+    const [, setThemeName] = usePreference('themeName')
 
     return (
         <View>

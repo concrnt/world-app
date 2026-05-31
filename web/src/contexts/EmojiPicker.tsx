@@ -4,6 +4,9 @@ import { CssVar } from '../types/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { IconButton } from '@concrnt/ui'
+import { useClient } from './Client'
+import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
+import type { List } from '@concrnt/worldlib'
 
 // ---- Types ----
 
@@ -26,7 +29,6 @@ export interface EmojiPackage extends RawEmojiPackage {
 
 // ---- Constants ----
 
-const TWEMOJI_URL = 'https://gist.githubusercontent.com/totegamma/6e1a047f54960f6bb7b946064664d793/raw/twemoji.json'
 const COLS = 8
 
 // ---- Context ----
@@ -36,6 +38,10 @@ export interface EmojiPickerState {
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
+    packageURLs: string[]
+    addEmojiPackage: (url: string) => Promise<void>
+    removeEmojiPackage: (url: string) => Promise<void>
+    updateEmojiPackage: (url: string) => Promise<void>
 }
 
 const EmojiPickerContext = createContext<EmojiPickerState | undefined>(undefined)
@@ -45,6 +51,7 @@ interface Props {
 }
 
 export const EmojiPickerProvider = (props: Props) => {
+    const { client } = useClient()
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
@@ -52,58 +59,87 @@ export const EmojiPickerProvider = (props: Props) => {
     const [query, setQuery] = useState('')
     const [activeTab, setActiveTab] = useState(0)
 
-    const [emojiPackages, setEmojiPackages] = useState<EmojiPackage[]>(() => {
-        const pkgs: EmojiPackage[] = []
-        for (const url of [TWEMOJI_URL]) {
-            const cacheKey = `emojiPackage:${url}`
+    const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
+    const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
+    const [emojiPackages, setEmojiPackages] = useState<EmojiPackage[]>([])
+    const allEmojis = useMemo(() => emojiPackages.flatMap((pkg) => pkg.emojis), [emojiPackages])
+
+    const gridRef = useRef<HTMLDivElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
+
+    const reloadEmojiPackageURLs = useCallback(async () => {
+        const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
+        const urls = await list.items.value()
+
+        setEmojiPackageList(list)
+        setEmojiPackageURLs(Array.from(new Set(urls)))
+    }, [client, emojiPackageList])
+
+    useEffect(() => {
+        let unmounted = false
+
+        ensureEmojiPackageList(client)
+            .then(async (list) => {
+                const urls = await list.items.value()
+
+                if (unmounted) return
+                setEmojiPackageList(list)
+                setEmojiPackageURLs(Array.from(new Set(urls)))
+            })
+            .catch((e) => {
+                console.error('Failed to load emoji package list:', e)
+            })
+
+        return () => {
+            unmounted = true
+        }
+    }, [client])
+
+    const loadEmojiPackage = useCallback(async (url: string, noCache = false): Promise<EmojiPackage | null> => {
+        const cacheKey = `emojiPackage:${url}`
+
+        if (!noCache) {
             const cache = localStorage.getItem(cacheKey)
             if (cache) {
                 try {
-                    pkgs.push(JSON.parse(cache))
+                    return JSON.parse(cache)
                 } catch {
                     localStorage.removeItem(cacheKey)
                 }
             }
         }
-        return pkgs
-    })
-    const [allEmojis, setAllEmojis] = useState<Emoji[]>(() => emojiPackages.flatMap((pkg) => pkg.emojis))
 
-    const gridRef = useRef<HTMLDivElement>(null)
-    const searchInputRef = useRef<HTMLInputElement>(null)
-
-    const emojiPackageURLs = useMemo(() => [TWEMOJI_URL], [])
+        try {
+            const res = await fetch(url, {
+                cache: noCache ? 'no-cache' : 'default',
+                signal: AbortSignal.timeout(5000)
+            })
+            const raw: RawEmojiPackage = await res.json()
+            const pkg: EmojiPackage = {
+                ...raw,
+                packageURL: url,
+                fetchedAt: new Date()
+            }
+            localStorage.setItem(cacheKey, JSON.stringify(pkg))
+            return pkg
+        } catch (e) {
+            console.error('Failed to fetch emoji package:', url, e)
+            return null
+        }
+    }, [])
 
     useEffect(() => {
         let unmounted = false
 
-        emojiPackageURLs.forEach((url) => {
-            const cacheKey = `emojiPackage:${url}`
-            if (localStorage.getItem(cacheKey)) return
-
-            fetch(url, { signal: AbortSignal.timeout(5000) })
-                .then((res) => res.json())
-                .then((raw: RawEmojiPackage) => {
-                    const pkg: EmojiPackage = {
-                        ...raw,
-                        packageURL: url,
-                        fetchedAt: new Date()
-                    }
-                    if (!unmounted) {
-                        setEmojiPackages((prev) => [...prev, pkg])
-                        setAllEmojis((prev) => [...prev, ...pkg.emojis])
-                        localStorage.setItem(cacheKey, JSON.stringify(pkg))
-                    }
-                })
-                .catch((e) => {
-                    console.error('Failed to fetch emoji package:', url, e)
-                })
+        Promise.all(emojiPackageURLs.map((url) => loadEmojiPackage(url))).then((packages) => {
+            if (unmounted) return
+            setEmojiPackages(packages.filter((pkg): pkg is EmojiPackage => pkg !== null))
         })
 
         return () => {
             unmounted = true
         }
-    }, [emojiPackageURLs])
+    }, [emojiPackageURLs, loadEmojiPackage])
 
     // ---- Search ----
 
@@ -155,6 +191,44 @@ export const EmojiPickerProvider = (props: Props) => {
         onSelectedRef.current = null
     }, [])
 
+    const addEmojiPackage = useCallback(
+        async (url: string) => {
+            const normalized = url.trim()
+            if (!normalized || emojiPackageURLs.includes(normalized)) return
+
+            const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
+            await list.addItem(client, normalized, EMOJI_PACKAGE_SCHEMA)
+            await reloadEmojiPackageURLs()
+        },
+        [client, emojiPackageList, emojiPackageURLs, reloadEmojiPackageURLs]
+    )
+
+    const removeEmojiPackage = useCallback(
+        async (url: string) => {
+            const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
+            await list.removeItem(client, url)
+            await reloadEmojiPackageURLs()
+        },
+        [client, emojiPackageList, reloadEmojiPackageURLs]
+    )
+
+    const updateEmojiPackage = useCallback(
+        async (url: string) => {
+            localStorage.removeItem(`emojiPackage:${url}`)
+            const pkg = await loadEmojiPackage(url, true)
+
+            setEmojiPackages((prev) => {
+                const rest = prev.filter((item) => item.packageURL !== url)
+                return pkg
+                    ? [...rest, pkg].sort(
+                          (a, b) => emojiPackageURLs.indexOf(a.packageURL) - emojiPackageURLs.indexOf(b.packageURL)
+                      )
+                    : rest
+            })
+        },
+        [emojiPackageURLs, loadEmojiPackage]
+    )
+
     const selectEmoji = useCallback(
         (emoji: Emoji) => {
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
@@ -168,17 +242,24 @@ export const EmojiPickerProvider = (props: Props) => {
 
     // ---- Display data ----
 
+    const effectiveActiveTab = useMemo(() => {
+        if (activeTab > emojiPackages.length) {
+            return emojiPackages.length > 0 ? 1 : 0
+        }
+        return activeTab
+    }, [activeTab, emojiPackages.length])
+
     const title = useMemo(() => {
         if (query.length > 0) return '検索結果'
-        if (activeTab === 0) return 'よく使う絵文字'
-        return emojiPackages[activeTab - 1]?.name ?? ''
-    }, [query, activeTab, emojiPackages])
+        if (effectiveActiveTab === 0) return 'よく使う絵文字'
+        return emojiPackages[effectiveActiveTab - 1]?.name ?? ''
+    }, [query, effectiveActiveTab, emojiPackages])
 
     const displayEmojis = useMemo(() => {
         if (query.length > 0) return searchResults
-        if (activeTab === 0) return frequentEmojis
-        return emojiPackages[activeTab - 1]?.emojis ?? []
-    }, [query, searchResults, activeTab, frequentEmojis, emojiPackages])
+        if (effectiveActiveTab === 0) return frequentEmojis
+        return emojiPackages[effectiveActiveTab - 1]?.emojis ?? []
+    }, [query, searchResults, effectiveActiveTab, frequentEmojis, emojiPackages])
 
     const rows = useMemo(() => {
         const result: Emoji[][] = []
@@ -195,9 +276,13 @@ export const EmojiPickerProvider = (props: Props) => {
             open,
             close,
             search,
-            packages: emojiPackages
+            packages: emojiPackages,
+            packageURLs: emojiPackageURLs,
+            addEmojiPackage,
+            removeEmojiPackage,
+            updateEmojiPackage
         }),
-        [open, close, search, emojiPackages]
+        [open, close, search, emojiPackages, emojiPackageURLs, addEmojiPackage, removeEmojiPackage, updateEmojiPackage]
     )
 
     return (
@@ -257,7 +342,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             >
                                 {query.length === 0 ? (
                                     <TabButton
-                                        selected={activeTab === 0}
+                                        selected={effectiveActiveTab === 0}
                                         onClick={() => {
                                             setActiveTab(0)
                                             gridRef.current?.scrollTo(0, 0)
@@ -274,7 +359,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 {emojiPackages.map((pkg, index) => (
                                     <TabButton
                                         key={pkg.packageURL}
-                                        selected={query.length === 0 && activeTab === index + 1}
+                                        selected={query.length === 0 && effectiveActiveTab === index + 1}
                                         onClick={() => {
                                             setQuery('')
                                             setActiveTab(index + 1)
@@ -376,7 +461,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                     >
                                         {query.length > 0
                                             ? '一致する絵文字がありません'
-                                            : activeTab === 0
+                                            : effectiveActiveTab === 0
                                               ? 'まだ使った絵文字がありません'
                                               : '絵文字がありません'}
                                     </div>
