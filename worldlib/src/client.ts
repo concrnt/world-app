@@ -12,7 +12,8 @@ import {
     KVS,
     SignedDocument,
     Acknowledge,
-    fetchWithTimeout
+    fetchWithTimeout,
+    Entity
 } from '@concrnt/client'
 import { ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
@@ -56,6 +57,8 @@ export class PinnedListItemClass implements PinnedListItem {
 export class Client {
     api: Api
     ccid: string
+
+    entity: Entity
     server: Server
 
     currentProfile: string
@@ -181,9 +184,10 @@ export class Client {
 
     // =====================================================================
 
-    constructor(api: Api, ccid: string, server: Server, profile?: string) {
+    constructor(api: Api, ccid: string, entity: Entity, server: Server, profile?: string) {
         this.api = api
         this.ccid = ccid
+        this.entity = entity
         this.server = server
         this.currentProfile = profile ?? 'main'
 
@@ -208,7 +212,9 @@ export class Client {
         const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
-        const client = new Client(api, ccid, server, profile)
+        const entity = await api.getEntity(ccid)
+
+        const client = new Client(api, ccid, entity.value, server, profile)
         if (ccid === '') return client
 
         client.updateProfiles()
