@@ -5,6 +5,8 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "barcode-scanner:allow-check-permissions",
+    "barcode-scanner:allow-request-permissions",
     "barcode-scanner:allow-scan",
     "barcode-scanner:allow-cancel",
     "haptics:allow-impact-feedback",

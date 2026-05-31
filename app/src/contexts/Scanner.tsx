@@ -1,5 +1,12 @@
 import { Button } from '@concrnt/ui'
-import { scan, cancel, Format /*checkPermissions, requestPermissions */ } from '@tauri-apps/plugin-barcode-scanner'
+import {
+    scan,
+    cancel,
+    Format,
+    checkPermissions,
+    requestPermissions,
+    type PermissionState
+} from '@tauri-apps/plugin-barcode-scanner'
 import { Activity, createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 interface ScannerContextState {
@@ -14,34 +21,47 @@ const ScannerContext = createContext<ScannerContextState>({
     scan: () => Promise.resolve(null)
 })
 
+const ensureCameraPermission = async (): Promise<boolean> => {
+    try {
+        let state: PermissionState = await checkPermissions()
+
+        if (state !== 'granted') {
+            state = await requestPermissions()
+        }
+
+        return state === 'granted'
+    } catch (e) {
+        console.error('Failed to check camera permission', e)
+        return false
+    }
+}
+
 export const ScannerProvider = (props: Props) => {
     const [mode, setMode] = useState<'idle' | 'scanning'>('idle')
 
     const scanWrapper = useCallback(async () => {
+        const hasPermission = await ensureCameraPermission()
+        if (!hasPermission) {
+            console.error('Camera permission denied')
+            return null
+        }
+
         setMode('scanning')
 
-        /*
-        const ps = await checkPermissions()
-        if (ps === 'denied') {
-            const r = await requestPermissions()
-            if (r !== 'granted') {
-                console.error('Camera permission denied')
-                setMode('idle')
-                return null
-            }
+        try {
+            const result = await scan({
+                windowed: true,
+                formats: [Format.QRCode]
+            })
+
+            console.log('Scan result:', result)
+            return result.content
+        } catch (e) {
+            console.error('Scan failed', e)
+            return null
+        } finally {
+            setMode('idle')
         }
-        */
-
-        const result = await scan({
-            windowed: true,
-            formats: [Format.QRCode]
-        })
-
-        console.log('Scan result:', result)
-
-        setMode('idle')
-
-        return Promise.resolve(result.content)
     }, [])
 
     const value = useMemo(
