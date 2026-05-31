@@ -1,10 +1,11 @@
 import { Suspense, use, useMemo, useState } from 'react'
+import { Reorder, useDragControls, motion } from 'motion/react'
 import { Header } from '../ui/Header'
-import { View, Text, IconButton, Button, TextField, List, ListItem } from '@concrnt/ui'
+import { View, Text, IconButton, Button, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
-import { MdPlaylistAdd } from 'react-icons/md'
+import { MdPlaylistAdd, MdDragHandle } from 'react-icons/md'
 
 import { RiPushpinFill } from 'react-icons/ri'
 import { RiPushpinLine } from 'react-icons/ri'
@@ -13,6 +14,8 @@ import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { usePreference } from '../contexts/Preference'
+import { sortByListOrder } from '../utils/listOrder'
 
 export const ListsView = () => {
     const { client } = useClient()
@@ -33,8 +36,11 @@ export const ListsView = () => {
         <>
             <View>
                 <Header>Lists</Header>
-                <div
+                <motion.div
+                    layoutScroll
                     style={{
+                        flex: 1,
+                        minHeight: 0,
                         overflowY: 'auto'
                     }}
                 >
@@ -46,7 +52,7 @@ export const ListsView = () => {
                             }}
                         />
                     </Suspense>
-                </div>
+                </motion.div>
             </View>
             <FAB
                 onClick={() => {
@@ -73,52 +79,152 @@ interface ListsProps {
 
 const Lists = (props: ListsProps) => {
     const lists = use(props.listsPromise)
-    const drawer = useDrawer()
 
     const { client } = useClient()
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
+    const [listOrder, setListOrder] = usePreference('listOrder')
+
+    const profile = client.currentProfile
+    const order = listOrder?.[profile] ?? []
+    // 並び順が未設定のうちは、ホームのタブ順(ピン留め順)を基準にして一覧を並べる
+    const effectiveOrder = order.length > 0 ? order : pinnedLists.map((p) => p.uri)
+
+    const sorted = sortByListOrder(lists, effectiveOrder)
+
+    const [ordered, setOrdered] = useState<ListType[]>(sorted)
+
+    // lists や order が外部で更新されたら並びを同期する(レンダー中の状態調整)
+    const sortedKey = sorted.map((l) => l.uri).join(',')
+    const [prevKey, setPrevKey] = useState(sortedKey)
+    if (sortedKey !== prevKey) {
+        setOrdered(sorted)
+        setPrevKey(sortedKey)
+    }
+
+    const persistOrder = (items: ListType[]) => {
+        setListOrder({ ...(listOrder ?? {}), [profile]: items.map((l) => l.uri) })
+    }
 
     return (
-        <List>
-            {lists.map((list) => (
-                <ListItem
+        <Reorder.Group
+            axis="y"
+            values={ordered}
+            onReorder={setOrdered}
+            style={{ listStyle: 'none', margin: 0, padding: 0, width: '100%' }}
+        >
+            {ordered.map((list) => (
+                <ListRow
                     key={list.uri}
-                    style={{
-                        height: '2rem'
+                    list={list}
+                    pinned={pinnedLists.some((p) => p.uri === list.uri)}
+                    onTogglePin={() => {
+                        if (pinnedLists.some((p) => p.uri === list.uri)) {
+                            client?.removePin(list.uri)
+                        } else {
+                            client?.addPin(list.uri)
+                        }
                     }}
-                    onClick={() =>
-                        drawer.open(
-                            <ListSettings
-                                uri={list.uri}
-                                onComplete={() => {
-                                    drawer.close()
-                                    props.onUpdate?.()
-                                }}
-                            />
-                        )
-                    }
-                    secondaryAction={
-                        <IconButton
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                if (pinnedLists.find((p) => p.uri === list.uri)) {
-                                    // unpin
-                                    client?.removePin(list.uri)
-                                } else {
-                                    // pin
-                                    client?.addPin(list.uri)
-                                }
-                            }}
-                        >
-                            {pinnedLists.find((p) => p.uri === list.uri) ? <RiPushpinFill /> : <RiPushpinLine />}
-                        </IconButton>
-                    }
-                >
-                    <Text>{list.title}</Text>
-                </ListItem>
+                    onPersist={() => persistOrder(ordered)}
+                    onUpdate={props.onUpdate}
+                />
             ))}
-        </List>
+        </Reorder.Group>
+    )
+}
+
+interface ListRowProps {
+    list: ListType
+    pinned: boolean
+    onTogglePin: () => void
+    onPersist: () => void
+    onUpdate?: () => void
+}
+
+const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProps) => {
+    const drawer = useDrawer()
+    const controls = useDragControls()
+    const [dragging, setDragging] = useState(false)
+
+    return (
+        <Reorder.Item
+            value={list}
+            dragListener={false}
+            dragControls={controls}
+            onDragStart={() => setDragging(true)}
+            onDragEnd={() => {
+                setDragging(false)
+                onPersist()
+            }}
+            style={{
+                listStyle: 'none',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '2rem',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: `0 ${CssVar.space(2)}`,
+                backgroundColor: dragging ? CssVar.contentBackground : 'transparent'
+            }}
+        >
+            <div
+                onClick={() =>
+                    drawer.open(
+                        <ListSettings
+                            uri={list.uri}
+                            onComplete={() => {
+                                drawer.close()
+                                onUpdate?.()
+                            }}
+                        />
+                    )
+                }
+                style={{
+                    flex: 1,
+                    minWidth: 0,
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    overflow: 'hidden'
+                }}
+            >
+                <Text>{list.title}</Text>
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                    gap: CssVar.space(1)
+                }}
+            >
+                <IconButton
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onTogglePin()
+                    }}
+                >
+                    {pinned ? <RiPushpinFill /> : <RiPushpinLine />}
+                </IconButton>
+                <div
+                    onPointerDown={(e) => controls.start(e)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'grab',
+                        touchAction: 'none',
+                        color: CssVar.contentText,
+                        padding: CssVar.space(1)
+                    }}
+                >
+                    <MdDragHandle size={20} />
+                </div>
+            </div>
+        </Reorder.Item>
     )
 }
 

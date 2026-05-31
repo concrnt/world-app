@@ -17,6 +17,8 @@ import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { usePreference } from '../contexts/Preference'
+import { sortByListOrder } from '../utils/listOrder'
 import { Composer } from '../components/Composer'
 
 export const HomeView = (props: ScrollViewProps) => {
@@ -96,24 +98,28 @@ const HomeMain = ({
     const { client } = useClient()
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
+    const [listOrder] = usePreference('listOrder')
 
-    const pin = pinnedLists.find((pin) => pin.uri === selectedTabUri)
+    const order = listOrder?.[client.currentProfile] ?? []
+    const sortedPins = sortByListOrder(pinnedLists, order)
+
+    const pin = sortedPins.find((pin) => pin.uri === selectedTabUri)
 
     useEffect(() => {
-        if (selectedTabUri === '' && pinnedLists.length > 0) {
-            setSelectedTabUri(pinnedLists[0].uri)
+        if (selectedTabUri === '' && sortedPins.length > 0) {
+            setSelectedTabUri(sortedPins[0].uri)
         }
     }, [selectedTabUri])
 
     return (
         <>
-            {pinnedLists.length > 1 && (
+            {sortedPins.length > 1 && (
                 <Tabs
                     style={{
                         color: CssVar.contentLink
                     }}
                 >
-                    {pinnedLists.map((tab) => (
+                    {sortedPins.map((tab) => (
                         <Tab
                             key={tab.uri}
                             selected={selectedTabUri === tab.uri}
