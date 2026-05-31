@@ -6,11 +6,14 @@ import { semantics } from '@concrnt/worldlib'
 export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
+    // プロフィール名 -> リストURIの並び順
+    listOrder?: Record<string, string[]>
 }
 
 export const defaultPreference: Preference = {
     themeName: 'blue',
-    themeVariant: 'classic'
+    themeVariant: 'classic',
+    listOrder: {}
 }
 
 interface PreferenceState {
