@@ -4,6 +4,7 @@ import { MdContentCopy, MdSave } from 'react-icons/md'
 import { Theme } from '../types/Theme'
 import { Themes } from '../data/themes'
 import { usePreference } from '../contexts/Preference'
+import { useThemeLibrary } from '../contexts/Theme'
 import { ThemeCard } from './ThemeCard'
 import { CssVar } from '../types/Theme'
 
@@ -27,7 +28,7 @@ interface Props {
 
 export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
     const [themeName, setThemeName] = usePreference('themeName')
-    const [customThemes, setCustomThemes] = usePreference('customThemes')
+    const { customThemes, saveTheme } = useThemeLibrary()
     const [title, setTitle] = useState(() => (baseName in Themes ? `${baseName}-custom` : baseName))
     const [draft, setDraft] = useState<Theme>(() => cloneTheme(baseTheme, baseName))
     const [status, setStatus] = useState('')
@@ -94,12 +95,9 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
                         variant="outlined"
                         disabled={protectedName || normalizedTitle.length === 0}
                         startIcon={<MdSave size={18} />}
-                        onClick={() => {
-                            setCustomThemes({
-                                ...customThemes,
-                                [normalizedTitle]: savedTheme
-                            })
-                            setThemeName(normalizedTitle)
+                        onClick={async () => {
+                            const saved = await saveTheme(savedTheme)
+                            setThemeName(saved.meta?.name ?? normalizedTitle)
                             setStatus(exists ? 'テーマを更新しました' : 'テーマを作成しました')
                         }}
                     >

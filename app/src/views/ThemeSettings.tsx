@@ -3,13 +3,14 @@ import { MdContentCopy, MdDeleteForever } from 'react-icons/md'
 import { ThemeCard } from '../components/ThemeCard'
 import { ThemeEditor } from '../components/ThemeEditor'
 import { usePreference } from '../contexts/Preference'
+import { useThemeLibrary } from '../contexts/Theme'
 import { Themes } from '../data/themes'
 import { CssVar } from '../types/Theme'
 import { Header } from '../ui/Header'
 
 export const ThemeSettingsView = () => {
     const [themeName, setThemeName] = usePreference('themeName')
-    const [customThemes, setCustomThemes] = usePreference('customThemes')
+    const { customThemes, deleteTheme } = useThemeLibrary()
     const selectedTheme = customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
     return (
@@ -77,11 +78,9 @@ export const ThemeSettingsView = () => {
                                             <MdContentCopy size={18} />
                                         </IconButton>
                                         <IconButton
-                                            onClick={(e) => {
+                                            onClick={async (e) => {
                                                 e.stopPropagation()
-                                                const next = { ...customThemes }
-                                                delete next[name]
-                                                setCustomThemes(next)
+                                                await deleteTheme(name)
                                                 if (themeName === name) {
                                                     setThemeName('blue')
                                                 }

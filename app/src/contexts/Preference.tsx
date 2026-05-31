@@ -2,12 +2,10 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useClient } from './Client'
 import { semantics } from '@concrnt/worldlib'
-import type { Theme } from '../types/Theme'
 
 export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
-    customThemes: Record<string, Theme>
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
 }
@@ -15,7 +13,6 @@ export interface Preference {
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
-    customThemes: {},
     listOrder: {}
 }
 
@@ -56,9 +53,12 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
                 if (!doc) return
                 const data = doc.value
                 if (!data) return
+                const { customThemes: _legacyCustomThemes, ...settings } = data as Preference & {
+                    customThemes?: unknown
+                }
                 setPref({
                     ...pref,
-                    ...data
+                    ...settings
                 })
             })
             .catch((e: any) => {
