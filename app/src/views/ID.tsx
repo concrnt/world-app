@@ -71,7 +71,7 @@ export const IDView = () => {
                     <Text variant="caption">現在のID、登録サーバー、認証情報を確認できます。</Text>
                 </div>
 
-                <div>
+                <div onPointerDownCapture={(e) => e.stopPropagation()}>
                     <Tilt glareEnable={true} glareBorderRadius="5%">
                         <Passport
                             ccid={client.ccid}
