@@ -6,13 +6,10 @@ import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
 import { MdNotifications } from 'react-icons/md'
 import { MdContacts } from 'react-icons/md'
-import { MdTerminal } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
-import { MdBadge } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
-import { SiActivitypub } from 'react-icons/si'
 
 import { CssVar } from '../types/Theme'
 
@@ -103,15 +100,6 @@ export const Sidebar = () => {
                         </ListItem>
                         <ListItem icon={<MdTravelExplore size={24} />} onClick={() => go('/query')}>
                             照会
-                        </ListItem>
-                        <ListItem icon={<MdTerminal size={24} />} onClick={() => go('/dev')}>
-                            開発者ツール
-                        </ListItem>
-                        <ListItem icon={<MdBadge size={24} />} onClick={() => go('/id')}>
-                            ID管理
-                        </ListItem>
-                        <ListItem icon={<SiActivitypub size={24} />} onClick={() => go('/activitypub')}>
-                            ActivityPub
                         </ListItem>
                         <ListItem icon={<MdSettings size={24} />} onClick={() => go('/settings')}>
                             設定

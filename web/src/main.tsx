@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider } from './contexts/Client'
@@ -24,7 +25,7 @@ import { HomeView } from './views/Home'
 import { ExplorerView } from './views/Explorer'
 import { NotificationsView } from './views/Notifications'
 import { ContactsView } from './views/Contacts'
-import { SettingsView } from './views/Settings'
+import { SettingsView, ThemeSettingsView } from './views/Settings'
 import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
 import { TimelineView } from './views/Timeline'
@@ -36,6 +37,9 @@ import { Activitypub } from './views/Activitypub'
 import { ApView } from './views/ApView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { NavigationProvider } from './contexts/Navigation'
+import { IconButton } from '@concrnt/ui'
+import { MdArrowBack } from 'react-icons/md'
 
 const ProfileRoute = () => {
     const { ccid = '', profile } = useParams()
@@ -54,6 +58,22 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' }) => {
         case 'apView':
             return <ApView uri={decoded} />
     }
+}
+
+const SettingsBackProvider = ({ children }: { children: ReactNode }) => {
+    const navigate = useNavigate()
+
+    return (
+        <NavigationProvider
+            backNode={
+                <IconButton onClick={() => navigate('/settings')}>
+                    <MdArrowBack size={24} />
+                </IconButton>
+            }
+        >
+            {children}
+        </NavigationProvider>
+    )
 }
 
 const AuthedRoutes = () => (
@@ -76,6 +96,38 @@ const AuthedRoutes = () => (
                                                         <Route path="contacts" element={<ContactsView />} />
                                                         <Route path="settings" element={<SettingsView />} />
                                                         <Route
+                                                            path="settings/theme"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <ThemeSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/activitypub"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <Activitypub />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/id"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <IDView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/dev"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <DevView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
                                                             path="profile/:ccid/:profile?"
                                                             element={<ProfileRoute />}
                                                         />
@@ -87,9 +139,18 @@ const AuthedRoutes = () => (
                                                         <Route path="lists" element={<ListsView />} />
                                                         <Route path="lists/:uri" element={<ListsView />} />
                                                         <Route path="query" element={<QueryView />} />
-                                                        <Route path="dev" element={<DevView />} />
-                                                        <Route path="id" element={<IDView />} />
-                                                        <Route path="activitypub" element={<Activitypub />} />
+                                                        <Route
+                                                            path="dev"
+                                                            element={<Navigate to="/settings/dev" replace />}
+                                                        />
+                                                        <Route
+                                                            path="id"
+                                                            element={<Navigate to="/settings/id" replace />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub"
+                                                            element={<Navigate to="/settings/activitypub" replace />}
+                                                        />
                                                         <Route
                                                             path="activitypub/person/:uri"
                                                             element={<UriRoute kind="apView" />}
