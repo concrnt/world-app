@@ -12,8 +12,10 @@ export class ServerOfflineError extends Error {
 }
 
 export class NotFoundError extends Error {
-    constructor(msg: string) {
+    uri: string
+    constructor(msg: string, uri: string) {
         super(msg)
+        this.uri = uri
     }
 }
 
@@ -211,7 +213,7 @@ export class Api {
                         case 403:
                             throw new PermissionError(`fetch failed on transport: ${res.status} ${await res.text()}`)
                         case 404:
-                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`, url)
                         case 502:
                         case 503:
                         case 504:
@@ -316,7 +318,7 @@ export class Api {
                     if (!res.ok) {
                         if (res.status === 404) {
                             this.cache.set(cacheKey, null)
-                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`, url)
                         }
                         return await Promise.reject(
                             new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
@@ -366,7 +368,7 @@ export class Api {
         const cacheKey = `domain:${remote}`
         const path = '/.well-known/concrnt'
         const data = await this.fetchWithCache<Server>(remote, path, cacheKey, { ...opts, auth: 'no-auth' })
-        if (!data) throw new NotFoundError(`domain ${remote} not found`)
+        if (!data) throw new NotFoundError(`domain ${remote} not found`, `https://${remote}${path}`)
         return data
     }
 
@@ -417,7 +419,10 @@ export class Api {
     }
 
     async getResource<T>(uri: string, hint?: string): Promise<T> {
-        const parsed = new URL(uri)
+        const parsed = URL.parse(uri)
+        if (!parsed) {
+            throw new Error(`invalid URI: ${uri}`)
+        }
         const owner = parsed.host
         const key = parsed.pathname
 

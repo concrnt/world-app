@@ -11,15 +11,12 @@ export const RenderError = ({ error }: FallbackProps) => {
                 }}
             >
                 <Text variant="caption">このメッセージは削除されました</Text>
+                <Text variant="caption">{error.uri}</Text>
             </div>
         )
     }
     return (
-        <div
-            style={{
-                overflow: 'hidden'
-            }}
-        >
+        <div>
             {(error as any)?.message}
             <pre
                 style={{

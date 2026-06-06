@@ -14,7 +14,7 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
-import { Avatar, CssVar, Divider } from '@concrnt/ui'
+import { Text, Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -363,6 +363,7 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     </Suspense>
                 </div>
             </ErrorBoundary>
+            <Text variant="caption">{item.href}</Text>
             <Divider />
         </>
     )

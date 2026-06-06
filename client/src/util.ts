@@ -12,6 +12,12 @@ export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs
         .then((res) => {
             return res
         })
+        .catch((err) => {
+            if (err.name === 'AbortError') {
+                throw new Error(`Request to ${url} timed out after ${timeoutMs} ms`)
+            }
+            throw new Error(`Request to ${url} failed: ${err.message}`)
+        })
         .finally(() => {
             clearTimeout(clientTimeout)
         })
