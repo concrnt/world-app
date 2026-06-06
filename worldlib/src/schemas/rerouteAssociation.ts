@@ -6,8 +6,9 @@
  */
 
 export interface RerouteAssociationSchema {
-    messageId: string
-    messageAuthor: string
+    targetURI: string
+    messageId?: string
+    messageAuthor?: string
     profileOverride?: {
         username?: string
         avatar?: string

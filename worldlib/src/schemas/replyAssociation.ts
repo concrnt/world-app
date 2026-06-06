@@ -6,8 +6,9 @@
  */
 
 export interface ReplyAssociationSchema {
-    messageId: string
-    messageAuthor: string
+    targetURI: string
+    messageId?: string
+    messageAuthor?: string
     profileOverride?: {
         username?: string
         avatar?: string

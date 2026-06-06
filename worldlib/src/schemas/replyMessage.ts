@@ -6,8 +6,9 @@
  */
 
 export interface ReplyMessageSchema {
-    replyToMessageId: string
-    replyToMessageAuthor: string
+    targetURI: string
+    replyToMessageId?: string
+    replyToMessageAuthor?: string
     body: string
     emojis?: {
         [k: string]: {

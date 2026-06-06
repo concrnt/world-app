@@ -6,8 +6,9 @@
  */
 
 export interface RerouteMessageSchema {
-    rerouteMessageId: string
-    rerouteMessageAuthor: string
+    targetURI: string
+    rerouteMessageId?: string
+    rerouteMessageAuthor?: string
     body?: string
     emojis?: {
         [k: string]: {
