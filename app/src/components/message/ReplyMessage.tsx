@@ -24,7 +24,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 gap: CssVar.space(1)
             }}
         >
-            <MessageContainer oneline uri={props.message.value.replyToMessageId} />
+            <MessageContainer oneline uri={props.message.value.targetURI} />
             <MessageLayout
                 onClick={() => {
                     push(<PostView uri={props.message.uri} />)

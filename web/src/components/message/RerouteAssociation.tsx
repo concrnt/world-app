@@ -15,8 +15,8 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
     // リルートしたユーザー
     const rerouteAuthor = message.authorUser
 
-    // リルートメッセージのID（valueから取得）
-    const rerouteMessageId = message.value.messageId
+    // リルートメッセージのURI（valueから取得）
+    const rerouteMessageURI = message.value.targetURI
 
     return (
         <div
@@ -27,8 +27,8 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 cursor: 'pointer'
             }}
             onClick={() => {
-                if (rerouteMessageId) {
-                    navigate('/post/' + encodeURIComponent(rerouteMessageId))
+                if (rerouteMessageURI) {
+                    navigate('/post/' + encodeURIComponent(rerouteMessageURI))
                 }
             }}
         >

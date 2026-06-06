@@ -241,7 +241,7 @@ export const PostView = (props: Props) => {
                                     }}
                                 >
                                     <Suspense fallback={<MessageSkeleton />}>
-                                        <MessageContainer uri={reply.value.messageId} />
+                                        <MessageContainer uri={reply.value.targetURI} />
                                     </Suspense>
                                 </div>
                             ))}

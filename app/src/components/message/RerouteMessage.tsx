@@ -66,7 +66,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 </IconButton>
                 <TimeDiff date={props.message.createdAt} />
             </OnelineMessageLayout>
-            <MessageContainer uri={props.message.value.rerouteMessageId} />
+            <MessageContainer uri={props.message.value.targetURI} />
         </div>
     )
 }

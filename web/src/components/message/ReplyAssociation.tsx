@@ -18,19 +18,19 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
     // リプライしたユーザー
     const replyAuthor = message.authorUser
 
-    // リプライメッセージのID（valueから取得）
-    const replyMessageId = message.value.messageId
+    // リプライメッセージのURI（valueから取得）
+    const replyMessageURI = message.value.targetURI
 
     // リプライメッセージを取得
     const [replyMessage, setReplyMessage] = useState<Message<any> | null>(null)
 
     useEffect(() => {
-        if (replyMessageId && client) {
-            client.getMessage<any>(replyMessageId).then((msg) => {
+        if (replyMessageURI && client) {
+            client.getMessage<any>(replyMessageURI).then((msg) => {
                 setReplyMessage(msg)
             })
         }
-    }, [replyMessageId, client])
+    }, [replyMessageURI, client])
 
     return (
         <div
@@ -41,8 +41,8 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                 cursor: 'pointer'
             }}
             onClick={() => {
-                if (replyMessageId) {
-                    navigate('/post/' + encodeURIComponent(replyMessageId))
+                if (replyMessageURI) {
+                    navigate('/post/' + encodeURIComponent(replyMessageURI))
                 }
             }}
         >
@@ -78,8 +78,8 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
             {replyMessage && (
                 <MessageLayout
                     onClick={() => {
-                        if (replyMessageId) {
-                            navigate('/post/' + encodeURIComponent(replyMessageId))
+                        if (replyMessageURI) {
+                            navigate('/post/' + encodeURIComponent(replyMessageURI))
                         }
                     }}
                     left={
@@ -104,7 +104,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
             )}
 
             {/* ローディング */}
-            {!replyMessage && replyMessageId && (
+            {!replyMessage && replyMessageURI && (
                 <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>
             )}
         </div>

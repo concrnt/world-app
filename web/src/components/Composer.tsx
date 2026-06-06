@@ -163,7 +163,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyMessage,
                         value: {
                             body: draft,
-                            replyToMessageId: props.targetMessage.uri,
+                            targetURI: props.targetMessage.uri,
                             emojis: emojiDict
                         },
                         author: client.ccid,
@@ -184,7 +184,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: newPostUri
+                            targetURI: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: timestamp
@@ -205,7 +205,7 @@ export const Composer = (props: Props) => {
                         key: newPostUri,
                         schema: Schemas.rerouteMessage,
                         value: {
-                            rerouteMessageId: props.targetMessage.uri
+                            targetURI: props.targetMessage.uri
                         },
                         author: client.ccid,
                         distributes,
@@ -225,7 +225,7 @@ export const Composer = (props: Props) => {
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            messageId: newPostUri
+                            targetURI: newPostUri
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: timestamp
