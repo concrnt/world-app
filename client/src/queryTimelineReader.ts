@@ -1,6 +1,6 @@
 import { Api } from './api'
-import { ChunklineItem } from './chunkline'
 import { Document, SignedDocument } from './model'
+import { TimelineItemWithUpdate } from './timelineReader'
 
 export interface Query {
     schema?: string
@@ -8,7 +8,7 @@ export interface Query {
 }
 
 export class QueryTimelineReader {
-    body: ChunklineItem[] = []
+    body: TimelineItemWithUpdate[] = []
     onUpdate?: () => void
     api: Api
     prefix?: string
@@ -34,10 +34,16 @@ export class QueryTimelineReader {
                 this.body = items.map((item) => {
                     const doc: Document<any> = JSON.parse(item.document)
 
+                    let href = item.cckv
+                    if (doc.schema === 'https://schema.concrnt.net/reference.json') {
+                        href = doc.value.href
+                    }
+
                     return {
-                        href: item.cckv,
+                        href: href,
                         timestamp: new Date(doc.createdAt),
-                        source: prefix
+                        source: prefix,
+                        lastUpdate: new Date()
                     }
                 })
 
@@ -73,8 +79,9 @@ export class QueryTimelineReader {
         })
 
         const newdata = items.filter((item) => !this.body.find((i) => i.href === item.href))
+        const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         if (newdata.length === 0) return false
-        this.body = this.body.concat(newdata)
+        this.body = this.body.concat(newdataWithUpdate)
         this.onUpdate?.()
         return true
     }
@@ -82,5 +89,17 @@ export class QueryTimelineReader {
     async reload(): Promise<boolean> {
         if (!this.prefix) return false
         return this.init(this.prefix, this.query, this.batch)
+    }
+
+    updateItem(href: string) {
+        const item = this.body.find((i) => i.href === href)
+        if (item) {
+            this.api.notifyResourceUpdate(href)
+            item.lastUpdate = new Date()
+            this.onUpdate?.()
+        } else {
+            console.warn(`Item with href ${href} not found in timeline.`)
+            console.log('Current items:', this.body)
+        }
     }
 }

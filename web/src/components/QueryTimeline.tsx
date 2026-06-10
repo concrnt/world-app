@@ -1,4 +1,15 @@
-import { memo, ReactNode, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+    createContext,
+    memo,
+    ReactNode,
+    Suspense,
+    useCallback,
+    useContext,
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    useState
+} from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -16,6 +27,18 @@ interface Props extends ScrollViewProps {
     query?: any
     batchSize?: number
     header?: ReactNode
+}
+
+interface QueryTimelineContextState {
+    update: (href: string) => void
+}
+
+const QueryTimelineContext = createContext<QueryTimelineContextState>({
+    update: (_href: string) => {}
+})
+
+export const useQueryTimelineContext = () => {
+    return useContext(QueryTimelineContext)
 }
 
 export const QueryTimeline = (props: Props) => {
@@ -78,6 +101,15 @@ export const QueryTimeline = (props: Props) => {
         }
     }, [reader])
 
+    const itemUpdated = useCallback(
+        (href: string) => {
+            console.log('Item updated:', href)
+            if (!reader.current) return
+            reader.current.updateItem(href)
+        },
+        [reader]
+    )
+
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
@@ -133,9 +165,15 @@ export const QueryTimeline = (props: Props) => {
                 ref={scrollRef}
             >
                 {props.header}
-                {reader.current?.body.map((item) => (
-                    <Cell key={item.timestamp.getTime() ?? item.href} item={item} />
-                ))}
+                <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
+                    {reader.current?.body.map((item) => (
+                        <Cell
+                            key={item.timestamp.getTime() ?? item.href}
+                            item={item}
+                            lastUpdate={item.lastUpdate?.getTime() ?? 0}
+                        />
+                    ))}
+                </QueryTimelineContext.Provider>
                 {loading && <Loading message={'Loading...'} />}
                 {!hasMoreData && (
                     <div
@@ -160,6 +198,7 @@ export const QueryTimeline = (props: Props) => {
 
 interface CellProps {
     item: ChunklineItem
+    lastUpdate: number
 }
 
 const Cell = memo<CellProps>(({ item }: CellProps) => {
