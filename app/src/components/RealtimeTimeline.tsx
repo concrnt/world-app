@@ -302,7 +302,7 @@ export const RealtimeTimeline = (props: Props) => {
                             </div>
                         ))}
                     {reader.current?.body.map((item) => (
-                        <Cell key={item.href} item={item} />
+                        <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
                     ))}
                     {loading && <Loading message={'Loading...'} />}
                     {!hasMoreData && (
@@ -329,9 +329,10 @@ export const RealtimeTimeline = (props: Props) => {
 
 interface CellProps {
     item: TimelineItemWithUpdate
+    lastUpdate: number
 }
 
-const Cell = memo(({ item }: CellProps) => {
+const Cell = memo<CellProps>(({ item }: CellProps) => {
     return (
         <>
             <ErrorBoundary FallbackComponent={RenderError}>
@@ -341,13 +342,8 @@ const Cell = memo(({ item }: CellProps) => {
                         contentVisibility: 'auto'
                     }}
                 >
-                    <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>
-                        <MessageContainer
-                            uri={item.href}
-                            source={item.source}
-                            lastUpdated={item.lastUpdate?.getTime() ?? 0}
-                            content={item.content}
-                        />
+                    <Suspense key={item.href} fallback={<MessageSkeleton />}>
+                        <MessageContainer uri={item.href} source={item.source} content={item.content} />
                     </Suspense>
                 </div>
             </ErrorBoundary>

@@ -17,6 +17,7 @@ import { useDrawer } from '../../contexts/Drawer'
 import { useConfirm } from '../../contexts/Confirm'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
+import { useQueryTimelineContext } from '../QueryTimeline'
 
 interface Props {
     message: Message<any>
@@ -35,6 +36,8 @@ export const MessageActions = (props: Props) => {
     const drawer = useDrawer()
     const confirm = useConfirm()
     const emojiPicker = useEmojiPicker()
+    const qt = useQueryTimelineContext()
+    const messageHref = props.message.key ?? props.message.uri
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -112,6 +115,7 @@ export const MessageActions = (props: Props) => {
                             })
                             if (likeState.ownLike) {
                                 await client.api.delete(likeState.ownLike.ccfs)
+                                qt.update(messageHref)
                             }
                         })
                     } else {
@@ -128,6 +132,7 @@ export const MessageActions = (props: Props) => {
                                 }
                             })
                             await props.message.favorite(client)
+                            qt.update(messageHref)
                         })
                     }
                 }}

@@ -17,7 +17,6 @@ import { ActivitypubNote } from './ActivitypubNote'
 interface Props {
     uri?: string
     source?: string
-    lastUpdated?: number
     content?: string
     oneline?: boolean
 }
