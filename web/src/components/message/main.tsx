@@ -8,6 +8,7 @@ import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
 import { RerouteMessage } from './RerouteMessage'
 import { LikeAssociation } from './LikeAssociation'
+import { ReactionAssociation } from './ReactionAssociation'
 import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
@@ -45,6 +46,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return <RerouteMessage message={message} />
         case Schemas.likeAssociation:
             return <LikeAssociation message={message} />
+        case Schemas.reactionAssociation:
+            return <ReactionAssociation message={message} />
         case Schemas.replyAssociation:
             return <ReplyAssociation message={message} />
         case Schemas.rerouteAssociation:
