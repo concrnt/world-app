@@ -32,6 +32,18 @@ export class Message<T> implements Document<T> {
         username: 'Anonymous'
     }
 
+    toJSON(): Document<T> & { uri: string } {
+        return {
+            uri: this.uri,
+            key: this.key,
+            schema: this.schema,
+            value: this.value,
+            author: this.author,
+            createdAt: this.createdAt,
+            distributes: this.distributes
+        }
+    }
+
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
         this.key = document.key

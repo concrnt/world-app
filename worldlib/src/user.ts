@@ -12,6 +12,15 @@ export class User {
     ccid: CCID
     alias?: string
 
+    toJSON() {
+        return {
+            ccid: this.ccid,
+            alias: this.alias,
+            domain: this.domain,
+            profile: this.profile
+        }
+    }
+
     stats = new CachedPromise<{ acknowledging: number; acknowledged: number }>(async () => {
         const acknowledging = await this.client.api.requestConcrntApi<Record<string, number>>(
             this.client.server.domain,

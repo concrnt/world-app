@@ -13,6 +13,18 @@ export class Timeline {
     icon?: string
     banner?: string
 
+    toJSON() {
+        return {
+            uri: this.uri,
+            schema: this.schema,
+            name: this.name,
+            shortname: this.shortname,
+            description: this.description,
+            icon: this.icon,
+            banner: this.banner
+        }
+    }
+
     constructor(uri: string, schema: string, value: CommunityTimelineSchema) {
         this.uri = uri
         this.schema = schema

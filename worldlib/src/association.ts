@@ -11,6 +11,19 @@ export class Association<T> implements Document<T> {
     associate: string
     associationVariant?: string
 
+    toJSON() {
+        return {
+            ccfs: this.ccfs,
+            schema: this.schema,
+            value: this.value,
+            author: this.author,
+            createdAt: this.createdAt,
+            distributes: this.distributes,
+            associate: this.associate,
+            associationVariant: this.associationVariant
+        }
+    }
+
     constructor(ccfs: string, document: Document<T>) {
         this.ccfs = ccfs
         this.schema = document.schema

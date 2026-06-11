@@ -9,6 +9,13 @@ export class List {
 
     title: string
 
+    toJSON() {
+        return {
+            uri: this.uri,
+            title: this.title
+        }
+    }
+
     items = new CachedPromise<string[]>(async () => {
         const items = await this.client.api.query({
             prefix: this.uri,
