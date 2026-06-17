@@ -7,6 +7,18 @@ import { View } from '../components/View'
 import { useNavigate } from 'react-router-dom'
 import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
+import { Fragment } from 'react'
+import buildTime from '~build/time'
+import { branch, sha } from '~build/git'
+import { version } from '~build/package'
+
+const branchName = branch || window.location.host.split('.')[0]
+const appInfoRows = [
+    ['バージョン', version],
+    ['ビルド日時', buildTime.toLocaleString()],
+    ['ブランチ', branchName],
+    ['コミット', sha]
+]
 
 export const SettingsView = () => {
     const { logout } = useClient()
@@ -77,6 +89,41 @@ export const SettingsView = () => {
                 >
                     Logout
                 </Button>
+
+                <Divider />
+
+                <div
+                    style={{
+                        border: `1px solid ${CssVar.divider}`,
+                        borderRadius: 8,
+                        padding: CssVar.space(1.5),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(0.75),
+                        opacity: 0.78
+                    }}
+                >
+                    <Text variant="caption" style={{ margin: 0, fontWeight: 700 }}>
+                        アプリ情報
+                    </Text>
+                    <dl
+                        style={{
+                            margin: 0,
+                            display: 'grid',
+                            gridTemplateColumns: 'max-content minmax(0, 1fr)',
+                            gap: `${CssVar.space(0.25)} ${CssVar.space(1)}`,
+                            fontSize: '0.75rem',
+                            lineHeight: 1.45
+                        }}
+                    >
+                        {appInfoRows.map(([label, value]) => (
+                            <Fragment key={label}>
+                                <dt style={{ margin: 0 }}>{label}</dt>
+                                <dd style={{ margin: 0, minWidth: 0, wordBreak: 'break-all' }}>{value}</dd>
+                            </Fragment>
+                        ))}
+                    </dl>
+                </div>
             </div>
         </View>
     )
