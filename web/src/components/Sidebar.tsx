@@ -78,9 +78,10 @@ export const Sidebar = () => {
                     </div>
                     <Divider />
                     <List
+                        dense
+                        disablePadding
                         style={{
-                            color: CssVar.backdropText,
-                            fontSize: '1.25rem'
+                            color: CssVar.backdropText
                         }}
                     >
                         <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>

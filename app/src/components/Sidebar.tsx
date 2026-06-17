@@ -83,9 +83,10 @@ export const Sidebar = (props: Props) => {
                     </div>
                     <Divider />
                     <List
+                        dense
+                        disablePadding
                         style={{
-                            color: CssVar.backdropText,
-                            fontSize: '1.25rem'
+                            color: CssVar.backdropText
                         }}
                     >
                         <ListItem

@@ -47,3 +47,30 @@ export const DenseContent: Story = {
         </List>
     )
 }
+
+export const Dense: Story = {
+    render: () => (
+        <List dense style={{ maxWidth: 420 }}>
+            <ListItem icon={<span aria-hidden>👤</span>} onClick={fn()}>
+                Account
+            </ListItem>
+            <ListItem icon={<span aria-hidden>🔔</span>} onClick={fn()} secondaryAction={<span aria-hidden>›</span>}>
+                Notifications
+            </ListItem>
+            <ListItem icon={<span aria-hidden>🎨</span>}>Appearance</ListItem>
+        </List>
+    )
+}
+
+export const WithEndIcon: Story = {
+    render: () => (
+        <List style={{ maxWidth: 420 }}>
+            <ListItem startIcon={<span aria-hidden>🎨</span>} endIcon={<span aria-hidden>›</span>} onClick={fn()}>
+                Appearance
+            </ListItem>
+            <ListItem startIcon={<span aria-hidden>🔒</span>} endIcon={<span aria-hidden>›</span>} onClick={fn()}>
+                Privacy
+            </ListItem>
+        </List>
+    )
+}
