@@ -29,7 +29,8 @@ export const DevView = () => {
                     gap: CssVar.space(2),
                     padding: CssVar.space(2),
                     flex: 1,
-                    overflowY: 'auto'
+                    overflowY: 'auto',
+                    touchAction: 'pan-y'
                 }}
             >
                 <List>
