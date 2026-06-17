@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Button, TextField, Text, Divider } from '@concrnt/ui'
+import { Button, TextField, Text, Divider, List, ListItem, Switch } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
+import { usePersistent } from '../hooks/usePersistent'
 
 export const DevView = () => {
     const { client } = useClient()
+    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
@@ -27,6 +29,14 @@ export const DevView = () => {
                     overflowY: 'auto'
                 }}
             >
+                <List>
+                    <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
+                        開発者モード
+                    </ListItem>
+                </List>
+
+                <Divider />
+
                 <UserPicker selected={selected} setSelected={setSelected} />
 
                 <Divider />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, TextField, View, Text, Divider } from '@concrnt/ui'
+import { Button, TextField, View, Text, Divider, List, ListItem, Switch } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
@@ -7,10 +7,12 @@ import { UserPicker } from '../components/UserPicker'
 import { useStack } from '../layouts/Stack'
 import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './StoreMocks'
 import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
+import { usePersistent } from '../hooks/usePersistent'
 
 export const DevView = () => {
     const { client } = useClient()
     const stack = useStack()
+    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
@@ -30,6 +32,14 @@ export const DevView = () => {
                     overflowY: 'auto'
                 }}
             >
+                <List>
+                    <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
+                        開発者モード
+                    </ListItem>
+                </List>
+
+                <Divider />
+
                 <UserPicker selected={selected} setSelected={setSelected} />
 
                 <Divider />

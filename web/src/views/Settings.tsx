@@ -7,10 +7,11 @@ import { View } from '../components/View'
 import { useNavigate } from 'react-router-dom'
 import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import buildTime from '~build/time'
 import { branch, sha } from '~build/git'
 import { version } from '~build/package'
+import { usePersistent } from '../hooks/usePersistent'
 
 const branchName = branch || window.location.host.split('.')[0]
 const appInfoRows = [
@@ -25,6 +26,21 @@ export const SettingsView = () => {
 
     const reset = useResetPreference()
     const navigate = useNavigate()
+    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
+    const [, setAppInfoTapCount] = useState(0)
+
+    const handleAppInfoClick = () => {
+        if (developerMode) return
+
+        setAppInfoTapCount((count) => {
+            const nextCount = count + 1
+            if (nextCount >= 7) {
+                setDeveloperMode(true)
+                return 0
+            }
+            return nextCount
+        })
+    }
 
     return (
         <View>
@@ -69,13 +85,15 @@ export const SettingsView = () => {
                     >
                         絵文字
                     </ListItem>
-                    <ListItem
-                        startIcon={<MdTerminal size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/dev')}
-                    >
-                        開発者ツール
-                    </ListItem>
+                    {developerMode && (
+                        <ListItem
+                            startIcon={<MdTerminal size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => navigate('/settings/dev')}
+                        >
+                            開発者ツール
+                        </ListItem>
+                    )}
                 </List>
 
                 <Divider />
@@ -93,6 +111,7 @@ export const SettingsView = () => {
                 <Divider />
 
                 <div
+                    onClick={handleAppInfoClick}
                     style={{
                         border: `1px solid ${CssVar.divider}`,
                         borderRadius: 8,
@@ -100,7 +119,8 @@ export const SettingsView = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: CssVar.space(0.75),
-                        opacity: 0.78
+                        opacity: 0.78,
+                        userSelect: 'none'
                     }}
                 >
                     <Text variant="caption" style={{ margin: 0, fontWeight: 700 }}>
