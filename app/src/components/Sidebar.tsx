@@ -109,6 +109,17 @@ export const Sidebar = (props: Props) => {
                             設定
                         </ListItem>
                     </List>
+                    <div style={{ flex: 1 }} />
+                    <Divider />
+                    <div
+                        style={{
+                            fontSize: '0.6rem',
+                            padding: CssVar.space(1),
+                            textAlign: 'center'
+                        }}
+                    >
+                        Concrnt World App 開発中α版
+                    </div>
                 </div>
             </div>
         </>

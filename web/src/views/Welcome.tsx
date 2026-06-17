@@ -93,7 +93,26 @@ export const WelcomeView = () => {
             return (
                 <AuthScreen>
                     <div style={{ flex: 1 }} />
-                    <AuthBrand />
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: CssVar.space(2)
+                        }}
+                    >
+                        <AuthBrand />
+                        <Text
+                            variant="caption"
+                            style={{
+                                color: CssVar.uiText,
+                                opacity: 0.72,
+                                textAlign: 'center'
+                            }}
+                        >
+                            World App 開発中α版
+                        </Text>
+                    </div>
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>
                         <AuthButton onClick={() => setState('signup')}>はじめる</AuthButton>
