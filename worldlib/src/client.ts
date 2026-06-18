@@ -379,10 +379,8 @@ export class Client {
         const document = {
             kind: 'ack' as const,
             author: this.ccid,
-            schema: 'https://schema.concrnt.net/acknowledge.json',
-            value: {
-                context: 'world.concrnt.ack'
-            },
+            schema: Schemas.followAck,
+            value: {},
             associate: semantics.user(to),
             createdAt: new Date()
         }
@@ -424,10 +422,8 @@ export class Client {
         const document = {
             kind: 'unack' as const,
             author: this.ccid,
-            schema: 'https://schema.concrnt.net/unacknowledge.json',
-            value: {
-                context: 'world.concrnt.ack'
-            },
+            schema: Schemas.followAck,
+            value: {},
             associate: semantics.user(to),
             createdAt: new Date()
         }
@@ -440,7 +436,7 @@ export class Client {
         return this.api
             .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
                 from: ccid,
-                context: 'world.concrnt.ack'
+                schema: Schemas.followAck
             })
             .then((res) => res.map((sd) => JSON.parse(sd.document)))
     }
@@ -449,7 +445,7 @@ export class Client {
         return this.api
             .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
                 to: ccid,
-                context: 'world.concrnt.ack'
+                schema: Schemas.followAck
             })
             .then((res) => res.map((sd) => JSON.parse(sd.document)))
     }
