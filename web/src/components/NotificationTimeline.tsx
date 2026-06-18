@@ -3,24 +3,25 @@ import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
-import { Message, Schemas, ReactionAssociationSchema, LikeAssociationSchema } from '@concrnt/worldlib'
+import { Message, Schemas, ReactionAssociationSchema, LikeAssociationSchema, FollowAckSchema } from '@concrnt/worldlib'
 import { MessageContainer } from './message'
 import { Avatar, CfmRenderer, CssVar, Divider } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
-import { MdStar, MdEmojiEmotions } from 'react-icons/md'
+import { MdStar, MdEmojiEmotions, MdPersonAdd } from 'react-icons/md'
 import { PullToRefresh } from './PullToRefresh'
 import { useNavigate } from 'react-router-dom'
 
 // 通知を集約した表示単位
 // - summarised-like: 同じ投稿に対する Like をまとめたもの
 // - summarised-reaction: 同じ投稿に対する Reaction をまとめたもの（絵文字違いでもここでひとまとめ）
+// - follow: フォロー通知（集約せず 1 件ずつ）
 // - normal: Reply / Reroute / Mention など、集約しない単発通知
 interface WrappedNotification {
     key: string
-    type: 'summarised-like' | 'summarised-reaction' | 'normal'
+    type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'normal'
     items: Message<any>[]
     // normal の元 ChunklineItem 情報（MessageContainer に渡すため）
     href?: string
@@ -37,6 +38,8 @@ interface Props extends ScrollViewProps {
 // 集約キーのサフィックス（'$' を含むキーは集約対象として識別する）
 const KEY_SUFFIX_LIKE = '$like'
 const KEY_SUFFIX_REACTION = '$reaction'
+// フォローは集約しないが、normal と区別するため専用サフィックスで識別する
+const KEY_SUFFIX_FOLLOW = '$follow'
 
 // 左アイコンコラムの共通スタイル
 // - 幅 48px は既存 MessageLayout のアバタースペースと揃えるため
@@ -93,6 +96,11 @@ export const NotificationTimeline = (props: Props) => {
                 case Schemas.reactionAssociation:
                     key = (msg.associationTarget?.uri ?? msg.uri) + KEY_SUFFIX_REACTION
                     break
+                case Schemas.followAck:
+                    // フォローは集約しない（対象投稿がなく時系列がぼやけるため）。
+                    // href はこの association 自身の uri なので 1 件ごとに一意なキーになる。
+                    key = item.href + KEY_SUFFIX_FOLLOW
+                    break
                 default:
                     // reply / reroute / mention / readAccessRequest など → 集約しない
                     key = item.href
@@ -120,6 +128,12 @@ export const NotificationTimeline = (props: Props) => {
                 result.push({
                     key: value.items[0].uri,
                     type: 'summarised-reaction',
+                    items: value.items
+                })
+            } else if (key.endsWith(KEY_SUFFIX_FOLLOW)) {
+                result.push({
+                    key: value.items[0].uri,
+                    type: 'follow',
                     items: value.items
                 })
             } else {
@@ -281,6 +295,7 @@ export const NotificationTimeline = (props: Props) => {
                             >
                                 {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}
                                 {n.type === 'summarised-reaction' && <SummarisedReaction items={n.items} />}
+                                {n.type === 'follow' && <FollowNotification item={n.items[0]} />}
                                 {n.type === 'normal' && n.href && (
                                     <Suspense fallback={<MessageSkeleton />}>
                                         <MessageContainer uri={n.href} source={n.source} />
@@ -414,6 +429,67 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                 )}
 
                 {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
+            </div>
+        </div>
+    )
+}
+
+// フォロー通知の表示 (#96)
+// 集約せず 1 件ずつ表示する。対象投稿がないため、フォロワーのアバターと文言のみ。
+// association の author = フォローした人。タップでその人のプロフィールへ。
+const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
+    const navigate = useNavigate()
+
+    const author = props.item.authorUser
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                cursor: 'pointer'
+            }}
+            onClick={() => {
+                if (author) {
+                    navigate('/profile/' + author.ccid)
+                }
+            }}
+        >
+            {/* 左カラム: フォローアイコン */}
+            <div
+                style={{
+                    width: ICON_COLUMN_WIDTH,
+                    paddingLeft: ICON_COLUMN_PADDING_LEFT,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    paddingTop: '2px'
+                }}
+            >
+                <MdPersonAdd size={ICON_SIZE} style={{ opacity: 0.7 }} />
+            </div>
+
+            {/* 右カラム: アバター / 文言 */}
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    flex: 1,
+                    minWidth: 0
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', flexWrap: 'wrap' }}>
+                    <Avatar
+                        ccid={props.item.author}
+                        src={author?.profile.avatar}
+                        style={{ width: '32px', height: '32px' }}
+                    />
+                </div>
+
+                <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                    <span>{author?.profile.username ?? '不明'} さんがあなたをフォローしました</span>
+                </div>
             </div>
         </div>
     )

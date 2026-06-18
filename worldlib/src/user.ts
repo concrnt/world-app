@@ -3,6 +3,7 @@ import { ProfileSchema } from './schemas/'
 import { Client } from './client'
 import { semantics } from './semantics'
 import { CachedPromise } from './cachedPromise'
+import { Schemas } from './schemas'
 
 export class User {
     client: Client
@@ -37,8 +38,8 @@ export class User {
             }
         )
         return {
-            acknowledging: acknowledging['world.concrnt.ack'] ?? 0,
-            acknowledged: acknowledged['world.concrnt.ack'] ?? 0
+            acknowledging: acknowledging[Schemas.followAck] ?? 0,
+            acknowledged: acknowledged[Schemas.followAck] ?? 0
         }
     })
 
