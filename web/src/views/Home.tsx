@@ -145,7 +145,9 @@ const HomeMain = ({
 }
 
 const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
+    const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
 
     if (!list) return <Text>リストが見つかりませんでした</Text>
 
@@ -155,7 +157,12 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
             list={list}
             headElement={
                 <>
-                    <Composer inline mode="normal" destinations={props.pin.defaultPostTimelines} />
+                    <Composer
+                        inline
+                        mode="normal"
+                        destinations={props.pin.defaultPostTimelines}
+                        options={knownCommunities}
+                    />
                     <Divider />
                 </>
             }

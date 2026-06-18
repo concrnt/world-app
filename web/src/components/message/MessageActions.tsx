@@ -46,8 +46,6 @@ export const MessageActions = (props: Props) => {
         count: props.message.associationCounts?.[Schemas.likeAssociation] ?? 0
     })
 
-    console.log('MessageActions rendered', { likeState, message: props.message })
-
     return (
         <div
             style={{
