@@ -382,37 +382,13 @@ export class Client {
             schema: Schemas.followAck,
             value: {},
             associate: semantics.user(to),
+            distributes: [
+                semantics.activityTimeline(this.ccid, this.currentProfile),
+                semantics.notificationTimeline(to, 'main')
+            ],
             createdAt: new Date()
         }
-        const ackDoc = await this.api.commit(document)
-
-        // フォロー通知(#96): ack ドキュメント(ccfs)を対象にした association を
-        // 相手の通知タイムラインへ配信する。fav / reaction と同じ distributes 経路。
-        // ack 本体のコミットが失敗した場合(ccfs が取れない)はスキップする。
-        if (ackDoc?.ccfs) {
-            const targetDomain = await this.api
-                .getEntity(to)
-                .then((entity) => entity?.value.domain)
-                .catch(() => undefined)
-
-            const notification: Document<FollowAssociationSchema> = {
-                kind: 'association',
-                author: this.ccid,
-                schema: Schemas.followAssociation,
-                associate: ackDoc.ccfs,
-                value: {},
-                distributes: [
-                    semantics.activityTimeline(this.ccid, this.currentProfile),
-                    semantics.notificationTimeline(to, 'main')
-                ],
-                createdAt: new Date()
-            }
-
-            // 通知の失敗はフォロー自体を巻き戻さない(ack は成立済み)。
-            await this.api.commit(notification, targetDomain).catch((e) => {
-                console.error('failed to send follow notification', e)
-            })
-        }
+        await this.api.commit(document)
 
         this.acknowledging.reload()
         this.acknowledgingUsers.reload()
