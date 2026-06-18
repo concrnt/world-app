@@ -72,6 +72,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
         if (!client) return
         const key = Date.now().toString()
         const document: Document<CommunityTimelineSchema> = {
+            kind: 'record',
             key: semantics.community(client.server.domain, key),
             schema: Schemas.communityTimeline,
             value,

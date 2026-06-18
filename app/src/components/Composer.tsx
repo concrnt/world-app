@@ -159,6 +159,7 @@ export const Composer = (props: Props) => {
                     // リプライメッセージを作成
 
                     const replyDocument = {
+                        kind: 'record' as const,
                         key: newPostUri,
                         schema: Schemas.replyMessage,
                         value: {
@@ -180,6 +181,7 @@ export const Composer = (props: Props) => {
                     const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 
                     const associationDocument = {
+                        kind: 'association' as const,
                         author: client.ccid,
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
@@ -202,6 +204,7 @@ export const Composer = (props: Props) => {
 
                     // リルートメッセージを作成
                     const rerouteDocument = {
+                        kind: 'record' as const,
                         key: newPostUri,
                         schema: Schemas.rerouteMessage,
                         value: {
@@ -221,6 +224,7 @@ export const Composer = (props: Props) => {
                     const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 
                     const associationDocument = {
+                        kind: 'association' as const,
                         author: client.ccid,
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
@@ -255,6 +259,7 @@ export const Composer = (props: Props) => {
                         )
 
                         const document = {
+                            kind: 'record' as const,
                             key: newPostUri,
                             schema: Schemas.mediaMessage,
                             value: {
@@ -269,6 +274,7 @@ export const Composer = (props: Props) => {
                         await client.api.commit(document)
                     } else {
                         const document = {
+                            kind: 'record' as const,
                             key: newPostUri,
                             schema: Schemas.markdownMessage,
                             value: {

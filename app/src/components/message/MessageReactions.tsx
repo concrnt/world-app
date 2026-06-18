@@ -49,6 +49,7 @@ export const MessageReactions = (props: Props) => {
                         ownReactions: {
                             ...prev.ownReactions,
                             [imageUrl]: new Association('dummy', {
+                                kind: 'association',
                                 author: client.ccid,
                                 schema: Schemas.reactionAssociation,
                                 value: {

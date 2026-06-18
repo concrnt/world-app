@@ -3,6 +3,7 @@ import { Document, SignedDocument } from '@concrnt/client'
 
 export class Association<T> implements Document<T> {
     ccfs: string
+    kind: 'association'
     schema: string
     value: T
     author: string
@@ -14,6 +15,7 @@ export class Association<T> implements Document<T> {
     toJSON() {
         return {
             ccfs: this.ccfs,
+            kind: this.kind,
             schema: this.schema,
             value: this.value,
             author: this.author,
@@ -26,6 +28,7 @@ export class Association<T> implements Document<T> {
 
     constructor(ccfs: string, document: Document<T>) {
         this.ccfs = ccfs
+        this.kind = 'association'
         this.schema = document.schema
         this.value = document.value
         this.author = document.author

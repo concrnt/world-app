@@ -157,6 +157,7 @@ export const WelcomeView = () => {
                                 const ckid: string = await invoke('create_subkey')
 
                                 const subkeyDoc: Document<any> = {
+                                    kind: 'record',
                                     key: semantics.subkey(user.ccid, ckid),
                                     author: user.ccid,
                                     schema: 'https://schema.concrnt.net/subkey.json',

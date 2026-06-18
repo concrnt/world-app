@@ -105,6 +105,7 @@ export function usePreference<K extends keyof Preference>(
             }
 
             const document = {
+                kind: 'record' as const,
                 key: semantics.settings(client.ccid),
                 author: client.ccid,
                 schema: 'https://schemas.concrnt.net/utils/settings',

@@ -96,6 +96,7 @@ export const ProfileEditor = (props: Props) => {
                         if (!client) return
                         setSaving(true)
                         const document: Document<ProfileSchema> = {
+                            kind: 'record',
                             key: props.targetURI,
                             schema: 'https://schema.concrnt.world/p/main.json',
                             value: {

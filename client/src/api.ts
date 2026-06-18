@@ -402,6 +402,7 @@ export class Api {
         const sd = await this.fetchWithCache<SignedDocument>(this.defaultHost, endpoint, uri, {})
 
         const document: Document<Entity> = JSON.parse(sd.document)
+        if (!document.kind) document.kind = 'entity'
         return document
     }
 
@@ -413,6 +414,15 @@ export class Api {
         if ('signer' in legacy) {
             document.author = legacy.signer
             document.value = legacy.body
+        }
+
+        if (!document.kind) {
+            if (document.schema === 'https://schema.concrnt.net/entity.json') document.kind = 'entity'
+            else if (document.schema === 'https://schema.concrnt.net/delete.json') document.kind = 'delete'
+            else if (document.schema === 'https://schema.concrnt.net/acknowledge.json') document.kind = 'ack'
+            else if (document.schema === 'https://schema.concrnt.net/unacknowledge.json') document.kind = 'unack'
+            else if (document.associate) document.kind = 'association'
+            else document.kind = 'record'
         }
 
         return document
@@ -642,6 +652,7 @@ export class Api {
 
     async delete(uri: string, domain?: string): Promise<void> {
         const documentObj: Document<string> = {
+            kind: 'delete',
             author: this.authProvider.getCCID(),
             schema: 'https://schema.concrnt.net/delete.json',
             value: uri,

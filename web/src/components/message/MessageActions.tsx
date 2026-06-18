@@ -124,6 +124,7 @@ export const MessageActions = (props: Props) => {
                             updateLikeState((prev: LikeState): LikeState => {
                                 return {
                                     ownLike: new Association('dummy', {
+                                        kind: 'association',
                                         schema: Schemas.likeAssociation,
                                         value: {},
                                         author: client.ccid,
@@ -163,6 +164,7 @@ export const MessageActions = (props: Props) => {
                                     ownReactions: {
                                         ...prev.ownReactions,
                                         [imageUrl]: new Association('dummy', {
+                                            kind: 'association',
                                             author: client.ccid,
                                             schema: Schemas.reactionAssociation,
                                             value: {

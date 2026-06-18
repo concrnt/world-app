@@ -8,6 +8,7 @@ import { semantics } from './semantics'
 
 export class Message<T> implements Document<T> {
     uri: string
+    kind: 'record'
     key?: string
     schema: string
     value: T
@@ -35,6 +36,7 @@ export class Message<T> implements Document<T> {
     toJSON(): Document<T> & { uri: string } {
         return {
             uri: this.uri,
+            kind: this.kind,
             key: this.key,
             schema: this.schema,
             value: this.value,
@@ -46,6 +48,7 @@ export class Message<T> implements Document<T> {
 
     constructor(uri: string, document: Document<T>) {
         this.uri = uri
+        this.kind = 'record'
         this.key = document.key
         this.schema = document.schema
         this.value = document.value
@@ -111,6 +114,7 @@ export class Message<T> implements Document<T> {
         ]
 
         const document: Document<LikeAssociationSchema> = {
+            kind: 'association',
             author: client.ccid,
             schema: Schemas.likeAssociation,
             associate: this.uri,
@@ -131,6 +135,7 @@ export class Message<T> implements Document<T> {
         ]
 
         const document: Document<ReactionAssociationSchema> = {
+            kind: 'association',
             author: client.ccid,
             schema: Schemas.reactionAssociation,
             associate: this.uri,

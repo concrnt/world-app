@@ -16,7 +16,10 @@ export const IsCKID = (str: string): boolean => {
     return str.startsWith('cck1') && !str.includes('.') && str.length === 42
 }
 
+export type DocumentKind = 'entity' | 'record' | 'association' | 'delete' | 'ack' | 'unack'
+
 export interface Document<T> {
+    kind: DocumentKind
     key?: string
     schema: string
     value: T

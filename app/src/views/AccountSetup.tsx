@@ -70,6 +70,7 @@ export const AccountSetup = (props: Props) => {
         const authProvider = new TauriAuthProvider(ccid)
 
         const document = {
+            kind: 'entity' as const,
             author: ccid,
             schema: 'https://schema.concrnt.net/entity.json',
             value: {
@@ -209,6 +210,7 @@ export const AccountSetup = (props: Props) => {
                                 const ckid: string = await invoke('create_subkey')
 
                                 const subkeyDoc: Document<any> = {
+                                    kind: 'record',
                                     key: semantics.subkey(ccid, ckid),
                                     author: ccid,
                                     schema: 'https://schema.concrnt.net/subkey.json',

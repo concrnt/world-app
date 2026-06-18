@@ -69,6 +69,7 @@ export const AccountSetup = (props: Props) => {
 
         const authProvider = new InMemoryAuthProvider(generated.privateKey)
         const document = {
+            kind: 'entity' as const,
             author: generated.CCID,
             schema: 'https://schema.concrnt.net/entity.json',
             value: {
@@ -101,6 +102,7 @@ export const AccountSetup = (props: Props) => {
         const ckid = ComputeCKID(subIdentity.publicKey)
 
         const subkeyDoc: Document<any> = {
+            kind: 'record',
             key: semantics.subkey(identity.CCID, ckid),
             author: identity.CCID,
             schema: 'https://schema.concrnt.net/subkey.json',

@@ -133,6 +133,7 @@ export class Client {
                     } else {
                         key = semantics.list(this.ccid, this.currentProfile, Date.now().toString())
                         const document: Document<ListSchema> = {
+                            kind: 'record',
                             key: key,
                             schema: Schemas.list,
                             value: {
@@ -153,6 +154,7 @@ export class Client {
                         }
                     ]
                     const document: Document<PinnedListsSchema> = {
+                        kind: 'record',
                         key: uri,
                         author: this.ccid,
                         schema: Schemas.pinnedLists,
@@ -224,6 +226,7 @@ export class Client {
             if (err instanceof NotFoundError) {
                 console.log('Home timeline not found, creating a new one...')
                 const document: Document<any> = {
+                    kind: 'record',
                     key: semantics.homeTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
@@ -240,6 +243,7 @@ export class Client {
             if (err instanceof NotFoundError) {
                 console.log('Notification timeline not found, creating a new one...')
                 const document: Document<any> = {
+                    kind: 'record',
                     key: semantics.notificationTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
@@ -269,6 +273,7 @@ export class Client {
             if (err instanceof NotFoundError) {
                 console.log('Activity timeline not found, creating a new one...')
                 const document: Document<any> = {
+                    kind: 'record',
                     key: semantics.activityTimeline(ccid, profile),
                     author: ccid,
                     schema: Schemas.userTimeline,
@@ -305,6 +310,7 @@ export class Client {
 
     async block(target: string): Promise<void> {
         const blockDocument = {
+            kind: 'record' as const,
             key: semantics.block(this.ccid, target),
             schema: Schemas.empty,
             value: {},
@@ -371,6 +377,7 @@ export class Client {
 
     async Acknowledge(to: string): Promise<void> {
         const document = {
+            kind: 'ack' as const,
             author: this.ccid,
             schema: 'https://schema.concrnt.net/acknowledge.json',
             value: {
@@ -386,6 +393,7 @@ export class Client {
 
     async UnAcknowledge(to: string): Promise<void> {
         const document = {
+            kind: 'unack' as const,
             author: this.ccid,
             schema: 'https://schema.concrnt.net/unacknowledge.json',
             value: {
@@ -433,6 +441,7 @@ export class Client {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = latestDoc.value.filter((item) => item.uri !== uri)
         const newDocument: Document<PinnedListsSchema> = {
+            kind: 'record',
             key: semantics.lists(this.ccid, this.currentProfile),
             author: this.ccid,
             schema: Schemas.pinnedLists,
@@ -455,6 +464,7 @@ export class Client {
             }
         ]
         const newDocument: Document<PinnedListsSchema> = {
+            kind: 'record',
             key: semantics.lists(this.ccid, this.currentProfile),
             author: this.ccid,
             schema: Schemas.pinnedLists,
@@ -482,6 +492,7 @@ export class Client {
             return item
         })
         const newDocument: Document<PinnedListsSchema> = {
+            kind: 'record',
             key: semantics.lists(this.ccid, this.currentProfile),
             author: this.ccid,
             schema: Schemas.pinnedLists,

@@ -67,6 +67,7 @@ const createAndCommitSubkey = async (identity: Identity, domain: string) => {
     const ckid = ComputeCKID(subIdentity.publicKey)
 
     const subkeyDoc: Document<any> = {
+        kind: 'record',
         key: semantics.subkey(identity.CCID, ckid),
         author: identity.CCID,
         schema: 'https://schema.concrnt.net/subkey.json',

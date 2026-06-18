@@ -66,6 +66,7 @@ export const Activitypub = () => {
                         if (err instanceof NotFoundError) {
                             console.log('Inbox not found. creating...')
                             const document = {
+                                kind: 'record' as const,
                                 key: inboxUri,
                                 author: client.ccid,
                                 schema: Schemas.userTimeline,

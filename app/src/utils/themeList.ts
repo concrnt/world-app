@@ -18,6 +18,7 @@ export const ensureThemeList = async (client: Client): Promise<void> => {
     }
 
     const document: Document<ListSchema> = {
+        kind: 'record',
         key: uri,
         schema: Schemas.list,
         value: {
@@ -72,6 +73,7 @@ export const saveCustomTheme = async (client: Client, theme: Theme): Promise<The
     }
 
     const document: Document<Theme> = {
+        kind: 'record',
         key: themeDocumentUri(client, title),
         schema: THEME_SCHEMA,
         value: normalizedTheme,

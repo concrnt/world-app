@@ -53,6 +53,7 @@ export const QRSetup = (props: Props) => {
         const uri = semantics.subkey(client.ccid, ckid)
 
         const subkeyDoc: Document<any> = {
+            kind: 'record',
             key: uri,
             author: client.ccid,
             schema: 'https://schema.concrnt.net/subkey.json',

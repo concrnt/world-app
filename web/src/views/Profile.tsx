@@ -49,6 +49,7 @@ export const ProfileView = (props: Props) => {
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
             .catch(() => {
                 const tmp: Document<ProfileSchema> = {
+                    kind: 'record',
                     key: semantics.profile(props.ccid, props.profileName ?? 'main'),
                     schema: Schemas.profile,
                     author: props.ccid,

@@ -15,6 +15,7 @@ export const ensureEmojiPackageList = async (client: Client): Promise<List> => {
     }
 
     const document: Document<ListSchema> = {
+        kind: 'record',
         key: uri,
         schema: Schemas.list,
         value: {

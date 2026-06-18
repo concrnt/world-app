@@ -258,6 +258,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                         const key = Date.now().toString()
 
                         const document: Document<ListSchema> = {
+                            kind: 'record',
                             key: semantics.list(client.ccid, client.currentProfile, key),
                             schema: Schemas.list,
                             value: {

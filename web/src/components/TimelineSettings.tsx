@@ -140,6 +140,7 @@ const TimelineEditor = (props: EditorProps) => {
     const handleSave = () => {
         if (!key || !schemaDraft) return
         const document: Document<any> = {
+            kind: 'record',
             key: key,
             schema: schemaDraft,
             value: valueDraft,

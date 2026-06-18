@@ -64,6 +64,7 @@ export class List {
         key += hash
 
         const document: Document<any> = {
+            kind: 'record',
             key: key,
             author: client.ccid,
             schema: 'https://schema.concrnt.net/reference.json',
