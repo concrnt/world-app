@@ -3,13 +3,7 @@ import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
-import {
-    Message,
-    Schemas,
-    ReactionAssociationSchema,
-    LikeAssociationSchema,
-    FollowAssociationSchema
-} from '@concrnt/worldlib'
+import { Message, Schemas, ReactionAssociationSchema, LikeAssociationSchema, FollowAckSchema } from '@concrnt/worldlib'
 import { MessageContainer } from './message'
 import { Avatar, CfmRenderer, CssVar, Divider } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -104,7 +98,7 @@ export const NotificationTimeline = (props: Props) => {
                 case Schemas.reactionAssociation:
                     key = (msg.associationTarget?.uri ?? msg.uri) + KEY_SUFFIX_REACTION
                     break
-                case Schemas.followAssociation:
+                case Schemas.followAck:
                     // フォローは集約しない（対象投稿がなく時系列がぼやけるため）。
                     // href はこの association 自身の uri なので 1 件ごとに一意なキーになる。
                     key = item.href + KEY_SUFFIX_FOLLOW
@@ -445,7 +439,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
 // フォロー通知の表示 (#96)
 // 集約せず 1 件ずつ表示する。対象投稿がないため、フォロワーのアバターと文言のみ。
 // association の author = フォローした人。タップでその人のプロフィールへ。
-const FollowNotification = (props: { item: Message<FollowAssociationSchema> }) => {
+const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
     const { push } = useStack()
 
     const author = props.item.authorUser

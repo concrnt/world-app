@@ -13,7 +13,6 @@ export * from './replyAssociation'
 export * from './rerouteAssociation'
 export * from './reactionAssociation'
 export * from './readAccessRequestAssociation'
-export * from './followAssociation'
 
 export * from './profile'
 
@@ -22,5 +21,7 @@ export * from './communityTimeline'
 export * from './list'
 
 export * from './pinnedLists'
+
+export * from './followAck'
 
 export * from './empty'

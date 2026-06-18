@@ -15,7 +15,7 @@ import {
     fetchWithTimeout,
     Entity
 } from '@concrnt/client'
-import { FollowAssociationSchema, ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
+import { ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
 import { User } from './user'
 import { List } from './list'
 import { Message } from './message'
