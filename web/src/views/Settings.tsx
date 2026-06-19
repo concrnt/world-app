@@ -1,6 +1,6 @@
 import { Button, Divider, Text, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { useResetPreference } from '../contexts/Preference'
+import { usePreference, useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
@@ -11,7 +11,6 @@ import { Fragment, useState } from 'react'
 import buildTime from '~build/time'
 import { branch, sha } from '~build/git'
 import { version } from '~build/package'
-import { usePersistent } from '../hooks/usePersistent'
 
 const branchName = branch || window.location.host.split('.')[0]
 const appInfoRows = [
@@ -26,7 +25,7 @@ export const SettingsView = () => {
 
     const reset = useResetPreference()
     const navigate = useNavigate()
-    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
+    const [developerMode, setDeveloperMode] = usePreference('developerMode')
     const [, setAppInfoTapCount] = useState(0)
 
     const handleAppInfoClick = () => {

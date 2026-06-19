@@ -7,12 +7,12 @@ import { UserPicker } from '../components/UserPicker'
 import { useStack } from '../layouts/Stack'
 import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './StoreMocks'
 import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
-import { usePersistent } from '../hooks/usePersistent'
+import { usePreference } from '../contexts/Preference'
 
 export const DevView = () => {
     const { client } = useClient()
     const stack = useStack()
-    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
+    const [developerMode, setDeveloperMode] = usePreference('developerMode')
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')

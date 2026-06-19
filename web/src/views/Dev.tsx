@@ -5,11 +5,11 @@ import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
-import { usePersistent } from '../hooks/usePersistent'
+import { usePreference } from '../contexts/Preference'
 
 export const DevView = () => {
     const { client } = useClient()
-    const [developerMode, setDeveloperMode] = usePersistent('developer-mode', false)
+    const [developerMode, setDeveloperMode] = usePreference('developerMode')
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
