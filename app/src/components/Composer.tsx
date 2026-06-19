@@ -43,6 +43,7 @@ export const Composer = (props: Props) => {
     const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
+    const [selectedProfile, setSelectedProfile] = useState<string>(client?.currentProfile ?? 'main')
     const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>(() => {
         if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
         return props.draftBuffer.mediaDrafts.map((m) => ({
@@ -135,14 +136,14 @@ export const Composer = (props: Props) => {
     const handleSubmit = async () => {
         if (!client) return
 
-        const homeTimeline = semantics.homeTimeline(client.ccid, client.currentProfile)
-        const activityTimeline = semantics.activityTimeline(client.ccid, client.currentProfile)
+        const homeTimeline = semantics.homeTimeline(client.ccid, selectedProfile)
+        const activityTimeline = semantics.activityTimeline(client.ccid, selectedProfile)
         const distributes = [...(postHome ? [homeTimeline] : []), ...props.destinations]
 
         const timestamp = new Date()
         const hash = CDID.newFromString(draft, timestamp).toString()
 
-        const newPostUri = semantics.post(client.ccid, client.currentProfile, hash)
+        const newPostUri = semantics.post(client.ccid, selectedProfile, hash)
 
         let success = false
         try {
@@ -615,6 +616,8 @@ export const Composer = (props: Props) => {
                                     labelFunc={(item: Timeline) => item.name}
                                     postHome={postHome}
                                     setPostHome={setPostHome}
+                                    selectedProfile={selectedProfile}
+                                    setSelectedProfile={setSelectedProfile}
                                 />
                             </div>
 
