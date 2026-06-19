@@ -7,9 +7,11 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar } from '@concrnt/ui'
+import { Avatar, ListItem } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { hapticSelection } from '../utils/haptics'
+import { useSelect } from '../contexts/Select'
+import { ProfileName } from './ProfileName'
 
 interface Props {
     selected: string[]
@@ -19,10 +21,13 @@ interface Props {
     labelFunc: (item: any) => string
     postHome?: boolean
     setPostHome?: (postHome: boolean) => void
+    selectedProfile?: string
+    setSelectedProfile?: (profile: string) => void
 }
 
 export const TimelinePicker = (props: Props) => {
     const { client } = useClient()
+    const { select, close } = useSelect()
 
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)
@@ -37,6 +42,43 @@ export const TimelinePicker = (props: Props) => {
         return remains.filter((i) => props.labelFunc(i).toLowerCase().includes(filter.toLowerCase()))
     }, [props, filter])
 
+    // 投稿元プロフィール（未指定時はクライアントのcurrentProfileにフォールバック）
+    const activeProfile = props.selectedProfile ?? client?.currentProfile ?? 'main'
+    const activeProfileDoc = client?.profiles?.[activeProfile]
+    const profileAvatar = activeProfileDoc?.value.avatar ?? client?.profile.avatar
+    const profileUsername = activeProfileDoc?.value.username ?? client?.profile.username ?? 'Home'
+
+    const openProfileSelect = () => {
+        if (!client) return
+        const profileOptions = Object.entries(client.profiles).map(([key, profile]) => (
+            <ListItem
+                key={key}
+                icon={
+                    <Avatar
+                        ccid={profile.author}
+                        src={profile.value.avatar}
+                        style={{ width: '32px', height: '32px' }}
+                    />
+                }
+                onClick={() => {
+                    props.setSelectedProfile?.(key)
+                    close()
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingLeft: CssVar.space(2)
+                    }}
+                >
+                    <ProfileName document={profile} />
+                </div>
+            </ListItem>
+        ))
+        select('投稿元プロフィール', profileOptions)
+    }
+
     return (
         <div
             style={{
@@ -48,10 +90,15 @@ export const TimelinePicker = (props: Props) => {
             }}
         >
             <Chip
+                onClick={() => {
+                    if (!props.setSelectedProfile) return
+                    hapticSelection()
+                    openProfileSelect()
+                }}
                 headElement={
                     <Avatar
                         ccid={client?.ccid ?? ''}
-                        src={client?.profile.avatar}
+                        src={profileAvatar}
                         style={{
                             width: 20,
                             height: 20
@@ -76,7 +123,7 @@ export const TimelinePicker = (props: Props) => {
                     opacity: props.postHome === false ? 0.5 : 1
                 }}
             >
-                {client?.profile.username ?? 'Home'}
+                {profileUsername}
             </Chip>
             {props.selected.map((sel) => {
                 const item = props.items.find((i) => props.keyFunc(i) === sel)
