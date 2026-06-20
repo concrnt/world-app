@@ -145,7 +145,8 @@ const TimelineEditor = (props: EditorProps) => {
             schema: schemaDraft,
             value: valueDraft,
             author: client.ccid,
-            createdAt: new Date()
+            createdAt: new Date(),
+            onUpdate: 'forget'
         }
         client.api.commit(document)
     }

@@ -106,7 +106,8 @@ export const ProfileEditor = (props: Props) => {
                                 banner: banner
                             },
                             author: client.ccid,
-                            createdAt: new Date()
+                            createdAt: new Date(),
+                            onUpdate: 'forget'
                         }
 
                         if (restricted) {

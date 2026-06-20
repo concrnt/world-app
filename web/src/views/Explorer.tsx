@@ -84,7 +84,8 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
                         url: 'https://policy.concrnt.world/t/write-public.json'
                     }
                 ]
-            }
+            },
+            onUpdate: 'forget'
         }
         await client.api.commit(document)
         console.log('Community created')

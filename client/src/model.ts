@@ -31,6 +31,8 @@ export interface Document<T> {
     associationVariant?: string
 
     policy?: Policy
+
+    onUpdate?: string
 }
 
 export interface Policy {
