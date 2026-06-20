@@ -169,11 +169,12 @@ export class Api {
     }
 
     async callConcrntApi<T>(host: string, api: string, args: Record<string, string>, init?: RequestInit): Promise<T> {
-        const server = await this.getServer(host || this.defaultHost)
+        const fetchHost = host || this.defaultHost
+        const server = await this.getServer(fetchHost)
 
         const endpoint = renderUriTemplate(server, api, args)
 
-        return this.fetchWithCredential<T>(this.defaultHost, endpoint, init)
+        return this.fetchWithCredential<T>(fetchHost, endpoint, init)
     }
 
     async fetchWithCredential<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
@@ -626,25 +627,24 @@ export class Api {
             }
         }
 
-        const result = fetch(`https://${domain ?? this.defaultHost}/commit`, {
+        const fetchHost = domain ?? this.defaultHost
+        const server = await this.getServer(fetchHost)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.core.commit', {})
+
+        const result = this.fetchHost<SignedDocument>(fetchHost, endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(signedDoc)
         })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`)
-                }
-                return response.json()
-            })
             .then((sd) => {
                 if (document.key) this.cache.invalidate(document.key)
                 return sd
             })
             .catch((error) => {
                 console.error('Error committing:', error)
+                throw error
             })
 
         return result
@@ -665,9 +665,7 @@ export class Api {
     // ---
 
     async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {
-        const requestPath = `/api/v2/timeline/recent?uris=${timelines.join(',')}`
-        const resp = await this.fetchWithCredential<ChunklineItem[]>(this.defaultHost, requestPath)
-        return resp.map((item) => ({ ...item, timestamp: new Date(item.timestamp) }))
+        return this.getTimelineRanged(timelines, {})
     }
 
     async getTimelineRanged(
