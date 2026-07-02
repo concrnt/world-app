@@ -21,6 +21,7 @@ import { MessageSkeleton } from './message/MessageSkeleton'
 import { RenderError } from './message/RenderError'
 import { Loading } from './message/Loading'
 import { MdArrowUpward } from 'react-icons/md'
+import { usePreference } from '../contexts/Preference'
 
 interface NewArrivalIcon {
     id: string
@@ -344,6 +345,8 @@ interface CellProps {
 }
 
 const Cell = memo<CellProps>(({ item }: CellProps) => {
+    const [devmode] = usePreference('developerMode')
+
     return (
         <>
             <ErrorBoundary FallbackComponent={RenderError}>
@@ -359,7 +362,7 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     </Suspense>
                 </div>
             </ErrorBoundary>
-            <Text variant="caption">{item.href}</Text>
+            {devmode && <Text variant="caption">{item.href}</Text>}
             <Divider />
         </>
     )
