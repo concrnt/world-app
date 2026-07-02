@@ -1,13 +1,14 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
-import { InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
-import { Button } from '@concrnt/ui'
+import { Api, Entity, InMemoryAuthProvider, InMemoryKVS, Server } from '@concrnt/client'
+import { Button, Text } from '@concrnt/ui'
 
 export interface ClientContextState {
     client: Client
     reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
+    offlineDomain: string | null
 }
 
 interface Props {
@@ -19,7 +20,8 @@ interface Props {
 const ClientContext = createContext<ClientContextState>({
     client: {} as Client,
     reload: async () => {},
-    logout: async () => {}
+    logout: async () => {},
+    offlineDomain: null
 })
 
 const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
@@ -38,10 +40,12 @@ const readStoredString = (key: string): string | undefined => {
 
 export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client | null | undefined>(undefined)
-    const [isOffline, setIsOffline] = useState(false)
+    const [offlineDomain, setOfflineDomain] = useState<string | null>(null)
 
     const reload = useCallback(async (name?: string) => {
         console.log('Reloading client for profile', name)
+        setClient(undefined)
+        setOfflineDomain(null)
 
         const domain = readStoredString('Domain')
         const masterKey = readStoredString('PrivateKey')
@@ -50,6 +54,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         if (!domain || (!masterKey && !subKey)) {
             console.log('No web session found')
             setClient(null)
+            setOfflineDomain(null)
             return
         }
 
@@ -58,13 +63,36 @@ export const ClientProvider = (props: Props): ReactNode => {
         await Client.create(domain, authProvider, kvs, name)
             .then((client) => {
                 console.log('Client created successfully')
+                setOfflineDomain(null)
                 setClient(client)
             })
             .catch((err) => {
                 console.error('Failed to create client', err)
                 if (err instanceof Error && err.message === `server ${domain} is offline`) {
-                    setIsOffline(true)
+                    const server: Server = {
+                        version: 'offline',
+                        domain,
+                        csid: '',
+                        layer: '',
+                        endpoints: {}
+                    }
+                    const entity: Entity = {
+                        domain,
+                        alias: '',
+                        alias_proof_type: ''
+                    }
+                    const offlineClient = new Client(
+                        new Api(domain, authProvider, kvs),
+                        authProvider.getCCID(),
+                        entity,
+                        server,
+                        name
+                    )
+                    setOfflineDomain(domain)
+                    setClient(offlineClient)
+                    return
                 }
+                setClient(null)
             })
     }, [])
 
@@ -84,41 +112,21 @@ export const ClientProvider = (props: Props): ReactNode => {
         return {
             client,
             reload,
-            logout
+            logout,
+            offlineDomain
         }
-    }, [client, reload, logout])
+    }, [client, reload, logout, offlineDomain])
 
-    if (isOffline) {
+    if (offlineDomain) {
+        if (!client) {
+            return <ReloadClientContext.Provider value={reload}>{props.loading}</ReloadClientContext.Provider>
+        }
+
         return (
-            <div
-                style={{
-                    width: '100vw',
-                    height: '100dvh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '1rem'
-                }}
-            >
-                サーバーはオフラインです
-                <Button
-                    onClick={() => {
-                        setIsOffline(false)
-                        reload()
-                    }}
-                >
-                    再試行
-                </Button>
-                <Button
-                    onClick={async () => {
-                        await logout()
-                        window.location.reload()
-                    }}
-                >
-                    ログアウト
-                </Button>
-            </div>
+            <ClientContext.Provider value={value as ClientContextState}>
+                <OfflineDomainBanner domain={offlineDomain} reload={reload} logout={logout} />
+                {props.children}
+            </ClientContext.Provider>
         )
     }
 
@@ -131,6 +139,47 @@ export const ClientProvider = (props: Props): ReactNode => {
     }
 
     return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
+}
+
+const OfflineDomainBanner = (props: { domain: string; reload: () => Promise<void>; logout: () => Promise<void> }) => {
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                top: 'calc(env(safe-area-inset-top) + 8px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 10000,
+                width: 'min(520px, calc(100vw - 24px))',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                backgroundColor: '#202124',
+                color: '#fff',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)'
+            }}
+        >
+            <Text style={{ flex: 1, fontSize: '13px' }}>
+                {props.domain} に接続できません。自ドメイン依存の機能は一部利用できません。
+            </Text>
+            <Button variant="text" onClick={() => props.reload()} style={{ color: '#fff' }}>
+                再試行
+            </Button>
+            <Button
+                variant="text"
+                onClick={async () => {
+                    await props.logout()
+                    window.location.reload()
+                }}
+                style={{ color: '#fff' }}
+            >
+                ログアウト
+            </Button>
+        </div>
+    )
 }
 
 export function useClient(): ClientContextState {

@@ -1,4 +1,4 @@
-import { View } from '@concrnt/ui'
+import { Text, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { useMemo, useRef } from 'react'
 import { useClient } from '../contexts/Client'
@@ -18,15 +18,38 @@ interface Props {
 }
 
 export const TimelineView = (props: Props) => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
     const composer = useComposer()
     const drawer = useDrawer()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
+    const timelineHost = useMemo(() => {
+        try {
+            const host = new URL(props.uri).host
+            return host.includes('.') ? host : undefined
+        } catch {
+            return undefined
+        }
+    }, [props.uri])
+    const hostOverride = offlineDomain && timelineHost !== offlineDomain ? timelineHost : undefined
 
     const timelinePromise = useMemo(() => {
         return client!.getTimeline(props.uri).catch(() => null)
     }, [client, props.uri])
+
+    if (offlineDomain && !hostOverride) {
+        return (
+            <View>
+                <Header>Timeline</Header>
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Text variant="h3">タイムラインを読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>
+                        自分のドメインがオフラインのため、このタイムラインを取得できません。
+                    </Text>
+                </div>
+            </View>
+        )
+    }
 
     return (
         <>
@@ -50,19 +73,21 @@ export const TimelineView = (props: Props) => {
                 >
                     <TimelineTag uri={props.uri} />
                 </Header>
-                <RealtimeTimeline ref={scrollRef} timelines={[props.uri]} />
+                <RealtimeTimeline ref={scrollRef} timelines={[props.uri]} hostOverride={hostOverride} />
             </View>
-            <FAB
-                onClick={() => {
-                    hapticLight()
-                    timelinePromise.then((t) => {
-                        const options = t ? [t] : []
-                        composer.open([props.uri], options)
-                    })
-                }}
-            >
-                <MdCreate size={24} />
-            </FAB>
+            {!offlineDomain && (
+                <FAB
+                    onClick={() => {
+                        hapticLight()
+                        timelinePromise.then((t) => {
+                            const options = t ? [t] : []
+                            composer.open([props.uri], options)
+                        })
+                    }}
+                >
+                    <MdCreate size={24} />
+                </FAB>
+            )}
         </>
     )
 }

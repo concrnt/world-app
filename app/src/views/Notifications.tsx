@@ -1,14 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
-import { View } from '@concrnt/ui'
+import { Text, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { NotificationTimeline } from '../components/NotificationTimeline'
 import { NotificationFilter } from '../components/NotificationFilter'
 import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 import { ScrollViewHandle } from '../types/ScrollView'
+import { CssVar } from '../types/Theme'
 
 export const NotificationsView = () => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -25,6 +26,27 @@ export const NotificationsView = () => {
         return (
             <View>
                 <Header>Notifications</Header>
+            </View>
+        )
+    }
+
+    if (offlineDomain) {
+        return (
+            <View>
+                <Header>Notifications</Header>
+                <div
+                    style={{
+                        padding: CssVar.space(4),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <Text variant="h3">通知を読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>
+                        自分のドメインがオフラインのため、通知タイムラインを取得できません。
+                    </Text>
+                </div>
             </View>
         )
     }

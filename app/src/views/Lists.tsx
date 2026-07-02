@@ -18,19 +18,38 @@ import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 
 export const ListsView = () => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
 
     const drawer = useDrawer()
 
     const [updater, setUpdater] = useState(0)
     const listsPromise = useMemo(() => {
-        if (!client) return Promise.resolve([])
+        if (!client || offlineDomain) return Promise.resolve([])
         const p = client.getLists()
         p.then((lists) => {
             console.log('Fetched lists:', lists)
         })
         return p
-    }, [client, updater])
+    }, [client, updater, offlineDomain])
+
+    if (offlineDomain) {
+        return (
+            <View>
+                <Header>Lists</Header>
+                <div
+                    style={{
+                        padding: CssVar.space(4),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <Text variant="h3">リストを読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>自分のドメインがオフラインのため、リスト設定を取得できません。</Text>
+                </div>
+            </View>
+        )
+    }
 
     return (
         <>

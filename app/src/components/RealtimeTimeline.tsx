@@ -20,6 +20,7 @@ interface NewArrivalIcon {
 
 interface Props extends ScrollViewProps {
     timelines: string[]
+    hostOverride?: string
 }
 
 const SCROLL_HALT_THRESHOLD = 100
@@ -56,7 +57,7 @@ export const RealtimeTimeline = (props: Props) => {
         const request = async () => {
             if (!client) return
 
-            return client.newTimelineReader().then((t) => {
+            return client.newTimelineReader({ withoutSocket: false, hostOverride: props.hostOverride }).then((t) => {
                 if (isCancelled) return
                 t.haltUpdate = false
                 t.onUpdate = () => {
@@ -102,7 +103,7 @@ export const RealtimeTimeline = (props: Props) => {
                 t?.dispose()
             })
         }
-    }, [client, reader, props.timelines, update])
+    }, [client, reader, props.timelines, update, props.hostOverride])
 
     const scrollRef = useRef<HTMLDivElement>(null)
 

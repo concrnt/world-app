@@ -22,7 +22,7 @@ import { sortByListOrder } from '../utils/listOrder'
 import { Composer } from '../components/Composer'
 
 export const HomeView = (props: ScrollViewProps) => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
     const drawer = useDrawer()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
@@ -35,6 +35,7 @@ export const HomeView = (props: ScrollViewProps) => {
     // fix default settings
     useEffect(() => {
         if (!client) return
+        if (offlineDomain) return
         if (!(client.currentProfile in client.profiles)) {
             drawer.open(
                 <ProfileEditor
@@ -45,7 +46,28 @@ export const HomeView = (props: ScrollViewProps) => {
                 />
             )
         }
-    }, [client, drawer])
+    }, [client, drawer, offlineDomain])
+
+    if (offlineDomain) {
+        return (
+            <View>
+                <Header onTitleTap={() => scrollRef.current?.scrollToTop()}>Home</Header>
+                <div
+                    style={{
+                        padding: CssVar.space(4),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <Text variant="h3">ホームを読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>
+                        自分のドメインがオフラインのため、ホームタイムラインや投稿先リストを取得できません。
+                    </Text>
+                </div>
+            </View>
+        )
+    }
 
     return (
         <>

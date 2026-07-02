@@ -6,9 +6,11 @@ import { semantics } from '@concrnt/worldlib'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
+import { Text } from '@concrnt/ui'
+import { CssVar } from '../types/Theme'
 
 export const NotificationsView = () => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -25,6 +27,27 @@ export const NotificationsView = () => {
         return (
             <View>
                 <Header>Notifications</Header>
+            </View>
+        )
+    }
+
+    if (offlineDomain) {
+        return (
+            <View>
+                <Header>Notifications</Header>
+                <div
+                    style={{
+                        padding: CssVar.space(4),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <Text variant="h3">通知を読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>
+                        自分のドメインがオフラインのため、通知タイムラインを取得できません。
+                    </Text>
+                </div>
             </View>
         )
     }

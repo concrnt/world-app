@@ -664,8 +664,8 @@ export class Api {
 
     // ---
 
-    async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {
-        return this.getTimelineRanged(timelines, {})
+    async getTimelineRecent(timelines: string[], host?: string): Promise<ChunklineItem[]> {
+        return this.getTimelineRanged(timelines, {}, host)
     }
 
     async getTimelineRanged(

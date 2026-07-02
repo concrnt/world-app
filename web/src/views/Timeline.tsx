@@ -1,5 +1,5 @@
-import { Divider } from '@concrnt/ui'
-import { useEffect, useRef, useState } from 'react'
+import { Divider, Text } from '@concrnt/ui'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { TimelineTag } from '../components/TimelineTag'
@@ -17,10 +17,19 @@ interface Props {
 }
 
 export const TimelineView = (props: Props) => {
-    const { client } = useClient()
+    const { client, offlineDomain } = useClient()
     const drawer = useDrawer()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
+    const timelineHost = useMemo(() => {
+        try {
+            const host = new URL(props.uri).host
+            return host.includes('.') ? host : undefined
+        } catch {
+            return undefined
+        }
+    }, [props.uri])
+    const hostOverride = offlineDomain && timelineHost !== offlineDomain ? timelineHost : undefined
 
     const [timeline, setTimeline] = useState<Timeline>(null)
     useEffect(() => {
@@ -30,6 +39,20 @@ export const TimelineView = (props: Props) => {
             .then(setTimeline)
             .catch(() => setTimeline(null))
     }, [client, props.uri])
+
+    if (offlineDomain && !hostOverride) {
+        return (
+            <View>
+                <Header>Timeline</Header>
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Text variant="h3">タイムラインを読み込めません</Text>
+                    <Text style={{ opacity: 0.7 }}>
+                        自分のドメインがオフラインのため、このタイムラインを取得できません。
+                    </Text>
+                </div>
+            </View>
+        )
+    }
 
     return (
         <>
@@ -56,16 +79,19 @@ export const TimelineView = (props: Props) => {
                 <RealtimeTimeline
                     ref={scrollRef}
                     timelines={[props.uri]}
+                    hostOverride={hostOverride}
                     headElement={
-                        <>
-                            <Composer
-                                inline
-                                mode="normal"
-                                destinations={[props.uri]}
-                                options={timeline ? [timeline] : []}
-                            />
-                            <Divider />
-                        </>
+                        offlineDomain ? undefined : (
+                            <>
+                                <Composer
+                                    inline
+                                    mode="normal"
+                                    destinations={[props.uri]}
+                                    options={timeline ? [timeline] : []}
+                                />
+                                <Divider />
+                            </>
+                        )
                     }
                 />
             </View>

@@ -84,7 +84,7 @@ export class TimelineReader {
         let hasMore = true
 
         await this.api
-            .getTimelineRecent(timelines)
+            .getTimelineRecent(timelines, this.hostOverride)
             .then((items: ChunklineItem[]) => {
                 const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
                 this.body = [...itemsWithUpdate]
@@ -131,7 +131,7 @@ export class TimelineReader {
         console.log('Reload!!!!!!!!!!!!!!!!!!!!!!!!')
         let hasMore = true
         this.haltUpdate = true
-        const items = await this.api.getTimelineRecent(this.timelines)
+        const items = await this.api.getTimelineRecent(this.timelines, this.hostOverride)
         const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         this.body = itemsWithUpdate
         this.chunkedBody = [itemsWithUpdate]
