@@ -171,7 +171,7 @@ export const Login = () => {
     const startRecoveryLogin = async (resolverOverride?: string) => {
         const identity = recoveryIdentity
         if (!identity) {
-            setStatus('リカバリーフレーズを確認できません。12語のフレーズを入力してください。')
+            setStatus('マスターキーを確認できません。12語のマスターキーを入力してください。')
             return
         }
 
@@ -204,7 +204,7 @@ export const Login = () => {
             continueWithSession()
         } catch (error) {
             console.error(error)
-            setStatus(error instanceof Error ? error.message : 'リカバリーフレーズでのログインに失敗しました。')
+            setStatus(error instanceof Error ? error.message : 'マスターキーでのログインに失敗しました。')
         } finally {
             setBusy(false)
         }
@@ -251,7 +251,7 @@ export const Login = () => {
                             setStatus('')
                         }}
                     >
-                        リカバリーフレーズでログイン
+                        マスターキーでログイン
                     </AuthButton>
                 </div>
             </div>
@@ -279,7 +279,7 @@ export const Login = () => {
                 <>
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
-                            <Text style={{ color: CssVar.uiText }}>リカバリーフレーズ</Text>
+                            <Text style={{ color: CssVar.uiText }}>マスターキー</Text>
                             <TextField
                                 value={mnemonic}
                                 onChange={(e) => {
@@ -288,7 +288,7 @@ export const Login = () => {
                                     setResolvedCCID(undefined)
                                     setStatus('')
                                 }}
-                                placeholder="12語のリカバリーフレーズを入力"
+                                placeholder="12語のマスターキーを入力"
                             />
                         </div>
 
@@ -306,7 +306,7 @@ export const Login = () => {
                         )}
 
                         <Text style={authStyles.status}>
-                            {status || (mnemonic && !recoveryIdentity ? 'フレーズを確認できません。' : '')}
+                            {status || (mnemonic && !recoveryIdentity ? 'マスターキーを確認できません。' : '')}
                         </Text>
                     </div>
 
@@ -320,7 +320,7 @@ export const Login = () => {
                             </AuthButton>
                         ) : (
                             <AuthButton disabled={busy || !recoveryIdentity} onClick={() => startRecoveryLogin()}>
-                                {busy ? '確認中...' : 'リカバリーフレーズでログイン'}
+                                {busy ? '確認中...' : 'マスターキーでログイン'}
                             </AuthButton>
                         )}
                         <AuthTextButton

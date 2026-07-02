@@ -66,22 +66,22 @@ export const AccountImport = (props: Props) => {
                 <>
                     <AuthHeader
                         title="アカウントをインポート"
-                        description="リカバリーフレーズを入力して、この端末でアカウントを使えるようにします。"
+                        description="マスターキーを入力して、この端末でアカウントを使えるようにします。"
                     />
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
-                            <Text>リカバリーフレーズ</Text>
+                            <Text>マスターキー</Text>
                             <TextField
                                 value={mnemonic}
                                 onChange={(e) => setMnemonic(e.target.value)}
-                                placeholder="リカバリーフレーズを入力"
+                                placeholder="マスターキーを入力"
                             />
                         </div>
                         <Text style={authStyles.status}>
                             {mnemonic
                                 ? successed
-                                    ? 'このフレーズは利用できます。'
-                                    : 'フレーズを確認できません。'
+                                    ? 'このマスターキーは利用できます。'
+                                    : 'マスターキーを確認できません。'
                                 : ''}
                         </Text>
                     </div>

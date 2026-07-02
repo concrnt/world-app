@@ -297,7 +297,7 @@ export const AccountSetup = (props: Props) => {
                                     fontSize: '0.92rem'
                                 }}
                             >
-                                リカバリーフレーズの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。現在ストア審査中のため、公開後にリンクを案内します。
+                                マスターキーの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。現在ストア審査中のため、公開後にリンクを案内します。
                             </Text>
                         </div>
                     </div>
@@ -322,8 +322,8 @@ export const AccountSetup = (props: Props) => {
             {state === 'backup' && identity && (
                 <>
                     <AuthHeader
-                        title="リカバリーフレーズを保存"
-                        description="このフレーズはアカウント復元に必要です。登録を続ける前にダウンロードして、安全な場所に保管してください。"
+                        title="マスターキーを保存"
+                        description="このマスターキーはアカウント復元に必要です。登録を続ける前にダウンロードして、安全な場所に保管してください。"
                     />
                     <div style={authStyles.section}>
                         <div
@@ -375,28 +375,28 @@ export const AccountSetup = (props: Props) => {
                     <AuthActions fixedBottom>
                         <AuthButton
                             onClick={() => {
-                                const text = `Concrnt リカバリーフレーズ
+                                const text = `Concrnt マスターキー
 このファイルは Concrnt のアカウントを復元するためのものです。
 このファイルを安全な場所に保管してください。
 
 CCID: ${identity.CCID}
-リカバリーフレーズ: ${identity.mnemonic_ja}
+マスターキー: ${identity.mnemonic_ja}
 登録サーバー: ${domain}
 
-リカバリーフレーズを紛失した場合、アカウントを復元できなくなる可能性があります。
+マスターキーを紛失した場合、アカウントを復元できなくなる可能性があります。
 この内容を他人に知られると、アカウントが乗っ取られる可能性があります。`
 
                                 const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
                                 const url = URL.createObjectURL(blob)
                                 const anchor = document.createElement('a')
                                 anchor.href = url
-                                anchor.download = `concrnt-recovery-${identity.CCID}.txt`
+                                anchor.download = `concrnt-masterkey-${identity.CCID}.txt`
                                 anchor.click()
                                 URL.revokeObjectURL(url)
                                 setRecoveryDownloaded(true)
                             }}
                         >
-                            リカバリーフレーズをダウンロード
+                            マスターキーをダウンロード
                         </AuthButton>
                         <AuthButton
                             variant="outlined"
