@@ -111,7 +111,7 @@ export const WelcomeView = () => {
                                 textAlign: 'center'
                             }}
                         >
-                            World App 開発中α版
+                            World App
                         </Text>
                     </div>
                     <div style={{ flex: 1 }} />

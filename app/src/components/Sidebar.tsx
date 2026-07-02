@@ -118,7 +118,7 @@ export const Sidebar = (props: Props) => {
                             textAlign: 'center'
                         }}
                     >
-                        Concrnt World App 開発中α版
+                        Concrnt World App
                     </div>
                 </div>
             </div>

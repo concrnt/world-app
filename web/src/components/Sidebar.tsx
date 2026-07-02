@@ -131,7 +131,7 @@ export const Sidebar = () => {
                             textAlign: 'center'
                         }}
                     >
-                        Concrnt World App 開発中α版
+                        Concrnt World App
                         <br />
                         <a
                             style={{
