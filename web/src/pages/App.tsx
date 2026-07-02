@@ -25,7 +25,8 @@ export const AppShell = () => {
             >
                 <aside
                     style={{
-                        width: '200px'
+                        width: '200px',
+                        margin: CssVar.space(2)
                     }}
                 >
                     <Sidebar />
