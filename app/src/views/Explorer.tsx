@@ -10,15 +10,32 @@ import { MdAdd } from 'react-icons/md'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
 import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
+import { ClassicExplorer } from '../components/ClassicExplorer'
+import { usePersistent } from '../hooks/usePersistent'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()
     const scrollRef = useRef<HTMLDivElement>(null)
+    const { client } = useClient()
+
+    const [preferredClassicMode, setPreferredClassicMode] = usePersistent('explorer-classic-mode', false)
+    const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
+    const classicMode = supportsSearchExplorer ? preferredClassicMode : true
 
     return (
         <>
             <View>
-                <Header onTitleTap={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}>Explorer</Header>
+                <Header
+                    onTitleTap={
+                        supportsSearchExplorer
+                            ? () => {
+                                  setPreferredClassicMode((v) => !v)
+                              }
+                            : undefined
+                    }
+                >
+                    {classicMode ? 'Explorer (Classic)' : 'Explorer'}
+                </Header>
                 <div
                     ref={scrollRef}
                     style={{
@@ -32,7 +49,7 @@ export const ExplorerView = () => {
                         touchAction: 'pan-y'
                     }}
                 >
-                    <SearchExplorer />
+                    {classicMode ? <ClassicExplorer /> : <SearchExplorer />}
                 </div>
             </View>
             <FAB

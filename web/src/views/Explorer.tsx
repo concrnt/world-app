@@ -16,16 +16,23 @@ import { ClassicExplorer } from '../components/ClassicExplorer'
 export const ExplorerView = () => {
     const drawer = useDrawer()
     const scrollRef = useRef<HTMLDivElement>(null)
+    const { client } = useClient()
 
-    const [classicMode, setClassicMode] = usePersistent('explorer-classic-mode', false)
+    const [preferredClassicMode, setPreferredClassicMode] = usePersistent('explorer-classic-mode', false)
+    const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
+    const classicMode = supportsSearchExplorer ? preferredClassicMode : true
 
     return (
         <>
             <View>
                 <Header
-                    onTitleTap={() => {
-                        setClassicMode((v) => !v)
-                    }}
+                    onTitleTap={
+                        supportsSearchExplorer
+                            ? () => {
+                                  setPreferredClassicMode((v) => !v)
+                              }
+                            : undefined
+                    }
                     right={
                         <Button
                             variant="text"
