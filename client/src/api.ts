@@ -691,5 +691,6 @@ export interface Server {
     domain: string
     csid: CSID
     layer: string
+    meta?: any
     endpoints: Record<string, string>
 }
