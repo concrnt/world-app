@@ -1,8 +1,11 @@
 import { NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { Text } from '@concrnt/ui'
 import { FallbackProps } from 'react-error-boundary'
+import { usePreference } from '../../contexts/Preference'
 
 export const RenderError = ({ error }: FallbackProps) => {
+    const [devmode] = usePreference('developerMode')
+
     if (error instanceof NotFoundError) {
         return (
             <div
@@ -40,6 +43,18 @@ export const RenderError = ({ error }: FallbackProps) => {
             >
                 <Text variant="caption">メッセージの取得先サーバーはオフラインです</Text>
                 <Text variant="caption">{offlineServer}</Text>
+            </div>
+        )
+    }
+
+    if (!devmode) {
+        return (
+            <div
+                style={{
+                    padding: '0 8px'
+                }}
+            >
+                <Text variant="caption">このメッセージは表示できません</Text>
             </div>
         )
     }
