@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
-import { Button, Text, TextField } from '@concrnt/ui'
+import { Button, Switch, Text, TextField } from '@concrnt/ui'
 import { TimelinePicker } from './TimelinePicker'
 import { useClient } from '../contexts/Client'
 import { List, Timeline } from '@concrnt/worldlib'
@@ -21,6 +21,7 @@ export const ListSettings = (props: Props) => {
     const [listName, setListName] = useState<string>('')
     const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
     const [postProfile, setPostProfile] = useState<string>(pin?.defaultProfile ?? client?.currentProfile ?? 'main')
+    const [excludeSelf, setExcludeSelf] = useState<boolean>(pin?.excludeSelf ?? false)
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 
@@ -38,7 +39,8 @@ export const ListSettings = (props: Props) => {
 
         await client.updatePinnedList(props.uri, {
             defaultPostTimelines: postTimelines,
-            defaultProfile: postProfile
+            defaultProfile: postProfile,
+            excludeSelf
         })
 
         props.onComplete?.()
@@ -79,6 +81,18 @@ export const ListSettings = (props: Props) => {
                         setSelectedProfile={setPostProfile}
                     />
                 </Suspense>
+            )}
+            {isPinned && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Text variant="h5">自分の投稿を含めない</Text>
+                    <Switch checked={excludeSelf} onChange={setExcludeSelf} />
+                </div>
             )}
 
             {isPinned ? (

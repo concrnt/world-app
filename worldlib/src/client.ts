@@ -38,6 +38,7 @@ export class PinnedListItemClass implements PinnedListItem {
     defaultPostHome: boolean
     defaultPostTimelines: string[]
     defaultProfile?: string
+    excludeSelf?: boolean
 
     list = new CachedPromise<List | null>(async () => {
         const list = await this.client.getList(this.uri)
@@ -53,6 +54,7 @@ export class PinnedListItemClass implements PinnedListItem {
         this.defaultPostHome = item.defaultPostHome
         this.defaultPostTimelines = item.defaultPostTimelines
         this.defaultProfile = item.defaultProfile
+        this.excludeSelf = item.excludeSelf
     }
 }
 
@@ -458,7 +460,12 @@ export class Client {
 
     async addPin(
         uri: string,
-        options?: { defaultPostHome?: boolean; defaultPostTimelines?: string[]; defaultProfile?: string }
+        options?: {
+            defaultPostHome?: boolean
+            defaultPostTimelines?: string[]
+            defaultProfile?: string
+            excludeSelf?: boolean
+        }
     ): Promise<void> {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = [
@@ -467,7 +474,8 @@ export class Client {
                 uri,
                 defaultPostHome: options?.defaultPostHome ?? false,
                 defaultPostTimelines: options?.defaultPostTimelines ?? [],
-                defaultProfile: options?.defaultProfile
+                defaultProfile: options?.defaultProfile,
+                excludeSelf: options?.excludeSelf
             }
         ]
         const newDocument: Document<PinnedListsSchema> = {
@@ -485,7 +493,12 @@ export class Client {
 
     async updatePinnedList(
         uri: string,
-        options: { defaultPostHome?: boolean; defaultPostTimelines?: string[]; defaultProfile?: string }
+        options: {
+            defaultPostHome?: boolean
+            defaultPostTimelines?: string[]
+            defaultProfile?: string
+            excludeSelf?: boolean
+        }
     ): Promise<void> {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = latestDoc.value.map((item) => {
@@ -494,7 +507,8 @@ export class Client {
                     uri,
                     defaultPostHome: options.defaultPostHome ?? item.defaultPostHome,
                     defaultPostTimelines: options.defaultPostTimelines ?? item.defaultPostTimelines,
-                    defaultProfile: options.defaultProfile ?? item.defaultProfile
+                    defaultProfile: options.defaultProfile ?? item.defaultProfile,
+                    excludeSelf: options.excludeSelf ?? item.excludeSelf
                 }
             }
             return item

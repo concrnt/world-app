@@ -155,6 +155,7 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
         <Timeline
             ref={props.ref}
             list={list}
+            excludeSelf={props.pin.excludeSelf}
             headElement={
                 <>
                     <div style={{ padding: CssVar.space(2) }}>
@@ -172,13 +173,13 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
     )
 }
 
-const Timeline = (props: { list: List; ref?: ScrollViewRef; headElement?: ReactNode }) => {
+const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRef; headElement?: ReactNode }) => {
     const { client } = useClient()
 
     const [items] = useSubscribe(props.list.items)
 
     const self = semantics.homeTimeline(client.ccid, client.currentProfile)
-    const timelines = [...new Set([self, ...items])]
+    const timelines = [...new Set([...(props.excludeSelf ? [] : [self]), ...items])]
 
     return <RealtimeTimeline ref={props.ref} timelines={timelines} headElement={props.headElement} />
 }

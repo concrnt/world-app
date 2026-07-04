@@ -153,19 +153,19 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
 
     return (
         <>
-            <Timeline ref={props.ref} list={list} />
+            <Timeline ref={props.ref} list={list} excludeSelf={props.pin.excludeSelf} />
             <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} defaultProfile={props.pin.defaultProfile} />
         </>
     )
 }
 
-const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
+const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRef }) => {
     const { client } = useClient()
 
     const [items] = useSubscribe(props.list.items)
 
     const self = semantics.homeTimeline(client.ccid, client.currentProfile)
-    const timelines = [...new Set([self, ...items])]
+    const timelines = [...new Set([...(props.excludeSelf ? [] : [self]), ...items])]
 
     return <RealtimeTimeline ref={props.ref} timelines={timelines} />
 }

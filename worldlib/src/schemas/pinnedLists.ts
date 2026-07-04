@@ -10,4 +10,5 @@ export type PinnedListsSchema = {
     defaultPostHome: boolean
     defaultPostTimelines: string[]
     defaultProfile?: string
+    excludeSelf?: boolean
 }[]
