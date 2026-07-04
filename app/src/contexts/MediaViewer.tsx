@@ -2,8 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
 
-import { MdClose } from 'react-icons/md'
+import { MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
 import { ModelViewer } from '../components/ModelViewer'
+import { useAudioPlayer } from './AudioPlayer'
 
 export interface MediaItem {
     mediaURL: string
@@ -14,12 +15,10 @@ export interface MediaItem {
 
 interface MediaViewerState {
     open: (medias: MediaItem[], startIndex?: number) => void
-    openModel: (src: string) => void
 }
 
 const MediaViewerContext = createContext<MediaViewerState>({
-    open: () => {},
-    openModel: () => {}
+    open: () => {}
 })
 
 interface Props {
@@ -71,9 +70,7 @@ const getMidpoint = (t1: React.Touch, t2: React.Touch) => ({
 export const MediaViewerProvider = (props: Props) => {
     const [medias, setMedias] = useState<MediaItem[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
-    const [modelSrc, setModelSrc] = useState<string | null>(null)
     const isOpen = medias.length > 0
-    const isModelOpen = modelSrc !== null
 
     // --- motion values ---
     const mvOffsetX = useMotionValue(0)
@@ -135,8 +132,12 @@ export const MediaViewerProvider = (props: Props) => {
         velocityY: 0
     })
 
-    const stateRef = useRef({ currentIndex: 0, mediasLength: 0 })
-    stateRef.current = { currentIndex, mediasLength: medias.length }
+    const stateRef = useRef({ currentIndex: 0, mediasLength: 0, isImage: false })
+    stateRef.current = {
+        currentIndex,
+        mediasLength: medias.length,
+        isImage: medias[currentIndex]?.mediaType.startsWith('image/') ?? false
+    }
 
     const getPageWidth = useCallback(() => window.innerWidth + IMAGE_GAP, [])
 
@@ -160,7 +161,6 @@ export const MediaViewerProvider = (props: Props) => {
     const close = useCallback(() => {
         setMedias([])
         setCurrentIndex(0)
-        setModelSrc(null)
         resetMotion()
     }, [resetMotion])
 
@@ -175,9 +175,10 @@ export const MediaViewerProvider = (props: Props) => {
         [mvOffsetX, mvScale, mvPanX, mvPanY]
     )
 
-    // --- ダブルタップ処理 ---
+    // --- ダブルタップ処理（ズームは画像のみ） ---
     const handleDoubleTap = useCallback(
         (clientX: number, clientY: number) => {
+            if (!stateRef.current.isImage) return
             const currentScale = mvScale.get()
             if (currentScale > 1) {
                 animate(mvScale, 1, ANIM_CONFIG)
@@ -203,6 +204,8 @@ export const MediaViewerProvider = (props: Props) => {
             const g = gestureRef.current
 
             if (e.touches.length === 2) {
+                // ピンチズームは画像のみ
+                if (!stateRef.current.isImage) return
                 g.gestureType = 'pinch'
                 g.lastPinchDist = getDistance(e.touches[0], e.touches[1])
                 const mid = getMidpoint(e.touches[0], e.touches[1])
@@ -418,7 +421,7 @@ export const MediaViewerProvider = (props: Props) => {
 
     // スクロール抑制
     useEffect(() => {
-        if (isOpen || isModelOpen) {
+        if (isOpen) {
             document.body.style.overflow = 'hidden'
         } else {
             document.body.style.overflow = ''
@@ -426,7 +429,7 @@ export const MediaViewerProvider = (props: Props) => {
         return () => {
             document.body.style.overflow = ''
         }
-    }, [isOpen, isModelOpen])
+    }, [isOpen])
 
     useEffect(() => {
         gestureRef.current.gestureType = 'none'
@@ -436,11 +439,7 @@ export const MediaViewerProvider = (props: Props) => {
     const prevMedia = currentIndex > 0 ? medias[currentIndex - 1] : null
     const nextMedia = currentIndex < medias.length - 1 ? medias[currentIndex + 1] : null
 
-    const openModel = useCallback((src: string) => {
-        setModelSrc(src)
-    }, [])
-
-    const value = useMemo(() => ({ open, openModel }), [open, openModel])
+    const value = useMemo(() => ({ open }), [open])
 
     return (
         <MediaViewerContext.Provider value={value}>
@@ -466,7 +465,7 @@ export const MediaViewerProvider = (props: Props) => {
                         if (e.target === e.currentTarget) close()
                     }}
                 >
-                    {/* カルーセル: 前・現在・次 の画像を横並び */}
+                    {/* カルーセル: 前・現在・次 のメディアを横並び */}
                     <motion.div
                         style={{
                             display: 'flex',
@@ -483,7 +482,7 @@ export const MediaViewerProvider = (props: Props) => {
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
                     >
-                        {/* 前の画像 */}
+                        {/* 前のメディア */}
                         <div
                             style={{
                                 flexShrink: 0,
@@ -495,23 +494,10 @@ export const MediaViewerProvider = (props: Props) => {
                                 marginLeft: `calc(-100vw - ${IMAGE_GAP}px)`
                             }}
                         >
-                            {prevMedia && prevMedia.mediaType.startsWith('image/') && (
-                                <img
-                                    src={prevMedia.mediaURL}
-                                    alt={prevMedia.altText ?? ''}
-                                    style={{
-                                        maxWidth: '90vw',
-                                        maxHeight: '85dvh',
-                                        objectFit: 'contain',
-                                        userSelect: 'none',
-                                        pointerEvents: 'none'
-                                    }}
-                                    draggable={false}
-                                />
-                            )}
+                            {prevMedia && <SlidePreview media={prevMedia} />}
                         </div>
 
-                        {/* 現在の画像（ズーム・パン対応） */}
+                        {/* 現在のメディア（画像はズーム・パン対応） */}
                         <div
                             style={{
                                 flexShrink: 0,
@@ -545,16 +531,41 @@ export const MediaViewerProvider = (props: Props) => {
                                     src={currentMedia.mediaURL}
                                     controls
                                     autoPlay
+                                    playsInline
                                     style={{
                                         maxWidth: '90vw',
                                         maxHeight: '85dvh'
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                 />
-                            ) : null}
+                            ) : currentMedia.mediaType.startsWith('audio/') ? (
+                                <AudioSlide media={currentMedia} />
+                            ) : currentMedia.mediaType.startsWith('model/') ? (
+                                <div
+                                    // model-viewerのカメラ操作とスワイプが競合しないよう、タッチをここで止める
+                                    onClick={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchMove={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
+                                >
+                                    <ModelViewer
+                                        src={currentMedia.mediaURL}
+                                        style={{
+                                            backgroundColor: '#3f3f3f',
+                                            width: '90vw',
+                                            height: '70dvh',
+                                            borderRadius: '8px'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                    Unsupported media type: {currentMedia.mediaType}
+                                </span>
+                            )}
                         </div>
 
-                        {/* 次の画像 */}
+                        {/* 次のメディア */}
                         <div
                             style={{
                                 flexShrink: 0,
@@ -565,20 +576,7 @@ export const MediaViewerProvider = (props: Props) => {
                                 justifyContent: 'center'
                             }}
                         >
-                            {nextMedia && nextMedia.mediaType.startsWith('image/') && (
-                                <img
-                                    src={nextMedia.mediaURL}
-                                    alt={nextMedia.altText ?? ''}
-                                    style={{
-                                        maxWidth: '90vw',
-                                        maxHeight: '85dvh',
-                                        objectFit: 'contain',
-                                        userSelect: 'none',
-                                        pointerEvents: 'none'
-                                    }}
-                                    draggable={false}
-                                />
-                            )}
+                            {nextMedia && <SlidePreview media={nextMedia} />}
                         </div>
                     </motion.div>
 
@@ -641,56 +639,82 @@ export const MediaViewerProvider = (props: Props) => {
                     )}
                 </motion.div>
             )}
-
-            {/* 3Dモデルビューワー */}
-            {isModelOpen && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100vw',
-                        height: '100dvh',
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <ModelViewer
-                        src={modelSrc!}
-                        style={{
-                            backgroundColor: '#3f3f3f',
-                            width: '90vw',
-                            height: '80dvh',
-                            borderRadius: '8px'
-                        }}
-                    />
-
-                    <button
-                        onClick={() => setModelSrc(null)}
-                        style={{
-                            position: 'absolute',
-                            top: 'max(12px, env(safe-area-inset-top))',
-                            right: '12px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            color: 'white'
-                        }}
-                    >
-                        <MdClose size={24} />
-                    </button>
-                </div>
-            )}
         </MediaViewerContext.Provider>
+    )
+}
+
+// 前後スライド用の軽量プレビュー（modelやaudioは実体をロードしない）
+const SlidePreview = ({ media }: { media: MediaItem }) => {
+    const kind = media.mediaType.split('/')[0]
+    switch (kind) {
+        case 'image':
+            return (
+                <img
+                    src={media.mediaURL}
+                    alt={media.altText ?? ''}
+                    style={{
+                        maxWidth: '90vw',
+                        maxHeight: '85dvh',
+                        objectFit: 'contain',
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                    }}
+                    draggable={false}
+                />
+            )
+        case 'video':
+            return (
+                <video
+                    src={media.mediaURL}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    style={{
+                        maxWidth: '90vw',
+                        maxHeight: '85dvh',
+                        pointerEvents: 'none'
+                    }}
+                />
+            )
+        case 'audio':
+            return <MdMusicNote size={96} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+        case 'model':
+            return <MdViewInAr size={96} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+        default:
+            return null
+    }
+}
+
+const AudioSlide = ({ media }: { media: MediaItem }) => {
+    const audioPlayer = useAudioPlayer()
+    const isPlaying = audioPlayer.nowPlaying === media.mediaURL
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                cursor: 'pointer'
+            }}
+            onClick={(e) => {
+                e.stopPropagation()
+                if (isPlaying) {
+                    audioPlayer.stop()
+                } else {
+                    audioPlayer.play(media.mediaURL)
+                }
+            }}
+        >
+            {isPlaying ? (
+                <MdStop size={96} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+            ) : (
+                <MdPlayCircle size={96} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+            )}
+            {media.altText && <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{media.altText}</span>}
+        </div>
     )
 }
 

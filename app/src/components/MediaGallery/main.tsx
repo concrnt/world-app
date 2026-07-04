@@ -1,4 +1,4 @@
-import { CssVar } from '@concrnt/ui'
+import { CssVar } from '../../types/Theme'
 import { MediaMessageSchema } from '@concrnt/worldlib'
 import { GalleryImage } from './Image'
 import { GalleryVideo } from './Video'
@@ -63,14 +63,16 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
                     backgroundColor: '#111'
                 }}
             >
-                <Blurhash
-                    hash={props.media.blurhash}
-                    height={'100%'}
-                    width={'100%'}
-                    punch={1}
-                    resolutionX={32}
-                    resolutionY={32}
-                />
+                {props.media.blurhash && (
+                    <Blurhash
+                        hash={props.media.blurhash}
+                        height={'100%'}
+                        width={'100%'}
+                        punch={1}
+                        resolutionX={32}
+                        resolutionY={32}
+                    />
+                )}
             </div>
             <div
                 style={{
