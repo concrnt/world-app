@@ -58,6 +58,21 @@ export const EmojiPickerProvider = (props: Props) => {
     const [frequentEmojis, setFrequentEmojis] = useLocalStorage<Emoji[]>('emojiPicker:frequent', [])
     const [query, setQuery] = useState('')
     const [activeTab, setActiveTab] = useState(0)
+    const [searchBoxFocused, setSearchBoxFocused] = useState(false)
+
+    // OSキーボード表示時はvisualViewportが縮むので、その分だけシートを持ち上げる
+    const [viewportHeight, setViewportHeight] = useState<number>(
+        () => window.visualViewport?.height ?? window.innerHeight
+    )
+    useEffect(() => {
+        const viewport = window.visualViewport
+        if (!viewport) return
+        const handleResize = (): void => {
+            setViewportHeight(viewport.height)
+        }
+        viewport.addEventListener('resize', handleResize)
+        return () => viewport.removeEventListener('resize', handleResize)
+    }, [])
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
@@ -186,6 +201,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const close = useCallback(() => {
         setIsOpen(false)
         setQuery('')
+        setSearchBoxFocused(false)
         onSelectedRef.current = null
     }, [])
 
@@ -311,7 +327,7 @@ export const EmojiPickerProvider = (props: Props) => {
                         <motion.div
                             style={{
                                 position: 'fixed',
-                                bottom: 0,
+                                bottom: `calc(100dvh - ${viewportHeight}px)`,
                                 left: 0,
                                 right: 0,
                                 backgroundColor: CssVar.contentBackground,
@@ -320,7 +336,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 maxHeight: '50vh',
-                                paddingBottom: 'env(safe-area-inset-bottom)',
+                                paddingBottom: searchBoxFocused ? 0 : 'env(safe-area-inset-bottom)',
                                 zIndex: 1001
                             }}
                             initial={{ y: '100%' }}
@@ -332,7 +348,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* Handle */}
                             <div
                                 style={{
-                                    display: 'flex',
+                                    display: searchBoxFocused ? 'none' : 'flex',
                                     justifyContent: 'center',
                                     padding: `${CssVar.space(2)} 0 ${CssVar.space(1)}`
                                 }}
@@ -347,10 +363,67 @@ export const EmojiPickerProvider = (props: Props) => {
                                 />
                             </div>
 
+                            {/* One-line emoji strip (キーボード表示中) */}
+                            <div
+                                style={{
+                                    display: searchBoxFocused ? 'flex' : 'none',
+                                    alignItems: 'center',
+                                    overflowX: 'auto',
+                                    overflowY: 'hidden',
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {displayEmojis.map((emoji, index) => (
+                                    <button
+                                        key={`${emoji.shortcode}-${index}`}
+                                        onMouseDown={() => selectEmoji(emoji)}
+                                        style={
+                                            {
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                border: 'none',
+                                                background: 'transparent',
+                                                borderRadius: CssVar.round(0.5),
+                                                cursor: 'pointer',
+                                                padding: '6px',
+                                                flexShrink: 0,
+                                                WebkitTapHighlightColor: 'transparent',
+                                                contentVisibility: 'auto',
+                                                containIntrinsicSize: '40px 40px'
+                                            } as React.CSSProperties
+                                        }
+                                    >
+                                        <img
+                                            src={emoji.imageURL}
+                                            alt={emoji.shortcode}
+                                            loading="lazy"
+                                            style={{
+                                                width: '28px',
+                                                height: '28px'
+                                            }}
+                                        />
+                                    </button>
+                                ))}
+                                {displayEmojis.length === 0 && (
+                                    <div
+                                        style={{
+                                            padding: `${CssVar.space(1)} 0`,
+                                            opacity: 0.4,
+                                            fontSize: '14px',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {query.length > 0 ? '一致する絵文字がありません' : '絵文字がありません'}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Tabs */}
                             <div
                                 style={{
-                                    display: 'flex',
+                                    display: searchBoxFocused ? 'none' : 'flex',
                                     overflowX: 'auto',
                                     gap: CssVar.space(1),
                                     padding: `0 ${CssVar.space(2)}`,
@@ -426,6 +499,23 @@ export const EmojiPickerProvider = (props: Props) => {
                                         placeholder="絵文字を検索..."
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
+                                        onFocus={() => {
+                                            // キーボード表示に伴うページのスクロールずれを補正
+                                            setTimeout(() => {
+                                                window.scrollTo(0, 0)
+                                            }, 100)
+                                            setSearchBoxFocused(true)
+                                        }}
+                                        onBlur={() => {
+                                            close()
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && displayEmojis.length > 0) {
+                                                e.preventDefault()
+                                                selectEmoji(displayEmojis[0])
+                                                close()
+                                            }
+                                        }}
                                         style={{
                                             flex: 1,
                                             border: 'none',
@@ -436,9 +526,12 @@ export const EmojiPickerProvider = (props: Props) => {
                                         }}
                                     />
                                     {query.length > 0 && (
-                                        <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
-                                            <MdClose size={16} />
-                                        </IconButton>
+                                        // mousedownによる検索欄のblur(=close)を防いでクリアだけ行う
+                                        <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                                            <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
+                                                <MdClose size={16} />
+                                            </IconButton>
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -446,6 +539,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* Title */}
                             <div
                                 style={{
+                                    display: searchBoxFocused ? 'none' : 'block',
                                     padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
                                     fontSize: '12px',
                                     opacity: 0.6,
@@ -459,6 +553,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             <div
                                 ref={gridRef}
                                 style={{
+                                    display: searchBoxFocused ? 'none' : 'block',
                                     flex: 1,
                                     overflowY: 'auto',
                                     overflowX: 'hidden',
