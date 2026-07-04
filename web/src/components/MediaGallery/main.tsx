@@ -45,7 +45,8 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
                 overflow: 'hidden',
                 borderRadius: CssVar.round(2),
                 aspectRatio: '4/3',
-                position: 'relative'
+                position: 'relative',
+                cursor: 'pointer'
             }}
             onClick={props.onClick}
         >
@@ -93,7 +94,7 @@ const MediaBody = (props: { media: Media }) => {
         case 'audio':
             return <GalleryAudio media={props.media} />
         case 'model':
-            return <GalleryModel media={props.media} />
+            return <GalleryModel />
         default:
             return (
                 <div
