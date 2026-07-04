@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
 import { ButtonBase } from './ButtonBase'
 
 interface Props {
-    onClick?: (e: MouseEvent<HTMLButtonElement>) => void
+    onClick?: (e: MouseEvent<HTMLButtonElement>) => void | Promise<void>
     children: ReactNode
+    busyChildren?: ReactNode
     variant?: 'contained' | 'outlined' | 'text'
     disabled?: boolean
     startIcon?: ReactNode
@@ -44,12 +46,23 @@ const variantStyles = {
 export const Button = ({
     onClick,
     children,
+    busyChildren,
     variant = 'contained',
     disabled = false,
     startIcon,
     endIcon,
     style
 }: Props) => {
+    const [busy, setBusy] = useState(false)
+
+    const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+        const result = onClick?.(e)
+        if (result instanceof Promise) {
+            setBusy(true)
+            result.finally(() => setBusy(false))
+        }
+    }
+
     const pressedStyle: CSSProperties =
         variant === 'text'
             ? {
@@ -61,8 +74,8 @@ export const Button = ({
 
     return (
         <ButtonBase
-            disabled={disabled}
-            onClick={onClick}
+            disabled={disabled || busy}
+            onClick={handleClick}
             pressedStyle={pressedStyle}
             style={{
                 ...baseStyle,
@@ -70,9 +83,15 @@ export const Button = ({
                 ...style
             }}
         >
-            {startIcon}
-            {children}
-            {endIcon}
+            {busy && busyChildren ? (
+                busyChildren
+            ) : (
+                <>
+                    {startIcon}
+                    {children}
+                    {endIcon}
+                </>
+            )}
         </ButtonBase>
     )
 }

@@ -35,9 +35,11 @@ export const ListSettings = (props: Props) => {
     const saveSettings = async () => {
         if (!client || !list) return
 
-        client.updatePinnedList(props.uri, {
+        await client.updatePinnedList(props.uri, {
             defaultPostTimelines: postTimelines
         })
+
+        props.onComplete?.()
     }
 
     return (
@@ -58,7 +60,9 @@ export const ListSettings = (props: Props) => {
                 }}
             >
                 <Text variant="h3">リスト設定</Text>
-                <Button onClick={saveSettings}>保存</Button>
+                <Button onClick={saveSettings} busyChildren="保存中...">
+                    保存
+                </Button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">リスト名</Text>

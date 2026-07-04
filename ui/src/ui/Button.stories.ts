@@ -61,6 +61,14 @@ export const Disabled: Story = {
     }
 }
 
+export const AsyncBusy: Story = {
+    args: {
+        children: '保存',
+        busyChildren: '保存中...',
+        onClick: () => new Promise((resolve) => setTimeout(resolve, 2000))
+    }
+}
+
 export const CustomStyle: Story = {
     args: {
         children: 'Custom Style',
