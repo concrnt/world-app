@@ -93,6 +93,9 @@ importers:
       react:
         specifier: ^19.2.4
         version: 19.2.4
+      react-blurhash:
+        specifier: ^0.3.0
+        version: 0.3.0(blurhash@2.0.5)(react@19.2.4)
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
@@ -303,6 +306,9 @@ importers:
       react:
         specifier: ^19.2.0
         version: 19.2.4
+      react-blurhash:
+        specifier: ^0.3.0
+        version: 0.3.0(blurhash@2.0.5)(react@19.2.4)
       react-dom:
         specifier: ^19.2.0
         version: 19.2.4(react@19.2.4)
@@ -2531,6 +2537,12 @@ packages:
     resolution: {integrity: sha512-bCpkbm9JiAuMGhkqoAiC0lLkb40DJ0HOEJIku+9JDjxX3Rcs+ztEOG13wbrOskt3n2DTrjshhaQ/iay+SnGg5Q==}
     peerDependencies:
       react: '>=16.4.1'
+
+  react-blurhash@0.3.0:
+    resolution: {integrity: sha512-XlKr4Ns1iYFRnk6DkAblNbAwN/bTJvxTVoxMvmTcURdc5oLoXZwqAF9N3LZUh/HT+QFlq5n6IS6VsDGsviYAiQ==}
+    peerDependencies:
+      blurhash: ^2.0.3
+      react: '>=15'
 
   react-docgen-typescript@2.4.0:
     resolution: {integrity: sha512-ZtAp5XTO5HRzQctjPU0ybY0RRCQO19X/8fxn3w7y2VVTUbGHDKULPTL4ky3vB05euSgG5NpALhEhDPvQ56wvXg==}
@@ -5357,6 +5369,11 @@ snapshots:
     dependencies:
       hoist-non-react-statics: 3.3.2
       prop-types: 15.8.1
+      react: 19.2.4
+
+  react-blurhash@0.3.0(blurhash@2.0.5)(react@19.2.4):
+    dependencies:
+      blurhash: 2.0.5
       react: 19.2.4
 
   react-docgen-typescript@2.4.0(typescript@5.9.3):

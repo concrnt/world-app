@@ -24,6 +24,7 @@
     "boring-avatars": "^2.0.4",
     "motion": "^12.36.0",
     "react": "^19.2.0",
+    "react-blurhash": "^0.3.0",
     "react-dom": "^19.2.0",
     "react-easy-crop": "^5.5.7",
     "react-error-boundary": "^6.0.3",
