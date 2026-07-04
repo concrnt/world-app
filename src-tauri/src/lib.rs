@@ -28,6 +28,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_file_saver::init())
+        .plugin(tauri_plugin_push::init())
         .manage(accounts::AccountsLock::default())
         .invoke_handler(tauri::generate_handler![
             commands::auth_available,

@@ -17,3 +17,6 @@ key.properties
 
 /.tauri
 /tauri.settings.gradle
+
+# Firebase config, ask a maintainer or create your own project for local dev
+app/google-services.json
