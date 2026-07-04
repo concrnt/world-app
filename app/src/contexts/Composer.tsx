@@ -1,12 +1,12 @@
 import { Composer } from '../components/Composer'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { Message, Timeline } from '@concrnt/worldlib'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
+import { useKeyboard } from './Keyboard'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
@@ -147,17 +147,7 @@ const ComposerOverlay = (props: {
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
 
-    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
-        'composerViewportHeight',
-        visualViewport?.height ?? 0
-    )
-    useEffect(() => {
-        function handleResize(): void {
-            setViewportHeight(visualViewport?.height ?? 0)
-        }
-        visualViewport?.addEventListener('resize', handleResize)
-        return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [setViewportHeight])
+    const keyboard = useKeyboard()
 
     return (
         <AnimatePresence onExitComplete={props.onClosed}>
@@ -178,11 +168,11 @@ const ComposerOverlay = (props: {
                 >
                     <div
                         style={{
-                            height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
+                            height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
                             maxHeight: '50vh',
-                            transition: 'height 0.1s ease-in-out'
+                            transition: `height ${keyboard.duration || 0.1}s ease-out`
                         }}
                     >
                         <div

@@ -22,48 +22,51 @@ import { ConfirmProvider } from './contexts/Confirm'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
+import { KeyboardProvider } from './contexts/Keyboard'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <ClientProvider
-            loading={<LoadingFull />}
-            failed={
-                <ModalProvider>
-                    <WelcomeView />
-                </ModalProvider>
-            }
-        >
-            <PreferenceProvider>
-                <ThemeProvider>
-                    <ConfirmProvider>
-                        <SelectProvider>
-                            <DrawerProvider>
-                                <ModalProvider>
-                                    <EmojiPickerProvider>
-                                        <ImageCropperProvider>
-                                            <ComposerProvider>
-                                                <ScannerProvider>
-                                                    <OverlayProvider>
-                                                        <MediaViewerProvider>
-                                                            <AudioPlayerProvider>
-                                                                <TickerProvider>
-                                                                    <UrlSummaryProvider>
-                                                                        <App />
-                                                                    </UrlSummaryProvider>
-                                                                </TickerProvider>
-                                                            </AudioPlayerProvider>
-                                                        </MediaViewerProvider>
-                                                    </OverlayProvider>
-                                                </ScannerProvider>
-                                            </ComposerProvider>
-                                        </ImageCropperProvider>
-                                    </EmojiPickerProvider>
-                                </ModalProvider>
-                            </DrawerProvider>
-                        </SelectProvider>
-                    </ConfirmProvider>
-                </ThemeProvider>
-            </PreferenceProvider>
-        </ClientProvider>
+        <KeyboardProvider>
+            <ClientProvider
+                loading={<LoadingFull />}
+                failed={
+                    <ModalProvider>
+                        <WelcomeView />
+                    </ModalProvider>
+                }
+            >
+                <PreferenceProvider>
+                    <ThemeProvider>
+                        <ConfirmProvider>
+                            <SelectProvider>
+                                <DrawerProvider>
+                                    <ModalProvider>
+                                        <EmojiPickerProvider>
+                                            <ImageCropperProvider>
+                                                <ComposerProvider>
+                                                    <ScannerProvider>
+                                                        <OverlayProvider>
+                                                            <MediaViewerProvider>
+                                                                <AudioPlayerProvider>
+                                                                    <TickerProvider>
+                                                                        <UrlSummaryProvider>
+                                                                            <App />
+                                                                        </UrlSummaryProvider>
+                                                                    </TickerProvider>
+                                                                </AudioPlayerProvider>
+                                                            </MediaViewerProvider>
+                                                        </OverlayProvider>
+                                                    </ScannerProvider>
+                                                </ComposerProvider>
+                                            </ImageCropperProvider>
+                                        </EmojiPickerProvider>
+                                    </ModalProvider>
+                                </DrawerProvider>
+                            </SelectProvider>
+                        </ConfirmProvider>
+                    </ThemeProvider>
+                </PreferenceProvider>
+            </ClientProvider>
+        </KeyboardProvider>
     </ErrorBoundary>
 )

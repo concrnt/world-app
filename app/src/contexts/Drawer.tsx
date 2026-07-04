@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { animate } from 'motion'
 import { CssVar } from '../types/Theme'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useKeyboard } from './Keyboard'
 
 interface DrawerContextState {
     open: (content: ReactNode) => void
@@ -47,17 +47,7 @@ export const DrawerProvider = (props: Props) => {
         [open, close]
     )
 
-    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
-        'composerViewportHeight',
-        visualViewport?.height ?? 0
-    )
-    useEffect(() => {
-        function handleResize(): void {
-            setViewportHeight(visualViewport?.height ?? 0)
-        }
-        visualViewport?.addEventListener('resize', handleResize)
-        return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [setViewportHeight])
+    const keyboard = useKeyboard()
 
     return (
         <>
@@ -164,7 +154,8 @@ export const DrawerProvider = (props: Props) => {
                                 {content}
                                 <div
                                     style={{
-                                        height: `calc(100dvh - ${viewportHeight}px)`
+                                        height: `${keyboard.height}px`,
+                                        transition: `height ${keyboard.duration}s ease-out`
                                     }}
                                 />
                             </div>

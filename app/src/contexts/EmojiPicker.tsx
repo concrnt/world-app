@@ -5,6 +5,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { IconButton } from '@concrnt/ui'
 import { useClient } from './Client'
+import { useKeyboard } from './Keyboard'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List } from '@concrnt/worldlib'
 
@@ -60,19 +61,8 @@ export const EmojiPickerProvider = (props: Props) => {
     const [activeTab, setActiveTab] = useState(0)
     const [searchBoxFocused, setSearchBoxFocused] = useState(false)
 
-    // OSキーボード表示時はvisualViewportが縮むので、その分だけシートを持ち上げる
-    const [viewportHeight, setViewportHeight] = useState<number>(
-        () => window.visualViewport?.height ?? window.innerHeight
-    )
-    useEffect(() => {
-        const viewport = window.visualViewport
-        if (!viewport) return
-        const handleResize = (): void => {
-            setViewportHeight(viewport.height)
-        }
-        viewport.addEventListener('resize', handleResize)
-        return () => viewport.removeEventListener('resize', handleResize)
-    }, [])
+    // OSキーボード表示時はその分だけシートを持ち上げる
+    const keyboard = useKeyboard()
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
@@ -327,7 +317,7 @@ export const EmojiPickerProvider = (props: Props) => {
                         <motion.div
                             style={{
                                 position: 'fixed',
-                                bottom: `calc(100dvh - ${viewportHeight}px)`,
+                                bottom: `${keyboard.height}px`,
                                 left: 0,
                                 right: 0,
                                 backgroundColor: CssVar.contentBackground,
@@ -336,7 +326,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 maxHeight: '50vh',
-                                paddingBottom: searchBoxFocused ? 0 : 'env(safe-area-inset-bottom)',
+                                paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                                transition: `bottom ${keyboard.duration}s ease-out`,
                                 zIndex: 1001
                             }}
                             initial={{ y: '100%' }}

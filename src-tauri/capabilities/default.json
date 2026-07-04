@@ -13,6 +13,7 @@
     "haptics:allow-notification-feedback",
     "haptics:allow-selection-feedback",
     "haptics:allow-vibrate",
+    "keyboard:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

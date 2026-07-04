@@ -35,6 +35,7 @@ tauri-plugin-keychain = { version = "2.0.2", path = "../plugins/tauri-plugin-key
 tauri-plugin-barcode-scanner = { version = "2.4.5" }
 tauri-plugin-haptics = "2"
 tauri-plugin-file-saver = { version = "0.1.0", path = "../plugins/tauri-plugin-file-saver" }
+tauri-plugin-keyboard = { version = "0.1.0", path = "../plugins/tauri-plugin-keyboard" }
 
 [target.'cfg(any(target_os = "ios"))'.dependencies]
 tauri-plugin-safari-scroll-killer = { version = "0.1.0", path = "../plugins/tauri-plugin-safari-scroll-killer" }

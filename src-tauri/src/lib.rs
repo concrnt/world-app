@@ -14,6 +14,11 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_safari_scroll_killer::init())
     }
 
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    {
+        builder = builder.plugin(tauri_plugin_keyboard::init())
+    }
+
     builder
         .plugin(tauri_plugin_biometric::init())
         .plugin(tauri_plugin_opener::init())

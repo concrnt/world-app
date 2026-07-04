@@ -1,0 +1,3 @@
+[default]
+description = "Allows listening to OS keyboard visibility events"
+permissions = ["allow-register-listener", "allow-remove-listener"]
