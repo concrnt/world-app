@@ -9,5 +9,5 @@ export type PinnedListsSchema = {
     uri: string
     defaultPostHome: boolean
     defaultPostTimelines: string[]
-    defaultProfile?: boolean
+    defaultProfile?: string
 }[]

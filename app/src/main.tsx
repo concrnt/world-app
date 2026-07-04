@@ -36,9 +36,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             <PreferenceProvider>
                 <ThemeProvider>
                     <ConfirmProvider>
-                        <DrawerProvider>
-                            <ModalProvider>
-                                <SelectProvider>
+                        <SelectProvider>
+                            <DrawerProvider>
+                                <ModalProvider>
                                     <EmojiPickerProvider>
                                         <ImageCropperProvider>
                                             <ComposerProvider>
@@ -58,9 +58,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                             </ComposerProvider>
                                         </ImageCropperProvider>
                                     </EmojiPickerProvider>
-                                </SelectProvider>
-                            </ModalProvider>
-                        </DrawerProvider>
+                                </ModalProvider>
+                            </DrawerProvider>
+                        </SelectProvider>
                     </ConfirmProvider>
                 </ThemeProvider>
             </PreferenceProvider>

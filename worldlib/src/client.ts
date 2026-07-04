@@ -37,6 +37,7 @@ export class PinnedListItemClass implements PinnedListItem {
     uri: string
     defaultPostHome: boolean
     defaultPostTimelines: string[]
+    defaultProfile?: string
 
     list = new CachedPromise<List | null>(async () => {
         const list = await this.client.getList(this.uri)
@@ -51,6 +52,7 @@ export class PinnedListItemClass implements PinnedListItem {
         this.uri = item.uri
         this.defaultPostHome = item.defaultPostHome
         this.defaultPostTimelines = item.defaultPostTimelines
+        this.defaultProfile = item.defaultProfile
     }
 }
 
@@ -454,14 +456,18 @@ export class Client {
         this.pinnedLists.reload()
     }
 
-    async addPin(uri: string, options?: { defaultPostHome?: boolean; defaultPostTimelines?: string[] }): Promise<void> {
+    async addPin(
+        uri: string,
+        options?: { defaultPostHome?: boolean; defaultPostTimelines?: string[]; defaultProfile?: string }
+    ): Promise<void> {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = [
             ...latestDoc.value,
             {
                 uri,
                 defaultPostHome: options?.defaultPostHome ?? false,
-                defaultPostTimelines: options?.defaultPostTimelines ?? []
+                defaultPostTimelines: options?.defaultPostTimelines ?? [],
+                defaultProfile: options?.defaultProfile
             }
         ]
         const newDocument: Document<PinnedListsSchema> = {
@@ -479,7 +485,7 @@ export class Client {
 
     async updatePinnedList(
         uri: string,
-        options: { defaultPostHome?: boolean; defaultPostTimelines?: string[] }
+        options: { defaultPostHome?: boolean; defaultPostTimelines?: string[]; defaultProfile?: string }
     ): Promise<void> {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = latestDoc.value.map((item) => {
@@ -487,7 +493,8 @@ export class Client {
                 return {
                     uri,
                     defaultPostHome: options.defaultPostHome ?? item.defaultPostHome,
-                    defaultPostTimelines: options.defaultPostTimelines ?? item.defaultPostTimelines
+                    defaultPostTimelines: options.defaultPostTimelines ?? item.defaultPostTimelines,
+                    defaultProfile: options.defaultProfile ?? item.defaultProfile
                 }
             }
             return item

@@ -194,20 +194,27 @@ export const PostView = (props: Props) => {
                     {!loading && tab === 'replies' && (
                         <>
                             {message && (
-                                <Composer
-                                    inline
-                                    mode="reply"
-                                    targetMessage={message}
-                                    destinations={
-                                        message.distributes?.filter(
-                                            (uri: string) =>
-                                                !uri.includes('/main/home-timeline') &&
-                                                !uri.includes('/main/activity-timeline') &&
-                                                !uri.includes('/main/notify-timeline')
-                                        ) ?? []
-                                    }
-                                    onPost={() => fetchAssociations('replies')}
-                                />
+                                <div
+                                    style={{
+                                        padding: CssVar.space(2),
+                                        border: `1px solid ${CssVar.divider}`,
+                                        borderRadius: CssVar.round(2)
+                                    }}
+                                >
+                                    <Composer
+                                        mode="reply"
+                                        targetMessage={message}
+                                        destinations={
+                                            message.distributes?.filter(
+                                                (uri: string) =>
+                                                    !uri.includes('/main/home-timeline') &&
+                                                    !uri.includes('/main/activity-timeline') &&
+                                                    !uri.includes('/main/notify-timeline')
+                                            ) ?? []
+                                        }
+                                        onPost={() => fetchAssociations('replies')}
+                                    />
+                                </div>
                             )}
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>

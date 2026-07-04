@@ -20,6 +20,7 @@ export const ListSettings = (props: Props) => {
     const [list, setList] = useState<List | null>(null)
     const [listName, setListName] = useState<string>('')
     const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
+    const [postProfile, setPostProfile] = useState<string>(pin?.defaultProfile ?? client?.currentProfile ?? 'main')
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 
@@ -36,7 +37,8 @@ export const ListSettings = (props: Props) => {
         if (!client || !list) return
 
         await client.updatePinnedList(props.uri, {
-            defaultPostTimelines: postTimelines
+            defaultPostTimelines: postTimelines,
+            defaultProfile: postProfile
         })
 
         props.onComplete?.()
@@ -70,7 +72,12 @@ export const ListSettings = (props: Props) => {
             </div>
             {isPinned && (
                 <Suspense fallback={<Text>Loading...</Text>}>
-                    <DefaultPostTimelines selected={postTimelines} setSelected={setPostTimelines} />
+                    <DefaultPostTimelines
+                        selected={postTimelines}
+                        setSelected={setPostTimelines}
+                        selectedProfile={postProfile}
+                        setSelectedProfile={setPostProfile}
+                    />
                 </Suspense>
             )}
 
@@ -99,11 +106,14 @@ export const ListSettings = (props: Props) => {
     )
 }
 
-const DefaultPostTimelines = (props: { selected: string[]; setSelected: (timelines: string[]) => void }) => {
+const DefaultPostTimelines = (props: {
+    selected: string[]
+    setSelected: (timelines: string[]) => void
+    selectedProfile: string
+    setSelectedProfile: (profile: string) => void
+}) => {
     const { client } = useClient()
     const [knownCommunities] = useSubscribe(client.knownCommunities)
-
-    console.log('knownCommunities', knownCommunities)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -114,6 +124,8 @@ const DefaultPostTimelines = (props: { selected: string[]; setSelected: (timelin
                 setSelected={props.setSelected}
                 keyFunc={(item: Timeline) => item.uri}
                 labelFunc={(item: Timeline) => item.name}
+                selectedProfile={props.selectedProfile}
+                setSelectedProfile={props.setSelectedProfile}
             />
         </div>
     )

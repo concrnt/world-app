@@ -157,12 +157,14 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
             list={list}
             headElement={
                 <>
-                    <Composer
-                        inline
-                        mode="normal"
-                        destinations={props.pin.defaultPostTimelines}
-                        options={knownCommunities}
-                    />
+                    <div style={{ padding: CssVar.space(2) }}>
+                        <Composer
+                            mode="normal"
+                            destinations={props.pin.defaultPostTimelines}
+                            options={knownCommunities}
+                            initialProfile={props.pin.defaultProfile}
+                        />
+                    </div>
                     <Divider />
                 </>
             }

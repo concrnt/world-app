@@ -1,5 +1,6 @@
 import { Divider } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
+import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { TimelineTag } from '../components/TimelineTag'
@@ -58,12 +59,13 @@ export const TimelineView = (props: Props) => {
                     timelines={[props.uri]}
                     headElement={
                         <>
-                            <Composer
-                                inline
-                                mode="normal"
-                                destinations={[props.uri]}
-                                options={timeline ? [timeline] : []}
-                            />
+                            <div style={{ padding: CssVar.space(2) }}>
+                                <Composer
+                                    mode="normal"
+                                    destinations={[props.uri]}
+                                    options={timeline ? [timeline] : []}
+                                />
+                            </div>
                             <Divider />
                         </>
                     }

@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Divider, IconButton, useTheme, Text, CfmRenderer } from '@concrnt/ui'
+import { Button, IconButton, Text, CfmRenderer } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { AnimatePresence, motion } from 'motion/react'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
 import { ComposerMode, DraftBuffer } from '../contexts/Composer'
 import { MdImage, MdClose, MdDeleteOutline, MdUndo } from 'react-icons/md'
@@ -25,7 +23,6 @@ interface MediaDraft {
 }
 
 interface Props {
-    onClose?: () => void
     destinations: string[]
     setDestinations?: (destinations: string[]) => void
     options?: Timeline[]
@@ -33,17 +30,23 @@ interface Props {
     targetMessage?: Message<any>
     draftBuffer?: DraftBuffer | null
     onSaveDraft?: (buf: DraftBuffer) => void
-    onClearDraft?: () => void
-    inline?: boolean
     onPost?: () => void
+    initialProfile?: string
+    autoFocus?: boolean
 }
 
 export const Composer = (props: Props) => {
     const { client } = useClient()
-    const [willClose, setWillClose] = useState<boolean>(false)
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
-    const [selectedProfile, setSelectedProfile] = useState<string>(client?.currentProfile ?? 'main')
+    const [selectedProfile, setSelectedProfile] = useState<string>(
+        props.initialProfile ?? client?.currentProfile ?? 'main'
+    )
+
+    // 投稿先リストが切り替わったときにデフォルトプロフィールを追従させる
+    useEffect(() => {
+        setSelectedProfile(props.initialProfile ?? client?.currentProfile ?? 'main')
+    }, [props.initialProfile, client?.currentProfile])
     const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>(() => {
         if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
         return props.draftBuffer.mediaDrafts.map((m) => ({
@@ -61,24 +64,21 @@ export const Composer = (props: Props) => {
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
-    const theme = useTheme()
     const emojiPicker = useEmojiPicker()
 
-    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
-        'composerViewportHeight',
-        visualViewport?.height ?? 0
-    )
-    useEffect(() => {
-        function handleResize(): void {
-            setViewportHeight(visualViewport?.height ?? 0)
-        }
-        visualViewport?.addEventListener('resize', handleResize)
-        return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [setViewportHeight])
+    // アンマウント時の下書き保存とプレビューURL解放のために最新の状態を参照できるようにする
+    const stateRef = useRef({ draft, emojiDict, mediaDrafts, postHome, onSaveDraft: props.onSaveDraft })
+    stateRef.current = { draft, emojiDict, mediaDrafts, postHome, onSaveDraft: props.onSaveDraft }
 
-    // クリーンアップ: プレビューURLを解放
     useEffect(() => {
         return () => {
+            const { draft, emojiDict, mediaDrafts, postHome, onSaveDraft } = stateRef.current
+            onSaveDraft?.({
+                draftText: draft,
+                mediaDrafts: mediaDrafts.map((m) => ({ file: m.file })),
+                emojiDict,
+                postHome
+            })
             mediaDrafts
                 .map((media) => media.previewUrl)
                 .filter(isNonNullOrUndefined)
@@ -133,8 +133,18 @@ export const Composer = (props: Props) => {
         })
     }
 
+    const reset = () => {
+        setDraft('')
+        setEmojiDict({})
+        mediaDrafts
+            .map((media) => media.previewUrl)
+            .filter(isNonNullOrUndefined)
+            .forEach((url) => URL.revokeObjectURL(url))
+        setMediaDrafts([])
+    }
+
     const handleSubmit = async () => {
-        if (!client) return
+        if (!client || uploading) return
 
         const homeTimeline = semantics.homeTimeline(client.ccid, selectedProfile)
         const activityTimeline = semantics.activityTimeline(client.ccid, selectedProfile)
@@ -153,7 +163,6 @@ export const Composer = (props: Props) => {
                 case 'reply': {
                     if (!props.targetMessage) {
                         console.error('Reply: targetMessage is undefined')
-                        setWillClose(true)
                         return
                     }
 
@@ -199,7 +208,6 @@ export const Composer = (props: Props) => {
                 case 'reroute': {
                     if (!props.targetMessage) {
                         console.error('Reroute: targetMessage is undefined')
-                        setWillClose(true)
                         return
                     }
 
@@ -297,587 +305,271 @@ export const Composer = (props: Props) => {
             setUploading(false)
         }
 
+        // 失敗時は入力を保持したまま（コンテナも閉じない）
         if (success) {
             hapticSuccess()
-            props.onClearDraft?.()
+            reset()
             props.onPost?.()
-
-            if (props.inline) {
-                // インラインモード: 送信後は關じずにドラフトだけリセット
-                setDraft('')
-                setEmojiDict({})
-                mediaDrafts
-                    .map((media) => media.previewUrl)
-                    .filter(isNonNullOrUndefined)
-                    .forEach((url) => URL.revokeObjectURL(url))
-                setMediaDrafts([])
-                return
-            }
         }
-        if (!props.inline) {
-            setWillClose(true)
-        }
-    }
-
-    if (props.inline) {
-        return (
-            <>
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        padding: CssVar.space(2),
-                        gap: CssVar.space(2)
-                    }}
-                >
-                    <TimelinePicker
-                        items={props.options ?? []}
-                        selected={props.destinations}
-                        setSelected={props.setDestinations ?? (() => {})}
-                        keyFunc={(item: Timeline) => item.uri}
-                        labelFunc={(item: Timeline) => item.name}
-                        postHome={postHome}
-                        setPostHome={setPostHome}
-                    />
-
-                    {/* テキストエリア */}
-                    {props.mode !== 'reroute' && (
-                        <textarea
-                            ref={textareaRef}
-                            value={draft}
-                            placeholder={getPlaceholder()}
-                            onChange={(e) => setDraft(e.target.value)}
-                            style={{
-                                width: '100%',
-                                minHeight: '80px',
-                                fontSize: '1rem',
-                                boxSizing: 'border-box',
-                                border: 'none',
-                                outline: 'none',
-                                resize: 'none',
-                                background: 'transparent',
-                                color: CssVar.contentText
-                            }}
-                            onKeyDown={(e) => {
-                                if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && e.metaKey)) {
-                                    e.preventDefault()
-                                    handleSubmit()
-                                }
-                            }}
-                        />
-                    )}
-
-                    {/* 絵文字サジェスト */}
-                    {props.mode !== 'reroute' && (
-                        <EmojiSuggestion
-                            textareaRef={textareaRef}
-                            text={draft}
-                            setText={setDraft}
-                            updateEmojiDict={setEmojiDict}
-                        />
-                    )}
-
-                    {/* テキストプレビュー */}
-                    {props.mode !== 'reroute' && draft.length > 0 && (
-                        <>
-                            <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
-                            <div
-                                style={{
-                                    fontSize: '0.85rem',
-                                    opacity: 0.8,
-                                    maxHeight: '80px',
-                                    overflowY: 'auto'
-                                }}
-                            >
-                                <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
-                            </div>
-                        </>
-                    )}
-
-                    {/* 画像プレビュー */}
-                    {mediaDrafts.length > 0 && (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {mediaDrafts.map((media, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        position: 'relative',
-                                        width: '80px',
-                                        height: '80px'
-                                    }}
-                                >
-                                    {media.previewUrl ? (
-                                        <img
-                                            src={media.previewUrl}
-                                            alt={`preview ${index}`}
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover',
-                                                borderRadius: CssVar.round(2)
-                                            }}
-                                        />
-                                    ) : (
-                                        <div
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                backgroundColor: CssVar.uiBackground,
-                                                borderRadius: CssVar.round(2)
-                                            }}
-                                        >
-                                            <MdOutlineUploadFile size={32} color={CssVar.uiText} />
-                                            <Text
-                                                style={{
-                                                    marginLeft: '4px',
-                                                    fontSize: '12px',
-                                                    color: CssVar.uiText
-                                                }}
-                                            >
-                                                {media.file.name.length > 10
-                                                    ? media.file.name.slice(0, 7) +
-                                                      '...' +
-                                                      media.file.name.split('.').pop()
-                                                    : media.file.name}
-                                            </Text>
-                                        </div>
-                                    )}
-                                    <IconButton
-                                        onClick={() => removeMedia(index)}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '-8px',
-                                            right: '-8px',
-                                            backgroundColor: CssVar.divider,
-                                            borderRadius: CssVar.round(4),
-                                            padding: '2px',
-                                            width: '24px',
-                                            height: '24px'
-                                        }}
-                                    >
-                                        <MdClose size={16} />
-                                    </IconButton>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* ツールバー + 送信ボタン */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {props.mode !== 'reroute' && (
-                                <IconButton onClick={() => fileInputRef.current?.click()}>
-                                    <MdImage size={24} />
-                                </IconButton>
-                            )}
-                            {props.mode !== 'reroute' && (
-                                <IconButton
-                                    onClick={() => {
-                                        emojiPicker.open((emoji: Emoji) => {
-                                            const ta = textareaRef.current
-                                            if (ta) {
-                                                const start = ta.selectionStart
-                                                const end = ta.selectionEnd
-                                                const insert = `:${emoji.shortcode}:`
-                                                const newDraft = draft.slice(0, start) + insert + draft.slice(end)
-                                                setDraft(newDraft)
-                                            } else {
-                                                setDraft((prev) => prev + `:${emoji.shortcode}:`)
-                                            }
-                                            setEmojiDict((prev) => ({
-                                                ...prev,
-                                                [emoji.shortcode]: { imageURL: emoji.imageURL }
-                                            }))
-                                        })
-                                    }}
-                                >
-                                    <MdEmojiEmotions size={24} />
-                                </IconButton>
-                            )}
-                            {props.mode !== 'reroute' && (
-                                <IconButton
-                                    disabled={draft.length === 0 && mediaDrafts.length === 0}
-                                    onClick={() => {
-                                        setUndoCache({ draft, emojiDict, mediaDrafts })
-                                        setDraft('')
-                                        setEmojiDict({})
-                                        setMediaDrafts([])
-                                    }}
-                                >
-                                    <MdDeleteOutline size={24} />
-                                </IconButton>
-                            )}
-                            {props.mode !== 'reroute' && undoCache && (
-                                <IconButton
-                                    onClick={() => {
-                                        setDraft(undoCache.draft)
-                                        setEmojiDict(undoCache.emojiDict)
-                                        setMediaDrafts(undoCache.mediaDrafts)
-                                        setUndoCache(null)
-                                    }}
-                                >
-                                    <MdUndo size={24} />
-                                </IconButton>
-                            )}
-                        </div>
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={uploading}
-                            endIcon={<MdSend />}
-                            style={{ minWidth: '100px' }}
-                        >
-                            {getSubmitLabel()}
-                        </Button>
-                    </div>
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleFileSelect} />
-            </>
-        )
     }
 
     return (
-        <AnimatePresence
-            onExitComplete={() => {
-                setDraft('')
-                setEmojiDict({})
-                mediaDrafts
-                    .map((media) => media.previewUrl)
-                    .filter(isNonNullOrUndefined)
-                    .forEach((url) => URL.revokeObjectURL(url))
-                setMediaDrafts([])
-                props.onClose?.()
+        <div
+            style={{
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(2)
             }}
         >
-            {!willClose && (
-                <motion.div
+            <TimelinePicker
+                items={props.options ?? []}
+                selected={props.destinations}
+                setSelected={props.setDestinations ?? (() => {})}
+                keyFunc={(item: Timeline) => item.uri}
+                labelFunc={(item: Timeline) => item.name}
+                postHome={postHome}
+                setPostHome={setPostHome}
+                selectedProfile={selectedProfile}
+                setSelectedProfile={setSelectedProfile}
+            />
+
+            {/* リプライ/リルート対象の表示 */}
+            {props.targetMessage && (
+                <div
                     style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: CssVar.backdropBackground,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        paddingTop: 'env(safe-area-inset-top)'
+                        padding: '8px',
+                        borderRadius: CssVar.round(1),
+                        borderLeft: '3px solid',
+                        borderLeftColor: CssVar.contentLink,
+                        fontSize: '14px'
                     }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
                 >
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                        {props.targetMessage.authorUser?.profile.username}
+                    </div>
                     <div
                         style={{
-                            height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            maxHeight: '50vh',
-                            transition: 'height 0.1s ease-in-out'
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            opacity: 0.8
                         }}
                     >
+                        {props.targetMessage.value.body}
+                    </div>
+                </div>
+            )}
+
+            {/* リルートモードではテキストエリアを非表示 */}
+            {props.mode !== 'reroute' && (
+                <textarea
+                    ref={textareaRef}
+                    autoFocus={props.autoFocus}
+                    value={draft}
+                    placeholder={getPlaceholder()}
+                    onChange={(e) => setDraft(e.target.value)}
+                    style={{
+                        width: '100%',
+                        flex: 1,
+                        minHeight: '80px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box',
+                        border: 'none',
+                        outline: 'none',
+                        resize: 'none',
+                        background: 'transparent',
+                        color: CssVar.contentText
+                    }}
+                    onKeyDown={(e) => {
+                        if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && e.metaKey)) {
+                            e.preventDefault()
+                            handleSubmit()
+                        }
+                    }}
+                />
+            )}
+
+            {/* 絵文字サジェスト */}
+            {props.mode !== 'reroute' && (
+                <EmojiSuggestion
+                    textareaRef={textareaRef}
+                    text={draft}
+                    setText={setDraft}
+                    updateEmojiDict={setEmojiDict}
+                />
+            )}
+
+            {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
+            {props.mode !== 'reroute' && draft.length > 0 && (
+                <>
+                    <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
+                    <div
+                        style={{
+                            fontSize: '0.85rem',
+                            opacity: 0.8,
+                            maxHeight: '80px',
+                            overflowY: 'auto'
+                        }}
+                    >
+                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                    </div>
+                </>
+            )}
+
+            {/* 画像プレビュー */}
+            {mediaDrafts.length > 0 && (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {mediaDrafts.map((media, index) => (
                         <div
+                            key={index}
                             style={{
-                                backgroundColor: CssVar.contentBackground,
-                                flex: 1,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                padding: CssVar.space(2),
-                                gap: CssVar.space(2),
-                                borderRadius: theme.variant === 'classic' ? undefined : CssVar.round(1),
-                                margin:
-                                    theme.variant === 'classic' ? undefined : `${CssVar.space(2)} ${CssVar.space(2)} 0`,
-                                overflow: 'auto'
+                                position: 'relative',
+                                width: '80px',
+                                height: '80px'
                             }}
                         >
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Button
-                                    variant="text"
-                                    onClick={() => {
-                                        props.onSaveDraft?.({
-                                            draftText: draft,
-                                            mediaDrafts: mediaDrafts.map((m) => ({ file: m.file })),
-                                            emojiDict,
-                                            postHome
-                                        })
-                                        setWillClose(true)
-                                    }}
+                            {media.previewUrl ? (
+                                <img
+                                    src={media.previewUrl}
+                                    alt={`preview ${index}`}
                                     style={{
-                                        fontSize: '0.9rem',
-                                        padding: 0
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        borderRadius: CssVar.round(2)
                                     }}
-                                >
-                                    キャンセル
-                                </Button>
-                            </div>
-
-                            <Divider />
-
-                            <div>
-                                <TimelinePicker
-                                    items={props.options ?? []}
-                                    selected={props.destinations}
-                                    setSelected={props.setDestinations ?? (() => {})}
-                                    keyFunc={(item: Timeline) => item.uri}
-                                    labelFunc={(item: Timeline) => item.name}
-                                    postHome={postHome}
-                                    setPostHome={setPostHome}
-                                    selectedProfile={selectedProfile}
-                                    setSelectedProfile={setSelectedProfile}
                                 />
-                            </div>
-
-                            {/* リプライ/リルート対象の表示 */}
-                            {props.targetMessage && (
+                            ) : (
                                 <div
                                     style={{
-                                        padding: '8px',
-                                        borderRadius: CssVar.round(1),
-                                        borderLeft: '3px solid',
-                                        borderLeftColor: CssVar.contentLink,
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {props.targetMessage.authorUser?.profile.username}
-                                    </div>
-                                    <div
-                                        style={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            opacity: 0.8
-                                        }}
-                                    >
-                                        {props.targetMessage.value.body}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* リルートモードではテキストエリアを非表示 */}
-                            {props.mode !== 'reroute' && (
-                                <div
-                                    style={{
-                                        flex: 1
-                                    }}
-                                >
-                                    <textarea
-                                        ref={textareaRef}
-                                        autoFocus
-                                        value={draft}
-                                        placeholder={getPlaceholder()}
-                                        onChange={(e) => setDraft(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            fontSize: '1.2rem',
-                                            boxSizing: 'border-box',
-                                            border: 'none',
-                                            outline: 'none',
-                                            resize: 'none',
-                                            height: '100%',
-                                            background: 'transparent',
-                                            color: CssVar.contentText
-                                        }}
-                                    />
-                                </div>
-                            )}
-
-                            {/* 絵文字サジェスト */}
-                            {props.mode !== 'reroute' && (
-                                <EmojiSuggestion
-                                    textareaRef={textareaRef}
-                                    text={draft}
-                                    setText={setDraft}
-                                    updateEmojiDict={setEmojiDict}
-                                />
-                            )}
-
-                            {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
-                            {props.mode !== 'reroute' && draft.length > 0 && (
-                                <>
-                                    <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
-                                    <div
-                                        style={{
-                                            fontSize: '0.85rem',
-                                            opacity: 0.8,
-                                            maxHeight: '80px',
-                                            overflowY: 'auto'
-                                        }}
-                                    >
-                                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
-                                    </div>
-                                </>
-                            )}
-
-                            {/* 画像プレビュー */}
-                            {mediaDrafts.length > 0 && (
-                                <div
-                                    style={{
+                                        width: '100%',
+                                        height: '100%',
                                         display: 'flex',
-                                        gap: '8px',
-                                        flexWrap: 'wrap'
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: CssVar.uiBackground,
+                                        borderRadius: CssVar.round(2)
                                     }}
                                 >
-                                    {mediaDrafts.map((media, index) => (
-                                        <div
-                                            key={index}
-                                            style={{
-                                                position: 'relative',
-                                                width: '80px',
-                                                height: '80px'
-                                            }}
-                                        >
-                                            {media.previewUrl ? (
-                                                <img
-                                                    src={media.previewUrl}
-                                                    alt={`preview ${index}`}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                        borderRadius: CssVar.round(2)
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        backgroundColor: CssVar.uiBackground,
-                                                        borderRadius: CssVar.round(2)
-                                                    }}
-                                                >
-                                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
-                                                    <Text
-                                                        style={{
-                                                            marginLeft: '4px',
-                                                            fontSize: '12px',
-                                                            color: CssVar.uiText
-                                                        }}
-                                                    >
-                                                        {media.file.name.length > 10
-                                                            ? media.file.name.slice(0, 7) +
-                                                              '...' +
-                                                              media.file.name.split('.').pop()
-                                                            : media.file.name}
-                                                    </Text>
-                                                </div>
-                                            )}
-                                            <IconButton
-                                                onClick={() => removeMedia(index)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: '-8px',
-                                                    right: '-8px',
-                                                    backgroundColor: CssVar.divider,
-                                                    borderRadius: CssVar.round(4),
-                                                    padding: '2px',
-                                                    width: '24px',
-                                                    height: '24px'
-                                                }}
-                                            >
-                                                <MdClose size={16} />
-                                            </IconButton>
-                                        </div>
-                                    ))}
+                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
+                                    <Text
+                                        style={{
+                                            marginLeft: '4px',
+                                            fontSize: '12px',
+                                            color: CssVar.uiText
+                                        }}
+                                    >
+                                        {media.file.name.length > 10
+                                            ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
+                                            : media.file.name}
+                                    </Text>
                                 </div>
                             )}
-                            <div
+                            <IconButton
+                                onClick={() => removeMedia(index)}
                                 style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
+                                    position: 'absolute',
+                                    top: '-8px',
+                                    right: '-8px',
+                                    backgroundColor: CssVar.divider,
+                                    borderRadius: CssVar.round(4),
+                                    padding: '2px',
+                                    width: '24px',
+                                    height: '24px'
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {/* 画像添付ボタン（リルート以外） */}
-                                    {props.mode !== 'reroute' && (
-                                        <IconButton onClick={() => fileInputRef.current?.click()}>
-                                            <MdImage size={24} />
-                                        </IconButton>
-                                    )}
-                                    {/* 絵文字ピッカーボタン（リルート以外） */}
-                                    {props.mode !== 'reroute' && (
-                                        <IconButton
-                                            onClick={() => {
-                                                emojiPicker.open((emoji: Emoji) => {
-                                                    const ta = textareaRef.current
-                                                    if (ta) {
-                                                        const start = ta.selectionStart
-                                                        const end = ta.selectionEnd
-                                                        const insert = `:${emoji.shortcode}:`
-                                                        const newDraft =
-                                                            draft.slice(0, start) + insert + draft.slice(end)
-                                                        setDraft(newDraft)
-                                                    } else {
-                                                        setDraft((prev) => prev + `:${emoji.shortcode}:`)
-                                                    }
-                                                    setEmojiDict((prev) => ({
-                                                        ...prev,
-                                                        [emoji.shortcode]: { imageURL: emoji.imageURL }
-                                                    }))
-                                                })
-                                            }}
-                                        >
-                                            <MdEmojiEmotions size={24} />
-                                        </IconButton>
-                                    )}
-                                    {/* ゴミ箱ボタン（リルート以外） */}
-                                    {props.mode !== 'reroute' && (
-                                        <IconButton
-                                            disabled={draft.length === 0 && mediaDrafts.length === 0}
-                                            onClick={() => {
-                                                setUndoCache({ draft, emojiDict, mediaDrafts })
-                                                setDraft('')
-                                                setEmojiDict({})
-                                                setMediaDrafts([])
-                                            }}
-                                        >
-                                            <MdDeleteOutline size={24} />
-                                        </IconButton>
-                                    )}
-                                    {/* Undoボタン（キャッシュがあるときのみ） */}
-                                    {props.mode !== 'reroute' && undoCache && (
-                                        <IconButton
-                                            onClick={() => {
-                                                setDraft(undoCache.draft)
-                                                setEmojiDict(undoCache.emojiDict)
-                                                setMediaDrafts(undoCache.mediaDrafts)
-                                                setUndoCache(null)
-                                            }}
-                                        >
-                                            <MdUndo size={24} />
-                                        </IconButton>
-                                    )}
-                                </div>
-                                <Button
-                                    onClick={handleSubmit}
-                                    disabled={uploading}
-                                    endIcon={<MdSend />}
-                                    style={{
-                                        minWidth: '100px'
-                                    }}
-                                >
-                                    {getSubmitLabel()}
-                                </Button>
-                            </div>
+                                <MdClose size={16} />
+                            </IconButton>
                         </div>
-                    </div>
-
-                    {/* 隠しファイル入力 */}
-                    <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
-                </motion.div>
+                    ))}
+                </div>
             )}
-        </AnimatePresence>
+
+            {/* ツールバー + 送信ボタン */}
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* 画像添付ボタン（リルート以外） */}
+                    {props.mode !== 'reroute' && (
+                        <IconButton onClick={() => fileInputRef.current?.click()}>
+                            <MdImage size={24} />
+                        </IconButton>
+                    )}
+                    {/* 絵文字ピッカーボタン（リルート以外） */}
+                    {props.mode !== 'reroute' && (
+                        <IconButton
+                            onClick={() => {
+                                emojiPicker.open((emoji: Emoji) => {
+                                    const ta = textareaRef.current
+                                    if (ta) {
+                                        const start = ta.selectionStart
+                                        const end = ta.selectionEnd
+                                        const insert = `:${emoji.shortcode}:`
+                                        const newDraft = draft.slice(0, start) + insert + draft.slice(end)
+                                        setDraft(newDraft)
+                                    } else {
+                                        setDraft((prev) => prev + `:${emoji.shortcode}:`)
+                                    }
+                                    setEmojiDict((prev) => ({
+                                        ...prev,
+                                        [emoji.shortcode]: { imageURL: emoji.imageURL }
+                                    }))
+                                })
+                            }}
+                        >
+                            <MdEmojiEmotions size={24} />
+                        </IconButton>
+                    )}
+                    {/* ゴミ箱ボタン（リルート以外） */}
+                    {props.mode !== 'reroute' && (
+                        <IconButton
+                            disabled={draft.length === 0 && mediaDrafts.length === 0}
+                            onClick={() => {
+                                setUndoCache({ draft, emojiDict, mediaDrafts })
+                                setDraft('')
+                                setEmojiDict({})
+                                setMediaDrafts([])
+                            }}
+                        >
+                            <MdDeleteOutline size={24} />
+                        </IconButton>
+                    )}
+                    {/* Undoボタン（キャッシュがあるときのみ） */}
+                    {props.mode !== 'reroute' && undoCache && (
+                        <IconButton
+                            onClick={() => {
+                                setDraft(undoCache.draft)
+                                setEmojiDict(undoCache.emojiDict)
+                                setMediaDrafts(undoCache.mediaDrafts)
+                                setUndoCache(null)
+                            }}
+                        >
+                            <MdUndo size={24} />
+                        </IconButton>
+                    )}
+                </div>
+                <Button
+                    onClick={handleSubmit}
+                    disabled={uploading}
+                    endIcon={<MdSend />}
+                    style={{
+                        minWidth: '100px'
+                    }}
+                >
+                    {getSubmitLabel()}
+                </Button>
+            </div>
+
+            {/* 隠しファイル入力 */}
+            <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
+        </div>
     )
 }

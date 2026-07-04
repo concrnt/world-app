@@ -154,7 +154,7 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
     return (
         <>
             <Timeline ref={props.ref} list={list} />
-            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} />
+            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} defaultProfile={props.pin.defaultProfile} />
         </>
     )
 }
@@ -170,14 +170,14 @@ const Timeline = (props: { list: List; ref?: ScrollViewRef }) => {
     return <RealtimeTimeline ref={props.ref} timelines={timelines} />
 }
 
-const InnerFab = (props: { defaultPostTimelines: string[] }) => {
+const InnerFab = (props: { defaultPostTimelines: string[]; defaultProfile?: string }) => {
     const composer = useComposer()
 
     return (
         <FAB
             onClick={() => {
                 hapticLight()
-                composer.open(props.defaultPostTimelines)
+                composer.open(props.defaultPostTimelines, undefined, undefined, undefined, props.defaultProfile)
             }}
         >
             <MdCreate size={24} />
