@@ -2,6 +2,7 @@ export interface KVS {
     set<T>(key: string, value: T): Promise<void>
     get<T>(key: string): Promise<KVSEntry<T> | null>
     invalidate(key: string): Promise<void>
+    clear(): Promise<void>
 }
 
 export interface KVSEntry<T> {

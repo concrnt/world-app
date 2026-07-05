@@ -1,5 +1,6 @@
 import { Button, View, Divider, Text, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
+import { resourceCache } from '../lib/cache'
 import { Header } from '../ui/Header'
 import { usePreference, useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
@@ -103,6 +104,14 @@ export const SettingsView = () => {
                 <Divider />
 
                 <Text variant="h3">アカウント</Text>
+                <Button
+                    onClick={async () => {
+                        await resourceCache.clear()
+                        window.location.reload()
+                    }}
+                >
+                    キャッシュを削除
+                </Button>
                 <Button
                     onClick={() => {
                         logout()

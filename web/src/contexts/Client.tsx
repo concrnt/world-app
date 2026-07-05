@@ -1,9 +1,10 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
-import { InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
+import { InMemoryAuthProvider } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
+import { resourceCache } from '../lib/cache'
 
 export interface ClientContextState {
     client: Client
@@ -59,7 +60,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
 
         const authProvider = new InMemoryAuthProvider(masterKey, subKey)
-        const kvs = new InMemoryKVS()
+        const kvs = resourceCache
         try {
             setProgress('サーバーに接続しています...')
             const client = await Client.create(domain, authProvider, kvs, name)
@@ -94,6 +95,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         localStorage.removeItem('Domain')
         localStorage.removeItem('PrivateKey')
         localStorage.removeItem('SubKey')
+        await resourceCache.clear()
         await reload()
     }, [])
 

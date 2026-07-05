@@ -14,4 +14,8 @@ export class InMemoryKVS implements KVS {
     async invalidate(key: string): Promise<void> {
         this.store.delete(key)
     }
+
+    async clear(): Promise<void> {
+        this.store.clear()
+    }
 }

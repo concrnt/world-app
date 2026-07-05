@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useModal } from '../contexts/Modal'
 import { useState } from 'react'
 import { BackupKeyButton } from './BackupKeyButton'
+import { resourceCache } from '../lib/cache'
 
 interface Props {
     children?: React.ReactNode
@@ -36,9 +37,13 @@ const ResetSessionModalContent = (props: { onDone: () => void; onCancel: () => v
                 <Button
                     disabled={!exported}
                     onClick={() => {
-                        invoke('clear_all').then(() => {
-                            props.onDone()
-                        })
+                        resourceCache
+                            .clear()
+                            .catch(() => {})
+                            .then(() => invoke('clear_all'))
+                            .then(() => {
+                                props.onDone()
+                            })
                     }}
                 >
                     リセット

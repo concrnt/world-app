@@ -68,4 +68,16 @@ export class IndexedDBKVS implements KVS {
             request.onerror = (event) => reject((event.target as IDBRequest).error)
         })
     }
+
+    async clear(): Promise<void> {
+        const db = await this.initDB()
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(this.storeName, 'readwrite')
+            const store = transaction.objectStore(this.storeName)
+            const request = store.clear()
+
+            request.onsuccess = () => resolve()
+            request.onerror = (event) => reject((event.target as IDBRequest).error)
+        })
+    }
 }

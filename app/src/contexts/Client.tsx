@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 
 import { Client } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
-import { InMemoryKVS } from '@concrnt/client'
+import { resourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 
@@ -58,7 +58,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
 
         const authProvider = await TauriAuthProvider.create()
-        const kvs = new InMemoryKVS()
+        const kvs = resourceCache
         try {
             setProgress('サーバーに接続しています...')
             const client = await Client.create(domain, authProvider, kvs, name)
@@ -91,6 +91,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
     const logout = useCallback(async () => {
         localStorage.clear()
+        await resourceCache.clear()
         await invoke('clear_session')
         reload()
     }, [])
