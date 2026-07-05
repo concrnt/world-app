@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
 import { LoadingFull } from './components/LoadingFull'
-import { ClientProvider } from './contexts/Client'
+import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
 import { SelectProvider } from './contexts/Select'
@@ -40,10 +40,26 @@ import { ApView } from './views/ApView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { NavigationProvider } from './contexts/Navigation'
-import { IconButton } from '@concrnt/ui'
+import { CssVar, IconButton, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
 import { Themes } from './data/themes'
+
+const ClientLoadingScreen = () => {
+    const progress = useClientSetupProgress()
+    return (
+        <LoadingFull>
+            <Text
+                style={{
+                    color: CssVar.uiText,
+                    fontSize: '14px'
+                }}
+            >
+                {progress}
+            </Text>
+        </LoadingFull>
+    )
+}
 
 const ProfileRoute = () => {
     const { ccid = '', profile } = useParams()
@@ -84,7 +100,7 @@ const AuthedRoutes = () => (
     <ClientProvider
         loading={
             <BaseThemeProvider theme={Themes.blue}>
-                <LoadingFull />
+                <ClientLoadingScreen />
             </BaseThemeProvider>
         }
         failed={

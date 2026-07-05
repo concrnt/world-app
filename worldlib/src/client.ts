@@ -221,79 +221,8 @@ export class Client {
 
         const entity = await api.getEntity(ccid)
 
-        const client = new Client(api, ccid, entity.value, server, profile)
-        if (ccid === '') return client
-
-        client.updateProfiles()
-
-        // ==== Default kit ====
-        await api.getDocument(semantics.homeTimeline(ccid, profile)).catch((err) => {
-            if (err instanceof NotFoundError) {
-                console.log('Home timeline not found, creating a new one...')
-                const document: Document<any> = {
-                    kind: 'record',
-                    key: semantics.homeTimeline(ccid, profile),
-                    author: ccid,
-                    schema: Schemas.userTimeline,
-                    value: {},
-                    createdAt: new Date()
-                }
-                api.commit(document)
-                return document
-            }
-            throw err
-        })
-
-        await api.getDocument(semantics.notificationTimeline(ccid, profile)).catch((err) => {
-            if (err instanceof NotFoundError) {
-                console.log('Notification timeline not found, creating a new one...')
-                const document: Document<any> = {
-                    kind: 'record',
-                    key: semantics.notificationTimeline(ccid, profile),
-                    author: ccid,
-                    schema: Schemas.userTimeline,
-                    value: {},
-                    createdAt: new Date(),
-                    policy: {
-                        entries: [
-                            {
-                                url: 'https://policy.concrnt.world/t/restrict-readers.json',
-                                params: {
-                                    entities: [ccid]
-                                }
-                            },
-                            {
-                                url: 'https://policy.concrnt.world/t/write-public.json'
-                            }
-                        ]
-                    }
-                }
-                api.commit(document)
-                return document
-            }
-            throw err
-        })
-
-        await api.getDocument(semantics.activityTimeline(ccid, profile)).catch((err) => {
-            if (err instanceof NotFoundError) {
-                console.log('Activity timeline not found, creating a new one...')
-                const document: Document<any> = {
-                    kind: 'record',
-                    key: semantics.activityTimeline(ccid, profile),
-                    author: ccid,
-                    schema: Schemas.userTimeline,
-                    value: {},
-                    createdAt: new Date()
-                }
-                api.commit(document)
-                return document
-            }
-            throw err
-        })
-
-        await client.pinnedLists.value() // pinnedlistが初期化されるまでブロック
-
-        return client
+        // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
+        return new Client(api, ccid, entity.value, server, profile)
     }
 
     async updateProfiles(): Promise<void> {

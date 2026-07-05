@@ -5,6 +5,7 @@ import { Client } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { InMemoryKVS } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
+import { setupDefaultTimelines } from '../utils/clientSetup'
 
 export interface ClientContextState {
     client: Client
@@ -26,6 +27,8 @@ const ClientContext = createContext<ClientContextState>({
 
 const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
 
+const ClientSetupProgressContext = createContext<string>('')
+
 interface SessionState {
     ccid: string
     ckid: string
@@ -35,9 +38,11 @@ interface SessionState {
 export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client | null | undefined>(undefined)
     const [isOffline, setIsOffline] = useState(false)
+    const [progress, setProgress] = useState('')
 
     const reload = useCallback(async (name?: string) => {
         console.log('Reloading client for profile', name)
+        setProgress('セッションを確認しています...')
         const session = await invoke<SessionState | undefined>('get_session')
         console.log('session', session)
         if (!session) {
@@ -54,17 +59,29 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         const authProvider = await TauriAuthProvider.create()
         const kvs = new InMemoryKVS()
-        await Client.create(domain, authProvider, kvs, name)
-            .then((client) => {
-                console.log('Client created successfully')
-                setClient(client)
-            })
-            .catch((err) => {
-                console.error('Failed to create client', err)
-                if (err instanceof Error && err.message === `server ${domain} is offline`) {
-                    setIsOffline(true)
-                }
-            })
+        try {
+            setProgress('サーバーに接続しています...')
+            const client = await Client.create(domain, authProvider, kvs, name)
+
+            if (client.ccid !== '') {
+                setProgress('プロフィールを読み込んでいます...')
+                await client.updateProfiles()
+
+                setProgress('タイムラインを確認しています...')
+                await setupDefaultTimelines(client)
+
+                setProgress('リストを読み込んでいます...')
+                await client.pinnedLists.value()
+            }
+
+            console.log('Client created successfully')
+            setClient(client)
+        } catch (err) {
+            console.error('Failed to create client', err)
+            if (err instanceof Error && err.message === `server ${domain} is offline`) {
+                setIsOffline(true)
+            }
+        }
     }, [])
 
     useEffect(() => {
@@ -121,7 +138,13 @@ export const ClientProvider = (props: Props): ReactNode => {
     }
 
     if (client === undefined) {
-        return <ReloadClientContext.Provider value={reload}>{props.loading}</ReloadClientContext.Provider>
+        return (
+            <ReloadClientContext.Provider value={reload}>
+                <ClientSetupProgressContext.Provider value={progress}>
+                    {props.loading}
+                </ClientSetupProgressContext.Provider>
+            </ReloadClientContext.Provider>
+        )
     }
 
     if (client === null) {
@@ -137,4 +160,9 @@ export function useClient(): ClientContextState {
 
 export function useReloadClient(): () => void {
     return useContext(ReloadClientContext)
+}
+
+// ClientProviderのloadingノード内で、現在のセットアップ処理の内容を表示するために使う
+export function useClientSetupProgress(): string {
+    return useContext(ClientSetupProgressContext)
 }

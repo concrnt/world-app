@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { ScannerProvider } from './contexts/Scanner'
 
 import { LoadingFull } from './components/LoadingFull'
-import { ClientProvider } from './contexts/Client'
+import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
 import { SelectProvider } from './contexts/Select'
@@ -23,12 +23,29 @@ import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { KeyboardProvider } from './contexts/Keyboard'
+import { CssVar, Text } from '@concrnt/ui'
+
+const ClientLoadingScreen = () => {
+    const progress = useClientSetupProgress()
+    return (
+        <LoadingFull>
+            <Text
+                style={{
+                    color: CssVar.uiText,
+                    fontSize: '14px'
+                }}
+            >
+                {progress}
+            </Text>
+        </LoadingFull>
+    )
+}
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <KeyboardProvider>
             <ClientProvider
-                loading={<LoadingFull />}
+                loading={<ClientLoadingScreen />}
                 failed={
                     <ModalProvider>
                         <WelcomeView />
