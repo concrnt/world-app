@@ -1,7 +1,7 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
-import { InMemoryAuthProvider } from '@concrnt/client'
+import { InMemoryAuthProvider, ServerOfflineError } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { resourceCache } from '../lib/cache'
@@ -10,6 +10,8 @@ export interface ClientContextState {
     client: Client
     reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
+    isDomainOffline: boolean
+    domainRecovered: boolean
 }
 
 interface Props {
@@ -21,7 +23,9 @@ interface Props {
 const ClientContext = createContext<ClientContextState>({
     client: {} as Client,
     reload: async () => {},
-    logout: async () => {}
+    logout: async () => {},
+    isDomainOffline: false,
+    domainRecovered: false
 })
 
 const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
@@ -43,7 +47,11 @@ const readStoredString = (key: string): string | undefined => {
 export const ClientProvider = (props: Props): ReactNode => {
     const [client, setClient] = useState<Client | null | undefined>(undefined)
     const [isOffline, setIsOffline] = useState(false)
+    const [isDomainOffline, setIsDomainOffline] = useState(false)
+    const [domainRecovered, setDomainRecovered] = useState(false)
     const [progress, setProgress] = useState('')
+    const clientRef = useRef<Client | null>(null)
+    const bootedOfflineRef = useRef(false)
 
     const reload = useCallback(async (name?: string) => {
         console.log('Reloading client for profile', name)
@@ -55,6 +63,8 @@ export const ClientProvider = (props: Props): ReactNode => {
 
         if (!domain || (!masterKey && !subKey)) {
             console.log('No web session found')
+            clientRef.current?.dispose()
+            clientRef.current = null
             setClient(null)
             return
         }
@@ -65,7 +75,7 @@ export const ClientProvider = (props: Props): ReactNode => {
             setProgress('サーバーに接続しています...')
             const client = await Client.create(domain, authProvider, kvs, name)
 
-            if (client.ccid !== '') {
+            if (client.ccid !== '' && client.isOnline) {
                 setProgress('プロフィールを読み込んでいます...')
                 await client.updateProfiles()
 
@@ -74,13 +84,24 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                 setProgress('リストを読み込んでいます...')
                 await client.pinnedLists.value()
+            } else if (client.ccid !== '') {
+                // 読み取り専用起動: キャッシュからベストエフォートで読み込む
+                // setupDefaultTimelinesはcommitを行うため実行しない
+                setProgress('キャッシュから読み込んでいます...')
+                await client.updateProfiles().catch(() => {})
+                await client.pinnedLists.value().catch(() => {})
             }
 
-            console.log('Client created successfully')
+            console.log('Client created successfully. online:', client.isOnline)
+            clientRef.current?.dispose()
+            clientRef.current = client
+            bootedOfflineRef.current = !client.isOnline
+            setIsDomainOffline(!client.isOnline)
+            setDomainRecovered(false)
             setClient(client)
         } catch (err) {
             console.error('Failed to create client', err)
-            if (err instanceof Error && err.message === `server ${domain} is offline`) {
+            if (err instanceof ServerOfflineError) {
                 setIsOffline(true)
             }
         }
@@ -90,6 +111,38 @@ export const ClientProvider = (props: Props): ReactNode => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         reload()
     }, [reload])
+
+    useEffect(() => {
+        if (!client) return
+        const onStatusChanged = (online: boolean) => {
+            if (online) {
+                if (bootedOfflineRef.current) {
+                    // 読み取り専用起動だった場合は再初期化が必要なので、バナーに再接続ボタンを出す
+                    setDomainRecovered(true)
+                } else {
+                    setIsDomainOffline(false)
+                }
+            } else {
+                setIsDomainOffline(true)
+                setDomainRecovered(false)
+            }
+        }
+        client.subscribeOnlineStatus(onStatusChanged)
+
+        // オンライン/オフラインとも即時プローブする(オフライン時はプローブが失敗して遷移が発火し、
+        // リクエストが発生しないアイドル状態でもバナーが表示される)
+        const onBrowserNetworkChange = () => {
+            client.probeDomainStatus()
+        }
+        window.addEventListener('online', onBrowserNetworkChange)
+        window.addEventListener('offline', onBrowserNetworkChange)
+
+        return () => {
+            client.unsubscribeOnlineStatus(onStatusChanged)
+            window.removeEventListener('online', onBrowserNetworkChange)
+            window.removeEventListener('offline', onBrowserNetworkChange)
+        }
+    }, [client])
 
     const logout = useCallback(async () => {
         localStorage.removeItem('Domain')
@@ -103,9 +156,11 @@ export const ClientProvider = (props: Props): ReactNode => {
         return {
             client,
             reload,
-            logout
+            logout,
+            isDomainOffline,
+            domainRecovered
         }
-    }, [client, reload, logout])
+    }, [client, reload, logout, isDomainOffline, domainRecovered])
 
     if (isOffline) {
         return (

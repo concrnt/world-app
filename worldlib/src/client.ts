@@ -12,7 +12,6 @@ import {
     KVS,
     SignedDocument,
     Acknowledge,
-    fetchWithTimeout,
     Entity
 } from '@concrnt/client'
 import { ListSchema, PinnedListsSchema, ProfileSchema, ReadAccessRequestAssociationSchema } from './schemas/'
@@ -73,11 +72,15 @@ export class Client {
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
-        const results = await this.api.query({
-            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
-            schema: Schemas.communityTimeline,
-            limit: 100
-        })
+        const results = await this.api.query(
+            {
+                prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                schema: Schemas.communityTimeline,
+                limit: 100
+            },
+            undefined,
+            { cache: true }
+        )
 
         const timelines = await Promise.allSettled(
             Array.from(results.values()).map((sd) => Timeline.loadFromReferenceSD(this, sd))
@@ -109,10 +112,14 @@ export class Client {
 
     blocks = new CachedPromise<string[]>(async () => {
         const prefix = semantics.blocks(this.ccid) + '/'
-        const results = await this.api.query({
-            prefix: prefix,
-            limit: 100
-        })
+        const results = await this.api.query(
+            {
+                prefix: prefix,
+                limit: 100
+            },
+            undefined,
+            { cache: true }
+        )
         return results.map((sd) => sd.cckv.substring(prefix.length))
     })
 
@@ -126,11 +133,15 @@ export class Client {
                     // listから1つ選ぶ
                     let key = ''
                     const existingList = await this.api
-                        .query({
-                            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
-                            schema: Schemas.list,
-                            limit: 1
-                        })
+                        .query(
+                            {
+                                prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                                schema: Schemas.list,
+                                limit: 1
+                            },
+                            undefined,
+                            { cache: true }
+                        )
                         .catch(() => [])
 
                     if (existingList.length > 0) {
@@ -191,6 +202,11 @@ export class Client {
 
     // =====================================================================
 
+    // 自ドメインのオンライン状態。falseの間は読み取り専用モード相当
+    isOnline: boolean = true
+    private onlineSubscriptions: Array<(online: boolean) => void> = []
+    private recoveryTimer: ReturnType<typeof setInterval> | null = null
+
     constructor(api: Api, ccid: string, entity: Entity, server: Server, profile?: string) {
         this.api = api
         this.ccid = ccid
@@ -201,6 +217,62 @@ export class Client {
         this.api.onResourceUpdated = (uri) => {
             delete this.messageCache[uri]
         }
+
+        this.api.onHostOnlineStatusChanged = (host, online) => {
+            // Api側の簿記は接続ホスト(defaultHost)をキーにしているため、
+            // server.domain(well-knownドキュメントの自己申告値)ではなくdefaultHostと比較する
+            if (host !== this.api.defaultHost) return
+            this.setOnlineStatus(online)
+        }
+    }
+
+    private setOnlineStatus(online: boolean) {
+        if (this.isOnline === online) return
+        this.isOnline = online
+        if (online) {
+            this.stopRecoveryPoll()
+        } else {
+            this.startRecoveryPoll()
+        }
+        for (const callback of this.onlineSubscriptions) {
+            callback(online)
+        }
+    }
+
+    subscribeOnlineStatus(callback: (online: boolean) => void) {
+        this.onlineSubscriptions.push(callback)
+    }
+
+    unsubscribeOnlineStatus(callback: (online: boolean) => void) {
+        this.onlineSubscriptions = this.onlineSubscriptions.filter((sub) => sub !== callback)
+    }
+
+    // バックオフゲートを迂回して自ドメインへ直接プローブする
+    async probeDomainStatus(): Promise<boolean> {
+        return await this.api.getServerOnlineStatus(this.api.defaultHost)
+    }
+
+    startRecoveryPoll() {
+        if (this.recoveryTimer) return
+        this.recoveryTimer = setInterval(() => {
+            this.probeDomainStatus()
+        }, 30 * 1000)
+    }
+
+    private stopRecoveryPoll() {
+        if (this.recoveryTimer) {
+            clearInterval(this.recoveryTimer)
+            this.recoveryTimer = null
+        }
+    }
+
+    dispose() {
+        this.stopRecoveryPoll()
+        this.onlineSubscriptions = []
+        for (const socket of Object.values(this.sockets)) {
+            socket.dispose()
+        }
+        this.sockets = {}
     }
 
     static async create(
@@ -209,29 +281,40 @@ export class Client {
         cacheEngine: KVS,
         profile: string = 'main'
     ): Promise<Client> {
-        await fetchWithTimeout(`https://${host}/.well-known/concrnt`, {}, 5000).catch((err) => {
-            console.error(`server ${host} is offline`, err)
-            throw new Error(`server ${host} is offline`)
-        })
-
         const api = new Api(host, authProvider, cacheEngine)
 
+        // 自ドメインへ直接プローブ。オフラインでも以降はキャッシュから構築を試みる
+        const online = await api.getServerOnlineStatus(host)
+        if (!online) {
+            console.error(`server ${host} is offline. attempting to boot from cache...`)
+        }
+
+        // オフライン時はキャッシュがあればそこから返る。なければServerOfflineErrorが伝播する
         const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
         const entity = await api.getEntity(ccid)
 
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
-        return new Client(api, ccid, entity.value, server, profile)
+        const client = new Client(api, ccid, entity.value, server, profile)
+        if (!online) {
+            client.isOnline = false
+            client.startRecoveryPoll()
+        }
+        return client
     }
 
     async updateProfiles(): Promise<void> {
         await this.api
-            .query({
-                parent: semantics.profiles(this.ccid),
-                order: 'asc',
-                limit: 100
-            })
+            .query(
+                {
+                    parent: semantics.profiles(this.ccid),
+                    order: 'asc',
+                    limit: 100
+                },
+                undefined,
+                { cache: true }
+            )
             .then((res) => {
                 const prefixLength = semantics.profiles(this.ccid).length + 1
                 for (const sd of res) {
@@ -320,7 +403,7 @@ export class Client {
 
     async newTimelineReader(opts?: { withoutSocket: boolean; hostOverride?: string }): Promise<TimelineReader> {
         if (opts?.withoutSocket) {
-            return new TimelineReader(this.api, undefined)
+            return new TimelineReader(this.api, undefined, opts?.hostOverride)
         }
         const socket = await this.newSocket(opts?.hostOverride)
         return new TimelineReader(this.api, socket, opts?.hostOverride)

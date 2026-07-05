@@ -52,7 +52,7 @@ interface Props {
 }
 
 export const Composer = (props: Props) => {
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
     const [selectedProfile, setSelectedProfile] = useState<string>(
@@ -242,6 +242,7 @@ export const Composer = (props: Props) => {
 
     const cannotSubmit =
         uploading ||
+        isDomainOffline ||
         (displayMode !== 'media' && displayMode !== 'reroute' && draft.trim() === '') ||
         (displayMode === 'media' && mediaDrafts.length === 0)
 
@@ -696,16 +697,23 @@ export const Composer = (props: Props) => {
                         </IconButton>
                     )}
                 </div>
-                <Button
-                    onClick={handleSubmit}
-                    disabled={cannotSubmit}
-                    endIcon={<MdSend />}
-                    style={{
-                        minWidth: '100px'
-                    }}
-                >
-                    {getSubmitLabel()}
-                </Button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isDomainOffline && (
+                        <Text variant="caption" style={{ margin: 0 }}>
+                            オフラインのため投稿できません
+                        </Text>
+                    )}
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={cannotSubmit}
+                        endIcon={<MdSend />}
+                        style={{
+                            minWidth: '100px'
+                        }}
+                    >
+                        {getSubmitLabel()}
+                    </Button>
+                </div>
             </div>
 
             {/* 隠しファイル入力 */}

@@ -15,25 +15,41 @@ export class Socket {
 
     hostOverride?: string
 
+    private checkConnectionInterval?: ReturnType<typeof setInterval>
+    private heartbeatInterval?: ReturnType<typeof setInterval>
+    private reconnectTimeout?: ReturnType<typeof setTimeout>
+    private connectPromise: Promise<void> | null = null
+    private disposed = false
+
     constructor(api: Api, hostOverride?: string) {
         this.api = api
         this.hostOverride = hostOverride
 
-        this.connect()
-            .then(() => {
-                setInterval(() => {
-                    this.checkConnection()
-                }, 1000)
-                setInterval(() => {
-                    this.heartbeat()
-                }, 30000)
-            })
-            .catch((err) => {
-                console.error('Failed to connect websocket:', err)
-            })
+        // 初回接続に失敗しても監視は動かし続ける(checkConnectionが再接続を担う)
+        this.checkConnectionInterval = setInterval(() => {
+            this.checkConnection()
+        }, 1000)
+        this.heartbeatInterval = setInterval(() => {
+            this.heartbeat()
+        }, 30000)
+
+        this.connect().catch((err) => {
+            console.error('Failed to connect websocket:', err)
+        })
     }
 
-    async connect() {
+    connect(): Promise<void> {
+        // 並行するconnectで複数のWebSocketが生成されないようシングルフライトにする
+        if (this.connectPromise) return this.connectPromise
+        this.connectPromise = this.doConnect().finally(() => {
+            this.connectPromise = null
+        })
+        return this.connectPromise
+    }
+
+    private async doConnect() {
+        if (this.disposed) return
+
         const host = this.hostOverride ?? this.api.defaultHost
         const server = await this.api.getServer(host)
         if (!server) {
@@ -42,6 +58,7 @@ export class Socket {
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.realtime', {})
 
+        this.ws?.close?.() // 古い接続が残っているとイベントが二重配信されるため閉じる
         this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + endpoint)
 
         this.ws.onmessage = async (rawevent: any) => {
@@ -85,11 +102,14 @@ export class Socket {
     }
 
     heartbeat() {
+        if (this.ws?.readyState !== WS.OPEN) return
         this.ws.send(JSON.stringify({ type: 'h' }))
     }
 
     checkConnection() {
-        if (this.ws.readyState !== WS.OPEN && !this.reconnecting) {
+        // 接続処理が進行中の間は再接続を起動しない
+        if (this.connectPromise || this.ws?.readyState === WS.CONNECTING) return
+        if (this.ws?.readyState !== WS.OPEN && !this.reconnecting) {
             this.failcount = 0
             this.reconnecting = true
             this.reconnect()
@@ -97,15 +117,18 @@ export class Socket {
     }
 
     reconnect() {
-        if (this.ws.readyState === WS.OPEN) {
+        if (this.disposed) return
+        if (this.ws?.readyState === WS.OPEN) {
             console.info('reconnect confirmed')
             this.reconnecting = false
             this.failcount = 0
         } else {
             console.info('reconnecting. attempt: ', this.failcount)
-            this.connect()
+            this.connect().catch((err) => {
+                console.info('reconnect attempt failed:', err)
+            })
             this.failcount++
-            setTimeout(
+            this.reconnectTimeout = setTimeout(
                 () => {
                     this.reconnect()
                 },
@@ -133,7 +156,8 @@ export class Socket {
             this.subscriptions.get(topic)?.add(callback)
         })
         const newtimelines = Array.from(this.subscriptions.keys())
-        if (newtimelines.length > currenttimelines.length) {
+        // 未接続時はonopenが購読リストを再送するので送信をスキップして良い
+        if (newtimelines.length > currenttimelines.length && this.ws?.readyState === WS.OPEN) {
             this.ws.send(JSON.stringify({ type: 'listen', prefixes: newtimelines }))
         }
     }
@@ -150,13 +174,22 @@ export class Socket {
             }
         })
         const newtimelines = Array.from(this.subscriptions.keys())
-        if (newtimelines.length < currenttimelines.length) {
+        if (newtimelines.length < currenttimelines.length && this.ws?.readyState === WS.OPEN) {
             this.ws.send(JSON.stringify({ type: 'unlisten', prefixes: newtimelines }))
         }
     }
 
     ping() {
+        if (this.ws?.readyState !== WS.OPEN) return
         this.ws.send(JSON.stringify({ type: 'h' }))
+    }
+
+    dispose() {
+        this.disposed = true
+        if (this.checkConnectionInterval) clearInterval(this.checkConnectionInterval)
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval)
+        if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout)
+        this.ws?.close?.()
     }
 
     waitOpen() {
@@ -169,7 +202,7 @@ export class Socket {
                 if (currentAttempt > maxNumberOfAttempts - 1) {
                     clearInterval(interval)
                     reject(new Error('Maximum number of attempts exceeded'))
-                } else if (this.ws.readyState === WS.OPEN) {
+                } else if (this.ws?.readyState === WS.OPEN) {
                     clearInterval(interval)
                     resolve(true)
                 }

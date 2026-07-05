@@ -17,10 +17,14 @@ export class List {
     }
 
     items = new CachedPromise<string[]>(async () => {
-        const items = await this.client.api.query({
-            prefix: this.uri,
-            limit: 100 //TODO: pagination
-        })
+        const items = await this.client.api.query(
+            {
+                prefix: this.uri,
+                limit: 100 //TODO: pagination
+            },
+            undefined,
+            { cache: true }
+        )
 
         const documents = items.map((i) => JSON.parse(i.document))
         return documents.map((d) => d.value.href)

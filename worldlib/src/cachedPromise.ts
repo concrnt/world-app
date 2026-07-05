@@ -6,7 +6,14 @@ export class CachedPromise<T> {
 
     value(): Promise<T> {
         if (!this.promise) {
-            this.promise = this.executor()
+            const promise = this.executor()
+            promise.catch(() => {
+                // 失敗はキャッシュしない(次のvalue()で再実行できるようにする)
+                if (this.promise === promise) {
+                    this.promise = null
+                }
+            })
+            this.promise = promise
         }
         return this.promise
     }

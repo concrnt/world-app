@@ -1,4 +1,5 @@
 import { MainView } from './views/Main'
+import { DomainOfflineBanner } from './components/DomainOfflineBanner'
 
 function App() {
     return (
@@ -6,11 +7,22 @@ function App() {
             style={{
                 width: '100%',
                 height: '100%',
-                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
                 overflow: 'hidden'
             }}
         >
-            <MainView />
+            <DomainOfflineBanner />
+            <div
+                style={{
+                    flex: 1,
+                    minHeight: 0,
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}
+            >
+                <MainView />
+            </div>
         </div>
     )
 }

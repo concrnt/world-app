@@ -1,6 +1,14 @@
 import { KVS } from './cache'
 import { AuthProvider } from './auth'
-import { fetchWithTimeout, makeUrlSafe, parseHexString, renderUriTemplate, btoa } from './util'
+import {
+    fetchWithTimeout,
+    makeUrlSafe,
+    parseHexString,
+    renderUriTemplate,
+    btoa,
+    TimeoutError,
+    NetworkError
+} from './util'
 import { CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument, Entity } from './model'
 import { ChunklineItem } from './chunkline'
 import { CheckJwtIsValid, JwtPayload } from './crypto'
@@ -34,7 +42,8 @@ export interface ApiResponse<T> {
 }
 
 export interface FetchOptions<T> {
-    cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only'
+    // fallback: ネットワーク優先で、失敗時のみキャッシュを返す(オフラインフォールバック用)
+    cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback'
     expressGetter?: (data: T) => void
     TTL?: number
     auth?: 'no-auth'
@@ -55,6 +64,13 @@ export class Api {
     notifyResourceUpdate(id: string) {
         this.onResourceUpdated?.(id)
     }
+
+    // ホストのオンライン/オフライン遷移時に一度だけ呼ばれる
+    onHostOnlineStatusChanged?: (host: string, online: boolean) => void
+
+    // バックオフ状態はプロセス内限定(永続KVSに書くと再起動をまたいで残ってしまう)
+    private offlineState = new Map<string, { count: number; since: number }>()
+    private onlineProbeMemo = new Map<string, number>()
 
     private inFlightRequests = new Map<string, Promise<any>>()
 
@@ -123,33 +139,42 @@ export class Api {
         }
     }
 
+    // バックオフゲートを迂回してホストへ直接プローブする(回復検知用)
     getServerOnlineStatus = async (host: string): Promise<boolean> => {
-        const cacheKey = `online:${host}`
-        const entry = await this.cache.get<number>(cacheKey)
-        if (entry) {
-            const age = Date.now() - entry.timestamp
-            if (age < 5000) {
-                return true
-            }
+        const memo = this.onlineProbeMemo.get(host)
+        if (memo && Date.now() - memo < 5000) {
+            return true
         }
 
-        return await this.getServer(host, { cache: 'no-cache' })
-            .then(() => {
-                this.cache.set(cacheKey, 1)
-                return true
-            })
-            .catch(() => {
-                this.cache.invalidate(cacheKey)
-                return false
-            })
+        try {
+            const res = await fetchWithTimeout(
+                `https://${host}/.well-known/concrnt`,
+                { headers: { Accept: 'application/json' } },
+                5000
+            )
+            if (!res.ok) throw new Error(`fetch failed on transport: ${res.status}`)
+            this.onlineProbeMemo.set(host, Date.now())
+            this.markHostOnline(host)
+            return true
+        } catch (_err) {
+            this.onlineProbeMemo.delete(host)
+            this.markHostOffline(host)
+            return false
+        }
     }
 
-    private isHostOnline = async (host: string): Promise<boolean> => {
-        const cacheKey = `offline:${host}`
-        const entry = await this.cache.get<number>(cacheKey)
+    private isHostOnline = (host: string): boolean => {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            // ゲートで弾く場合もオフライン遷移は通知する(hasガードでcount増加とsinceリセットを防ぐ)
+            if (!this.offlineState.has(host)) {
+                this.markHostOffline(host)
+            }
+            return false
+        }
+        const entry = this.offlineState.get(host)
         if (entry) {
-            const age = Date.now() - entry.timestamp
-            const threshold = 500 * Math.pow(1.5, Math.min(entry.data, 15))
+            const age = Date.now() - entry.since
+            const threshold = 500 * Math.pow(1.5, Math.min(entry.count, 15))
             if (age < threshold) {
                 return false
             }
@@ -157,15 +182,18 @@ export class Api {
         return true
     }
 
-    private markHostOnline = async (host: string) => {
-        const cacheKey = `offline:${host}`
-        this.cache.invalidate(cacheKey)
+    private markHostOnline = (host: string) => {
+        if (this.offlineState.delete(host)) {
+            this.onHostOnlineStatusChanged?.(host, true)
+        }
     }
 
-    private markHostOffline = async (host: string) => {
-        const cacheKey = `offline:${host}`
-        const failCount = (await this.cache.get<number>(cacheKey))?.data ?? 0
-        this.cache.set(cacheKey, failCount + 1)
+    private markHostOffline = (host: string) => {
+        const prev = this.offlineState.get(host)
+        this.offlineState.set(host, { count: (prev?.count ?? 0) + 1, since: Date.now() })
+        if (!prev) {
+            this.onHostOnlineStatusChanged?.(host, false)
+        }
     }
 
     async callConcrntApi<T>(host: string, api: string, args: Record<string, string>, init?: RequestInit): Promise<T> {
@@ -199,7 +227,7 @@ export class Api {
             const fetchHost = host || this.defaultHost
             const url = `https://${fetchHost}${path}`
 
-            if (!(await this.isHostOnline(fetchHost))) {
+            if (!this.isHostOnline(fetchHost)) {
                 return Promise.reject(new ServerOfflineError(fetchHost))
             }
 
@@ -218,7 +246,7 @@ export class Api {
                         case 502:
                         case 503:
                         case 504:
-                            await this.markHostOffline(fetchHost)
+                            this.markHostOffline(fetchHost)
                             throw new ServerOfflineError(fetchHost)
                     }
 
@@ -237,8 +265,12 @@ export class Api {
                         return Promise.reject(err)
                     }
 
-                    if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
-                        await this.markHostOffline(fetchHost)
+                    if (
+                        err instanceof TimeoutError ||
+                        err instanceof NetworkError ||
+                        ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
+                    ) {
+                        this.markHostOffline(fetchHost)
                         return Promise.reject(new ServerOfflineError(fetchHost))
                     }
 
@@ -270,7 +302,10 @@ export class Api {
                 const age = Date.now() - cachedEntry.timestamp
                 if (age < (cachedEntry.data ? (opts?.TTL ?? this.defaultCacheTTL) : this.negativeCacheTTL)) {
                     // return cached if TTL is not expired
-                    if (!(opts?.cache === 'best-effort' && !cachedEntry.data)) return cachedEntry.data
+                    // fallbackモードはネットワーク優先なのでここでは返さない
+                    if (opts?.cache !== 'fallback' && !(opts?.cache === 'best-effort' && !cachedEntry.data)) {
+                        return cachedEntry.data
+                    }
                 }
             }
         }
@@ -280,7 +315,7 @@ export class Api {
             const fetchHost = host || this.defaultHost
             const url = `https://${fetchHost}${path}`
 
-            if (!(await this.isHostOnline(fetchHost))) {
+            if (!this.isHostOnline(fetchHost)) {
                 return Promise.reject(new ServerOfflineError(fetchHost))
             }
 
@@ -312,7 +347,7 @@ export class Api {
                     }
 
                     if ([502, 503, 504].includes(res.status)) {
-                        await this.markHostOffline(fetchHost)
+                        this.markHostOffline(fetchHost)
                         return await Promise.reject(new ServerOfflineError(fetchHost))
                     }
 
@@ -340,8 +375,12 @@ export class Api {
                         return Promise.reject(err)
                     }
 
-                    if (['ENOTFOUND', 'ECONNREFUSED'].includes(err.cause?.code)) {
-                        await this.markHostOffline(fetchHost)
+                    if (
+                        err instanceof TimeoutError ||
+                        err instanceof NetworkError ||
+                        ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
+                    ) {
+                        this.markHostOffline(fetchHost)
                         return Promise.reject(new ServerOfflineError(fetchHost))
                     }
 
@@ -356,9 +395,16 @@ export class Api {
             return req
         }
 
+        if (opts?.cache === 'fallback') {
+            return await fetchNetwork().catch((err) => {
+                if (cached) return cached
+                throw err
+            })
+        }
+
         if (cached) {
             // swr
-            fetchNetwork()
+            fetchNetwork().catch(() => {}) // バックグラウンド更新の失敗はunhandledrejectionにしない
             return cached
         }
 
@@ -429,14 +475,8 @@ export class Api {
         return document
     }
 
-    async getResource<T>(uri: string, hint?: string): Promise<T> {
-        const parsed = URL.parse(uri)
-        if (!parsed) {
-            throw new Error(`invalid URI: ${uri}`)
-        }
-        const owner = parsed.host
-        const key = parsed.pathname
-
+    // owner(CCID/CSID/FQDN)からリソースの所在ドメインを解決する
+    async resolveDomain(owner: string, hint?: string): Promise<FQDN> {
         let fqdn = owner
         if (IsCCID(fqdn)) {
             const entity = await this.getEntity(owner, hint)
@@ -446,6 +486,18 @@ export class Api {
             const server = await this.getServerByCSID(owner, hint)
             fqdn = server.domain
         }
+        return fqdn
+    }
+
+    async getResource<T>(uri: string, hint?: string): Promise<T> {
+        const parsed = URL.parse(uri)
+        if (!parsed) {
+            throw new Error(`invalid URI: ${uri}`)
+        }
+        const owner = parsed.host
+        const key = parsed.pathname
+
+        const fqdn = await this.resolveDomain(owner, hint)
 
         const server = await this.getServer(fqdn)
 
@@ -473,15 +525,7 @@ export class Api {
         const parsed = new URL(uri)
         const owner = parsed.host
 
-        let fqdn = owner
-        if (IsCCID(fqdn)) {
-            const entity = await this.getEntity(owner, hint)
-            fqdn = entity.value.domain
-        }
-        if (IsCSID(fqdn)) {
-            const server = await this.getServerByCSID(owner, hint)
-            fqdn = server.domain
-        }
+        const fqdn = await this.resolveDomain(owner, hint)
 
         const server = await this.getServer(fqdn)
 
@@ -498,15 +542,7 @@ export class Api {
         const parsed = new URL(uri)
         const owner = parsed.host
 
-        let fqdn = owner
-        if (IsCCID(fqdn)) {
-            const entity = await this.getEntity(owner, hint)
-            fqdn = entity.value.domain
-        }
-        if (IsCSID(fqdn)) {
-            const server = await this.getServerByCSID(owner, hint)
-            fqdn = server.domain
-        }
+        const fqdn = await this.resolveDomain(owner, hint)
 
         const server = await this.getServer(fqdn)
 
@@ -528,7 +564,8 @@ export class Api {
             limit?: string | number
             order?: string
         },
-        domain?: string
+        domain?: string,
+        opts?: { cache?: boolean }
     ): Promise<SignedDocument[]> {
         let fqdn = domain
         const key = query.prefix ?? query.parent
@@ -537,17 +574,7 @@ export class Api {
         }
         if (!fqdn) {
             const parsed = new URL(key)
-            const owner = parsed.host
-
-            fqdn = owner
-            if (IsCCID(fqdn)) {
-                const entity = await this.getEntity(owner)
-                fqdn = entity.value.domain
-            }
-            if (IsCSID(fqdn)) {
-                const server = await this.getServerByCSID(owner)
-                fqdn = server.domain
-            }
+            fqdn = await this.resolveDomain(parsed.host)
         }
 
         if (!fqdn) {
@@ -565,6 +592,12 @@ export class Api {
             limit: query.limit,
             order: query.order
         })
+
+        // ページング付きクエリはキャッシュキーが安定しないため対象外
+        if (opts?.cache && !query.since && !query.until) {
+            const cacheKey = `query:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}`
+            return await this.fetchWithCache<SignedDocument[]>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
+        }
 
         const resource = this.fetchWithCredential<SignedDocument[]>(fqdn, endpoint, {})
 
@@ -664,8 +697,8 @@ export class Api {
 
     // ---
 
-    async getTimelineRecent(timelines: string[]): Promise<ChunklineItem[]> {
-        return this.getTimelineRanged(timelines, {})
+    async getTimelineRecent(timelines: string[], host?: string): Promise<ChunklineItem[]> {
+        return this.getTimelineRanged(timelines, {}, host)
     }
 
     async getTimelineRanged(

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
+import { DomainOfflineBanner } from '../components/DomainOfflineBanner'
 import { CssVar } from '../types/Theme'
 
 export const AppShell = () => {
@@ -7,20 +8,22 @@ export const AppShell = () => {
         <div
             style={{
                 display: 'flex',
+                flexDirection: 'column',
                 width: '100vw',
                 height: '100dvh',
                 boxSizing: 'border-box',
                 backgroundColor: CssVar.backdropBackground,
-                justifyContent: 'center'
+                alignItems: 'center'
             }}
         >
+            <DomainOfflineBanner />
             <div
                 style={{
                     display: 'flex',
                     flex: 1,
+                    minHeight: 0,
                     maxWidth: '1280px',
-                    width: '100%',
-                    height: '100%'
+                    width: '100%'
                 }}
             >
                 <aside

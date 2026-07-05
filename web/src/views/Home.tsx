@@ -4,7 +4,8 @@ import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/Scrol
 import { useClient } from '../contexts/Client'
 import { useDrawer } from '../contexts/Drawer'
 
-import { Tabs, Tab, Text, Divider } from '@concrnt/ui'
+import { Tabs, Tab, Text, Divider, Button } from '@concrnt/ui'
+import { ErrorBoundary } from 'react-error-boundary'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 
@@ -22,7 +23,7 @@ import { sortByListOrder } from '../utils/listOrder'
 import { Composer } from '../components/Composer'
 
 export const HomeView = (props: ScrollViewProps) => {
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const drawer = useDrawer()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
@@ -35,6 +36,9 @@ export const HomeView = (props: ScrollViewProps) => {
     // fix default settings
     useEffect(() => {
         if (!client) return
+        // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
+        // そもそもcommitもできないので表示しない
+        if (isDomainOffline) return
         if (!(client.currentProfile in client.profiles)) {
             drawer.open(
                 <ProfileEditor
@@ -45,7 +49,7 @@ export const HomeView = (props: ScrollViewProps) => {
                 />
             )
         }
-    }, [client, drawer])
+    }, [client, drawer, isDomainOffline])
 
     return (
         <>
@@ -78,9 +82,32 @@ export const HomeView = (props: ScrollViewProps) => {
                 >
                     Home
                 </Header>
-                <Suspense>
-                    <HomeMain ref={scrollRef} selectedTabUri={selectedTabUri} setSelectedTabUri={setSelectedTabUri} />
-                </Suspense>
+                <ErrorBoundary
+                    fallbackRender={({ resetErrorBoundary }) => (
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: CssVar.space(2),
+                                padding: CssVar.space(4)
+                            }}
+                        >
+                            <Text variant="caption">
+                                読み込みに失敗しました(サーバーがオフラインの可能性があります)
+                            </Text>
+                            <Button onClick={() => resetErrorBoundary()}>再試行</Button>
+                        </div>
+                    )}
+                >
+                    <Suspense>
+                        <HomeMain
+                            ref={scrollRef}
+                            selectedTabUri={selectedTabUri}
+                            setSelectedTabUri={setSelectedTabUri}
+                        />
+                    </Suspense>
+                </ErrorBoundary>
             </View>
         </>
     )

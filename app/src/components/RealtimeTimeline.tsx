@@ -25,7 +25,7 @@ interface Props extends ScrollViewProps {
 const SCROLL_HALT_THRESHOLD = 100
 
 export const RealtimeTimeline = (props: Props) => {
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
 
     const loadingRef = useRef(true)
     const [loading, setLoading] = useState(true)
@@ -48,6 +48,33 @@ export const RealtimeTimeline = (props: Props) => {
         newArrivalsRef.current = newArrivals
     }, [newArrivals])
 
+    // 自ドメインがオフラインでも、単一タイムラインならそのホストから直接読める。
+    // reader再生成のトリガーは解決済みのhostOverride値の変化のみにする
+    // (isDomainOffline自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
+    const [hostOverride, setHostOverride] = useState<string | undefined>(undefined)
+    useEffect(() => {
+        if (!client || !isDomainOffline || props.timelines.length !== 1) {
+            setHostOverride(undefined)
+            return
+        }
+        let isCancelled = false
+        const owner = URL.parse(props.timelines[0])?.host
+        if (!owner) {
+            setHostOverride(undefined)
+            return
+        }
+        client.api
+            .resolveDomain(owner)
+            .catch(() => undefined)
+            .then((fqdn) => {
+                if (isCancelled) return
+                setHostOverride(fqdn === client.api.defaultHost ? undefined : fqdn)
+            })
+        return () => {
+            isCancelled = true
+        }
+    }, [client, isDomainOffline, props.timelines])
+
     useEffect(() => {
         console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
@@ -56,53 +83,62 @@ export const RealtimeTimeline = (props: Props) => {
         const request = async () => {
             if (!client) return
 
-            return client.newTimelineReader().then((t) => {
-                if (isCancelled) return
-                t.haltUpdate = false
-                t.onUpdate = () => {
-                    startTransition(() => {
-                        update()
-                    })
-                }
-
-                t.onNewItem = (item) => {
+            return client
+                .newTimelineReader({ withoutSocket: false, hostOverride })
+                .catch(() => client.newTimelineReader({ withoutSocket: true, hostOverride }))
+                .then((t) => {
                     if (isCancelled) return
-                    if (!t.haltUpdate) return
-                    if (!item.href) return
-
-                    client.getMessage(item.href).then((msg) => {
-                        if (isCancelled) return
-                        if (!msg) return
-                        const icon = msg.authorProfile?.avatar
-                        if (!icon) return
-                        setNewArrivals((prev) => {
-                            if (prev.find((e) => e.src === icon)) return prev
-                            return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
+                    t.haltUpdate = false
+                    t.onUpdate = () => {
+                        startTransition(() => {
+                            update()
                         })
-                    })
-                }
+                    }
 
-                reader.current = t
-                t.listen(props.timelines)
-                    .then((hasMoreData) => {
-                        setHasMoreData(hasMoreData)
-                    })
-                    .finally(() => {
-                        loadingRef.current = false
-                        setLoading(false)
-                        setInitialLoaded(true)
-                    })
-                return t
-            })
+                    t.onNewItem = (item) => {
+                        if (isCancelled) return
+                        if (!t.haltUpdate) return
+                        if (!item.href) return
+
+                        client.getMessage(item.href).then((msg) => {
+                            if (isCancelled) return
+                            if (!msg) return
+                            const icon = msg.authorProfile?.avatar
+                            if (!icon) return
+                            setNewArrivals((prev) => {
+                                if (prev.find((e) => e.src === icon)) return prev
+                                return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
+                            })
+                        })
+                    }
+
+                    reader.current = t
+                    t.listen(props.timelines)
+                        .then((hasMoreData) => {
+                            setHasMoreData(hasMoreData)
+                        })
+                        .finally(() => {
+                            loadingRef.current = false
+                            setLoading(false)
+                            setInitialLoaded(true)
+                        })
+                    return t
+                })
         }
-        const mt = request()
+        const mt = request().catch((err) => {
+            console.error('Failed to initialize timeline reader:', err)
+            loadingRef.current = false
+            setLoading(false)
+            setInitialLoaded(true)
+            return undefined
+        })
         return () => {
             isCancelled = true
             mt.then((t) => {
                 t?.dispose()
             })
         }
-    }, [client, reader, props.timelines, update])
+    }, [client, reader, props.timelines, update, hostOverride])
 
     const scrollRef = useRef<HTMLDivElement>(null)
 

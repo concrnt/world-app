@@ -1,6 +1,25 @@
 import { Server } from './api'
 import { parse } from 'uri-template'
 
+// メッセージ文字列は既存のエラー文字列と互換を保つこと(RenderError等が正規表現でマッチしている)
+export class TimeoutError extends Error {
+    url: string
+
+    constructor(url: string, timeoutMs: number) {
+        super(`Request to ${url} timed out after ${timeoutMs} ms`)
+        this.url = url
+    }
+}
+
+export class NetworkError extends Error {
+    url: string
+
+    constructor(url: string, cause: unknown) {
+        super(`Request to ${url} failed: ${(cause as Error)?.message ?? String(cause)}`, { cause })
+        this.url = url
+    }
+}
+
 export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 10 * 1000): Promise<Response> => {
     const controller = new AbortController()
     const clientTimeout = setTimeout(() => {
@@ -14,9 +33,9 @@ export const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs
         })
         .catch((err) => {
             if (err.name === 'AbortError') {
-                throw new Error(`Request to ${url} timed out after ${timeoutMs} ms`)
+                throw new TimeoutError(url, timeoutMs)
             }
-            throw new Error(`Request to ${url} failed: ${err.message}`)
+            throw new NetworkError(url, err)
         })
         .finally(() => {
             clearTimeout(clientTimeout)
