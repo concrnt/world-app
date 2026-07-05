@@ -12,6 +12,7 @@ import {
     InMemoryAuthProvider,
     InMemoryKVS,
     LoadIdentity,
+    SignedDocument,
     type Identity
 } from '@concrnt/client'
 import { semantics } from '@concrnt/worldlib'
@@ -81,6 +82,29 @@ const createAndCommitSubkey = async (identity: Identity, domain: string) => {
     if (!committed) throw new Error('Subkey commit failed')
 
     return `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
+}
+
+// v1 -> v2 移行対応:
+// v2へ自動的に移行されたユーザーのエンティティは proof.type が "none" になっており、
+// このままでは利用を続けられない。マスターキーでログインしたこのタイミングで、
+// エンティティを concrnt-ecrecover-direct で再コミットして正しい proof を付与する。
+const ensureEntityProof = async (identity: Identity, domain: string) => {
+    const authProvider = new InMemoryAuthProvider(identity.privateKey)
+    const kvs = new InMemoryKVS()
+    const api = new Api(domain, authProvider, kvs)
+
+    const self = await api.getResource<SignedDocument>(semantics.user(identity.CCID))
+    if (self.proof?.type !== 'none') return
+
+    console.log('Entity proof type is "none", re-committing entity with master key...')
+    const entityDoc: Document<Entity> = {
+        kind: 'entity',
+        author: identity.CCID,
+        schema: 'https://schema.concrnt.net/entity.json',
+        value: JSON.parse(self.document).value,
+        createdAt: new Date()
+    }
+    await api.commit(entityDoc, domain, { useMasterkey: true })
 }
 
 export const Login = () => {
@@ -199,6 +223,10 @@ export const Login = () => {
 
             setStatus('このブラウザで使う鍵を登録しています...')
             const subkeyStr = await createAndCommitSubkey(identity, domain)
+
+            await ensureEntityProof(identity, domain).catch((err) => {
+                console.error('Failed to migrate entity proof type', err)
+            })
 
             storeWebSession(domain, identity.privateKey, subkeyStr)
             continueWithSession()

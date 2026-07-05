@@ -4,7 +4,7 @@ import Tilt from 'react-parallax-tilt'
 import { useEffect, useState } from 'react'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
-import { Api, InMemoryKVS, Document, Entity, InMemoryAuthProvider } from '@concrnt/client'
+import { Api, InMemoryKVS, Document, Entity, InMemoryAuthProvider, SignedDocument } from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
@@ -174,6 +174,29 @@ export const WelcomeView = () => {
 
                                 await api.commit(subkeyDoc, user.entity.value.domain, { useMasterkey: true })
                                 console.log('Subkey Registered')
+
+                                // v1 -> v2 移行対応:
+                                // v2へ自動的に移行されたユーザーのエンティティは proof.type が "none" に
+                                // なっており、このままでは利用を続けられない。マスターキーが使えるこの
+                                // タイミングで concrnt-ecrecover-direct で再コミットして正しい proof を付与する。
+                                try {
+                                    const self = await api.getResource<SignedDocument>(semantics.user(user.ccid))
+                                    if (self.proof?.type === 'none') {
+                                        console.log(
+                                            'Entity proof type is "none", re-committing entity with master key...'
+                                        )
+                                        const entityDoc: Document<Entity> = {
+                                            kind: 'entity',
+                                            author: user.ccid,
+                                            schema: 'https://schema.concrnt.net/entity.json',
+                                            value: user.entity.value,
+                                            createdAt: new Date()
+                                        }
+                                        await api.commit(entityDoc, user.entity.value.domain, { useMasterkey: true })
+                                    }
+                                } catch (err) {
+                                    console.error('Failed to migrate entity proof type', err)
+                                }
 
                                 await invoke('set_domain', { domain: user.entity.value.domain })
 
