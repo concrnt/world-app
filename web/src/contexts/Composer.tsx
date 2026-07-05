@@ -10,11 +10,14 @@ import { CssVar } from '../types/Theme'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
+export type EditorMode = 'plaintext' | 'markdown' | 'media'
+
 export interface DraftBuffer {
     draftText: string
     mediaDrafts: Array<{ file: File }>
     emojiDict: Record<string, { imageURL: string }>
     postHome: boolean
+    editorMode?: EditorMode
 }
 
 interface ComposerContextState {

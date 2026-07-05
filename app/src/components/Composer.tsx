@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import { Button, IconButton, Text, CfmRenderer } from '@concrnt/ui'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { Button, IconButton, List, ListItem, Popover, Text, CfmRenderer } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
-import { ComposerMode, DraftBuffer } from '../contexts/Composer'
-import { MdImage, MdClose, MdDeleteOutline, MdUndo } from 'react-icons/md'
+import { ComposerMode, DraftBuffer, EditorMode } from '../contexts/Composer'
+import { MdImage, MdClose, MdDeleteOutline, MdUndo, MdTextFields, MdPermMedia, MdReply, MdRepeat } from 'react-icons/md'
+import { FaMarkdown } from 'react-icons/fa'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
 import { hapticSuccess } from '../utils/haptics'
@@ -20,6 +22,20 @@ import { CDID } from '@concrnt/client'
 interface MediaDraft {
     file: File
     previewUrl?: string
+}
+
+const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
+    plaintext: <MdTextFields size={24} />,
+    markdown: <FaMarkdown size={20} />,
+    media: <MdPermMedia size={20} />,
+    reply: <MdReply size={24} />,
+    reroute: <MdRepeat size={24} />
+}
+
+const editorModeLabels: Record<EditorMode, string> = {
+    plaintext: 'プレーンテキスト',
+    markdown: 'マークダウン',
+    media: 'メディア'
 }
 
 interface Props {
@@ -55,6 +71,10 @@ export const Composer = (props: Props) => {
         }))
     })
     const [uploading, setUploading] = useState<boolean>(false)
+    const [editorMode, setEditorMode] = useState<EditorMode>(
+        props.draftBuffer?.editorMode ?? ((props.draftBuffer?.mediaDrafts.length ?? 0) > 0 ? 'media' : 'markdown')
+    )
+    const [modeSelectOpen, setModeSelectOpen] = useState(false)
     const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>(props.draftBuffer?.emojiDict ?? {})
     const [undoCache, setUndoCache] = useState<{
         draft: string
@@ -66,18 +86,25 @@ export const Composer = (props: Props) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const emojiPicker = useEmojiPicker()
 
+    // Composerは複数同時にマウントされ得るため、アンカー名をインスタンスごとに一意にする
+    const modeSelectAnchor = '--composer-mode-select-' + useId().replace(/[^a-zA-Z0-9-]/g, '')
+
+    // リプライ/リルート時はモードを外部から固定し、通常時はユーザーが選択したエディタモードを表示する
+    const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode
+
     // アンマウント時の下書き保存とプレビューURL解放のために最新の状態を参照できるようにする
-    const stateRef = useRef({ draft, emojiDict, mediaDrafts, postHome, onSaveDraft: props.onSaveDraft })
-    stateRef.current = { draft, emojiDict, mediaDrafts, postHome, onSaveDraft: props.onSaveDraft }
+    const stateRef = useRef({ draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft: props.onSaveDraft })
+    stateRef.current = { draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft: props.onSaveDraft }
 
     useEffect(() => {
         return () => {
-            const { draft, emojiDict, mediaDrafts, postHome, onSaveDraft } = stateRef.current
+            const { draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft } = stateRef.current
             onSaveDraft?.({
                 draftText: draft,
                 mediaDrafts: mediaDrafts.map((m) => ({ file: m.file })),
                 emojiDict,
-                postHome
+                postHome,
+                editorMode
             })
             mediaDrafts
                 .map((media) => media.previewUrl)
@@ -107,22 +134,91 @@ export const Composer = (props: Props) => {
         }
     }
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const mediaToTag = (url: string, typ: string, name: string): string => {
+        if (typ.startsWith('image/')) return `![${name}](${url})`
+        if (typ.startsWith('video/')) return `<video controls src="${url}"></video>`
+        return `[${name}](${url})`
+    }
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (!files) return
-
-        const newMediaDrafts: MediaDraft[] = []
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i]
-            newMediaDrafts.push({
-                file,
-                previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
-            })
-        }
-        setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
+        const selected = Array.from(files)
 
         // inputをリセット（同じファイルを再選択可能にする）
         e.target.value = ''
+
+        if (props.mode === 'reply' || editorMode === 'markdown') {
+            // リプライ中、またはすでにドラフトがインラインでメディアを扱っている場合は
+            // その場でアップロードしてタグを挿入する。そうでなければmediaモードへ切り替える
+            const hasInlineMedia = /!\[[^\]]*\]\([^)]*\)/.test(draft) || draft.includes('<video')
+            if (props.mode === 'reply' || hasInlineMedia) {
+                if (!client || uploading) return
+                setUploading(true)
+                try {
+                    const tags = await Promise.all(
+                        selected.map(async (file) => {
+                            const [url, typ] = await uploadImage(client, file)
+                            return mediaToTag(url, typ, file.name)
+                        })
+                    )
+                    const insert = tags.join('\n')
+                    const ta = textareaRef.current
+                    if (ta) {
+                        const start = ta.selectionStart
+                        const end = ta.selectionEnd
+                        setDraft((prev) => prev.slice(0, start) + insert + prev.slice(end))
+                    } else {
+                        setDraft((prev) => prev + insert)
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error)
+                } finally {
+                    setUploading(false)
+                }
+                return
+            }
+            setEditorMode('media')
+        }
+
+        const newMediaDrafts: MediaDraft[] = selected.map((file) => ({
+            file,
+            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+        }))
+        setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
+    }
+
+    const selectEditorMode = async (next: EditorMode) => {
+        setModeSelectOpen(false)
+        if (next === editorMode) return
+        if (editorMode === 'media' && mediaDrafts.length > 0) {
+            if (next === 'markdown') {
+                // 添付済みメディアをアップロードしてインラインタグへ変換する
+                if (!client || uploading) return
+                setUploading(true)
+                try {
+                    const tags = await Promise.all(
+                        mediaDrafts.map(async (media) => {
+                            const [url, typ] = await uploadImage(client, media.file)
+                            return mediaToTag(url, typ, media.file.name)
+                        })
+                    )
+                    setDraft((prev) => (prev === '' ? tags.join('\n') : prev + '\n' + tags.join('\n')))
+                } catch (error) {
+                    console.error('Media conversion error:', error)
+                    return
+                } finally {
+                    setUploading(false)
+                }
+            }
+            // plaintextへの切り替えではタグ変換できないため破棄する
+            mediaDrafts
+                .map((media) => media.previewUrl)
+                .filter(isNonNullOrUndefined)
+                .forEach((url) => URL.revokeObjectURL(url))
+            setMediaDrafts([])
+        }
+        setEditorMode(next)
     }
 
     const removeMedia = (index: number) => {
@@ -141,10 +237,16 @@ export const Composer = (props: Props) => {
             .filter(isNonNullOrUndefined)
             .forEach((url) => URL.revokeObjectURL(url))
         setMediaDrafts([])
+        setEditorMode('markdown')
     }
 
+    const cannotSubmit =
+        uploading ||
+        (displayMode !== 'media' && displayMode !== 'reroute' && draft.trim() === '') ||
+        (displayMode === 'media' && mediaDrafts.length === 0)
+
     const handleSubmit = async () => {
-        if (!client || uploading) return
+        if (!client || cannotSubmit) return
 
         const homeTimeline = semantics.homeTimeline(client.ccid, selectedProfile)
         const activityTimeline = semantics.activityTimeline(client.ccid, selectedProfile)
@@ -248,53 +350,70 @@ export const Composer = (props: Props) => {
                     break
                 }
                 default: {
-                    // 通常の投稿
-
-                    // 画像がある場合は mediaMessage、なければ markdownMessage
-                    if (mediaDrafts.length > 0) {
-                        // 画像をアップロード
-                        const uploadedMedias = await Promise.all(
-                            mediaDrafts.map(async (media) => {
-                                const [[url, typ], blurhash] = await Promise.all([
-                                    uploadImage(client, media.file),
-                                    computeBlurhash(media.file)
-                                ])
-                                return {
-                                    mediaURL: url,
-                                    mediaType: typ,
-                                    ...(blurhash ? { blurhash } : {})
-                                }
-                            })
-                        )
-
-                        const document = {
-                            kind: 'record' as const,
-                            key: newPostUri,
-                            schema: Schemas.mediaMessage,
-                            value: {
-                                body: draft,
-                                medias: uploadedMedias,
-                                emojis: emojiDict
-                            },
-                            author: client.ccid,
-                            distributes,
-                            createdAt: timestamp
+                    // 通常の投稿: エディタモードに応じてスキーマを切り替える
+                    switch (editorMode) {
+                        case 'plaintext': {
+                            const document = {
+                                kind: 'record' as const,
+                                key: newPostUri,
+                                schema: Schemas.plaintextMessage,
+                                value: {
+                                    body: draft
+                                },
+                                author: client.ccid,
+                                distributes,
+                                createdAt: timestamp
+                            }
+                            await client.api.commit(document)
+                            break
                         }
-                        await client.api.commit(document)
-                    } else {
-                        const document = {
-                            kind: 'record' as const,
-                            key: newPostUri,
-                            schema: Schemas.markdownMessage,
-                            value: {
-                                body: draft,
-                                emojis: emojiDict
-                            },
-                            author: client.ccid,
-                            distributes,
-                            createdAt: timestamp
+                        case 'media': {
+                            // 画像をアップロード
+                            const uploadedMedias = await Promise.all(
+                                mediaDrafts.map(async (media) => {
+                                    const [[url, typ], blurhash] = await Promise.all([
+                                        uploadImage(client, media.file),
+                                        computeBlurhash(media.file)
+                                    ])
+                                    return {
+                                        mediaURL: url,
+                                        mediaType: typ,
+                                        ...(blurhash ? { blurhash } : {})
+                                    }
+                                })
+                            )
+
+                            const document = {
+                                kind: 'record' as const,
+                                key: newPostUri,
+                                schema: Schemas.mediaMessage,
+                                value: {
+                                    body: draft,
+                                    medias: uploadedMedias,
+                                    emojis: emojiDict
+                                },
+                                author: client.ccid,
+                                distributes,
+                                createdAt: timestamp
+                            }
+                            await client.api.commit(document)
+                            break
                         }
-                        await client.api.commit(document)
+                        default: {
+                            const document = {
+                                kind: 'record' as const,
+                                key: newPostUri,
+                                schema: Schemas.markdownMessage,
+                                value: {
+                                    body: draft,
+                                    emojis: emojiDict
+                                },
+                                author: client.ccid,
+                                distributes,
+                                createdAt: timestamp
+                            }
+                            await client.api.commit(document)
+                        }
                     }
                 }
             }
@@ -323,17 +442,38 @@ export const Composer = (props: Props) => {
                 gap: CssVar.space(2)
             }}
         >
-            <TimelinePicker
-                items={props.options ?? []}
-                selected={props.destinations}
-                setSelected={props.setDestinations ?? (() => {})}
-                keyFunc={(item: Timeline) => item.uri}
-                labelFunc={(item: Timeline) => item.name}
-                postHome={postHome}
-                setPostHome={setPostHome}
-                selectedProfile={selectedProfile}
-                setSelectedProfile={setSelectedProfile}
-            />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: CssVar.space(1) }}>
+                {/* モードセレクタ。リプライ/リルート時は状態表示のみで切り替え不可 */}
+                <IconButton
+                    onClick={props.mode === 'normal' ? () => setModeSelectOpen(true) : undefined}
+                    style={{ anchorName: modeSelectAnchor } as CSSProperties}
+                >
+                    {modeIcons[displayMode]}
+                </IconButton>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <TimelinePicker
+                        items={props.options ?? []}
+                        selected={props.destinations}
+                        setSelected={props.setDestinations ?? (() => {})}
+                        keyFunc={(item: Timeline) => item.uri}
+                        labelFunc={(item: Timeline) => item.name}
+                        postHome={postHome}
+                        setPostHome={setPostHome}
+                        selectedProfile={selectedProfile}
+                        setSelectedProfile={setSelectedProfile}
+                    />
+                </div>
+            </div>
+
+            <Popover open={modeSelectOpen} onClose={() => setModeSelectOpen(false)} anchor={modeSelectAnchor}>
+                <List dense disablePadding style={{ minWidth: '200px' }}>
+                    {(Object.keys(editorModeLabels) as EditorMode[]).map((key) => (
+                        <ListItem key={key} icon={modeIcons[key]} onClick={() => selectEditorMode(key)}>
+                            {editorModeLabels[key]}
+                        </ListItem>
+                    ))}
+                </List>
+            </Popover>
 
             {/* リプライ/リルート対象の表示 */}
             {props.targetMessage && (
@@ -391,8 +531,8 @@ export const Composer = (props: Props) => {
                 />
             )}
 
-            {/* 絵文字サジェスト */}
-            {props.mode !== 'reroute' && (
+            {/* 絵文字サジェスト（plaintextスキーマは絵文字非対応） */}
+            {props.mode !== 'reroute' && displayMode !== 'plaintext' && (
                 <EmojiSuggestion
                     textareaRef={textareaRef}
                     text={draft}
@@ -401,8 +541,8 @@ export const Composer = (props: Props) => {
                 />
             )}
 
-            {/* テキストプレビュー（絵文字等のレンダリング確認用） */}
-            {props.mode !== 'reroute' && draft.length > 0 && (
+            {/* テキストプレビュー（絵文字等のレンダリング確認用。plaintextはレンダリングされないため非表示） */}
+            {props.mode !== 'reroute' && displayMode !== 'plaintext' && draft.length > 0 && (
                 <>
                     <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
                     <div
@@ -497,14 +637,14 @@ export const Composer = (props: Props) => {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {/* 画像添付ボタン（リルート以外） */}
-                    {props.mode !== 'reroute' && (
+                    {/* 画像添付ボタン（リルート・プレーンテキスト以外） */}
+                    {props.mode !== 'reroute' && displayMode !== 'plaintext' && (
                         <IconButton onClick={() => fileInputRef.current?.click()}>
                             <MdImage size={24} />
                         </IconButton>
                     )}
-                    {/* 絵文字ピッカーボタン（リルート以外） */}
-                    {props.mode !== 'reroute' && (
+                    {/* 絵文字ピッカーボタン（リルート・プレーンテキスト以外） */}
+                    {props.mode !== 'reroute' && displayMode !== 'plaintext' && (
                         <IconButton
                             onClick={() => {
                                 emojiPicker.open((emoji: Emoji) => {
@@ -558,7 +698,7 @@ export const Composer = (props: Props) => {
                 </div>
                 <Button
                     onClick={handleSubmit}
-                    disabled={uploading}
+                    disabled={cannotSubmit}
                     endIcon={<MdSend />}
                     style={{
                         minWidth: '100px'
