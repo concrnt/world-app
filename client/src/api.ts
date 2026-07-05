@@ -453,8 +453,8 @@ export class Api {
         return document
     }
 
-    async getDocument<T>(uri: string, domain?: string): Promise<Document<T>> {
-        const sd = await this.getResource<SignedDocument>(uri, domain)
+    async getDocument<T>(uri: string, domain?: string, opts?: FetchOptions<SignedDocument>): Promise<Document<T>> {
+        const sd = await this.getResource<SignedDocument>(uri, domain, opts)
         const document: Document<T> = JSON.parse(sd.document)
 
         const legacy = document as any
@@ -489,7 +489,7 @@ export class Api {
         return fqdn
     }
 
-    async getResource<T>(uri: string, hint?: string): Promise<T> {
+    async getResource<T>(uri: string, hint?: string, opts?: FetchOptions<T>): Promise<T> {
         const parsed = URL.parse(uri)
         if (!parsed) {
             throw new Error(`invalid URI: ${uri}`)
@@ -507,7 +507,7 @@ export class Api {
             key: key.replace(/^\/+|\/+$/g, '')
         })
 
-        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, {})
+        const resource = this.fetchWithCache<T>(fqdn, endpoint, uri, opts ?? {})
 
         return resource
     }

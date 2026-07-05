@@ -252,6 +252,24 @@ export class Client {
         return await this.api.getServerOnlineStatus(this.api.defaultHost)
     }
 
+    // 自分が利用しているsubkeyがサーバー上でまだenact状態か確認する。
+    // サーバー側リセットや他デバイスからのrevokeで無効化されているケースを検知するために起動時に呼ばれる。
+    // 'unknown'はオフライン等でチェックできなかったことを表し、fail-openとして扱う(誤って無効判定しない)
+    async checkSubkeyStatus(): Promise<'valid' | 'invalid' | 'unknown'> {
+        const ckid = this.api.authProvider.getCKID()
+        if (!ckid) return 'valid' // subkeyを使っていないセッション(マスターキーのみ)は対象外
+
+        try {
+            const doc = await this.api.getDocument(semantics.subkey(this.ccid, ckid), undefined, {
+                cache: 'no-cache'
+            })
+            return doc.kind === 'record' ? 'valid' : 'invalid'
+        } catch (err) {
+            if (err instanceof NotFoundError) return 'invalid'
+            return 'unknown'
+        }
+    }
+
     startRecoveryPoll() {
         if (this.recoveryTimer) return
         this.recoveryTimer = setInterval(() => {

@@ -5,6 +5,7 @@ import { InMemoryAuthProvider, ServerOfflineError } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { resourceCache } from '../lib/cache'
+import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
 
 export interface ClientContextState {
     client: Client
@@ -12,6 +13,7 @@ export interface ClientContextState {
     logout: () => Promise<void>
     isDomainOffline: boolean
     domainRecovered: boolean
+    isSubkeyInvalid: boolean
 }
 
 interface Props {
@@ -25,7 +27,8 @@ const ClientContext = createContext<ClientContextState>({
     reload: async () => {},
     logout: async () => {},
     isDomainOffline: false,
-    domainRecovered: false
+    domainRecovered: false,
+    isSubkeyInvalid: false
 })
 
 const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
@@ -49,6 +52,7 @@ export const ClientProvider = (props: Props): ReactNode => {
     const [isOffline, setIsOffline] = useState(false)
     const [isDomainOffline, setIsDomainOffline] = useState(false)
     const [domainRecovered, setDomainRecovered] = useState(false)
+    const [subkeyInvalid, setSubkeyInvalid] = useState(false)
     const [progress, setProgress] = useState('')
     const clientRef = useRef<Client | null>(null)
     const bootedOfflineRef = useRef(false)
@@ -75,7 +79,15 @@ export const ClientProvider = (props: Props): ReactNode => {
             setProgress('サーバーに接続しています...')
             const client = await Client.create(domain, authProvider, kvs, name)
 
+            // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
+            // (オフライン起動時はどのみち書き込みができないため確認しない)
+            let subkeyIsInvalid = false
             if (client.ccid !== '' && client.isOnline) {
+                setProgress('鍵の状態を確認しています...')
+                subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
+            }
+
+            if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
                 setProgress('プロフィールを読み込んでいます...')
                 await client.updateProfiles()
 
@@ -85,7 +97,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                 setProgress('リストを読み込んでいます...')
                 await client.pinnedLists.value()
             } else if (client.ccid !== '') {
-                // 読み取り専用起動: キャッシュからベストエフォートで読み込む
+                // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
                 // setupDefaultTimelinesはcommitを行うため実行しない
                 setProgress('キャッシュから読み込んでいます...')
                 await client.updateProfiles().catch(() => {})
@@ -98,6 +110,7 @@ export const ClientProvider = (props: Props): ReactNode => {
             bootedOfflineRef.current = !client.isOnline
             setIsDomainOffline(!client.isOnline)
             setDomainRecovered(false)
+            setSubkeyInvalid(subkeyIsInvalid)
             setClient(client)
         } catch (err) {
             console.error('Failed to create client', err)
@@ -158,9 +171,10 @@ export const ClientProvider = (props: Props): ReactNode => {
             reload,
             logout,
             isDomainOffline,
-            domainRecovered
+            domainRecovered,
+            isSubkeyInvalid: subkeyInvalid
         }
-    }, [client, reload, logout, isDomainOffline, domainRecovered])
+    }, [client, reload, logout, isDomainOffline, domainRecovered, subkeyInvalid])
 
     if (isOffline) {
         return (
@@ -210,7 +224,12 @@ export const ClientProvider = (props: Props): ReactNode => {
         return <ReloadClientContext.Provider value={reload}>{props.failed}</ReloadClientContext.Provider>
     }
 
-    return <ClientContext.Provider value={value as ClientContextState}>{props.children}</ClientContext.Provider>
+    return (
+        <ClientContext.Provider value={value as ClientContextState}>
+            {props.children}
+            {subkeyInvalid && <SubkeyInvalidDrawer client={client} onRecovered={reload} onLogout={logout} />}
+        </ClientContext.Provider>
+    )
 }
 
 export function useClient(): ClientContextState {
