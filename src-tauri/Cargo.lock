@@ -3873,6 +3873,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-keyboard"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-plugin-keychain"
 version = "2.0.2"
 dependencies = [
@@ -5224,6 +5234,7 @@ dependencies = [
  "tauri-plugin-biometric",
  "tauri-plugin-file-saver",
  "tauri-plugin-haptics",
+ "tauri-plugin-keyboard",
  "tauri-plugin-keychain",
  "tauri-plugin-opener",
  "tauri-plugin-safari-scroll-killer",

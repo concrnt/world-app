@@ -2,9 +2,13 @@ use concrnt::{compute_ckid, generate_identity, sign, Identity};
 
 use crate::{auth, session, Error};
 
+// keychain/biometricプラグインを呼ぶコマンドは必ずasyncにすること。
+// 同期コマンドはWebViewのIPCハンドラ(メインスレッド)上で実行され、
+// run_mobile_pluginのブロッキング待ちがSwift側のipcキューと相互待ちして
+// メインスレッドごとデッドロックする(白画面/フリーズ)。
 #[tauri::command]
-pub(crate) fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
-    if let Ok(ccid) = has_masterkey(app_handle.clone()) {
+pub(crate) async fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, Error> {
+    if let Ok(ccid) = has_masterkey(app_handle.clone()).await {
         return Ok(ccid);
     }
 
@@ -18,7 +22,7 @@ pub(crate) fn initialize_master(app_handle: tauri::AppHandle) -> Result<String, 
 }
 
 #[tauri::command]
-pub(crate) fn initialize_from_mnemonic(
+pub(crate) async fn initialize_from_mnemonic(
     app_handle: tauri::AppHandle,
     mnemonic: &str,
 ) -> Result<String, Error> {
@@ -46,12 +50,15 @@ pub(crate) fn create_subkey(app_handle: tauri::AppHandle) -> Result<String, Erro
 }
 
 #[tauri::command]
-pub(crate) fn auth_available(app_handle: tauri::AppHandle) -> Result<String, Error> {
+pub(crate) async fn auth_available(app_handle: tauri::AppHandle) -> Result<String, Error> {
     auth::biometric_status(&app_handle)
 }
 
 #[tauri::command]
-pub(crate) fn sign_masterkey(app_handle: tauri::AppHandle, payload: &str) -> Result<String, Error> {
+pub(crate) async fn sign_masterkey(
+    app_handle: tauri::AppHandle,
+    payload: &str,
+) -> Result<String, Error> {
     let identity = auth::retract_masterkey(&app_handle)?;
     sign(&identity.private_key, payload)
 }
@@ -74,7 +81,7 @@ pub(crate) fn set_domain(app_handle: tauri::AppHandle, domain: &str) -> Result<(
 }
 
 #[tauri::command]
-pub(crate) fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
+pub(crate) async fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Error> {
     let mnemonic = session::get_master_mnemonic(&app_handle)?;
     let identity = concrnt::load_identity(&mnemonic)?;
 
@@ -82,7 +89,7 @@ pub(crate) fn has_masterkey(app_handle: tauri::AppHandle) -> Result<String, Erro
 }
 
 #[tauri::command]
-pub(crate) fn get_session(app_handle: tauri::AppHandle) -> Option<session::SessionInfo> {
+pub(crate) async fn get_session(app_handle: tauri::AppHandle) -> Option<session::SessionInfo> {
     session::get_session(&app_handle)
 }
 
@@ -92,7 +99,7 @@ pub(crate) fn clear_session(app_handle: tauri::AppHandle) {
 }
 
 #[tauri::command]
-pub(crate) fn clear_all(app_handle: tauri::AppHandle) {
+pub(crate) async fn clear_all(app_handle: tauri::AppHandle) {
     session::clear_session_store(&app_handle).unwrap();
     session::remove_master_mnemonic(&app_handle);
 }
