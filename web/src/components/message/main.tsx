@@ -4,6 +4,7 @@ import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
 import { ApNoteSchema, Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
+import { PlaintextMessage } from './PlaintextMessage'
 import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
 import { RerouteMessage } from './RerouteMessage'
@@ -38,6 +39,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
         case Schemas.markdownMessage:
         case Schemas.gfmMessage:
             return <MarkdownMessage message={message} />
+        case Schemas.plaintextMessage:
+            return <PlaintextMessage message={message} />
         case Schemas.mediaMessage:
             return <MediaMessage message={message} />
         case Schemas.replyMessage:
