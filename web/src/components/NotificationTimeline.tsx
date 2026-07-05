@@ -3,14 +3,21 @@ import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
-import { Message, Schemas, ReactionAssociationSchema, LikeAssociationSchema, FollowAckSchema } from '@concrnt/worldlib'
+import {
+    Message,
+    Schemas,
+    ReactionAssociationSchema,
+    LikeAssociationSchema,
+    FollowAckSchema,
+    ReadAccessRequestAssociationSchema
+} from '@concrnt/worldlib'
 import { MessageContainer } from './message'
-import { Avatar, CfmRenderer, CssVar, Divider } from '@concrnt/ui'
+import { Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
-import { MdStar, MdEmojiEmotions, MdPersonAdd } from 'react-icons/md'
+import { MdStar, MdEmojiEmotions, MdPersonAdd, MdLock } from 'react-icons/md'
 import { PullToRefresh } from './PullToRefresh'
 import { useNavigate } from 'react-router-dom'
 
@@ -18,10 +25,11 @@ import { useNavigate } from 'react-router-dom'
 // - summarised-like: 同じ投稿に対する Like をまとめたもの
 // - summarised-reaction: 同じ投稿に対する Reaction をまとめたもの（絵文字違いでもここでひとまとめ）
 // - follow: フォロー通知（集約せず 1 件ずつ）
+// - readaccess: 閲覧リクエスト通知（集約せず 1 件ずつ、承認/無視ボタン付き）
 // - normal: Reply / Reroute / Mention など、集約しない単発通知
 interface WrappedNotification {
     key: string
-    type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'normal'
+    type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'readaccess' | 'normal'
     items: Message<any>[]
     // normal の元 ChunklineItem 情報（MessageContainer に渡すため）
     href?: string
@@ -40,6 +48,8 @@ const KEY_SUFFIX_LIKE = '$like'
 const KEY_SUFFIX_REACTION = '$reaction'
 // フォローは集約しないが、normal と区別するため専用サフィックスで識別する
 const KEY_SUFFIX_FOLLOW = '$follow'
+// 閲覧リクエストも集約しない
+const KEY_SUFFIX_READACCESS = '$readaccess'
 
 // 左アイコンコラムの共通スタイル
 // - 幅 48px は既存 MessageLayout のアバタースペースと揃えるため
@@ -101,8 +111,12 @@ export const NotificationTimeline = (props: Props) => {
                     // href はこの association 自身の uri なので 1 件ごとに一意なキーになる。
                     key = item.href + KEY_SUFFIX_FOLLOW
                     break
+                case Schemas.readAccessRequestAssociation:
+                    // 閲覧リクエストも集約しない
+                    key = item.href + KEY_SUFFIX_READACCESS
+                    break
                 default:
-                    // reply / reroute / mention / readAccessRequest など → 集約しない
+                    // reply / reroute / mention など → 集約しない
                     key = item.href
             }
 
@@ -134,6 +148,12 @@ export const NotificationTimeline = (props: Props) => {
                 result.push({
                     key: value.items[0].uri,
                     type: 'follow',
+                    items: value.items
+                })
+            } else if (key.endsWith(KEY_SUFFIX_READACCESS)) {
+                result.push({
+                    key: value.items[0].uri,
+                    type: 'readaccess',
                     items: value.items
                 })
             } else {
@@ -296,6 +316,7 @@ export const NotificationTimeline = (props: Props) => {
                                 {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}
                                 {n.type === 'summarised-reaction' && <SummarisedReaction items={n.items} />}
                                 {n.type === 'follow' && <FollowNotification item={n.items[0]} />}
+                                {n.type === 'readaccess' && <ReadAccessRequestNotification item={n.items[0]} />}
                                 {n.type === 'normal' && n.href && (
                                     <Suspense fallback={<MessageSkeleton />}>
                                         <MessageContainer uri={n.href} source={n.source} />
@@ -490,6 +511,139 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
                     <span>{author?.profile.username ?? '不明'} さんがあなたをフォローしました</span>
                 </div>
+            </div>
+        </div>
+    )
+}
+
+// 閲覧リクエスト通知の表示
+// 集約せず 1 件ずつ表示する。申請者のアバターと文言に加え、承認/無視ボタンを置く。
+// 承認 = 対象documentのpolicy(restrict-readers)のentitiesに申請者を追加 → 申請associationを削除
+// 無視 = 申請associationの削除のみ
+const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestAssociationSchema> }) => {
+    const { client } = useClient()
+    const navigate = useNavigate()
+
+    const author = props.item.authorUser
+
+    const [targetLabel, setTargetLabel] = useState<string>('コンテンツ')
+    const [result, setResult] = useState<'granted' | 'ignored' | null>(null)
+    const [working, setWorking] = useState(false)
+
+    useEffect(() => {
+        if (!client || !props.item.associate) return
+        client.api
+            .getDocument<any>(props.item.associate)
+            .then((doc) => {
+                if (doc.schema === Schemas.profile) {
+                    setTargetLabel(`プロフィール「${doc.value.username ?? ''}」`)
+                } else {
+                    setTargetLabel(`タイムライン「${doc.value.name ?? ''}」`)
+                }
+            })
+            .catch(() => {
+                // 対象が取得できなくてもフォールバック表示のまま続行
+            })
+    }, [client, props.item.associate])
+
+    if (!props.item.associate) return null
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                cursor: 'pointer'
+            }}
+            onClick={() => {
+                if (author) {
+                    navigate('/profile/' + author.ccid)
+                }
+            }}
+        >
+            {/* 左カラム: 鍵アイコン */}
+            <div
+                style={{
+                    width: ICON_COLUMN_WIDTH,
+                    paddingLeft: ICON_COLUMN_PADDING_LEFT,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    paddingTop: '2px'
+                }}
+            >
+                <MdLock size={ICON_SIZE} style={{ opacity: 0.7 }} />
+            </div>
+
+            {/* 右カラム: アバター / 文言 / ボタン */}
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    flex: 1,
+                    minWidth: 0
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', flexWrap: 'wrap' }}>
+                    <Avatar
+                        ccid={props.item.author}
+                        src={author?.profile.avatar}
+                        style={{ width: '32px', height: '32px' }}
+                    />
+                </div>
+
+                <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                    <span>
+                        {author?.profile.username ?? '不明'} さんが{targetLabel}
+                        への閲覧アクセスを希望しています
+                    </span>
+                </div>
+
+                {result === null ? (
+                    <div
+                        style={{ display: 'flex', flexDirection: 'row', gap: CssVar.space(1) }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                        }}
+                    >
+                        <Button
+                            variant="contained"
+                            disabled={working}
+                            onClick={async () => {
+                                setWorking(true)
+                                try {
+                                    await client.grantReadAccess(props.item.associate!, props.item.author)
+                                    await client.api.delete(props.item.uri)
+                                    setResult('granted')
+                                } finally {
+                                    setWorking(false)
+                                }
+                            }}
+                        >
+                            閲覧ユーザーに追加
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            disabled={working}
+                            onClick={async () => {
+                                setWorking(true)
+                                try {
+                                    await client.api.delete(props.item.uri)
+                                    setResult('ignored')
+                                } finally {
+                                    setWorking(false)
+                                }
+                            }}
+                        >
+                            無視
+                        </Button>
+                    </div>
+                ) : (
+                    <Text variant="caption" style={{ opacity: 0.7 }}>
+                        {result === 'granted' ? '閲覧ユーザーに追加しました' : '無視しました'}
+                    </Text>
+                )}
             </div>
         </div>
     )

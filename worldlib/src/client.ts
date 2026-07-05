@@ -15,10 +15,11 @@ import {
     fetchWithTimeout,
     Entity
 } from '@concrnt/client'
-import { ListSchema, PinnedListsSchema, ProfileSchema } from './schemas/'
+import { ListSchema, PinnedListsSchema, ProfileSchema, ReadAccessRequestAssociationSchema } from './schemas/'
 import { User } from './user'
 import { List } from './list'
 import { Message } from './message'
+import { Association } from './association'
 import { Timeline } from './timeline'
 import { semantics } from './semantics'
 import { Schemas } from './schemas'
@@ -329,6 +330,54 @@ export class Client {
         const blockUri = semantics.block(this.ccid, target)
         await this.api.delete(blockUri)
         this.blocks.reload()
+    }
+
+    async requestReadAccess(
+        target: string,
+        owner: string,
+        notifyProfile: string = 'main'
+    ): Promise<Association<ReadAccessRequestAssociationSchema>> {
+        const domain = (await this.api.getEntity(owner)).value.domain
+        const document: Document<ReadAccessRequestAssociationSchema> = {
+            kind: 'association',
+            author: this.ccid,
+            schema: Schemas.readAccessRequestAssociation,
+            associate: target,
+            value: {},
+            distributes: [semantics.notificationTimeline(owner, notifyProfile)],
+            createdAt: new Date()
+        }
+        const sd = await this.api.commit(document, domain)
+        return Association.fromSignedDocument(sd)
+    }
+
+    async getOwnReadAccessRequest(target: string): Promise<Association<ReadAccessRequestAssociationSchema> | null> {
+        const sds = await this.api
+            .getAssociations(target, { author: this.ccid, schema: Schemas.readAccessRequestAssociation })
+            .catch(() => []) // 制限中のdocumentに対しては403になる場合がある
+        if (sds.length === 0) return null
+        return Association.fromSignedDocument(sds[0])
+    }
+
+    async grantReadAccess(target: string, ccid: string): Promise<void> {
+        const doc = await this.api.getDocument<any>(target)
+        const entry = doc.policy?.entries?.find((e) => e.url === 'https://policy.concrnt.world/t/restrict-readers.json')
+        if (!entry) return // 制限が既に解除されている
+        const entities: string[] = entry.params?.entities ?? []
+        if (!entities.includes(ccid)) {
+            entry.params = { ...entry.params, entities: [...entities, ccid] }
+        }
+        const newDoc: Document<any> = {
+            kind: 'record',
+            key: doc.key ?? target,
+            schema: doc.schema,
+            value: doc.value,
+            author: this.ccid,
+            createdAt: new Date(),
+            policy: doc.policy,
+            onUpdate: 'forget'
+        }
+        await this.api.commit(newDoc)
     }
 
     async newSocket(host?: string): Promise<Socket> {

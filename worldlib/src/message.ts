@@ -15,6 +15,7 @@ export class Message<T> implements Document<T> {
     author: string
     createdAt: Date
     distributes?: string[]
+    associate?: string
 
     hint?: string
 
@@ -42,7 +43,8 @@ export class Message<T> implements Document<T> {
             value: this.value,
             author: this.author,
             createdAt: this.createdAt,
-            distributes: this.distributes
+            distributes: this.distributes,
+            associate: this.associate
         }
     }
 
@@ -55,6 +57,7 @@ export class Message<T> implements Document<T> {
         this.author = document.author
         this.createdAt = new Date(document.createdAt)
         this.distributes = document.distributes
+        this.associate = document.associate
     }
 
     static async load<T>(client: Client, uri: string, hint?: string): Promise<Message<T> | null> {

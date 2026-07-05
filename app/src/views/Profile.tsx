@@ -21,7 +21,7 @@ import { ProfileEditor } from '../components/ProfileEditor'
 import { useDrawer } from '../contexts/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
-import { Document } from '@concrnt/client'
+import { Document, PermissionError } from '@concrnt/client'
 import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
@@ -30,6 +30,8 @@ import { useSelect } from '../contexts/Select'
 import { useConfirm } from '../contexts/Confirm'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
+import { PrivateContentDoor } from '../components/PrivateContentDoor'
+import { MdLock } from 'react-icons/md'
 
 interface Props {
     ccid: string
@@ -44,10 +46,13 @@ export const ProfileView = (props: Props) => {
     }, [client, props.ccid])
 
     const [reload, setReload] = useState(0)
-    const profilePromise = useMemo(() => {
+    const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
-            .catch(() => {
+            .catch((err): Document<ProfileSchema> | 'restricted' => {
+                if (err instanceof PermissionError) {
+                    return 'restricted'
+                }
                 const tmp: Document<ProfileSchema> = {
                     kind: 'record',
                     key: semantics.profile(props.ccid, props.profileName ?? 'main'),
@@ -85,40 +90,39 @@ export const ProfileView = (props: Props) => {
 interface InnerProps {
     ccid: string
     userPromise: Promise<User | null>
-    profilePromise: Promise<Document<ProfileSchema>>
+    profilePromise: Promise<Document<ProfileSchema> | 'restricted'>
     profileName: string
     reload: () => void
 }
 
 const Inner = (props: InnerProps) => {
     const user = use(props.userPromise)
+    const profile = use(props.profilePromise)
 
     if (user === null) {
         return <Text>ユーザーが見つかりませんでした</Text>
     }
 
+    if (profile === 'restricted') {
+        return <RestrictedBody ccid={props.ccid} user={user} profileName={props.profileName} />
+    }
+
     return (
-        <Body
-            ccid={props.ccid}
-            user={user}
-            profilePromise={props.profilePromise}
-            profileName={props.profileName}
-            reload={props.reload}
-        />
+        <Body ccid={props.ccid} user={user} profile={profile} profileName={props.profileName} reload={props.reload} />
     )
 }
 
 interface BodyProps {
     ccid: string
     user: User
-    profilePromise: Promise<Document<ProfileSchema>>
+    profile: Document<ProfileSchema>
     profileName: string
     reload: () => void
 }
 
 const Body = (props: BodyProps) => {
     const [stats, reloadStats] = useSubscribe(props.user.stats)
-    const profile = use(props.profilePromise)
+    const profile = props.profile
 
     const { client } = useClient()
     const theme = useTheme()
@@ -398,5 +402,116 @@ const Body = (props: BodyProps) => {
                 </>
             }
         />
+    )
+}
+
+interface RestrictedBodyProps {
+    ccid: string
+    user: User
+    profileName: string
+}
+
+const RestrictedBody = (props: RestrictedBodyProps) => {
+    const { client } = useClient()
+    const theme = useTheme()
+    const navigation = useNavigation()
+
+    const isMe = client.ccid === props.ccid
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column'
+            }}
+        >
+            <div
+                style={{
+                    position: 'relative'
+                }}
+            >
+                <CCWallpaper
+                    style={{
+                        paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                        height: '150px'
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: CssVar.space(1),
+                            gap: CssVar.space(1)
+                        }}
+                    >
+                        <div
+                            style={{
+                                color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
+                                height: '40px',
+                                width: '40px'
+                            }}
+                        >
+                            {navigation.backNode}
+                        </div>
+                        <div style={{ flex: 1 }} />
+                    </div>
+                </CCWallpaper>
+                <Avatar
+                    ccid={props.ccid}
+                    style={{
+                        width: `100px`,
+                        height: `100px`,
+                        position: 'absolute',
+                        transform: 'translateY(-50%)',
+                        left: CssVar.space(2)
+                    }}
+                />
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(2),
+                    padding: `0 ${CssVar.space(2)}`
+                }}
+            >
+                <div
+                    style={{
+                        minHeight: `50px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end'
+                    }}
+                >
+                    {!isMe && <AcknowledgeButton ccid={props.ccid} />}
+                </div>
+                <div>
+                    <Text
+                        variant="h6"
+                        style={{
+                            fontWeight: 'bold',
+                            fontSize: '1.2rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1)
+                        }}
+                    >
+                        {props.user.alias ?? props.ccid}
+                        <MdLock />
+                    </Text>
+                </div>
+                <div>
+                    <Text variant="caption">{props.ccid}</Text>
+                </div>
+            </div>
+            <PrivateContentDoor
+                kind="profile"
+                targetUri={semantics.profile(props.ccid, props.profileName)}
+                owner={props.ccid}
+                notifyProfile={props.profileName}
+            />
+        </div>
     )
 }

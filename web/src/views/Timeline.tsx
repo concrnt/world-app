@@ -12,6 +12,7 @@ import { Timeline } from '@concrnt/worldlib'
 import { MdInfo } from 'react-icons/md'
 import { useDrawer } from '../contexts/Drawer'
 import { TimelineSettings } from '../components/TimelineSettings'
+import { PrivateContentDoor } from '../components/PrivateContentDoor'
 
 interface Props {
     uri: string
@@ -23,14 +24,28 @@ export const TimelineView = (props: Props) => {
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
-    const [timeline, setTimeline] = useState<Timeline>(null)
+    // uriとセットで保持し、uriが変わった直後に古いtimelineを見せないようにする
+    const [fetched, setFetched] = useState<{ uri: string; timeline: Timeline | null }>()
     useEffect(() => {
         if (!client) return
+        let cancelled = false
         client
             .getTimeline(props.uri)
-            .then(setTimeline)
-            .catch(() => setTimeline(null))
+            .then((t) => {
+                if (!cancelled) setFetched({ uri: props.uri, timeline: t })
+            })
+            .catch(() => {
+                if (!cancelled) setFetched({ uri: props.uri, timeline: null })
+            })
+        return () => {
+            cancelled = true
+        }
     }, [client, props.uri])
+
+    // undefined: ロード中 / null: 取得失敗
+    const timeline = fetched?.uri === props.uri ? fetched.timeline : undefined
+
+    const restricted = timeline ? timeline.isRestrictedFor(client.ccid) : false
 
     return (
         <>
@@ -54,22 +69,28 @@ export const TimelineView = (props: Props) => {
                 >
                     <TimelineTag uri={props.uri} />
                 </Header>
-                <RealtimeTimeline
-                    ref={scrollRef}
-                    timelines={[props.uri]}
-                    headElement={
-                        <>
-                            <div style={{ padding: CssVar.space(2) }}>
-                                <Composer
-                                    mode="normal"
-                                    destinations={[props.uri]}
-                                    options={timeline ? [timeline] : []}
-                                />
-                            </div>
-                            <Divider />
-                        </>
-                    }
-                />
+                {restricted && timeline ? (
+                    <PrivateContentDoor kind="timeline" targetUri={props.uri} owner={timeline.author} />
+                ) : (
+                    timeline !== undefined && (
+                        <RealtimeTimeline
+                            ref={scrollRef}
+                            timelines={[props.uri]}
+                            headElement={
+                                <>
+                                    <div style={{ padding: CssVar.space(2) }}>
+                                        <Composer
+                                            mode="normal"
+                                            destinations={[props.uri]}
+                                            options={timeline ? [timeline] : []}
+                                        />
+                                    </div>
+                                    <Divider />
+                                </>
+                            }
+                        />
+                    )
+                )}
             </View>
         </>
     )

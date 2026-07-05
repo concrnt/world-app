@@ -1,11 +1,13 @@
 import { CommunityTimelineSchema } from './schemas/'
 import { Client } from './client'
-import { SignedDocument } from '@concrnt/client'
+import { Document, Policy, SignedDocument } from '@concrnt/client'
 
 export class Timeline {
     uri: string
 
     schema: string
+    author: string
+    policy?: Policy
 
     name: string
     shortname?: string
@@ -17,6 +19,8 @@ export class Timeline {
         return {
             uri: this.uri,
             schema: this.schema,
+            author: this.author,
+            policy: this.policy,
             name: this.name,
             shortname: this.shortname,
             description: this.description,
@@ -25,14 +29,32 @@ export class Timeline {
         }
     }
 
-    constructor(uri: string, schema: string, value: CommunityTimelineSchema) {
+    constructor(uri: string, document: Document<CommunityTimelineSchema>) {
         this.uri = uri
-        this.schema = schema
-        this.name = value.name
-        this.shortname = value.shortname
-        this.description = value.description
-        this.icon = value.icon
-        this.banner = value.banner
+        this.schema = document.schema
+        this.author = document.author
+        this.policy = document.policy
+        this.name = document.value.name
+        this.shortname = document.value.shortname
+        this.description = document.value.description
+        this.icon = document.value.icon
+        this.banner = document.value.banner
+    }
+
+    // restrict-readers policyが設定されている場合は閲覧を許可されたccidのリストを、
+    // 設定されていない場合はnullを返す
+    restrictReaders(): string[] | null {
+        const entry = this.policy?.entries?.find(
+            (e) => e.url === 'https://policy.concrnt.world/t/restrict-readers.json'
+        )
+        if (!entry) return null
+        return entry.params?.entities ?? []
+    }
+
+    isRestrictedFor(ccid: string): boolean {
+        const readers = this.restrictReaders()
+        if (readers === null) return false
+        return this.author !== ccid && !readers.includes(ccid)
     }
 
     static async load(client: Client, uri: string, hint?: string): Promise<Timeline | null> {
@@ -40,14 +62,14 @@ export class Timeline {
         if (!res) {
             return null
         }
-        const timeline = new Timeline(uri, res.schema, res.value)
+        const timeline = new Timeline(uri, res)
 
         return timeline
     }
 
     static loadFromSD(sd: SignedDocument): Timeline {
         const doc = JSON.parse(sd.document)
-        const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc.schema, doc.value)
+        const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc)
         return timeline
     }
 
@@ -56,7 +78,7 @@ export class Timeline {
         if (doc.schema === 'https://schema.concrnt.net/reference.json') {
             return Timeline.load(client, doc.value.href)
         } else {
-            const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc.schema, doc.value)
+            const timeline = new Timeline(sd.cckv ?? sd.ccfs, doc)
             return Promise.resolve(timeline)
         }
     }

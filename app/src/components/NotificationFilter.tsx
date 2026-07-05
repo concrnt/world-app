@@ -11,7 +11,8 @@ const filters: { label: string; schema: string }[] = [
     { label: 'メンション', schema: Schemas.mentionAssociation },
     { label: 'リルート', schema: Schemas.rerouteAssociation },
     { label: 'お気に入り', schema: Schemas.likeAssociation },
-    { label: 'リアクション', schema: Schemas.reactionAssociation }
+    { label: 'リアクション', schema: Schemas.reactionAssociation },
+    { label: '閲覧リクエスト', schema: Schemas.readAccessRequestAssociation }
 ]
 
 export const NotificationFilter = (props: Props) => {
