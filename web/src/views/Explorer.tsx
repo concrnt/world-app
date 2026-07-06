@@ -12,9 +12,11 @@ import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { usePersistent } from '../hooks/usePersistent'
 import { ClassicExplorer } from '../components/ClassicExplorer'
+import { useNavigate } from 'react-router-dom'
 
 export const ExplorerView = () => {
     const drawer = useDrawer()
+    const navigate = useNavigate()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
 
@@ -39,8 +41,9 @@ export const ExplorerView = () => {
                             onClick={() => {
                                 drawer.open(
                                     <CommunityCreator
-                                        onComplete={() => {
+                                        onComplete={(uri) => {
                                             drawer.close()
+                                            navigate('/timeline/' + encodeURIComponent(uri))
                                         }}
                                     />
                                 )
@@ -70,7 +73,7 @@ export const ExplorerView = () => {
     )
 }
 
-const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
+const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void }) => {
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
     const { client } = useClient()
@@ -96,6 +99,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
         }
         await client.api.commit(document)
         console.log('Community created')
+        return document.key
     }
 
     return (
@@ -118,12 +122,13 @@ const CommunityCreator = ({ onComplete }: { onComplete: () => void }) => {
                 <Button
                     disabled={!communityName}
                     onClick={async () => {
-                        await createCommunity({
+                        const uri = await createCommunity({
                             name: communityName,
                             description: communityDescription
                         })
+                        if (!uri) return
                         hapticSuccess()
-                        onComplete()
+                        onComplete(uri)
                     }}
                 >
                     作成
