@@ -16,6 +16,7 @@ import { ServerSelector } from '../components/ServerSelector'
 interface Props {
     entrypoint: string
     onBack?: () => void
+    onComplete?: () => void
 }
 
 export const AccountSetup = (props: Props) => {
@@ -25,21 +26,19 @@ export const AccountSetup = (props: Props) => {
     const modal = useModal()
 
     const [domain, setDomain] = useState<string>(props.entrypoint)
+    // initialize_masterの返り値をstateで保持する。多アカウント環境では
+    // 「アクティブなアカウント」を再取得すると別のアカウントを掴む恐れがあるため、
+    // このフローで生成したccidだけを一貫して使う。
+    const [createdCCID, setCreatedCCID] = useState<string | null>(null)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
 
     useEffect(() => {
         const timer = setInterval(async () => {
-            if (!registrationPageOpened) return
+            if (!registrationPageOpened || !createdCCID) return
             if (accountCreated) {
                 clearInterval(timer)
-                return
-            }
-
-            const ccid = await invoke('has_masterkey')
-            if (typeof ccid !== 'string') {
-                console.log('CCID not found, waiting...')
                 return
             }
 
@@ -47,7 +46,7 @@ export const AccountSetup = (props: Props) => {
             const kvs = new InMemoryKVS()
             const api = new Api(domain, auth, kvs)
 
-            const registration = await api.getEntity(ccid)
+            const registration = await api.getEntity(createdCCID)
             if (!registration) {
                 console.log('Registration not found, waiting...')
                 return
@@ -62,10 +61,13 @@ export const AccountSetup = (props: Props) => {
         return () => {
             clearInterval(timer)
         }
-    }, [registrationPageOpened, domain, accountCreated])
+    }, [registrationPageOpened, domain, accountCreated, createdCCID])
 
     const openRegistrationPage = async (domain: string) => {
-        const ccid: string = await invoke('initialize_master')
+        // 二重実行しても新しいアカウントが増えるだけで既存の鍵には触れないが、
+        // 孤児アカウントを作らないよう一度生成したccidを使い回す
+        const ccid: string = createdCCID ?? (await invoke('initialize_master'))
+        setCreatedCCID(ccid)
 
         const authProvider = new TauriAuthProvider(ccid)
 
@@ -196,7 +198,7 @@ export const AccountSetup = (props: Props) => {
                             disabled={finalizing}
                             onClick={async () => {
                                 setFinalizing(true)
-                                const ccid = await invoke('has_masterkey')
+                                const ccid = createdCCID
                                 if (typeof ccid !== 'string') {
                                     alert('プログラムエラー: CCIDが見つかりません')
                                     return
@@ -207,7 +209,7 @@ export const AccountSetup = (props: Props) => {
 
                                 const api = new Api(domain, authProvider, kvs)
 
-                                const ckid: string = await invoke('create_subkey')
+                                const ckid: string = await invoke('create_subkey', { ccid })
 
                                 const subkeyDoc: Document<any> = {
                                     kind: 'record',
@@ -223,13 +225,17 @@ export const AccountSetup = (props: Props) => {
                                 console.log('Committing subkey document:', subkeyDoc)
                                 await api.commit(subkeyDoc, domain, { useMasterkey: true })
                                 console.log('Subkey document committed')
-                                await invoke('set_domain', { domain })
+                                await invoke('set_domain', { domain, ccid })
                                 console.log('Domain set in backend')
 
                                 reset()
                                 console.log('Preferences reset')
-                                reload()
-                                console.log('Client reloaded')
+                                if (props.onComplete) {
+                                    props.onComplete()
+                                } else {
+                                    reload()
+                                    console.log('Client reloaded')
+                                }
                             }}
                         >
                             {finalizing ? '登録中...' : '完了'}

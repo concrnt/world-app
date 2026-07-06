@@ -4,7 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { Client } from '@concrnt/worldlib'
 import { ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
-import { resourceCache } from '../lib/cache'
+import { deleteResourceCache, getResourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
@@ -75,7 +75,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
 
         const authProvider = await TauriAuthProvider.create()
-        const kvs = resourceCache
+        const kvs = getResourceCache(ccid)
         try {
             setProgress('サーバーに接続しています...')
             const client = await Client.create(domain, authProvider, kvs, name)
@@ -159,8 +159,11 @@ export const ClientProvider = (props: Props): ReactNode => {
     }, [client])
 
     const logout = useCallback(async () => {
+        const ccid = clientRef.current?.ccid
         localStorage.clear()
-        await resourceCache.clear()
+        if (ccid) {
+            await deleteResourceCache(ccid).catch(() => {})
+        }
         await invoke('clear_session')
         reload()
     }, [])

@@ -1,7 +1,7 @@
 use concrnt::Identity;
 use tauri_plugin_biometric::{AuthOptions, BiometricExt};
 
-use crate::{session, Error};
+use crate::{accounts, Error};
 
 pub(crate) fn biometric_status(app_handle: &tauri::AppHandle) -> Result<String, Error> {
     match app_handle.biometric().status() {
@@ -19,18 +19,31 @@ pub(crate) fn biometric_status(app_handle: &tauri::AppHandle) -> Result<String, 
     }
 }
 
-pub(crate) fn retract_masterkey(app_handle: &tauri::AppHandle) -> Result<Identity, Error> {
+pub(crate) fn retract_masterkey(
+    app_handle: &tauri::AppHandle,
+    ccid: Option<&str>,
+) -> Result<Identity, Error> {
     authenticate_keychain_access(app_handle)?;
-    let mnemonic = session::get_master_mnemonic(app_handle)?;
+    let record = accounts::resolve(app_handle, ccid)?;
 
-    concrnt::load_identity(&mnemonic)
+    concrnt::load_identity(&record.mnemonic)
 }
 
-pub(crate) fn retract_subkey(app_handle: &tauri::AppHandle) -> Result<String, Error> {
-    session::get_session_string(app_handle, session::SUB_PRIVATE_KEY)
+pub(crate) fn retract_subkey(
+    app_handle: &tauri::AppHandle,
+    ccid: Option<&str>,
+) -> Result<(String, String), Error> {
+    let record = accounts::resolve(app_handle, ccid)?;
+    let sub_priv = record
+        .sub_priv
+        .ok_or_else(|| format!("Account {} has no subkey", record.ccid))?;
+    let ckid = record
+        .ckid
+        .ok_or_else(|| format!("Account {} has no ckid", record.ccid))?;
+    Ok((sub_priv, ckid))
 }
 
-fn authenticate_keychain_access(app_handle: &tauri::AppHandle) -> Result<(), Error> {
+pub(crate) fn authenticate_keychain_access(app_handle: &tauri::AppHandle) -> Result<(), Error> {
     let verified = app_handle.biometric().authenticate(
         "Authenticate to access the keychain item".to_string(),
         AuthOptions {

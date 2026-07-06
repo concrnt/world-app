@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 30以下向けのAuto Backupルール。
+     鍵を保持するkeychain_prefsのみバックアップし、
+     WebViewデータやキャッシュ類の復元による不整合を防ぐため他は全て除外する。 -->
+<full-backup-content>
+    <include domain="sharedpref" path="keychain_prefs.xml" />
+</full-backup-content>

@@ -42,4 +42,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation(project(":tauri-android"))
     implementation("com.google.code.gson:gson:2.8.8")
+    implementation("com.google.android.gms:play-services-auth-blockstore:16.4.0")
 }

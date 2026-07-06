@@ -2,7 +2,6 @@ import { invoke } from '@tauri-apps/api/core'
 import { Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
-import { ResetSessionButton } from '../components/ResetSessionButton'
 
 interface Props {
     onBack?: () => void
@@ -12,21 +11,6 @@ interface Props {
 export const AccountImport = (props: Props) => {
     const [mnemonic, setMnemonic] = useState<string>('')
     const [successed, setSuccessed] = useState<boolean>(false)
-
-    const [existingCCID, setExistingCCID] = useState<string | null>(null)
-
-    const [update, setUpdate] = useState<number>(0)
-
-    useEffect(() => {
-        invoke('has_masterkey')
-            .then((existing) => {
-                if (typeof existing !== 'string') return
-                setExistingCCID(existing)
-            })
-            .catch((_e) => {
-                setExistingCCID(null)
-            })
-    }, [update])
 
     useEffect(() => {
         invoke('load_identity', { mnemonic })
@@ -42,71 +26,49 @@ export const AccountImport = (props: Props) => {
 
     return (
         <AuthScreen align="top">
-            {existingCCID ? (
-                <>
-                    <AuthHeader
-                        title="保存済みアカウントがあります"
-                        description="新しくインポートするには、端末に保存されたアカウント情報を先に削除する必要があります。"
+            <AuthHeader
+                title="アカウントをインポート"
+                description="マスターキーを入力して、この端末でアカウントを使えるようにします。"
+            />
+            <div style={authStyles.section}>
+                <div style={authStyles.inputGroup}>
+                    <Text>マスターキー</Text>
+                    <TextField
+                        value={mnemonic}
+                        onChange={(e) => setMnemonic(e.target.value)}
+                        placeholder="マスターキーを入力"
                     />
-                    <div style={authStyles.section}>
-                        <Text style={authStyles.ccid}>CCID: {existingCCID}</Text>
-                    </div>
-                    <AuthActions fixedBottom>
-                        <ResetSessionButton
-                            onDone={() => {
-                                setUpdate((v) => v + 1)
-                            }}
-                        >
-                            端末のアカウント情報を削除
-                        </ResetSessionButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
-                    </AuthActions>
-                </>
-            ) : (
-                <>
-                    <AuthHeader
-                        title="アカウントをインポート"
-                        description="マスターキーを入力して、この端末でアカウントを使えるようにします。"
-                    />
-                    <div style={authStyles.section}>
-                        <div style={authStyles.inputGroup}>
-                            <Text>マスターキー</Text>
-                            <TextField
-                                value={mnemonic}
-                                onChange={(e) => setMnemonic(e.target.value)}
-                                placeholder="マスターキーを入力"
-                            />
-                        </div>
-                        <Text style={authStyles.status}>
-                            {mnemonic
-                                ? successed
-                                    ? 'このマスターキーは利用できます。'
-                                    : 'マスターキーを確認できません。'
-                                : ''}
-                        </Text>
-                    </div>
-                    <AuthActions fixedBottom>
-                        <AuthButton
-                            disabled={!successed}
-                            onClick={() => {
-                                if (!successed) return
+                </div>
+                <Text style={authStyles.status}>
+                    {mnemonic
+                        ? successed
+                            ? 'このマスターキーは利用できます。'
+                            : 'マスターキーを確認できません。'
+                        : ''}
+                </Text>
+            </div>
+            <AuthActions fixedBottom>
+                <AuthButton
+                    disabled={!successed}
+                    onClick={() => {
+                        if (!successed) return
 
-                                invoke('initialize_from_mnemonic', { mnemonic })
-                                    .then(() => {
-                                        console.log('Identity initialized from mnemonic')
-                                        props.onImported?.()
-                                    })
-                                    .catch((err) => {
-                                        console.error('Failed to initialize identity from mnemonic', err)
-                                    })
-                            }}
-                        >
-                            インポート
-                        </AuthButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
-                    </AuthActions>
-                </>
-            )}
+                        // 既にインポート済みのアカウントの場合は既存のsubkey等を維持したまま
+                        // アクティブ化されるだけ(冪等)なので、事前チェックは不要
+                        invoke('initialize_from_mnemonic', { mnemonic })
+                            .then(() => {
+                                console.log('Identity initialized from mnemonic')
+                                props.onImported?.()
+                            })
+                            .catch((err) => {
+                                console.error('Failed to initialize identity from mnemonic', err)
+                            })
+                    }}
+                >
+                    インポート
+                </AuthButton>
+                <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+            </AuthActions>
         </AuthScreen>
     )
 }

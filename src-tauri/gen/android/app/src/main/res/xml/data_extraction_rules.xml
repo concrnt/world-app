@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31以上向けのバックアップ/デバイス移行ルール。
+     鍵を保持するkeychain_prefsのみ対象にし、他は全て除外する。
+     クラウドバックアップはクライアントサイド暗号化(端末に画面ロックがある場合)を必須にする。 -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="keychain_prefs.xml" requireFlags="clientSideEncryption" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="keychain_prefs.xml" />
+    </device-transfer>
+</data-extraction-rules>

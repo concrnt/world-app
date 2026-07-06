@@ -76,10 +76,39 @@ class KeychainPlugin: Plugin {
             kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
             kSecAttrSynchronizable: kCFBooleanTrue!
         ] as CFDictionary
+        // 新規追加専用: 既存アイテムがある場合はerrSecDuplicateItemで失敗させ、
+        // サイレント上書きによる鍵の紛失を防ぐ。更新はupdateItemを使うこと。
         let status = SecItemAdd(attributes, nil)
 
         invoke.resolve(status == errSecSuccess)
     }
+
+    @objc public func updateItem(_ invoke: Invoke) throws {
+        let args = try invoke.parseArgs(KeychainArgs.self)
+        let key = args.key
+        let value = args.password ?? ""
+        guard let data = value.data(using: .utf8) else {
+            invoke.resolve(false)
+            return
+        }
+
+        // kSecAttrSynchronizableを含めないとsynchronizableなアイテムにマッチしない
+        let query = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: key,
+            kSecAttrSynchronizable: kCFBooleanTrue!
+        ] as CFDictionary
+        let attributesToUpdate = [
+            kSecValueData: data
+        ] as CFDictionary
+
+        // in-place更新のみ。存在しなければerrSecItemNotFoundで失敗する。
+        // 削除→再追加はクラッシュ時にアイテムが消える時間窓ができるため行わない。
+        let status = SecItemUpdate(query, attributesToUpdate)
+
+        invoke.resolve(status == errSecSuccess)
+    }
+
     @objc public func removeItem(_ invoke: Invoke) throws {
         let args = try invoke.parseArgs(KeychainArgs.self)
         let key = args.key

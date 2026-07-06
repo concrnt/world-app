@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { ReactNode } from 'react'
 import { type FallbackProps } from 'react-error-boundary'
-import { resourceCache } from '../lib/cache'
+import { deleteAllResourceCaches } from '../lib/cache'
 
 export function EmergencyKit({ error }: FallbackProps): ReactNode {
     return (
@@ -30,7 +30,7 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
             <button
                 onClick={async () => {
                     localStorage.clear()
-                    await resourceCache.clear().catch(() => {})
+                    await deleteAllResourceCaches().catch(() => {})
                     await invoke('clear_session')
                     location.reload()
                 }}

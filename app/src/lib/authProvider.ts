@@ -48,11 +48,13 @@ export class TauriAuthProvider implements AuthProvider {
         return true
     }
 
+    // ccidを明示して署名する: セットアップフロー中などにアクティブアカウントの
+    // ポインタが動いても、このProviderに紐づくアカウントの鍵で署名されることを保証する
     signMaster(data: string): Promise<string> {
-        return invoke<string>('sign_masterkey', { payload: data })
+        return invoke<string>('sign_masterkey', { payload: data, ccid: this.ccid })
     }
 
     signSub(data: string): Promise<[string, string]> {
-        return invoke<[string, string]>('sign_subkey', { payload: data })
+        return invoke<[string, string]>('sign_subkey', { payload: data, ccid: this.ccid })
     }
 }

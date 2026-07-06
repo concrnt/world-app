@@ -1,18 +1,76 @@
 import { useClient } from '../contexts/Client'
 import { useSelect } from '../contexts/Select'
 import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
-import { ReactNode, useMemo } from 'react'
+import { ReactNode, useCallback, useMemo } from 'react'
 import { useDrawer } from '../contexts/Drawer'
+import { useModal } from '../contexts/Modal'
 import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
 import { HiSwitchHorizontal } from 'react-icons/hi'
-import { MdPersonAdd } from 'react-icons/md'
+import { MdManageAccounts, MdPersonAdd } from 'react-icons/md'
 import { ProfileName } from './ProfileName'
+import { AccountListItem } from './AccountListItem'
+import { AddAccountDrawer } from './AddAccountDrawer'
+import { ResetSessionModalContent } from './ResetSessionButton'
+import { listAccounts, performAccountSwitch } from '../lib/accounts'
 
 export const SwitchAccountButton = (): ReactNode => {
     const { client, reload } = useClient()
     const { select, close } = useSelect()
     const drawer = useDrawer()
+    const modal = useModal()
+
+    // 2段目のシート: 端末に保存されているアカウント(鍵)の一覧
+    const openAccountSheet = useCallback(async () => {
+        if (!client) return
+        const accounts = await listAccounts().catch(() => [])
+
+        const options: ReactNode[] = accounts.map((account) => (
+            <AccountListItem
+                key={account.ccid}
+                account={account}
+                onClick={() => {
+                    if (account.isActive) {
+                        close()
+                        return
+                    }
+                    performAccountSwitch(account.ccid)
+                }}
+                onDelete={() => {
+                    close()
+                    modal.open(
+                        <ResetSessionModalContent
+                            ccid={account.ccid}
+                            onDone={() => {
+                                modal.close()
+                                // アクティブアカウントを消した場合はRust側が次のアカウントへ
+                                // 付け替えるので、いずれにせよリロードして整合させる
+                                window.location.reload()
+                            }}
+                            onCancel={() => {
+                                modal.close()
+                            }}
+                        />
+                    )
+                }}
+            />
+        ))
+
+        options.push(
+            <ListItem
+                key={'$addAccount'}
+                icon={<MdPersonAdd size={24} />}
+                onClick={() => {
+                    close()
+                    drawer.open(<AddAccountDrawer previousCcid={client.ccid} onClose={() => drawer.close()} />)
+                }}
+            >
+                <Text>アカウントを追加</Text>
+            </ListItem>
+        )
+
+        select('アカウント', options)
+    }, [client, select, close, drawer, modal])
 
     const options: ReactNode[] = useMemo(() => {
         const result: ReactNode[] = []
@@ -74,8 +132,20 @@ export const SwitchAccountButton = (): ReactNode => {
             </ListItem>
         )
 
+        result.push(
+            <ListItem
+                key={'$switchAccount'}
+                icon={<MdManageAccounts size={24} />}
+                onClick={() => {
+                    openAccountSheet()
+                }}
+            >
+                <Text>アカウントを切り替え</Text>
+            </ListItem>
+        )
+
         return result
-    }, [client, reload, close, drawer])
+    }, [client, reload, close, drawer, openAccountSheet])
 
     return (
         <IconButton

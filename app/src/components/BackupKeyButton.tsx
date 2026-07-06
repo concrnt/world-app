@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { Button } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 
-export const BackupKeyButton = (props: { onClick?: () => void }) => {
+export const BackupKeyButton = (props: { onClick?: () => void; ccid?: string }) => {
     const clientContext = useClient()
     const client = clientContext?.client
 
@@ -19,6 +19,7 @@ export const BackupKeyButton = (props: { onClick?: () => void }) => {
             onClick={() => {
                 props.onClick?.()
                 invoke('backup_masterkey', {
+                    ccid: props.ccid,
                     filename: filename,
                     template: `Concrnt ログイン情報
 このファイルは Concrnt のログイン情報をバックアップするためのものです。

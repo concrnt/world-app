@@ -1,7 +1,7 @@
+mod accounts;
 mod auth;
 mod backup;
 mod commands;
-mod session;
 
 pub(crate) type Error = concrnt::Error;
 
@@ -27,6 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_haptics::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_file_saver::init())
+        .manage(accounts::AccountsLock::default())
         .invoke_handler(tauri::generate_handler![
             commands::auth_available,
             commands::initialize_master,
@@ -35,9 +36,12 @@ pub fn run() {
             commands::sign_masterkey,
             commands::sign_subkey,
             commands::get_session,
+            commands::get_active_ccid,
+            commands::list_accounts,
+            commands::switch_account,
+            commands::remove_account,
             commands::clear_session,
             commands::set_domain,
-            commands::has_masterkey,
             commands::clear_all,
             commands::load_identity,
             backup::backup_masterkey,

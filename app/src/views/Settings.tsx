@@ -1,6 +1,6 @@
 import { Button, View, Divider, Text, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { resourceCache } from '../lib/cache'
+import { getResourceCache } from '../lib/cache'
 import { Header } from '../ui/Header'
 import { usePreference, useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
@@ -26,7 +26,7 @@ const appInfoRows = [
 ]
 
 export const SettingsView = () => {
-    const { logout } = useClient()
+    const { client, logout } = useClient()
 
     const reset = useResetPreference()
     const stack = useStack()
@@ -106,7 +106,7 @@ export const SettingsView = () => {
                 <Text variant="h3">アカウント</Text>
                 <Button
                     onClick={async () => {
-                        await resourceCache.clear()
+                        await getResourceCache(client.ccid).clear()
                         window.location.reload()
                     }}
                 >

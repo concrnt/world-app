@@ -27,7 +27,7 @@ import { ResetSessionButton } from '../components/ResetSessionButton'
     -> 別のアカウントにする (要注意)
 */
 
-const resolveEntrypoint = (): string => {
+export const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
     if (hostname === 'localhost') {
         return 'ariake.concrnt.net'
@@ -50,9 +50,14 @@ export const WelcomeView = () => {
     const [resolver, setResolver] = useState<string>(resolveEntrypoint())
 
     useEffect(() => {
-        invoke('has_masterkey')
+        invoke<string | null>('get_active_ccid')
             .then(async (ccid) => {
-                if (typeof ccid !== 'string') return
+                if (typeof ccid !== 'string') {
+                    setExistingCCID(null)
+                    setUser(null)
+                    setState('welcome')
+                    return
+                }
                 setExistingCCID(ccid)
 
                 const authProvider = new InMemoryAuthProvider()
@@ -154,7 +159,7 @@ export const WelcomeView = () => {
                         <AuthButton
                             onClick={async () => {
                                 if (!user || !user.entity) return
-                                const ckid: string = await invoke('create_subkey')
+                                const ckid: string = await invoke('create_subkey', { ccid: user.ccid })
 
                                 const subkeyDoc: Document<any> = {
                                     kind: 'record',
@@ -198,7 +203,7 @@ export const WelcomeView = () => {
                                     console.error('Failed to migrate entity proof type', err)
                                 }
 
-                                await invoke('set_domain', { domain: user.entity.value.domain })
+                                await invoke('set_domain', { domain: user.entity.value.domain, ccid: user.ccid })
 
                                 reset()
                                 window.location.reload()
@@ -207,11 +212,12 @@ export const WelcomeView = () => {
                             このアカウントで続行
                         </AuthButton>
                         <ResetSessionButton
+                            ccid={user!.ccid}
                             onDone={async () => {
                                 reload()
                             }}
                         >
-                            端末のアカウント情報をリセットする
+                            このアカウントを端末から削除する
                         </ResetSessionButton>
                     </AuthActions>
                 </AuthScreen>
@@ -282,11 +288,12 @@ const RecoveryView = (props: {
                         新規登録する
                     </AuthButton>
                     <ResetSessionButton
+                        ccid={props.ccid}
                         onDone={() => {
                             props.reload()
                         }}
                     >
-                        端末のアカウント情報をリセットする
+                        このアカウントを端末から削除する
                     </ResetSessionButton>
                 </AuthActions>
             )}

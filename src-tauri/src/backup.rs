@@ -7,8 +7,9 @@ pub(crate) async fn backup_masterkey(
     app_handle: tauri::AppHandle,
     template: &str,
     filename: &str,
+    ccid: Option<String>,
 ) -> Result<(), Error> {
-    let identity = auth::retract_masterkey(&app_handle)?;
+    let identity = auth::retract_masterkey(&app_handle, ccid.as_deref())?;
 
     let filename = if filename.trim().is_empty() {
         "concrnt_masterkey_backup.txt".to_string()

@@ -13,6 +13,13 @@ export async function saveItem(key: string, password: string): Promise<any | nul
   });
 }
 
+export async function updateItem(key: string, password: string): Promise<any | null> {
+  return await invoke('plugin:keychain|update_item', {
+		key,
+		password
+  });
+}
+
 export async function removeItem(key: string): Promise<any | null> {
   return await invoke('plugin:keychain|remove_item', {
 		key,

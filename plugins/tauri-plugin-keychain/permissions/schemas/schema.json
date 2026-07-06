@@ -331,10 +331,22 @@
           "markdownDescription": "Denies the save_item command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-get-item`\n- `allow-save-item`\n- `allow-remove-item`",
+          "description": "Enables the update_item command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-item",
+          "markdownDescription": "Enables the update_item command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update_item command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-item",
+          "markdownDescription": "Denies the update_item command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-get-item`\n- `allow-save-item`\n- `allow-update-item`\n- `allow-remove-item`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-get-item`\n- `allow-save-item`\n- `allow-remove-item`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-get-item`\n- `allow-save-item`\n- `allow-update-item`\n- `allow-remove-item`"
         }
       ]
     }

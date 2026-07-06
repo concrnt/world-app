@@ -38,10 +38,19 @@ impl<R: Runtime> Keychain<R> {
       .run_mobile_plugin("hasItem", payload)
       .unwrap_or(false)
   }
+  /// 新規追加専用。既にアイテムが存在する場合は失敗する(サイレント上書きはしない)。
   pub fn save_item(&self, payload: KeychainRequest) -> bool {
     self
       .0
       .run_mobile_plugin("saveItem", payload)
+      .unwrap_or(false)
+  }
+  /// 既存アイテムのin-place更新専用。アイテムが存在しない場合は失敗する。
+  /// 削除→再追加はクラッシュ時にアイテムが消える時間窓ができるため使わないこと。
+  pub fn update_item(&self, payload: KeychainRequest) -> bool {
+    self
+      .0
+      .run_mobile_plugin("updateItem", payload)
       .unwrap_or(false)
   }
   pub fn remove_item(&self, payload: KeychainRequest) -> bool {

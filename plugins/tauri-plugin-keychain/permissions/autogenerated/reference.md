@@ -6,6 +6,7 @@ Default permissions for the plugin
 
 - `allow-get-item`
 - `allow-save-item`
+- `allow-update-item`
 - `allow-remove-item`
 
 ## Permission Table
@@ -91,6 +92,32 @@ Enables the save_item command without any pre-configured scope.
 <td>
 
 Denies the save_item command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`keychain:allow-update-item`
+
+</td>
+<td>
+
+Enables the update_item command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`keychain:deny-update-item`
+
+</td>
+<td>
+
+Denies the update_item command without any pre-configured scope.
 
 </td>
 </tr>
