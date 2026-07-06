@@ -37,7 +37,6 @@ export const SwitchAccountButton = (): ReactNode => {
                     performAccountSwitch(account.ccid)
                 }}
                 onDelete={() => {
-                    close()
                     modal.open(
                         <ResetSessionModalContent
                             ccid={account.ccid}
@@ -61,7 +60,6 @@ export const SwitchAccountButton = (): ReactNode => {
                 key={'$addAccount'}
                 icon={<MdPersonAdd size={24} />}
                 onClick={() => {
-                    close()
                     drawer.open(<AddAccountDrawer previousCcid={client.ccid} onClose={() => drawer.close()} />)
                 }}
             >

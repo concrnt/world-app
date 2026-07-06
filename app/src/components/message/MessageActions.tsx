@@ -32,7 +32,7 @@ interface LikeState {
 export const MessageActions = (props: Props) => {
     const { client } = useClient()
     const composer = useComposer()
-    const { select } = useSelect()
+    const { select, close } = useSelect()
     const drawer = useDrawer()
     const confirm = useConfirm()
     const emojiPicker = useEmojiPicker()
@@ -201,6 +201,7 @@ export const MessageActions = (props: Props) => {
                                     '本当にこの投稿を削除しますか？',
                                     () => {
                                         client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                                        close()
                                     },
                                     {
                                         confirmText: '削除'
@@ -218,6 +219,7 @@ export const MessageActions = (props: Props) => {
                                         targetURI={props.message.uri}
                                         onSend={() => {
                                             drawer.close()
+                                            close()
                                             hapticSuccess()
                                         }}
                                     />

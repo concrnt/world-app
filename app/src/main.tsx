@@ -9,21 +9,17 @@ import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
-import { SelectProvider } from './contexts/Select'
-import { DrawerProvider } from './contexts/Drawer'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
-import { ModalProvider } from './contexts/Modal'
 import TickerProvider from './contexts/Ticer'
-import { ConfirmProvider } from './contexts/Confirm'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { KeyboardProvider } from './contexts/Keyboard'
-import { CssVar, Text } from '@concrnt/ui'
+import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -47,40 +43,34 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             <ClientProvider
                 loading={<ClientLoadingScreen />}
                 failed={
-                    <ModalProvider>
+                    <OverlayStackProvider>
                         <WelcomeView />
-                    </ModalProvider>
+                    </OverlayStackProvider>
                 }
             >
                 <PreferenceProvider>
                     <ThemeProvider>
-                        <ConfirmProvider>
-                            <SelectProvider>
-                                <DrawerProvider>
-                                    <ModalProvider>
-                                        <EmojiPickerProvider>
-                                            <ImageCropperProvider>
-                                                <ComposerProvider>
-                                                    <ScannerProvider>
-                                                        <OverlayProvider>
-                                                            <MediaViewerProvider>
-                                                                <AudioPlayerProvider>
-                                                                    <TickerProvider>
-                                                                        <UrlSummaryProvider>
-                                                                            <App />
-                                                                        </UrlSummaryProvider>
-                                                                    </TickerProvider>
-                                                                </AudioPlayerProvider>
-                                                            </MediaViewerProvider>
-                                                        </OverlayProvider>
-                                                    </ScannerProvider>
-                                                </ComposerProvider>
-                                            </ImageCropperProvider>
-                                        </EmojiPickerProvider>
-                                    </ModalProvider>
-                                </DrawerProvider>
-                            </SelectProvider>
-                        </ConfirmProvider>
+                        <OverlayStackProvider>
+                            <EmojiPickerProvider>
+                                <ImageCropperProvider>
+                                    <ComposerProvider>
+                                        <ScannerProvider>
+                                            <OverlayProvider>
+                                                <MediaViewerProvider>
+                                                    <AudioPlayerProvider>
+                                                        <TickerProvider>
+                                                            <UrlSummaryProvider>
+                                                                <App />
+                                                            </UrlSummaryProvider>
+                                                        </TickerProvider>
+                                                    </AudioPlayerProvider>
+                                                </MediaViewerProvider>
+                                            </OverlayProvider>
+                                        </ScannerProvider>
+                                    </ComposerProvider>
+                                </ImageCropperProvider>
+                            </EmojiPickerProvider>
+                        </OverlayStackProvider>
                     </ThemeProvider>
                 </PreferenceProvider>
             </ClientProvider>

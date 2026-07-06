@@ -9,15 +9,12 @@ import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
-import { SelectProvider } from './contexts/Select'
-import { DrawerProvider } from './contexts/Drawer'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
-import { ConfirmProvider } from './contexts/Confirm'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { WelcomeView } from './views/Welcome'
 import { AppShell } from './pages/App'
@@ -40,7 +37,7 @@ import { ApView } from './views/ApView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { NavigationProvider } from './contexts/Navigation'
-import { CssVar, IconButton, Text } from '@concrnt/ui'
+import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
 import { Themes } from './data/themes'
@@ -111,120 +108,108 @@ const AuthedRoutes = () => (
     >
         <PreferenceProvider>
             <ThemeProvider>
-                <ConfirmProvider>
+                <OverlayStackProvider>
                     <ImageCropperProvider>
-                        <SelectProvider>
-                            <DrawerProvider>
-                                <EmojiPickerProvider>
-                                    <ComposerProvider>
-                                        <MediaViewerProvider>
-                                            <AudioPlayerProvider>
-                                                <TickerProvider>
-                                                    <UrlSummaryProvider>
-                                                        <Routes>
-                                                            <Route path="/" element={<AppShell />}>
-                                                                <Route index element={<HomeView />} />
-                                                                <Route path="explorer" element={<ExplorerView />} />
-                                                                <Route
-                                                                    path="notifications"
-                                                                    element={<NotificationsView />}
-                                                                />
-                                                                <Route path="contacts" element={<ContactsView />} />
-                                                                <Route path="settings" element={<SettingsView />} />
-                                                                <Route
-                                                                    path="settings/theme"
-                                                                    element={
-                                                                        <SettingsBackProvider>
-                                                                            <ThemeSettingsView />
-                                                                        </SettingsBackProvider>
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="settings/activitypub"
-                                                                    element={
-                                                                        <SettingsBackProvider>
-                                                                            <Activitypub />
-                                                                        </SettingsBackProvider>
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="settings/id"
-                                                                    element={
-                                                                        <SettingsBackProvider>
-                                                                            <IDView />
-                                                                        </SettingsBackProvider>
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="settings/emoji"
-                                                                    element={
-                                                                        <SettingsBackProvider>
-                                                                            <EmojiSettingsView />
-                                                                        </SettingsBackProvider>
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="settings/dev"
-                                                                    element={
-                                                                        <SettingsBackProvider>
-                                                                            <DevView />
-                                                                        </SettingsBackProvider>
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="profile/:ccid/:profile?"
-                                                                    element={<ProfileRoute />}
-                                                                />
-                                                                <Route
-                                                                    path="post/:uri"
-                                                                    element={<UriRoute kind="post" />}
-                                                                />
-                                                                <Route
-                                                                    path="timeline/:uri"
-                                                                    element={<UriRoute kind="timeline" />}
-                                                                />
-                                                                <Route path="lists" element={<ListsView />} />
-                                                                <Route path="lists/:uri" element={<ListsView />} />
-                                                                <Route path="query" element={<QueryView />} />
-                                                                <Route
-                                                                    path="dev"
-                                                                    element={<Navigate to="/settings/dev" replace />}
-                                                                />
-                                                                <Route
-                                                                    path="id"
-                                                                    element={<Navigate to="/settings/id" replace />}
-                                                                />
-                                                                <Route
-                                                                    path="activitypub"
-                                                                    element={
-                                                                        <Navigate to="/settings/activitypub" replace />
-                                                                    }
-                                                                />
-                                                                <Route
-                                                                    path="activitypub/person/:uri"
-                                                                    element={<UriRoute kind="apView" />}
-                                                                />
-                                                                <Route
-                                                                    path="activitypub/note/:uri"
-                                                                    element={<UriRoute kind="apView" />}
-                                                                />
-                                                                <Route
-                                                                    path="activitypub/view/:uri"
-                                                                    element={<UriRoute kind="apView" />}
-                                                                />
-                                                                <Route path="*" element={<Navigate to="/" replace />} />
-                                                            </Route>
-                                                        </Routes>
-                                                    </UrlSummaryProvider>
-                                                </TickerProvider>
-                                            </AudioPlayerProvider>
-                                        </MediaViewerProvider>
-                                    </ComposerProvider>
-                                </EmojiPickerProvider>
-                            </DrawerProvider>
-                        </SelectProvider>
+                        <EmojiPickerProvider>
+                            <ComposerProvider>
+                                <MediaViewerProvider>
+                                    <AudioPlayerProvider>
+                                        <TickerProvider>
+                                            <UrlSummaryProvider>
+                                                <Routes>
+                                                    <Route path="/" element={<AppShell />}>
+                                                        <Route index element={<HomeView />} />
+                                                        <Route path="explorer" element={<ExplorerView />} />
+                                                        <Route path="notifications" element={<NotificationsView />} />
+                                                        <Route path="contacts" element={<ContactsView />} />
+                                                        <Route path="settings" element={<SettingsView />} />
+                                                        <Route
+                                                            path="settings/theme"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <ThemeSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/activitypub"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <Activitypub />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/id"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <IDView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/emoji"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <EmojiSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/dev"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <DevView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="profile/:ccid/:profile?"
+                                                            element={<ProfileRoute />}
+                                                        />
+                                                        <Route path="post/:uri" element={<UriRoute kind="post" />} />
+                                                        <Route
+                                                            path="timeline/:uri"
+                                                            element={<UriRoute kind="timeline" />}
+                                                        />
+                                                        <Route path="lists" element={<ListsView />} />
+                                                        <Route path="lists/:uri" element={<ListsView />} />
+                                                        <Route path="query" element={<QueryView />} />
+                                                        <Route
+                                                            path="dev"
+                                                            element={<Navigate to="/settings/dev" replace />}
+                                                        />
+                                                        <Route
+                                                            path="id"
+                                                            element={<Navigate to="/settings/id" replace />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub"
+                                                            element={<Navigate to="/settings/activitypub" replace />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub/person/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub/note/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route
+                                                            path="activitypub/view/:uri"
+                                                            element={<UriRoute kind="apView" />}
+                                                        />
+                                                        <Route path="*" element={<Navigate to="/" replace />} />
+                                                    </Route>
+                                                </Routes>
+                                            </UrlSummaryProvider>
+                                        </TickerProvider>
+                                    </AudioPlayerProvider>
+                                </MediaViewerProvider>
+                            </ComposerProvider>
+                        </EmojiPickerProvider>
                     </ImageCropperProvider>
-                </ConfirmProvider>
+                </OverlayStackProvider>
             </ThemeProvider>
         </PreferenceProvider>
     </ClientProvider>

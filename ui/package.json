@@ -18,6 +18,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json",
+    "dev": "vite build --watch",
     "storybook": "storybook dev -p 6006"
   },
   "peerDependencies": {

@@ -1,172 +1,49 @@
-import { AnimatePresence, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { animate } from 'motion'
-import { CssVar } from '../types/Theme'
+import { ReactNode, useCallback, useMemo } from 'react'
+import { BottomSheet, useOverlayStack } from '@concrnt/ui'
 import { useKeyboard } from './Keyboard'
 
-interface DrawerContextState {
+interface DrawerState {
     open: (content: ReactNode) => void
     close: () => void
 }
 
-interface Props {
-    children: React.ReactNode
+interface DrawerShellProps {
+    onDismiss: () => void
+    children: ReactNode
 }
 
-const DrawerContext = createContext<DrawerContextState>({
-    open: () => {},
-    close: () => {}
-})
+const DrawerShell = (props: DrawerShellProps) => {
+    const keyboard = useKeyboard()
 
-export const DrawerProvider = (props: Props) => {
-    const y = useMotionValue(0)
-    const dragControls = useDragControls()
+    return (
+        <BottomSheet height={window.innerHeight * 0.9} keyboardInset={keyboard} onDismiss={props.onDismiss}>
+            {props.children}
+        </BottomSheet>
+    )
+}
 
-    const [content, setContent] = useState<ReactNode>(null)
-
-    const height = window.innerHeight * 0.9
-    const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
+export const useDrawer = (): DrawerState => {
+    const stack = useOverlayStack()
 
     const open = useCallback(
-        (c: ReactNode) => {
-            y.set(height)
-            setContent(c)
+        (content: ReactNode) => {
+            stack.push({
+                kind: 'drawer',
+                render: (close) => <DrawerShell onDismiss={close}>{content}</DrawerShell>
+            })
         },
-        [height, y]
+        [stack]
     )
 
     const close = useCallback(() => {
-        setContent(null)
-    }, [])
+        stack.closeKind('drawer')
+    }, [stack])
 
-    const value = useMemo(
+    return useMemo(
         () => ({
             open,
             close
         }),
         [open, close]
     )
-
-    const keyboard = useKeyboard()
-
-    return (
-        <>
-            <DrawerContext.Provider value={value}>{props.children}</DrawerContext.Provider>
-            <AnimatePresence>
-                {content && (
-                    <>
-                        <motion.div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                background: 'black',
-                                opacity: backdropOpacity
-                            }}
-                            onClick={() => {
-                                close()
-                            }}
-                        />
-                        <motion.div
-                            style={{
-                                backgroundColor: CssVar.contentBackground,
-                                color: CssVar.contentText,
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
-                                height,
-                                y
-                            }}
-                            drag="y"
-                            dragControls={dragControls}
-                            dragListener={false}
-                            dragConstraints={{ top: 0, bottom: height }}
-                            dragElastic={0}
-                            dragMomentum={false}
-                            initial={{ y: height }}
-                            animate={{ y: 0 }}
-                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
-                            exit={{ y: height }}
-                            onDragEnd={(_, info) => {
-                                const current = y.get()
-                                const v = info.velocity.y
-                                const dy = info.offset.y
-
-                                const fast = Math.abs(v) > 50
-                                const far = Math.abs(dy) > height / 2
-
-                                let shouldClose = false
-                                if (fast) {
-                                    shouldClose = v > 0
-                                } else if (far) {
-                                    shouldClose = dy > 0
-                                } else {
-                                    shouldClose = current > height / 2
-                                }
-
-                                if (shouldClose) {
-                                    close()
-                                } else {
-                                    animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
-                                }
-                            }}
-                        >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    padding: `${CssVar.space(2)} 0`,
-                                    position: 'relative',
-                                    touchAction: 'none'
-                                }}
-                                onPointerDown={(e) => {
-                                    dragControls.start(e)
-                                }}
-                            >
-                                {/* ハンドルの見た目は変えず、当たり判定を縦方向に拡張する透明レイヤー */}
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: `-${CssVar.space(4)}`,
-                                        bottom: `-${CssVar.space(4)}`,
-                                        left: 0,
-                                        right: 0
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        width: '30px',
-                                        height: '6px',
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: CssVar.divider
-                                    }}
-                                />
-                            </div>
-                            <div
-                                style={{
-                                    overflow: 'auto',
-                                    flex: 1,
-                                    height: '100%'
-                                }}
-                            >
-                                {content}
-                                <div
-                                    style={{
-                                        height: `${keyboard.height}px`,
-                                        transition: `height ${keyboard.duration}s ease-out`
-                                    }}
-                                />
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </>
-    )
-}
-
-export const useDrawer = (): DrawerContextState => {
-    return useContext(DrawerContext)
 }
