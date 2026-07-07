@@ -1,57 +1,19 @@
 import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
-import { Suspense, use, useEffect, useMemo, useState } from 'react'
+import { Suspense, useDeferredValue, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { TimelineCard } from './TimelineCard'
 import { Document, Server } from '@concrnt/client'
 import { Avatar, Chip, CssVar, Text } from '@concrnt/ui'
+import { useResource } from '../hooks/useResource'
 
-export const ClassicExplorer = (props: { updater?: any }) => {
+export const ClassicExplorer = () => {
     const { client } = useClient()
-
-    const [serverDomains, setServerDomains] = useState<string[]>(client?.server?.domain ? [client.server.domain] : [])
-    const [communities, setCommunities] = useState<Record<string, Document<CommunityTimelineSchema>>>({})
 
     const [selectedServer, setSelectedServer] = useState<string>(client?.server?.domain ?? '')
 
-    useEffect(() => {
-        if (!client) return
-
-        client.api
-            .callConcrntApi<Server[]>('', 'net.concrnt.core.known-servers', {})
-            .then((response) => {
-                setServerDomains(
-                    Array.from(new Set([client.server.domain, ...response.map((server) => server.domain)]))
-                )
-            })
-            .catch((error) => {
-                console.error('Error fetching servers:', error)
-            })
-    }, [client])
-
-    useEffect(() => {
-        if (!client || !selectedServer) return
-        client.api
-            .query(
-                {
-                    prefix: semantics.communities(selectedServer),
-                    schema: Schemas.communityTimeline,
-                    limit: '100'
-                },
-                selectedServer
-            )
-            .then((results) => {
-                const mapped: Record<string, Document<CommunityTimelineSchema>> = {}
-                results.forEach((sd) => {
-                    mapped[sd.cckv] = JSON.parse(sd.document)
-                })
-
-                setCommunities(mapped)
-            })
-            .catch((error) => {
-                console.error('Error fetching communities:', error)
-                setCommunities({})
-            })
-    }, [client, selectedServer, props.updater])
+    // チップのハイライトは即時反応させ、コミュニティ一覧だけ遅れて追従させる
+    const deferredServer = useDeferredValue(selectedServer)
+    const isStale = deferredServer !== selectedServer
 
     return (
         <>
@@ -62,58 +24,130 @@ export const ClassicExplorer = (props: { updater?: any }) => {
                     gap: CssVar.space(1)
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        justifyContent: 'space-between',
-                        gap: CssVar.space(1)
-                    }}
+                <Suspense
+                    fallback={
+                        <Text variant="caption" style={{ opacity: 0.5 }}>
+                            読み込み中...
+                        </Text>
+                    }
                 >
-                    <Text variant="h3" style={{ margin: 0 }}>
-                        Known Servers
-                    </Text>
-                    <Text variant="caption" style={{ margin: 0 }}>
-                        {serverDomains.length} servers
-                    </Text>
-                </div>
-                <div
-                    style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        gap: CssVar.space(1)
-                    }}
-                >
-                    {serverDomains.map((domain) => (
-                        <ServerChip
-                            key={domain}
-                            domain={domain}
-                            selected={selectedServer === domain}
-                            onSelect={() => setSelectedServer(domain)}
-                        />
-                    ))}
-                </div>
+                    <ServerList selectedServer={selectedServer} onSelect={setSelectedServer} />
+                </Suspense>
             </div>
             <Text variant="h3">Communities:</Text>
             <Text variant="caption">{`Selected: ${selectedServer}`}</Text>
-            {Object.entries(communities).map(([uri, community]) => (
-                <TimelineCard key={uri} uri={uri} document={community} />
-            ))}
+            <Suspense
+                fallback={
+                    <Text variant="caption" style={{ opacity: 0.5 }}>
+                        読み込み中...
+                    </Text>
+                }
+            >
+                <CommunityList server={deferredServer} dimmed={isStale} />
+            </Suspense>
         </>
     )
 }
 
-const ServerChip = (props: { domain: string; selected: boolean; onSelect: () => void }) => {
+const ServerList = (props: { selectedServer: string; onSelect: (domain: string) => void }) => {
     const { client } = useClient()
 
-    const serverPromise = useMemo(() => {
-        return client.api
-            .getServer(props.domain, { cache: 'no-cache' })
-            .then((server) => ({ server, offline: false }))
-            .catch(() => ({ server: null, offline: true }))
-    }, [client, props.domain])
+    const serverDomains = useResource(`known-servers:${client.server.domain}`, () =>
+        client.api
+            .callConcrntApi<Server[]>('', 'net.concrnt.core.known-servers', {})
+            .then((response) => Array.from(new Set([client.server.domain, ...response.map((server) => server.domain)])))
+            .catch((error) => {
+                console.error('Error fetching servers:', error)
+                return [client.server.domain]
+            })
+    )
 
+    return (
+        <>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: CssVar.space(1)
+                }}
+            >
+                <Text variant="h3" style={{ margin: 0 }}>
+                    Known Servers
+                </Text>
+                <Text variant="caption" style={{ margin: 0 }}>
+                    {serverDomains.length} servers
+                </Text>
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: CssVar.space(1)
+                }}
+            >
+                {serverDomains.map((domain) => (
+                    <ServerChip
+                        key={domain}
+                        domain={domain}
+                        selected={props.selectedServer === domain}
+                        onSelect={() => props.onSelect(domain)}
+                    />
+                ))}
+            </div>
+        </>
+    )
+}
+
+const CommunityList = (props: { server: string; dimmed: boolean }) => {
+    const { client } = useClient()
+
+    const communities = useResource<Record<string, Document<CommunityTimelineSchema>>>(
+        `communities:${props.server}`,
+        () => {
+            if (!props.server) return Promise.resolve({})
+            return client.api
+                .query(
+                    {
+                        prefix: semantics.communities(props.server),
+                        schema: Schemas.communityTimeline,
+                        limit: '100'
+                    },
+                    props.server
+                )
+                .then((results) => {
+                    const mapped: Record<string, Document<CommunityTimelineSchema>> = {}
+                    results.forEach((sd) => {
+                        mapped[sd.cckv] = JSON.parse(sd.document)
+                    })
+                    return mapped
+                })
+                .catch((error): Record<string, Document<CommunityTimelineSchema>> => {
+                    console.error('Error fetching communities:', error)
+                    return {}
+                })
+        }
+    )
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(2),
+                opacity: props.dimmed ? 0.6 : 1,
+                transition: 'opacity 0.2s'
+            }}
+        >
+            {Object.entries(communities).map(([uri, community]) => (
+                <TimelineCard key={uri} uri={uri} document={community} />
+            ))}
+        </div>
+    )
+}
+
+const ServerChip = (props: { domain: string; selected: boolean; onSelect: () => void }) => {
     return (
         <Suspense
             fallback={
@@ -126,13 +160,29 @@ const ServerChip = (props: { domain: string; selected: boolean; onSelect: () => 
                 />
             }
         >
-            <ServerChipBody
-                domain={props.domain}
-                selected={props.selected}
-                onSelect={props.onSelect}
-                serverPromise={serverPromise}
-            />
+            <ServerChipContent {...props} />
         </Suspense>
+    )
+}
+
+const ServerChipContent = (props: { domain: string; selected: boolean; onSelect: () => void }) => {
+    const { client } = useClient()
+
+    const { server, offline } = useResource(`server:${props.domain}`, () =>
+        client.api
+            .getServer(props.domain)
+            .then((server) => ({ server: (server ?? null) as Server | null, offline: false }))
+            .catch(() => ({ server: null, offline: true }))
+    )
+
+    return (
+        <ServerChipBody
+            domain={props.domain}
+            selected={props.selected}
+            onSelect={props.onSelect}
+            server={server}
+            offline={offline}
+        />
     )
 }
 
@@ -140,15 +190,11 @@ const ServerChipBody = (props: {
     domain: string
     selected: boolean
     onSelect: () => void
-    server?: Server | null
-    offline?: boolean
-    serverPromise?: Promise<{ server: Server | null; offline: boolean }>
+    server: Server | null
+    offline: boolean
 }) => {
-    const result = props.serverPromise
-        ? use(props.serverPromise)
-        : { server: props.server ?? null, offline: props.offline ?? false }
-    const server = result.server
-    const offline = result.offline
+    const server = props.server
+    const offline = props.offline
     const nickname =
         typeof server?.meta?.nickname === 'string' && server.meta.nickname ? server.meta.nickname : undefined
     const logo = typeof server?.meta?.logo === 'string' && server.meta.logo ? server.meta.logo : undefined

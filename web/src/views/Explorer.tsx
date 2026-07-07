@@ -2,7 +2,7 @@ import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { useDrawer } from '../contexts/Drawer'
 import { MdAdd } from 'react-icons/md'
 import { hapticSuccess } from '../utils/haptics'
@@ -11,6 +11,7 @@ import { CssVar } from '../types/Theme'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { usePersistent } from '../hooks/usePersistent'
+import { invalidateResource } from '../hooks/useResource'
 import { ClassicExplorer } from '../components/ClassicExplorer'
 import { useNavigate } from 'react-router-dom'
 
@@ -21,6 +22,7 @@ export const ExplorerView = () => {
     const { client } = useClient()
 
     const [preferredClassicMode, setPreferredClassicMode] = usePersistent('explorer-classic-mode', false)
+    const [, startModeTransition] = useTransition()
     const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
     const classicMode = supportsSearchExplorer ? preferredClassicMode : true
 
@@ -31,7 +33,9 @@ export const ExplorerView = () => {
                     onTitleTap={
                         supportsSearchExplorer
                             ? () => {
-                                  setPreferredClassicMode((v) => !v)
+                                  startModeTransition(() => {
+                                      setPreferredClassicMode((v) => !v)
+                                  })
                               }
                             : undefined
                     }
@@ -42,6 +46,7 @@ export const ExplorerView = () => {
                                 drawer.open(
                                     <CommunityCreator
                                         onComplete={(uri) => {
+                                            invalidateResource(`communities:${client.server.domain}`)
                                             drawer.close()
                                             navigate('/timeline/' + encodeURIComponent(uri))
                                         }}

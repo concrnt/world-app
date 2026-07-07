@@ -2,7 +2,7 @@ import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, View, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { Header } from '../ui/Header'
 import { useDrawer } from '../contexts/Drawer'
 import { FAB } from '../ui/FAB'
@@ -12,6 +12,7 @@ import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 import { ClassicExplorer } from '../components/ClassicExplorer'
 import { usePersistent } from '../hooks/usePersistent'
+import { invalidateResource } from '../hooks/useResource'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from './Timeline'
 
@@ -22,6 +23,7 @@ export const ExplorerView = () => {
     const { client } = useClient()
 
     const [preferredClassicMode, setPreferredClassicMode] = usePersistent('explorer-classic-mode', false)
+    const [, startModeTransition] = useTransition()
     const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
     const classicMode = supportsSearchExplorer ? preferredClassicMode : true
 
@@ -32,7 +34,9 @@ export const ExplorerView = () => {
                     onTitleTap={
                         supportsSearchExplorer
                             ? () => {
-                                  setPreferredClassicMode((v) => !v)
+                                  startModeTransition(() => {
+                                      setPreferredClassicMode((v) => !v)
+                                  })
                               }
                             : undefined
                     }
@@ -61,6 +65,7 @@ export const ExplorerView = () => {
                     drawer.open(
                         <CommunityCreator
                             onComplete={(uri) => {
+                                invalidateResource(`communities:${client.server.domain}`)
                                 drawer.close()
                                 push(<TimelineView uri={uri} />)
                             }}

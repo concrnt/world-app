@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useDeferredValue, useRef, useState } from 'react'
 import { Text, TextField, CCWallpaper, Avatar, IconButton, Tab, Tabs, useTheme } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useDrawer } from '../contexts/Drawer'
@@ -7,6 +7,7 @@ import { MdPlaylistAdd } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
+import { useResource } from '../hooks/useResource'
 
 // Crawler API base URL
 // https://github.com/concrnt/crawler
@@ -46,6 +47,19 @@ interface SearchResponse<T> {
 
 type TabType = 'communities' | 'users'
 
+// エラーは呼び出し側で表示するためrejectさせずnullをresolveする
+const fetchSearch = async (tab: TabType, query: string): Promise<CommunityHit[] | UserHit[] | null> => {
+    try {
+        const q = encodeURIComponent(query)
+        const res = await fetch(`${CRAWLER_URL}/api/v1/search/${tab}?q=${q}&limit=20`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data: SearchResponse<CommunityHit | UserHit> = await res.json()
+        return data.hits as CommunityHit[] | UserHit[]
+    } catch {
+        return null
+    }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const SearchExplorer = () => {
@@ -59,44 +73,13 @@ export const SearchExplorer = () => {
 
     const [tab, setTab] = useState<TabType>('communities')
     const [query, setQuery] = useState('')
-    const [communities, setCommunities] = useState<CommunityHit[]>([])
-    const [users, setUsers] = useState<UserHit[]>([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const fetchData = useCallback(async (currentTab: TabType, currentQuery: string) => {
-        setLoading(true)
-        setError(null)
-        try {
-            const q = encodeURIComponent(currentQuery)
-            if (currentTab === 'communities') {
-                const res = await fetch(`${CRAWLER_URL}/api/v1/search/communities?q=${q}&limit=20`)
-                if (!res.ok) throw new Error(`HTTP ${res.status}`)
-                const data: SearchResponse<CommunityHit> = await res.json()
-                setCommunities(data.hits)
-            } else {
-                const res = await fetch(`${CRAWLER_URL}/api/v1/search/users?q=${q}&limit=20`)
-                if (!res.ok) throw new Error(`HTTP ${res.status}`)
-                const data: SearchResponse<UserHit> = await res.json()
-                setUsers(data.hits)
-            }
-        } catch {
-            setError('検索サービスに接続できませんでした')
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(() => {
-            fetchData(tab, query)
-        }, 300)
-        return () => {
-            if (debounceRef.current) clearTimeout(debounceRef.current)
-        }
-    }, [query, tab, fetchData])
+    // タブと入力欄は即時反応させ、結果リストだけ遅れて追従させる
+    const deferredTab = useDeferredValue(tab)
+    const deferredQuery = useDeferredValue(searchQuery)
+    const isStale = deferredTab !== tab || deferredQuery !== searchQuery
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -122,33 +105,50 @@ export const SearchExplorer = () => {
             <TextField
                 value={query}
                 placeholder={tab === 'communities' ? 'コミュニティを検索...' : 'ユーザーを検索...'}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                    const value = e.target.value
+                    setQuery(value)
+                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                    debounceRef.current = setTimeout(() => {
+                        setSearchQuery(value)
+                    }, 300)
+                }}
             />
 
-            {error && (
-                <Text variant="caption" style={{ color: 'var(--error, #f44336)' }}>
-                    {error}
-                </Text>
-            )}
-
-            {loading ? (
-                <Text variant="caption">読み込み中...</Text>
-            ) : tab === 'communities' ? (
-                communities.length === 0 ? (
-                    <Text variant="caption" style={{ opacity: 0.5 }}>
-                        {query ? '該当するコミュニティが見つかりませんでした' : '読み込み中...'}
-                    </Text>
-                ) : (
-                    <CommunityResultList communities={communities} />
-                )
-            ) : users.length === 0 ? (
-                <Text variant="caption" style={{ opacity: 0.5 }}>
-                    {query ? '該当するユーザーが見つかりませんでした' : '読み込み中...'}
-                </Text>
-            ) : (
-                <UserResultList users={users} />
-            )}
+            <div style={{ opacity: isStale ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+                <Suspense fallback={<Text variant="caption">読み込み中...</Text>}>
+                    <SearchResults tab={deferredTab} query={deferredQuery} />
+                </Suspense>
+            </div>
         </div>
+    )
+}
+
+const SearchResults = ({ tab, query }: { tab: TabType; query: string }) => {
+    const hits = useResource(`crawler-search:${tab}:${query}`, () => fetchSearch(tab, query))
+
+    if (hits === null) {
+        return (
+            <Text variant="caption" style={{ color: 'var(--error, #f44336)' }}>
+                検索サービスに接続できませんでした
+            </Text>
+        )
+    }
+
+    if (hits.length === 0) {
+        return (
+            <Text variant="caption" style={{ opacity: 0.5 }}>
+                {tab === 'communities'
+                    ? '該当するコミュニティが見つかりませんでした'
+                    : '該当するユーザーが見つかりませんでした'}
+            </Text>
+        )
+    }
+
+    return tab === 'communities' ? (
+        <CommunityResultList communities={hits as CommunityHit[]} />
+    ) : (
+        <UserResultList users={hits as UserHit[]} />
     )
 }
 
