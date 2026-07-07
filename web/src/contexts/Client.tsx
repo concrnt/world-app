@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Client } from '@concrnt/worldlib'
-import { InMemoryAuthProvider, ServerOfflineError } from '@concrnt/client'
+import { InMemoryAuthProvider, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { resourceCache } from '../lib/cache'
@@ -55,12 +55,15 @@ export const ClientProvider = (props: Props): ReactNode => {
     const [subkeyInvalid, setSubkeyInvalid] = useState(false)
     const [progress, setProgress] = useState('')
     const [setupError, setSetupError] = useState<string | null>(null)
+    // サーバーのリセットや他ドメインへの移行で、自分の登録(entity)がこのサーバーに存在しないケース
+    const [notFoundOn, setNotFoundOn] = useState<string | null>(null)
     const clientRef = useRef<Client | null>(null)
     const bootedOfflineRef = useRef(false)
 
     const reload = useCallback(async (name?: string) => {
         console.log('Reloading client for profile', name)
         setSetupError(null)
+        setNotFoundOn(null)
         setProgress('セッションを確認しています...')
 
         const domain = readStoredString('Domain')
@@ -118,6 +121,10 @@ export const ClientProvider = (props: Props): ReactNode => {
             console.error('Failed to create client', err)
             if (err instanceof ServerOfflineError) {
                 setIsOffline(true)
+            } else if (err instanceof NotFoundError) {
+                // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
+                // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
+                setNotFoundOn(domain)
             } else {
                 setSetupError(err instanceof Error ? err.message : String(err))
             }
@@ -202,6 +209,37 @@ export const ClientProvider = (props: Props): ReactNode => {
                 >
                     再試行
                 </Button>
+                <Button
+                    onClick={async () => {
+                        await logout()
+                        window.location.reload()
+                    }}
+                >
+                    ログアウト
+                </Button>
+            </div>
+        )
+    }
+
+    if (notFoundOn) {
+        return (
+            <div
+                style={{
+                    width: '100vw',
+                    height: '100dvh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                }}
+            >
+                サーバー {notFoundOn} にあなたの登録が見つかりませんでした
+                <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                    サーバーのリセットや、別のサーバーへの移行が原因の可能性があります。
+                </div>
                 <Button
                     onClick={async () => {
                         await logout()
