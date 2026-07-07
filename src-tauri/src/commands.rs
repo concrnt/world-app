@@ -1,4 +1,5 @@
 use concrnt::{compute_ckid, generate_identity, sign, Identity};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 use crate::{accounts, auth, Error};
 
@@ -145,11 +146,31 @@ pub(crate) async fn switch_account(
     })
 }
 
-/// アカウントを端末から削除する。マスターキーを破棄する破壊的操作のため生体認証を要求する。
+/// アカウントを端末から削除する。マスターキーを破棄する破壊的操作のため、
+/// JS層を信用せず、このコマンド自身がOSネイティブの確認ダイアログを最終セーフティとして表示する。
+/// JS側が改ざん・バグっていても、ネイティブの明示的な同意が無い限り削除は実行されない。
+/// ユーザーがキャンセルした場合は何も削除せず Ok(false) を返す(削除実行時は Ok(true))。
+/// blocking_showはメインスレッド上ではフリーズするが、本コマンドはasyncでメインスレッド外で
+/// 実行されるため安全(keychainプラグインと同じ理由でasync必須)。
 #[tauri::command]
-pub(crate) async fn remove_account(app_handle: tauri::AppHandle, ccid: &str) -> Result<(), Error> {
-    auth::authenticate_keychain_access(&app_handle)?;
-    accounts::remove_account(&app_handle, ccid)
+pub(crate) async fn remove_account(app_handle: tauri::AppHandle, ccid: &str) -> Result<bool, Error> {
+    let confirmed = app_handle
+        .dialog()
+        .message("このアカウントを端末から削除します。よろしいですか？")
+        .title("アカウント情報の削除")
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "削除".to_string(),
+            "キャンセル".to_string(),
+        ))
+        .blocking_show();
+
+    if !confirmed {
+        return Ok(false);
+    }
+
+    accounts::remove_account(&app_handle, ccid)?;
+    Ok(true)
 }
 
 /// アカウント単位のログアウト: subkey/domainを破棄するが、mnemonicと一覧掲載は維持する。

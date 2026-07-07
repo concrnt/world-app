@@ -41,14 +41,15 @@ export const ResetSessionModalContent = (props: { ccid: string; onDone: () => vo
                 <Button
                     disabled={!exported}
                     onClick={() => {
-                        // 他のアカウントには影響しない。生体認証はRust側で要求される
+                        // 他のアカウントには影響しない。最終確認(OSネイティブのyes/noダイアログ)は
+                        // Rust側のremove_accountが表示する。キャンセル時はremoved=falseで何もしない。
                         removeAccount(props.ccid)
-                            .then(() => {
-                                props.onDone()
+                            .then((removed) => {
+                                if (removed) props.onDone()
                             })
                             .catch((err) => {
                                 console.error('Failed to remove account', err)
-                                setError('削除できませんでした。認証をキャンセルした場合はやり直してください。')
+                                setError('削除できませんでした。もう一度お試しください。')
                             })
                     }}
                 >

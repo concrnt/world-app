@@ -29,7 +29,7 @@ import { ResetSessionButton } from '../components/ResetSessionButton'
 
 export const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
-    if (hostname === 'localhost') {
+    if (hostname === 'localhost' || hostname === 'tauri.localhost') {
         return 'ariake.concrnt.net'
     }
     return hostname

@@ -26,6 +26,7 @@ pub fn run() {
         .plugin(tauri_plugin_keychain::init())
         .plugin(tauri_plugin_haptics::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_file_saver::init())
         .manage(accounts::AccountsLock::default())
         .invoke_handler(tauri::generate_handler![

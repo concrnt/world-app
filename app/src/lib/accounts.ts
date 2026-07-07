@@ -22,10 +22,14 @@ export const switchAccount = (ccid: string): Promise<SessionInfo> => {
     return invoke<SessionInfo>('switch_account', { ccid })
 }
 
-// 端末からアカウント(マスターキー含む)を削除する。Rust側で生体認証が要求される。
-export const removeAccount = async (ccid: string): Promise<void> => {
-    await invoke('remove_account', { ccid })
-    await deleteResourceCache(ccid).catch(() => {})
+// 端末からアカウント(マスターキー含む)を削除する。最終確認のOSネイティブダイアログはRust側が表示し、
+// キャンセルされた場合は削除せずfalseを返す。実際に削除されたときのみtrueを返す。
+export const removeAccount = async (ccid: string): Promise<boolean> => {
+    const removed = await invoke<boolean>('remove_account', { ccid })
+    if (removed) {
+        await deleteResourceCache(ccid).catch(() => {})
+    }
+    return removed
 }
 
 // アクティブアカウントを切り替えてアプリ全体をリロードする。
