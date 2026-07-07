@@ -54,11 +54,13 @@ export const ClientProvider = (props: Props): ReactNode => {
     const [domainRecovered, setDomainRecovered] = useState(false)
     const [subkeyInvalid, setSubkeyInvalid] = useState(false)
     const [progress, setProgress] = useState('')
+    const [setupError, setSetupError] = useState<string | null>(null)
     const clientRef = useRef<Client | null>(null)
     const bootedOfflineRef = useRef(false)
 
     const reload = useCallback(async (name?: string) => {
         console.log('Reloading client for profile', name)
+        setSetupError(null)
         setProgress('セッションを確認しています...')
 
         const domain = readStoredString('Domain')
@@ -116,6 +118,8 @@ export const ClientProvider = (props: Props): ReactNode => {
             console.error('Failed to create client', err)
             if (err instanceof ServerOfflineError) {
                 setIsOffline(true)
+            } else {
+                setSetupError(err instanceof Error ? err.message : String(err))
             }
         }
     }, [])
@@ -193,6 +197,43 @@ export const ClientProvider = (props: Props): ReactNode => {
                 <Button
                     onClick={() => {
                         setIsOffline(false)
+                        reload()
+                    }}
+                >
+                    再試行
+                </Button>
+                <Button
+                    onClick={async () => {
+                        await logout()
+                        window.location.reload()
+                    }}
+                >
+                    ログアウト
+                </Button>
+            </div>
+        )
+    }
+
+    if (setupError) {
+        return (
+            <div
+                style={{
+                    width: '100vw',
+                    height: '100dvh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                }}
+            >
+                読み込みに失敗しました
+                <div style={{ fontSize: '0.85rem', opacity: 0.7, wordBreak: 'break-all' }}>{setupError}</div>
+                <Button
+                    onClick={() => {
+                        setSetupError(null)
                         reload()
                     }}
                 >

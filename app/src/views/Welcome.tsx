@@ -46,6 +46,8 @@ export const WelcomeView = () => {
     const [existingCCID, setExistingCCID] = useState<string | null>(null)
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
+    const [continuing, setContinuing] = useState(false)
+    const [continueError, setContinueError] = useState<string | null>(null)
     const reset = useResetPreference()
     const [resolver, setResolver] = useState<string>(resolveEntrypoint())
 
@@ -156,60 +158,78 @@ export const WelcomeView = () => {
                         </Tilt>
                     </div>
                     <AuthActions fixedBottom>
+                        {continueError && (
+                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
+                                続行に失敗しました。通信環境を確認して、もう一度お試しください。
+                                {'\n'}
+                                {continueError}
+                            </Text>
+                        )}
                         <AuthButton
+                            disabled={continuing}
                             onClick={async () => {
                                 if (!user || !user.entity) return
-                                const ckid: string = await invoke('create_subkey', { ccid: user.ccid })
-
-                                const subkeyDoc: Document<any> = {
-                                    kind: 'record',
-                                    key: semantics.subkey(user.ccid, ckid),
-                                    author: user.ccid,
-                                    schema: 'https://schema.concrnt.net/subkey.json',
-                                    value: {
-                                        ckid
-                                    },
-                                    createdAt: new Date()
-                                }
-
-                                const authProvider = new TauriAuthProvider(user.ccid)
-                                const kvs = new InMemoryKVS()
-
-                                const api = new Api(user.entity.value.domain, authProvider, kvs)
-
-                                await api.commit(subkeyDoc, user.entity.value.domain, { useMasterkey: true })
-                                console.log('Subkey Registered')
-
-                                // v1 -> v2 移行対応:
-                                // v2へ自動的に移行されたユーザーのエンティティは proof.type が "none" に
-                                // なっており、このままでは利用を続けられない。マスターキーが使えるこの
-                                // タイミングで concrnt-ecrecover-direct で再コミットして正しい proof を付与する。
+                                setContinueError(null)
+                                setContinuing(true)
                                 try {
-                                    const self = await api.getResource<SignedDocument>(semantics.user(user.ccid))
-                                    if (self.proof?.type === 'none') {
-                                        console.log(
-                                            'Entity proof type is "none", re-committing entity with master key...'
-                                        )
-                                        const entityDoc: Document<Entity> = {
-                                            kind: 'entity',
-                                            author: user.ccid,
-                                            schema: 'https://schema.concrnt.net/entity.json',
-                                            value: user.entity.value,
-                                            createdAt: new Date()
-                                        }
-                                        await api.commit(entityDoc, user.entity.value.domain, { useMasterkey: true })
+                                    const ckid: string = await invoke('create_subkey', { ccid: user.ccid })
+
+                                    const subkeyDoc: Document<any> = {
+                                        kind: 'record',
+                                        key: semantics.subkey(user.ccid, ckid),
+                                        author: user.ccid,
+                                        schema: 'https://schema.concrnt.net/subkey.json',
+                                        value: {
+                                            ckid
+                                        },
+                                        createdAt: new Date()
                                     }
+
+                                    const authProvider = new TauriAuthProvider(user.ccid)
+                                    const kvs = new InMemoryKVS()
+
+                                    const api = new Api(user.entity.value.domain, authProvider, kvs)
+
+                                    await api.commit(subkeyDoc, user.entity.value.domain, { useMasterkey: true })
+                                    console.log('Subkey Registered')
+
+                                    // v1 -> v2 移行対応:
+                                    // v2へ自動的に移行されたユーザーのエンティティは proof.type が "none" に
+                                    // なっており、このままでは利用を続けられない。マスターキーが使えるこの
+                                    // タイミングで concrnt-ecrecover-direct で再コミットして正しい proof を付与する。
+                                    try {
+                                        const self = await api.getResource<SignedDocument>(semantics.user(user.ccid))
+                                        if (self.proof?.type === 'none') {
+                                            console.log(
+                                                'Entity proof type is "none", re-committing entity with master key...'
+                                            )
+                                            const entityDoc: Document<Entity> = {
+                                                kind: 'entity',
+                                                author: user.ccid,
+                                                schema: 'https://schema.concrnt.net/entity.json',
+                                                value: user.entity.value,
+                                                createdAt: new Date()
+                                            }
+                                            await api.commit(entityDoc, user.entity.value.domain, {
+                                                useMasterkey: true
+                                            })
+                                        }
+                                    } catch (err) {
+                                        console.error('Failed to migrate entity proof type', err)
+                                    }
+
+                                    await invoke('set_domain', { domain: user.entity.value.domain, ccid: user.ccid })
+
+                                    reset()
+                                    window.location.reload()
                                 } catch (err) {
-                                    console.error('Failed to migrate entity proof type', err)
+                                    console.error('Failed to continue with account', err)
+                                    setContinueError(err instanceof Error ? err.message : String(err))
+                                    setContinuing(false)
                                 }
-
-                                await invoke('set_domain', { domain: user.entity.value.domain, ccid: user.ccid })
-
-                                reset()
-                                window.location.reload()
                             }}
                         >
-                            このアカウントで続行
+                            {continuing ? '続行中...' : 'このアカウントで続行'}
                         </AuthButton>
                         <ResetSessionButton
                             ccid={user!.ccid}

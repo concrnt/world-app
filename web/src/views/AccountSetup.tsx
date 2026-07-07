@@ -41,6 +41,7 @@ export const AccountSetup = (props: Props) => {
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
+    const [finalizeError, setFinalizeError] = useState<string | null>(null)
     const [identity, setIdentity] = useState<Identity | null>(null)
 
     const serverInput = useRef<HTMLInputElement>(null)
@@ -100,34 +101,42 @@ export const AccountSetup = (props: Props) => {
     const finalize = async () => {
         if (!identity) return
 
+        setFinalizeError(null)
         setFinalizing(true)
-        const authProvider = new InMemoryAuthProvider(identity.privateKey)
-        const kvs = new InMemoryKVS()
-        const api = new Api(domain, authProvider, kvs)
+        try {
+            const authProvider = new InMemoryAuthProvider(identity.privateKey)
+            const kvs = new InMemoryKVS()
+            const api = new Api(domain, authProvider, kvs)
 
-        const subIdentity = GenerateIdentity()
-        const ckid = ComputeCKID(subIdentity.publicKey)
+            const subIdentity = GenerateIdentity()
+            const ckid = ComputeCKID(subIdentity.publicKey)
 
-        const subkeyDoc: Document<{ ckid: string }> = {
-            kind: 'record',
-            key: semantics.subkey(identity.CCID, ckid),
-            author: identity.CCID,
-            schema: 'https://schema.concrnt.net/subkey.json',
-            value: {
-                ckid
-            },
-            createdAt: new Date()
+            const subkeyDoc: Document<{ ckid: string }> = {
+                kind: 'record',
+                key: semantics.subkey(identity.CCID, ckid),
+                author: identity.CCID,
+                schema: 'https://schema.concrnt.net/subkey.json',
+                value: {
+                    ckid
+                },
+                createdAt: new Date()
+            }
+
+            await api.commit(subkeyDoc, domain, { useMasterkey: true })
+
+            storeWebSession(
+                domain,
+                identity.privateKey,
+                `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
+            )
+            reset()
+            await reload()
+        } catch (err) {
+            console.error('Failed to finalize registration', err)
+            setFinalizeError(err instanceof Error ? err.message : String(err))
+        } finally {
+            setFinalizing(false)
         }
-
-        await api.commit(subkeyDoc, domain, { useMasterkey: true })
-
-        storeWebSession(
-            domain,
-            identity.privateKey,
-            `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
-        )
-        reset()
-        await reload()
     }
 
     const state = accountCreated ? 'done' : identity && !registrationPageOpened ? 'backup' : 'initial'
@@ -425,6 +434,13 @@ CCID: ${identity.CCID}
                         description="登録が確認できました。最後にこのブラウザで使う鍵を登録します。"
                     />
                     <AuthActions fixedBottom>
+                        {finalizeError && (
+                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
+                                登録に失敗しました。通信環境を確認して、もう一度お試しください。
+                                {'\n'}
+                                {finalizeError}
+                            </Text>
+                        )}
                         <AuthButton disabled={finalizing} onClick={finalize}>
                             {finalizing ? '登録中...' : '完了'}
                         </AuthButton>

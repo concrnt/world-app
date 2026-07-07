@@ -33,6 +33,7 @@ export const AccountSetup = (props: Props) => {
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
+    const [finalizeError, setFinalizeError] = useState<string | null>(null)
 
     useEffect(() => {
         const timer = setInterval(async () => {
@@ -194,47 +195,63 @@ export const AccountSetup = (props: Props) => {
                         description="登録が確認できました。最後にこの端末で使う鍵を登録します。"
                     />
                     <AuthActions fixedBottom>
+                        {finalizeError && (
+                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
+                                登録に失敗しました。通信環境を確認して、もう一度お試しください。
+                                {'\n'}
+                                {finalizeError}
+                            </Text>
+                        )}
                         <AuthButton
                             disabled={finalizing}
                             onClick={async () => {
+                                setFinalizeError(null)
                                 setFinalizing(true)
                                 const ccid = createdCCID
                                 if (typeof ccid !== 'string') {
-                                    alert('プログラムエラー: CCIDが見つかりません')
+                                    setFinalizeError('プログラムエラー: CCIDが見つかりません')
+                                    setFinalizing(false)
                                     return
                                 }
 
-                                const authProvider = new TauriAuthProvider(ccid)
-                                const kvs = new InMemoryKVS()
+                                try {
+                                    const authProvider = new TauriAuthProvider(ccid)
+                                    const kvs = new InMemoryKVS()
 
-                                const api = new Api(domain, authProvider, kvs)
+                                    const api = new Api(domain, authProvider, kvs)
 
-                                const ckid: string = await invoke('create_subkey', { ccid })
+                                    const ckid: string = await invoke('create_subkey', { ccid })
 
-                                const subkeyDoc: Document<any> = {
-                                    kind: 'record',
-                                    key: semantics.subkey(ccid, ckid),
-                                    author: ccid,
-                                    schema: 'https://schema.concrnt.net/subkey.json',
-                                    value: {
-                                        ckid
-                                    },
-                                    createdAt: new Date()
-                                }
+                                    const subkeyDoc: Document<any> = {
+                                        kind: 'record',
+                                        key: semantics.subkey(ccid, ckid),
+                                        author: ccid,
+                                        schema: 'https://schema.concrnt.net/subkey.json',
+                                        value: {
+                                            ckid
+                                        },
+                                        createdAt: new Date()
+                                    }
 
-                                console.log('Committing subkey document:', subkeyDoc)
-                                await api.commit(subkeyDoc, domain, { useMasterkey: true })
-                                console.log('Subkey document committed')
-                                await invoke('set_domain', { domain, ccid })
-                                console.log('Domain set in backend')
+                                    console.log('Committing subkey document:', subkeyDoc)
+                                    await api.commit(subkeyDoc, domain, { useMasterkey: true })
+                                    console.log('Subkey document committed')
+                                    await invoke('set_domain', { domain, ccid })
+                                    console.log('Domain set in backend')
 
-                                reset()
-                                console.log('Preferences reset')
-                                if (props.onComplete) {
-                                    props.onComplete()
-                                } else {
-                                    reload()
-                                    console.log('Client reloaded')
+                                    reset()
+                                    console.log('Preferences reset')
+                                    if (props.onComplete) {
+                                        props.onComplete()
+                                    } else {
+                                        reload()
+                                        console.log('Client reloaded')
+                                    }
+                                } catch (err) {
+                                    console.error('Failed to finalize registration', err)
+                                    setFinalizeError(err instanceof Error ? err.message : String(err))
+                                } finally {
+                                    setFinalizing(false)
                                 }
                             }}
                         >
