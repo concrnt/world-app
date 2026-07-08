@@ -32,7 +32,8 @@
       "icons/icon.ico"
     ],
     "android": {
-      "autoIncrementVersionCode": true
+      "autoIncrementVersionCode": false,
+      "versionCode": 2026070801
     }
   }
 }
