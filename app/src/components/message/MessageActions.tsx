@@ -6,6 +6,7 @@ import { hapticLight, hapticSuccess } from '../../utils/haptics'
 import { startTransition, useOptimistic } from 'react'
 import { useSelect } from '../../contexts/Select'
 import { Report } from '../Report'
+import { MessageInspector } from './MessageInspector'
 
 import { MdStar } from 'react-icons/md'
 import { MdStarOutline } from 'react-icons/md'
@@ -227,6 +228,15 @@ export const MessageActions = (props: Props) => {
                             }}
                         >
                             通報
+                        </ListItem>,
+                        <ListItem
+                            key="inspect"
+                            onClick={() => {
+                                drawer.open(<MessageInspector message={props.message} />)
+                                close()
+                            }}
+                        >
+                            <Text>インスペクター</Text>
                         </ListItem>
                     ])
                 }}
