@@ -1,8 +1,21 @@
-import { Suspense, useEffect, useState } from 'react'
-import { Button, Switch, Text, TextField } from '@concrnt/ui'
+import { type CSSProperties, Suspense, useEffect, useId, useState } from 'react'
+import {
+    Button,
+    IconButton,
+    List as ListView,
+    ListItem,
+    Popover,
+    Switch,
+    Tab,
+    Tabs,
+    Text,
+    TextField
+} from '@concrnt/ui'
+import { MdDelete, MdMoreHoriz, MdOutlinePushPin, MdPlaylistRemove, MdPushPin } from 'react-icons/md'
 import { TimelinePicker } from './TimelinePicker'
+import { TimelineTag } from './TimelineTag'
 import { useClient } from '../contexts/Client'
-import { List, Timeline } from '@concrnt/worldlib'
+import { List, Schemas, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
 
@@ -22,6 +35,9 @@ export const ListSettings = (props: Props) => {
     const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
     const [postProfile, setPostProfile] = useState<string>(pin?.defaultProfile ?? client?.currentProfile ?? 'main')
     const [excludeSelf, setExcludeSelf] = useState<boolean>(pin?.excludeSelf ?? false)
+
+    const [menuOpen, setMenuOpen] = useState(false)
+    const menuAnchor = '--list-settings-menu-' + useId().replace(/[^a-zA-Z0-9-]/g, '')
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 
@@ -64,10 +80,44 @@ export const ListSettings = (props: Props) => {
                 }}
             >
                 <Text variant="h3">リスト設定</Text>
-                <Button onClick={saveSettings} busyChildren="保存中...">
-                    保存
-                </Button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                    <IconButton onClick={() => setMenuOpen(true)} style={{ anchorName: menuAnchor } as CSSProperties}>
+                        <MdMoreHoriz size={20} />
+                    </IconButton>
+                    <Button onClick={saveSettings} busyChildren="保存中...">
+                        保存
+                    </Button>
+                </div>
             </div>
+
+            <Popover open={menuOpen} onClose={() => setMenuOpen(false)} anchor={menuAnchor}>
+                <ListView dense disablePadding style={{ minWidth: '180px' }}>
+                    <ListItem
+                        icon={isPinned ? <MdOutlinePushPin size={20} /> : <MdPushPin size={20} />}
+                        onClick={() => {
+                            setMenuOpen(false)
+                            if (isPinned) {
+                                client?.removePin(props.uri)
+                            } else {
+                                client?.addPin(props.uri)
+                            }
+                        }}
+                    >
+                        {isPinned ? 'ピン留めを解除' : 'ピン留めする'}
+                    </ListItem>
+                    <ListItem
+                        icon={<MdDelete size={20} />}
+                        onClick={() => {
+                            setMenuOpen(false)
+                            client?.api.delete(props.uri).then(() => {
+                                props.onComplete?.()
+                            })
+                        }}
+                    >
+                        リストを削除
+                    </ListItem>
+                </ListView>
+            </Popover>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">リスト名</Text>
                 <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
@@ -95,28 +145,99 @@ export const ListSettings = (props: Props) => {
                 </div>
             )}
 
-            {isPinned ? (
-                <Button
-                    onClick={() => {
-                        client?.removePin(props.uri).then(() => {
-                            props.onComplete?.()
-                        })
-                    }}
-                >
-                    ピン留め解除
-                </Button>
-            ) : (
-                <Button
-                    onClick={() => {
-                        client?.api.delete(props.uri).then(() => {
-                            props.onComplete?.()
-                        })
-                    }}
-                >
-                    リストを削除
-                </Button>
+            {list && (
+                <Suspense fallback={<Text>Loading...</Text>}>
+                    <ContainedTimelines list={list} />
+                </Suspense>
             )}
         </div>
+    )
+}
+
+const ContainedTimelines = (props: { list: List }) => {
+    const [items] = useSubscribe(props.list.items)
+    const [tab, setTab] = useState<'community' | 'user'>('community')
+
+    const activeColor = CssVar.contentLink
+    const inactiveColor = `rgb(from ${CssVar.contentText} r g b / 0.35)`
+    const tabStyle = (selected: boolean) => ({
+        color: selected ? activeColor : inactiveColor,
+        fontWeight: selected ? ('bold' as const) : ('normal' as const)
+    })
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+            <Text variant="h5">含まれるタイムライン</Text>
+            <Tabs>
+                <Tab
+                    selected={tab === 'community'}
+                    groupId="list-settings-timelines"
+                    style={tabStyle(tab === 'community')}
+                    onClick={() => setTab('community')}
+                >
+                    <Text>コミュニティ</Text>
+                </Tab>
+                <Tab
+                    selected={tab === 'user'}
+                    groupId="list-settings-timelines"
+                    style={tabStyle(tab === 'user')}
+                    onClick={() => setTab('user')}
+                >
+                    <Text>ユーザー</Text>
+                </Tab>
+            </Tabs>
+            <ResolvedTimelineList list={props.list} uris={items} filter={tab} />
+        </div>
+    )
+}
+
+const ResolvedTimelineList = (props: { list: List; uris: string[]; filter: 'community' | 'user' }) => {
+    const { client } = useClient()
+    const [resolved, setResolved] = useState<Array<{ uri: string; timeline: Timeline | null }> | null>(null)
+
+    useEffect(() => {
+        if (!client) return
+        let cancelled = false
+        Promise.all(props.uris.map(async (uri) => ({ uri, timeline: await client.getTimeline(uri) }))).then((r) => {
+            if (!cancelled) setResolved(r)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [client, props.uris])
+
+    if (!resolved) {
+        return <Text style={{ opacity: 0.6 }}>Loading...</Text>
+    }
+
+    const targetSchema = props.filter === 'community' ? Schemas.communityTimeline : Schemas.userTimeline
+    const filtered = resolved.filter(({ timeline }) => timeline?.schema === targetSchema)
+
+    if (filtered.length === 0) {
+        return <Text style={{ opacity: 0.6 }}>タイムラインがありません</Text>
+    }
+
+    return (
+        <ListView dense>
+            {filtered.map(({ uri }) => (
+                <ListItem
+                    key={uri}
+                    style={{ borderBottom: `1px solid ${CssVar.divider}` }}
+                    secondaryAction={
+                        <IconButton
+                            onClick={() => {
+                                if (!client) return
+                                props.list.removeItem(client, uri)
+                            }}
+                        >
+                            <MdPlaylistRemove size={20} />
+                        </IconButton>
+                    }
+                >
+                    <TimelineTag uri={uri} />
+                </ListItem>
+            ))}
+        </ListView>
     )
 }
 
