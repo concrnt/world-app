@@ -160,7 +160,7 @@ export const WelcomeView = () => {
                     <AuthActions fixedBottom>
                         {continueError && (
                             <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                続行に失敗しました。通信環境を確認して、もう一度お試しください。
+                                続行に失敗しました。もう一度お試しください。
                                 {'\n'}
                                 {continueError}
                             </Text>

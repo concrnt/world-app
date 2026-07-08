@@ -1,10 +1,14 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Button } from '@concrnt/ui'
+import { Button, Text } from '@concrnt/ui'
+import { useState } from 'react'
 import { useClient } from '../contexts/Client'
 
 export const BackupKeyButton = (props: { onClick?: () => void; ccid?: string }) => {
     const clientContext = useClient()
     const client = clientContext?.client
+
+    const [backingUp, setBackingUp] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const username = client?.profile?.username
     let filename = 'concrnt_backup'
@@ -15,13 +19,18 @@ export const BackupKeyButton = (props: { onClick?: () => void; ccid?: string }) 
     filename += `_${timestamp}.txt`
 
     return (
-        <Button
-            onClick={() => {
-                props.onClick?.()
-                invoke('backup_masterkey', {
-                    ccid: props.ccid,
-                    filename: filename,
-                    template: `Concrnt ログイン情報
+        <>
+            <Button
+                disabled={backingUp}
+                onClick={async () => {
+                    props.onClick?.()
+                    setError(null)
+                    setBackingUp(true)
+                    try {
+                        await invoke('backup_masterkey', {
+                            ccid: props.ccid,
+                            filename: filename,
+                            template: `Concrnt ログイン情報
 このファイルは Concrnt のログイン情報をバックアップするためのものです。
 このファイルを安全な場所に保管してください。
 
@@ -31,10 +40,24 @@ CCID: \${ccid}
 
 もし、マスターキーを紛失した場合、アカウントを復元することができなくなります。
 また、この内容を他人に知られると、アカウントが永久に乗っ取られる可能性があります。安全な場所に保管してください。`
-                })
-            }}
-        >
-            マスターキーをバックアップ
-        </Button>
+                        })
+                    } catch (err) {
+                        console.error('Failed to backup masterkey', err)
+                        setError(err instanceof Error ? err.message : String(err))
+                    } finally {
+                        setBackingUp(false)
+                    }
+                }}
+            >
+                {backingUp ? 'バックアップ中...' : 'マスターキーをバックアップ'}
+            </Button>
+            {error && (
+                <Text style={{ color: '#ff5b5b', wordBreak: 'break-all' }}>
+                    バックアップに失敗しました。
+                    {'\n'}
+                    {error}
+                </Text>
+            )}
+        </>
     )
 }

@@ -34,6 +34,8 @@ export const AccountSetup = (props: Props) => {
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
     const [finalizeError, setFinalizeError] = useState<string | null>(null)
+    const [starting, setStarting] = useState(false)
+    const [registrationError, setRegistrationError] = useState<string | null>(null)
 
     useEffect(() => {
         const timer = setInterval(async () => {
@@ -65,31 +67,40 @@ export const AccountSetup = (props: Props) => {
     }, [registrationPageOpened, domain, accountCreated, createdCCID])
 
     const openRegistrationPage = async (domain: string) => {
-        // 二重実行しても新しいアカウントが増えるだけで既存の鍵には触れないが、
-        // 孤児アカウントを作らないよう一度生成したccidを使い回す
-        const ccid: string = createdCCID ?? (await invoke('initialize_master'))
-        setCreatedCCID(ccid)
+        setRegistrationError(null)
+        setStarting(true)
+        try {
+            // 二重実行しても新しいアカウントが増えるだけで既存の鍵には触れないが、
+            // 孤児アカウントを作らないよう一度生成したccidを使い回す
+            const ccid: string = createdCCID ?? (await invoke('initialize_master'))
+            setCreatedCCID(ccid)
 
-        const authProvider = new TauriAuthProvider(ccid)
+            const authProvider = new TauriAuthProvider(ccid)
 
-        const document = {
-            kind: 'entity' as const,
-            author: ccid,
-            schema: 'https://schema.concrnt.net/entity.json',
-            value: {
-                domain
-            },
-            createdAt: new Date().toISOString()
+            const document = {
+                kind: 'entity' as const,
+                author: ccid,
+                schema: 'https://schema.concrnt.net/entity.json',
+                value: {
+                    domain
+                },
+                createdAt: new Date().toISOString()
+            }
+
+            const docString = JSON.stringify(document)
+            const signature = await authProvider.signMaster(docString)
+
+            const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
+
+            openUrl(`https://${domain}/register?document=${encodedDoc}&signature=${signature}`, 'inAppBrowser')
+
+            setRegistrationPageOpened(true)
+        } catch (err) {
+            console.error('Failed to open registration page', err)
+            setRegistrationError(err instanceof Error ? err.message : String(err))
+        } finally {
+            setStarting(false)
         }
-
-        const docString = JSON.stringify(document)
-        const signature = await authProvider.signMaster(docString)
-
-        const encodedDoc = btoa(docString).replace('+', '-').replace('/', '_').replace('==', '')
-
-        openUrl(`https://${domain}/register?document=${encodedDoc}&signature=${signature}`, 'inAppBrowser')
-
-        setRegistrationPageOpened(true)
     }
 
     const state = accountCreated ? 'done' : 'initial'
@@ -174,15 +185,27 @@ export const AccountSetup = (props: Props) => {
                         <Text style={authStyles.status}>
                             {registrationPageOpened ? 'サーバー上でアカウントが作成されるのを待っています。' : ''}
                         </Text>
+                        {registrationError && (
+                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
+                                登録を開始できませんでした。もう一度お試しください。
+                                {'\n'}
+                                {registrationError}
+                            </Text>
+                        )}
                     </div>
 
                     <AuthActions fixedBottom>
                         <AuthButton
+                            disabled={starting}
                             onClick={async () => {
-                                openRegistrationPage(domain)
+                                await openRegistrationPage(domain)
                             }}
                         >
-                            {props.entrypoint === domain ? 'おすすめサーバーではじめる' : 'このサーバーではじめる'}
+                            {starting
+                                ? '準備中...'
+                                : props.entrypoint === domain
+                                  ? 'おすすめサーバーではじめる'
+                                  : 'このサーバーではじめる'}
                         </AuthButton>
                         <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
                     </AuthActions>
@@ -197,7 +220,7 @@ export const AccountSetup = (props: Props) => {
                     <AuthActions fixedBottom>
                         {finalizeError && (
                             <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                登録に失敗しました。通信環境を確認して、もう一度お試しください。
+                                登録に失敗しました。もう一度お試しください。
                                 {'\n'}
                                 {finalizeError}
                             </Text>

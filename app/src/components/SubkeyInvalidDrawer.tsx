@@ -38,7 +38,8 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
             await onRecovered()
         } catch (err) {
             console.error('Failed to reactivate subkey', err)
-            setError('鍵の再有効化に失敗しました。時間をおいて再度お試しください。')
+            const detail = err instanceof Error ? err.message : String(err)
+            setError(`鍵の再有効化に失敗しました。もう一度お試しください。\n${detail}`)
         }
     }
 
@@ -90,7 +91,9 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
                         ? '「鍵を再有効化」を押すと、この端末の鍵を復旧できます。'
                         : '投稿など書き込みを行うには、一度ログアウトし、再度ログインしてください。'}
                 </Text>
-                {error && <Text style={{ color: '#ff7676' }}>{error}</Text>}
+                {error && (
+                    <Text style={{ color: '#ff7676', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{error}</Text>
+                )}
                 <div
                     style={{
                         marginTop: 'auto',
