@@ -14,6 +14,8 @@ import {
 import { MdDelete, MdMoreHoriz, MdOutlinePushPin, MdPlaylistRemove, MdPushPin } from 'react-icons/md'
 import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
+import { useStack } from '../layouts/Stack'
+import { TimelineView } from '../views/Timeline'
 import { useClient } from '../contexts/Client'
 import { List, Schemas, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
@@ -147,14 +149,14 @@ export const ListSettings = (props: Props) => {
 
             {list && (
                 <Suspense fallback={<Text>Loading...</Text>}>
-                    <ContainedTimelines list={list} />
+                    <ContainedTimelines list={list} onComplete={props.onComplete} />
                 </Suspense>
             )}
         </div>
     )
 }
 
-const ContainedTimelines = (props: { list: List }) => {
+const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
     const [items] = useSubscribe(props.list.items)
     const [tab, setTab] = useState<'community' | 'user'>('community')
 
@@ -186,13 +188,19 @@ const ContainedTimelines = (props: { list: List }) => {
                     <Text>ユーザー</Text>
                 </Tab>
             </Tabs>
-            <ResolvedTimelineList list={props.list} uris={items} filter={tab} />
+            <ResolvedTimelineList list={props.list} uris={items} filter={tab} onComplete={props.onComplete} />
         </div>
     )
 }
 
-const ResolvedTimelineList = (props: { list: List; uris: string[]; filter: 'community' | 'user' }) => {
+const ResolvedTimelineList = (props: {
+    list: List
+    uris: string[]
+    filter: 'community' | 'user'
+    onComplete?: () => void
+}) => {
     const { client } = useClient()
+    const { push } = useStack()
     const [resolved, setResolved] = useState<Array<{ uri: string; timeline: Timeline | null }> | null>(null)
 
     useEffect(() => {
@@ -234,7 +242,14 @@ const ResolvedTimelineList = (props: { list: List; uris: string[]; filter: 'comm
                         </IconButton>
                     }
                 >
-                    <TimelineTag uri={uri} />
+                    <TimelineTag
+                        uri={uri}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            props.onComplete?.()
+                            push(<TimelineView uri={uri} />)
+                        }}
+                    />
                 </ListItem>
             ))}
         </ListView>

@@ -11,6 +11,7 @@ import {
     Text,
     TextField
 } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
 import { MdDelete, MdMoreHoriz, MdOutlinePushPin, MdPlaylistRemove, MdPushPin } from 'react-icons/md'
 import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
@@ -147,14 +148,14 @@ export const ListSettings = (props: Props) => {
 
             {list && (
                 <Suspense fallback={<Text>Loading...</Text>}>
-                    <ContainedTimelines list={list} />
+                    <ContainedTimelines list={list} onComplete={props.onComplete} />
                 </Suspense>
             )}
         </div>
     )
 }
 
-const ContainedTimelines = (props: { list: List }) => {
+const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
     const [items] = useSubscribe(props.list.items)
     const [tab, setTab] = useState<'community' | 'user'>('community')
 
@@ -186,13 +187,19 @@ const ContainedTimelines = (props: { list: List }) => {
                     <Text>ユーザー</Text>
                 </Tab>
             </Tabs>
-            <ResolvedTimelineList list={props.list} uris={items} filter={tab} />
+            <ResolvedTimelineList list={props.list} uris={items} filter={tab} onComplete={props.onComplete} />
         </div>
     )
 }
 
-const ResolvedTimelineList = (props: { list: List; uris: string[]; filter: 'community' | 'user' }) => {
+const ResolvedTimelineList = (props: {
+    list: List
+    uris: string[]
+    filter: 'community' | 'user'
+    onComplete?: () => void
+}) => {
     const { client } = useClient()
+    const navigate = useNavigate()
     const [resolved, setResolved] = useState<Array<{ uri: string; timeline: Timeline | null }> | null>(null)
 
     useEffect(() => {
@@ -234,7 +241,14 @@ const ResolvedTimelineList = (props: { list: List; uris: string[]; filter: 'comm
                         </IconButton>
                     }
                 >
-                    <TimelineTag uri={uri} />
+                    <TimelineTag
+                        uri={uri}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            props.onComplete?.()
+                            navigate('/timeline/' + encodeURIComponent(uri))
+                        }}
+                    />
                 </ListItem>
             ))}
         </ListView>
