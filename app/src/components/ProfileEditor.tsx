@@ -224,22 +224,17 @@ export const ProfileEditor = (props: Props) => {
                 onChange={async (e) => {
                     if (e.target.files?.[0]) {
                         const file = e.target.files[0]
-                        const reader = new FileReader()
-                        reader.onload = async (event) => {
-                            const src = event.target?.result as string
-                            const croppedFile = await cropper.open(src, {
-                                aspect: 1,
-                                outputWidth: 512
-                            })
-                            if (croppedFile) {
-                                setAvatarDraft(croppedFile)
-                                setAvatar(URL.createObjectURL(croppedFile))
-                            }
-                        }
-                        reader.readAsDataURL(file)
                         // 同じファイルを再選択できるようにリセット
                         if (avatarInputRef.current) {
                             avatarInputRef.current.value = ''
+                        }
+                        const croppedFile = await cropper.open(file, {
+                            aspect: 1,
+                            outputWidth: 512
+                        })
+                        if (croppedFile) {
+                            setAvatarDraft(croppedFile)
+                            setAvatar(URL.createObjectURL(croppedFile))
                         }
                     }
                 }}
@@ -253,23 +248,18 @@ export const ProfileEditor = (props: Props) => {
                 onChange={async (e) => {
                     if (e.target.files?.[0]) {
                         const file = e.target.files[0]
-                        const reader = new FileReader()
-                        reader.onload = async (event) => {
-                            const src = event.target?.result as string
-                            const croppedFile = await cropper.open(src, {
-                                aspect: 3,
-                                outputWidth: 1500,
-                                outputHeight: 500
-                            })
-                            if (croppedFile) {
-                                setBannerDraft(croppedFile)
-                                setBanner(URL.createObjectURL(croppedFile))
-                            }
-                        }
-                        reader.readAsDataURL(file)
                         // 同じファイルを再選択できるようにリセット
                         if (bannerInputRef.current) {
                             bannerInputRef.current.value = ''
+                        }
+                        const croppedFile = await cropper.open(file, {
+                            aspect: 3,
+                            outputWidth: 1500,
+                            outputHeight: 500
+                        })
+                        if (croppedFile) {
+                            setBannerDraft(croppedFile)
+                            setBanner(URL.createObjectURL(croppedFile))
                         }
                     }
                 }}

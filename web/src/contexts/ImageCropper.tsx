@@ -14,7 +14,7 @@ interface CropOptions {
 
 interface ImageCropperState {
     /** クロッパーを開く。決定で File、キャンセルで null を返す */
-    open: (imageSrc: string, options?: CropOptions) => Promise<File | null>
+    open: (source: File, options?: CropOptions) => Promise<File | null>
 }
 
 const ImageCropperContext = createContext<ImageCropperState>({
@@ -26,7 +26,8 @@ interface Props {
 }
 
 export const ImageCropperProvider = (props: Props) => {
-    const [imageSrc, setImageSrc] = useState<string | null>(null)
+    // 表示用に生成した Object URL（react-easy-crop に渡す）
+    const [imageUrl, setImageUrl] = useState<string | null>(null)
     const [options, setOptions] = useState<CropOptions>({})
 
     const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -34,15 +35,31 @@ export const ImageCropperProvider = (props: Props) => {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
     const [processing, setProcessing] = useState(false)
 
+    // クロップ対象の元 File（base64 化せず直接 cropImage に渡す）
+    const sourceFileRef = useRef<File | null>(null)
+    // 解放用に現在の Object URL を保持
+    const urlRef = useRef<string | null>(null)
     // Promise の resolve を保持して、決定/キャンセル時に呼ぶ
     const resolverRef = useRef<((file: File | null) => void) | null>(null)
 
-    const open = useCallback((src: string, opts?: CropOptions): Promise<File | null> => {
+    const cleanup = useCallback(() => {
+        if (urlRef.current) {
+            URL.revokeObjectURL(urlRef.current)
+            urlRef.current = null
+        }
+        sourceFileRef.current = null
+        setImageUrl(null)
+    }, [])
+
+    const open = useCallback((source: File, opts?: CropOptions): Promise<File | null> => {
         setCrop({ x: 0, y: 0 })
         setZoom(1)
         setCroppedAreaPixels(null)
         setProcessing(false)
-        setImageSrc(src)
+        sourceFileRef.current = source
+        const url = URL.createObjectURL(source)
+        urlRef.current = url
+        setImageUrl(url)
         setOptions(opts ?? {})
 
         return new Promise<File | null>((resolve) => {
@@ -51,11 +68,12 @@ export const ImageCropperProvider = (props: Props) => {
     }, [])
 
     const handleConfirm = useCallback(async () => {
-        if (!croppedAreaPixels || !imageSrc) return
+        const file = sourceFileRef.current
+        if (!croppedAreaPixels || !file) return
         setProcessing(true)
         try {
             const croppedFile = await cropImage(
-                imageSrc,
+                file,
                 croppedAreaPixels,
                 options.outputWidth ?? 512,
                 options.outputHeight
@@ -66,16 +84,16 @@ export const ImageCropperProvider = (props: Props) => {
             resolverRef.current?.(null)
         } finally {
             resolverRef.current = null
-            setImageSrc(null)
+            cleanup()
             setProcessing(false)
         }
-    }, [croppedAreaPixels, imageSrc, options])
+    }, [croppedAreaPixels, options, cleanup])
 
     const handleCancel = useCallback(() => {
         resolverRef.current?.(null)
         resolverRef.current = null
-        setImageSrc(null)
-    }, [])
+        cleanup()
+    }, [cleanup])
 
     const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels)
@@ -87,7 +105,7 @@ export const ImageCropperProvider = (props: Props) => {
         <ImageCropperContext.Provider value={value}>
             {props.children}
 
-            {imageSrc && (
+            {imageUrl && (
                 <div
                     style={{
                         position: 'fixed',
@@ -111,7 +129,7 @@ export const ImageCropperProvider = (props: Props) => {
                         }}
                     >
                         <Cropper
-                            image={imageSrc}
+                            image={imageUrl}
                             crop={crop}
                             zoom={zoom}
                             aspect={options.aspect ?? 1}
