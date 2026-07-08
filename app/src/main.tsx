@@ -50,9 +50,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             >
                 <PreferenceProvider>
                     <ThemeProvider>
-                        <OverlayStackProvider>
-                            <EmojiPickerProvider>
-                                <ImageCropperProvider>
+                        <ImageCropperProvider>
+                            <OverlayStackProvider>
+                                <EmojiPickerProvider>
                                     <ComposerProvider>
                                         <ScannerProvider>
                                             <OverlayProvider>
@@ -68,9 +68,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                             </OverlayProvider>
                                         </ScannerProvider>
                                     </ComposerProvider>
-                                </ImageCropperProvider>
-                            </EmojiPickerProvider>
-                        </OverlayStackProvider>
+                                </EmojiPickerProvider>
+                            </OverlayStackProvider>
+                        </ImageCropperProvider>
                     </ThemeProvider>
                 </PreferenceProvider>
             </ClientProvider>

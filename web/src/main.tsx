@@ -108,8 +108,8 @@ const AuthedRoutes = () => (
     >
         <PreferenceProvider>
             <ThemeProvider>
-                <OverlayStackProvider>
-                    <ImageCropperProvider>
+                <ImageCropperProvider>
+                    <OverlayStackProvider>
                         <EmojiPickerProvider>
                             <ComposerProvider>
                                 <MediaViewerProvider>
@@ -208,8 +208,8 @@ const AuthedRoutes = () => (
                                 </MediaViewerProvider>
                             </ComposerProvider>
                         </EmojiPickerProvider>
-                    </ImageCropperProvider>
-                </OverlayStackProvider>
+                    </OverlayStackProvider>
+                </ImageCropperProvider>
             </ThemeProvider>
         </PreferenceProvider>
     </ClientProvider>
