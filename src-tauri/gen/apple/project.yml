@@ -53,6 +53,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 0.1.0
         CFBundleVersion: "0.1.0"
+        NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。
     entitlements:
       path: world-app_iOS/world-app_iOS.entitlements
     scheme:
