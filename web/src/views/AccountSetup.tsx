@@ -15,7 +15,10 @@ import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
-import { MdHourglassEmpty, MdPhoneIphone } from 'react-icons/md'
+import { MdPhoneIphone } from 'react-icons/md'
+import { QRCode } from 'react-qrcode-logo'
+import appStoreBadge from '../assets/appstore-badge.svg'
+import googlePlayBadge from '../assets/googleplay-badge.png'
 
 interface Props {
     entrypoint: string
@@ -234,40 +237,38 @@ export const AccountSetup = (props: Props) => {
                             backgroundColor: `rgb(from ${CssVar.contentBackground} r g b / 0.86)`,
                             boxShadow: `inset 0 1px 0 rgb(from ${CssVar.contentText} r g b / 0.08)`,
                             display: 'flex',
-                            alignItems: 'flex-start',
+                            flexDirection: 'column',
                             gap: CssVar.space(2)
                         }}
                     >
                         <div
                             style={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: CssVar.round(1),
-                                backgroundColor: `rgb(from ${CssVar.contentLink} r g b / 0.14)`,
-                                color: CssVar.contentLink,
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flex: '0 0 auto'
-                            }}
-                        >
-                            <MdPhoneIphone size={24} />
-                        </div>
-                        <div
-                            style={{
-                                minWidth: 0,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: CssVar.space(1)
+                                alignItems: 'flex-start',
+                                gap: CssVar.space(2)
                             }}
                         >
                             <div
                                 style={{
+                                    width: 42,
+                                    height: 42,
+                                    borderRadius: CssVar.round(1),
+                                    backgroundColor: `rgb(from ${CssVar.contentLink} r g b / 0.14)`,
+                                    color: CssVar.contentLink,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    gap: CssVar.space(1.5),
-                                    flexWrap: 'wrap'
+                                    justifyContent: 'center',
+                                    flex: '0 0 auto'
+                                }}
+                            >
+                                <MdPhoneIphone size={24} />
+                            </div>
+                            <div
+                                style={{
+                                    minWidth: 0,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: CssVar.space(1)
                                 }}
                             >
                                 <Text
@@ -279,35 +280,85 @@ export const AccountSetup = (props: Props) => {
                                 >
                                     アプリでの作成がおすすめ
                                 </Text>
-                                <div
+                                <Text
                                     style={{
-                                        height: 26,
-                                        padding: `0 ${CssVar.space(1)}`,
-                                        borderRadius: CssVar.round(1),
-                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.08)`,
                                         color: CssVar.contentText,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: CssVar.space(0.5),
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                        whiteSpace: 'nowrap'
+                                        opacity: 0.76,
+                                        lineHeight: 1.65,
+                                        fontSize: '0.92rem'
                                     }}
                                 >
-                                    <MdHourglassEmpty size={16} />
-                                    リンク準備中
-                                </div>
+                                    マスターキーの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。お使いのスマートフォンで下のQRコードを読み取ってアプリを入手してください。
+                                </Text>
                             </div>
-                            <Text
-                                style={{
-                                    color: CssVar.contentText,
-                                    opacity: 0.76,
-                                    lineHeight: 1.65,
-                                    fontSize: '0.92rem'
-                                }}
-                            >
-                                マスターキーの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。現在ストア審査中のため、公開後にリンクを案内します。
-                            </Text>
+                        </div>
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: CssVar.space(3),
+                                flexWrap: 'wrap'
+                            }}
+                        >
+                            {[
+                                {
+                                    label: 'Download on the App Store',
+                                    badge: appStoreBadge,
+                                    url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
+                                },
+                                {
+                                    label: 'Get it on Google Play',
+                                    badge: googlePlayBadge,
+                                    url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
+                                }
+                            ].map((store) => (
+                                <a
+                                    key={store.label}
+                                    href={store.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1.5),
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            padding: 8,
+                                            borderRadius: CssVar.round(1),
+                                            backgroundColor: '#ffffff',
+                                            boxSizing: 'border-box',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <QRCode
+                                            value={store.url}
+                                            size={288}
+                                            ecLevel="M"
+                                            quietZone={0}
+                                            style={{ width: 144, height: 144 }}
+                                            fgColor="#000000"
+                                            bgColor="#ffffff"
+                                            qrStyle="squares"
+                                            eyeRadius={0}
+                                        />
+                                    </div>
+                                    <img
+                                        src={store.badge}
+                                        alt={store.label}
+                                        style={{
+                                            height: 40,
+                                            width: 'auto'
+                                        }}
+                                    />
+                                </a>
+                            ))}
                         </div>
                     </div>
 
