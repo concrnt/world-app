@@ -30,7 +30,7 @@
 		67FAED51536CB18AC90660F0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		8B19A8C3EE2470A47AE9C07C /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		9E785D893A4E4A6B1F96A47F /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
-		A5E5EF0BEA26524B5E398421 /* world-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "world-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5E5EF0BEA26524B5E398421 /* concrnt-world.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "concrnt-world.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C8AA335DC7CA6A4833722A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A9098138DE1443798C468987 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		A997B192DB06D319C9550A5C /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
@@ -98,7 +98,7 @@
 		7586FE3D0219858221F8E9DC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A5E5EF0BEA26524B5E398421 /* world-app.app */,
+				A5E5EF0BEA26524B5E398421 /* concrnt-world.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -170,7 +170,7 @@
 			packageProductDependencies = (
 			);
 			productName = "world-app_iOS";
-			productReference = A5E5EF0BEA26524B5E398421 /* world-app.app */;
+			productReference = A5E5EF0BEA26524B5E398421 /* concrnt-world.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
