@@ -6,12 +6,19 @@ use tauri_plugin_store::StoreExt;
 
 use crate::Error;
 
-// キーチェーンには全アカウントを1つのJSONブロブとして保存する。
-// iOSではkSecAttrSynchronizableによりiCloudキーチェーンで同期され、
-// AndroidではBlock Store + Auto Backupによりアンインストール後も復元される。
+// 全アカウントを1つのJSONブロブとして、2つのストアに保存する:
+//   - ローカル正コピー: tauri-plugin-store(端末内の永続ファイル)。消えない「真」の保存先。
+//   - iCloud同期バックアップ: iOSキーチェーンの synchronizable アイテム。クロスデバイス/復元用。
+// キーチェーンの synchronizable アイテムはシミュレータやiCloud設定変更時にまばらに読めなくなるため、
+// これ単独には依存しない。読み取り時は両者を ccid で統合(union)し、片方が一時的に読めなくても、
+// あるいは片方にしか無いアカウントでも「無いこと」にはしない。並び順はローカルを基準とする。
+// 書き込みはローカル(必ず永続化)＋キーチェーン(ベストエフォート)の両方に行う。
+// AndroidではキーチェーンプラグインがBlock Store + Auto Backupを用い、アンインストール後も復元される。
 const ACCOUNTS_KEY: &str = "concrnt_accounts";
 const SESSION_STORE: &str = "session";
 const ACTIVE_CCID: &str = "active_ccid";
+// ローカル正コピーをストア内に保持するキー。
+const LOCAL_ACCOUNTS: &str = "accounts";
 
 // Block Storeの総容量(約64KB)に対する安全マージン。1アカウント約450バイト。
 const MAX_ACCOUNTS: usize = 20;
@@ -151,65 +158,126 @@ fn pick_active(file: &AccountsFile, stored: Option<&str>) -> Option<String> {
     file.accounts.first().map(|a| a.ccid.clone())
 }
 
-// ===== キーチェーン/ストアIO =====
+/// ローカル(正)とクラウド(iCloud同期バックアップ)のアカウント一覧を統合する。
+/// どちらか一方にしか無いアカウントも保持し(ccidで重複排除)、「鍵があるのに無い」誤認を防ぐ。
+/// 並び順はローカルを基準にし(将来の並べ替え機能はローカルで順序を持つ)、ローカルに無く
+/// クラウドにのみ有るアカウントを末尾に追加する。同一ccidが両方にある場合は、subkey/domain等の
+/// 端末固有フィールドを持つローカルのレコードを優先する。
+fn merge_accounts(local: Option<AccountsFile>, cloud: Option<AccountsFile>) -> AccountsFile {
+    let mut merged = local.map(|f| f.accounts).unwrap_or_default();
+    if let Some(cloud) = cloud {
+        for c in cloud.accounts {
+            if !merged.iter().any(|a| a.ccid == c.ccid) {
+                merged.push(c);
+            }
+        }
+    }
+    AccountsFile {
+        version: 1,
+        accounts: merged,
+    }
+}
 
-/// ブロブを読み込む。アイテム欠落は空ファイル(existed=false)として扱うが、
-/// パース失敗はErrを返す。呼び出し側はErr時に書き込みを一切行わないこと
-/// (壊れたブロブを空として上書きすると全鍵を失うため)。
-fn load_accounts_raw(app_handle: &tauri::AppHandle) -> Result<(AccountsFile, bool), Error> {
+// ===== ストアIO(ローカル正コピー) =====
+
+/// ローカル正コピーを読み込む。欠落はNone。パース失敗はErr(壊れた正を空として上書きしないため)。
+fn load_local(app_handle: &tauri::AppHandle) -> Result<Option<AccountsFile>, Error> {
+    let store = session_store(app_handle)?;
+    match store.get(LOCAL_ACCOUNTS) {
+        Some(value) => {
+            let file: AccountsFile = serde_json::from_value(value)
+                .map_err(|e| format!("Local accounts data is corrupted: {}", e))?;
+            Ok(Some(file))
+        }
+        None => Ok(None),
+    }
+}
+
+/// ローカル正コピーを永続化する。鍵の唯一確実な保存先なので、必ずディスクへflushする。
+fn save_local(app_handle: &tauri::AppHandle, file: &AccountsFile) -> Result<(), Error> {
+    let store = session_store(app_handle)?;
+    let value =
+        serde_json::to_value(file).map_err(|e| format!("Failed to serialize accounts: {}", e))?;
+    store.set(LOCAL_ACCOUNTS.to_string(), value);
+    store
+        .save()
+        .map_err(|e| format!("Failed to persist accounts: {}", e))
+}
+
+// ===== キーチェーンIO(iCloud同期バックアップ) =====
+
+/// iCloud同期バックアップを読み込む。ベストエフォート: 読み取り失敗・パース失敗はNone
+/// (ローカル正が別途あるため致命的でない)。
+fn load_cloud(app_handle: &tauri::AppHandle) -> Option<AccountsFile> {
     let request = KeychainRequest {
         key: Some(ACCOUNTS_KEY.to_string()),
         password: None,
     };
-
-    let raw = match app_handle.keychain().get_item(request) {
-        Ok(resp) => resp.password,
-        Err(e) => return Err(format!("Failed to read keychain: {}", e)),
-    };
-
-    match raw {
-        Some(json) if !json.trim().is_empty() => {
-            let file: AccountsFile = serde_json::from_str(&json)
-                .map_err(|e| format!("Accounts data is corrupted: {}", e))?;
-            Ok((file, true))
-        }
-        _ => Ok((AccountsFile::default(), false)),
+    let raw = app_handle.keychain().get_item(request).ok()?.password?;
+    if raw.trim().is_empty() {
+        return None;
+    }
+    match serde_json::from_str(&raw) {
+        Ok(file) => Some(file),
+        Err(_) => None,
     }
 }
 
-pub(crate) fn load_accounts(app_handle: &tauri::AppHandle) -> Result<AccountsFile, Error> {
-    load_accounts_raw(app_handle).map(|(file, _)| file)
+/// iCloud同期バックアップへ書き込む(ベストエフォート)。統合済みブロブを書くため、
+/// 既存クラウド分の消失は起きない(update-or-add)。失敗しても正はローカルにあるので無視する。
+fn save_cloud_best_effort(app_handle: &tauri::AppHandle, file: &AccountsFile) {
+    let json = match serde_json::to_string(file) {
+        Ok(json) => json,
+        Err(_) => return,
+    };
+    let updated = app_handle.keychain().update_item(KeychainRequest {
+        key: Some(ACCOUNTS_KEY.to_string()),
+        password: Some(json.clone()),
+    });
+    if !updated {
+        // 存在しなければ追加する。
+        app_handle.keychain().save_item(KeychainRequest {
+            key: Some(ACCOUNTS_KEY.to_string()),
+            password: Some(json),
+        });
+    }
 }
 
-fn save_accounts_raw(
-    app_handle: &tauri::AppHandle,
-    file: &AccountsFile,
-    existed: bool,
-) -> Result<(), Error> {
-    let json =
-        serde_json::to_string(file).map_err(|e| format!("Failed to serialize accounts: {}", e))?;
-    let request = KeychainRequest {
-        key: Some(ACCOUNTS_KEY.to_string()),
-        password: Some(json),
-    };
+/// ローカル正とクラウドを統合した現在のアカウント一覧を返す。
+pub(crate) fn load_accounts(app_handle: &tauri::AppHandle) -> Result<AccountsFile, Error> {
+    let local = load_local(app_handle)?;
+    let cloud = load_cloud(app_handle);
+    Ok(merge_accounts(local, cloud))
+}
 
-    // save_itemはadd専用(重複時は失敗)、update_itemは既存アイテムのin-place更新専用。
-    // existed=falseなのに実体が存在した場合(同期の競合など)はsave_itemが失敗し、
-    // サイレント上書きは起こらない。
-    let success = if existed {
-        app_handle.keychain().update_item(request)
-    } else {
-        app_handle.keychain().save_item(request)
-    };
+/// クラウドにのみ存在する既存データを、信頼できるローカル正コピーへ複製する(冪等)。
+/// 既存ユーザーの移行と、同期コピーが一時的に読めない状況での「無いこと」誤認の防止のため、
+/// アプリ起動時の読み取り経路(get_active_ccid)から呼ぶ。ミューテーションロックを取得して
+/// 読み取り経路の競合書き込みを避ける。ローカルが既に存在すれば何もしない。
+fn ensure_migrated(app_handle: &tauri::AppHandle) -> Result<(), Error> {
+    let lock = app_handle.state::<AccountsLock>();
+    let _guard = lock
+        .0
+        .lock()
+        .map_err(|_| "Accounts lock is poisoned".to_string())?;
 
-    if !success {
-        return Err("Failed to save accounts to keychain".to_string());
+    if load_local(app_handle)?
+        .map(|f| !f.accounts.is_empty())
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+    if let Some(cloud) = load_cloud(app_handle) {
+        if !cloud.accounts.is_empty() {
+            save_local(app_handle, &cloud)?;
+        }
     }
     Ok(())
 }
 
-/// ブロブへの全ての変更はこの関数を通す。Mutexで直列化し、
-/// 変更後にguard_no_key_lossで鍵の消失がないことを検証してから保存する。
+/// アカウント一覧への全ての変更はこの関数を通す。Mutexで直列化し、統合した現在値(before)を基準に
+/// 変更後にguard_no_key_lossで鍵の消失がないことを検証してから、ローカル正(必ず永続化)と
+/// クラウド同期バックアップ(ベストエフォート)の両方へ保存する。
 pub(crate) fn with_accounts_mut<T>(
     app_handle: &tauri::AppHandle,
     allow_removal: bool,
@@ -221,11 +289,12 @@ pub(crate) fn with_accounts_mut<T>(
         .lock()
         .map_err(|_| "Accounts lock is poisoned".to_string())?;
 
-    let (before, existed) = load_accounts_raw(app_handle)?;
+    let before = merge_accounts(load_local(app_handle)?, load_cloud(app_handle));
     let mut file = before.clone();
     let result = f(&mut file)?;
     guard_no_key_loss(&before, &file, allow_removal)?;
-    save_accounts_raw(app_handle, &file, existed)?;
+    save_local(app_handle, &file)?;
+    save_cloud_best_effort(app_handle, &file);
     Ok(result)
 }
 
@@ -264,6 +333,8 @@ pub(crate) fn remove_account(app_handle: &tauri::AppHandle, ccid: &str) -> Resul
 }
 
 /// 全アカウントとアクティブポインタを消す非常口。通常のフローからは呼ばないこと。
+/// ローカル正・クラウド同期の両方を消す。クラウド削除に失敗するとローカルを消しても
+/// 次回のunion読み取りで復活し得るため、その場合はエラーを返してリトライを促す。
 pub(crate) fn clear_all(app_handle: &tauri::AppHandle) -> Result<(), Error> {
     let lock = app_handle.state::<AccountsLock>();
     let _guard = lock
@@ -271,18 +342,31 @@ pub(crate) fn clear_all(app_handle: &tauri::AppHandle) -> Result<(), Error> {
         .lock()
         .map_err(|_| "Accounts lock is poisoned".to_string())?;
 
-    app_handle.keychain().remove_item(KeychainRequest {
+    let cloud_removed = app_handle.keychain().remove_item(KeychainRequest {
         key: Some(ACCOUNTS_KEY.to_string()),
         password: None,
     });
+
     let store = session_store(app_handle)?;
     store.clear();
+    store
+        .save()
+        .map_err(|e| format!("Failed to persist store: {}", e))?;
+
+    if !cloud_removed {
+        return Err(
+            "Failed to clear iCloud-synced accounts from keychain (local copy was cleared)"
+                .to_string(),
+        );
+    }
     Ok(())
 }
 
 // ===== アクティブアカウント =====
 
 pub(crate) fn get_active_ccid(app_handle: &tauri::AppHandle) -> Result<Option<String>, Error> {
+    // 起動時の読み取り経路。既存ユーザーのクラウド→ローカル移行をここで確実に行う。
+    ensure_migrated(app_handle)?;
     let file = load_accounts(app_handle)?;
 
     let store = session_store(app_handle)?;
@@ -471,6 +555,37 @@ mod tests {
         let mut file = file_with(vec![record("con1aaa", "m1")]);
         let next = remove_from(&mut file, "con1aaa", Some("con1aaa")).unwrap();
         assert_eq!(next, None);
+    }
+
+    #[test]
+    fn merge_unions_dedupes_and_prefers_local() {
+        let mut local_a = record("con1aaa", "m1");
+        local_a.domain = Some("local.example".to_string());
+        let local = file_with(vec![local_a, record("con1bbb", "m2")]);
+
+        let mut cloud_a = record("con1aaa", "m1");
+        cloud_a.domain = Some("cloud.example".to_string()); // 同一ccidはローカル優先
+        let cloud = file_with(vec![cloud_a, record("con1ccc", "m3")]); // con1cccはクラウドのみ
+
+        let merged = merge_accounts(Some(local), Some(cloud));
+        let ccids: Vec<&str> = merged.accounts.iter().map(|a| a.ccid.as_str()).collect();
+        // ローカル順を基準にし、クラウドのみのアカウントを末尾に追加する
+        assert_eq!(ccids, vec!["con1aaa", "con1bbb", "con1ccc"]);
+        // 同一ccidはローカルのフィールドを優先する
+        assert_eq!(merged.accounts[0].domain.as_deref(), Some("local.example"));
+    }
+
+    #[test]
+    fn merge_handles_missing_sides() {
+        assert!(merge_accounts(None, None).accounts.is_empty());
+        assert_eq!(
+            merge_accounts(None, Some(file_with(vec![record("con1ccc", "m3")]))).accounts.len(),
+            1
+        );
+        assert_eq!(
+            merge_accounts(Some(file_with(vec![record("con1aaa", "m1")])), None).accounts.len(),
+            1
+        );
     }
 
     #[test]

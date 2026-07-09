@@ -42,7 +42,10 @@ interface User {
 }
 
 export const WelcomeView = () => {
-    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready'>('initial')
+    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error'>(
+        'initial'
+    )
+    const [loadError, setLoadError] = useState<string | null>(null)
     const [existingCCID, setExistingCCID] = useState<string | null>(null)
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
@@ -52,38 +55,49 @@ export const WelcomeView = () => {
     const [resolver, setResolver] = useState<string>(resolveEntrypoint())
 
     useEffect(() => {
-        invoke<string | null>('get_active_ccid')
-            .then(async (ccid) => {
-                if (typeof ccid !== 'string') {
-                    setExistingCCID(null)
-                    setUser(null)
-                    setState('welcome')
-                    return
-                }
-                setExistingCCID(ccid)
+        const load = async () => {
+            // アカウント読み取り(get_active_ccid)の失敗だけをエラー画面に落とす。
+            // 失敗を「アカウント無し」とみなしてオンボーディングに落とすと、鍵が端末に残っているのに
+            // 新規作成へ誘導してしまうため。後続のサーバー通信の失敗はここに含めない(別途catchする)。
+            let ccid: string | null
+            try {
+                ccid = await invoke<string | null>('get_active_ccid')
+            } catch (e) {
+                console.error('Failed to load active account', e)
+                setExistingCCID(null)
+                setUser(null)
+                setLoadError(e instanceof Error ? e.message : String(e))
+                setState('error')
+                return
+            }
 
-                const authProvider = new InMemoryAuthProvider()
-                const kvs = new InMemoryKVS()
-
-                const api = new Api(resolver, authProvider, kvs)
-
-                const entity = await api.getEntity(ccid).catch(() => undefined)
-                const profile = await api
-                    .getDocument<ProfileSchema>(semantics.profile(ccid, 'main'))
-                    .catch(() => undefined)
-
-                setUser({
-                    ccid,
-                    entity,
-                    profile
-                })
-                setState(entity ? 'ready' : 'missing')
-            })
-            .catch((_e) => {
+            if (typeof ccid !== 'string') {
                 setExistingCCID(null)
                 setUser(null)
                 setState('welcome')
+                return
+            }
+            setExistingCCID(ccid)
+
+            const authProvider = new InMemoryAuthProvider()
+            const kvs = new InMemoryKVS()
+
+            const api = new Api(resolver, authProvider, kvs)
+
+            const entity = await api.getEntity(ccid).catch(() => undefined)
+            const profile = await api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main')).catch(() => undefined)
+
+            setUser({
+                ccid,
+                entity,
+                profile
             })
+            setState(entity ? 'ready' : 'missing')
+        }
+        load().catch((e) => {
+            // get_active_ccid成功後の想定外の例外。鍵は読めているので、キーチェーン起因ではない。
+            console.error('Unexpected error while preparing account view', e)
+        })
     }, [updater, resolver])
 
     const reload = () => {
@@ -93,6 +107,56 @@ export const WelcomeView = () => {
     switch (state) {
         case 'initial':
             return <LoadingFull />
+        case 'error':
+            return (
+                <AuthScreen>
+                    <div style={{ flex: 1 }} />
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: CssVar.space(2)
+                        }}
+                    >
+                        <AuthBrand />
+                        <Text
+                            style={{
+                                color: CssVar.uiText,
+                                textAlign: 'center'
+                            }}
+                        >
+                            アカウント情報の読み込みに失敗しました。{'\n'}
+                            端末に保存された鍵が消えたわけではありません。もう一度お試しください。
+                        </Text>
+                        {loadError && (
+                            <Text
+                                variant="caption"
+                                style={{
+                                    color: CssVar.uiText,
+                                    opacity: 0.6,
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all'
+                                }}
+                            >
+                                {loadError}
+                            </Text>
+                        )}
+                    </div>
+                    <div style={{ flex: 1 }} />
+                    <AuthActions fixedBottom>
+                        <AuthButton
+                            onClick={() => {
+                                setLoadError(null)
+                                setState('initial')
+                                reload()
+                            }}
+                        >
+                            再試行
+                        </AuthButton>
+                    </AuthActions>
+                </AuthScreen>
+            )
         case 'signup':
             return <AccountSetup entrypoint={resolver} onBack={() => setState('welcome')} />
         case 'signin':

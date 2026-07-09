@@ -14,17 +14,22 @@ struct KeychainResponse: Codable {
     let password: String?
 }
 
+// このプラグインが扱うのは iCloud キーチェーン同期コピー(kSecAttrSynchronizable: true)のみ。
+// 端末上の「消えない正コピー」はアプリ側(Rust: accounts.rs)が tauri-plugin-store に別途保持し、
+// 読み取り時に両者を統合(union)する。したがって同期コピーが一時的に読めなくても鍵は失われない。
+//
+// 検索クエリには kSecAttrAccessible を含めない(属性は書き込み時のみ指定)。
+// accessibility を検索キーにすると、アイテムの実際の accessibility と不一致のとき false negative になり得る。
+// synchronizable コピーには ThisDeviceOnly が使えないため、書き込みには AfterFirstUnlock を用いる。
 class KeychainPlugin: Plugin {
     @objc public func getItem(_ invoke: Invoke) throws {
-
-    let args = try invoke.parseArgs(KeychainArgs.self)
+        let args = try invoke.parseArgs(KeychainArgs.self)
         let key = args.key
         let query = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key,
             kSecReturnData: kCFBooleanTrue!,
             kSecMatchLimit: kSecMatchLimitOne,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
             kSecAttrSynchronizable: kCFBooleanTrue!
         ] as CFDictionary
 
@@ -37,9 +42,7 @@ class KeychainPlugin: Plugin {
         }
 
         let password = String(data: resultData, encoding: .utf8)
-
-        let resp = KeychainResponse(password: password)
-        invoke.resolve(resp)
+        invoke.resolve(KeychainResponse(password: password))
     }
 
     @objc public func hasItem(_ invoke: Invoke) throws {
@@ -50,7 +53,6 @@ class KeychainPlugin: Plugin {
             kSecAttrAccount: key,
             kSecReturnData: kCFBooleanTrue!,
             kSecMatchLimit: kSecMatchLimitOne,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
             kSecAttrSynchronizable: kCFBooleanTrue!
         ] as CFDictionary
 
@@ -59,14 +61,14 @@ class KeychainPlugin: Plugin {
 
         invoke.resolve(status == errSecSuccess)
     }
-    
+
     @objc public func saveItem(_ invoke: Invoke) throws {
         let args = try invoke.parseArgs(KeychainArgs.self)
         let key = args.key
         let value = args.password ?? ""
-        guard let data = value.data(using: .utf8) else { 
+        guard let data = value.data(using: .utf8) else {
             invoke.resolve(false)
-            return 
+            return
         }
 
         let attributes = [
@@ -76,8 +78,8 @@ class KeychainPlugin: Plugin {
             kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
             kSecAttrSynchronizable: kCFBooleanTrue!
         ] as CFDictionary
-        // 新規追加専用: 既存アイテムがある場合はerrSecDuplicateItemで失敗させ、
-        // サイレント上書きによる鍵の紛失を防ぐ。更新はupdateItemを使うこと。
+        // 新規追加専用: 既存アイテムがある場合は errSecDuplicateItem で失敗させ、
+        // サイレント上書きを防ぐ。更新は updateItem を使うこと。
         let status = SecItemAdd(attributes, nil)
 
         invoke.resolve(status == errSecSuccess)
@@ -92,7 +94,7 @@ class KeychainPlugin: Plugin {
             return
         }
 
-        // kSecAttrSynchronizableを含めないとsynchronizableなアイテムにマッチしない
+        // kSecAttrSynchronizable を含めないと synchronizable なアイテムにマッチしない。
         let query = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key,
@@ -102,7 +104,7 @@ class KeychainPlugin: Plugin {
             kSecValueData: data
         ] as CFDictionary
 
-        // in-place更新のみ。存在しなければerrSecItemNotFoundで失敗する。
+        // in-place 更新のみ。存在しなければ errSecItemNotFound で失敗する。
         // 削除→再追加はクラッシュ時にアイテムが消える時間窓ができるため行わない。
         let status = SecItemUpdate(query, attributesToUpdate)
 
@@ -113,14 +115,13 @@ class KeychainPlugin: Plugin {
         let args = try invoke.parseArgs(KeychainArgs.self)
         let key = args.key
         let query = [
-                kSecClass: kSecClassGenericPassword,
-                kSecAttrAccount: key,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: key,
             kSecAttrSynchronizable: kCFBooleanTrue!
         ] as CFDictionary
 
         let status = SecItemDelete(query)
-        invoke.resolve(status == errSecSuccess)
+        invoke.resolve(status == errSecSuccess || status == errSecItemNotFound)
     }
 }
 
