@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { IconButton } from '@concrnt/ui'
+import { IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List } from '@concrnt/worldlib'
@@ -52,6 +52,7 @@ interface Props {
 
 export const EmojiPickerProvider = (props: Props) => {
     const { client } = useClient()
+    const parentCfmActions = useCfmActions()
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
@@ -287,7 +288,16 @@ export const EmojiPickerProvider = (props: Props) => {
 
     return (
         <EmojiPickerContext.Provider value={value}>
-            {props.children}
+            <CfmActionsProvider
+                value={{
+                    ...parentCfmActions,
+                    loadEmojipack: loadEmojiPackage,
+                    addEmojipack: addEmojiPackage,
+                    emojipackURLs: emojiPackageURLs
+                }}
+            >
+                {props.children}
+            </CfmActionsProvider>
 
             <AnimatePresence>
                 {isOpen && (

@@ -1,11 +1,12 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Codeblock } from './Codeblock'
 import cfm from '@concrnt/cfm'
 import { Link } from './Link'
 import { Text } from './Text'
 import { ThemeCard } from './ThemeCard'
+import { EmojipackCard, type EmojipackLite } from './EmojipackCard'
 import { IconButton } from './IconButton'
-import { migrateTheme } from '../types/Theme'
+import { migrateTheme, CssVar } from '../types/Theme'
 import { useCfmActions } from '../contexts/CfmActions'
 
 const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNode => {
@@ -50,6 +51,79 @@ const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNo
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
+                    </IconButton>
+                )
+            }
+        />
+    )
+}
+
+const EmojiPackBlock = ({ url }: { url: string }): ReactNode => {
+    const { loadEmojipack, addEmojipack, emojipackURLs } = useCfmActions()
+    const [pack, setPack] = useState<EmojipackLite | null>(null)
+
+    useEffect(() => {
+        if (!loadEmojipack) return
+        let cancelled = false
+        loadEmojipack(url)
+            .then((p) => {
+                if (!cancelled) setPack(p)
+            })
+            .catch((e) => {
+                console.error(e)
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [url, loadEmojipack])
+
+    if (!pack) {
+        return <Text>[Emoji Pack: {url}]</Text>
+    }
+
+    const added = emojipackURLs?.includes(url) ?? false
+
+    return (
+        <EmojipackCard
+            pack={pack}
+            action={
+                addEmojipack && (
+                    <IconButton
+                        disabled={added}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            addEmojipack(url)
+                        }}
+                        style={{ color: CssVar.contentText, opacity: added ? 0.4 : 1 }}
+                    >
+                        {added ? (
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        ) : (
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        )}
                     </IconButton>
                 )
             }
@@ -250,9 +324,8 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                 return <ThemeCodeBlock body={String(ast.body)} lang={ast.lang} />
             }
             return <Codeblock language={ast.lang}>{ast.body}</Codeblock>
-        case 'EmojiPack': // TODO: implement EmojipackCard
-            //return <EmojipackCard src={ast.body} icon={<ManageSearchIcon />} onClick={actions.openEmojipack} />
-            return <Text>[Emoji Pack: {ast.body}]</Text>
+        case 'EmojiPack':
+            return <EmojiPackBlock url={String(ast.body)} />
         case 'Heading':
             return (
                 <Text variant={`h${ast.level}` as any}>
