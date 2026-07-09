@@ -2,7 +2,6 @@ package world.concrnt.plugin.push
 
 import java.math.BigInteger
 import java.security.AlgorithmParameters
-import java.security.KeyAgreement
 import java.security.KeyFactory
 import java.security.spec.ECGenParameterSpec
 import java.security.spec.ECParameterSpec
@@ -12,6 +11,7 @@ import java.security.spec.ECPublicKeySpec
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
 import javax.crypto.Cipher
+import javax.crypto.KeyAgreement
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
