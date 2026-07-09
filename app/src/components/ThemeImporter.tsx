@@ -3,42 +3,57 @@ import { Button, Text, migrateTheme } from '@concrnt/ui'
 import { Theme, CssVar } from '../types/Theme'
 import { useThemeLibrary } from '../contexts/Theme'
 
+// Tolerant JSON extraction: pasted text often carries leading/trailing junk
+// (fence remnants, stray backslashes/newlines, or a once-escaped payload).
+const tryParseJson = (chunk: string): any => {
+    const t = chunk.trim()
+    if (!t) return null
+
+    // 1. as-is
+    try {
+        return JSON.parse(t)
+    } catch {
+        /* fall through */
+    }
+
+    // 2. slice from the first { or [ to the last } or ] (drops surrounding junk)
+    const start = t.search(/[{[]/)
+    const end = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'))
+    if (start < 0 || end <= start) return null
+    const sliced = t.slice(start, end + 1)
+    try {
+        return JSON.parse(sliced)
+    } catch {
+        /* fall through */
+    }
+
+    // 3. last resort: undo one level of escaping (handles \" and literal \n/\t)
+    try {
+        const unescaped = sliced.replace(/\\"/g, '"').replace(/\\n/g, '').replace(/\\t/g, '')
+        return JSON.parse(unescaped)
+    } catch {
+        return null
+    }
+}
+
 // Accepts v1/v2 theme JSON in several shapes and normalizes every entry to a v2 Theme:
-//   - one or more ```theme ... ``` fenced blocks (shared posts)
-//   - a JSON array of themes
 //   - a single theme object (has `content` or `palette`)
-//   - a Record<name, theme> object (v1 customThemes dump)
+//   - a JSON array of themes
+//   - a Record<name, theme> object (v1 "全部コピー" export)
 const parseThemesInput = (text: string): Theme[] => {
-    const trimmed = text.trim()
-    if (!trimmed) return []
+    const value = tryParseJson(text)
+    if (!value || typeof value !== 'object') return []
 
-    const raw: any[] = []
-    const fenceRegex = /```theme\s*([\s\S]*?)```/g
-    let match: RegExpExecArray | null
-    let foundFence = false
-    while ((match = fenceRegex.exec(trimmed)) !== null) {
-        foundFence = true
-        try {
-            raw.push(JSON.parse(match[1].trim()))
-        } catch (e) {
-            console.error(e)
-        }
+    let raw: any[]
+    if (Array.isArray(value)) {
+        raw = value
+    } else if (value.content || value.palette) {
+        raw = [value]
+    } else {
+        raw = Object.values(value)
     }
 
-    if (!foundFence) {
-        const parsed = JSON.parse(trimmed)
-        if (Array.isArray(parsed)) {
-            raw.push(...parsed)
-        } else if (parsed && typeof parsed === 'object') {
-            if (parsed.content || parsed.palette) {
-                raw.push(parsed)
-            } else {
-                raw.push(...Object.values(parsed))
-            }
-        }
-    }
-
-    return raw.filter(Boolean).map(migrateTheme)
+    return raw.filter((v) => v && typeof v === 'object').map(migrateTheme)
 }
 
 interface Props {
