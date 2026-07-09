@@ -1,24 +1,34 @@
 import Foundation
 
-/// Parses a decrypted concrnt.Event push payload and builds display content.
+/// Parses a decrypted concrnt push payload and builds display content.
 /// Mirrors the per-schema Japanese copy from the v1 web client's service
-/// worker (references/concrnt-world/app/src/sw.js), adapted to v2's
-/// Event/SignedDocument/Document envelope (the pushed payload is the whole
-/// Event, not a bare association document, and the inner Document is a
-/// JSON-encoded string that must be parsed again). Shared between the
-/// Notification Service Extension and (for symmetry/testability) the app.
+/// worker (references/concrnt-world/app/src/sw.js). The push carries only the
+/// minimal notification struct {uri, schema, author, createdAt} (see concrnt's
+/// NotificationReactor.buildNotificationPayload); this resolves the association
+/// document the uri points at (GET /api/v2/resolve) to recover value/associate,
+/// then resolves the actor's profile and the target message body on demand.
+/// Shared between the Notification Service Extension and (for symmetry/
+/// testability) the app.
 public enum NotificationContent {
     public struct Result {
         public let title: String
         public let body: String?
         public let targetUri: String?
         public let view: String
+        /// Actor avatar URL, attached as the notification's image (the iOS
+        /// equivalent of Android's large icon). nil when unavailable.
+        public let imageUrl: String?
 
-        public init(title: String, body: String?, targetUri: String?, view: String) {
+        public init(title: String, body: String?, targetUri: String?, view: String, imageUrl: String? = nil) {
             self.title = title
             self.body = body
             self.targetUri = targetUri
             self.view = view
+            self.imageUrl = imageUrl
+        }
+
+        func with(imageUrl: String?) -> Result {
+            Result(title: title, body: body, targetUri: targetUri, view: view, imageUrl: imageUrl)
         }
     }
 
@@ -47,69 +57,55 @@ public enum NotificationContent {
         }
 
         let result = try? await withTimeout(seconds: enrichmentTimeoutSeconds) {
-            buildContent(event: event)
+            await buildContent(payload: event)
         }
 
         // result: Result?? — outer optional from try? (timeout/cancellation),
-        // inner optional from buildContent itself (parse failure / self-action).
+        // inner optional from buildContent itself (parse/resolve failure).
         return result.flatMap { $0 } ?? fallback
     }
 
-    private static func buildContent(event: [String: Any]) async -> Result? {
-        guard let documents = event["documents"] as? [String: Any] else { return nil }
-
-        var signedDoc: [String: Any]?
-        if let assocKey = event["association"] as? String, let sd = documents[assocKey] as? [String: Any] {
-            signedDoc = sd
-        } else {
-            for (_, raw) in documents {
-                guard let sd = raw as? [String: Any],
-                      let docStr = sd["document"] as? String,
-                      let docData = docStr.data(using: .utf8),
-                      let doc = try? JSONSerialization.jsonObject(with: docData) as? [String: Any],
-                      doc["kind"] as? String == "association"
-                else { continue }
-                signedDoc = sd
-                break
-            }
-        }
-
-        guard let sd = signedDoc,
-              let docStr = sd["document"] as? String,
-              let docData = docStr.data(using: .utf8),
-              let doc = try? JSONSerialization.jsonObject(with: docData) as? [String: Any]
+    private static func buildContent(payload: [String: Any]) async -> Result? {
+        // The push carries only the minimal notification struct
+        // {uri, schema, author, createdAt}; everything else is fetched from the
+        // association document the uri points at.
+        guard let uri = nonEmpty(payload["uri"] as? String),
+              let homeDomain = PushKeyStore.homeDomain
         else { return nil }
 
-        let author = doc["author"] as? String ?? ""
-        let isSelfAction = PushKeyStore.ccid.map { !$0.isEmpty && $0 == author } ?? false
+        // Resolve the association document (ccfs://...) the push refers to.
+        guard let doc = await fetchResolvedDocument(domain: homeDomain, uri: uri) else { return nil }
 
-        let schema = doc["schema"] as? String ?? ""
+        // schema/author come pre-resolved in the payload; fall back to the
+        // resolved document if the server omitted them.
+        let schema = nonEmpty(payload["schema"] as? String) ?? (doc["schema"] as? String ?? "")
+        let author = nonEmpty(payload["author"] as? String) ?? (doc["author"] as? String ?? "")
+
         let value = doc["value"] as? [String: Any] ?? [:]
         let profileOverride = value["profileOverride"] as? [String: Any]
         let overrideUsername = nonEmpty(profileOverride?["username"] as? String)
+        let overrideAvatar = nonEmpty(profileOverride?["avatar"] as? String)
+        let profileId = nonEmpty(profileOverride?["profileID"] as? String)
 
-        let homeDomain = PushKeyStore.homeDomain
-        var username = overrideUsername
-        if username == nil, !isSelfAction, let home = homeDomain {
-            username = await resolveUsername(
-                homeDomain: home,
-                author: author,
-                signedDoc: sd,
-                profileId: nonEmpty(profileOverride?["profileID"] as? String)
-            )
-        }
-        let finalUsername = username ?? "名無し"
+        // Resolve the actor's profile once for both the display name and avatar.
+        let actor = author.isEmpty
+            ? nil
+            : await resolveActorProfile(homeDomain: homeDomain, author: author, profileId: profileId)
+        let finalUsername = overrideUsername ?? actor?.username ?? "名無し"
+        // The notification's image (iOS large icon) is always the actor's avatar.
+        let avatarUrl = overrideAvatar ?? actor?.avatar
 
         let associate = nonEmpty(doc["associate"] as? String)
 
         func messageBody(for uri: String?) async -> String? {
-            guard let home = homeDomain, let uri = uri else { return nil }
-            return await resolveMessageBody(homeDomain: home, targetUri: uri)
+            guard let uri = uri else { return nil }
+            return await resolveMessageBody(homeDomain: homeDomain, targetUri: uri)
         }
 
+        let base: Result
         switch schema {
         case schemaLike:
-            return Result(
+            base = Result(
                 title: "\(finalUsername)さんがあなたの投稿にいいねしました",
                 body: await messageBody(for: associate),
                 targetUri: associate,
@@ -117,14 +113,14 @@ public enum NotificationContent {
             )
         case schemaReaction:
             let shortcode = value["shortcode"] as? String ?? ""
-            return Result(
+            base = Result(
                 title: "\(finalUsername)さんがあなたの投稿にリアクションしました :\(shortcode):",
                 body: await messageBody(for: associate),
                 targetUri: associate,
                 view: "post"
             )
         case schemaReroute:
-            return Result(
+            base = Result(
                 title: "\(finalUsername)さんがあなたの投稿をリルートしました",
                 body: await messageBody(for: associate),
                 targetUri: associate,
@@ -132,57 +128,54 @@ public enum NotificationContent {
             )
         case schemaReply:
             let target = nonEmpty(value["targetURI"] as? String) ?? associate
-            return Result(
+            base = Result(
                 title: "\(finalUsername)さんがあなたの投稿にリプライしました",
                 body: await messageBody(for: target),
                 targetUri: target,
                 view: "post"
             )
         case schemaMention:
-            return Result(
+            base = Result(
                 title: "\(finalUsername)さんがあなたをメンションしました",
                 body: await messageBody(for: associate),
                 targetUri: associate,
                 view: "post"
             )
         case schemaReadAccessRequest:
-            return Result(title: "\(finalUsername)さんが閲覧リクエストを送信しています", body: nil, targetUri: nil, view: "notifications")
+            base = Result(title: "\(finalUsername)さんが閲覧リクエストを送信しています", body: nil, targetUri: nil, view: "notifications")
         case schemaFollowAck:
-            return Result(title: "\(finalUsername)さんにフォローされました", body: nil, targetUri: nil, view: "notifications")
+            base = Result(title: "\(finalUsername)さんにフォローされました", body: nil, targetUri: nil, view: "notifications")
         default:
             return fallback
         }
+        return base.with(imageUrl: avatarUrl)
     }
 
-    private static func resolveUsername(
+    private struct ActorProfile {
+        let username: String?
+        let avatar: String?
+    }
+
+    private static func resolveActorProfile(
         homeDomain: String,
         author: String,
-        signedDoc: [String: Any],
         profileId: String?
-    ) async -> String? {
-        guard let authorDomain = await resolveAuthorDomain(homeDomain: homeDomain, author: author, signedDoc: signedDoc) else {
+    ) async -> ActorProfile? {
+        guard !author.isEmpty,
+              let authorDomain = await resolveAuthorDomain(homeDomain: homeDomain, author: author) else {
             return nil
         }
         let profile = profileId ?? "main"
         let uri = "cckv://\(author)/concrnt.world/profiles/\(profile)"
         guard let profileDoc = await fetchResolvedDocument(domain: authorDomain, uri: uri) else { return nil }
         let value = profileDoc["value"] as? [String: Any]
-        return nonEmpty(value?["username"] as? String)
+        return ActorProfile(
+            username: nonEmpty(value?["username"] as? String),
+            avatar: nonEmpty(value?["avatar"] as? String)
+        )
     }
 
-    private static func resolveAuthorDomain(homeDomain: String, author: String, signedDoc: [String: Any]) async -> String? {
-        // Api.commit() always embeds the author's own entity document under
-        // this reference key, so this usually avoids a network round trip.
-        if let references = signedDoc["references"] as? [String: Any],
-           let embedded = references["cckv://\(author)"] as? [String: Any],
-           let embeddedDocStr = embedded["document"] as? String,
-           let embeddedDocData = embeddedDocStr.data(using: .utf8),
-           let embeddedDoc = try? JSONSerialization.jsonObject(with: embeddedDocData) as? [String: Any],
-           let value = embeddedDoc["value"] as? [String: Any],
-           let domain = nonEmpty(value["domain"] as? String) {
-            return domain
-        }
-
+    private static func resolveAuthorDomain(homeDomain: String, author: String) async -> String? {
         guard let entityDoc = await fetchResolvedDocument(domain: homeDomain, uri: "cckv://\(author)") else { return nil }
         let value = entityDoc["value"] as? [String: Any]
         return nonEmpty(value?["domain"] as? String)

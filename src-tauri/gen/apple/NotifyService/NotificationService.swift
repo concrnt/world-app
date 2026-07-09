@@ -68,9 +68,46 @@ class NotificationService: UNNotificationServiceExtension {
                 content.threadIdentifier = uri
             }
             content.userInfo["cc-view"] = result.view
+
+            // Attach the actor's avatar as the notification image (shown as the
+            // thumbnail on the right, and large when expanded). Best-effort.
+            if let imageUrl = result.imageUrl,
+               let attachment = await downloadAttachment(from: imageUrl) {
+                content.attachments = [attachment]
+            }
         } catch {
             // Decryption failed (stale/rotated key, corrupt payload, ...);
             // leave the placeholder alert untouched.
+        }
+    }
+
+    /// Downloads an image to a temp file and wraps it as a notification
+    /// attachment. Returns nil on any failure so the notification still
+    /// delivers without the image.
+    private func downloadAttachment(from urlString: String) async -> UNNotificationAttachment? {
+        guard let url = URL(string: urlString) else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, http.statusCode == 200
+        else { return nil }
+
+        let ext = attachmentExtension(url: url, mimeType: http.mimeType)
+        let fileURL = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(ext)
+        guard (try? data.write(to: fileURL)) != nil else { return nil }
+        return try? UNNotificationAttachment(identifier: "avatar", url: fileURL, options: nil)
+    }
+
+    private func attachmentExtension(url: URL, mimeType: String?) -> String {
+        let pathExt = url.pathExtension.lowercased()
+        if ["png", "jpg", "jpeg", "gif", "webp"].contains(pathExt) { return pathExt }
+        switch mimeType {
+        case "image/png": return "png"
+        case "image/gif": return "gif"
+        case "image/webp": return "webp"
+        default: return "jpg"
         }
     }
 

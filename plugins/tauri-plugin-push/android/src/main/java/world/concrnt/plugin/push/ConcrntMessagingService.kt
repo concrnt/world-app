@@ -33,6 +33,7 @@ class ConcrntMessagingService : FirebaseMessagingService() {
         if (encoding != "aes128gcm" || encoded.isNullOrEmpty()) {
             // Relay sent a size-fallback or unknown-encoding message; show a
             // generic notification rather than silently dropping it.
+            Log.w(TAG, "no aes128gcm payload (relay size-fallback or unknown encoding) -> generic notification")
             NotificationRenderer.show(applicationContext, null)
             return
         }

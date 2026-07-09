@@ -10,6 +10,7 @@ import {
     DEFAULT_PUSH_SCHEMAS,
     getPushSchemas,
     isPushEnabled,
+    PUSH_PERMISSION_DENIED_MESSAGE,
     PUSH_VENDOR_ID,
     registerPush,
     unregisterPush
@@ -77,8 +78,11 @@ export const NotificationSettingsView = () => {
                 setEnabled(false)
             }
         } catch (e) {
-            setError(e instanceof Error ? e.message : String(e))
-            setPermissionDenied(true)
+            const msg = e instanceof Error ? e.message : String(e)
+            setError(msg)
+            // Only surface the OS-permission notice for an actual permission
+            // denial — other failures (relay/network/registration) show `error`.
+            setPermissionDenied(msg === PUSH_PERMISSION_DENIED_MESSAGE)
         } finally {
             setBusy(false)
         }

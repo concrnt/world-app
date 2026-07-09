@@ -3,11 +3,16 @@ import { Client, Schemas, semantics } from '@concrnt/worldlib'
 
 export const PUSH_VENDOR_ID = 'world.concrnt.app'
 
-// Replace with the deployed webpush-relay origin before shipping.
-export const PUSH_RELAY = 'https://push.concrnt.net'
+// Deployed webpush-relay origin (webpush-relay / webpush-relay-workers).
+export const PUSH_RELAY = 'https://webpush-relay.concrnt.net'
 
 const LS_ENABLED_KEY = 'push:enabled'
 const LS_SCHEMAS_KEY = 'push:schemas'
+
+// Thrown by registerPush when the OS notification permission is not granted.
+// Callers compare against this to distinguish a permission denial from other
+// (relay/network/registration) failures.
+export const PUSH_PERMISSION_DENIED_MESSAGE = 'notification permission was not granted'
 
 // Per-device push state lives in localStorage, not the Preference context:
 // Preference is synced to the account (cckv://.../settings) and a push
@@ -77,10 +82,12 @@ export const onNotificationTapped = (cb: (payload: LaunchNotification) => void):
 export async function registerPush(client: Client, schemas: string[]): Promise<void> {
     const permission = await requestPushPermission()
     if (!permission.granted) {
-        throw new Error('notification permission was not granted')
+        throw new Error(PUSH_PERMISSION_DENIED_MESSAGE)
     }
 
-    await invoke('plugin:push|set_context', { homeDomain: client.server.domain, ccid: client.ccid })
+    await invoke('plugin:push|set_context', {
+        payload: { homeDomain: client.server.domain, ccid: client.ccid }
+    })
 
     const token = await invoke<GetTokenResponse>('plugin:push|get_token')
     const keys = await invoke<GetOrCreateKeysResponse>('plugin:push|get_or_create_keys')
