@@ -1,0 +1,15 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Default permissions for the push notification plugin"
+permissions = [
+    "allow-check-permission",
+    "allow-request-permission",
+    "allow-get-token",
+    "allow-get-or-create-keys",
+    "allow-reset-keys",
+    "allow-set-context",
+    "allow-get-launch-notification",
+    "allow-register-listener",
+    "allow-remove-listener",
+]

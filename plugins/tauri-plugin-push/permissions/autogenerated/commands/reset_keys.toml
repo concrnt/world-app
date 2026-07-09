@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-reset-keys"
+description = "Enables the reset_keys command without any pre-configured scope."
+commands.allow = ["reset_keys"]
+
+[[permission]]
+identifier = "deny-reset-keys"
+description = "Denies the reset_keys command without any pre-configured scope."
+commands.deny = ["reset_keys"]

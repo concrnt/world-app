@@ -50,6 +50,16 @@ export interface FetchOptions<T> {
     timeoutms?: number
 }
 
+export interface NotificationSubscription {
+    vendorID: string
+    owner: string
+    schemas: string[]
+    prefixes: string[]
+    subscription: string
+    cdate?: string
+    mdate?: string
+}
+
 export class Api {
     authProvider: AuthProvider
     cache: KVS
@@ -716,6 +726,52 @@ export class Api {
 
         const resp = await this.fetchWithCredential<ChunklineItem[]>(host ?? this.defaultHost, endpoint)
         return resp.map((item) => ({ ...item, timestamp: new Date(item.timestamp) }))
+    }
+
+    // ---
+
+    async subscribeNotification(
+        owner: string,
+        vendorID: string,
+        sub: { schemas: string[]; prefixes: string[]; subscription: string },
+        host?: string
+    ): Promise<NotificationSubscription> {
+        const fetchHost = host ?? this.defaultHost
+        const resp = await this.callConcrntApi<ApiResponse<NotificationSubscription>>(
+            fetchHost,
+            'net.concrnt.world.subscribe',
+            { owner, vendor_id: vendorID },
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vendorID, owner, ...sub })
+            }
+        )
+        return resp.content
+    }
+
+    async getNotificationSubscription(
+        owner: string,
+        vendorID: string,
+        host?: string
+    ): Promise<NotificationSubscription> {
+        const fetchHost = host ?? this.defaultHost
+        const resp = await this.callConcrntApi<ApiResponse<NotificationSubscription>>(
+            fetchHost,
+            'net.concrnt.world.subscribe',
+            { owner, vendor_id: vendorID }
+        )
+        return resp.content
+    }
+
+    async deleteNotificationSubscription(owner: string, vendorID: string, host?: string): Promise<void> {
+        const fetchHost = host ?? this.defaultHost
+        await this.callConcrntApi<ApiResponse<NotificationSubscription>>(
+            fetchHost,
+            'net.concrnt.world.subscribe',
+            { owner, vendor_id: vendorID },
+            { method: 'DELETE' }
+        )
     }
 }
 

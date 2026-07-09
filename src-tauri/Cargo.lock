@@ -3984,6 +3984,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-push"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-plugin-safari-scroll-killer"
 version = "0.1.0"
 dependencies = [
@@ -5307,6 +5318,7 @@ dependencies = [
  "tauri-plugin-keyboard",
  "tauri-plugin-keychain",
  "tauri-plugin-opener",
+ "tauri-plugin-push",
  "tauri-plugin-safari-scroll-killer",
  "tauri-plugin-store",
 ]

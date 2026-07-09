@@ -7,6 +7,9 @@ import { HomeView } from './Home'
 import { ExplorerView } from './Explorer'
 import { NotificationsView } from './Notifications'
 import { ContactsView } from './Contacts'
+import { PostView } from './Post'
+import { useClient } from '../contexts/Client'
+import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -19,6 +22,7 @@ import { useTheme } from '@concrnt/ui'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
+    const { client } = useClient()
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
     const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
@@ -135,6 +139,43 @@ export const MainView = () => {
             delete (window as any).__concrntHandleBack
         }
     }, [selectedTab])
+
+    // Push notifications: re-upsert the subscription on every app start (the
+    // cheapest way to keep the native token fresh across rotations), surface
+    // a cold-start tap's deep link once, and listen for warm-start taps.
+    useEffect(() => {
+        if (!client) return
+
+        if (isPushEnabled()) {
+            registerPush(client, getPushSchemas()).catch((err) => {
+                console.error('failed to re-register push subscription', err)
+            })
+        }
+
+        const navigate = (payload: { uri: string | null; view: string | null }) => {
+            setSelectedTab('notifications')
+            if (payload.view === 'post' && payload.uri) {
+                stackRefs.current['notifications']?.push(<PostView uri={payload.uri} />)
+            }
+        }
+
+        getLaunchNotification()
+            .then((payload) => {
+                if (payload.view) navigate(payload)
+            })
+            .catch(() => {})
+
+        let listener: { unregister: () => void } | undefined
+        onNotificationTapped(navigate)
+            .then((l) => {
+                listener = l
+            })
+            .catch(() => {})
+
+        return () => {
+            listener?.unregister()
+        }
+    }, [client])
 
     return (
         <>

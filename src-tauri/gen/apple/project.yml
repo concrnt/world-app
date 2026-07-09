@@ -1,3 +1,9 @@
+# WARNING: do not run `pnpm tauri ios init` / `tauri ios init` — it
+# regenerates this file from scratch and will drop the NotifyService target
+# (Notification Service Extension, used for push notifications; see
+# ../../../plugins/tauri-plugin-push/README.md) along with its entitlements
+# and the app's aps-environment / App Group entitlements below. If
+# regeneration is ever unavoidable, re-apply this file's git diff afterwards.
 name: world-app
 options:
   bundleIdPrefix: world.concrnt.app
@@ -80,6 +86,8 @@ targets:
       - sdk: Security.framework
       - sdk: UIKit.framework
       - sdk: WebKit.framework
+      - target: NotifyService
+        embed: true
     preBuildScripts:
       - script: pnpm tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
         name: Build Rust Code
@@ -87,3 +95,36 @@ targets:
         outputFiles:
           - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
           - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a
+
+  # Notification Service Extension: decrypts the WebPush payload relayed
+  # (still encrypted) through webpush-relay and rewrites the notification's
+  # title/body before display. See ../../../plugins/tauri-plugin-push/README.md.
+  NotifyService:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: NotifyService
+      - path: ../../../plugins/tauri-plugin-push/ios/Sources/PushShared
+    info:
+      path: NotifyService/Info.plist
+      properties:
+        CFBundleDisplayName: NotifyService
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "0.1.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+    entitlements:
+      path: NotifyService/NotifyService.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: world.concrnt.app.NotifyService
+        SKIP_INSTALL: true
+        ENABLE_BITCODE: false
+        ARCHS: [arm64]
+        VALID_ARCHS: arm64
+        EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
+    dependencies:
+      - sdk: UserNotifications.framework
+      - sdk: Security.framework

@@ -10,7 +10,8 @@ import { IDView } from './ID'
 import { DevView } from './Dev'
 import { EmojiSettingsView } from './EmojiSettings'
 import { ThemeSettingsView } from './ThemeSettings'
-import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
+import { NotificationSettingsView } from './NotificationSettings'
+import { MdBadge, MdChevronRight, MdEmojiEmotions, MdNotifications, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 import { Fragment, useState } from 'react'
 import buildTime from '~build/time'
@@ -89,6 +90,13 @@ export const SettingsView = () => {
                         onClick={() => stack.push(<EmojiSettingsView />)}
                     >
                         絵文字
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdNotifications size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<NotificationSettingsView />)}
+                    >
+                        通知
                     </ListItem>
                     {developerMode && (
                         <ListItem

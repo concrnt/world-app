@@ -1,0 +1,14 @@
+<!-- Notification status-bar icon. Must be a white silhouette on transparent
+     (Android tints the small icon and only reads its alpha), otherwise the
+     full-colour launcher icon collapses to a blank circle. This reuses the
+     concrnt logo path from ic_launcher_monochrome but drops the adaptive-icon
+     safe-zone group transform so the glyph fills the notification canvas. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+  <path
+      android:pathData="M256,28.7c-125.54,0 -227.3,101.77 -227.3,227.3s101.77,227.3 227.3,227.3 227.3,-101.77 227.3,-227.3S381.54,28.7 256,28.7ZM352.26,159.76l-75.47,226.42 -37.74,-113.21 -113.21,-37.74 226.42,-75.47ZM400,400c-38.46,38.46 -89.6,59.65 -144,59.65s-105.54,-21.18 -144,-59.65c-38.46,-38.46 -59.65,-89.6 -59.65,-144s21.18,-105.54 59.65,-144c38.46,-38.46 89.6,-59.65 144,-59.65v60.21c-79.09,0 -143.43,64.34 -143.43,143.43s64.34,143.43 143.43,143.43 143.43,-64.34 143.43,-143.43h60.21c0,54.4 -21.18,105.54 -59.65,144Z"
+      android:fillColor="#fff"/>
+</vector>

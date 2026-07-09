@@ -88,3 +88,7 @@ dependencies {
 }
 
 apply(from = "tauri.build.gradle.kts")
+
+// Push notifications: requires app/google-services.json (see
+// plugins/tauri-plugin-push/README.md for how to obtain one).
+apply(plugin = "com.google.gms.google-services")

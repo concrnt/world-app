@@ -8,6 +8,7 @@ import { deleteResourceCache, getResourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
+import { isPushEnabled, unregisterPush } from '../lib/push'
 
 export interface ClientContextState {
     client: Client
@@ -171,13 +172,16 @@ export const ClientProvider = (props: Props): ReactNode => {
 
     const logout = useCallback(async () => {
         const ccid = clientRef.current?.ccid
+        if (client && isPushEnabled()) {
+            await unregisterPush(client).catch(() => {})
+        }
         localStorage.clear()
         if (ccid) {
             await deleteResourceCache(ccid).catch(() => {})
         }
         await invoke('clear_session')
         reload()
-    }, [])
+    }, [client])
 
     const value = useMemo(() => {
         return {
