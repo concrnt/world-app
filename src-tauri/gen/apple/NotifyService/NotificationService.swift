@@ -1,5 +1,4 @@
 import UserNotifications
-import PushShared
 
 /// Decrypts the WebPush body relayed (still encrypted) through webpush-relay
 /// as an APNs payload keyed "p" (base64url, no padding) + "e" ("aes128gcm"),

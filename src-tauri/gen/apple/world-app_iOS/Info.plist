@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Concrnt</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -14,20 +14,20 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>Concrnt</string>
-	<key>CFBundleDisplayName</key>
-	<string>Concrnt</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>0.1.5</string>
 	<key>CFBundleVersion</key>
 	<string>0.1.5</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>FaceID はマスターキーを保護するために使用されます。</string>
 	<key>NSCameraUsageDescription</key>
 	<string>カメラは、ログイン QR を読み込むために使用されます。</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>FaceID はマスターキーを保護するために使用されます。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>画像を写真ライブラリに保存するために使用されます。</string>
 	<key>UILaunchStoryboardName</key>

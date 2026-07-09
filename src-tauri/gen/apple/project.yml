@@ -36,7 +36,12 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
-      - path: Externals
+      # NOTE: do NOT list `Externals` here. It is a gitignored build-output dir
+      # holding the per-arch libapp.a; scanning it as sources makes xcodegen copy
+      # those .a files into the app bundle as resources, which collides with the
+      # framework dependency below ("Multiple commands produce .../libapp.a").
+      # libapp.a is linked via the `framework: libapp.a` dependency +
+      # LIBRARY_SEARCH_PATHS, so no source entry is needed.
       - path: world-app_iOS
       - path: assets
         buildPhase: resources
@@ -45,23 +50,35 @@ targets:
     info:
       path: world-app_iOS/Info.plist
       properties:
+        # NOTE: this Info.plist is generated from these properties by xcodegen.
+        # Keys not managed by Tauri/tauri.conf.json (permission usage strings,
+        # display name, export-compliance flag, ...) MUST live here or they are
+        # dropped on the next `xcodegen generate`. See the header warning above.
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleName: Concrnt
+        CFBundleDisplayName: Concrnt
+        CFBundleShortVersionString: 0.1.5
+        CFBundleVersion: "0.1.5"
         LSRequiresIPhoneOS: true
+        NSFaceIDUsageDescription: FaceID はマスターキーを保護するために使用されます。
+        NSCameraUsageDescription: カメラは、ログイン QR を読み込むために使用されます。
+        NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+        UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.1.0
-        CFBundleVersion: "0.1.0"
-        NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。
     entitlements:
       path: world-app_iOS/world-app_iOS.entitlements
+      properties:
+        aps-environment: development
+        com.apple.security.application-groups:
+          - group.world.concrnt.app
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -117,6 +134,9 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
     entitlements:
       path: NotifyService/NotifyService.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.world.concrnt.app
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: world.concrnt.app.NotifyService
