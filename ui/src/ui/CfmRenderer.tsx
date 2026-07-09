@@ -3,6 +3,59 @@ import { Codeblock } from './Codeblock'
 import cfm from '@concrnt/cfm'
 import { Link } from './Link'
 import { Text } from './Text'
+import { ThemeCard } from './ThemeCard'
+import { IconButton } from './IconButton'
+import { migrateTheme } from '../types/Theme'
+import { useCfmActions } from '../contexts/CfmActions'
+
+const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNode => {
+    const { importTheme } = useCfmActions()
+
+    const theme = useMemo(() => {
+        try {
+            return migrateTheme(JSON.parse(body))
+        } catch (e) {
+            console.error(e)
+            return null
+        }
+    }, [body])
+
+    if (!theme) {
+        return <Codeblock language={lang}>{body}</Codeblock>
+    }
+
+    return (
+        <ThemeCard
+            theme={theme}
+            action={
+                importTheme && (
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            importTheme(theme)
+                        }}
+                        style={{ color: theme.content.text }}
+                    >
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                    </IconButton>
+                )
+            }
+        />
+    )
+}
 
 export interface EmojiLite {
     imageURL?: string
@@ -193,6 +246,9 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                 />
             )
         case 'CodeBlock':
+            if (ast.lang === 'theme') {
+                return <ThemeCodeBlock body={String(ast.body)} lang={ast.lang} />
+            }
             return <Codeblock language={ast.lang}>{ast.body}</Codeblock>
         case 'EmojiPack': // TODO: implement EmojipackCard
             //return <EmojipackCard src={ast.body} icon={<ManageSearchIcon />} onClick={actions.openEmojipack} />

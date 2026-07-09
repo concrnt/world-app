@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { Theme } from '../types/Theme'
 import { usePreference } from './Preference'
 import { Themes } from '../data/themes'
-import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
+import { ThemeProvider as BaseThemeProvider, CfmActionsProvider, migrateTheme } from '@concrnt/ui'
 import { useClient } from './Client'
 import {
     deleteCustomTheme as deleteCustomThemeDocument,
@@ -31,7 +31,7 @@ const ThemeLibraryContext = createContext<ThemeLibraryState>({
 
 export const ThemeProvider = (props: Props) => {
     const { client } = useClient()
-    const [themeName] = usePreference('themeName')
+    const [themeName, setThemeName] = usePreference('themeName')
     const [customThemes, setCustomThemes] = useState<Record<string, Theme>>({})
     const theme = props.theme ?? customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
@@ -84,6 +84,16 @@ export const ThemeProvider = (props: Props) => {
         [client]
     )
 
+    const importTheme = useCallback(
+        async (source: Theme) => {
+            const saved = await saveTheme(migrateTheme(source))
+            if (saved.meta?.name) {
+                setThemeName(saved.meta.name)
+            }
+        },
+        [saveTheme, setThemeName]
+    )
+
     const value = useMemo(
         () => ({
             customThemes,
@@ -96,7 +106,9 @@ export const ThemeProvider = (props: Props) => {
 
     return (
         <ThemeLibraryContext.Provider value={value}>
-            <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
+            <CfmActionsProvider value={{ importTheme }}>
+                <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
+            </CfmActionsProvider>
         </ThemeLibraryContext.Provider>
     )
 }

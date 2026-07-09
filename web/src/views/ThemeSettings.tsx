@@ -1,9 +1,11 @@
-import { Divider, IconButton, Text } from '@concrnt/ui'
+import { Button, Divider, IconButton, Text } from '@concrnt/ui'
 import { MdContentCopy, MdDeleteForever } from 'react-icons/md'
 import { ThemeCard } from '../components/ThemeCard'
 import { ThemeEditor } from '../components/ThemeEditor'
+import { ThemeImporter } from '../components/ThemeImporter'
 import { usePreference } from '../contexts/Preference'
 import { useThemeLibrary } from '../contexts/Theme'
+import { useDrawer } from '../contexts/Drawer'
 import { Themes } from '../data/themes'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
@@ -11,7 +13,8 @@ import { View } from '../components/View'
 
 export const ThemeSettingsView = () => {
     const [themeName, setThemeName] = usePreference('themeName')
-    const { customThemes, deleteTheme } = useThemeLibrary()
+    const { customThemes, deleteTheme, reloadThemes } = useThemeLibrary()
+    const drawer = useDrawer()
     const selectedTheme = customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
     return (
@@ -44,10 +47,26 @@ export const ThemeSettingsView = () => {
                     ))}
                 </div>
 
+                <Divider />
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: CssVar.space(2),
+                        flexWrap: 'wrap'
+                    }}
+                >
+                    <Text variant="h3">カスタムテーマ</Text>
+                    <Button
+                        variant="outlined"
+                        onClick={() => drawer.open(<ThemeImporter onComplete={() => reloadThemes()} />)}
+                    >
+                        v1からインポート
+                    </Button>
+                </div>
                 {Object.keys(customThemes).length > 0 && (
                     <>
-                        <Divider />
-                        <Text variant="h3">カスタムテーマ</Text>
                         <div
                             style={{
                                 display: 'grid',
