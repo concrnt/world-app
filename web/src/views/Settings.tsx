@@ -6,7 +6,7 @@ import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { useNavigate } from 'react-router-dom'
-import { MdBadge, MdChevronRight, MdEmojiEmotions, MdPalette, MdTerminal } from 'react-icons/md'
+import { MdBadge, MdChevronRight, MdEmojiEmotions, MdNotifications, MdPalette, MdTerminal } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 import { Fragment, useState } from 'react'
 import buildTime from '~build/time'
@@ -84,6 +84,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/emoji')}
                     >
                         絵文字
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdNotifications size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/notifications')}
+                    >
+                        通知
                     </ListItem>
                     {developerMode && (
                         <ListItem

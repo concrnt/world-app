@@ -23,6 +23,7 @@ import { ExplorerView } from './views/Explorer'
 import { NotificationsView } from './views/Notifications'
 import { ContactsView } from './views/Contacts'
 import { SettingsView } from './views/Settings'
+import { NotificationSettingsView } from './views/NotificationSettings'
 import { ThemeSettingsView } from './views/ThemeSettings'
 import { EmojiSettingsView } from './views/EmojiSettings'
 import { ProfileView } from './views/Profile'
@@ -128,6 +129,14 @@ const AuthedRoutes = () => (
                                                             element={
                                                                 <SettingsBackProvider>
                                                                     <ThemeSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/notifications"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <NotificationSettingsView />
                                                                 </SettingsBackProvider>
                                                             }
                                                         />

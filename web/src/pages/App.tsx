@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
 import { DomainOfflineBanner } from '../components/DomainOfflineBanner'
+import { PwaManager } from '../components/PwaManager'
 import { CssVar } from '../types/Theme'
 
 export const AppShell = () => {
@@ -16,6 +17,7 @@ export const AppShell = () => {
                 alignItems: 'center'
             }}
         >
+            <PwaManager />
             <DomainOfflineBanner />
             <div
                 style={{

@@ -5,6 +5,7 @@ import { InMemoryAuthProvider, NotFoundError, ServerOfflineError } from '@concrn
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { resourceCache } from '../lib/cache'
+import { isPushEnabled, unregisterPush } from '../lib/push'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
 
 export interface ClientContextState {
@@ -169,6 +170,11 @@ export const ClientProvider = (props: Props): ReactNode => {
     }, [client])
 
     const logout = useCallback(async () => {
+        // push購読はこのブラウザに紐づくため、セッションを破棄する前に解除しておく
+        const current = clientRef.current
+        if (current && isPushEnabled()) {
+            await unregisterPush(current).catch(() => {})
+        }
         localStorage.removeItem('Domain')
         localStorage.removeItem('PrivateKey')
         localStorage.removeItem('SubKey')
