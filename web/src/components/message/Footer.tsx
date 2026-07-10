@@ -4,6 +4,7 @@ import { MessageActions } from './MessageActions'
 import { MessageReactions } from './MessageReactions'
 import { PostedTimelines } from './PostedTimelines'
 import { CssVar } from '@concrnt/ui'
+import { useClient } from '../../contexts/Client'
 
 interface Props {
     message: Message<any>
@@ -15,6 +16,7 @@ export interface ReactionState {
 }
 
 export const MessageFooter = (props: Props) => {
+    const { client } = useClient()
     const [reactionState, updateReactionState] = useOptimistic<ReactionState>(
         (() => {
             const reactionCounts = props.message.reactionCounts ?? {}
@@ -65,7 +67,10 @@ export const MessageFooter = (props: Props) => {
                         marginLeft: `calc(${CssVar.space(2)} * -1)`
                     }}
                 >
-                    <MessageActions message={props.message} updateReactionState={updateReactionState} />
+                    {/* ゲスト(未ログイン)はEmojiPickerProvider等が無いため、アクション群自体を描画しない */}
+                    {client.ccid !== '' && (
+                        <MessageActions message={props.message} updateReactionState={updateReactionState} />
+                    )}
                 </div>
             </div>
         </>

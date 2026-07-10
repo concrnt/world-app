@@ -317,6 +317,22 @@ export const ClientProvider = (props: Props): ReactNode => {
     )
 }
 
+// ゲスト(未ログイン)閲覧用。createAsGuestで作ったClientを既存のuseClient()消費者にそのまま供給する
+export const GuestClientProvider = (props: { client: Client; children: ReactNode }): ReactNode => {
+    const value = useMemo<ClientContextState>(
+        () => ({
+            client: props.client,
+            reload: async () => {},
+            logout: async () => {},
+            isDomainOffline: false,
+            domainRecovered: false,
+            isSubkeyInvalid: false
+        }),
+        [props.client]
+    )
+    return <ClientContext.Provider value={value}>{props.children}</ClientContext.Provider>
+}
+
 export function useClient(): ClientContextState {
     return useContext(ClientContext)
 }

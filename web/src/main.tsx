@@ -37,6 +37,10 @@ import { Activitypub } from './views/Activitypub'
 import { ApView } from './views/ApView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { GuestShell } from './views/guest/GuestBase'
+import { GuestProfileView } from './views/guest/GuestProfile'
+import { GuestPostView } from './views/guest/GuestPost'
+import { GuestTimelineView } from './views/guest/GuestTimeline'
 import { NavigationProvider } from './contexts/Navigation'
 import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
@@ -77,6 +81,32 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' }) => {
             return <ApView uri={decoded} />
     }
 }
+
+const GuestProfileRoute = () => {
+    const { ccid = '', profile } = useParams()
+    return <GuestProfileView ccid={ccid} profileName={profile} />
+}
+
+const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {
+    const { uri = '' } = useParams()
+    const decoded = decodeURIComponent(uri)
+
+    switch (kind) {
+        case 'post':
+            return <GuestPostView uri={decoded} />
+        case 'timeline':
+            return <GuestTimelineView uri={decoded} />
+    }
+}
+
+// ログインセッションの有無(モジュールロード時に1回判定)。
+// 無い場合のみゲスト閲覧ルートを登録する。ログイン/登録完了時はフルリロードされるため再評価される
+const hasSession = (() => {
+    const domain = localStorage.getItem('Domain')
+    const masterKey = localStorage.getItem('PrivateKey')
+    const subKey = localStorage.getItem('SubKey')
+    return !!domain && (!!masterKey || !!subKey)
+})()
 
 const SettingsBackProvider = ({ children }: { children: ReactNode }) => {
     const navigate = useNavigate()
@@ -244,6 +274,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                         </BaseThemeProvider>
                     }
                 />
+                {!hasSession && (
+                    <Route element={<GuestShell />}>
+                        <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
+                        <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
+                        <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
+                    </Route>
+                )}
                 <Route path="*" element={<AuthedRoutes />} />
             </Routes>
         </BrowserRouter>

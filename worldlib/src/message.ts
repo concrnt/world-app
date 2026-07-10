@@ -93,9 +93,11 @@ export class Message<T> implements Document<T> {
             }
         }
 
-        message.ownAssociations = (await client.api.getAssociations(uri, { author: client.ccid })).map((sd) =>
-            Association.fromSignedDocument(sd)
-        )
+        message.ownAssociations = client.ccid
+            ? (await client.api.getAssociations(uri, { author: client.ccid })).map((sd) =>
+                  Association.fromSignedDocument(sd)
+              )
+            : []
 
         message.associationCounts = await client.api.getAssociationCounts(uri)
         message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)

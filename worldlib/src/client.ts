@@ -12,7 +12,9 @@ import {
     KVS,
     SignedDocument,
     Acknowledge,
-    Entity
+    Entity,
+    InMemoryAuthProvider,
+    InMemoryKVS
 } from '@concrnt/client'
 import { ListSchema, PinnedListsSchema, ProfileSchema, ReadAccessRequestAssociationSchema } from './schemas/'
 import { User } from './user'
@@ -315,6 +317,24 @@ export class Client {
 
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
         const client = new Client(api, ccid, entity.value, server, profile)
+        if (!online) {
+            client.isOnline = false
+            client.startRecoveryPoll()
+        }
+        return client
+    }
+
+    // 鍵を持たないゲスト(未ログイン)用クライアント。公開リソースの閲覧のみ可能で、署名を伴う操作は行えない
+    static async createAsGuest(host: FQDN, cacheEngine?: KVS): Promise<Client> {
+        const api = new Api(host, new InMemoryAuthProvider(), cacheEngine ?? new InMemoryKVS())
+
+        const online = await api.getServerOnlineStatus(host)
+
+        // オフラインかつキャッシュなしの場合はServerOfflineErrorが伝播する
+        const server = await api.getServer(host)
+
+        const guestEntity: Entity = { domain: server.domain, alias: '', alias_proof_type: '' }
+        const client = new Client(api, '', guestEntity, server)
         if (!online) {
             client.isOnline = false
             client.startRecoveryPoll()
