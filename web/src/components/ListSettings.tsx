@@ -1,10 +1,11 @@
-import { type CSSProperties, Suspense, useEffect, useId, useState } from 'react'
+import { type CSSProperties, Suspense, useEffect, useState } from 'react'
 import {
     Button,
     IconButton,
     List as ListView,
     ListItem,
     Popover,
+    useAnchor,
     Switch,
     Tab,
     Tabs,
@@ -38,7 +39,7 @@ export const ListSettings = (props: Props) => {
     const [excludeSelf, setExcludeSelf] = useState<boolean>(pin?.excludeSelf ?? false)
 
     const [menuOpen, setMenuOpen] = useState(false)
-    const menuAnchor = '--list-settings-menu-' + useId().replace(/[^a-zA-Z0-9-]/g, '')
+    const menuAnchor = useAnchor()
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 

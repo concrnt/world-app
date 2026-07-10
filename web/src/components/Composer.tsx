@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import { Button, IconButton, List, ListItem, Popover, Text, CfmRenderer } from '@concrnt/ui'
+import { Button, IconButton, List, ListItem, Popover, Text, CfmRenderer, useAnchor } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
@@ -87,7 +87,7 @@ export const Composer = (props: Props) => {
     const emojiPicker = useEmojiPicker()
 
     // Composerは複数同時にマウントされ得るため、アンカー名をインスタンスごとに一意にする
-    const modeSelectAnchor = '--composer-mode-select-' + useId().replace(/[^a-zA-Z0-9-]/g, '')
+    const modeSelectAnchor = useAnchor()
 
     // リプライ/リルート時はモードを外部から固定し、通常時はユーザーが選択したエディタモードを表示する
     const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode

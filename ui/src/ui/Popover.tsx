@@ -1,5 +1,11 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+
+// トリガー側が style={{ anchorName: useAnchor()の返り値 }} で宣言し、Popoverのanchorに渡すアンカー名を生成する
+export const useAnchor = (): string => {
+    const id = useId().replace(/[^a-zA-Z0-9-]/g, '')
+    return `--anchor-${id}`
+}
 
 interface Props {
     open: boolean
