@@ -10,6 +10,7 @@ import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
+import { FAB } from '../components/FAB'
 import { usePersistent } from '../hooks/usePersistent'
 import { invalidateResource } from '../hooks/useResource'
 import { ClassicExplorer } from '../components/ClassicExplorer'
@@ -73,6 +74,21 @@ export const ExplorerView = () => {
                 >
                     {classicMode ? <ClassicExplorer /> : <SearchExplorer />}
                 </div>
+                <FAB
+                    onClick={() => {
+                        drawer.open(
+                            <CommunityCreator
+                                onComplete={(uri) => {
+                                    invalidateResource(`communities:${client.server.domain}`)
+                                    drawer.close()
+                                    navigate('/timeline/' + encodeURIComponent(uri))
+                                }}
+                            />
+                        )
+                    }}
+                >
+                    <MdAdd size={24} />
+                </FAB>
             </View>
         </>
     )

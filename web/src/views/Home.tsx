@@ -13,7 +13,9 @@ import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 
 import { MdTune } from 'react-icons/md'
+import { MdCreate } from 'react-icons/md'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
+import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -21,6 +23,9 @@ import { useSubscribe } from '../hooks/useSubscribe'
 import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 import { Composer } from '../components/Composer'
+import { FAB } from '../components/FAB'
+import { useComposer } from '../contexts/Composer'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { client, isDomainOffline } = useClient()
@@ -143,7 +148,9 @@ const HomeMain = ({
             {sortedPins.length > 1 && (
                 <Tabs
                     style={{
-                        color: CssVar.contentLink
+                        color: CssVar.contentLink,
+                        overflowX: 'auto',
+                        justifyContent: 'flex-start'
                     }}
                 >
                     {sortedPins.map((tab) => (
@@ -158,7 +165,8 @@ const HomeMain = ({
                             groupId="home-timeline-tabs"
                             style={{
                                 color: CssVar.contentText,
-                                width: '120px'
+                                width: '120px',
+                                flexShrink: 0
                             }}
                         >
                             <ListName uri={tab.uri} />
@@ -175,28 +183,50 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
     const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
     const [knownCommunities] = useSubscribe(client.knownCommunities)
+    const isMobile = useIsMobile()
 
     if (!list) return <Text>リストが見つかりませんでした</Text>
 
     return (
-        <Timeline
-            ref={props.ref}
-            list={list}
-            excludeSelf={props.pin.excludeSelf}
-            headElement={
-                <>
-                    <div style={{ padding: CssVar.space(2) }}>
-                        <Composer
-                            mode="normal"
-                            destinations={props.pin.defaultPostTimelines}
-                            options={knownCommunities}
-                            initialProfile={props.pin.defaultProfile}
-                        />
-                    </div>
-                    <Divider />
-                </>
-            }
-        />
+        <>
+            <Timeline
+                ref={props.ref}
+                list={list}
+                excludeSelf={props.pin.excludeSelf}
+                headElement={
+                    // モバイルではインラインエディタは出さず、FABからモーダルで投稿する(app版と同じ体験)
+                    isMobile ? undefined : (
+                        <>
+                            <div style={{ padding: CssVar.space(2) }}>
+                                <Composer
+                                    mode="normal"
+                                    destinations={props.pin.defaultPostTimelines}
+                                    options={knownCommunities}
+                                    initialProfile={props.pin.defaultProfile}
+                                />
+                            </div>
+                            <Divider />
+                        </>
+                    )
+                }
+            />
+            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} defaultProfile={props.pin.defaultProfile} />
+        </>
+    )
+}
+
+const InnerFab = (props: { defaultPostTimelines: string[]; defaultProfile?: string }) => {
+    const composer = useComposer()
+
+    return (
+        <FAB
+            onClick={() => {
+                hapticLight()
+                composer.open(props.defaultPostTimelines, undefined, undefined, undefined, props.defaultProfile)
+            }}
+        >
+            <MdCreate size={24} />
+        </FAB>
     )
 }
 

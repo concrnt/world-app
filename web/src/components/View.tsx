@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
 import { useTheme } from '@concrnt/ui'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 interface Props {
     children?: ReactNode
@@ -10,6 +11,7 @@ interface Props {
 
 export const View = (props: Props) => {
     const theme = useTheme()
+    const isMobile = useIsMobile()
     const variant = props.variant ?? theme.variant
 
     if (variant === 'classic') {
@@ -41,6 +43,11 @@ export const View = (props: Props) => {
                     borderRadius: CssVar.round(1),
                     overflow: 'hidden',
                     flex: 1,
+                    // モバイル幅ではデスクトップのカードラッパーが無いので、
+                    // ui版View(=app版の見た目)と同じマージンをここで持つ
+                    ...(isMobile && {
+                        margin: `env(safe-area-inset-top) ${CssVar.space(1)} ${CssVar.space(1)} ${CssVar.space(1)}`
+                    }),
                     ...props.style
                 }}
             >

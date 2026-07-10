@@ -1,10 +1,22 @@
-import { Outlet } from 'react-router-dom'
+import { useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
+import { DrawerMenu } from '../components/DrawerMenu'
+import { SidebarLayout } from '../layouts/Sidebar'
 import { DomainOfflineBanner } from '../components/DomainOfflineBanner'
 import { PwaManager } from '../components/PwaManager'
+import { NavigationProvider } from '../contexts/Navigation'
 import { CssVar } from '../types/Theme'
+import { useIsMobile } from '../hooks/useIsMobile'
+import { IconButton, Tabs, Tab, useTheme } from '@concrnt/ui'
+import { MdArrowBack, MdHome, MdExplore, MdNotifications, MdContacts } from 'react-icons/md'
 
 export const AppShell = () => {
+    const isMobile = useIsMobile()
+    return isMobile ? <MobileShell /> : <DesktopShell />
+}
+
+const DesktopShell = () => {
     return (
         <div
             style={{
@@ -59,6 +71,126 @@ export const AppShell = () => {
                         <Outlet />
                     </div>
                 </main>
+            </div>
+        </div>
+    )
+}
+
+// app版のボトムタブ(app/src/views/Main.tsx)と同じ4項目
+const TABS = [
+    { path: '/', icon: <MdHome size={24} /> },
+    { path: '/explorer', icon: <MdExplore size={24} /> },
+    { path: '/notifications', icon: <MdNotifications size={24} /> },
+    { path: '/contacts', icon: <MdContacts size={24} /> }
+]
+
+const MobileBackButton = () => {
+    const navigate = useNavigate()
+    return (
+        <IconButton
+            onClick={() => {
+                // 共有リンク直開きやリロード直後は履歴が無いのでホームへ逃がす
+                if ((window.history.state?.idx ?? 0) > 0) {
+                    navigate(-1)
+                } else {
+                    navigate('/', { replace: true })
+                }
+            }}
+        >
+            <MdArrowBack size={24} />
+        </IconButton>
+    )
+}
+
+const MobileShell = () => {
+    const [opened, setOpen] = useState(false)
+    const location = useLocation()
+    const navigate = useNavigate()
+    const theme = useTheme()
+
+    const isTabRoot = TABS.some((tab) => tab.path === location.pathname)
+
+    // どこ経由の遷移でもドロワーを閉じる
+    const [prevPathname, setPrevPathname] = useState(location.pathname)
+    if (prevPathname !== location.pathname) {
+        setPrevPathname(location.pathname)
+        setOpen(false)
+    }
+
+    return (
+        <div
+            style={{
+                width: '100vw',
+                height: '100dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                backgroundColor: CssVar.backdropBackground
+            }}
+        >
+            <PwaManager />
+            <DomainOfflineBanner />
+            <div
+                style={{
+                    flex: 1,
+                    minHeight: 0,
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}
+            >
+                <SidebarLayout
+                    opened={opened}
+                    setOpen={setOpen}
+                    content={<DrawerMenu onClose={() => setOpen(false)} />}
+                >
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden',
+                            backgroundColor: CssVar.backdropBackground
+                        }}
+                    >
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}
+                        >
+                            {isTabRoot ? (
+                                <Outlet />
+                            ) : (
+                                <NavigationProvider backNode={<MobileBackButton />}>
+                                    <Outlet />
+                                </NavigationProvider>
+                            )}
+                        </div>
+                        <Tabs
+                            style={{
+                                paddingBottom: 'env(safe-area-inset-bottom)',
+                                borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined
+                            }}
+                        >
+                            {TABS.map((tab) => (
+                                <Tab
+                                    key={tab.path}
+                                    groupId="bottom-tabs"
+                                    selected={location.pathname === tab.path}
+                                    onClick={() => navigate(tab.path)}
+                                    style={{
+                                        color: CssVar.backdropText
+                                    }}
+                                >
+                                    {tab.icon}
+                                </Tab>
+                            ))}
+                        </Tabs>
+                    </div>
+                </SidebarLayout>
             </div>
         </div>
     )

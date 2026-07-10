@@ -11,6 +11,7 @@ import { AudioPlayerProvider } from '../../contexts/AudioPlayer'
 import TickerProvider from '../../contexts/Ticer'
 import { UrlSummaryProvider } from '../../contexts/UrlSummary'
 import { LoadingFull } from '../../components/LoadingFull'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
@@ -24,6 +25,7 @@ const resolveEntrypoint = (): string => {
 // 閲覧に必要な最小限のプロバイダのみをマウントする(書き込みを伴うプロバイダは置かない)
 export const GuestShell = () => {
     const navigate = useNavigate()
+    const isMobile = useIsMobile()
     const [client, setClient] = useState<Client | null>(null)
     const [failed, setFailed] = useState(false)
 
@@ -168,15 +170,16 @@ export const GuestShell = () => {
                                                 <div
                                                     style={{
                                                         flexGrow: '1',
-                                                        margin: CssVar.space(2),
+                                                        margin: isMobile ? 0 : CssVar.space(2),
                                                         marginTop: 0,
                                                         display: 'flex',
                                                         flexFlow: 'column',
-                                                        borderRadius: CssVar.round(2),
+                                                        borderRadius: isMobile ? 0 : CssVar.round(2),
                                                         overflow: 'hidden',
                                                         background: 'none',
-                                                        boxShadow:
-                                                            '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
+                                                        boxShadow: isMobile
+                                                            ? 'none'
+                                                            : '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
                                                     }}
                                                 >
                                                     <Outlet />
