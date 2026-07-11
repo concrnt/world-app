@@ -33,6 +33,7 @@ import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { MdLock } from 'react-icons/md'
+import { useMediaViewer } from '../contexts/MediaViewer'
 
 interface Props {
     ccid: string
@@ -133,6 +134,7 @@ const Body = (props: BodyProps) => {
     const navigation = useNavigation()
     const { select } = useSelect()
     const drawer = useDrawer()
+    const mediaViewer = useMediaViewer()
 
     const isMe = client.ccid === props.ccid
 
@@ -272,9 +274,15 @@ const Body = (props: BodyProps) => {
                                 height: `100px`,
                                 position: 'absolute',
                                 transform: 'translateY(-50%)',
-                                left: CssVar.space(2)
+                                left: CssVar.space(2),
+                                cursor: profile.value.avatar ? 'pointer' : undefined
                             }}
                             src={profile.value.avatar}
+                            onClick={() => {
+                                const avatar = profile.value.avatar
+                                if (!avatar) return
+                                mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
+                            }}
                         />
                     </div>
                     <div
