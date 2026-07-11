@@ -1,6 +1,7 @@
 import { Chip } from '@concrnt/ui'
 
 import { Suspense, use, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { IoMdAdd } from 'react-icons/io'
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export const UserPicker = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.userPicker' })
     const { client } = useClient()
 
     const [focused, setFocused] = useState(false)
@@ -112,7 +114,7 @@ export const UserPicker = (props: Props) => {
                     }}
                     tailElement={<IoMdAdd size={16} />}
                 >
-                    ユーザーを追加
+                    {t('addUser')}
                 </Chip>
             )}
             {focused && (
@@ -157,6 +159,7 @@ interface UserPickerProps {
 }
 
 const UserChip = (props: UserPickerProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.userPicker' })
     const { client } = useClient()
 
     const userPromise = useMemo(() => {
@@ -164,7 +167,7 @@ const UserChip = (props: UserPickerProps) => {
     }, [props.ccid, client])
 
     return (
-        <Suspense fallback={<Chip>読み込み中...</Chip>}>
+        <Suspense fallback={<Chip>{t('loading')}</Chip>}>
             <UserChipBody ccid={props.ccid} userPromise={userPromise} onClick={props.onClick} />
         </Suspense>
     )

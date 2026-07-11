@@ -1,6 +1,7 @@
 import { Chip } from '@concrnt/ui'
 
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { MdOutlineTag } from 'react-icons/md'
 import { IoMdCloseCircle } from 'react-icons/io'
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export const TimelinePicker = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.timelinePicker' })
     const { client } = useClient()
     const { select, close } = useSelect()
 
@@ -76,7 +78,7 @@ export const TimelinePicker = (props: Props) => {
                 </div>
             </ListItem>
         ))
-        select('投稿元プロフィール', profileOptions)
+        select(t('postProfile'), profileOptions)
     }
 
     return (
@@ -200,7 +202,7 @@ export const TimelinePicker = (props: Props) => {
                     }}
                     tailElement={<IoMdAdd size={16} />}
                 >
-                    投稿先を追加
+                    {t('addDestination')}
                 </Chip>
             )}
             {focused && (

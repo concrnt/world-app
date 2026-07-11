@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export const EmojiPickerProvider = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
@@ -256,10 +258,10 @@ export const EmojiPickerProvider = (props: Props) => {
     }, [activeTab, emojiPackages.length])
 
     const title = useMemo(() => {
-        if (query.length > 0) return '検索結果'
-        if (effectiveActiveTab === 0) return 'よく使う絵文字'
+        if (query.length > 0) return t('searchResults')
+        if (effectiveActiveTab === 0) return t('frequentlyUsed')
         return emojiPackages[effectiveActiveTab - 1]?.name ?? ''
-    }, [query, effectiveActiveTab, emojiPackages])
+    }, [query, effectiveActiveTab, emojiPackages, t])
 
     const displayEmojis = useMemo(() => {
         if (query.length > 0) return searchResults
@@ -416,7 +418,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             whiteSpace: 'nowrap'
                                         }}
                                     >
-                                        {query.length > 0 ? '一致する絵文字がありません' : '絵文字がありません'}
+                                        {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
                                     </div>
                                 )}
                             </div>
@@ -497,7 +499,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                     <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
                                     <input
                                         type="text"
-                                        placeholder="絵文字を検索..."
+                                        placeholder={t('searchPlaceholder')}
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         onFocus={() => {
@@ -574,10 +576,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                         }}
                                     >
                                         {query.length > 0
-                                            ? '一致する絵文字がありません'
+                                            ? t('noMatchingEmojis')
                                             : activeTab === 0
-                                              ? 'まだ使った絵文字がありません'
-                                              : '絵文字がありません'}
+                                              ? t('noRecentEmojis')
+                                              : t('noEmojis')}
                                     </div>
                                 ) : (
                                     rows.map((row, rowIndex) => (

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, TextField, Text, Divider, List, ListItem, Switch } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
@@ -8,6 +9,7 @@ import { Header } from '../components/Header'
 import { usePreference } from '../contexts/Preference'
 
 export const DevView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.dev' })
     const { client } = useClient()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
 
@@ -31,7 +33,7 @@ export const DevView = () => {
             >
                 <List>
                     <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
-                        開発者モード
+                        {t('developerMode')}
                     </ListItem>
                 </List>
 

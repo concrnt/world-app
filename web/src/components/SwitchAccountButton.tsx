@@ -2,6 +2,7 @@ import { useClient } from '../contexts/Client'
 import { useSelect } from '../contexts/Select'
 import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
 import { ReactNode, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDrawer } from '../contexts/Drawer'
 import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
@@ -10,6 +11,7 @@ import { MdPersonAdd } from 'react-icons/md'
 import { ProfileName } from './ProfileName'
 
 export const SwitchAccountButton = (): ReactNode => {
+    const { t } = useTranslation('', { keyPrefix: 'components.switchAccountButton' })
     const { client, reload } = useClient()
     const { select, close } = useSelect()
     const drawer = useDrawer()
@@ -65,24 +67,24 @@ export const SwitchAccountButton = (): ReactNode => {
                                 drawer.close()
                             }}
                             targetURI={semantics.profile(client.ccid, Date.now().toString())}
-                            title="Create New Profile"
+                            title={t('createNewProfile')}
                         />
                     )
                 }}
             >
-                <Text>プロフィールを追加</Text>
+                <Text>{t('addProfile')}</Text>
             </ListItem>
         )
 
         return result
-    }, [client, reload, close, drawer])
+    }, [client, reload, close, drawer, t])
 
     return (
         <IconButton
             onClick={(e) => {
                 e.stopPropagation()
                 if (!client) return
-                select('Switch Account', options)
+                select(t('switchAccountTitle'), options)
             }}
         >
             <HiSwitchHorizontal size={20} color={CssVar.backdropText} />

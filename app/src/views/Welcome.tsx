@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
 import { Api, InMemoryKVS, Document, Entity, InMemoryAuthProvider, SignedDocument } from '@concrnt/client'
@@ -42,6 +43,7 @@ interface User {
 }
 
 export const WelcomeView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error'>(
         'initial'
     )
@@ -123,11 +125,11 @@ export const WelcomeView = () => {
                         <Text
                             style={{
                                 color: CssVar.uiText,
-                                textAlign: 'center'
+                                textAlign: 'center',
+                                whiteSpace: 'pre-line'
                             }}
                         >
-                            アカウント情報の読み込みに失敗しました。{'\n'}
-                            端末に保存された鍵が消えたわけではありません。もう一度お試しください。
+                            {t('loadFailed')}
                         </Text>
                         {loadError && (
                             <Text
@@ -152,7 +154,7 @@ export const WelcomeView = () => {
                                 reload()
                             }}
                         >
-                            再試行
+                            {t('retry')}
                         </AuthButton>
                     </AuthActions>
                 </AuthScreen>
@@ -187,8 +189,8 @@ export const WelcomeView = () => {
                     </div>
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>
-                        <AuthButton onClick={() => setState('signup')}>はじめる</AuthButton>
-                        <AuthTextButton onClick={() => setState('signin')}>ログイン</AuthTextButton>
+                        <AuthButton onClick={() => setState('signup')}>{t('getStarted')}</AuthButton>
+                        <AuthTextButton onClick={() => setState('signin')}>{t('login')}</AuthTextButton>
                     </AuthActions>
                 </AuthScreen>
             )
@@ -206,10 +208,7 @@ export const WelcomeView = () => {
         case 'ready':
             return (
                 <AuthScreen>
-                    <AuthHeader
-                        title="おかえりなさい"
-                        description="この端末に保存されているアカウントを確認しました。"
-                    />
+                    <AuthHeader title={t('welcomeBackTitle')} description={t('welcomeBackDescriptionDevice')} />
                     <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
@@ -223,8 +222,15 @@ export const WelcomeView = () => {
                     </div>
                     <AuthActions fixedBottom>
                         {continueError && (
-                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                続行に失敗しました。もう一度お試しください。
+                            <Text
+                                style={{
+                                    color: '#ff5b5b',
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('continueFailed')}
                                 {'\n'}
                                 {continueError}
                             </Text>
@@ -293,7 +299,7 @@ export const WelcomeView = () => {
                                 }
                             }}
                         >
-                            {continuing ? '続行中...' : 'このアカウントで続行'}
+                            {continuing ? t('continuing') : t('continueWithAccount')}
                         </AuthButton>
                         <ResetSessionButton
                             ccid={user!.ccid}
@@ -301,7 +307,7 @@ export const WelcomeView = () => {
                                 reload()
                             }}
                         >
-                            このアカウントを端末から削除する
+                            {t('removeAccountFromDevice')}
                         </ResetSessionButton>
                     </AuthActions>
                 </AuthScreen>
@@ -315,6 +321,7 @@ const RecoveryView = (props: {
     setDomain?: (domain: string) => void
     ccid: string
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [found, setFound] = useState<boolean>(false)
     const [domain, setDomain] = useState<string>()
 
@@ -341,26 +348,23 @@ const RecoveryView = (props: {
 
     return (
         <AuthScreen align="top">
-            <AuthHeader
-                title="登録サーバーを確認してください"
-                description="端末にはアカウント情報がありますが、現在のサーバーでは登録情報が見つかりませんでした。"
-            />
+            <AuthHeader title={t('recovery.title')} description={t('recovery.descriptionDevice')} />
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>
-                    <Text style={{ color: CssVar.uiText }}>サーバーアドレス</Text>
+                    <Text style={{ color: CssVar.uiText }}>{t('recovery.serverAddress')}</Text>
                     <TextField
                         value={domain}
                         onChange={(e) => setDomain(e.target.value)}
-                        placeholder="サーバーアドレスを入力"
+                        placeholder={t('recovery.serverAddressPlaceholder')}
                     />
                 </div>
                 <Text style={authStyles.status}>
-                    {found ? '登録情報が見つかりました。' : '登録情報が見つかりませんでした。'}
+                    {found ? t('recovery.registrationFound') : t('recovery.registrationNotFound')}
                 </Text>
             </div>
             {found ? (
                 <AuthActions fixedBottom>
-                    <AuthButton onClick={props.reload}>続行</AuthButton>
+                    <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
             ) : (
                 <AuthActions fixedBottom>
@@ -369,7 +373,7 @@ const RecoveryView = (props: {
                             props.giveup()
                         }}
                     >
-                        新規登録する
+                        {t('recovery.registerNew')}
                     </AuthButton>
                     <ResetSessionButton
                         ccid={props.ccid}
@@ -377,7 +381,7 @@ const RecoveryView = (props: {
                             props.reload()
                         }}
                     >
-                        このアカウントを端末から削除する
+                        {t('removeAccountFromDevice')}
                     </ResetSessionButton>
                 </AuthActions>
             )}

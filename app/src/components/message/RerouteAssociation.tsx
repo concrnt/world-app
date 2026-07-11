@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { RerouteAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
@@ -8,6 +9,7 @@ import { MdRepeat } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.rerouteAssociation' })
     const { push } = useStack()
     const message = props.message
 
@@ -60,7 +62,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {rerouteAuthor?.profile.username} がリルートしました
+                    {t('userRerouted', { name: rerouteAuthor?.profile.username ?? '' })}
                 </span>
             </div>
 
@@ -87,7 +89,9 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             )}
 
             {/* ローディング */}
-            {!targetMessage && <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
+            {!targetMessage && (
+                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>
+            )}
         </div>
     )
 }

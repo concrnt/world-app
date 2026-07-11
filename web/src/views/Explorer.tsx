@@ -3,6 +3,7 @@ import { useClient } from '../contexts/Client'
 import { Text, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
 import { useState, useRef, useTransition } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDrawer } from '../contexts/Drawer'
 import { MdAdd } from 'react-icons/md'
 import { hapticSuccess } from '../utils/haptics'
@@ -79,6 +80,7 @@ export const ExplorerView = () => {
 }
 
 const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
     const { client } = useClient()
@@ -123,7 +125,7 @@ const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void })
                     alignItems: 'center'
                 }}
             >
-                <Text variant="h3">コミュニティを作成</Text>
+                <Text variant="h3">{t('createCommunity')}</Text>
                 <Button
                     disabled={!communityName}
                     onClick={async () => {
@@ -136,15 +138,15 @@ const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void })
                         onComplete(uri)
                     }}
                 >
-                    作成
+                    {t('create')}
                 </Button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">名前</Text>
+                <Text variant="h5">{t('name')}</Text>
                 <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">説明</Text>
+                <Text variant="h5">{t('description')}</Text>
                 <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
             </div>
         </div>

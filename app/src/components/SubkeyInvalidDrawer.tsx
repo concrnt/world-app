@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { Button, CssVar, Text } from '@concrnt/ui'
 import { Client, semantics } from '@concrnt/worldlib'
@@ -12,6 +13,7 @@ interface Props {
 // サーバーリセットや他デバイスからのrevokeでこの端末のsubkeyが失効した際に表示する、
 // 閉じることのできない案内。アプリはマスターキーを保持しているため、その場で再有効化できる。
 export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.subkeyInvalidDrawer' })
     const [error, setError] = useState('')
     const canSignMaster = client.api.authProvider.canSignMaster()
     const width = Math.min(typeof window !== 'undefined' ? window.innerWidth : 420, 420)
@@ -21,7 +23,7 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
         try {
             const ccid = client.ccid
             const ckid = client.api.authProvider.getCKID()
-            if (!ckid) throw new Error('この端末の鍵情報が見つかりませんでした。')
+            if (!ckid) throw new Error(t('ckidNotFound'))
 
             await client.api.commit(
                 {
@@ -39,7 +41,7 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
         } catch (err) {
             console.error('Failed to reactivate subkey', err)
             const detail = err instanceof Error ? err.message : String(err)
-            setError(`鍵の再有効化に失敗しました。もう一度お試しください。\n${detail}`)
+            setError(`${t('reactivateFailed')}\n${detail}`)
         }
     }
 
@@ -82,14 +84,10 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
                     overflowY: 'auto'
                 }}
             >
-                <Text variant="h3">この端末の鍵が無効になっています</Text>
+                <Text variant="h3">{t('titleDevice')}</Text>
+                <Text style={{ opacity: 0.8 }}>{t('revokedDevice')}</Text>
                 <Text style={{ opacity: 0.8 }}>
-                    サーバー側のリセット、または他のデバイスからの操作により、この端末で使用している鍵(サブキー)が失効しました。
-                </Text>
-                <Text style={{ opacity: 0.8 }}>
-                    {canSignMaster
-                        ? '「鍵を再有効化」を押すと、この端末の鍵を復旧できます。'
-                        : '投稿など書き込みを行うには、一度ログアウトし、再度ログインしてください。'}
+                    {canSignMaster ? t('reactivateHintDevice') : t('reloginHintDevice')}
                 </Text>
                 {error && (
                     <Text style={{ color: '#ff7676', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{error}</Text>
@@ -102,9 +100,9 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
                         gap: CssVar.space(2)
                     }}
                 >
-                    {canSignMaster && <Button onClick={reactivate}>鍵を再有効化</Button>}
+                    {canSignMaster && <Button onClick={reactivate}>{t('reactivateKey')}</Button>}
                     <Button variant={canSignMaster ? 'outlined' : 'contained'} onClick={onLogout}>
-                        ログアウト
+                        {t('logout')}
                     </Button>
                 </div>
             </motion.div>

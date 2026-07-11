@@ -8,6 +8,7 @@ import { Header } from '../ui/Header'
 import { FAB } from '../ui/FAB'
 import { View, Tabs, Tab, Text, Button } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
+import { useTranslation } from 'react-i18next'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
@@ -25,6 +26,7 @@ import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 
 export const HomeView = (props: ScrollViewProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const { client, isDomainOffline } = useClient()
     const drawer = useDrawer()
 
@@ -45,13 +47,13 @@ export const HomeView = (props: ScrollViewProps) => {
             drawer.open(
                 <ProfileEditor
                     noLoading
-                    title="プロフィールを設定しましょう！"
+                    title={t('setUpProfile')}
                     targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
                     onComplete={() => drawer.close()}
                 />
             )
         }
-    }, [client, drawer, isDomainOffline])
+    }, [client, drawer, isDomainOffline, t])
 
     return (
         <>
@@ -95,10 +97,8 @@ export const HomeView = (props: ScrollViewProps) => {
                                 padding: CssVar.space(4)
                             }}
                         >
-                            <Text variant="caption">
-                                読み込みに失敗しました(サーバーがオフラインの可能性があります)
-                            </Text>
-                            <Button onClick={() => resetErrorBoundary()}>再試行</Button>
+                            <Text variant="caption">{t('loadFailed')}</Text>
+                            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
                         </div>
                     )}
                 >
@@ -174,9 +174,10 @@ const HomeMain = ({
 }
 
 const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const [list] = useSubscribe(props.pin.list)
 
-    if (!list) return <Text>リストが見つかりませんでした</Text>
+    if (!list) return <Text>{t('listNotFound')}</Text>
 
     return (
         <>

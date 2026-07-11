@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Text } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
@@ -42,25 +43,22 @@ const InfoTile = ({ icon, label, value }: { icon: ReactNode; label: string; valu
 }
 
 export const IDView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
 
     if (!client) return null
 
     const username = client.profile?.username
-    const alias = client.entity.alias || '<未設定>'
+    const alias = client.entity.alias || t('aliasNotSet')
 
     const backupMasterKey = () => {
         const privateKey = localStorage.getItem('PrivateKey')
-        const text = `Concrnt Web ログイン情報
-このファイルは Concrnt Web のログイン情報をバックアップするためのものです。
-このファイルを安全な場所に保管してください。
-
-CCID: ${client.ccid}
-マスター秘密鍵: ${privateKey ?? '未保存'}
-バックアップ時登録サーバー: ${client.server.domain ?? 'N/A'}
-
-秘密鍵を紛失した場合、アカウントを復元できなくなる可能性があります。
-この内容を他人に知られると、アカウントが乗っ取られる可能性があります。`
+        const text = t('backupFileContent', {
+            ccid: client.ccid,
+            privateKey: privateKey ?? t('backupNotSaved'),
+            server: client.server.domain ?? 'N/A',
+            interpolation: { escapeValue: false }
+        })
 
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
         const url = URL.createObjectURL(blob)
@@ -73,7 +71,7 @@ CCID: ${client.ccid}
 
     return (
         <View>
-            <Header>ID管理</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -86,7 +84,7 @@ CCID: ${client.ccid}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(0.5) }}>
                     <Text variant="h3">Passport</Text>
-                    <Text variant="caption">現在のID、登録サーバー、認証情報を確認できます。</Text>
+                    <Text variant="caption">{t('passportDescription')}</Text>
                 </div>
 
                 <div>
@@ -102,7 +100,7 @@ CCID: ${client.ccid}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: CssVar.space(2) }}>
-                    <InfoTile icon={<MdBadge size={24} />} label="エイリアス" value={alias} />
+                    <InfoTile icon={<MdBadge size={24} />} label={t('alias')} value={alias} />
                     <InfoTile
                         icon={<MdPublic size={24} />}
                         label="Home Server"
@@ -110,7 +108,7 @@ CCID: ${client.ccid}
                     />
                 </div>
 
-                <Button onClick={backupMasterKey}>マスターキーをバックアップ</Button>
+                <Button onClick={backupMasterKey}>{t('backupMasterKey')}</Button>
             </div>
         </View>
     )

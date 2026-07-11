@@ -1,5 +1,6 @@
 import { TextField, Text, Button } from '@concrnt/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
 interface Props {
@@ -8,12 +9,13 @@ interface Props {
 }
 
 export const Report = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.report' })
     const { client } = useClient()
     const [reason, setReason] = useState('')
 
     return (
         <div>
-            <Text>報告理由</Text>
+            <Text>{t('reason')}</Text>
             <TextField value={reason} onChange={(e) => setReason(e.target.value)} />
 
             <Button
@@ -45,7 +47,7 @@ export const Report = (props: Props) => {
                         })
                 }}
             >
-                送信
+                {t('send')}
             </Button>
         </div>
     )

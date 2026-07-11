@@ -1,6 +1,7 @@
 import { Button, Text } from '@concrnt/ui'
 import { useModal } from '../contexts/Modal'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BackupKeyButton } from './BackupKeyButton'
 import { removeAccount } from '../lib/accounts'
 
@@ -11,14 +12,15 @@ interface Props {
 }
 
 export const ResetSessionModalContent = (props: { ccid: string; onDone: () => void; onCancel: () => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.resetSessionButton' })
     const [exported, setExported] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     return (
         <>
-            <Text variant="h3">アカウント情報の削除</Text>
+            <Text variant="h3">{t('title')}</Text>
 
-            <Text variant="caption">削除する前に、このアカウントのマスターキーをバックアップしましょう。</Text>
+            <Text variant="caption">{t('backupFirst')}</Text>
 
             <BackupKeyButton
                 ccid={props.ccid}
@@ -37,7 +39,7 @@ export const ResetSessionModalContent = (props: { ccid: string; onDone: () => vo
                     marginTop: 16
                 }}
             >
-                <Button onClick={props.onCancel}>キャンセル</Button>
+                <Button onClick={props.onCancel}>{t('cancel')}</Button>
                 <Button
                     disabled={!exported}
                     onClick={() => {
@@ -49,11 +51,11 @@ export const ResetSessionModalContent = (props: { ccid: string; onDone: () => vo
                             })
                             .catch((err) => {
                                 console.error('Failed to remove account', err)
-                                setError('削除できませんでした。もう一度お試しください。')
+                                setError(t('deleteFailed'))
                             })
                     }}
                 >
-                    削除
+                    {t('delete')}
                 </Button>
             </div>
         </>
@@ -61,6 +63,7 @@ export const ResetSessionModalContent = (props: { ccid: string; onDone: () => vo
 }
 
 export const ResetSessionButton = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.resetSessionButton' })
     const modal = useModal()
 
     const handleClick = () => {
@@ -89,7 +92,7 @@ export const ResetSessionButton = (props: Props) => {
                 fontSize: '1rem'
             }}
         >
-            {props.children || 'Reset Session'}
+            {props.children || t('resetSession')}
         </Button>
     )
 }

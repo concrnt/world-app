@@ -5,6 +5,7 @@ import { Button, CCWallpaper, CssVar, Tab, Tabs, TextField } from '@concrnt/ui'
 
 import { useClient } from '../contexts/Client'
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Subscription } from './Subscription'
 import { CCEditor } from './CCEditor'
 import { PolicyEditor } from './PolicyEditor'
@@ -112,6 +113,7 @@ interface EditorProps {
 }
 
 const TimelineEditor = (props: EditorProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.timelineSettings' })
     const { client } = useClient()
     const [schemaDraft, setSchemaDraft] = useState<string>()
     const [valueDraft, setValueDraft] = useState<any>()
@@ -159,7 +161,7 @@ const TimelineEditor = (props: EditorProps) => {
                 gap: CssVar.space(4)
             }}
         >
-            <Text variant="h3">スキーマ</Text>
+            <Text variant="h3">{t('schema')}</Text>
             <TextField
                 // error={!schemaDraft?.startsWith('https://')}
                 // helperText={t('schemaDesc')}
@@ -169,7 +171,7 @@ const TimelineEditor = (props: EditorProps) => {
                 }}
             />
             <div>
-                <Text variant="h3">属性</Text>
+                <Text variant="h3">{t('attributes')}</Text>
                 <CCEditor
                     schemaURL={schemaDraft}
                     value={valueDraft}

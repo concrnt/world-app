@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CssVar } from '@concrnt/ui'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export const AddAccountDrawer = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.addAccountDrawer' })
     const [mode, setMode] = useState<'menu' | 'create' | 'import'>('menu')
 
     // 追加が完了したら新アカウント(既にアクティブ)で起動し直す。
@@ -48,15 +50,12 @@ export const AddAccountDrawer = (props: Props) => {
                 padding: `${CssVar.space(4)} ${CssVar.space(3)} calc(env(safe-area-inset-bottom) + ${CssVar.space(4)})`
             }}
         >
-            <AuthHeader
-                title="アカウントを追加"
-                description="新しいアカウントを作成するか、既存のアカウントをインポートします。"
-            />
-            <AuthButton onClick={() => setMode('create')}>新規作成</AuthButton>
+            <AuthHeader title={t('title')} description={t('description')} />
+            <AuthButton onClick={() => setMode('create')}>{t('createNew')}</AuthButton>
             <AuthButton variant="outlined" onClick={() => setMode('import')}>
-                既存アカウントをインポート
+                {t('importExisting')}
             </AuthButton>
-            <AuthTextButton onClick={() => props.onClose()}>キャンセル</AuthTextButton>
+            <AuthTextButton onClick={() => props.onClose()}>{t('cancel')}</AuthTextButton>
         </div>
     )
 }

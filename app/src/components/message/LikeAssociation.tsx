@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { LikeAssociationSchema } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
@@ -8,6 +9,7 @@ import { MdStar } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.likeAssociation' })
     const { push } = useStack()
     const message = props.message
 
@@ -57,7 +59,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {likeAuthor?.profile.username} がお気に入りに登録しました
+                    {t('userLiked', { name: likeAuthor?.profile.username ?? '' })}
                 </span>
             </div>
 
@@ -81,7 +83,9 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             )}
 
             {/* ローディング */}
-            {!targetMessage && <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
+            {!targetMessage && (
+                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>
+            )}
         </div>
     )
 }

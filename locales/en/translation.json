@@ -76,6 +76,573 @@
             "urlCopied": "Copied URL",
             "loadFailed": "Failed to load",
             "fetchedAt": "Fetched at: {{date}}"
+        },
+        "welcome": {
+            "loadFailed": "Failed to load account information.\nThe key stored on this device has not been lost. Please try again.",
+            "retry": "Retry",
+            "getStarted": "Get Started",
+            "login": "Log In",
+            "welcomeBackTitle": "Welcome back",
+            "welcomeBackDescriptionDevice": "We found an account saved on this device.",
+            "welcomeBackDescriptionBrowser": "We found an account saved in this browser.",
+            "continueFailed": "Failed to continue. Please try again.",
+            "continuing": "Continuing...",
+            "continueWithAccount": "Continue with this account",
+            "removeAccountFromDevice": "Remove this account from this device",
+            "resetBrowserAccount": "Reset account data in this browser",
+            "recovery": {
+                "title": "Check your registered server",
+                "descriptionDevice": "This device has account data, but no registration was found on the current server.",
+                "descriptionBrowser": "This browser has account data, but no registration was found on the current server.",
+                "serverAddress": "Server address",
+                "serverAddressPlaceholder": "Enter server address",
+                "registrationFound": "Registration found.",
+                "registrationNotFound": "Registration not found.",
+                "continue": "Continue",
+                "registerNew": "Register a new account",
+                "deleteBrowserAccount": "Delete account data from this browser"
+            }
+        },
+        "accountSetup": {
+            "title": "Create Account",
+            "chooseServerDescription": "Choose a server to register on, then complete registration in your browser.",
+            "registerOnDomainDescription": "Register an account on {{domain}}.",
+            "recommendedServer": "Recommended server",
+            "customServer": "Custom server",
+            "change": "Change",
+            "waitingForRegistration": "Waiting for your account to be created on the server.",
+            "waitingForRegistrationAuto": "Waiting for your account to be created on the server. You will proceed automatically once registration is complete.",
+            "waitingForRegistrationButton": "Waiting for registration...",
+            "registrationStartFailed": "Could not start registration. Please try again.",
+            "preparing": "Preparing...",
+            "startWithRecommendedServer": "Start with the recommended server",
+            "startWithThisServer": "Start with this server",
+            "back": "Back",
+            "appRecommendedTitle": "We recommend creating your account in the app",
+            "appRecommendedDescription": "The app makes it easier to store your master key and move between devices. Scan the QR code below with your smartphone to get the app.",
+            "backupTitle": "Save your master key",
+            "backupDescription": "This master key is required to recover your account. Download it and store it in a safe place before continuing registration.",
+            "registeredServer": "Registered server",
+            "downloadStarted": "Download started. Check where the file was saved before proceeding to registration.",
+            "downloadWarning": "If you lose this file, you may not be able to recover your account on another device or browser.",
+            "masterkeyFileTemplate": "Concrnt Master Key\nThis file is used to recover your Concrnt account.\nStore this file in a safe place.\n\nCCID: {{ccid}}\nMaster Key: {{mnemonic}}\nRegistered server: {{domain}}\n\nIf you lose your master key, you may not be able to recover your account.\nIf someone else learns this information, your account may be taken over.",
+            "downloadMasterkey": "Download master key",
+            "openRegistrationPage": "Open registration page",
+            "backToServerSelection": "Back to server selection",
+            "readyTitle": "Ready",
+            "readyDescriptionDevice": "Registration confirmed. Finally, register the key this device will use.",
+            "readyDescriptionBrowser": "Registration confirmed. Finally, register the key this browser will use.",
+            "finalizeFailed": "Registration failed. Please try again.",
+            "finalizeFailedNetwork": "Registration failed. Check your network connection and try again.",
+            "ccidMissing": "Program error: CCID not found",
+            "registering": "Registering...",
+            "done": "Done"
+        },
+        "accountImport": {
+            "title": "Import Account",
+            "descriptionDevice": "Enter your master key to use your account on this device.",
+            "descriptionBrowser": "Enter your master key to use your account in this browser.",
+            "masterKey": "Master Key",
+            "masterKeyPlaceholder": "Enter master key",
+            "masterKeyValid": "This master key is valid.",
+            "masterKeyInvalid": "Could not verify this master key.",
+            "import": "Import",
+            "back": "Back",
+            "existingAccountTitle": "A saved account already exists",
+            "existingAccountDescription": "To import a new account, you must first delete the account data saved in this browser.",
+            "existingMasterKeyNotice": "This browser already has a master key.",
+            "deleteBrowserAccount": "Delete account data from this browser"
+        },
+        "profile": {
+            "userNotFound": "User not found",
+            "blockConfirmTitle": "Are you sure you want to block this user?",
+            "blockConfirmDescription": "Blocking will prevent this user from replying to you or reacting to your posts, but they will still be able to see your public posts.",
+            "block": "Block",
+            "unblockConfirmTitle": "Are you sure you want to unblock this user?",
+            "unblockConfirmDescription": "Unblocking will allow this user to reply to you and react to your posts again.",
+            "unblock": "Unblock",
+            "noDescription": "No description yet",
+            "following": "{{n}} Following",
+            "followers": "{{n}} Followers"
+        },
+        "explorer": {
+            "createCommunity": "Create Community",
+            "create": "Create",
+            "name": "Name",
+            "description": "Description"
+        },
+        "dev": {
+            "developerMode": "Developer Mode",
+            "mockHome": "Home screen mock",
+            "mockExplorer": "Explorer screen mock",
+            "mockID": "ID screen mock"
+        },
+        "id": {
+            "title": "ID Management",
+            "aliasNotSet": "<Not set>",
+            "passportDescription": "View your current ID, registered server, and credentials.",
+            "alias": "Alias",
+            "loginOnAnotherDevice": "Log in on another device",
+            "backupMasterKey": "Back up master key",
+            "backupNotSaved": "Not saved",
+            "backupFileContent": "Concrnt Web login information\nThis file is a backup of your Concrnt Web login information.\nKeep this file in a safe place.\n\nCCID: {{ccid}}\nMaster private key: {{privateKey}}\nRegistered server at backup: {{server}}\n\nIf you lose your private key, you may not be able to recover your account.\nIf anyone else learns this information, your account could be taken over."
+        },
+        "activitypub": {
+            "title": "ActivityPub Settings",
+            "loading": "Loading...",
+            "enableIntro": "Let's enable ActivityPub integration",
+            "enableDescription": "Enabling integration lets you connect with ActivityPub-compatible social networks.",
+            "desiredId": "Desired ID",
+            "enable": "Enable",
+            "enabled": "ActivityPub integration is enabled.",
+            "yourId": "Your ID: {{id}}",
+            "inquiry": "Inquiry"
+        },
+        "apPerson": {
+            "follow": "Follow",
+            "unfollow": "Unfollow",
+            "noDescription": "No description yet",
+            "apUserNotice": "This user is an ActivityPub user.",
+            "openRemote": "Open on remote server"
+        },
+        "home": {
+            "setUpProfile": "Let's set up your profile!",
+            "loadFailed": "Failed to load (the server may be offline)",
+            "retry": "Retry",
+            "listNotFound": "List not found"
+        },
+        "post": {
+            "loading": "Loading...",
+            "noReplies": "No replies yet",
+            "noReroutes": "No reroutes yet",
+            "noFavorites": "No favorites yet",
+            "noReactions": "No reactions yet",
+            "rerouted": "rerouted this post",
+            "favorited": "liked this post",
+            "addReaction": "Add reaction..."
+        },
+        "query": {
+            "title": "Inquiry",
+            "submit": "Inquiry"
+        },
+        "lists": {
+            "createList": "Create List",
+            "create": "Create",
+            "listTitle": "Title"
+        }
+    },
+    "components": {
+        "composer": {
+            "modePlaintext": "Plaintext",
+            "modeMarkdown": "Markdown",
+            "modeMedia": "Media",
+            "sending": "Sending...",
+            "submitReply": "Reply",
+            "submitReroute": "Reroute",
+            "submit": "Post",
+            "replyPlaceholder": "Write a reply...",
+            "placeholder": "What are you up to?",
+            "cannotPostOffline": "You can't post while offline"
+        },
+        "report": {
+            "reason": "Report reason",
+            "send": "Send"
+        },
+        "privateContentDoor": {
+            "privateProfile": "This profile is private",
+            "privateTimeline": "This timeline is private",
+            "approvalRequired": "You need the owner's approval to view this content.",
+            "requested": "Request sent",
+            "requestAccess": "Request access"
+        },
+        "domainOfflineBanner": {
+            "recovered": "Your server is back online",
+            "reconnect": "Reconnect",
+            "offline": "Your domain {{domain}} is currently in read-only mode due to being offline. Please wait until it is restored."
+        },
+        "selectWidget": {
+            "placeholder": "Select an option"
+        },
+        "likeAssociation": {
+            "userLiked": "{{name}} added this to favorites",
+            "loading": "Loading..."
+        },
+        "messageActions": {
+            "confirmDelete": "Really delete this post?",
+            "delete": "Delete",
+            "deletePost": "Delete post",
+            "report": "Report",
+            "inspector": "Inspector"
+        },
+        "messageInspector": {
+            "title": "Inspector",
+            "loadFailed": "Failed to load: {{error}}",
+            "signatureVerification": "Signature verification",
+            "verificationKey": "Verification key ({{type}})",
+            "verificationError": "Verification error: {{error}}",
+            "keyMismatch": "The key recovered from the signature does not match the verification key"
+        },
+        "onelineMessage": {
+            "deletePost": "Delete post"
+        },
+        "reactionAssociation": {
+            "userReacted": "{{name}} reacted",
+            "loading": "Loading..."
+        },
+        "renderError": {
+            "messageDeleted": "This message has been deleted",
+            "serverOffline": "The server hosting this message is offline",
+            "cannotDisplay": "This message cannot be displayed"
+        },
+        "replyAssociation": {
+            "loading": "Loading..."
+        },
+        "rerouteAssociation": {
+            "userRerouted": "{{name}} rerouted",
+            "loading": "Loading..."
+        },
+        "rerouteMessage": {
+            "userRerouted": "{{name}} rerouted",
+            "deleteReroute": "Delete reroute"
+        },
+        "sidebar": {
+            "home": "Home",
+            "notifications": "Notifications",
+            "contacts": "Contacts",
+            "explore": "Explore",
+            "profile": "Profile",
+            "lists": "Lists",
+            "query": "Query",
+            "settings": "Settings",
+            "post": "Post",
+            "documentation": "Documentation",
+            "forum": "Forum"
+        },
+        "themeEditor": {
+            "title": "Theme Editor",
+            "update": "Update",
+            "create": "Create",
+            "themeUpdated": "Theme updated",
+            "themeCreated": "Theme created",
+            "saveFailed": "Failed to save theme",
+            "jsonCopied": "Copied JSON",
+            "titleLabel": "Title",
+            "builtinNameProtected": "Built-in theme names cannot be overwritten",
+            "variantLabel": "Display type",
+            "preview": "Preview",
+            "currentlyInUse": "This theme is currently in use"
+        },
+        "themeImporter": {
+            "title": "Import from v1",
+            "description": "Paste the JSON exported with \"Copy all\" in the v1 theme settings, or a ```theme block. Themes with the same name as an existing one will be skipped.",
+            "placeholder": "Paste JSON here",
+            "parseFailed": "Failed to parse JSON",
+            "noThemesFound": "No themes found",
+            "importResult": "{{added}} added / {{skipped}} skipped",
+            "import": "Import"
+        },
+        "switchAccountButton": {
+            "accountsTitle": "Accounts",
+            "addAccount": "Add account",
+            "addProfile": "Add profile",
+            "switchAccount": "Switch account",
+            "switchAccountTitle": "Switch Account",
+            "createNewProfile": "Create New Profile"
+        },
+        "subkeyInvalidDrawer": {
+            "ckidNotFound": "Key information for this device was not found.",
+            "titleDevice": "The key on this device is no longer valid",
+            "titleBrowser": "The key on this device is no longer valid",
+            "revokedDevice": "Due to a server reset or an action from another device, the key (sub-key) used on this device has been revoked.",
+            "revokedBrowser": "Due to a server reset or an action from another device, the key (sub-key) used in this browser has been revoked.",
+            "reactivateHintDevice": "Press \"Reactivate Key\" to restore this device's key.",
+            "reactivateHintBrowser": "Press \"Reactivate Key\" to restore this browser's key.",
+            "reloginHintDevice": "To post or make other changes, please log out and log in again.",
+            "reloginHintBrowser": "To post or make other changes, please log out and log in again using a QR code or your master key.",
+            "reactivateFailed": "Failed to reactivate the key. Please try again.",
+            "reactivateFailedRetryLater": "Failed to reactivate the key. Please try again later.",
+            "reactivateKey": "Reactivate Key",
+            "logout": "Log Out"
+        },
+        "classicExplorer": {
+            "loading": "Loading...",
+            "offline": "Offline"
+        },
+        "searchExplorer": {
+            "communities": "Communities",
+            "users": "Users",
+            "searchCommunities": "Search communities...",
+            "searchUsers": "Search users...",
+            "loading": "Loading...",
+            "searchServiceUnavailable": "Could not connect to the search service",
+            "noCommunitiesFound": "No matching communities found",
+            "noUsersFound": "No matching users found"
+        },
+        "profileEditor": {
+            "loadingProfile": "Loading the latest profile...",
+            "saving": "Saving...",
+            "save": "Save",
+            "makeAccountPrivate": "Make account private",
+            "selectViewers": "Select who can view",
+            "selectViewersNote": "To select a user, you need to follow them first."
+        },
+        "acknowledgeButton": {
+            "follow": "Follow",
+            "following": "Following"
+        },
+        "acknowledgeList": {
+            "following": "Following",
+            "followers": "Followers"
+        },
+        "userPicker": {
+            "addUser": "Add user",
+            "loading": "Loading..."
+        },
+        "timelinePicker": {
+            "postProfile": "Posting profile",
+            "addDestination": "Add destination"
+        },
+        "timelineSettings": {
+            "schema": "Schema",
+            "attributes": "Attributes"
+        },
+        "listSettings": {
+            "title": "List Settings",
+            "save": "Save",
+            "saving": "Saving...",
+            "pin": "Pin",
+            "unpin": "Unpin",
+            "deleteList": "Delete List",
+            "listName": "List name",
+            "excludeSelf": "Exclude your own posts",
+            "containedTimelines": "Included timelines",
+            "community": "Community",
+            "user": "User",
+            "noTimelines": "No timelines",
+            "defaultPostTimelines": "Default destination"
+        },
+        "subscription": {
+            "addToList": "Add to List"
+        },
+        "notificationTimeline": {
+            "unknown": "Unknown",
+            "loading": "Loading...",
+            "favorite": "{{name}} liked your post",
+            "favoriteMany": "{{name}} and {{others}} others liked your post",
+            "reaction": "{{name}} reacted to your post",
+            "reactionMany": "{{name}} and {{others}} others reacted to your post",
+            "follow": "{{name}} followed you",
+            "readAccessRequest": "{{name}} is requesting read access to {{target}}",
+            "targetContent": "your content",
+            "targetProfile": "profile \"{{name}}\"",
+            "targetTimeline": "timeline \"{{name}}\"",
+            "grant": "Add to readers",
+            "ignore": "Ignore",
+            "granted": "Added to readers",
+            "ignored": "Ignored"
+        },
+        "notificationFilter": {
+            "reply": "Reply",
+            "mention": "Mention",
+            "reroute": "Reroute",
+            "fav": "Favorite",
+            "reaction": "Reaction",
+            "readRequest": "Read Request"
+        }
+    },
+    "contexts": {
+        "composer": {
+            "cancel": "Cancel"
+        },
+        "emojiPicker": {
+            "searchResults": "Search results",
+            "frequentlyUsed": "Frequently used",
+            "searchPlaceholder": "Search emojis...",
+            "noMatchingEmojis": "No matching emojis",
+            "noEmojis": "No emojis",
+            "noRecentEmojis": "No emojis used yet"
+        },
+        "client": {
+            "checkingSession": "Checking session...",
+            "connectingToServer": "Connecting to server...",
+            "checkingKeyStatus": "Checking key status...",
+            "loadingProfiles": "Loading profiles...",
+            "checkingTimelines": "Checking timelines...",
+            "loadingLists": "Loading lists...",
+            "loadingFromCache": "Loading from cache...",
+            "serverOffline": "The server is offline",
+            "retry": "Retry",
+            "logout": "Logout",
+            "registrationNotFound": "Your registration was not found on server {{domain}}",
+            "registrationNotFoundDesc": "This may be caused by a server reset or a migration to another server.",
+            "loadFailed": "Failed to load"
+        },
+        "imageCropper": {
+            "cancel": "Cancel",
+            "processing": "Processing...",
+            "apply": "Apply"
+        }
+    },
+    "utils": {
+        "humanReadableTimeDiff": {
+            "justNow": "just now",
+            "secondsAgo": "{{n}}s ago",
+            "secondsLater": "{{n}}s later",
+            "minutesAgo": "{{n}}m ago",
+            "minutesLater": "{{n}}m later",
+            "hoursAgo": "{{n}}h ago",
+            "hoursLater": "{{n}}h later"
+        }
+    },
+    "web": {
+        "pwaManager": {
+            "newVersionAvailable": "A new version is available",
+            "update": "Update"
+        },
+        "push": {
+            "browserNotSupported": "This browser does not support push notifications",
+            "browserNotSupportedIos": "This browser does not support push notifications (on iOS, add the app to your home screen to enable them)",
+            "serverNotSupported": "This server does not support push notifications"
+        },
+        "login": {
+            "title": "Log In",
+            "description": "Choose how to log in to use Concrnt in this browser.",
+            "qrLogin": "QR login with the app",
+            "passkeyLogin": "Log in with a passkey",
+            "masterKeyLogin": "Log in with master key",
+            "checking": "Checking...",
+            "usePasskey": "Use passkey",
+            "masterKey": "Master Key",
+            "masterKeyPlaceholder": "Enter your 12-word master key",
+            "registeredServer": "Registered server",
+            "serverPlaceholder": "e.g. v2dev.concrnt.net",
+            "masterKeyInvalid": "Could not verify this master key.",
+            "masterKeyInvalidDetailed": "Could not verify this master key. Please enter your 12-word master key.",
+            "loginWithThisServer": "Log in with this server",
+            "clearInput": "Clear input",
+            "passkeyUnavailable": "Passkeys are not available in this browser.",
+            "checkingPasskey": "Checking your passkey...",
+            "passkeyNotSelected": "No passkey was selected.",
+            "passkeyNoUserHandle": "Could not get an account ID from this passkey.",
+            "passkeyNoRegistration": "No registration was found for this passkey.",
+            "passkeyNoPrf": "This passkey does not support the PRF extension required for login.",
+            "passkeyLoginFailed": "Passkey login failed.",
+            "checkingRegistration": "Checking registration on {{resolver}}...",
+            "registrationNotFoundOnRecommended": "No registration was found on the recommended server. Please enter the server you registered on.",
+            "registrationNotFoundOnServer": "No registration was found on the specified server.",
+            "registeringKey": "Registering the key this browser will use...",
+            "masterKeyLoginFailed": "Login with master key failed.",
+            "subkeyCommitFailed": "Subkey commit failed."
+        },
+        "register": {
+            "title": "Account Registration",
+            "successTitle": "Registration Complete",
+            "successDescription": "You can close this screen and return to the original app.",
+            "invalidRequest": "Could not verify the registration request. Please open this page again from the original screen.",
+            "codeOfConduct": "Code of Conduct",
+            "tos": "Terms of Service / Privacy Policy",
+            "registrationForm": "Registration Form",
+            "formDescription": "The information you enter here is not a public profile. It is reviewed by the server administrator for registration screening and contact purposes.",
+            "inviteCode": "Invite code",
+            "registering": "Registering...",
+            "register": "Register",
+            "selectPlaceholder": "Please select"
+        },
+        "qrSetup": {
+            "scanWithApp": "Scan the QR code with the Concrnt app",
+            "usePasskeyTitle": "Use a passkey?",
+            "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
+            "no": "No",
+            "yes": "Yes",
+            "confirmEmoji": "Check the emoji shown on your device, and if it matches, select \"Yes\" on the device."
+        },
+        "guestBase": {
+            "connectionFailed": "Could not connect to the server",
+            "retry": "Retry",
+            "login": "Login",
+            "getStarted": "Get Started"
+        },
+        "guestPost": {
+            "loading": "Loading...",
+            "noReplies": "No replies yet",
+            "noReroutes": "No reroutes yet",
+            "rerouted": "rerouted this post",
+            "noFavorites": "No favorites yet",
+            "favorited": "favorited this post",
+            "noReactions": "No reactions yet",
+            "restrictedTitle": "This post cannot be displayed",
+            "restrictedDescription": "This may be a private post. You need to log in to view it",
+            "login": "Login"
+        },
+        "guestProfile": {
+            "userNotFound": "User not found",
+            "loginToFollow": "Log in to follow",
+            "noDescription": "No description yet",
+            "following": "{{n}} Following",
+            "followers": "{{n}} Followers",
+            "privateProfile": "This profile is private",
+            "loginRequired": "You need to log in to request access",
+            "login": "Login"
+        },
+        "guestTimeline": {
+            "privateTimeline": "This timeline is private",
+            "loginRequired": "You need to log in to request access",
+            "login": "Login"
+        }
+    },
+    "app": {
+        "qrSetup": {
+            "title": "Log in on another device",
+            "confirmTitle": "Allow login on this device?",
+            "confirmDescription": "Make sure the emoji shown here matches the one displayed on the other device",
+            "cancel": "Cancel",
+            "ok": "OK",
+            "loginCompleted": "Login completed!",
+            "waitingForDevice": "Waiting for information from the device...",
+            "scanQRCode": "Scan QR code"
+        },
+        "serverSelector": {
+            "title": "Select a server",
+            "cancel": "Cancel",
+            "connectionFailed": "Could not connect to the server",
+            "notConcrntServer": "This server does not support Concrnt",
+            "verifying": "Verifying...",
+            "confirm": "Confirm"
+        },
+        "accountListItem": {
+            "setupIncomplete": "Setup incomplete"
+        },
+        "addAccountDrawer": {
+            "title": "Add Account",
+            "description": "Create a new account or import an existing one.",
+            "createNew": "Create new",
+            "importExisting": "Import existing account",
+            "cancel": "Cancel"
+        },
+        "backupKeyButton": {
+            "backingUp": "Backing up...",
+            "backupMasterkey": "Back up master key",
+            "backupFailed": "Backup failed.",
+            "fileTemplate": "Concrnt Login Information\nThis file is a backup of your Concrnt login information.\nStore this file in a safe place.\n\nCCID: ${ccid}\nMaster Key: ${mnemonic_ja}\nRegistered server at backup: {{domain}}\n\nIf you lose your master key, you will not be able to recover your account.\nIf someone else learns this information, your account may be permanently taken over. Store it in a safe place."
+        },
+        "resetSessionButton": {
+            "title": "Delete Account Data",
+            "backupFirst": "Before deleting, back up this account's master key.",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "deleteFailed": "Could not delete. Please try again.",
+            "resetSession": "Reset Session"
+        },
+        "storeMocks": {
+            "idTitle": "ID Management",
+            "passportDescription": "View your current ID, registered server, and credentials.",
+            "openIdSettings": "Open ID settings",
+            "communities": "Communities",
+            "users": "Users",
+            "searchCommunities": "Search communities...",
+            "searchUsers": "Search users...",
+            "noCommunitiesFound": "No matching communities found",
+            "noUsersFound": "No matching users found"
         }
     }
 }

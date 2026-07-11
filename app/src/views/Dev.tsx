@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, TextField, View, Text, Divider, List, ListItem, Switch } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
@@ -10,6 +11,7 @@ import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
 import { usePreference } from '../contexts/Preference'
 
 export const DevView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.dev' })
     const { client } = useClient()
     const stack = useStack()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
@@ -35,7 +37,7 @@ export const DevView = () => {
             >
                 <List>
                     <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
-                        開発者モード
+                        {t('developerMode')}
                     </ListItem>
                 </List>
 
@@ -47,13 +49,13 @@ export const DevView = () => {
 
                 <Text variant="h3">Store Mock</Text>
                 <Button startIcon={<MdHome />} onClick={() => stack.push(<StoreMockHomeView />)}>
-                    ホーム画面 mock
+                    {t('mockHome')}
                 </Button>
                 <Button startIcon={<MdExplore />} onClick={() => stack.push(<StoreMockExplorerView />)}>
-                    探索画面 mock
+                    {t('mockExplorer')}
                 </Button>
                 <Button startIcon={<MdBadge />} onClick={() => stack.push(<StoreMockIDView />)}>
-                    ID画面 mock
+                    {t('mockID')}
                 </Button>
 
                 <Divider />

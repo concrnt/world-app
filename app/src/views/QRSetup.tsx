@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useScanner } from '../contexts/Scanner'
 import { Button, View, Text } from '@concrnt/ui'
 import { emojihash, semantics, SignalLoginSender } from '@concrnt/worldlib'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export const QRSetup = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.qrSetup' })
     const { scan } = useScanner()
     const { client } = useClient()
 
@@ -90,7 +92,7 @@ export const QRSetup = (props: Props) => {
 
     return (
         <View>
-            <Header>他の端末でログイン</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -101,8 +103,8 @@ export const QRSetup = (props: Props) => {
             >
                 {pendingCkid ? (
                     <div>
-                        <Text variant="h3">この端末でログインを許可しますか？</Text>
-                        <Text>表示されている絵文字が端末で表示されているものと同じであることを確認してください</Text>
+                        <Text variant="h3">{t('confirmTitle')}</Text>
+                        <Text>{t('confirmDescription')}</Text>
                         <div
                             style={{
                                 display: 'flex',
@@ -130,24 +132,24 @@ export const QRSetup = (props: Props) => {
                                 justifyContent: 'flex-end'
                             }}
                         >
-                            <Button onClick={handleCancel}>Cancel</Button>
+                            <Button onClick={handleCancel}>{t('cancel')}</Button>
 
-                            <Button onClick={handleConfirm}>OK</Button>
+                            <Button onClick={handleConfirm}>{t('ok')}</Button>
                         </div>
                     </div>
                 ) : (
                     <>
                         {completed ? (
-                            <Text variant="h3">ログインが完了しました！</Text>
+                            <Text variant="h3">{t('loginCompleted')}</Text>
                         ) : sender ? (
-                            <Text variant="h3">端末から情報が送られてくるのを待っています......</Text>
+                            <Text variant="h3">{t('waitingForDevice')}</Text>
                         ) : (
                             <Button
                                 onClick={() => {
                                     scan().then(scanCallback)
                                 }}
                             >
-                                QRコードをスキャン
+                                {t('scanQRCode')}
                             </Button>
                         )}
                     </>

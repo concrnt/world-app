@@ -1,4 +1,5 @@
 import { type CSSProperties, Suspense, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Button,
     IconButton,
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export const ListSettings = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
@@ -81,13 +83,13 @@ export const ListSettings = (props: Props) => {
                     alignItems: 'center'
                 }}
             >
-                <Text variant="h3">リスト設定</Text>
+                <Text variant="h3">{t('title')}</Text>
                 <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
                     <IconButton onClick={() => setMenuOpen(true)} style={{ anchorName: menuAnchor } as CSSProperties}>
                         <MdMoreHoriz size={20} />
                     </IconButton>
-                    <Button onClick={saveSettings} busyChildren="保存中...">
-                        保存
+                    <Button onClick={saveSettings} busyChildren={t('saving')}>
+                        {t('save')}
                     </Button>
                 </div>
             </div>
@@ -105,7 +107,7 @@ export const ListSettings = (props: Props) => {
                             }
                         }}
                     >
-                        {isPinned ? 'ピン留めを解除' : 'ピン留めする'}
+                        {isPinned ? t('unpin') : t('pin')}
                     </ListItem>
                     <ListItem
                         icon={<MdDelete size={20} />}
@@ -116,12 +118,12 @@ export const ListSettings = (props: Props) => {
                             })
                         }}
                     >
-                        リストを削除
+                        {t('deleteList')}
                     </ListItem>
                 </ListView>
             </Popover>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">リスト名</Text>
+                <Text variant="h5">{t('listName')}</Text>
                 <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
             </div>
             {isPinned && (
@@ -142,7 +144,7 @@ export const ListSettings = (props: Props) => {
                         alignItems: 'center'
                     }}
                 >
-                    <Text variant="h5">自分の投稿を含めない</Text>
+                    <Text variant="h5">{t('excludeSelf')}</Text>
                     <Switch checked={excludeSelf} onChange={setExcludeSelf} />
                 </div>
             )}
@@ -157,6 +159,7 @@ export const ListSettings = (props: Props) => {
 }
 
 const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const [items] = useSubscribe(props.list.items)
     const [tab, setTab] = useState<'community' | 'user'>('community')
 
@@ -169,7 +172,7 @@ const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            <Text variant="h5">含まれるタイムライン</Text>
+            <Text variant="h5">{t('containedTimelines')}</Text>
             <Tabs>
                 <Tab
                     selected={tab === 'community'}
@@ -177,7 +180,7 @@ const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
                     style={tabStyle(tab === 'community')}
                     onClick={() => setTab('community')}
                 >
-                    <Text>コミュニティ</Text>
+                    <Text>{t('community')}</Text>
                 </Tab>
                 <Tab
                     selected={tab === 'user'}
@@ -185,7 +188,7 @@ const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
                     style={tabStyle(tab === 'user')}
                     onClick={() => setTab('user')}
                 >
-                    <Text>ユーザー</Text>
+                    <Text>{t('user')}</Text>
                 </Tab>
             </Tabs>
             <ResolvedTimelineList list={props.list} uris={items} filter={tab} onComplete={props.onComplete} />
@@ -199,6 +202,7 @@ const ResolvedTimelineList = (props: {
     filter: 'community' | 'user'
     onComplete?: () => void
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
     const navigate = useNavigate()
     const [resolved, setResolved] = useState<Array<{ uri: string; timeline: Timeline | null }> | null>(null)
@@ -222,7 +226,7 @@ const ResolvedTimelineList = (props: {
     const filtered = resolved.filter(({ timeline }) => timeline?.schema === targetSchema)
 
     if (filtered.length === 0) {
-        return <Text style={{ opacity: 0.6 }}>タイムラインがありません</Text>
+        return <Text style={{ opacity: 0.6 }}>{t('noTimelines')}</Text>
     }
 
     return (
@@ -262,12 +266,13 @@ const DefaultPostTimelines = (props: {
     selectedProfile: string
     setSelectedProfile: (profile: string) => void
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
     const [knownCommunities] = useSubscribe(client.knownCommunities)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            <Text variant="h5">デフォルト投稿先</Text>
+            <Text variant="h5">{t('defaultPostTimelines')}</Text>
             <TimelinePicker
                 items={knownCommunities}
                 selected={props.selected}

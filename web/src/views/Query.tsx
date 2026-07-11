@@ -1,18 +1,20 @@
 import { TextField, Button } from '@concrnt/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CssVar } from '../types/Theme'
 import { useNavigate } from 'react-router-dom'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 
 export const QueryView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.query' })
     const navigate = useNavigate()
 
     const [query, setQuery] = useState('')
 
     return (
         <View>
-            <Header>照会</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -27,7 +29,7 @@ export const QueryView = () => {
                         navigate('/timeline/' + encodeURIComponent(query))
                     }}
                 >
-                    照会
+                    {t('submit')}
                 </Button>
             </div>
         </View>

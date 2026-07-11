@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Cropper, { type Area } from 'react-easy-crop'
 import { CssVar } from '../types/Theme'
 import { cropImage } from '../utils/cropImage'
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export const ImageCropperProvider = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.imageCropper' })
     // 表示用に生成した Object URL（react-easy-crop に渡す）
     const [imageUrl, setImageUrl] = useState<string | null>(null)
     const [options, setOptions] = useState<CropOptions>({})
@@ -167,7 +169,7 @@ export const ImageCropperProvider = (props: Props) => {
                                 padding: `${CssVar.space(2)} ${CssVar.space(4)}`
                             }}
                         >
-                            キャンセル
+                            {t('cancel')}
                         </button>
                         <button
                             onClick={handleConfirm}
@@ -184,7 +186,7 @@ export const ImageCropperProvider = (props: Props) => {
                                 opacity: processing ? 0.5 : 1
                             }}
                         >
-                            {processing ? '処理中...' : '決定'}
+                            {processing ? t('processing') : t('apply')}
                         </button>
                     </div>
                 </div>

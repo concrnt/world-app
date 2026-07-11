@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Text } from '@concrnt/ui'
 import { CssVar } from '../../types/Theme'
 import { useClient } from '../../contexts/Client'
@@ -17,6 +18,7 @@ interface Props {
 
 // views/Timeline.tsx のゲスト(未ログイン)版。Composerと設定を持たず、リアルタイム更新も行わない
 export const GuestTimelineView = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestTimeline' })
     const { client } = useClient()
     const navigate = useNavigate()
 
@@ -62,9 +64,9 @@ export const GuestTimelineView = (props: Props) => {
                         }}
                     >
                         <MdLock size={48} style={{ opacity: 0.5 }} />
-                        <Text>このタイムラインはプライベートです</Text>
-                        <Text variant="caption">閲覧をリクエストするにはログインが必要です</Text>
-                        <Button onClick={() => navigate('/login')}>ログイン</Button>
+                        <Text>{t('privateTimeline')}</Text>
+                        <Text variant="caption">{t('loginRequired')}</Text>
+                        <Button onClick={() => navigate('/login')}>{t('login')}</Button>
                     </div>
                 ) : (
                     timeline !== undefined && <RealtimeTimeline ref={scrollRef} timelines={[props.uri]} noRealtime />

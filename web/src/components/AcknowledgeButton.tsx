@@ -1,4 +1,5 @@
 import { Button } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const AcknowledgeButton = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.acknowledgeButton' })
     const { client } = useClient()
 
     const [acknowledging] = useSubscribe(client.acknowledging)
@@ -27,7 +29,7 @@ export const AcknowledgeButton = (props: Props) => {
 
     return (
         <Button variant={acknowledged ? 'outlined' : 'contained'} onClick={handleClick}>
-            {acknowledged ? 'フォロー中' : 'フォロー'}
+            {acknowledged ? t('following') : t('follow')}
         </Button>
     )
 }

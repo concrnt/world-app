@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Document } from '@concrnt/client'
 import { Avatar, Button, CCWallpaper, Switch, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const ProfileEditor = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.profileEditor' })
     const { client } = useClient()
     const cropper = useImageCropper()
 
@@ -70,7 +72,7 @@ export const ProfileEditor = (props: Props) => {
     }, [client, props.targetURI])
 
     if (loading) {
-        return <div>最新のプロフィールを読み込んでいます...</div>
+        return <div>{t('loadingProfile')}</div>
     }
 
     return (
@@ -143,7 +145,7 @@ export const ProfileEditor = (props: Props) => {
                         })
                     }}
                 >
-                    {saving ? '保存中...' : '保存'}
+                    {saving ? t('saving') : t('save')}
                 </Button>
             </div>
 
@@ -165,7 +167,7 @@ export const ProfileEditor = (props: Props) => {
                     justifyContent: 'space-between'
                 }}
             >
-                <Text>アカウントを非公開にする</Text>
+                <Text>{t('makeAccountPrivate')}</Text>
                 <Switch
                     checked={restricted}
                     onChange={(c) => {
@@ -175,10 +177,8 @@ export const ProfileEditor = (props: Props) => {
             </div>
             {restricted && (
                 <>
-                    <Text>閲覧可能ユーザーを選択</Text>
-                    <Text variant="caption">
-                        ユーザーを選択するには、まずそのユーザーをフォローする必要があります。
-                    </Text>
+                    <Text>{t('selectViewers')}</Text>
+                    <Text variant="caption">{t('selectViewersNote')}</Text>
                     <UserPicker selected={members} setSelected={setMembers} />
                 </>
             )}

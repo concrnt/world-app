@@ -1,9 +1,11 @@
 import { invoke } from '@tauri-apps/api/core'
 import { Button, Text } from '@concrnt/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
 export const BackupKeyButton = (props: { onClick?: () => void; ccid?: string }) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.backupKeyButton' })
     const clientContext = useClient()
     const client = clientContext?.client
 
@@ -30,16 +32,7 @@ export const BackupKeyButton = (props: { onClick?: () => void; ccid?: string }) 
                         await invoke('backup_masterkey', {
                             ccid: props.ccid,
                             filename: filename,
-                            template: `Concrnt ログイン情報
-このファイルは Concrnt のログイン情報をバックアップするためのものです。
-このファイルを安全な場所に保管してください。
-
-CCID: \${ccid}
-マスターキー: \${mnemonic_ja}
-バックアップ時登録サーバー: ${client?.server?.domain ?? 'N/A'}
-
-もし、マスターキーを紛失した場合、アカウントを復元することができなくなります。
-また、この内容を他人に知られると、アカウントが永久に乗っ取られる可能性があります。安全な場所に保管してください。`
+                            template: t('fileTemplate', { domain: client?.server?.domain ?? 'N/A' })
                         })
                     } catch (err) {
                         console.error('Failed to backup masterkey', err)
@@ -49,11 +42,11 @@ CCID: \${ccid}
                     }
                 }}
             >
-                {backingUp ? 'バックアップ中...' : 'マスターキーをバックアップ'}
+                {backingUp ? t('backingUp') : t('backupMasterkey')}
             </Button>
             {error && (
-                <Text style={{ color: '#ff5b5b', wordBreak: 'break-all' }}>
-                    バックアップに失敗しました。
+                <Text style={{ color: '#ff5b5b', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>
+                    {t('backupFailed')}
                     {'\n'}
                     {error}
                 </Text>

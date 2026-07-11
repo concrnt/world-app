@@ -1,5 +1,6 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Message, Timeline } from '@concrnt/worldlib'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, Divider, useTheme } from '@concrnt/ui'
@@ -136,6 +137,7 @@ const ComposerOverlay = (props: {
     initialProfile?: string
     onClosed: () => void
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
 
@@ -200,7 +202,7 @@ const ComposerOverlay = (props: {
                                         padding: 0
                                     }}
                                 >
-                                    キャンセル
+                                    {t('cancel')}
                                 </Button>
                             </div>
 

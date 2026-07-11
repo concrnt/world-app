@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
 import { RerouteMessageSchema } from '@concrnt/worldlib'
@@ -13,6 +14,7 @@ import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
     const { select } = useSelect()
 
@@ -40,7 +42,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 }
             >
                 <Text variant="caption">
-                    {props.message.authorUser?.profile.username || 'Anonymous'}さんがリルートしました
+                    {t('userRerouted', { name: props.message.authorUser?.profile.username || 'Anonymous' })}
                 </Text>
                 <div style={{ flex: 1 }} />
                 <IconButton
@@ -53,7 +55,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                                     client.api.delete(props.message.uri).then(() => hapticSuccess())
                                 }}
                             >
-                                <Text>リルートを削除</Text>
+                                <Text>{t('deleteReroute')}</Text>
                             </ListItem>
                         ])
                     }}

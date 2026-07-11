@@ -1,3 +1,5 @@
+import i18n from '../i18n'
+
 const nowEpsilon = 3000 // 3 seconds
 
 export const humanReadableTimeDiff = (time: Date): string => {
@@ -9,17 +11,19 @@ export const humanReadableTimeDiff = (time: Date): string => {
     const elapsed = current.getTime() - time.getTime()
 
     if (Math.abs(elapsed) < nowEpsilon) {
-        return 'たった今'
+        return i18n.t('utils.humanReadableTimeDiff.justNow')
     }
 
-    const postfix = '' + (elapsed < 0 ? '後' : '前')
+    const suffix = elapsed < 0 ? 'Later' : 'Ago'
 
     if (elapsed < msPerMinute) {
-        return `${Math.round(Math.abs(elapsed) / 1000)}秒${postfix}`
+        return i18n.t(`utils.humanReadableTimeDiff.seconds${suffix}`, { n: Math.round(Math.abs(elapsed) / 1000) })
     } else if (elapsed < msPerHour) {
-        return `${Math.round(Math.abs(elapsed) / msPerMinute)}分${postfix}`
+        return i18n.t(`utils.humanReadableTimeDiff.minutes${suffix}`, {
+            n: Math.round(Math.abs(elapsed) / msPerMinute)
+        })
     } else if (elapsed < msPerDay) {
-        return `${Math.round(Math.abs(elapsed) / msPerHour)}時間${postfix}`
+        return i18n.t(`utils.humanReadableTimeDiff.hours${suffix}`, { n: Math.round(Math.abs(elapsed) / msPerHour) })
     } else {
         return (
             (current.getFullYear() === time.getFullYear() ? '' : `${time.getFullYear()}-`) +

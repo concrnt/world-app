@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
 import { MarkdownMessageSchema } from '@concrnt/worldlib'
@@ -12,6 +13,7 @@ import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 
 export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.onelineMessage' })
     const navigate = useNavigate()
     const { client } = useClient()
     const { select } = useSelect()
@@ -46,7 +48,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                                 client.api.delete(message.uri).then(() => hapticSuccess())
                             }}
                         >
-                            <Text>投稿を削除</Text>
+                            <Text>{t('deletePost')}</Text>
                         </ListItem>
                     ])
                 }}

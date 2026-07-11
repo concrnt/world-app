@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, IconButton, Text, TextField } from '@concrnt/ui'
 import { MdContentCopy, MdSave } from 'react-icons/md'
 import { Theme } from '../types/Theme'
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.themeEditor' })
     const [themeName, setThemeName] = usePreference('themeName')
     const { customThemes, saveTheme } = useThemeLibrary()
     const [title, setTitle] = useState(() => (baseName in Themes ? `${baseName}-custom` : baseName))
@@ -89,7 +91,7 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
                     flexWrap: 'wrap'
                 }}
             >
-                <Text variant="h3">テーマエディタ</Text>
+                <Text variant="h3">{t('title')}</Text>
                 <div style={{ display: 'flex', gap: CssVar.space(1), flexWrap: 'wrap' }}>
                     <Button
                         variant="outlined"
@@ -99,19 +101,19 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
                             try {
                                 const saved = await saveTheme(savedTheme)
                                 setThemeName(saved.meta?.name ?? normalizedTitle)
-                                setStatus(exists ? 'テーマを更新しました' : 'テーマを作成しました')
+                                setStatus(exists ? t('themeUpdated') : t('themeCreated'))
                             } catch (e) {
                                 console.error('Failed to save theme', e)
-                                setStatus('テーマの保存に失敗しました')
+                                setStatus(t('saveFailed'))
                             }
                         }}
                     >
-                        {exists ? '更新' : '作成'}
+                        {exists ? t('update') : t('create')}
                     </Button>
                     <IconButton
                         onClick={() => {
                             navigator.clipboard?.writeText(JSON.stringify(savedTheme))
-                            setStatus('JSONをコピーしました')
+                            setStatus(t('jsonCopied'))
                         }}
                     >
                         <MdContentCopy size={20} />
@@ -127,12 +129,12 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                    <Field label="タイトル">
+                    <Field label={t('titleLabel')}>
                         <TextField value={title} onChange={(e) => setTitle(e.target.value)} />
-                        {protectedName && <Text variant="caption">組み込みテーマ名は上書きできません</Text>}
+                        {protectedName && <Text variant="caption">{t('builtinNameProtected')}</Text>}
                     </Field>
 
-                    <Field label="表示タイプ">
+                    <Field label={t('variantLabel')}>
                         <select
                             value={draft.variant}
                             onChange={(e) => updateDraft({ variant: e.target.value as Theme['variant'] })}
@@ -145,7 +147,7 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                    <Text variant="h5">プレビュー</Text>
+                    <Text variant="h5">{t('preview')}</Text>
                     <ThemeCard theme={savedTheme} />
                 </div>
             </div>
@@ -223,7 +225,7 @@ export const ThemeEditor = ({ baseTheme, baseName }: Props) => {
             </div>
 
             {status && <Text variant="caption">{status}</Text>}
-            {themeName === normalizedTitle && <Text variant="caption">現在このテーマを使用しています</Text>}
+            {themeName === normalizedTitle && <Text variant="caption">{t('currentlyInUse')}</Text>}
         </div>
     )
 }

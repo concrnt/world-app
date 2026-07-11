@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Text } from '@concrnt/ui'
 import { MdLock } from 'react-icons/md'
 import { Association, ReadAccessRequestAssociationSchema } from '@concrnt/worldlib'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export const PrivateContentDoor = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.privateContentDoor' })
     const { client } = useClient()
 
     const [request, setRequest] = useState<Association<ReadAccessRequestAssociationSchema> | null>(null)
@@ -43,10 +45,8 @@ export const PrivateContentDoor = (props: Props) => {
             }}
         >
             <MdLock size={96} style={{ opacity: 0.5 }} />
-            <Text variant="h3">
-                {props.kind === 'profile' ? 'このプロフィールはプライベートです' : 'このタイムラインはプライベートです'}
-            </Text>
-            <Text style={{ opacity: 0.7 }}>閲覧するには所有者の承認が必要です。</Text>
+            <Text variant="h3">{props.kind === 'profile' ? t('privateProfile') : t('privateTimeline')}</Text>
+            <Text style={{ opacity: 0.7 }}>{t('approvalRequired')}</Text>
             {!isMe && !loading && (
                 <Button
                     variant={request ? 'outlined' : 'contained'}
@@ -70,7 +70,7 @@ export const PrivateContentDoor = (props: Props) => {
                         }
                     }}
                 >
-                    {request ? 'リクエスト済み' : '閲覧をリクエスト'}
+                    {request ? t('requested') : t('requestAccess')}
                 </Button>
             )}
         </div>

@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const AccountImport = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.accountImport' })
     const [mnemonic, setMnemonic] = useState<string>('')
     const [successed, setSuccessed] = useState<boolean>(false)
 
@@ -26,25 +28,18 @@ export const AccountImport = (props: Props) => {
 
     return (
         <AuthScreen align="top">
-            <AuthHeader
-                title="アカウントをインポート"
-                description="マスターキーを入力して、この端末でアカウントを使えるようにします。"
-            />
+            <AuthHeader title={t('title')} description={t('descriptionDevice')} />
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>
-                    <Text>マスターキー</Text>
+                    <Text>{t('masterKey')}</Text>
                     <TextField
                         value={mnemonic}
                         onChange={(e) => setMnemonic(e.target.value)}
-                        placeholder="マスターキーを入力"
+                        placeholder={t('masterKeyPlaceholder')}
                     />
                 </div>
                 <Text style={authStyles.status}>
-                    {mnemonic
-                        ? successed
-                            ? 'このマスターキーは利用できます。'
-                            : 'マスターキーを確認できません。'
-                        : ''}
+                    {mnemonic ? (successed ? t('masterKeyValid') : t('masterKeyInvalid')) : ''}
                 </Text>
             </div>
             <AuthActions fixedBottom>
@@ -65,9 +60,9 @@ export const AccountImport = (props: Props) => {
                             })
                     }}
                 >
-                    インポート
+                    {t('import')}
                 </AuthButton>
-                <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
             </AuthActions>
         </AuthScreen>
     )

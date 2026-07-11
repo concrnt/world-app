@@ -1,4 +1,5 @@
 import { type ReactNode, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Avatar,
     Button,
@@ -353,9 +354,10 @@ export const StoreMockExplorerView = () => {
 }
 
 export const StoreMockIDView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'app.storeMocks' })
     return (
         <View>
-            <Header>ID管理</Header>
+            <Header>{t('idTitle')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -368,7 +370,7 @@ export const StoreMockIDView = () => {
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(0.5) }}>
                     <Text variant="h3">Passport</Text>
-                    <Text variant="caption">現在のID、登録サーバー、認証情報を確認できます。</Text>
+                    <Text variant="caption">{t('passportDescription')}</Text>
                 </div>
 
                 <div>
@@ -390,7 +392,7 @@ export const StoreMockIDView = () => {
                     <InfoTile icon={<MdSearch size={24} />} label="Discoverable" value="Enabled" />
                 </div>
 
-                <Button endIcon={<MdArrowForward size={20} />}>ID設定を開く</Button>
+                <Button endIcon={<MdArrowForward size={20} />}>{t('openIdSettings')}</Button>
             </div>
         </View>
     )
@@ -498,6 +500,7 @@ const FooterButton = ({ icon, count }: { icon: ReactNode; count?: number }) => {
 }
 
 const MockSearchExplorer = () => {
+    const { t } = useTranslation('', { keyPrefix: 'app.storeMocks' })
     const [tab, setTab] = useState<'communities' | 'users'>('communities')
     const [query, setQuery] = useState('')
 
@@ -538,7 +541,7 @@ const MockSearchExplorer = () => {
                     style={tabStyle(tab === 'communities')}
                     onClick={() => setTab('communities')}
                 >
-                    <Text>コミュニティ</Text>
+                    <Text>{t('communities')}</Text>
                 </Tab>
                 <Tab
                     selected={tab === 'users'}
@@ -546,20 +549,20 @@ const MockSearchExplorer = () => {
                     style={tabStyle(tab === 'users')}
                     onClick={() => setTab('users')}
                 >
-                    <Text>ユーザー</Text>
+                    <Text>{t('users')}</Text>
                 </Tab>
             </Tabs>
 
             <TextField
                 value={query}
-                placeholder={tab === 'communities' ? 'コミュニティを検索...' : 'ユーザーを検索...'}
+                placeholder={tab === 'communities' ? t('searchCommunities') : t('searchUsers')}
                 onChange={(e) => setQuery(e.target.value)}
             />
 
             {tab === 'communities' ? (
                 filteredCommunities.length === 0 ? (
                     <Text variant="caption" style={{ opacity: 0.5 }}>
-                        該当するコミュニティが見つかりませんでした
+                        {t('noCommunitiesFound')}
                     </Text>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -570,7 +573,7 @@ const MockSearchExplorer = () => {
                 )
             ) : filteredUsers.length === 0 ? (
                 <Text variant="caption" style={{ opacity: 0.5 }}>
-                    該当するユーザーが見つかりませんでした
+                    {t('noUsersFound')}
                 </Text>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>

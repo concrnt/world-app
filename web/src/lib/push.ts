@@ -1,4 +1,5 @@
 import { Client, Schemas, semantics } from '@concrnt/worldlib'
+import i18n from '../i18n'
 
 export const PUSH_VENDOR_ID = 'world.concrnt.web'
 
@@ -80,12 +81,12 @@ const writeHomeDomain = (homeDomain: string): Promise<void> =>
 
 const getPushManager = async (): Promise<PushManager> => {
     if (!('serviceWorker' in navigator)) {
-        throw new Error('このブラウザはプッシュ通知に対応していません')
+        throw new Error(i18n.t('web.push.browserNotSupported'))
     }
     const registration = await navigator.serviceWorker.ready
     // iOS Safari exposes push only when installed to the home screen.
     if (!registration.pushManager) {
-        throw new Error('このブラウザはプッシュ通知に対応していません(iOSではホーム画面に追加すると利用できます)')
+        throw new Error(i18n.t('web.push.browserNotSupportedIos'))
     }
     return registration.pushManager
 }
@@ -99,7 +100,7 @@ const getPushManager = async (): Promise<PushManager> => {
 export async function registerPush(client: Client, schemas: string[]): Promise<void> {
     const vapidKey = client.server.meta?.vapidKey
     if (typeof vapidKey !== 'string' || vapidKey === '') {
-        throw new Error('このサーバーはプッシュ通知に対応していません')
+        throw new Error(i18n.t('web.push.serverNotSupported'))
     }
 
     const pushManager = await getPushManager()

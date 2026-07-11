@@ -2,6 +2,7 @@ import { Codeblock, Text } from '@concrnt/ui'
 import { SignedDocument, ValidateSignature } from '@concrnt/client'
 import { type Message } from '@concrnt/worldlib'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const MessageInspector = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.messageInspector' })
     const { client } = useClient()
     const [signedDocument, setSignedDocument] = useState<SignedDocument | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -55,19 +57,19 @@ export const MessageInspector = (props: Props) => {
                 padding: '4px'
             }}
         >
-            <Text variant="h1">インスペクター</Text>
+            <Text variant="h1">{t('title')}</Text>
             <Text variant="caption" style={{ wordBreak: 'break-all' }}>
                 {props.message.uri}
             </Text>
 
-            {error && <Text style={{ color: 'red' }}>読み込みに失敗しました: {error}</Text>}
+            {error && <Text style={{ color: 'red' }}>{t('loadFailed', { error })}</Text>}
             {!signedDocument && !error && <Text>Loading...</Text>}
 
             {signedDocument && signatureInfo && (
                 <>
                     {/* 署名検証 */}
                     <div>
-                        <Text variant="h5">署名検証</Text>
+                        <Text variant="h5">{t('signatureVerification')}</Text>
                         {signatureInfo.valid ? (
                             <Text style={{ color: 'green' }}>✓ Signature valid</Text>
                         ) : (
@@ -77,16 +79,17 @@ export const MessageInspector = (props: Props) => {
                             type: {signedDocument.proof.type}
                         </Text>
                         <Text variant="caption" style={{ wordBreak: 'break-all' }}>
-                            検証キー ({signatureInfo.isSubkey ? 'subkey' : 'master'}): {signatureInfo.expectedKeyID}
+                            {t('verificationKey', { type: signatureInfo.isSubkey ? 'subkey' : 'master' })}:{' '}
+                            {signatureInfo.expectedKeyID}
                         </Text>
                         {signatureInfo.error && (
                             <Text variant="caption" style={{ color: 'red', wordBreak: 'break-all' }}>
-                                検証エラー: {signatureInfo.error}
+                                {t('verificationError', { error: signatureInfo.error })}
                             </Text>
                         )}
                         {!signatureInfo.valid && !signatureInfo.error && (
                             <Text variant="caption" style={{ color: 'red' }}>
-                                署名から復元したキーが検証キーと一致しません
+                                {t('keyMismatch')}
                             </Text>
                         )}
                     </div>
