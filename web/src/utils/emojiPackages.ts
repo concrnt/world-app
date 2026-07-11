@@ -7,7 +7,7 @@ export const TWEMOJI_URL =
 export const EMOJI_PACKAGE_SCHEMA = 'https://schema.concrnt.world/s/emoji-package.json'
 
 export const ensureEmojiPackageList = async (client: Client): Promise<List> => {
-    const uri = semantics.emojipacks(client.ccid)
+    const uri = semantics.emojipacks(client.ccid) + '/'
     const existing = await client.getList(uri)
 
     if (existing) {
