@@ -5,6 +5,7 @@ import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { CssVar } from '../types/Theme'
 import { type EmojiPackage, type RawEmojiPackage, useEmojiPicker } from '../contexts/EmojiPicker'
+import type { ListEntry } from '@concrnt/worldlib'
 import { MdAddCircle, MdCached, MdContentCopy, MdDeleteForever } from 'react-icons/md'
 
 export const EmojiSettingsView = () => {
@@ -88,9 +89,10 @@ export const EmojiSettingsView = () => {
                         gap: CssVar.space(2)
                     }}
                 >
-                    {picker.packageURLs.map((url) => {
-                        const pkg = packagesByURL.get(url)
-                        return <EmojiPackageCard key={url} url={url} pkg={pkg} onStatus={setStatus} />
+                    {picker.packageEntries.map((entry) => {
+                        const href = typeof entry.value?.href === 'string' ? entry.value.href : undefined
+                        const pkg = href ? packagesByURL.get(href) : undefined
+                        return <EmojiPackageCard key={entry.key} entry={entry} pkg={pkg} onStatus={setStatus} />
                     })}
                 </div>
 
@@ -151,14 +153,16 @@ export const EmojiSettingsView = () => {
 }
 
 interface EmojiPackageCardProps {
-    url: string
+    entry: ListEntry
     pkg?: EmojiPackage
     onStatus: (status: string) => void
 }
 
-const EmojiPackageCard = ({ url, pkg, onStatus }: EmojiPackageCardProps) => {
+const EmojiPackageCard = ({ entry, pkg, onStatus }: EmojiPackageCardProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.emojiSettings' })
     const picker = useEmojiPicker()
+
+    const href = typeof entry.value?.href === 'string' ? entry.value.href : undefined
 
     return (
         <div
@@ -191,23 +195,27 @@ const EmojiPackageCard = ({ url, pkg, onStatus }: EmojiPackageCardProps) => {
                 />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-                <Text variant="h4">{pkg?.name ?? t('loadFailed')}</Text>
+                <Text variant="h4">{pkg?.name ?? (href ? t('loadFailed') : t('brokenEntry'))}</Text>
                 <Text style={{ overflowWrap: 'anywhere', opacity: 0.65 }}>
-                    {pkg?.fetchedAt ? t('fetchedAt', { date: new Date(pkg.fetchedAt).toLocaleString() }) : url}
+                    {pkg?.fetchedAt
+                        ? t('fetchedAt', { date: new Date(pkg.fetchedAt).toLocaleString() })
+                        : (href ?? entry.key)}
                 </Text>
             </div>
             <div style={{ display: 'flex', gap: CssVar.space(0.5), flexShrink: 0 }}>
+                {href && (
+                    <IconButton
+                        onClick={async () => {
+                            await picker.updateEmojiPackage(href)
+                            onStatus(t('updated'))
+                        }}
+                    >
+                        <MdCached size={20} />
+                    </IconButton>
+                )}
                 <IconButton
                     onClick={async () => {
-                        await picker.updateEmojiPackage(url)
-                        onStatus(t('updated'))
-                    }}
-                >
-                    <MdCached size={20} />
-                </IconButton>
-                <IconButton
-                    onClick={async () => {
-                        await navigator.clipboard?.writeText(url)
+                        await navigator.clipboard?.writeText(href ?? entry.key)
                         onStatus(t('urlCopied'))
                     }}
                 >
@@ -215,7 +223,7 @@ const EmojiPackageCard = ({ url, pkg, onStatus }: EmojiPackageCardProps) => {
                 </IconButton>
                 <IconButton
                     onClick={async () => {
-                        await picker.removeEmojiPackage(url)
+                        await picker.removeEmojiPackage(entry.key)
                         onStatus(t('removed'))
                     }}
                 >

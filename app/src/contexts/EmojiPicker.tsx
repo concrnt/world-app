@@ -8,7 +8,7 @@ import { IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
-import type { List } from '@concrnt/worldlib'
+import type { List, ListEntry } from '@concrnt/worldlib'
 
 // ---- Types ----
 
@@ -41,8 +41,9 @@ export interface EmojiPickerState {
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
     packageURLs: string[]
+    packageEntries: ListEntry[]
     addEmojiPackage: (url: string) => Promise<void>
-    removeEmojiPackage: (url: string) => Promise<void>
+    removeEmojiPackage: (key: string) => Promise<void>
     updateEmojiPackage: (url: string) => Promise<void>
 }
 
@@ -69,6 +70,7 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
+    const [packageEntries, setPackageEntries] = useState<ListEntry[]>([])
     const [emojiPackages, setEmojiPackages] = useState<EmojiPackage[]>([])
     const allEmojis = useMemo(() => emojiPackages.flatMap((pkg) => pkg.emojis), [emojiPackages])
 
@@ -77,9 +79,11 @@ export const EmojiPickerProvider = (props: Props) => {
     // ---- Emoji package loading ----
     const reloadEmojiPackageURLs = useCallback(async () => {
         const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
-        const urls = await list.items.value()
+        const entries = await list.entries.value()
+        const urls = entries.map((e) => e.value?.href).filter((h): h is string => typeof h === 'string' && !!h)
 
         setEmojiPackageList(list)
+        setPackageEntries(entries)
         setEmojiPackageURLs(Array.from(new Set(urls)))
     }, [client, emojiPackageList])
 
@@ -88,10 +92,12 @@ export const EmojiPickerProvider = (props: Props) => {
 
         ensureEmojiPackageList(client)
             .then(async (list) => {
-                const urls = await list.items.value()
+                const entries = await list.entries.value()
+                const urls = entries.map((e) => e.value?.href).filter((h): h is string => typeof h === 'string' && !!h)
 
                 if (unmounted) return
                 setEmojiPackageList(list)
+                setPackageEntries(entries)
                 setEmojiPackageURLs(Array.from(new Set(urls)))
             })
             .catch((e) => {
@@ -211,9 +217,11 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const removeEmojiPackage = useCallback(
-        async (url: string) => {
+        async (key: string) => {
             const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
-            await list.removeItem(client, url)
+            await client.api.delete(key)
+            list.items.reload()
+            list.entries.reload()
             await reloadEmojiPackageURLs()
         },
         [client, emojiPackageList, reloadEmojiPackageURLs]
@@ -288,11 +296,22 @@ export const EmojiPickerProvider = (props: Props) => {
             search,
             packages: emojiPackages,
             packageURLs: emojiPackageURLs,
+            packageEntries,
             addEmojiPackage,
             removeEmojiPackage,
             updateEmojiPackage
         }),
-        [open, close, search, emojiPackages, emojiPackageURLs, addEmojiPackage, removeEmojiPackage, updateEmojiPackage]
+        [
+            open,
+            close,
+            search,
+            emojiPackages,
+            emojiPackageURLs,
+            packageEntries,
+            addEmojiPackage,
+            removeEmojiPackage,
+            updateEmojiPackage
+        ]
     )
 
     return (

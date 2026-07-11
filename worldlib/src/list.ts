@@ -3,6 +3,11 @@ import { Client } from './client'
 import { ListSchema } from './schemas/list'
 import { CachedPromise } from './cachedPromise'
 
+export interface ListEntry {
+    key: string // 実際に格納されているKVキー
+    value?: any // ドキュメントのvalue (パース不能ならundefined)。参照なら { href, schema }
+}
+
 export class List {
     client: Client
     uri: string
@@ -28,6 +33,29 @@ export class List {
 
         const documents = items.map((i) => JSON.parse(i.document))
         return documents.map((d) => d.value.href)
+    })
+
+    entries = new CachedPromise<ListEntry[]>(async () => {
+        const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
+        const items = await this.client.api.query(
+            {
+                prefix,
+                limit: 100 //TODO: pagination
+            },
+            undefined,
+            { cache: true }
+        )
+
+        return items.map((sd) => {
+            const key = sd.cckv ?? sd.ccfs
+            let value: any
+            try {
+                value = JSON.parse(sd.document).value
+            } catch {
+                value = undefined
+            }
+            return { key, value }
+        })
     })
 
     constructor(client: Client, uri: string, title: string) {
@@ -81,6 +109,7 @@ export class List {
 
         await client.api.commit(document)
         this.items.reload()
+        this.entries.reload()
         client.knownCommunities.reload()
     }
 
@@ -95,6 +124,7 @@ export class List {
 
         await client.api.delete(key)
         this.items.reload()
+        this.entries.reload()
         client.knownCommunities.reload()
     }
 }

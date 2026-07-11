@@ -97,6 +97,7 @@
             "removed": "Removed emoji package",
             "urlCopied": "Copied URL",
             "loadFailed": "Failed to load",
+            "brokenEntry": "Broken entry",
             "fetchedAt": "Fetched at: {{date}}"
         },
         "welcome": {

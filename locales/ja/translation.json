@@ -97,6 +97,7 @@
             "removed": "絵文字パッケージを削除しました",
             "urlCopied": "URLをコピーしました",
             "loadFailed": "読み込みに失敗しました",
+            "brokenEntry": "壊れた項目",
             "fetchedAt": "取得日: {{date}}"
         },
         "welcome": {
