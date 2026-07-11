@@ -10,23 +10,34 @@ import { IDView } from './ID'
 import { DevView } from './Dev'
 import { EmojiSettingsView } from './EmojiSettings'
 import { ThemeSettingsView } from './ThemeSettings'
+import { LanguageSettingsView } from './LanguageSettings'
 import { NotificationSettingsView } from './NotificationSettings'
-import { MdBadge, MdChevronRight, MdEmojiEmotions, MdNotifications, MdPalette, MdTerminal } from 'react-icons/md'
+import {
+    MdBadge,
+    MdChevronRight,
+    MdEmojiEmotions,
+    MdLanguage,
+    MdNotifications,
+    MdPalette,
+    MdTerminal
+} from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 import { Fragment, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import buildTime from '~build/time'
 import { branch, sha } from '~build/git'
 import { version } from '~build/package'
 
 const branchName = branch || window.location.host.split('.')[0]
 const appInfoRows = [
-    ['バージョン', version],
-    ['ビルド日時', buildTime.toLocaleString()],
-    ['ブランチ', branchName],
-    ['コミット', sha]
+    ['version', version],
+    ['buildTime', buildTime.toLocaleString()],
+    ['branch', branchName],
+    ['commit', sha]
 ]
 
 export const SettingsView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.settings' })
     const { client, logout } = useClient()
 
     const reset = useResetPreference()
@@ -49,7 +60,7 @@ export const SettingsView = () => {
 
     return (
         <View>
-            <Header>設定</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     flex: 1,
@@ -61,42 +72,49 @@ export const SettingsView = () => {
                     padding: CssVar.space(4)
                 }}
             >
-                <Text variant="h3">設定</Text>
+                <Text variant="h3">{t('title')}</Text>
                 <List>
                     <ListItem
                         startIcon={<MdPalette size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<ThemeSettingsView />)}
                     >
-                        テーマ設定
+                        {t('theme')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdLanguage size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<LanguageSettingsView />)}
+                    >
+                        {t('language')}
                     </ListItem>
                     <ListItem
                         startIcon={<SiActivitypub size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<Activitypub />)}
                     >
-                        ActivityPub設定
+                        {t('activitypub')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<IDView />)}
                     >
-                        ID管理
+                        {t('id')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdEmojiEmotions size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<EmojiSettingsView />)}
                     >
-                        絵文字
+                        {t('emoji')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<NotificationSettingsView />)}
                     >
-                        通知
+                        {t('notifications')}
                     </ListItem>
                     {developerMode && (
                         <ListItem
@@ -104,21 +122,21 @@ export const SettingsView = () => {
                             endIcon={<MdChevronRight size={24} />}
                             onClick={() => stack.push(<DevView />)}
                         >
-                            開発者ツール
+                            {t('devTools')}
                         </ListItem>
                     )}
                 </List>
 
                 <Divider />
 
-                <Text variant="h3">アカウント</Text>
+                <Text variant="h3">{t('account')}</Text>
                 <Button
                     onClick={async () => {
                         await getResourceCache(client.ccid).clear()
                         window.location.reload()
                     }}
                 >
-                    キャッシュを削除
+                    {t('clearCache')}
                 </Button>
                 <Button
                     onClick={() => {
@@ -126,7 +144,7 @@ export const SettingsView = () => {
                         reset()
                     }}
                 >
-                    Logout
+                    {t('logout')}
                 </Button>
 
                 <Divider />
@@ -145,7 +163,7 @@ export const SettingsView = () => {
                     }}
                 >
                     <Text variant="caption" style={{ margin: 0, fontWeight: 700 }}>
-                        アプリ情報
+                        {t('appInfo.title')}
                     </Text>
                     <dl
                         style={{
@@ -159,7 +177,7 @@ export const SettingsView = () => {
                     >
                         {appInfoRows.map(([label, value]) => (
                             <Fragment key={label}>
-                                <dt style={{ margin: 0 }}>{label}</dt>
+                                <dt style={{ margin: 0 }}>{t(`appInfo.${label}`)}</dt>
                                 <dd style={{ margin: 0, minWidth: 0, wordBreak: 'break-all' }}>{value}</dd>
                             </Fragment>
                         ))}

@@ -7,5 +7,75 @@
         "delete": "Delete",
         "retry": "Retry",
         "loading": "Loading..."
+    },
+    "views": {
+        "settings": {
+            "title": "Settings",
+            "theme": "Theme",
+            "language": "Language",
+            "activitypub": "ActivityPub",
+            "id": "ID Management",
+            "emoji": "Emoji",
+            "notifications": "Notifications",
+            "devTools": "Developer Tools",
+            "account": "Account",
+            "clearCache": "Clear Cache",
+            "logout": "Logout",
+            "appInfo": {
+                "title": "App Info",
+                "version": "Version",
+                "buildTime": "Build Time",
+                "branch": "Branch",
+                "commit": "Commit"
+            }
+        },
+        "languageSettings": {
+            "title": "Language"
+        },
+        "themeSettings": {
+            "title": "Theme",
+            "currentTheme": "Current Theme: {{name}}",
+            "builtinThemes": "Built-in Themes",
+            "customThemes": "Custom Themes",
+            "importFromV1": "Import from v1"
+        },
+        "notificationSettings": {
+            "title": "Notifications",
+            "enablePush": "Receive push notifications",
+            "singleDeviceNote": "Push notifications are delivered only to the last browser (or device) where they were enabled. Enabling them in another browser will stop delivery to this one.",
+            "permissionDeniedApp": "Notification permission has been denied by the OS. Please allow notifications for this app in your device settings.",
+            "permissionDeniedWeb": "Notification permission has been denied by the browser. Please allow notifications for this site in your browser settings.",
+            "types": {
+                "title": "Notification Types",
+                "reply": "Reply",
+                "mention": "Mention",
+                "reroute": "Reroute",
+                "fav": "Favorite",
+                "reaction": "Reaction",
+                "readRequest": "Read Request",
+                "follow": "Follow"
+            },
+            "subscription": {
+                "title": "Subscription Status",
+                "endpoint": "Endpoint: {{host}}",
+                "lastUpdated": "Last Updated: {{date}}",
+                "notRegistered": "Not registered",
+                "reRegister": "Re-register"
+            }
+        },
+        "emojiSettings": {
+            "title": "Emoji",
+            "packages": "Emoji Packages",
+            "updateAll": "Update All",
+            "packageURL": "Emoji Package URL",
+            "packageNotFound": "Package not found",
+            "alreadyAdded": "Already added",
+            "added": "Added emoji package",
+            "updated": "Updated emoji package",
+            "removed": "Removed emoji package",
+            "urlCopied": "Copied URL",
+            "loadFailed": "Failed to load",
+            "fetchedAt": "Fetched at: {{date}}"
+        }
     }
 }

@@ -7,5 +7,75 @@
         "delete": "削除",
         "retry": "再試行",
         "loading": "読み込み中..."
+    },
+    "views": {
+        "settings": {
+            "title": "設定",
+            "theme": "テーマ設定",
+            "language": "言語",
+            "activitypub": "ActivityPub設定",
+            "id": "ID管理",
+            "emoji": "絵文字",
+            "notifications": "通知",
+            "devTools": "開発者ツール",
+            "account": "アカウント",
+            "clearCache": "キャッシュを削除",
+            "logout": "Logout",
+            "appInfo": {
+                "title": "アプリ情報",
+                "version": "バージョン",
+                "buildTime": "ビルド日時",
+                "branch": "ブランチ",
+                "commit": "コミット"
+            }
+        },
+        "languageSettings": {
+            "title": "言語"
+        },
+        "themeSettings": {
+            "title": "テーマ設定",
+            "currentTheme": "現在のテーマ: {{name}}",
+            "builtinThemes": "組み込みテーマ",
+            "customThemes": "カスタムテーマ",
+            "importFromV1": "v1からインポート"
+        },
+        "notificationSettings": {
+            "title": "通知",
+            "enablePush": "プッシュ通知を受け取る",
+            "singleDeviceNote": "通知を受け取れるのは最後に有効化した1ブラウザ(または1端末)のみです。別のブラウザで有効化すると、このブラウザでは受け取れなくなります。",
+            "permissionDeniedApp": "通知の許可がOS側で拒否されています。端末の設定アプリからこのアプリの通知を許可してください。",
+            "permissionDeniedWeb": "通知の許可がブラウザ側で拒否されています。ブラウザの設定でこのサイトの通知を許可してください。",
+            "types": {
+                "title": "通知の種類",
+                "reply": "リプライ",
+                "mention": "メンション",
+                "reroute": "リルート",
+                "fav": "お気に入り",
+                "reaction": "リアクション",
+                "readRequest": "閲覧リクエスト",
+                "follow": "フォロー"
+            },
+            "subscription": {
+                "title": "購読状況",
+                "endpoint": "エンドポイント: {{host}}",
+                "lastUpdated": "最終更新: {{date}}",
+                "notRegistered": "未登録です",
+                "reRegister": "再登録"
+            }
+        },
+        "emojiSettings": {
+            "title": "絵文字",
+            "packages": "絵文字パッケージ",
+            "updateAll": "全て更新",
+            "packageURL": "絵文字パッケージURL",
+            "packageNotFound": "パッケージが見つかりませんでした",
+            "alreadyAdded": "すでに追加されています",
+            "added": "絵文字パッケージを追加しました",
+            "updated": "絵文字パッケージを更新しました",
+            "removed": "絵文字パッケージを削除しました",
+            "urlCopied": "URLをコピーしました",
+            "loadFailed": "読み込みに失敗しました",
+            "fetchedAt": "取得日: {{date}}"
+        }
     }
 }
