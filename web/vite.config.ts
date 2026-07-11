@@ -69,6 +69,12 @@ export default defineConfig({
             }
         })
     ],
+    resolve: {
+        dedupe: ['react', 'react-dom', 'react/jsx-runtime']
+    },
+    optimizeDeps: {
+        include: ['@concrnt/ui']
+    },
     server: {
         host: true,
         allowedHosts: ['host.docker.internal', 'cc2.tunnel.anthrotech.dev']

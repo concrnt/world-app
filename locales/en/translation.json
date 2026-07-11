@@ -8,6 +8,28 @@
         "retry": "Retry",
         "loading": "Loading..."
     },
+    "emergency": {
+        "title": "Crash Report",
+        "reload": "Reload",
+        "recoverTools": "Recovery Tools",
+        "whenToUseTools": "If reloading doesn’t help after 3 tries ↓",
+        "softReset": "Reset everything except login info and reload",
+        "hardReset": "Reset everything (login info will also be lost)",
+        "support": "Support",
+        "supportDesc": "If reloading doesn't resolve the issue, there may be a serious problem. Check the latest updates using the link below.",
+        "reportFailed": "Failed to send report (Hint: This only works on official deployments)",
+        "reportSent": "Crash report sent. Thank you!",
+        "sendAnonymousReport": "Send anonymous crash report",
+        "messages": [
+            "The internet is a wonderful place, but sometimes things go wrong. Try the buttons below.",
+            "Computers are mysterious. Reloading might fix the issue.",
+            "Strange things happen sometimes. Let’s solve this together — try the buttons below.",
+            "The system hit a small bump. A retry might do the trick.",
+            "Something didn’t go as planned. Try reloading.",
+            "Things might not be working correctly right now. Try reloading.",
+            "Oops! Something went wrong. Try reloading."
+        ]
+    },
     "views": {
         "settings": {
             "title": "Settings",

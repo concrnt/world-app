@@ -284,6 +284,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                         </BaseThemeProvider>
                     }
                 />
+                <Route
+                    path="/crash"
+                    element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}
+                />
                 {!hasSession && (
                     <Route element={<GuestShell />}>
                         <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
