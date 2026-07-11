@@ -5,9 +5,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Button, Divider, useTheme, useOverlayStack } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useKeyboard } from './Keyboard'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
@@ -153,22 +153,11 @@ interface ComposerOverlayProps {
 }
 
 // モバイル用の全画面モーダルのchrome（背景・アニメーション・キャンセルボタン）を担当し、中身はComposerに任せる。
-// ソフトキーボードに合わせて高さを追従させるため visualViewport を監視する
+// ソフトキーボードに合わせて高さを追従させる(app版と同じ式)
 const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
-
-    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
-        'composerViewportHeight',
-        visualViewport?.height ?? 0
-    )
-    useEffect(() => {
-        function handleResize(): void {
-            setViewportHeight(visualViewport?.height ?? 0)
-        }
-        visualViewport?.addEventListener('resize', handleResize)
-        return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [setViewportHeight])
+    const keyboard = useKeyboard()
 
     return (
         <AnimatePresence onExitComplete={props.onClosed}>
@@ -189,11 +178,11 @@ const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
                 >
                     <div
                         style={{
-                            height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
+                            height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
                             maxHeight: '50vh',
-                            transition: 'height 0.1s ease-in-out'
+                            transition: `height ${keyboard.duration || 0.1}s ease-out`
                         }}
                     >
                         <div

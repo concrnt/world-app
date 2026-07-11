@@ -42,6 +42,7 @@ import { GuestProfileView } from './views/guest/GuestProfile'
 import { GuestPostView } from './views/guest/GuestPost'
 import { GuestTimelineView } from './views/guest/GuestTimeline'
 import { NavigationProvider } from './contexts/Navigation'
+import { KeyboardProvider } from './contexts/Keyboard'
 import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
@@ -256,33 +257,35 @@ const AuthedRoutes = () => (
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <BrowserRouter>
-            <Routes>
-                <Route
-                    path="/login"
-                    element={
-                        <BaseThemeProvider theme={Themes.blue}>
-                            <Login />
-                        </BaseThemeProvider>
-                    }
-                />
-                <Route
-                    path="/register"
-                    element={
-                        <BaseThemeProvider theme={Themes.blue}>
-                            <Register />
-                        </BaseThemeProvider>
-                    }
-                />
-                {!hasSession && (
-                    <Route element={<GuestShell />}>
-                        <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
-                        <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
-                        <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
-                    </Route>
-                )}
-                <Route path="*" element={<AuthedRoutes />} />
-            </Routes>
-        </BrowserRouter>
+        <KeyboardProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route
+                        path="/login"
+                        element={
+                            <BaseThemeProvider theme={Themes.blue}>
+                                <Login />
+                            </BaseThemeProvider>
+                        }
+                    />
+                    <Route
+                        path="/register"
+                        element={
+                            <BaseThemeProvider theme={Themes.blue}>
+                                <Register />
+                            </BaseThemeProvider>
+                        }
+                    />
+                    {!hasSession && (
+                        <Route element={<GuestShell />}>
+                            <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
+                            <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
+                            <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
+                        </Route>
+                    )}
+                    <Route path="*" element={<AuthedRoutes />} />
+                </Routes>
+            </BrowserRouter>
+        </KeyboardProvider>
     </ErrorBoundary>
 )
