@@ -1,0 +1,11 @@
+{
+    "common": {
+        "ok": "OK",
+        "cancel": "Cancel",
+        "close": "Close",
+        "save": "Save",
+        "delete": "Delete",
+        "retry": "Retry",
+        "loading": "Loading..."
+    }
+}

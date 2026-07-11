@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
 import { ScannerProvider } from './contexts/Scanner'

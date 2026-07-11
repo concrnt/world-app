@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
+import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
