@@ -1,6 +1,6 @@
 import { useClient } from '../contexts/Client'
 import { useSelect } from '../contexts/Select'
-import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
+import { Avatar, CssVar, IconButton, ListItem, Text, useAnchor } from '@concrnt/ui'
 import { ReactNode, useMemo } from 'react'
 import { useDrawer } from '../contexts/Drawer'
 import { ProfileEditor } from './ProfileEditor'
@@ -13,6 +13,7 @@ export const SwitchAccountButton = (): ReactNode => {
     const { client, reload } = useClient()
     const { select, close } = useSelect()
     const drawer = useDrawer()
+    const menuAnchor = useAnchor()
 
     const options: ReactNode[] = useMemo(() => {
         const result: ReactNode[] = []
@@ -82,8 +83,9 @@ export const SwitchAccountButton = (): ReactNode => {
             onClick={(e) => {
                 e.stopPropagation()
                 if (!client) return
-                select('Switch Account', options)
+                select('Switch Account', options, menuAnchor)
             }}
+            style={{ anchorName: menuAnchor } as React.CSSProperties}
         >
             <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
         </IconButton>

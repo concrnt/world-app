@@ -1,4 +1,4 @@
-import { Button, ListItem, Text } from '@concrnt/ui'
+import { Button, ListItem, Text, useAnchor } from '@concrnt/ui'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
@@ -38,6 +38,7 @@ export const MessageActions = (props: Props) => {
     const confirm = useConfirm()
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
+    const menuAnchor = useAnchor()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -193,52 +194,57 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    select('', [
-                        <ListItem
-                            key="delete"
-                            onClick={() => {
-                                confirm.open(
-                                    '本当にこの投稿を削除しますか？',
-                                    () => {
-                                        client?.api.delete(props.message.uri).then(() => hapticSuccess())
-                                        close()
-                                    },
-                                    {
-                                        confirmText: '削除'
-                                    }
-                                )
-                            }}
-                        >
-                            <Text>投稿を削除</Text>
-                        </ListItem>,
-                        <ListItem
-                            key="abuse"
-                            onClick={() => {
-                                drawer.open(
-                                    <Report
-                                        targetURI={props.message.uri}
-                                        onSend={() => {
-                                            drawer.close()
+                    select(
+                        '',
+                        [
+                            <ListItem
+                                key="delete"
+                                onClick={() => {
+                                    confirm.open(
+                                        '本当にこの投稿を削除しますか？',
+                                        () => {
+                                            client?.api.delete(props.message.uri).then(() => hapticSuccess())
                                             close()
-                                            hapticSuccess()
-                                        }}
-                                    />
-                                )
-                            }}
-                        >
-                            通報
-                        </ListItem>,
-                        <ListItem
-                            key="inspect"
-                            onClick={() => {
-                                drawer.open(<MessageInspector message={props.message} />)
-                                close()
-                            }}
-                        >
-                            <Text>インスペクター</Text>
-                        </ListItem>
-                    ])
+                                        },
+                                        {
+                                            confirmText: '削除'
+                                        }
+                                    )
+                                }}
+                            >
+                                <Text>投稿を削除</Text>
+                            </ListItem>,
+                            <ListItem
+                                key="abuse"
+                                onClick={() => {
+                                    drawer.open(
+                                        <Report
+                                            targetURI={props.message.uri}
+                                            onSend={() => {
+                                                drawer.close()
+                                                close()
+                                                hapticSuccess()
+                                            }}
+                                        />
+                                    )
+                                }}
+                            >
+                                通報
+                            </ListItem>,
+                            <ListItem
+                                key="inspect"
+                                onClick={() => {
+                                    drawer.open(<MessageInspector message={props.message} />)
+                                    close()
+                                }}
+                            >
+                                <Text>インスペクター</Text>
+                            </ListItem>
+                        ],
+                        menuAnchor
+                    )
                 }}
+                style={{ anchorName: menuAnchor } as React.CSSProperties}
             >
                 <MdMoreHoriz size={20} />
             </Button>

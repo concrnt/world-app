@@ -200,6 +200,7 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
                             <div style={{ padding: CssVar.space(2) }}>
                                 <Composer
                                     mode="normal"
+                                    autoGrow
                                     destinations={props.pin.defaultPostTimelines}
                                     options={knownCommunities}
                                     initialProfile={props.pin.defaultProfile}

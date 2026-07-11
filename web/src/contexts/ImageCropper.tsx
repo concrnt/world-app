@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { CssVar } from '../types/Theme'
 import { cropImage } from '../utils/cropImage'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 interface CropOptions {
     /** クロップ領域のアスペクト比。デフォルト 1 (正方形) */
@@ -99,6 +100,18 @@ export const ImageCropperProvider = (props: Props) => {
         setCroppedAreaPixels(croppedAreaPixels)
     }, [])
 
+    const isMobile = useIsMobile()
+
+    // Escでキャンセル(バックドロップクリックはクロップドラッグの誤操作になりやすいので閉じない)
+    useEffect(() => {
+        if (!imageUrl) return
+        const onKeyDown = (e: KeyboardEvent): void => {
+            if (e.key === 'Escape') handleCancel()
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [imageUrl, handleCancel])
+
     const value = useMemo(() => ({ open }), [open])
 
     return (
@@ -113,79 +126,97 @@ export const ImageCropperProvider = (props: Props) => {
                         left: 0,
                         width: '100vw',
                         height: '100dvh',
-                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                        // モバイルは全画面クロッパー、デスクトップは半透明バックドロップ+中央カード
+                        backgroundColor: isMobile ? 'rgba(0, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.5)',
                         zIndex: 10000,
                         display: 'flex',
                         flexDirection: 'column',
+                        ...(!isMobile && { alignItems: 'center', justifyContent: 'center' }),
                         touchAction: 'none'
                     }}
                 >
-                    {/* クロッパー領域 */}
                     <div
-                        style={{
-                            position: 'relative',
-                            flex: 1,
-                            marginTop: 'env(safe-area-inset-top)'
-                        }}
+                        style={
+                            isMobile
+                                ? { display: 'contents' }
+                                : {
+                                      width: 'min(640px, 90vw)',
+                                      backgroundColor: '#1a1a1a',
+                                      borderRadius: CssVar.round(2),
+                                      overflow: 'hidden',
+                                      display: 'flex',
+                                      flexDirection: 'column'
+                                  }
+                        }
                     >
-                        <Cropper
-                            image={imageUrl}
-                            crop={crop}
-                            zoom={zoom}
-                            aspect={options.aspect ?? 1}
-                            onCropChange={setCrop}
-                            onZoomChange={setZoom}
-                            onCropComplete={onCropComplete}
-                            cropShape="rect"
-                            showGrid={false}
+                        {/* クロッパー領域 */}
+                        <div
                             style={{
-                                cropAreaStyle: {
-                                    borderRadius: '8px'
-                                }
+                                position: 'relative',
+                                ...(isMobile
+                                    ? { flex: 1, marginTop: 'env(safe-area-inset-top)' }
+                                    : { height: 'min(60vh, 480px)' })
                             }}
-                        />
-                    </div>
+                        >
+                            <Cropper
+                                image={imageUrl}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={options.aspect ?? 1}
+                                onCropChange={setCrop}
+                                onZoomChange={setZoom}
+                                onCropComplete={onCropComplete}
+                                cropShape="rect"
+                                showGrid={false}
+                                style={{
+                                    cropAreaStyle: {
+                                        borderRadius: '8px'
+                                    }
+                                }}
+                            />
+                        </div>
 
-                    {/* 下部コントロール */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: `${CssVar.space(4)} ${CssVar.space(6)}`,
-                            paddingBottom: `max(${CssVar.space(4)}, env(safe-area-inset-bottom))`
-                        }}
-                    >
-                        <button
-                            onClick={handleCancel}
+                        {/* 下部コントロール */}
+                        <div
                             style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'white',
-                                fontSize: '16px',
-                                cursor: 'pointer',
-                                padding: `${CssVar.space(2)} ${CssVar.space(4)}`
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: `${CssVar.space(4)} ${CssVar.space(6)}`,
+                                paddingBottom: `max(${CssVar.space(4)}, env(safe-area-inset-bottom))`
                             }}
                         >
-                            キャンセル
-                        </button>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={processing}
-                            style={{
-                                background: 'white',
-                                border: 'none',
-                                color: 'black',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                cursor: processing ? 'default' : 'pointer',
-                                padding: `${CssVar.space(2)} ${CssVar.space(4)}`,
-                                borderRadius: CssVar.round(1),
-                                opacity: processing ? 0.5 : 1
-                            }}
-                        >
-                            {processing ? '処理中...' : '決定'}
-                        </button>
+                            <button
+                                onClick={handleCancel}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'white',
+                                    fontSize: '16px',
+                                    cursor: 'pointer',
+                                    padding: `${CssVar.space(2)} ${CssVar.space(4)}`
+                                }}
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={handleConfirm}
+                                disabled={processing}
+                                style={{
+                                    background: 'white',
+                                    border: 'none',
+                                    color: 'black',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    cursor: processing ? 'default' : 'pointer',
+                                    padding: `${CssVar.space(2)} ${CssVar.space(4)}`,
+                                    borderRadius: CssVar.round(1),
+                                    opacity: processing ? 0.5 : 1
+                                }}
+                            >
+                                {processing ? '処理中...' : '決定'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

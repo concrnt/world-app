@@ -7,7 +7,7 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar, ListItem } from '@concrnt/ui'
+import { Avatar, ListItem, useAnchor } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { hapticSelection } from '../utils/haptics'
 import { useSelect } from '../contexts/Select'
@@ -28,6 +28,7 @@ interface Props {
 export const TimelinePicker = (props: Props) => {
     const { client } = useClient()
     const { select, close } = useSelect()
+    const profileAnchor = useAnchor()
 
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)
@@ -76,7 +77,7 @@ export const TimelinePicker = (props: Props) => {
                 </div>
             </ListItem>
         ))
-        select('投稿元プロフィール', profileOptions)
+        select('投稿元プロフィール', profileOptions, profileAnchor)
     }
 
     return (
@@ -118,10 +119,13 @@ export const TimelinePicker = (props: Props) => {
                         }}
                     />
                 }
-                style={{
-                    textDecoration: props.postHome === false ? 'line-through' : 'none',
-                    opacity: props.postHome === false ? 0.5 : 1
-                }}
+                style={
+                    {
+                        textDecoration: props.postHome === false ? 'line-through' : 'none',
+                        opacity: props.postHome === false ? 0.5 : 1,
+                        anchorName: profileAnchor
+                    } as React.CSSProperties
+                }
             >
                 {profileUsername}
             </Chip>
