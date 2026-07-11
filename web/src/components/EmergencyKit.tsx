@@ -44,6 +44,8 @@ const KitButton = (props: {
 }
 
 export function EmergencyKit({ error }: FallbackProps): ReactNode {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
     const { t } = useTranslation('', { keyPrefix: 'emergency' })
 
     useEffect(() => {
@@ -57,13 +59,13 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
         }
 
         if (
-            error?.message?.includes('Failed to fetch dynamically imported module') ||
-            error?.message?.includes("'text/html' is not a valid JavaScript MIME type")
+            errorMessage.includes('Failed to fetch dynamically imported module') ||
+            errorMessage.includes("'text/html' is not a valid JavaScript MIME type")
         ) {
             localStorage.setItem('lastQuickFix', new Date().toISOString())
             window.location.reload()
         }
-    }, [error])
+    }, [errorMessage])
 
     const cleanReload = async (): Promise<void> => {
         localStorage.removeItem('lastQuickFix')
@@ -104,8 +106,8 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
 
     const report = `# Crash Report
 Time: ${new Date().toISOString()}
-Error: ${error?.message}
-Stack: ${error?.stack}
+Error: ${errorMessage}
+Stack: ${errorStack}
 UserAgent: ${navigator.userAgent}
 Language: ${navigator.language}
 Location: ${window.location.href}
@@ -145,7 +147,7 @@ buildTime: ${buildTime.toLocaleString()}`
         })
     }
 
-    const messages: string[] = t('messages', { returnObjects: true })
+    const messages = t('messages', { returnObjects: true }) as string[]
     const message = messages[(messages.length * messageSeed) | 0]
 
     return (
