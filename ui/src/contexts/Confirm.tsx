@@ -22,7 +22,7 @@ export const useConfirm = (): ConfirmState => {
             stack.push({
                 kind: 'confirm',
                 render: (close) => (
-                    <CenterDialog>
+                    <CenterDialog onBackdropClick={close}>
                         <h2>{title}</h2>
                         {opts?.description && <p>{opts.description}</p>}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1) }}>

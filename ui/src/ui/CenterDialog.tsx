@@ -20,7 +20,7 @@ export const CenterDialog = (props: Props) => {
                     backgroundColor: 'black'
                 }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
+                animate={{ opacity: 0.5 }}
                 exit={{ opacity: 0 }}
             />
             <div
@@ -42,7 +42,7 @@ export const CenterDialog = (props: Props) => {
                         color: CssVar.contentText,
                         padding: CssVar.space(2),
                         borderRadius: CssVar.round(1),
-                        width: '80vw',
+                        width: 'min(480px, 80vw)',
                         position: 'absolute',
                         top: '30%'
                     }}

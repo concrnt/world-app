@@ -3,11 +3,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useTranslation } from 'react-i18next'
 import { Message, Timeline } from '@concrnt/worldlib'
 import { AnimatePresence, motion } from 'motion/react'
-import { Button, Divider, useTheme } from '@concrnt/ui'
+import { Button, Divider, useTheme, useOverlayStack } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { CssVar } from '../types/Theme'
+import { useIsMobile } from '../hooks/useIsMobile'
+import { useKeyboard } from './Keyboard'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
@@ -43,6 +44,7 @@ const ComposerContext = createContext<ComposerContextState>({
 
 export const ComposerProvider = (props: Props) => {
     const { client } = useClient()
+    const isMobile = useIsMobile()
 
     const [showComposer, setShowComposer] = useState(false)
     const [destinations, setDestinations] = useState<string[]>([])
@@ -107,17 +109,31 @@ export const ComposerProvider = (props: Props) => {
                             left: 0
                         }}
                     >
-                        <ComposerOverlay
-                            destinations={destinations}
-                            setDestinations={setDestinations}
-                            options={options}
-                            mode={mode}
-                            targetMessage={targetMessage}
-                            draftBuffer={mode === 'normal' ? draftBuffer : null}
-                            onSaveDraft={mode === 'normal' ? setDraftBuffer : undefined}
-                            initialProfile={profile}
-                            onClosed={close}
-                        />
+                        {isMobile ? (
+                            <ComposerOverlayMobile
+                                destinations={destinations}
+                                setDestinations={setDestinations}
+                                options={options}
+                                mode={mode}
+                                targetMessage={targetMessage}
+                                draftBuffer={mode === 'normal' ? draftBuffer : null}
+                                onSaveDraft={mode === 'normal' ? setDraftBuffer : undefined}
+                                initialProfile={profile}
+                                onClosed={close}
+                            />
+                        ) : (
+                            <ComposerOverlayDesktop
+                                destinations={destinations}
+                                setDestinations={setDestinations}
+                                options={options}
+                                mode={mode}
+                                targetMessage={targetMessage}
+                                draftBuffer={mode === 'normal' ? draftBuffer : null}
+                                onSaveDraft={mode === 'normal' ? setDraftBuffer : undefined}
+                                initialProfile={profile}
+                                onClosed={close}
+                            />
+                        )}
                     </div>
                 )}
             </div>
@@ -125,8 +141,7 @@ export const ComposerProvider = (props: Props) => {
     )
 }
 
-// 全画面モーダルのchrome（背景・アニメーション・キャンセルボタン）を担当し、中身はComposerに任せる
-const ComposerOverlay = (props: {
+interface ComposerOverlayProps {
     destinations: string[]
     setDestinations: (destinations: string[]) => void
     options: Timeline[]
@@ -136,22 +151,15 @@ const ComposerOverlay = (props: {
     onSaveDraft?: (buf: DraftBuffer) => void
     initialProfile?: string
     onClosed: () => void
-}) => {
+}
+
+// モバイル用の全画面モーダルのchrome（背景・アニメーション・キャンセルボタン）を担当し、中身はComposerに任せる。
+// ソフトキーボードに合わせて高さを追従させる(app版と同じ式)
+const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
-
-    const [viewportHeight, setViewportHeight] = useLocalStorage<number>(
-        'composerViewportHeight',
-        visualViewport?.height ?? 0
-    )
-    useEffect(() => {
-        function handleResize(): void {
-            setViewportHeight(visualViewport?.height ?? 0)
-        }
-        visualViewport?.addEventListener('resize', handleResize)
-        return () => visualViewport?.removeEventListener('resize', handleResize)
-    }, [setViewportHeight])
+    const keyboard = useKeyboard()
 
     return (
         <AnimatePresence onExitComplete={props.onClosed}>
@@ -172,11 +180,11 @@ const ComposerOverlay = (props: {
                 >
                     <div
                         style={{
-                            height: `calc(${viewportHeight}px - env(safe-area-inset-top))`,
+                            height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
                             maxHeight: '50vh',
-                            transition: 'height 0.1s ease-in-out'
+                            transition: `height ${keyboard.duration || 0.1}s ease-out`
                         }}
                     >
                         <div
@@ -222,6 +230,99 @@ const ComposerOverlay = (props: {
                             />
                         </div>
                     </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    )
+}
+
+// デスクトップ用のchrome。v1と同様の「上寄せ・幅700px・半透明バックドロップ」のシンプルなモーダル
+const ComposerOverlayDesktop = (props: ComposerOverlayProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
+    const [willClose, setWillClose] = useState(false)
+    const theme = useTheme()
+    const stack = useOverlayStack()
+
+    // Escで閉じる。ネイティブpopover(モードセレクタ等)や上に乗ったオーバーレイ(select/confirm)があればそちらを先に閉じる
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent): void => {
+            if (e.key !== 'Escape' || e.defaultPrevented) return
+            if (document.querySelector(':popover-open')) return
+            if (stack.closeTop()) return
+            setWillClose(true)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [stack])
+
+    return (
+        <AnimatePresence onExitComplete={props.onClosed}>
+            {!willClose && (
+                <motion.div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'flex-start',
+                        paddingTop: '10vh',
+                        overflow: 'hidden'
+                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => setWillClose(true)}
+                >
+                    <motion.div
+                        style={{
+                            width: 'min(700px, 90vw)',
+                            maxHeight: '75vh',
+                            backgroundColor: CssVar.contentBackground,
+                            borderRadius: theme.variant === 'classic' ? undefined : CssVar.round(1),
+                            padding: CssVar.space(2),
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(2),
+                            overflow: 'auto',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35)'
+                        }}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <Button
+                                variant="text"
+                                onClick={() => setWillClose(true)}
+                                style={{
+                                    fontSize: '0.9rem',
+                                    padding: 0
+                                }}
+                            >
+                                {t('cancel')}
+                            </Button>
+                        </div>
+
+                        <Divider />
+
+                        <Composer
+                            autoFocus
+                            autoGrow
+                            destinations={props.destinations}
+                            setDestinations={props.setDestinations}
+                            options={props.options}
+                            mode={props.mode}
+                            targetMessage={props.targetMessage}
+                            draftBuffer={props.draftBuffer}
+                            onSaveDraft={props.onSaveDraft}
+                            initialProfile={props.initialProfile}
+                            onPost={() => setWillClose(true)}
+                        />
+                    </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>

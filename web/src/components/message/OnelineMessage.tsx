@@ -3,7 +3,7 @@ import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
 import { MarkdownMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, Text, IconButton, ListItem } from '@concrnt/ui'
+import { Avatar, CfmRenderer, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
 
 import { MdMoreHoriz } from 'react-icons/md'
 import { useSelect } from '../../contexts/Select'
@@ -16,7 +16,8 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.onelineMessage' })
     const navigate = useNavigate()
     const { client } = useClient()
-    const { select } = useSelect()
+    const { select, close } = useSelect()
+    const menuAnchor = useAnchor()
 
     const message = props.message
 
@@ -41,21 +42,29 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             <IconButton
                 onClick={(e) => {
                     e.stopPropagation()
-                    select('', [
-                        <ListItem
-                            key="delete"
-                            onClick={() => {
-                                client.api.delete(message.uri).then(() => hapticSuccess())
-                            }}
-                        >
-                            <Text>{t('deletePost')}</Text>
-                        </ListItem>
-                    ])
+                    select(
+                        '',
+                        [
+                            <ListItem
+                                key="delete"
+                                onClick={() => {
+                                    client.api.delete(message.uri).then(() => hapticSuccess())
+                                    close()
+                                }}
+                            >
+                                <Text>{t('deletePost')}</Text>
+                            </ListItem>
+                        ],
+                        menuAnchor
+                    )
                 }}
-                style={{
-                    padding: 0,
-                    margin: 0
-                }}
+                style={
+                    {
+                        padding: 0,
+                        margin: 0,
+                        anchorName: menuAnchor
+                    } as React.CSSProperties
+                }
             >
                 <MdMoreHoriz size={15} />
             </IconButton>

@@ -1,4 +1,4 @@
-import { Button, ListItem, Text } from '@concrnt/ui'
+import { Button, ListItem, Text, useAnchor } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
@@ -40,6 +40,7 @@ export const MessageActions = (props: Props) => {
     const confirm = useConfirm()
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
+    const menuAnchor = useAnchor()
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -195,52 +196,57 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    select('', [
-                        <ListItem
-                            key="delete"
-                            onClick={() => {
-                                confirm.open(
-                                    t('confirmDelete'),
-                                    () => {
-                                        client?.api.delete(props.message.uri).then(() => hapticSuccess())
-                                        close()
-                                    },
-                                    {
-                                        confirmText: t('delete')
-                                    }
-                                )
-                            }}
-                        >
-                            <Text>{t('deletePost')}</Text>
-                        </ListItem>,
-                        <ListItem
-                            key="abuse"
-                            onClick={() => {
-                                drawer.open(
-                                    <Report
-                                        targetURI={props.message.uri}
-                                        onSend={() => {
-                                            drawer.close()
+                    select(
+                        '',
+                        [
+                            <ListItem
+                                key="delete"
+                                onClick={() => {
+                                    confirm.open(
+                                        t('confirmDelete'),
+                                        () => {
+                                            client?.api.delete(props.message.uri).then(() => hapticSuccess())
                                             close()
-                                            hapticSuccess()
-                                        }}
-                                    />
-                                )
-                            }}
-                        >
-                            {t('report')}
-                        </ListItem>,
-                        <ListItem
-                            key="inspect"
-                            onClick={() => {
-                                drawer.open(<MessageInspector message={props.message} />)
-                                close()
-                            }}
-                        >
-                            <Text>{t('inspector')}</Text>
-                        </ListItem>
-                    ])
+                                        },
+                                        {
+                                            confirmText: t('delete')
+                                        }
+                                    )
+                                }}
+                            >
+                                <Text>{t('deletePost')}</Text>
+                            </ListItem>,
+                            <ListItem
+                                key="abuse"
+                                onClick={() => {
+                                    drawer.open(
+                                        <Report
+                                            targetURI={props.message.uri}
+                                            onSend={() => {
+                                                drawer.close()
+                                                close()
+                                                hapticSuccess()
+                                            }}
+                                        />
+                                    )
+                                }}
+                            >
+                                {t('report')}
+                            </ListItem>,
+                            <ListItem
+                                key="inspect"
+                                onClick={() => {
+                                    drawer.open(<MessageInspector message={props.message} />)
+                                    close()
+                                }}
+                            >
+                                <Text>{t('inspector')}</Text>
+                            </ListItem>
+                        ],
+                        menuAnchor
+                    )
                 }}
+                style={{ anchorName: menuAnchor } as React.CSSProperties}
             >
                 <MdMoreHoriz size={20} />
             </Button>

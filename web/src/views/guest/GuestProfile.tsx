@@ -1,6 +1,7 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, CCWallpaper, Text, View, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
+import { Avatar, CCWallpaper, Text, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
+import { View } from '../../components/View'
 import { useClient } from '../../contexts/Client'
 import { useNavigate } from 'react-router-dom'
 

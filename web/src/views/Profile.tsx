@@ -5,14 +5,15 @@ import {
     CCWallpaper,
     IconButton,
     Text,
-    View,
     Button,
     Tabs,
     Tab,
     Divider,
     useTheme,
-    ListItem
+    ListItem,
+    useAnchor
 } from '@concrnt/ui'
+import { View } from '../components/View'
 import { useClient } from '../contexts/Client'
 
 // import { MdSearch } from 'react-icons/md'
@@ -134,6 +135,7 @@ const Body = (props: BodyProps) => {
     const navigation = useNavigation()
     const { select } = useSelect()
     const drawer = useDrawer()
+    const menuAnchor = useAnchor()
     const mediaViewer = useMediaViewer()
 
     const isMe = client.ccid === props.ccid
@@ -259,8 +261,9 @@ const Body = (props: BodyProps) => {
                                     <IconButton
                                         variant="contained"
                                         onClick={() => {
-                                            select('', selectOptions)
+                                            select('', selectOptions, menuAnchor)
                                         }}
+                                        style={{ anchorName: menuAnchor } as React.CSSProperties}
                                     >
                                         <MdMoreHoriz size={24} />
                                     </IconButton>

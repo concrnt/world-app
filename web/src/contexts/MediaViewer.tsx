@@ -2,10 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
 
-import { MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
+import { MdChevronLeft, MdChevronRight, MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
 import { CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { ModelViewer } from '../components/ModelViewer'
 import { useAudioPlayer } from './AudioPlayer'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export interface MediaItem {
     mediaURL: string
@@ -72,6 +73,7 @@ export const MediaViewerProvider = (props: Props) => {
     const [medias, setMedias] = useState<MediaItem[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const isOpen = medias.length > 0
+    const isMobile = useIsMobile()
 
     // --- motion values ---
     const mvOffsetX = useMotionValue(0)
@@ -175,6 +177,22 @@ export const MediaViewerProvider = (props: Props) => {
         },
         [mvOffsetX, mvScale, mvPanX, mvPanY]
     )
+
+    // キーボード操作(デスクトップ向け): Escで閉じる、←→でメディア切替
+    useEffect(() => {
+        if (!isOpen) return
+        const onKeyDown = (e: KeyboardEvent): void => {
+            if (e.key === 'Escape') {
+                close()
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                changeImage(currentIndex - 1)
+            } else if (e.key === 'ArrowRight' && currentIndex < medias.length - 1) {
+                changeImage(currentIndex + 1)
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [isOpen, currentIndex, medias.length, close, changeImage])
 
     // --- ダブルタップ処理（ズームは画像のみ） ---
     const handleDoubleTap = useCallback(
@@ -614,6 +632,60 @@ export const MediaViewerProvider = (props: Props) => {
                     >
                         <MdClose size={24} />
                     </button>
+
+                    {/* 前へ/次へボタン(デスクトップのみ。モバイルはスワイプで切替) */}
+                    {!isMobile && currentIndex > 0 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                changeImage(currentIndex - 1)
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '12px',
+                                transform: 'translateY(-50%)',
+                                background: 'rgba(255, 255, 255, 0.15)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '40px',
+                                height: '40px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                color: 'white'
+                            }}
+                        >
+                            <MdChevronLeft size={28} />
+                        </button>
+                    )}
+                    {!isMobile && currentIndex < medias.length - 1 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                changeImage(currentIndex + 1)
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                right: '12px',
+                                transform: 'translateY(-50%)',
+                                background: 'rgba(255, 255, 255, 0.15)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '40px',
+                                height: '40px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                color: 'white'
+                            }}
+                        >
+                            <MdChevronRight size={28} />
+                        </button>
+                    )}
 
                     {/* ページインジケーター */}
                     {medias.length > 1 && (

@@ -20,7 +20,7 @@ export const useModal = (): ModalState => {
         (content: ReactNode) => {
             stack.push({
                 kind: 'modal',
-                render: () => <CenterDialog>{content}</CenterDialog>
+                render: (close) => <CenterDialog onBackdropClick={close}>{content}</CenterDialog>
             })
         },
         [stack]

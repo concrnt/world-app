@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
-import { View } from '@concrnt/ui'
+import { View } from '../components/View'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
 import { ApObject } from '../utils/activitypub'

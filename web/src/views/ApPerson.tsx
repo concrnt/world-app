@@ -1,4 +1,5 @@
-import { Avatar, Button, CCWallpaper, CssVar, useTheme, View, Text } from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text } from '@concrnt/ui'
+import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

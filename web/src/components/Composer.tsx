@@ -50,6 +50,8 @@ interface Props {
     onPost?: () => void
     initialProfile?: string
     autoFocus?: boolean
+    // 親の高さに従うのではなく、入力内容に応じてテキストエリアを自動伸縮させる(デスクトップのモーダル/インライン用)
+    autoGrow?: boolean
 }
 
 export const Composer = (props: Props) => {
@@ -513,18 +515,22 @@ export const Composer = (props: Props) => {
                     value={draft}
                     placeholder={getPlaceholder()}
                     onChange={(e) => setDraft(e.target.value)}
-                    style={{
-                        width: '100%',
-                        flex: 1,
-                        minHeight: '80px',
-                        fontSize: '1rem',
-                        boxSizing: 'border-box',
-                        border: 'none',
-                        outline: 'none',
-                        resize: 'none',
-                        background: 'transparent',
-                        color: CssVar.contentText
-                    }}
+                    style={
+                        {
+                            width: '100%',
+                            fontSize: '1rem',
+                            boxSizing: 'border-box',
+                            border: 'none',
+                            outline: 'none',
+                            resize: 'none',
+                            background: 'transparent',
+                            color: CssVar.contentText,
+                            // field-sizing非対応ブラウザではminHeight固定+内部スクロールに劣化する
+                            ...(props.autoGrow
+                                ? { flex: '0 1 auto', minHeight: '96px', maxHeight: '40vh', fieldSizing: 'content' }
+                                : { flex: 1, minHeight: '80px' })
+                        } as React.CSSProperties
+                    }
                     onKeyDown={(e) => {
                         if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && e.metaKey)) {
                             e.preventDefault()
