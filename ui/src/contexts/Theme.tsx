@@ -51,6 +51,15 @@ export const ThemeProvider = (props: Props) => {
         document.documentElement.style.setProperty('--divider', theme.divider)
         document.documentElement.style.setProperty('--space', theme.space)
         document.documentElement.style.setProperty('--round', theme.round)
+
+        // ブラウザ上部/PWAステータスバーの色をテーマに追従させる
+        let themeColorMeta = document.querySelector('meta[name="theme-color"]')
+        if (!themeColorMeta) {
+            themeColorMeta = document.createElement('meta')
+            themeColorMeta.setAttribute('name', 'theme-color')
+            document.head.appendChild(themeColorMeta)
+        }
+        themeColorMeta.setAttribute('content', theme.backdrop.background)
     }, [theme])
 
     const value = useMemo(() => ({ variant: theme.variant }), [theme.variant])

@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
 import { DrawerMenu } from '../components/DrawerMenu'
 import { SidebarLayout } from '../layouts/Sidebar'
+import { SwipableView } from '../layouts/Stack'
 import { DomainOfflineBanner } from '../components/DomainOfflineBanner'
 import { PwaManager } from '../components/PwaManager'
 import { NavigationProvider } from '../contexts/Navigation'
@@ -110,6 +111,15 @@ const MobileShell = () => {
 
     const isTabRoot = TABS.some((tab) => tab.path === location.pathname)
 
+    const goBack = () => {
+        // 共有リンク直開きやリロード直後は履歴が無いのでホームへ逃がす
+        if ((window.history.state?.idx ?? 0) > 0) {
+            navigate(-1)
+        } else {
+            navigate('/', { replace: true })
+        }
+    }
+
     // どこ経由の遷移でもドロワーを閉じる
     const [prevPathname, setPrevPathname] = useState(location.pathname)
     if (prevPathname !== location.pathname) {
@@ -157,6 +167,7 @@ const MobileShell = () => {
                             style={{
                                 flex: 1,
                                 minHeight: 0,
+                                position: 'relative',
                                 display: 'flex',
                                 flexDirection: 'column'
                             }}
@@ -164,9 +175,11 @@ const MobileShell = () => {
                             {isTabRoot ? (
                                 <Outlet />
                             ) : (
-                                <NavigationProvider backNode={<MobileBackButton />}>
-                                    <Outlet />
-                                </NavigationProvider>
+                                <SwipableView key={location.pathname} onPop={goBack}>
+                                    <NavigationProvider backNode={<MobileBackButton />}>
+                                        <Outlet />
+                                    </NavigationProvider>
+                                </SwipableView>
                             )}
                         </div>
                         <Tabs

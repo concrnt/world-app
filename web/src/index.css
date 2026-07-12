@@ -8,6 +8,12 @@
 html {
     font-family: "Hiragino Sans W3", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "メイリオ", Meiryo, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
     font-size: 16px;
+    overscroll-behavior-y: none;
+}
+
+body {
+    overflow-x: hidden;
+    background-color: var(--backdrop-background);
 }
 
 :root {

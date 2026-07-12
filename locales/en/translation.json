@@ -6,7 +6,8 @@
         "save": "Save",
         "delete": "Delete",
         "retry": "Retry",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "swipeBack": "Swipe to go back"
     },
     "emergency": {
         "title": "Crash Report",
