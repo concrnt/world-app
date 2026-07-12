@@ -3,6 +3,7 @@ import type { FieldProps, RJSFSchema, StrictRJSFSchema, UiSchema, WidgetProps } 
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
 import { Suspense, use, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
@@ -73,6 +74,7 @@ export const Inner = (props: {
     codeOfConductPromise: Promise<string>
     schemaPromise: Promise<RJSFSchema>
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.register' })
     const server = use(props.serverPromise)
     const domain = server.domain
     const tos = use(props.tosPromise)
@@ -163,16 +165,12 @@ export const Inner = (props: {
     if (success) {
         return (
             <AuthScreen align="top">
-                <PageHeader title="アカウント登録" description={domain} />
+                <PageHeader title={t('title')} description={domain} />
                 <div style={styles.successWrap}>
                     <Text variant="h2" style={styles.successTitle}>
-                        登録完了
+                        {t('successTitle')}
                     </Text>
-                    <Text style={styles.successDescription}>
-                        {callback
-                            ? 'この画面を閉じて、元のアプリに戻ることができます。'
-                            : 'この画面を閉じて、元のアプリに戻ることができます。'}
-                    </Text>
+                    <Text style={styles.successDescription}>{t('successDescription')}</Text>
                 </div>
             </AuthScreen>
         )
@@ -181,31 +179,27 @@ export const Inner = (props: {
     return (
         <AuthScreen align="top">
             <RegisterPageStyle />
-            <PageHeader title="アカウント登録" description={domain} />
+            <PageHeader title={t('title')} description={domain} />
 
             <div style={authStyles.section}>
                 {!hasValidRequest && (
-                    <Text style={{ ...authStyles.status, color: '#ff7c7c', opacity: 1 }}>
-                        登録リクエストを確認できませんでした。元の画面からもう一度開いてください。
-                    </Text>
+                    <Text style={{ ...authStyles.status, color: '#ff7c7c', opacity: 1 }}>{t('invalidRequest')}</Text>
                 )}
             </div>
 
-            <PolicySection title="行動規範" body={codeOfConduct} />
-            <PolicySection title="利用規約 / プライバシーポリシー" body={tos} />
+            <PolicySection title={t('codeOfConduct')} body={codeOfConduct} />
+            <PolicySection title={t('tos')} body={tos} />
 
             <div style={authStyles.section}>
                 <Text variant="h2" style={styles.sectionTitle}>
-                    登録フォーム
+                    {t('registrationForm')}
                 </Text>
-                <Text style={styles.sectionDescription}>
-                    ここで入力する内容は公開プロフィールではありません。サーバーの管理者が登録審査や連絡のために確認する情報です。
-                </Text>
+                <Text style={styles.sectionDescription}>{t('formDescription')}</Text>
 
                 <div className="register-form-shell" ref={formShellRef}>
                     {server.meta.registration === 'invite' && (
                         <>
-                            <Text style={{ color: CssVar.uiText }}>招待コード</Text>
+                            <Text style={{ color: CssVar.uiText }}>{t('inviteCode')}</Text>
                             <TextField value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
                         </>
                     )}
@@ -242,7 +236,7 @@ export const Inner = (props: {
                                 }
                                 onClick={() => formShellRef.current?.querySelector('form')?.requestSubmit()}
                             >
-                                {processing ? '登録中...' : '登録する'}
+                                {processing ? t('registering') : t('register')}
                             </AuthButton>
                         </AuthActions>
                     </Form>
@@ -382,6 +376,7 @@ const TextareaWidget = (props: WidgetProps) => {
 }
 
 const SelectWidget = (props: WidgetProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.register' })
     const { id, value, required, disabled, readonly, placeholder, onChange, onBlur, onFocus, options } = props
 
     return (
@@ -396,7 +391,7 @@ const SelectWidget = (props: WidgetProps) => {
             style={styles.select}
         >
             <option value="" disabled>
-                {placeholder ?? '選択してください'}
+                {placeholder ?? t('selectPlaceholder')}
             </option>
             {Array.isArray(options.enumOptions) &&
                 options.enumOptions.map((option) => (

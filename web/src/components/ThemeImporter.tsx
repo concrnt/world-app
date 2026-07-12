@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Text, migrateTheme } from '@concrnt/ui'
 import { Theme, CssVar } from '../types/Theme'
 import { useThemeLibrary } from '../contexts/Theme'
@@ -61,6 +62,7 @@ interface Props {
 }
 
 export const ThemeImporter = ({ onComplete }: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.themeImporter' })
     const { customThemes, saveTheme } = useThemeLibrary()
     const [input, setInput] = useState('')
     const [status, setStatus] = useState('')
@@ -72,12 +74,12 @@ export const ThemeImporter = ({ onComplete }: Props) => {
             themes = parseThemesInput(input)
         } catch (e) {
             console.error(e)
-            setStatus('JSONの解析に失敗しました')
+            setStatus(t('parseFailed'))
             return
         }
 
         if (themes.length === 0) {
-            setStatus('テーマが見つかりませんでした')
+            setStatus(t('noThemesFound'))
             return
         }
 
@@ -101,7 +103,7 @@ export const ThemeImporter = ({ onComplete }: Props) => {
             }
         }
         setBusy(false)
-        setStatus(`${added}件追加 / ${skipped}件スキップ`)
+        setStatus(t('importResult', { added, skipped }))
         onComplete()
     }
 
@@ -114,15 +116,12 @@ export const ThemeImporter = ({ onComplete }: Props) => {
                 padding: CssVar.space(4)
             }}
         >
-            <Text variant="h3">v1からインポート</Text>
-            <Text variant="caption">
-                v1のテーマ設定で「全部コピー」したJSON、または ```theme
-                ブロックを貼り付けてください。既存と同名のテーマはスキップします。
-            </Text>
+            <Text variant="h3">{t('title')}</Text>
+            <Text variant="caption">{t('description')}</Text>
             <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="ここにJSONを貼り付け"
+                placeholder={t('placeholder')}
                 rows={10}
                 style={{
                     padding: '8px',
@@ -141,7 +140,7 @@ export const ThemeImporter = ({ onComplete }: Props) => {
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
                 <Button disabled={busy || input.trim().length === 0} onClick={handleImport}>
-                    インポート
+                    {t('import')}
                 </Button>
                 {status && <Text variant="caption">{status}</Text>}
             </div>

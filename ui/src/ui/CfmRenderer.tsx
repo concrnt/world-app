@@ -144,6 +144,21 @@ export interface CfmRendererProps {
 export interface RenderAstProps {
     ast: any
     emojis: Record<string, EmojiLite>
+    imageNodes: any[]
+}
+
+const collectImageNodes = (ast: any, result: any[]): any[] => {
+    if (Array.isArray(ast)) {
+        for (const node of ast) collectImageNodes(node, result)
+        return result
+    }
+    if (!ast || typeof ast !== 'object') return result
+    if (ast.type === 'Image') {
+        result.push(ast)
+        return result
+    }
+    collectImageNodes(ast.body, result)
+    return result
 }
 
 const Spoiler = ({ children }: { children: ReactNode }) => {
@@ -165,12 +180,14 @@ const Spoiler = ({ children }: { children: ReactNode }) => {
     )
 }
 
-const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
+const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
+    const { openMedias } = useCfmActions()
+
     if (Array.isArray(ast)) {
         return (
             <>
                 {ast.map((node: any, i: number) => (
-                    <RenderAst key={i} ast={node} emojis={emojis} />
+                    <RenderAst key={i} ast={node} emojis={emojis} imageNodes={imageNodes} />
                 ))}
             </>
         )
@@ -183,30 +200,30 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
         case 'Line':
             return (
                 <>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                     <br />
                 </>
             )
         case 'Text':
             return ast.body
         case 'Marquee': // TODO: implement marquee
-            return <RenderAst ast={ast.body} emojis={emojis} />
+            return <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
         case 'Italic':
             return (
                 <i>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </i>
             )
         case 'Bold':
             return (
                 <b>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </b>
             )
         case 'Strike':
             return (
                 <s>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </s>
             )
         case 'URL':
@@ -216,13 +233,13 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
         case 'Spoiler':
             return (
                 <Spoiler>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </Spoiler>
             )
         case 'Quote':
             return (
                 <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: '4px solid #ccc' }}>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </blockquote>
             )
         case 'Tag':
@@ -284,7 +301,7 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                     }}
                 >
                     <summary>{ast.summary.body}</summary>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </details>
             )
         case 'InlineCode':
@@ -310,12 +327,20 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
                     style={{
                         maxHeight: '20vh',
                         borderRadius: '8px',
-                        maxWidth: '100%'
+                        maxWidth: '100%',
+                        cursor: openMedias ? 'pointer' : undefined
                     }}
                     onClick={(e) => {
                         e.stopPropagation()
                         e.preventDefault()
-                        // mediaViewer.openSingle(ast.url)
+                        openMedias?.(
+                            imageNodes.map((node) => ({
+                                mediaURL: node.url,
+                                mediaType: 'image/*',
+                                altText: node.alt
+                            })),
+                            imageNodes.indexOf(ast)
+                        )
                     }}
                 />
             )
@@ -329,7 +354,7 @@ const RenderAst = ({ ast, emojis }: RenderAstProps): ReactNode => {
         case 'Heading':
             return (
                 <Text variant={`h${ast.level}` as any}>
-                    <RenderAst ast={ast.body} emojis={emojis} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
                 </Text>
             )
         default:
@@ -359,13 +384,15 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
         }
     }, [props.messagebody])
 
+    const imageNodes = useMemo(() => collectImageNodes(ast, []), [ast])
+
     return (
         <div
             style={{
                 whiteSpace: 'pre-wrap'
             }}
         >
-            <RenderAst ast={ast} emojis={props.emojiDict} />
+            <RenderAst ast={ast} emojis={props.emojiDict} imageNodes={imageNodes} />
         </div>
     )
 }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button, Text } from '@concrnt/ui'
@@ -10,6 +11,7 @@ import { getPushSchemas, isPushEnabled, registerPush } from '../lib/push'
 // - 通知クリック時のservice workerからのnavigateメッセージ処理
 // - 起動時のプッシュ購読の再登録(upsert)
 export const PwaManager = () => {
+    const { t } = useTranslation('', { keyPrefix: 'web.pwaManager' })
     const { client } = useClient()
     const navigate = useNavigate()
 
@@ -72,7 +74,7 @@ export const PwaManager = () => {
             }}
         >
             <Text variant="caption" style={{ color: '#ffffff', margin: 0 }}>
-                新しいバージョンがあります
+                {t('newVersionAvailable')}
             </Text>
             <Button
                 variant="text"
@@ -81,7 +83,7 @@ export const PwaManager = () => {
                     updateServiceWorker(true)
                 }}
             >
-                更新
+                {t('update')}
             </Button>
         </div>
     )

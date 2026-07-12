@@ -1,4 +1,5 @@
 import { Suspense, use, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, CCWallpaper, Text, Button, Tabs, Tab, Divider, useTheme } from '@concrnt/ui'
 import { View } from '../../components/View'
 import { useClient } from '../../contexts/Client'
@@ -11,6 +12,7 @@ import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
 import { ProfileName } from '../../components/ProfileName'
 import { MdLock } from 'react-icons/md'
+import { useMediaViewer } from '../../contexts/MediaViewer'
 
 interface Props {
     ccid: string
@@ -71,11 +73,12 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestProfile' })
     const user = use(props.userPromise)
     const profile = use(props.profilePromise)
 
     if (user === null) {
-        return <Text>ユーザーが見つかりませんでした</Text>
+        return <Text>{t('userNotFound')}</Text>
     }
 
     if (profile === 'restricted') {
@@ -93,11 +96,13 @@ interface BodyProps {
 }
 
 const Body = (props: BodyProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestProfile' })
     const [stats] = useSubscribe(props.user.stats)
     const profile = props.profile
 
     const theme = useTheme()
     const navigate = useNavigate()
+    const mediaViewer = useMediaViewer()
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
 
@@ -148,9 +153,15 @@ const Body = (props: BodyProps) => {
                                 height: `100px`,
                                 position: 'absolute',
                                 transform: 'translateY(-50%)',
-                                left: CssVar.space(2)
+                                left: CssVar.space(2),
+                                cursor: profile.value.avatar ? 'pointer' : undefined
                             }}
                             src={profile.value.avatar}
+                            onClick={() => {
+                                const avatar = profile.value.avatar
+                                if (!avatar) return
+                                mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
+                            }}
                         />
                     </div>
                     <div
@@ -170,7 +181,7 @@ const Body = (props: BodyProps) => {
                             }}
                         >
                             <Button variant="outlined" onClick={() => navigate('/login')}>
-                                ログインしてフォロー
+                                {t('loginToFollow')}
                             </Button>
                         </div>
                         <div>
@@ -189,7 +200,7 @@ const Body = (props: BodyProps) => {
                             <Text variant="caption">{props.ccid}</Text>
                         </div>
                         <div>
-                            <Text>{profile.value.description || '説明はまだありません'}</Text>
+                            <Text>{profile.value.description || t('noDescription')}</Text>
                         </div>
                         <div
                             style={{
@@ -197,8 +208,8 @@ const Body = (props: BodyProps) => {
                                 gap: CssVar.space(2)
                             }}
                         >
-                            <Text>{`${stats.acknowledging} フォロー`}</Text>
-                            <Text>{`${stats.acknowledged} フォロワー`}</Text>
+                            <Text>{t('following', { n: stats.acknowledging })}</Text>
+                            <Text>{t('followers', { n: stats.acknowledged })}</Text>
                         </div>
                     </div>
                     <Tabs>
@@ -246,6 +257,7 @@ interface RestrictedBodyProps {
 }
 
 const RestrictedBody = (props: RestrictedBodyProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestProfile' })
     const theme = useTheme()
     const navigate = useNavigate()
 
@@ -316,9 +328,9 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                 }}
             >
                 <MdLock size={48} style={{ opacity: 0.5 }} />
-                <Text>このプロフィールはプライベートです</Text>
-                <Text variant="caption">閲覧をリクエストするにはログインが必要です</Text>
-                <Button onClick={() => navigate('/login')}>ログイン</Button>
+                <Text>{t('privateProfile')}</Text>
+                <Text variant="caption">{t('loginRequired')}</Text>
+                <Button onClick={() => navigate('/login')}>{t('login')}</Button>
             </div>
         </div>
     )

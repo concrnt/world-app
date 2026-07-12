@@ -1,4 +1,5 @@
 import { Suspense, use, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, Tab, Tabs, Text } from '@concrnt/ui'
 import { isNonNullOrUndefined, User } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const AcknowledgeList = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.acknowledgeList' })
     const { client } = useClient()
 
     const [tab, setTab] = useState<'acknowledging' | 'acknowledgers'>(props.initialTab ?? 'acknowledging')
@@ -56,7 +58,7 @@ export const AcknowledgeList = (props: Props) => {
                     groupId="acknowledge-list-tabs"
                     style={{ color: CssVar.contentText }}
                 >
-                    フォロー
+                    {t('following')}
                 </Tab>
                 <Tab
                     selected={tab === 'acknowledgers'}
@@ -64,7 +66,7 @@ export const AcknowledgeList = (props: Props) => {
                     groupId="acknowledge-list-tabs"
                     style={{ color: CssVar.contentText }}
                 >
-                    フォロワー
+                    {t('followers')}
                 </Tab>
             </Tabs>
             <Suspense

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Checkbox, Divider, Switch, Text, View } from '@concrnt/ui'
 import { NotFoundError, NotificationSubscription } from '@concrnt/client'
 import { Schemas } from '@concrnt/worldlib'
@@ -16,17 +17,18 @@ import {
     unregisterPush
 } from '../lib/push'
 
-const schemaOptions: { label: string; schema: string }[] = [
-    { label: 'リプライ', schema: Schemas.replyAssociation },
-    { label: 'メンション', schema: Schemas.mentionAssociation },
-    { label: 'リルート', schema: Schemas.rerouteAssociation },
-    { label: 'お気に入り', schema: Schemas.likeAssociation },
-    { label: 'リアクション', schema: Schemas.reactionAssociation },
-    { label: '閲覧リクエスト', schema: Schemas.readAccessRequestAssociation },
-    { label: 'フォロー', schema: Schemas.followAck }
+const schemaOptions: { labelKey: string; schema: string }[] = [
+    { labelKey: 'reply', schema: Schemas.replyAssociation },
+    { labelKey: 'mention', schema: Schemas.mentionAssociation },
+    { labelKey: 'reroute', schema: Schemas.rerouteAssociation },
+    { labelKey: 'fav', schema: Schemas.likeAssociation },
+    { labelKey: 'reaction', schema: Schemas.reactionAssociation },
+    { labelKey: 'readRequest', schema: Schemas.readAccessRequestAssociation },
+    { labelKey: 'follow', schema: Schemas.followAck }
 ]
 
 export const NotificationSettingsView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.notificationSettings' })
     const { client } = useClient()
 
     const [enabled, setEnabled] = useState(isPushEnabled)
@@ -90,7 +92,7 @@ export const NotificationSettingsView = () => {
 
     return (
         <View>
-            <Header>通知</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     flex: 1,
@@ -103,13 +105,13 @@ export const NotificationSettingsView = () => {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text variant="h3">プッシュ通知を受け取る</Text>
+                    <Text variant="h3">{t('enablePush')}</Text>
                     <Switch checked={enabled} disabled={busy} onChange={handleToggle} />
                 </div>
 
                 {permissionDenied && (
                     <Text variant="caption" style={{ color: 'var(--error, #f44336)' }}>
-                        通知の許可がOS側で拒否されています。端末の設定アプリからこのアプリの通知を許可してください。
+                        {t('permissionDeniedApp')}
                     </Text>
                 )}
                 {error && (
@@ -120,7 +122,7 @@ export const NotificationSettingsView = () => {
 
                 <Divider />
 
-                <Text variant="h3">通知の種類</Text>
+                <Text variant="h3">{t('types.title')}</Text>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                     {schemaOptions.map((opt) => (
                         <div key={opt.schema} style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
@@ -133,22 +135,22 @@ export const NotificationSettingsView = () => {
                                     applySchemas(next)
                                 }}
                             />
-                            <Text>{opt.label}</Text>
+                            <Text>{t(`types.${opt.labelKey}`)}</Text>
                         </div>
                     ))}
                 </div>
 
                 <Divider />
 
-                <Text variant="h3">購読状況</Text>
+                <Text variant="h3">{t('subscription.title')}</Text>
                 {subscription ? (
                     <Text variant="caption">
-                        エンドポイント: {subscriptionEndpointHost(subscription)}
+                        {t('subscription.endpoint', { host: subscriptionEndpointHost(subscription) })}
                         <br />
-                        最終更新: {subscription.mdate ?? subscription.cdate ?? '-'}
+                        {t('subscription.lastUpdated', { date: subscription.mdate ?? subscription.cdate ?? '-' })}
                     </Text>
                 ) : (
-                    <Text variant="caption">未登録です</Text>
+                    <Text variant="caption">{t('subscription.notRegistered')}</Text>
                 )}
                 <Button
                     disabled={busy}
@@ -165,7 +167,7 @@ export const NotificationSettingsView = () => {
                         }
                     }}
                 >
-                    再登録
+                    {t('subscription.reRegister')}
                 </Button>
             </div>
         </View>

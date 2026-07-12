@@ -1,9 +1,11 @@
 import { NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { Text } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 import { FallbackProps } from 'react-error-boundary'
 import { usePreference } from '../../contexts/Preference'
 
 export const RenderError = ({ error }: FallbackProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.renderError' })
     const [devmode] = usePreference('developerMode')
 
     if (error instanceof NotFoundError) {
@@ -13,7 +15,7 @@ export const RenderError = ({ error }: FallbackProps) => {
                     padding: '0 8px'
                 }}
             >
-                <Text variant="caption">このメッセージは削除されました</Text>
+                <Text variant="caption">{t('messageDeleted')}</Text>
                 <Text variant="caption">{error.uri}</Text>
             </div>
         )
@@ -41,7 +43,7 @@ export const RenderError = ({ error }: FallbackProps) => {
                     padding: '0 8px'
                 }}
             >
-                <Text variant="caption">メッセージの取得先サーバーはオフラインです</Text>
+                <Text variant="caption">{t('serverOffline')}</Text>
                 <Text variant="caption">{offlineServer}</Text>
             </div>
         )
@@ -54,7 +56,7 @@ export const RenderError = ({ error }: FallbackProps) => {
                     padding: '0 8px'
                 }}
             >
-                <Text variant="caption">このメッセージは表示できません</Text>
+                <Text variant="caption">{t('cannotDisplay')}</Text>
             </div>
         )
     }

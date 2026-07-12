@@ -1,8 +1,10 @@
 import { Button, Text } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
 // ホームサーバーがオフラインのとき(読み取り専用モード)に表示する帯
 export const DomainOfflineBanner = () => {
+    const { t } = useTranslation('', { keyPrefix: 'components.domainOfflineBanner' })
     const { client, isDomainOffline, domainRecovered, reload } = useClient()
 
     if (!isDomainOffline) return null
@@ -26,7 +28,7 @@ export const DomainOfflineBanner = () => {
             {domainRecovered ? (
                 <>
                     <Text variant="caption" style={{ color: '#ffffff', margin: 0 }}>
-                        サーバーが復旧しました
+                        {t('recovered')}
                     </Text>
                     <Button
                         variant="text"
@@ -35,13 +37,12 @@ export const DomainOfflineBanner = () => {
                             reload()
                         }}
                     >
-                        再接続
+                        {t('reconnect')}
                     </Button>
                 </>
             ) : (
                 <Text variant="caption" style={{ color: '#ffffff', margin: 0 }}>
-                    あなたのドメイン{client.api.defaultHost}
-                    は現在オフラインのため、読み取り専用モードです。復旧までしばらくお待ちください。
+                    {t('offline', { domain: client.api.defaultHost })}
                 </Text>
             )}
         </div>

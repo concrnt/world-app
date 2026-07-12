@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { Text, CssVar } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export const AccountSetup = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.accountSetup' })
     const reload = useReloadClient()
     const reset = useResetPreference()
 
@@ -109,10 +111,7 @@ export const AccountSetup = (props: Props) => {
         <AuthScreen align="top">
             {state === 'initial' && (
                 <>
-                    <AuthHeader
-                        title="アカウントを作成"
-                        description="登録に使うサーバーを選んでから、ブラウザで登録を完了します。"
-                    />
+                    <AuthHeader title={t('title')} description={t('chooseServerDescription')} />
 
                     <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
@@ -129,7 +128,7 @@ export const AccountSetup = (props: Props) => {
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
                             <Text style={{ color: CssVar.uiText }}>
-                                {props.entrypoint === domain ? 'おすすめサーバー' : 'カスタムサーバー'}
+                                {props.entrypoint === domain ? t('recommendedServer') : t('customServer')}
                             </Text>
                             <div
                                 style={{
@@ -177,17 +176,24 @@ export const AccountSetup = (props: Props) => {
                                         )
                                     }}
                                 >
-                                    変更
+                                    {t('change')}
                                 </button>
                             </div>
                         </div>
 
                         <Text style={authStyles.status}>
-                            {registrationPageOpened ? 'サーバー上でアカウントが作成されるのを待っています。' : ''}
+                            {registrationPageOpened ? t('waitingForRegistration') : ''}
                         </Text>
                         {registrationError && (
-                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                登録を開始できませんでした。もう一度お試しください。
+                            <Text
+                                style={{
+                                    color: '#ff5b5b',
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('registrationStartFailed')}
                                 {'\n'}
                                 {registrationError}
                             </Text>
@@ -202,25 +208,29 @@ export const AccountSetup = (props: Props) => {
                             }}
                         >
                             {starting
-                                ? '準備中...'
+                                ? t('preparing')
                                 : props.entrypoint === domain
-                                  ? 'おすすめサーバーではじめる'
-                                  : 'このサーバーではじめる'}
+                                  ? t('startWithRecommendedServer')
+                                  : t('startWithThisServer')}
                         </AuthButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                        <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
                     </AuthActions>
                 </>
             )}
             {state === 'done' && (
                 <>
-                    <AuthHeader
-                        title="準備完了"
-                        description="登録が確認できました。最後にこの端末で使う鍵を登録します。"
-                    />
+                    <AuthHeader title={t('readyTitle')} description={t('readyDescriptionDevice')} />
                     <AuthActions fixedBottom>
                         {finalizeError && (
-                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                登録に失敗しました。もう一度お試しください。
+                            <Text
+                                style={{
+                                    color: '#ff5b5b',
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('finalizeFailed')}
                                 {'\n'}
                                 {finalizeError}
                             </Text>
@@ -232,7 +242,7 @@ export const AccountSetup = (props: Props) => {
                                 setFinalizing(true)
                                 const ccid = createdCCID
                                 if (typeof ccid !== 'string') {
-                                    setFinalizeError('プログラムエラー: CCIDが見つかりません')
+                                    setFinalizeError(t('ccidMissing'))
                                     setFinalizing(false)
                                     return
                                 }
@@ -278,7 +288,7 @@ export const AccountSetup = (props: Props) => {
                                 }
                             }}
                         >
-                            {finalizing ? '登録中...' : '完了'}
+                            {finalizing ? t('registering') : t('done')}
                         </AuthButton>
                     </AuthActions>
                 </>

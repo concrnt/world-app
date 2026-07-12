@@ -3,8 +3,10 @@ import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
 
 import { MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
+import { CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { ModelViewer } from '../components/ModelViewer'
 import { useAudioPlayer } from './AudioPlayer'
+import { useBackHandler } from './BackHandler'
 
 export interface MediaItem {
     mediaURL: string
@@ -163,6 +165,12 @@ export const MediaViewerProvider = (props: Props) => {
         setCurrentIndex(0)
         resetMotion()
     }, [resetMotion])
+
+    // Androidバックボタンでビューアを閉じる
+    useBackHandler(() => {
+        close()
+        return true
+    }, isOpen)
 
     const changeImage = useCallback(
         (newIndex: number) => {
@@ -441,9 +449,18 @@ export const MediaViewerProvider = (props: Props) => {
 
     const value = useMemo(() => ({ open }), [open])
 
+    const parentCfmActions = useCfmActions()
+
     return (
         <MediaViewerContext.Provider value={value}>
-            {props.children}
+            <CfmActionsProvider
+                value={{
+                    ...parentCfmActions,
+                    openMedias: open
+                }}
+            >
+                {props.children}
+            </CfmActionsProvider>
 
             {isOpen && currentMedia && (
                 <motion.div

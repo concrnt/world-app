@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { ReplyAssociationSchema, Message } from '@concrnt/worldlib'
 import { Avatar, CfmRenderer, Chip } from '@concrnt/ui'
@@ -8,6 +9,7 @@ import { MdReply } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.replyAssociation' })
     const navigate = useNavigate()
     const { client } = useClient()
     const message = props.message
@@ -105,7 +107,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
 
             {/* ローディング */}
             {!replyMessage && replyMessageURI && (
-                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>
+                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>
             )}
         </div>
     )

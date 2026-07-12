@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { Client } from '@concrnt/worldlib'
 import { Button, ConcrntLogo, OverlayStackProvider, Text } from '@concrnt/ui'
@@ -24,6 +25,7 @@ const resolveEntrypoint = (): string => {
 // 未ログイン閲覧用のシェル。鍵を持たないゲストクライアントを生成し、
 // 閲覧に必要な最小限のプロバイダのみをマウントする(書き込みを伴うプロバイダは置かない)
 export const GuestShell = () => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestBase' })
     const navigate = useNavigate()
     const isMobile = useIsMobile()
     const [client, setClient] = useState<Client | null>(null)
@@ -58,17 +60,17 @@ export const GuestShell = () => {
                         backgroundColor: CssVar.uiBackground
                     }}
                 >
-                    サーバーに接続できませんでした
+                    {t('connectionFailed')}
                     <Button
                         onClick={() => {
                             setFailed(false)
                             load()
                         }}
                     >
-                        再試行
+                        {t('retry')}
                     </Button>
                     <Button variant="outlined" onClick={() => navigate('/login')}>
-                        ログイン
+                        {t('login')}
                     </Button>
                 </div>
             </BaseThemeProvider>
@@ -146,9 +148,9 @@ export const GuestShell = () => {
                                                 }}
                                             >
                                                 <Button variant="text" onClick={() => navigate('/login')}>
-                                                    ログイン
+                                                    {t('login')}
                                                 </Button>
-                                                <Button onClick={() => navigate('/register')}>はじめる</Button>
+                                                <Button onClick={() => navigate('/register')}>{t('getStarted')}</Button>
                                             </div>
                                         </div>
                                         <div

@@ -1,4 +1,5 @@
 import { ReactNode, startTransition, Suspense, use, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Avatar,
     CCWallpaper,
@@ -33,6 +34,7 @@ import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { MdLock } from 'react-icons/md'
+import { useMediaViewer } from '../contexts/MediaViewer'
 
 interface Props {
     ccid: string
@@ -97,11 +99,12 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const user = use(props.userPromise)
     const profile = use(props.profilePromise)
 
     if (user === null) {
-        return <Text>ユーザーが見つかりませんでした</Text>
+        return <Text>{t('userNotFound')}</Text>
     }
 
     if (profile === 'restricted') {
@@ -122,6 +125,7 @@ interface BodyProps {
 }
 
 const Body = (props: BodyProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const [stats, reloadStats] = useSubscribe(props.user.stats)
     const profile = props.profile
 
@@ -132,6 +136,7 @@ const Body = (props: BodyProps) => {
     const { select } = useSelect()
     const drawer = useDrawer()
     const menuAnchor = useAnchor()
+    const mediaViewer = useMediaViewer()
 
     const isMe = client.ccid === props.ccid
 
@@ -171,19 +176,18 @@ const Body = (props: BodyProps) => {
                     <ListItem
                         onClick={() => {
                             confirm.open(
-                                '本当にこのユーザーのブロックを解除しますか？',
+                                t('unblockConfirmTitle'),
                                 () => {
                                     client?.unblock(props.ccid)
                                 },
                                 {
-                                    description:
-                                        'ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。',
-                                    confirmText: 'ブロック解除'
+                                    description: t('unblockConfirmDescription'),
+                                    confirmText: t('unblock')
                                 }
                             )
                         }}
                     >
-                        <Text>ブロック解除</Text>
+                        <Text>{t('unblock')}</Text>
                     </ListItem>
                 )
             } else {
@@ -191,25 +195,24 @@ const Body = (props: BodyProps) => {
                     <ListItem
                         onClick={() => {
                             confirm.open(
-                                '本当にこのユーザーをブロックしますか？',
+                                t('blockConfirmTitle'),
                                 () => {
                                     client?.block(props.ccid)
                                 },
                                 {
-                                    description:
-                                        'ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。',
-                                    confirmText: 'ブロック'
+                                    description: t('blockConfirmDescription'),
+                                    confirmText: t('block')
                                 }
                             )
                         }}
                     >
-                        <Text>ブロック</Text>
+                        <Text>{t('block')}</Text>
                     </ListItem>
                 )
             }
         }
         return options
-    }, [client, confirm, isBlocking, props.ccid, isMe])
+    }, [client, confirm, isBlocking, props.ccid, isMe, t])
 
     return (
         <QueryTimeline
@@ -274,9 +277,15 @@ const Body = (props: BodyProps) => {
                                 height: `100px`,
                                 position: 'absolute',
                                 transform: 'translateY(-50%)',
-                                left: CssVar.space(2)
+                                left: CssVar.space(2),
+                                cursor: profile.value.avatar ? 'pointer' : undefined
                             }}
                             src={profile.value.avatar}
+                            onClick={() => {
+                                const avatar = profile.value.avatar
+                                if (!avatar) return
+                                mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
+                            }}
                         />
                     </div>
                     <div
@@ -343,7 +352,7 @@ const Body = (props: BodyProps) => {
                             <Text variant="caption">{props.ccid}</Text>
                         </div>
                         <div>
-                            <Text>{profile.value.description || '説明はまだありません'}</Text>
+                            <Text>{profile.value.description || t('noDescription')}</Text>
                         </div>
                         <div
                             style={{
@@ -357,7 +366,7 @@ const Body = (props: BodyProps) => {
                                     drawer.open(<AcknowledgeList targetCcid={props.ccid} initialTab="acknowledging" />)
                                 }
                             >
-                                <Text>{`${stats.acknowledging} フォロー`}</Text>
+                                <Text>{t('following', { n: stats.acknowledging })}</Text>
                             </div>
                             <div
                                 style={{ cursor: 'pointer' }}
@@ -365,7 +374,7 @@ const Body = (props: BodyProps) => {
                                     drawer.open(<AcknowledgeList targetCcid={props.ccid} initialTab="acknowledgers" />)
                                 }
                             >
-                                <Text>{`${stats.acknowledged} フォロワー`}</Text>
+                                <Text>{t('followers', { n: stats.acknowledged })}</Text>
                             </div>
                         </div>
                     </div>

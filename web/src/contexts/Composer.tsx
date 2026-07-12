@@ -1,5 +1,6 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Message, Timeline } from '@concrnt/worldlib'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, Divider, useTheme, useOverlayStack } from '@concrnt/ui'
@@ -155,6 +156,7 @@ interface ComposerOverlayProps {
 // モバイル用の全画面モーダルのchrome（背景・アニメーション・キャンセルボタン）を担当し、中身はComposerに任せる。
 // ソフトキーボードに合わせて高さを追従させる(app版と同じ式)
 const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
     const keyboard = useKeyboard()
@@ -208,7 +210,7 @@ const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
                                         padding: 0
                                     }}
                                 >
-                                    キャンセル
+                                    {t('cancel')}
                                 </Button>
                             </div>
 
@@ -236,6 +238,7 @@ const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
 
 // デスクトップ用のchrome。v1と同様の「上寄せ・幅700px・半透明バックドロップ」のシンプルなモーダル
 const ComposerOverlayDesktop = (props: ComposerOverlayProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
     const [willClose, setWillClose] = useState(false)
     const theme = useTheme()
     const stack = useOverlayStack()
@@ -300,7 +303,7 @@ const ComposerOverlayDesktop = (props: ComposerOverlayProps) => {
                                     padding: 0
                                 }}
                             >
-                                キャンセル
+                                {t('cancel')}
                             </Button>
                         </div>
 

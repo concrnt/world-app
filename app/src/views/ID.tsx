@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View, Button, Text } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
@@ -44,17 +45,18 @@ const InfoTile = ({ icon, label, value }: { icon: ReactNode; label: string; valu
 }
 
 export const IDView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
     const stack = useStack()
 
     if (!client) return null
 
     const username = client.profile?.username
-    const alias = client.entity.alias || '<未設定>'
+    const alias = client.entity.alias || t('aliasNotSet')
 
     return (
         <View>
-            <Header>ID管理</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -68,7 +70,7 @@ export const IDView = () => {
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(0.5) }}>
                     <Text variant="h3">Passport</Text>
-                    <Text variant="caption">現在のID、登録サーバー、認証情報を確認できます。</Text>
+                    <Text variant="caption">{t('passportDescription')}</Text>
                 </div>
 
                 <div onPointerDownCapture={(e) => e.stopPropagation()}>
@@ -84,7 +86,7 @@ export const IDView = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: CssVar.space(2) }}>
-                    <InfoTile icon={<MdBadge size={24} />} label="エイリアス" value={alias} />
+                    <InfoTile icon={<MdBadge size={24} />} label={t('alias')} value={alias} />
                     <InfoTile
                         icon={<MdPublic size={24} />}
                         label="Home Server"
@@ -107,7 +109,7 @@ export const IDView = () => {
                         )
                     }}
                 >
-                    他デバイスでログイン
+                    {t('loginOnAnotherDevice')}
                 </Button>
                 <BackupKeyButton />
             </div>

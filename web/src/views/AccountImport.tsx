@@ -1,5 +1,6 @@
 import { Text, TextField } from '@concrnt/ui'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoadIdentity } from '@concrnt/client'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const AccountImport = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.accountImport' })
     const [mnemonic, setMnemonic] = useState<string>('')
     const [update, setUpdate] = useState<number>(0)
 
@@ -21,12 +23,9 @@ export const AccountImport = (props: Props) => {
         <AuthScreen align="top">
             {existingMaster ? (
                 <>
-                    <AuthHeader
-                        title="保存済みアカウントがあります"
-                        description="新しくインポートするには、ブラウザに保存されたアカウント情報を先に削除する必要があります。"
-                    />
+                    <AuthHeader title={t('existingAccountTitle')} description={t('existingAccountDescription')} />
                     <div style={authStyles.section}>
-                        <Text style={authStyles.ccid}>このブラウザには既にマスターキーがあります。</Text>
+                        <Text style={authStyles.ccid}>{t('existingMasterKeyNotice')}</Text>
                     </div>
                     <AuthActions fixedBottom>
                         <AuthButton
@@ -39,32 +38,25 @@ export const AccountImport = (props: Props) => {
                                 setUpdate((v) => v + 1)
                             }}
                         >
-                            ブラウザのアカウント情報を削除
+                            {t('deleteBrowserAccount')}
                         </AuthButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                        <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
                     </AuthActions>
                 </>
             ) : (
                 <>
-                    <AuthHeader
-                        title="アカウントをインポート"
-                        description="マスターキーを入力して、このブラウザでアカウントを使えるようにします。"
-                    />
+                    <AuthHeader title={t('title')} description={t('descriptionBrowser')} />
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
-                            <Text>マスターキー</Text>
+                            <Text>{t('masterKey')}</Text>
                             <TextField
                                 value={mnemonic}
                                 onChange={(e) => setMnemonic(e.target.value)}
-                                placeholder="マスターキーを入力"
+                                placeholder={t('masterKeyPlaceholder')}
                             />
                         </div>
                         <Text style={authStyles.status}>
-                            {mnemonic
-                                ? identity
-                                    ? 'このマスターキーは利用できます。'
-                                    : 'マスターキーを確認できません。'
-                                : ''}
+                            {mnemonic ? (identity ? t('masterKeyValid') : t('masterKeyInvalid')) : ''}
                         </Text>
                     </div>
                     <AuthActions fixedBottom>
@@ -76,9 +68,9 @@ export const AccountImport = (props: Props) => {
                                 props.onImported?.()
                             }}
                         >
-                            インポート
+                            {t('import')}
                         </AuthButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                        <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
                     </AuthActions>
                 </>
             )}

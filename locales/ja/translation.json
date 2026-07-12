@@ -1,0 +1,671 @@
+{
+    "common": {
+        "ok": "OK",
+        "cancel": "キャンセル",
+        "close": "閉じる",
+        "save": "保存",
+        "delete": "削除",
+        "retry": "再試行",
+        "loading": "読み込み中..."
+    },
+    "emergency": {
+        "title": "クラッシュレポート",
+        "reload": "リロード",
+        "recoverTools": "復旧ツール",
+        "whenToUseTools": "3回くらい再読み込みしても解決しないなら↓",
+        "softReset": "ログイン情報以外をリセットして再読み込み",
+        "hardReset": "すべてリセットする(ログイン情報も失われます)",
+        "support": "Support",
+        "supportDesc": "リロードしても解決しない場合、何か重大な問題が発生中かもしれません。以下のリンクから最新情報を確認できます。",
+        "reportFailed": "レポートの送信に失敗しました(ヒント: このレポートは公式で提供しているもののみ機能します)",
+        "reportSent": "クラッシュレポートを送信しました。ありがとうございます！",
+        "sendAnonymousReport": "匿名でクラッシュレポートを送信する",
+        "messages": [
+            "インターネットは素晴らしいものですが、時々問題が発生します。以下のボタンをお試しください。",
+            "コンピューターは不思議なものです。再読み込みすると問題が解決するかもしれません。",
+            "時には不思議なことが起きますね。この現象を一緒に解決していきましょう。以下のボタンをお試しください。",
+            "システムに小さなつまずきがありました。もう一度試すことで乗り越えられるかもしれません。",
+            "何かが予定通りに進みませんでした。再読み込みを試してみてください。",
+            "一時的にうまく動いていないようです。再読み込みを試してみてください。",
+            "おおっと！何かがおかしいようです。再読み込みを試してみてください。"
+        ]
+    },
+    "views": {
+        "settings": {
+            "title": "設定",
+            "theme": "テーマ設定",
+            "language": "言語",
+            "activitypub": "ActivityPub設定",
+            "id": "ID管理",
+            "emoji": "絵文字",
+            "notifications": "通知",
+            "devTools": "開発者ツール",
+            "account": "アカウント",
+            "clearCache": "キャッシュを削除",
+            "logout": "Logout",
+            "appInfo": {
+                "title": "アプリ情報",
+                "version": "バージョン",
+                "buildTime": "ビルド日時",
+                "branch": "ブランチ",
+                "commit": "コミット"
+            }
+        },
+        "languageSettings": {
+            "title": "言語"
+        },
+        "themeSettings": {
+            "title": "テーマ設定",
+            "currentTheme": "現在のテーマ: {{name}}",
+            "builtinThemes": "組み込みテーマ",
+            "customThemes": "カスタムテーマ",
+            "importFromV1": "v1からインポート"
+        },
+        "notificationSettings": {
+            "title": "通知",
+            "enablePush": "プッシュ通知を受け取る",
+            "singleDeviceNote": "通知を受け取れるのは最後に有効化した1ブラウザ(または1端末)のみです。別のブラウザで有効化すると、このブラウザでは受け取れなくなります。",
+            "permissionDeniedApp": "通知の許可がOS側で拒否されています。端末の設定アプリからこのアプリの通知を許可してください。",
+            "permissionDeniedWeb": "通知の許可がブラウザ側で拒否されています。ブラウザの設定でこのサイトの通知を許可してください。",
+            "types": {
+                "title": "通知の種類",
+                "reply": "リプライ",
+                "mention": "メンション",
+                "reroute": "リルート",
+                "fav": "お気に入り",
+                "reaction": "リアクション",
+                "readRequest": "閲覧リクエスト",
+                "follow": "フォロー"
+            },
+            "subscription": {
+                "title": "購読状況",
+                "endpoint": "エンドポイント: {{host}}",
+                "lastUpdated": "最終更新: {{date}}",
+                "notRegistered": "未登録です",
+                "reRegister": "再登録"
+            }
+        },
+        "emojiSettings": {
+            "title": "絵文字",
+            "packages": "絵文字パッケージ",
+            "updateAll": "全て更新",
+            "packageURL": "絵文字パッケージURL",
+            "packageNotFound": "パッケージが見つかりませんでした",
+            "alreadyAdded": "すでに追加されています",
+            "added": "絵文字パッケージを追加しました",
+            "updated": "絵文字パッケージを更新しました",
+            "removed": "絵文字パッケージを削除しました",
+            "urlCopied": "URLをコピーしました",
+            "loadFailed": "読み込みに失敗しました",
+            "brokenEntry": "壊れた項目",
+            "fetchedAt": "取得日: {{date}}"
+        },
+        "welcome": {
+            "loadFailed": "アカウント情報の読み込みに失敗しました。\n端末に保存された鍵が消えたわけではありません。もう一度お試しください。",
+            "retry": "再試行",
+            "getStarted": "はじめる",
+            "login": "ログイン",
+            "welcomeBackTitle": "おかえりなさい",
+            "welcomeBackDescriptionDevice": "この端末に保存されているアカウントを確認しました。",
+            "welcomeBackDescriptionBrowser": "このブラウザに保存されているアカウントを確認しました。",
+            "continueFailed": "続行に失敗しました。もう一度お試しください。",
+            "continuing": "続行中...",
+            "continueWithAccount": "このアカウントで続行",
+            "removeAccountFromDevice": "このアカウントを端末から削除する",
+            "resetBrowserAccount": "ブラウザのアカウント情報をリセットする",
+            "recovery": {
+                "title": "登録サーバーを確認してください",
+                "descriptionDevice": "端末にはアカウント情報がありますが、現在のサーバーでは登録情報が見つかりませんでした。",
+                "descriptionBrowser": "ブラウザにはアカウント情報がありますが、現在のサーバーでは登録情報が見つかりませんでした。",
+                "serverAddress": "サーバーアドレス",
+                "serverAddressPlaceholder": "サーバーアドレスを入力",
+                "registrationFound": "登録情報が見つかりました。",
+                "registrationNotFound": "登録情報が見つかりませんでした。",
+                "continue": "続行",
+                "registerNew": "新規登録する",
+                "deleteBrowserAccount": "ブラウザのアカウント情報を削除"
+            }
+        },
+        "accountSetup": {
+            "title": "アカウントを作成",
+            "chooseServerDescription": "登録に使うサーバーを選んでから、ブラウザで登録を完了します。",
+            "registerOnDomainDescription": "{{domain}} でアカウントを登録します。",
+            "recommendedServer": "おすすめサーバー",
+            "customServer": "カスタムサーバー",
+            "change": "変更",
+            "waitingForRegistration": "サーバー上でアカウントが作成されるのを待っています。",
+            "waitingForRegistrationAuto": "サーバー上でアカウントが作成されるのを待っています。登録が完了すると自動で次へ進みます。",
+            "waitingForRegistrationButton": "登録待機中...",
+            "registrationStartFailed": "登録を開始できませんでした。もう一度お試しください。",
+            "preparing": "準備中...",
+            "startWithRecommendedServer": "おすすめサーバーではじめる",
+            "startWithThisServer": "このサーバーではじめる",
+            "back": "戻る",
+            "appRecommendedTitle": "アプリでの作成がおすすめ",
+            "appRecommendedDescription": "マスターキーの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。お使いのスマートフォンで下のQRコードを読み取ってアプリを入手してください。",
+            "backupTitle": "マスターキーを保存",
+            "backupDescription": "このマスターキーはアカウント復元に必要です。登録を続ける前にダウンロードして、安全な場所に保管してください。",
+            "registeredServer": "登録サーバー",
+            "downloadStarted": "ダウンロードを開始しました。保存先を確認してから登録へ進んでください。",
+            "downloadWarning": "このファイルを失うと、別の端末やブラウザでアカウントを復元できなくなる可能性があります。",
+            "masterkeyFileTemplate": "Concrnt マスターキー\nこのファイルは Concrnt のアカウントを復元するためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: {{ccid}}\nマスターキー: {{mnemonic}}\n登録サーバー: {{domain}}\n\nマスターキーを紛失した場合、アカウントを復元できなくなる可能性があります。\nこの内容を他人に知られると、アカウントが乗っ取られる可能性があります。",
+            "downloadMasterkey": "マスターキーをダウンロード",
+            "openRegistrationPage": "登録ページを開く",
+            "backToServerSelection": "サーバー選択に戻る",
+            "readyTitle": "準備完了",
+            "readyDescriptionDevice": "登録が確認できました。最後にこの端末で使う鍵を登録します。",
+            "readyDescriptionBrowser": "登録が確認できました。最後にこのブラウザで使う鍵を登録します。",
+            "finalizeFailed": "登録に失敗しました。もう一度お試しください。",
+            "finalizeFailedNetwork": "登録に失敗しました。通信環境を確認して、もう一度お試しください。",
+            "ccidMissing": "プログラムエラー: CCIDが見つかりません",
+            "registering": "登録中...",
+            "done": "完了"
+        },
+        "accountImport": {
+            "title": "アカウントをインポート",
+            "descriptionDevice": "マスターキーを入力して、この端末でアカウントを使えるようにします。",
+            "descriptionBrowser": "マスターキーを入力して、このブラウザでアカウントを使えるようにします。",
+            "masterKey": "マスターキー",
+            "masterKeyPlaceholder": "マスターキーを入力",
+            "masterKeyValid": "このマスターキーは利用できます。",
+            "masterKeyInvalid": "マスターキーを確認できません。",
+            "import": "インポート",
+            "back": "戻る",
+            "existingAccountTitle": "保存済みアカウントがあります",
+            "existingAccountDescription": "新しくインポートするには、ブラウザに保存されたアカウント情報を先に削除する必要があります。",
+            "existingMasterKeyNotice": "このブラウザには既にマスターキーがあります。",
+            "deleteBrowserAccount": "ブラウザのアカウント情報を削除"
+        },
+        "profile": {
+            "userNotFound": "ユーザーが見つかりませんでした",
+            "blockConfirmTitle": "本当にこのユーザーをブロックしますか？",
+            "blockConfirmDescription": "ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。",
+            "block": "ブロック",
+            "unblockConfirmTitle": "本当にこのユーザーのブロックを解除しますか？",
+            "unblockConfirmDescription": "ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。",
+            "unblock": "ブロック解除",
+            "noDescription": "説明はまだありません",
+            "following": "{{n}} フォロー",
+            "followers": "{{n}} フォロワー"
+        },
+        "explorer": {
+            "createCommunity": "コミュニティを作成",
+            "create": "作成",
+            "name": "名前",
+            "description": "説明"
+        },
+        "dev": {
+            "developerMode": "開発者モード",
+            "mockHome": "ホーム画面 mock",
+            "mockExplorer": "探索画面 mock",
+            "mockID": "ID画面 mock"
+        },
+        "id": {
+            "title": "ID管理",
+            "aliasNotSet": "<未設定>",
+            "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
+            "alias": "エイリアス",
+            "loginOnAnotherDevice": "他デバイスでログイン",
+            "backupMasterKey": "マスターキーをバックアップ",
+            "backupNotSaved": "未保存",
+            "backupFileContent": "Concrnt Web ログイン情報\nこのファイルは Concrnt Web のログイン情報をバックアップするためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: {{ccid}}\nマスター秘密鍵: {{privateKey}}\nバックアップ時登録サーバー: {{server}}\n\n秘密鍵を紛失した場合、アカウントを復元できなくなる可能性があります。\nこの内容を他人に知られると、アカウントが乗っ取られる可能性があります。"
+        },
+        "activitypub": {
+            "title": "Activitypub設定",
+            "loading": "読み込み中...",
+            "enableIntro": "Activitypub連携を有効化しましょう",
+            "enableDescription": "連携を有効化すると、Activitypub対応のSNSと繋がることができます。",
+            "desiredId": "希望のID",
+            "enable": "有効化",
+            "enabled": "Activitypub連携は有効化されています。",
+            "yourId": "あなたのID: {{id}}",
+            "inquiry": "照会"
+        },
+        "apPerson": {
+            "follow": "フォロー",
+            "unfollow": "フォロー解除",
+            "noDescription": "説明はまだありません",
+            "apUserNotice": "このユーザーはActivityPubのユーザーです。",
+            "openRemote": "リモートで開く"
+        },
+        "home": {
+            "setUpProfile": "プロフィールを設定しましょう！",
+            "loadFailed": "読み込みに失敗しました(サーバーがオフラインの可能性があります)",
+            "retry": "再試行",
+            "listNotFound": "リストが見つかりませんでした"
+        },
+        "post": {
+            "loading": "読み込み中...",
+            "noReplies": "リプライはまだありません",
+            "noReroutes": "リルートはまだありません",
+            "noFavorites": "お気に入りはまだありません",
+            "noReactions": "リアクションはまだありません",
+            "rerouted": "がリルートしました",
+            "favorited": "がお気に入りに登録しました",
+            "addReaction": "リアクションを追加..."
+        },
+        "query": {
+            "title": "照会",
+            "submit": "照会"
+        },
+        "lists": {
+            "createList": "リストを作成",
+            "create": "作成",
+            "listTitle": "タイトル"
+        }
+    },
+    "components": {
+        "composer": {
+            "modePlaintext": "プレーンテキスト",
+            "modeMarkdown": "マークダウン",
+            "modeMedia": "メディア",
+            "sending": "送信中...",
+            "submitReply": "リプライ",
+            "submitReroute": "リルート",
+            "submit": "カレント",
+            "replyPlaceholder": "返信を入力...",
+            "placeholder": "今、なにしてる？",
+            "cannotPostOffline": "オフラインのため投稿できません"
+        },
+        "report": {
+            "reason": "報告理由",
+            "send": "送信"
+        },
+        "privateContentDoor": {
+            "privateProfile": "このプロフィールはプライベートです",
+            "privateTimeline": "このタイムラインはプライベートです",
+            "approvalRequired": "閲覧するには所有者の承認が必要です。",
+            "requested": "リクエスト済み",
+            "requestAccess": "閲覧をリクエスト"
+        },
+        "domainOfflineBanner": {
+            "recovered": "サーバーが復旧しました",
+            "reconnect": "再接続",
+            "offline": "あなたのドメイン{{domain}}は現在オフラインのため、読み取り専用モードです。復旧までしばらくお待ちください。"
+        },
+        "selectWidget": {
+            "placeholder": "選択してください"
+        },
+        "likeAssociation": {
+            "userLiked": "{{name}} がお気に入りに登録しました",
+            "loading": "読み込み中..."
+        },
+        "messageActions": {
+            "confirmDelete": "本当にこの投稿を削除しますか？",
+            "delete": "削除",
+            "deletePost": "投稿を削除",
+            "report": "通報",
+            "inspector": "インスペクター"
+        },
+        "messageInspector": {
+            "title": "インスペクター",
+            "loadFailed": "読み込みに失敗しました: {{error}}",
+            "signatureVerification": "署名検証",
+            "verificationKey": "検証キー ({{type}})",
+            "verificationError": "検証エラー: {{error}}",
+            "keyMismatch": "署名から復元したキーが検証キーと一致しません"
+        },
+        "onelineMessage": {
+            "deletePost": "投稿を削除"
+        },
+        "reactionAssociation": {
+            "userReacted": "{{name}} がリアクションしました",
+            "loading": "読み込み中..."
+        },
+        "renderError": {
+            "messageDeleted": "このメッセージは削除されました",
+            "serverOffline": "メッセージの取得先サーバーはオフラインです",
+            "cannotDisplay": "このメッセージは表示できません"
+        },
+        "replyAssociation": {
+            "loading": "読み込み中..."
+        },
+        "rerouteAssociation": {
+            "userRerouted": "{{name}} がリルートしました",
+            "loading": "読み込み中..."
+        },
+        "rerouteMessage": {
+            "userRerouted": "{{name}}さんがリルートしました",
+            "deleteReroute": "リルートを削除"
+        },
+        "sidebar": {
+            "home": "ホーム",
+            "notifications": "通知",
+            "contacts": "コンタクト",
+            "explore": "探索",
+            "profile": "プロフィール",
+            "lists": "リスト",
+            "query": "照会",
+            "settings": "設定",
+            "post": "投稿",
+            "documentation": "ドキュメント",
+            "forum": "フォーラム"
+        },
+        "themeEditor": {
+            "title": "テーマエディタ",
+            "update": "更新",
+            "create": "作成",
+            "themeUpdated": "テーマを更新しました",
+            "themeCreated": "テーマを作成しました",
+            "saveFailed": "テーマの保存に失敗しました",
+            "jsonCopied": "JSONをコピーしました",
+            "titleLabel": "タイトル",
+            "builtinNameProtected": "組み込みテーマ名は上書きできません",
+            "variantLabel": "表示タイプ",
+            "preview": "プレビュー",
+            "currentlyInUse": "現在このテーマを使用しています"
+        },
+        "themeImporter": {
+            "title": "v1からインポート",
+            "description": "v1のテーマ設定で「全部コピー」したJSON、または ```theme ブロックを貼り付けてください。既存と同名のテーマはスキップします。",
+            "placeholder": "ここにJSONを貼り付け",
+            "parseFailed": "JSONの解析に失敗しました",
+            "noThemesFound": "テーマが見つかりませんでした",
+            "importResult": "{{added}}件追加 / {{skipped}}件スキップ",
+            "import": "インポート"
+        },
+        "switchAccountButton": {
+            "accountsTitle": "アカウント",
+            "addAccount": "アカウントを追加",
+            "addProfile": "プロフィールを追加",
+            "switchAccount": "アカウントを切り替え",
+            "switchAccountTitle": "アカウントの切り替え",
+            "createNewProfile": "新しいプロフィールを作成"
+        },
+        "subkeyInvalidDrawer": {
+            "ckidNotFound": "この端末の鍵情報が見つかりませんでした。",
+            "titleDevice": "この端末の鍵が無効になっています",
+            "titleBrowser": "このデバイスの鍵が無効になっています",
+            "revokedDevice": "サーバー側のリセット、または他のデバイスからの操作により、この端末で使用している鍵(サブキー)が失効しました。",
+            "revokedBrowser": "サーバー側のリセット、または他のデバイスからの操作により、このブラウザで使用している鍵(サブキー)が失効しました。",
+            "reactivateHintDevice": "「鍵を再有効化」を押すと、この端末の鍵を復旧できます。",
+            "reactivateHintBrowser": "「鍵を再有効化」を押すと、このブラウザの鍵を復旧できます。",
+            "reloginHintDevice": "投稿など書き込みを行うには、一度ログアウトし、再度ログインしてください。",
+            "reloginHintBrowser": "投稿など書き込みを行うには、一度ログアウトし、QRコードまたはマスターキーで再度ログインしてください。",
+            "reactivateFailed": "鍵の再有効化に失敗しました。もう一度お試しください。",
+            "reactivateFailedRetryLater": "鍵の再有効化に失敗しました。時間をおいて再度お試しください。",
+            "reactivateKey": "鍵を再有効化",
+            "logout": "ログアウト"
+        },
+        "classicExplorer": {
+            "loading": "読み込み中...",
+            "offline": "オフライン"
+        },
+        "searchExplorer": {
+            "communities": "コミュニティ",
+            "users": "ユーザー",
+            "searchCommunities": "コミュニティを検索...",
+            "searchUsers": "ユーザーを検索...",
+            "loading": "読み込み中...",
+            "searchServiceUnavailable": "検索サービスに接続できませんでした",
+            "noCommunitiesFound": "該当するコミュニティが見つかりませんでした",
+            "noUsersFound": "該当するユーザーが見つかりませんでした"
+        },
+        "profileEditor": {
+            "loadingProfile": "最新のプロフィールを読み込んでいます...",
+            "saving": "保存中...",
+            "save": "保存",
+            "makeAccountPrivate": "アカウントを非公開にする",
+            "selectViewers": "閲覧可能ユーザーを選択",
+            "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。"
+        },
+        "acknowledgeButton": {
+            "follow": "フォロー",
+            "following": "フォロー中"
+        },
+        "acknowledgeList": {
+            "following": "フォロー",
+            "followers": "フォロワー"
+        },
+        "userPicker": {
+            "addUser": "ユーザーを追加",
+            "loading": "読み込み中..."
+        },
+        "timelinePicker": {
+            "postProfile": "投稿元プロフィール",
+            "addDestination": "投稿先を追加"
+        },
+        "timelineSettings": {
+            "schema": "スキーマ",
+            "attributes": "属性"
+        },
+        "listSettings": {
+            "title": "リスト設定",
+            "save": "保存",
+            "saving": "保存中...",
+            "pin": "ピン留めする",
+            "unpin": "ピン留めを解除",
+            "deleteList": "リストを削除",
+            "listName": "リスト名",
+            "excludeSelf": "自分の投稿を含めない",
+            "containedTimelines": "含まれるタイムライン",
+            "community": "コミュニティ",
+            "user": "ユーザー",
+            "noTimelines": "タイムラインがありません",
+            "defaultPostTimelines": "デフォルト投稿先"
+        },
+        "subscription": {
+            "addToList": "リストに追加"
+        },
+        "notificationTimeline": {
+            "unknown": "不明",
+            "loading": "読み込み中...",
+            "favorite": "{{name}} さんがあなたの投稿をお気に入りに登録しました",
+            "favoriteMany": "{{name}} さんと他 {{others}} 人があなたの投稿をお気に入りに登録しました",
+            "reaction": "{{name}} さんがあなたの投稿にリアクションしました",
+            "reactionMany": "{{name}} さんと他 {{others}} 人があなたの投稿にリアクションしました",
+            "follow": "{{name}} さんがあなたをフォローしました",
+            "readAccessRequest": "{{name}} さんが{{target}}への閲覧アクセスを希望しています",
+            "targetContent": "コンテンツ",
+            "targetProfile": "プロフィール「{{name}}」",
+            "targetTimeline": "タイムライン「{{name}}」",
+            "grant": "閲覧ユーザーに追加",
+            "ignore": "無視",
+            "granted": "閲覧ユーザーに追加しました",
+            "ignored": "無視しました"
+        },
+        "notificationFilter": {
+            "reply": "リプライ",
+            "mention": "メンション",
+            "reroute": "リルート",
+            "fav": "お気に入り",
+            "reaction": "リアクション",
+            "readRequest": "閲覧リクエスト"
+        }
+    },
+    "contexts": {
+        "composer": {
+            "cancel": "キャンセル"
+        },
+        "emojiPicker": {
+            "searchResults": "検索結果",
+            "frequentlyUsed": "よく使う絵文字",
+            "searchPlaceholder": "絵文字を検索...",
+            "noMatchingEmojis": "一致する絵文字がありません",
+            "noEmojis": "絵文字がありません",
+            "noRecentEmojis": "まだ使った絵文字がありません"
+        },
+        "client": {
+            "checkingSession": "セッションを確認しています...",
+            "connectingToServer": "サーバーに接続しています...",
+            "checkingKeyStatus": "鍵の状態を確認しています...",
+            "loadingProfiles": "プロフィールを読み込んでいます...",
+            "checkingTimelines": "タイムラインを確認しています...",
+            "loadingLists": "リストを読み込んでいます...",
+            "loadingFromCache": "キャッシュから読み込んでいます...",
+            "serverOffline": "サーバーはオフラインです",
+            "retry": "再試行",
+            "logout": "ログアウト",
+            "registrationNotFound": "サーバー {{domain}} にあなたの登録が見つかりませんでした",
+            "registrationNotFoundDesc": "サーバーのリセットや、別のサーバーへの移行が原因の可能性があります。",
+            "loadFailed": "読み込みに失敗しました"
+        },
+        "imageCropper": {
+            "cancel": "キャンセル",
+            "processing": "処理中...",
+            "apply": "決定"
+        }
+    },
+    "utils": {
+        "humanReadableTimeDiff": {
+            "justNow": "たった今",
+            "secondsAgo": "{{n}}秒前",
+            "secondsLater": "{{n}}秒後",
+            "minutesAgo": "{{n}}分前",
+            "minutesLater": "{{n}}分後",
+            "hoursAgo": "{{n}}時間前",
+            "hoursLater": "{{n}}時間後"
+        }
+    },
+    "web": {
+        "pwaManager": {
+            "newVersionAvailable": "新しいバージョンがあります",
+            "update": "更新"
+        },
+        "push": {
+            "browserNotSupported": "このブラウザはプッシュ通知に対応していません",
+            "browserNotSupportedIos": "このブラウザはプッシュ通知に対応していません(iOSではホーム画面に追加すると利用できます)",
+            "serverNotSupported": "このサーバーはプッシュ通知に対応していません"
+        },
+        "login": {
+            "title": "ログイン",
+            "description": "このブラウザでConcrntを使うためのログイン方法を選択してください。",
+            "qrLogin": "アプリでQRログイン",
+            "passkeyLogin": "パスキーでログイン",
+            "masterKeyLogin": "マスターキーでログイン",
+            "checking": "確認中...",
+            "usePasskey": "パスキーを使う",
+            "masterKey": "マスターキー",
+            "masterKeyPlaceholder": "12語のマスターキーを入力",
+            "registeredServer": "登録サーバー",
+            "serverPlaceholder": "例: v2dev.concrnt.net",
+            "masterKeyInvalid": "マスターキーを確認できません。",
+            "masterKeyInvalidDetailed": "マスターキーを確認できません。12語のマスターキーを入力してください。",
+            "loginWithThisServer": "このサーバーでログイン",
+            "clearInput": "入力をクリア",
+            "passkeyUnavailable": "このブラウザではパスキーを利用できません。",
+            "checkingPasskey": "パスキーを確認しています...",
+            "passkeyNotSelected": "パスキーが選択されませんでした。",
+            "passkeyNoUserHandle": "このパスキーからアカウントIDを取得できませんでした。",
+            "passkeyNoRegistration": "このパスキーに対応する登録情報が見つかりませんでした。",
+            "passkeyNoPrf": "このパスキーはログインに必要なPRF拡張を利用できません。",
+            "passkeyLoginFailed": "パスキーログインに失敗しました。",
+            "checkingRegistration": "{{resolver}} で登録情報を確認しています...",
+            "registrationNotFoundOnRecommended": "おすすめサーバーでは登録情報が見つかりませんでした。登録したサーバーを入力してください。",
+            "registrationNotFoundOnServer": "指定されたサーバーで登録情報が見つかりませんでした。",
+            "registeringKey": "このブラウザで使う鍵を登録しています...",
+            "masterKeyLoginFailed": "マスターキーでのログインに失敗しました。",
+            "subkeyCommitFailed": "サブキーの登録に失敗しました。"
+        },
+        "register": {
+            "title": "アカウント登録",
+            "successTitle": "登録完了",
+            "successDescription": "この画面を閉じて、元のアプリに戻ることができます。",
+            "invalidRequest": "登録リクエストを確認できませんでした。元の画面からもう一度開いてください。",
+            "codeOfConduct": "行動規範",
+            "tos": "利用規約 / プライバシーポリシー",
+            "registrationForm": "登録フォーム",
+            "formDescription": "ここで入力する内容は公開プロフィールではありません。サーバーの管理者が登録審査や連絡のために確認する情報です。",
+            "inviteCode": "招待コード",
+            "registering": "登録中...",
+            "register": "登録する",
+            "selectPlaceholder": "選択してください"
+        },
+        "qrSetup": {
+            "scanWithApp": "ConcrntアプリでQRコードをスキャンしてください",
+            "usePasskeyTitle": "パスキーを利用しますか？",
+            "usePasskeyDescription": "パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。",
+            "no": "いいえ",
+            "yes": "はい",
+            "confirmEmoji": "端末で表示されている絵文字を確認し、同じであれば端末で「はい」を選択してください。"
+        },
+        "guestBase": {
+            "connectionFailed": "サーバーに接続できませんでした",
+            "retry": "再試行",
+            "login": "ログイン",
+            "getStarted": "はじめる"
+        },
+        "guestPost": {
+            "loading": "読み込み中...",
+            "noReplies": "リプライはまだありません",
+            "noReroutes": "リルートはまだありません",
+            "rerouted": "がリルートしました",
+            "noFavorites": "お気に入りはまだありません",
+            "favorited": "がお気に入りに登録しました",
+            "noReactions": "リアクションはまだありません",
+            "restrictedTitle": "この投稿は表示できません",
+            "restrictedDescription": "プライベートな投稿の可能性があります。閲覧するにはログインが必要です",
+            "login": "ログイン"
+        },
+        "guestProfile": {
+            "userNotFound": "ユーザーが見つかりませんでした",
+            "loginToFollow": "ログインしてフォロー",
+            "noDescription": "説明はまだありません",
+            "following": "{{n}} フォロー",
+            "followers": "{{n}} フォロワー",
+            "privateProfile": "このプロフィールはプライベートです",
+            "loginRequired": "閲覧をリクエストするにはログインが必要です",
+            "login": "ログイン"
+        },
+        "guestTimeline": {
+            "privateTimeline": "このタイムラインはプライベートです",
+            "loginRequired": "閲覧をリクエストするにはログインが必要です",
+            "login": "ログイン"
+        }
+    },
+    "app": {
+        "qrSetup": {
+            "title": "他の端末でログイン",
+            "confirmTitle": "この端末でログインを許可しますか？",
+            "confirmDescription": "表示されている絵文字が端末で表示されているものと同じであることを確認してください",
+            "cancel": "キャンセル",
+            "ok": "OK",
+            "loginCompleted": "ログインが完了しました！",
+            "waitingForDevice": "端末から情報が送られてくるのを待っています......",
+            "scanQRCode": "QRコードをスキャン"
+        },
+        "serverSelector": {
+            "title": "サーバーを選択",
+            "cancel": "キャンセル",
+            "connectionFailed": "サーバーに接続できませんでした",
+            "notConcrntServer": "サーバーがconcrntに対応していません",
+            "verifying": "検証中...",
+            "confirm": "決定"
+        },
+        "accountListItem": {
+            "setupIncomplete": "セットアップ未完了"
+        },
+        "addAccountDrawer": {
+            "title": "アカウントを追加",
+            "description": "新しいアカウントを作成するか、既存のアカウントをインポートします。",
+            "createNew": "新規作成",
+            "importExisting": "既存アカウントをインポート",
+            "cancel": "キャンセル"
+        },
+        "backupKeyButton": {
+            "backingUp": "バックアップ中...",
+            "backupMasterkey": "マスターキーをバックアップ",
+            "backupFailed": "バックアップに失敗しました。",
+            "fileTemplate": "Concrnt ログイン情報\nこのファイルは Concrnt のログイン情報をバックアップするためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: ${ccid}\nマスターキー: ${mnemonic_ja}\nバックアップ時登録サーバー: {{domain}}\n\nもし、マスターキーを紛失した場合、アカウントを復元することができなくなります。\nまた、この内容を他人に知られると、アカウントが永久に乗っ取られる可能性があります。安全な場所に保管してください。"
+        },
+        "resetSessionButton": {
+            "title": "アカウント情報の削除",
+            "backupFirst": "削除する前に、このアカウントのマスターキーをバックアップしましょう。",
+            "cancel": "キャンセル",
+            "delete": "削除",
+            "deleteFailed": "削除できませんでした。もう一度お試しください。",
+            "resetSession": "セッションをリセット"
+        },
+        "storeMocks": {
+            "idTitle": "ID管理",
+            "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
+            "openIdSettings": "ID設定を開く",
+            "communities": "コミュニティ",
+            "users": "ユーザー",
+            "searchCommunities": "コミュニティを検索...",
+            "searchUsers": "ユーザーを検索...",
+            "noCommunitiesFound": "該当するコミュニティが見つかりませんでした",
+            "noUsersFound": "該当するユーザーが見つかりませんでした"
+        }
+    }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Api, Document, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
@@ -13,6 +14,7 @@ interface Props {
 
 // 非アクティブアカウントのプロフィールは認証なしでそのアカウントのドメインから取得する
 export const AccountListItem = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'app.accountListItem' })
     const { account } = props
     const [profile, setProfile] = useState<Document<ProfileSchema> | null>(null)
 
@@ -70,7 +72,7 @@ export const AccountListItem = (props: Props) => {
                         whiteSpace: 'nowrap'
                     }}
                 >
-                    {setupIncomplete ? 'セットアップ未完了' : account.domain}
+                    {setupIncomplete ? t('setupIncomplete') : account.domain}
                 </Text>
             </div>
         </ListItem>

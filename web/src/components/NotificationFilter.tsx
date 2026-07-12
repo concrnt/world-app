@@ -1,21 +1,23 @@
 import { Schemas } from '@concrnt/worldlib'
 import { Chip } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
     selected: string | undefined
     setSelected: (value: string | undefined) => void
 }
 
-const filters: { label: string; schema: string }[] = [
-    { label: 'リプライ', schema: Schemas.replyAssociation },
-    { label: 'メンション', schema: Schemas.mentionAssociation },
-    { label: 'リルート', schema: Schemas.rerouteAssociation },
-    { label: 'お気に入り', schema: Schemas.likeAssociation },
-    { label: 'リアクション', schema: Schemas.reactionAssociation },
-    { label: '閲覧リクエスト', schema: Schemas.readAccessRequestAssociation }
+const filters: { labelKey: string; schema: string }[] = [
+    { labelKey: 'reply', schema: Schemas.replyAssociation },
+    { labelKey: 'mention', schema: Schemas.mentionAssociation },
+    { labelKey: 'reroute', schema: Schemas.rerouteAssociation },
+    { labelKey: 'fav', schema: Schemas.likeAssociation },
+    { labelKey: 'reaction', schema: Schemas.reactionAssociation },
+    { labelKey: 'readRequest', schema: Schemas.readAccessRequestAssociation }
 ]
 
 export const NotificationFilter = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationFilter' })
     return (
         <div
             style={{
@@ -44,7 +46,7 @@ export const NotificationFilter = (props: Props) => {
                             props.setSelected(isSelected ? undefined : f.schema)
                         }}
                     >
-                        {f.label}
+                        {t(f.labelKey)}
                     </Chip>
                 )
             })}

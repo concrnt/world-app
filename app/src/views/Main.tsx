@@ -9,6 +9,7 @@ import { NotificationsView } from './Notifications'
 import { ContactsView } from './Contacts'
 import { PostView } from './Post'
 import { useClient } from '../contexts/Client'
+import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 
 import { MdHome } from 'react-icons/md'
@@ -122,23 +123,18 @@ export const MainView = () => {
         [selectedTab]
     )
 
-    // Android back button handling
-    useEffect(() => {
-        ;(window as any).__concrntHandleBack = (): boolean => {
-            const stackRef = stackRefs.current[selectedTab]
-            if (stackRef && stackRef.pop()) {
-                return true
-            }
-            if (selectedTab !== 'home') {
-                setSelectedTab('home')
-                return true
-            }
-            return false
+    // Android back button handling: ナビゲーションハンドラは常時登録(=スタックの最下段)
+    useBackHandler(() => {
+        const stackRef = stackRefs.current[selectedTab]
+        if (stackRef && stackRef.pop()) {
+            return true
         }
-        return () => {
-            delete (window as any).__concrntHandleBack
+        if (selectedTab !== 'home') {
+            setSelectedTab('home')
+            return true
         }
-    }, [selectedTab])
+        return false
+    })
 
     // Push notifications: re-upsert the subscription on every app start (the
     // cheapest way to keep the native token fresh across rotations), surface

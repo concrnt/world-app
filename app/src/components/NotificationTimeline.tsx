@@ -1,4 +1,5 @@
 import { Fragment, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -355,6 +356,7 @@ export const NotificationTimeline = (props: Props) => {
 // レイアウト: 左アイコンコラム (width: ICON_COLUMN_WIDTH, paddingLeft: ICON_COLUMN_PADDING_LEFT)
 //            + 右コンテンツコラム (flex: 1, アバター/文言/プレビューを縦積み)
 const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
     const { push } = useStack()
 
     // 集約グループ内の全 Message は同じ associationTarget を指している前提
@@ -425,13 +427,13 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                 {/* 文言 */}
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
                     {props.items.length === 1 ? (
-                        <span>
-                            {firstAuthor?.profile.username ?? '不明'} さんがあなたの投稿をお気に入りに登録しました
-                        </span>
+                        <span>{t('favorite', { name: firstAuthor?.profile.username ?? t('unknown') })}</span>
                     ) : (
                         <span>
-                            {firstAuthor?.profile.username ?? '不明'} さんと他 {props.items.length - 1}{' '}
-                            人があなたの投稿をお気に入りに登録しました
+                            {t('favoriteMany', {
+                                name: firstAuthor?.profile.username ?? t('unknown'),
+                                others: props.items.length - 1
+                            })}
                         </span>
                     )}
                 </div>
@@ -451,7 +453,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                     </div>
                 )}
 
-                {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
+                {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>}
             </div>
         </div>
     )
@@ -461,6 +463,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
 // 集約せず 1 件ずつ表示する。対象投稿がないため、フォロワーのアバターと文言のみ。
 // association の author = フォローした人。タップでその人のプロフィールへ。
 const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
     const { push } = useStack()
 
     const author = props.item.authorUser
@@ -511,7 +514,7 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
                 </div>
 
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
-                    <span>{author?.profile.username ?? '不明'} さんがあなたをフォローしました</span>
+                    <span>{t('follow', { name: author?.profile.username ?? t('unknown') })}</span>
                 </div>
             </div>
         </div>
@@ -523,12 +526,16 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
 // 承認 = 対象documentのpolicy(restrict-readers)のentitiesに申請者を追加 → 申請associationを削除
 // 無視 = 申請associationの削除のみ
 const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestAssociationSchema> }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
     const { client } = useClient()
     const { push } = useStack()
 
     const author = props.item.authorUser
 
-    const [targetLabel, setTargetLabel] = useState<string>('コンテンツ')
+    const [targetInfo, setTargetInfo] = useState<{ kind: 'content' | 'profile' | 'timeline'; name: string }>({
+        kind: 'content',
+        name: ''
+    })
     const [result, setResult] = useState<'granted' | 'ignored' | null>(null)
     const [working, setWorking] = useState(false)
 
@@ -538,9 +545,9 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
             .getDocument<any>(props.item.associate)
             .then((doc) => {
                 if (doc.schema === Schemas.profile) {
-                    setTargetLabel(`プロフィール「${doc.value.username ?? ''}」`)
+                    setTargetInfo({ kind: 'profile', name: doc.value.username ?? '' })
                 } else {
-                    setTargetLabel(`タイムライン「${doc.value.name ?? ''}」`)
+                    setTargetInfo({ kind: 'timeline', name: doc.value.name ?? '' })
                 }
             })
             .catch(() => {
@@ -549,6 +556,10 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
     }, [client, props.item.associate])
 
     if (!props.item.associate) return null
+
+    let targetLabel = t('targetContent')
+    if (targetInfo.kind === 'profile') targetLabel = t('targetProfile', { name: targetInfo.name })
+    if (targetInfo.kind === 'timeline') targetLabel = t('targetTimeline', { name: targetInfo.name })
 
     return (
         <div
@@ -597,8 +608,10 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
 
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
                     <span>
-                        {author?.profile.username ?? '不明'} さんが{targetLabel}
-                        への閲覧アクセスを希望しています
+                        {t('readAccessRequest', {
+                            name: author?.profile.username ?? t('unknown'),
+                            target: targetLabel
+                        })}
                     </span>
                 </div>
 
@@ -623,7 +636,7 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
                                 }
                             }}
                         >
-                            閲覧ユーザーに追加
+                            {t('grant')}
                         </Button>
                         <Button
                             variant="outlined"
@@ -638,12 +651,12 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
                                 }
                             }}
                         >
-                            無視
+                            {t('ignore')}
                         </Button>
                     </div>
                 ) : (
                     <Text variant="caption" style={{ opacity: 0.7 }}>
-                        {result === 'granted' ? '閲覧ユーザーに追加しました' : '無視しました'}
+                        {result === 'granted' ? t('granted') : t('ignored')}
                     </Text>
                 )}
             </div>
@@ -655,6 +668,7 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
 // レイアウト: 左アイコンコラム (width: ICON_COLUMN_WIDTH, paddingLeft: ICON_COLUMN_PADDING_LEFT)
 //            + 右コンテンツコラム (絵文字ごとのグループ / 文言 / プレビューを縦積み)
 const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[] }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
     const { push } = useStack()
 
     const target = props.items[0].associationTarget
@@ -754,11 +768,13 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                 {/* 文言 */}
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
                     {props.items.length === 1 ? (
-                        <span>{firstAuthor?.profile.username ?? '不明'} さんがあなたの投稿にリアクションしました</span>
+                        <span>{t('reaction', { name: firstAuthor?.profile.username ?? t('unknown') })}</span>
                     ) : (
                         <span>
-                            {firstAuthor?.profile.username ?? '不明'} さんと他 {props.items.length - 1}{' '}
-                            人があなたの投稿にリアクションしました
+                            {t('reactionMany', {
+                                name: firstAuthor?.profile.username ?? t('unknown'),
+                                others: props.items.length - 1
+                            })}
                         </span>
                     )}
                 </div>
@@ -778,7 +794,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                     </div>
                 )}
 
-                {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>読み込み中...</div>}
+                {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>}
             </div>
         </div>
     )

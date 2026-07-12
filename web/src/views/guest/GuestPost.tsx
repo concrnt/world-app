@@ -1,6 +1,7 @@
 import { MessageContainer } from '../../components/message'
 import { Avatar, Divider, Tabs, Tab, Text, Button } from '@concrnt/ui'
 import { Suspense, useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import {
     Association,
@@ -28,6 +29,7 @@ interface Props {
 
 // views/Post.tsx のゲスト(未ログイン)版。返信Composerとリアクション追加を持たない
 export const GuestPostView = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestPost' })
     const { client } = useClient()
     const navigate = useNavigate()
     const [tab, setTab] = useState<PostTab>('replies')
@@ -177,7 +179,7 @@ export const GuestPostView = (props: Props) => {
                 >
                     {loading && (
                         <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                            <Text>読み込み中...</Text>
+                            <Text>{t('loading')}</Text>
                         </div>
                     )}
 
@@ -185,7 +187,7 @@ export const GuestPostView = (props: Props) => {
                         <>
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リプライはまだありません</Text>
+                                    <Text>{t('noReplies')}</Text>
                                 </div>
                             )}
                             {replies.map((reply) => (
@@ -209,7 +211,7 @@ export const GuestPostView = (props: Props) => {
                         <>
                             {reroutes.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リルートはまだありません</Text>
+                                    <Text>{t('noReroutes')}</Text>
                                 </div>
                             )}
                             {reroutes.map((reroute) => (
@@ -219,7 +221,7 @@ export const GuestPostView = (props: Props) => {
                                     date={reroute.createdAt}
                                     onClick={() => navigate('/profile/' + reroute.author)}
                                 >
-                                    がリルートしました
+                                    {t('rerouted')}
                                 </AssociationUserItem>
                             ))}
                         </>
@@ -229,7 +231,7 @@ export const GuestPostView = (props: Props) => {
                         <>
                             {favorites.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>お気に入りはまだありません</Text>
+                                    <Text>{t('noFavorites')}</Text>
                                 </div>
                             )}
                             {favorites.map((fav) => (
@@ -239,7 +241,7 @@ export const GuestPostView = (props: Props) => {
                                     date={fav.createdAt}
                                     onClick={() => navigate('/profile/' + fav.author)}
                                 >
-                                    がお気に入りに登録しました
+                                    {t('favorited')}
                                 </AssociationUserItem>
                             ))}
                         </>
@@ -249,7 +251,7 @@ export const GuestPostView = (props: Props) => {
                         <>
                             {Object.keys(reactionCounts).length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リアクションはまだありません</Text>
+                                    <Text>{t('noReactions')}</Text>
                                 </div>
                             )}
 
@@ -308,7 +310,7 @@ export const GuestPostView = (props: Props) => {
                                                 opacity: 0.5
                                             }}
                                         >
-                                            <Text>読み込み中...</Text>
+                                            <Text>{t('loading')}</Text>
                                         </div>
                                     )}
                                     {!loadingMembers &&
@@ -332,6 +334,7 @@ export const GuestPostView = (props: Props) => {
 
 // 制限付き・取得失敗時のフォールバック(ゲストは閲覧リクエストを送れないためログインを促す)
 const RestrictedFallback = () => {
+    const { t } = useTranslation('', { keyPrefix: 'web.guestPost' })
     const navigate = useNavigate()
     return (
         <div
@@ -344,9 +347,9 @@ const RestrictedFallback = () => {
             }}
         >
             <MdLock size={48} style={{ opacity: 0.5 }} />
-            <Text>この投稿は表示できません</Text>
-            <Text variant="caption">プライベートな投稿の可能性があります。閲覧するにはログインが必要です</Text>
-            <Button onClick={() => navigate('/login')}>ログイン</Button>
+            <Text>{t('restrictedTitle')}</Text>
+            <Text variant="caption">{t('restrictedDescription')}</Text>
+            <Button onClick={() => navigate('/login')}>{t('login')}</Button>
         </div>
     )
 }

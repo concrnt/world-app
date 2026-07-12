@@ -1,6 +1,7 @@
 packages:
   - 'app'
   - 'client'
+  - 'locales'
   - 'worldlib'
   - 'ui'
   - 'web'

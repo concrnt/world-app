@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -6,7 +7,7 @@ import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
-import type { List } from '@concrnt/worldlib'
+import type { List, ListEntry } from '@concrnt/worldlib'
 import { useKeyboard } from './Keyboard'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -43,8 +44,9 @@ export interface EmojiPickerState {
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
     packageURLs: string[]
+    packageEntries: ListEntry[]
     addEmojiPackage: (url: string) => Promise<void>
-    removeEmojiPackage: (url: string) => Promise<void>
+    removeEmojiPackage: (key: string) => Promise<void>
     updateEmojiPackage: (url: string) => Promise<void>
 }
 
@@ -55,6 +57,7 @@ interface Props {
 }
 
 export const EmojiPickerProvider = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
@@ -71,6 +74,7 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
+    const [packageEntries, setPackageEntries] = useState<ListEntry[]>([])
     const [emojiPackages, setEmojiPackages] = useState<EmojiPackage[]>([])
     const allEmojis = useMemo(() => emojiPackages.flatMap((pkg) => pkg.emojis), [emojiPackages])
 
@@ -79,9 +83,11 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const reloadEmojiPackageURLs = useCallback(async () => {
         const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
-        const urls = await list.items.value()
+        const entries = await list.entries.value()
+        const urls = entries.map((e) => e.value?.href).filter((h): h is string => typeof h === 'string' && !!h)
 
         setEmojiPackageList(list)
+        setPackageEntries(entries)
         setEmojiPackageURLs(Array.from(new Set(urls)))
     }, [client, emojiPackageList])
 
@@ -90,10 +96,12 @@ export const EmojiPickerProvider = (props: Props) => {
 
         ensureEmojiPackageList(client)
             .then(async (list) => {
-                const urls = await list.items.value()
+                const entries = await list.entries.value()
+                const urls = entries.map((e) => e.value?.href).filter((h): h is string => typeof h === 'string' && !!h)
 
                 if (unmounted) return
                 setEmojiPackageList(list)
+                setPackageEntries(entries)
                 setEmojiPackageURLs(Array.from(new Set(urls)))
             })
             .catch((e) => {
@@ -218,9 +226,11 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const removeEmojiPackage = useCallback(
-        async (url: string) => {
+        async (key: string) => {
             const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
-            await list.removeItem(client, url)
+            await client.api.delete(key)
+            list.items.reload()
+            list.entries.reload()
             await reloadEmojiPackageURLs()
         },
         [client, emojiPackageList, reloadEmojiPackageURLs]
@@ -264,10 +274,10 @@ export const EmojiPickerProvider = (props: Props) => {
     }, [activeTab, emojiPackages.length])
 
     const title = useMemo(() => {
-        if (query.length > 0) return '検索結果'
-        if (effectiveActiveTab === 0) return 'よく使う絵文字'
+        if (query.length > 0) return t('searchResults')
+        if (effectiveActiveTab === 0) return t('frequentlyUsed')
         return emojiPackages[effectiveActiveTab - 1]?.name ?? ''
-    }, [query, effectiveActiveTab, emojiPackages])
+    }, [query, effectiveActiveTab, emojiPackages, t])
 
     const displayEmojis = useMemo(() => {
         if (query.length > 0) return searchResults
@@ -294,11 +304,22 @@ export const EmojiPickerProvider = (props: Props) => {
             search,
             packages: emojiPackages,
             packageURLs: emojiPackageURLs,
+            packageEntries,
             addEmojiPackage,
             removeEmojiPackage,
             updateEmojiPackage
         }),
-        [open, close, search, emojiPackages, emojiPackageURLs, addEmojiPackage, removeEmojiPackage, updateEmojiPackage]
+        [
+            open,
+            close,
+            search,
+            emojiPackages,
+            emojiPackageURLs,
+            packageEntries,
+            addEmojiPackage,
+            removeEmojiPackage,
+            updateEmojiPackage
+        ]
     )
 
     return (
@@ -425,7 +446,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 whiteSpace: 'nowrap'
                                             }}
                                         >
-                                            {query.length > 0 ? '一致する絵文字がありません' : '絵文字がありません'}
+                                            {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
                                         </div>
                                     )}
                                 </div>
@@ -504,7 +525,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                         <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
                                         <input
                                             type="text"
-                                            placeholder="絵文字を検索..."
+                                            placeholder={t('searchPlaceholder')}
                                             value={query}
                                             onChange={(e) => setQuery(e.target.value)}
                                             onFocus={() => {
@@ -581,10 +602,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                             }}
                                         >
                                             {query.length > 0
-                                                ? '一致する絵文字がありません'
+                                                ? t('noMatchingEmojis')
                                                 : effectiveActiveTab === 0
-                                                  ? 'まだ使った絵文字がありません'
-                                                  : '絵文字がありません'}
+                                                  ? t('noRecentEmojis')
+                                                  : t('noEmojis')}
                                         </div>
                                     ) : (
                                         rows.map((row, rowIndex) => (
@@ -733,7 +754,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                         <input
                                             ref={searchInputRef}
                                             type="text"
-                                            placeholder="絵文字を検索..."
+                                            placeholder={t('searchPlaceholder')}
                                             value={query}
                                             onChange={(e) => setQuery(e.target.value)}
                                             style={{
@@ -788,10 +809,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                             }}
                                         >
                                             {query.length > 0
-                                                ? '一致する絵文字がありません'
+                                                ? t('noMatchingEmojis')
                                                 : effectiveActiveTab === 0
-                                                  ? 'まだ使った絵文字がありません'
-                                                  : '絵文字がありません'}
+                                                  ? t('noRecentEmojis')
+                                                  : t('noEmojis')}
                                         </div>
                                     ) : (
                                         rows.map((row, rowIndex) => (

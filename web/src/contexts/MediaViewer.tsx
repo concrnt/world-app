@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
 
 import { MdChevronLeft, MdChevronRight, MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
+import { CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { ModelViewer } from '../components/ModelViewer'
 import { useAudioPlayer } from './AudioPlayer'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -459,9 +460,18 @@ export const MediaViewerProvider = (props: Props) => {
 
     const value = useMemo(() => ({ open }), [open])
 
+    const parentCfmActions = useCfmActions()
+
     return (
         <MediaViewerContext.Provider value={value}>
-            {props.children}
+            <CfmActionsProvider
+                value={{
+                    ...parentCfmActions,
+                    openMedias: open
+                }}
+            >
+                {props.children}
+            </CfmActionsProvider>
 
             {isOpen && currentMedia && (
                 <motion.div

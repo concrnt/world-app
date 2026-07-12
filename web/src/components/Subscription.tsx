@@ -1,5 +1,6 @@
 import { useClient } from '../contexts/Client'
 import { Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Checkbox, Text, List, ListItem } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -7,6 +8,7 @@ import { PinnedListItemClass } from '@concrnt/worldlib'
 import { List as ListType } from '@concrnt/worldlib'
 
 export const Subscription = ({ target }: { target: string }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.subscription' })
     return (
         <div
             style={{
@@ -16,7 +18,7 @@ export const Subscription = ({ target }: { target: string }) => {
                 width: '100%'
             }}
         >
-            <Text variant="h3">リストに追加</Text>
+            <Text variant="h3">{t('addToList')}</Text>
             <Suspense fallback={<Text>Loading...</Text>}>
                 <Lists target={target} />
             </Suspense>

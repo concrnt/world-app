@@ -2,6 +2,7 @@ import { useClient } from '../contexts/Client'
 import { useSelect } from '../contexts/Select'
 import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
 import { ReactNode, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDrawer } from '../contexts/Drawer'
 import { useModal } from '../contexts/Modal'
 import { ProfileEditor } from './ProfileEditor'
@@ -15,6 +16,7 @@ import { ResetSessionModalContent } from './ResetSessionButton'
 import { listAccounts, performAccountSwitch } from '../lib/accounts'
 
 export const SwitchAccountButton = (): ReactNode => {
+    const { t } = useTranslation('', { keyPrefix: 'components.switchAccountButton' })
     const { client, reload } = useClient()
     const { select, close } = useSelect()
     const drawer = useDrawer()
@@ -63,12 +65,12 @@ export const SwitchAccountButton = (): ReactNode => {
                     drawer.open(<AddAccountDrawer previousCcid={client.ccid} onClose={() => drawer.close()} />)
                 }}
             >
-                <Text>アカウントを追加</Text>
+                <Text>{t('addAccount')}</Text>
             </ListItem>
         )
 
-        select('アカウント', options)
-    }, [client, select, close, drawer, modal])
+        select(t('accountsTitle'), options)
+    }, [client, select, close, drawer, modal, t])
 
     const options: ReactNode[] = useMemo(() => {
         const result: ReactNode[] = []
@@ -121,12 +123,12 @@ export const SwitchAccountButton = (): ReactNode => {
                                 drawer.close()
                             }}
                             targetURI={semantics.profile(client.ccid, Date.now().toString())}
-                            title="Create New Profile"
+                            title={t('createNewProfile')}
                         />
                     )
                 }}
             >
-                <Text>プロフィールを追加</Text>
+                <Text>{t('addProfile')}</Text>
             </ListItem>
         )
 
@@ -138,19 +140,19 @@ export const SwitchAccountButton = (): ReactNode => {
                     openAccountSheet()
                 }}
             >
-                <Text>アカウントを切り替え</Text>
+                <Text>{t('switchAccount')}</Text>
             </ListItem>
         )
 
         return result
-    }, [client, reload, close, drawer, openAccountSheet])
+    }, [client, reload, close, drawer, openAccountSheet, t])
 
     return (
         <IconButton
             onClick={(e) => {
                 e.stopPropagation()
                 if (!client) return
-                select('Switch Account', options)
+                select(t('switchAccountTitle'), options)
             }}
         >
             <HiSwitchHorizontal size={20} color={CssVar.backdropText} />

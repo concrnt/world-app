@@ -1,7 +1,9 @@
 import { CssVar } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 import type { WidgetProps } from '@rjsf/utils'
 
 export const SelectWidget = (props: WidgetProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.selectWidget' })
     const { id, value, required, disabled, readonly, placeholder, onChange, onBlur, onFocus, options } = props
 
     return (
@@ -25,7 +27,7 @@ export const SelectWidget = (props: WidgetProps) => {
             }}
         >
             <option value="" disabled>
-                {placeholder ?? '選択してください'}
+                {placeholder ?? t('placeholder')}
             </option>
             {Array.isArray(options.enumOptions) &&
                 options.enumOptions.map((option) => (

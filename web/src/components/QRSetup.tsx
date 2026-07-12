@@ -10,12 +10,14 @@ import {
 import { Button, CssVar, Passport, Text } from '@concrnt/ui'
 import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from '@concrnt/worldlib'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QRCode } from 'react-qrcode-logo'
 import { usePersistent } from '../hooks/usePersistent'
 import { string2Uint8Array } from '../util'
 import Tilt from 'react-parallax-tilt'
 
 export const QRSetup = () => {
+    const { t } = useTranslation('', { keyPrefix: 'web.qrSetup' })
     const [sessionID, _] = useState<string>(crypto.randomUUID())
     const signalURL = `wss://signal.concrnt.net/${sessionID}`
 
@@ -193,13 +195,7 @@ export const QRSetup = () => {
                     textAlign: 'center'
                 }}
             >
-                {!ccid && (
-                    <Text>
-                        Concrntアプリで
-                        <wbr />
-                        QRコードをスキャンしてください
-                    </Text>
-                )}
+                {!ccid && <Text>{t('scanWithApp')}</Text>}
 
                 {pendingKeyGeneration && (
                     <div
@@ -212,8 +208,8 @@ export const QRSetup = () => {
                             width: '100%'
                         }}
                     >
-                        <Text variant="h4">パスキーを利用しますか？</Text>
-                        <Text>パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。</Text>
+                        <Text variant="h4">{t('usePasskeyTitle')}</Text>
+                        <Text>{t('usePasskeyDescription')}</Text>
                         <div
                             style={{
                                 display: 'flex',
@@ -231,7 +227,7 @@ export const QRSetup = () => {
                                     }
                                 }}
                             >
-                                いいえ
+                                {t('no')}
                             </Button>
                             <Button
                                 onClick={() => {
@@ -240,7 +236,7 @@ export const QRSetup = () => {
                                     }
                                 }}
                             >
-                                はい
+                                {t('yes')}
                             </Button>
                         </div>
                     </div>
@@ -273,7 +269,7 @@ export const QRSetup = () => {
                             </Tilt>
                         </div>
                         <Text style={{ fontSize: '2rem' }}>{keyFingerprint}</Text>
-                        <Text>端末で表示されている絵文字を確認し、同じであれば端末で「はい」を選択してください。</Text>
+                        <Text>{t('confirmEmoji')}</Text>
                     </div>
                 )}
             </div>

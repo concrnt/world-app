@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, IconButton, Text, TextField, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { type EmojiPackage, type RawEmojiPackage, useEmojiPicker } from '../contexts/EmojiPicker'
+import type { ListEntry } from '@concrnt/worldlib'
 import { MdAddCircle, MdCached, MdContentCopy, MdDeleteForever } from 'react-icons/md'
 
 export const EmojiSettingsView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.emojiSettings' })
     const picker = useEmojiPicker()
 
     const [addingPackageURL, setAddingPackageURL] = useState('')
@@ -35,7 +38,7 @@ export const EmojiSettingsView = () => {
                 })
                 .catch(() => {
                     setPreview(null)
-                    setStatus('パッケージが見つかりませんでした')
+                    setStatus(t('packageNotFound'))
                 })
         }, 500)
 
@@ -46,7 +49,7 @@ export const EmojiSettingsView = () => {
 
     return (
         <View>
-            <Header>絵文字</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     flex: 1,
@@ -67,15 +70,15 @@ export const EmojiSettingsView = () => {
                         flexWrap: 'wrap'
                     }}
                 >
-                    <Text variant="h3">絵文字パッケージ</Text>
+                    <Text variant="h3">{t('packages')}</Text>
                     <Button
                         variant="outlined"
                         onClick={async () => {
                             await Promise.all(picker.packageURLs.map((url) => picker.updateEmojiPackage(url)))
-                            setStatus('絵文字パッケージを更新しました')
+                            setStatus(t('updated'))
                         }}
                     >
-                        全て更新
+                        {t('updateAll')}
                     </Button>
                 </div>
 
@@ -86,9 +89,10 @@ export const EmojiSettingsView = () => {
                         gap: CssVar.space(2)
                     }}
                 >
-                    {picker.packageURLs.map((url) => {
-                        const pkg = packagesByURL.get(url)
-                        return <EmojiPackageCard key={url} url={url} pkg={pkg} onStatus={setStatus} />
+                    {picker.packageEntries.map((entry) => {
+                        const href = typeof entry.value?.href === 'string' ? entry.value.href : undefined
+                        const pkg = href ? packagesByURL.get(href) : undefined
+                        return <EmojiPackageCard key={entry.key} entry={entry} pkg={pkg} onStatus={setStatus} />
                     })}
                 </div>
 
@@ -115,13 +119,13 @@ export const EmojiSettingsView = () => {
                         <IconButton
                             onClick={async () => {
                                 if (picker.packageURLs.includes(preview.packageURL)) {
-                                    setStatus('すでに追加されています')
+                                    setStatus(t('alreadyAdded'))
                                     return
                                 }
                                 await picker.addEmojiPackage(preview.packageURL)
                                 setAddingPackageURL('')
                                 setPreview(null)
-                                setStatus('絵文字パッケージを追加しました')
+                                setStatus(t('added'))
                             }}
                         >
                             <MdAddCircle size={24} />
@@ -130,7 +134,7 @@ export const EmojiSettingsView = () => {
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                    <Text variant="h5">絵文字パッケージURL</Text>
+                    <Text variant="h5">{t('packageURL')}</Text>
                     <TextField
                         value={addingPackageURL}
                         placeholder="https://example.com/emoji.json"
@@ -149,13 +153,16 @@ export const EmojiSettingsView = () => {
 }
 
 interface EmojiPackageCardProps {
-    url: string
+    entry: ListEntry
     pkg?: EmojiPackage
     onStatus: (status: string) => void
 }
 
-const EmojiPackageCard = ({ url, pkg, onStatus }: EmojiPackageCardProps) => {
+const EmojiPackageCard = ({ entry, pkg, onStatus }: EmojiPackageCardProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.emojiSettings' })
     const picker = useEmojiPicker()
+
+    const href = typeof entry.value?.href === 'string' ? entry.value.href : undefined
 
     return (
         <div
@@ -188,32 +195,36 @@ const EmojiPackageCard = ({ url, pkg, onStatus }: EmojiPackageCardProps) => {
                 />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-                <Text variant="h4">{pkg?.name ?? '読み込みに失敗しました'}</Text>
+                <Text variant="h4">{pkg?.name ?? (href ? t('loadFailed') : t('brokenEntry'))}</Text>
                 <Text style={{ overflowWrap: 'anywhere', opacity: 0.65 }}>
-                    {pkg?.fetchedAt ? `取得日: ${new Date(pkg.fetchedAt).toLocaleString()}` : url}
+                    {pkg?.fetchedAt
+                        ? t('fetchedAt', { date: new Date(pkg.fetchedAt).toLocaleString() })
+                        : (href ?? entry.key)}
                 </Text>
             </div>
             <div style={{ display: 'flex', gap: CssVar.space(0.5), flexShrink: 0 }}>
+                {href && (
+                    <IconButton
+                        onClick={async () => {
+                            await picker.updateEmojiPackage(href)
+                            onStatus(t('updated'))
+                        }}
+                    >
+                        <MdCached size={20} />
+                    </IconButton>
+                )}
                 <IconButton
                     onClick={async () => {
-                        await picker.updateEmojiPackage(url)
-                        onStatus('絵文字パッケージを更新しました')
-                    }}
-                >
-                    <MdCached size={20} />
-                </IconButton>
-                <IconButton
-                    onClick={async () => {
-                        await navigator.clipboard?.writeText(url)
-                        onStatus('URLをコピーしました')
+                        await navigator.clipboard?.writeText(href ?? entry.key)
+                        onStatus(t('urlCopied'))
                     }}
                 >
                     <MdContentCopy size={20} />
                 </IconButton>
                 <IconButton
                     onClick={async () => {
-                        await picker.removeEmojiPackage(url)
-                        onStatus('絵文字パッケージを削除しました')
+                        await picker.removeEmojiPackage(entry.key)
+                        onStatus(t('removed'))
                     }}
                 >
                     <MdDeleteForever size={20} />

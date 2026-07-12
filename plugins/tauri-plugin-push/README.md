@@ -38,6 +38,8 @@ forwards the still-encrypted payload to APNs/FCM. This plugin:
   committed; ask a maintainer or create your own Firebase project for local
   development). The Gradle wiring (`com.google.gms.google-services` plugin) is
   already in place in `src-tauri/gen/android/{build.gradle.kts,app/build.gradle.kts}`.
+  If the file is absent the build still succeeds — the plugin is simply not
+  applied and push notifications are disabled (`get_token` rejects at runtime).
 - **iOS**: an APNs `.p8` auth key configured on the relay (not this plugin);
   the app side just needs the Push Notifications capability + an App Group
   enabled on the app's App ID (see the NSE target notes in

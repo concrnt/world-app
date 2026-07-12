@@ -1,6 +1,7 @@
 import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
 import { Api, InMemoryAuthProvider, InMemoryKVS, Document, Entity } from '@concrnt/client'
@@ -37,6 +38,7 @@ const readStoredString = (key: string): string | undefined => {
 }
 
 export const WelcomeView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [user, setUser] = useState<User | null>(null)
     const [updater, setUpdater] = useState<number>(0)
     const reset = useResetPreference()
@@ -115,8 +117,8 @@ export const WelcomeView = () => {
                     </div>
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>
-                        <AuthButton onClick={() => setState('signup')}>はじめる</AuthButton>
-                        <AuthTextButton onClick={() => (window.location.href = '/login')}>ログイン</AuthTextButton>
+                        <AuthButton onClick={() => setState('signup')}>{t('getStarted')}</AuthButton>
+                        <AuthTextButton onClick={() => (window.location.href = '/login')}>{t('login')}</AuthTextButton>
                     </AuthActions>
                 </AuthScreen>
             )
@@ -134,10 +136,7 @@ export const WelcomeView = () => {
         case 'ready':
             return (
                 <AuthScreen>
-                    <AuthHeader
-                        title="おかえりなさい"
-                        description="このブラウザに保存されているアカウントを確認しました。"
-                    />
+                    <AuthHeader title={t('welcomeBackTitle')} description={t('welcomeBackDescriptionBrowser')} />
                     <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
@@ -157,7 +156,7 @@ export const WelcomeView = () => {
                                 window.location.reload()
                             }}
                         >
-                            このアカウントで続行
+                            {t('continueWithAccount')}
                         </AuthButton>
                         <AuthTextButton
                             danger
@@ -168,7 +167,7 @@ export const WelcomeView = () => {
                                 reload()
                             }}
                         >
-                            ブラウザのアカウント情報をリセットする
+                            {t('resetBrowserAccount')}
                         </AuthTextButton>
                     </AuthActions>
                 </AuthScreen>
@@ -182,6 +181,7 @@ const RecoveryView = (props: {
     setDomain?: (domain: string) => void
     ccid: string
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [found, setFound] = useState<boolean>(false)
     const [domain, setDomain] = useState<string>()
 
@@ -208,30 +208,27 @@ const RecoveryView = (props: {
 
     return (
         <AuthScreen align="top">
-            <AuthHeader
-                title="登録サーバーを確認してください"
-                description="ブラウザにはアカウント情報がありますが、現在のサーバーでは登録情報が見つかりませんでした。"
-            />
+            <AuthHeader title={t('recovery.title')} description={t('recovery.descriptionBrowser')} />
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>
-                    <Text style={{ color: CssVar.uiText }}>サーバーアドレス</Text>
+                    <Text style={{ color: CssVar.uiText }}>{t('recovery.serverAddress')}</Text>
                     <TextField
                         value={domain}
                         onChange={(e) => setDomain(e.target.value)}
-                        placeholder="サーバーアドレスを入力"
+                        placeholder={t('recovery.serverAddressPlaceholder')}
                     />
                 </div>
                 <Text style={authStyles.status}>
-                    {found ? '登録情報が見つかりました。' : '登録情報が見つかりませんでした。'}
+                    {found ? t('recovery.registrationFound') : t('recovery.registrationNotFound')}
                 </Text>
             </div>
             {found ? (
                 <AuthActions fixedBottom>
-                    <AuthButton onClick={props.reload}>続行</AuthButton>
+                    <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
             ) : (
                 <AuthActions fixedBottom>
-                    <AuthButton onClick={props.giveup}>新規登録する</AuthButton>
+                    <AuthButton onClick={props.giveup}>{t('recovery.registerNew')}</AuthButton>
                     <AuthTextButton
                         danger
                         onClick={() => {
@@ -241,7 +238,7 @@ const RecoveryView = (props: {
                             props.reload()
                         }}
                     >
-                        ブラウザのアカウント情報を削除
+                        {t('recovery.deleteBrowserAccount')}
                     </AuthTextButton>
                 </AuthActions>
             )}

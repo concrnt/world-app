@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useClient } from '../contexts/Client'
 
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export const Sidebar = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
 
@@ -97,16 +99,16 @@ export const Sidebar = (props: Props) => {
                                 )
                             }
                         >
-                            プロフィール
+                            {t('profile')}
                         </ListItem>
                         <ListItem icon={<MdList size={24} />} onClick={() => props.onPush?.(<ListsView />)}>
-                            リスト
+                            {t('lists')}
                         </ListItem>
                         <ListItem icon={<MdTravelExplore size={24} />} onClick={() => props.onPush?.(<QueryView />)}>
-                            照会
+                            {t('query')}
                         </ListItem>
                         <ListItem icon={<MdSettings size={24} />} onClick={() => props.onPush?.(<SettingsView />)}>
-                            設定
+                            {t('settings')}
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />

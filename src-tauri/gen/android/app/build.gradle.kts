@@ -91,4 +91,9 @@ apply(from = "tauri.build.gradle.kts")
 
 // Push notifications: requires app/google-services.json (see
 // plugins/tauri-plugin-push/README.md for how to obtain one).
-apply(plugin = "com.google.gms.google-services")
+// Missing file only disables FCM push; the build itself still succeeds.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle("google-services.json not found; building without FCM push notifications")
+}

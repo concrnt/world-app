@@ -1,5 +1,7 @@
 import { CssVar, Text, TextField } from '@concrnt/ui'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { QRSetup } from '../components/QRSetup'
 import { string2Uint8Array } from '../util'
 import {
@@ -79,7 +81,7 @@ const createAndCommitSubkey = async (identity: Identity, domain: string) => {
     }
 
     const committed = await api.commit(subkeyDoc, domain, { useMasterkey: true })
-    if (!committed) throw new Error('Subkey commit failed')
+    if (!committed) throw new Error(i18n.t('web.login.subkeyCommitFailed'))
 
     return `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
 }
@@ -108,6 +110,7 @@ const ensureEntityProof = async (identity: Identity, domain: string) => {
 }
 
 export const Login = () => {
+    const { t } = useTranslation('', { keyPrefix: 'web.login' })
     const reset = useResetPreference()
     const [method, setMethod] = useState<LoginMethod>('qr')
     const [status, setStatus] = useState('')
@@ -131,12 +134,12 @@ export const Login = () => {
 
     const startPasskeyLogin = async () => {
         if (!window.PublicKeyCredential || !navigator.credentials) {
-            setStatus('このブラウザではパスキーを利用できません。')
+            setStatus(t('passkeyUnavailable'))
             return
         }
 
         setBusy(true)
-        setStatus('パスキーを確認しています...')
+        setStatus(t('checkingPasskey'))
 
         try {
             const challenge = new Uint8Array(32)
@@ -156,11 +159,11 @@ export const Login = () => {
                 }
             })
 
-            if (!cred) throw new Error('パスキーが選択されませんでした。')
+            if (!cred) throw new Error(t('passkeyNotSelected'))
 
             // @ts-expect-error - userHandle is not yet in browser types
             const userHandle = cred.response?.userHandle
-            if (!userHandle) throw new Error('このパスキーからアカウントIDを取得できませんでした。')
+            if (!userHandle) throw new Error(t('passkeyNoUserHandle'))
 
             let ccid = new TextDecoder().decode(userHandle)
             let resolver = entrypoint
@@ -172,12 +175,12 @@ export const Login = () => {
 
             const entity = await resolveEntity(ccid, resolver, resolver)
             const domain = entity?.value.domain
-            if (!domain) throw new Error('このパスキーに対応する登録情報が見つかりませんでした。')
+            if (!domain) throw new Error(t('passkeyNoRegistration'))
 
             // @ts-expect-error - getClientExtensionResults is not yet in browser types
             const credentialResults = cred.getClientExtensionResults()
             const prfRes = credentialResults?.prf?.results
-            if (!prfRes?.first) throw new Error('このパスキーはログインに必要なPRF拡張を利用できません。')
+            if (!prfRes?.first) throw new Error(t('passkeyNoPrf'))
 
             const identity = DeriveIdentity(new Uint8Array(prfRes.first))
             const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
@@ -186,7 +189,7 @@ export const Login = () => {
             continueWithSession()
         } catch (error) {
             console.error(error)
-            setStatus(error instanceof Error ? error.message : 'パスキーログインに失敗しました。')
+            setStatus(error instanceof Error ? error.message : t('passkeyLoginFailed'))
         } finally {
             setBusy(false)
         }
@@ -195,7 +198,7 @@ export const Login = () => {
     const startRecoveryLogin = async (resolverOverride?: string) => {
         const identity = recoveryIdentity
         if (!identity) {
-            setStatus('マスターキーを確認できません。12語のマスターキーを入力してください。')
+            setStatus(t('masterKeyInvalidDetailed'))
             return
         }
 
@@ -204,7 +207,7 @@ export const Login = () => {
 
         setBusy(true)
         setResolvedCCID(identity.CCID)
-        setStatus(`${resolver} で登録情報を確認しています...`)
+        setStatus(t('checkingRegistration', { resolver }))
 
         try {
             const entity = await resolveEntity(identity.CCID, resolver, isManualResolver ? resolver : undefined)
@@ -213,15 +216,13 @@ export const Login = () => {
             if (!domain) {
                 if (!isManualResolver) {
                     setNeedsServer(true)
-                    setStatus(
-                        'おすすめサーバーでは登録情報が見つかりませんでした。登録したサーバーを入力してください。'
-                    )
+                    setStatus(t('registrationNotFoundOnRecommended'))
                     return
                 }
-                throw new Error('指定されたサーバーで登録情報が見つかりませんでした。')
+                throw new Error(t('registrationNotFoundOnServer'))
             }
 
-            setStatus('このブラウザで使う鍵を登録しています...')
+            setStatus(t('registeringKey'))
             const subkeyStr = await createAndCommitSubkey(identity, domain)
 
             await ensureEntityProof(identity, domain).catch((err) => {
@@ -232,7 +233,7 @@ export const Login = () => {
             continueWithSession()
         } catch (error) {
             console.error(error)
-            setStatus(error instanceof Error ? error.message : 'マスターキーでのログインに失敗しました。')
+            setStatus(error instanceof Error ? error.message : t('masterKeyLoginFailed'))
         } finally {
             setBusy(false)
         }
@@ -240,10 +241,7 @@ export const Login = () => {
 
     return (
         <AuthScreen align="top">
-            <AuthHeader
-                title="ログイン"
-                description="このブラウザでConcrntを使うためのログイン方法を選択してください。"
-            />
+            <AuthHeader title={t('title')} description={t('description')} />
 
             <div style={authStyles.section}>
                 <div
@@ -259,7 +257,7 @@ export const Login = () => {
                         variant={method === 'qr' ? 'contained' : 'outlined'}
                         onClick={() => setMethod('qr')}
                     >
-                        アプリでQRログイン
+                        {t('qrLogin')}
                     </AuthButton>
                     <AuthButton
                         disabled={busy}
@@ -269,7 +267,7 @@ export const Login = () => {
                             setStatus('')
                         }}
                     >
-                        パスキーでログイン
+                        {t('passkeyLogin')}
                     </AuthButton>
                     <AuthButton
                         disabled={busy}
@@ -279,7 +277,7 @@ export const Login = () => {
                             setStatus('')
                         }}
                     >
-                        マスターキーでログイン
+                        {t('masterKeyLogin')}
                     </AuthButton>
                 </div>
             </div>
@@ -297,7 +295,7 @@ export const Login = () => {
                     </div>
                     <AuthActions fixedBottom>
                         <AuthButton disabled={busy} onClick={startPasskeyLogin}>
-                            {busy ? '確認中...' : 'パスキーを使う'}
+                            {busy ? t('checking') : t('usePasskey')}
                         </AuthButton>
                     </AuthActions>
                 </>
@@ -307,7 +305,7 @@ export const Login = () => {
                 <>
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
-                            <Text style={{ color: CssVar.uiText }}>マスターキー</Text>
+                            <Text style={{ color: CssVar.uiText }}>{t('masterKey')}</Text>
                             <TextField
                                 value={mnemonic}
                                 onChange={(e) => {
@@ -316,7 +314,7 @@ export const Login = () => {
                                     setResolvedCCID(undefined)
                                     setStatus('')
                                 }}
-                                placeholder="12語のマスターキーを入力"
+                                placeholder={t('masterKeyPlaceholder')}
                             />
                         </div>
 
@@ -324,17 +322,17 @@ export const Login = () => {
 
                         {needsServer && (
                             <div style={authStyles.inputGroup}>
-                                <Text style={{ color: CssVar.uiText }}>登録サーバー</Text>
+                                <Text style={{ color: CssVar.uiText }}>{t('registeredServer')}</Text>
                                 <TextField
                                     value={manualServer}
                                     onChange={(e) => setManualServer(e.target.value)}
-                                    placeholder="例: v2dev.concrnt.net"
+                                    placeholder={t('serverPlaceholder')}
                                 />
                             </div>
                         )}
 
                         <Text style={authStyles.status}>
-                            {status || (mnemonic && !recoveryIdentity ? 'マスターキーを確認できません。' : '')}
+                            {status || (mnemonic && !recoveryIdentity ? t('masterKeyInvalid') : '')}
                         </Text>
                     </div>
 
@@ -344,11 +342,11 @@ export const Login = () => {
                                 disabled={busy || !manualServer.trim()}
                                 onClick={() => startRecoveryLogin(manualServer)}
                             >
-                                {busy ? '確認中...' : 'このサーバーでログイン'}
+                                {busy ? t('checking') : t('loginWithThisServer')}
                             </AuthButton>
                         ) : (
                             <AuthButton disabled={busy || !recoveryIdentity} onClick={() => startRecoveryLogin()}>
-                                {busy ? '確認中...' : 'マスターキーでログイン'}
+                                {busy ? t('checking') : t('masterKeyLogin')}
                             </AuthButton>
                         )}
                         <AuthTextButton
@@ -360,7 +358,7 @@ export const Login = () => {
                                 setStatus('')
                             }}
                         >
-                            入力をクリア
+                            {t('clearInput')}
                         </AuthTextButton>
                     </AuthActions>
                 </>

@@ -2,6 +2,7 @@ import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text } from '@concrnt/ui
 import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { ApObject } from '../utils/activitypub'
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const ApPerson = ({ person }: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.apPerson' })
     const theme = useTheme()
     const navigation = useNavigation()
     const { client } = useClient()
@@ -109,7 +111,7 @@ export const ApPerson = ({ person }: Props) => {
                                         })
                                 }}
                             >
-                                フォロー解除
+                                {t('unfollow')}
                             </Button>
                         ) : (
                             <Button
@@ -126,7 +128,7 @@ export const ApPerson = ({ person }: Props) => {
                                         })
                                 }}
                             >
-                                フォロー
+                                {t('follow')}
                             </Button>
                         )}
                     </div>
@@ -145,7 +147,7 @@ export const ApPerson = ({ person }: Props) => {
                         </Text>
                     </div>
                     <div>
-                        <Text>{person.summary || '説明はまだありません'}</Text>
+                        <Text>{person.summary || t('noDescription')}</Text>
                     </div>
                     <div
                         style={{
@@ -156,14 +158,14 @@ export const ApPerson = ({ person }: Props) => {
                 </div>
             </div>
             <div>
-                <Text>このユーザーはActivityPubのユーザーです。</Text>
+                <Text>{t('apUserNotice')}</Text>
                 {person.url && (
                     <Button
                         onClick={() => {
                             window.open(person.url!.toString(), '_blank', 'noopener,noreferrer')
                         }}
                     >
-                        リモートで開く
+                        {t('openRemote')}
                     </Button>
                 )}
             </div>

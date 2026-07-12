@@ -1,5 +1,6 @@
 import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Suspense, useDeferredValue, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { TimelineCard } from './TimelineCard'
 import { Document, Server } from '@concrnt/client'
@@ -7,6 +8,7 @@ import { Avatar, Chip, CssVar, Text } from '@concrnt/ui'
 import { useResource } from '../hooks/useResource'
 
 export const ClassicExplorer = () => {
+    const { t } = useTranslation('', { keyPrefix: 'components.classicExplorer' })
     const { client } = useClient()
 
     const [selectedServer, setSelectedServer] = useState<string>(client?.server?.domain ?? '')
@@ -27,7 +29,7 @@ export const ClassicExplorer = () => {
                 <Suspense
                     fallback={
                         <Text variant="caption" style={{ opacity: 0.5 }}>
-                            読み込み中...
+                            {t('loading')}
                         </Text>
                     }
                 >
@@ -39,7 +41,7 @@ export const ClassicExplorer = () => {
             <Suspense
                 fallback={
                     <Text variant="caption" style={{ opacity: 0.5 }}>
-                        読み込み中...
+                        {t('loading')}
                     </Text>
                 }
             >
@@ -193,6 +195,7 @@ const ServerChipBody = (props: {
     server: Server | null
     offline: boolean
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.classicExplorer' })
     const server = props.server
     const offline = props.offline
     const nickname =
@@ -246,7 +249,7 @@ const ServerChipBody = (props: {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        オフライン
+                        {t('offline')}
                     </span>
                 ) : nickname ? (
                     <span

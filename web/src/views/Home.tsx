@@ -6,6 +6,7 @@ import { useDrawer } from '../contexts/Drawer'
 
 import { Tabs, Tab, Text, Divider, Button } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
+import { useTranslation } from 'react-i18next'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 
@@ -28,6 +29,7 @@ import { useComposer } from '../contexts/Composer'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 export const HomeView = (props: ScrollViewProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const { client, isDomainOffline } = useClient()
     const drawer = useDrawer()
 
@@ -48,13 +50,13 @@ export const HomeView = (props: ScrollViewProps) => {
             drawer.open(
                 <ProfileEditor
                     noLoading
-                    title="プロフィールを設定しましょう！"
+                    title={t('setUpProfile')}
                     targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
                     onComplete={() => drawer.close()}
                 />
             )
         }
-    }, [client, drawer, isDomainOffline])
+    }, [client, drawer, isDomainOffline, t])
 
     return (
         <>
@@ -98,10 +100,8 @@ export const HomeView = (props: ScrollViewProps) => {
                                 padding: CssVar.space(4)
                             }}
                         >
-                            <Text variant="caption">
-                                読み込みに失敗しました(サーバーがオフラインの可能性があります)
-                            </Text>
-                            <Button onClick={() => resetErrorBoundary()}>再試行</Button>
+                            <Text variant="caption">{t('loadFailed')}</Text>
+                            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
                         </div>
                     )}
                 >
@@ -180,12 +180,13 @@ const HomeMain = ({
 }
 
 const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
     const [knownCommunities] = useSubscribe(client.knownCommunities)
     const isMobile = useIsMobile()
 
-    if (!list) return <Text>リストが見つかりませんでした</Text>
+    if (!list) return <Text>{t('listNotFound')}</Text>
 
     return (
         <>

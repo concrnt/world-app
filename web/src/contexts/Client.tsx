@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Client } from '@concrnt/worldlib'
 import { InMemoryAuthProvider, NotFoundError, ServerOfflineError } from '@concrnt/client'
@@ -49,6 +50,7 @@ const readStoredString = (key: string): string | undefined => {
 }
 
 export const ClientProvider = (props: Props): ReactNode => {
+    const { t } = useTranslation('', { keyPrefix: 'contexts.client' })
     const [client, setClient] = useState<Client | null | undefined>(undefined)
     const [isOffline, setIsOffline] = useState(false)
     const [isDomainOffline, setIsDomainOffline] = useState(false)
@@ -61,76 +63,79 @@ export const ClientProvider = (props: Props): ReactNode => {
     const clientRef = useRef<Client | null>(null)
     const bootedOfflineRef = useRef(false)
 
-    const reload = useCallback(async (name?: string) => {
-        console.log('Reloading client for profile', name)
-        setSetupError(null)
-        setNotFoundOn(null)
-        setProgress('セッションを確認しています...')
+    const reload = useCallback(
+        async (name?: string) => {
+            console.log('Reloading client for profile', name)
+            setSetupError(null)
+            setNotFoundOn(null)
+            setProgress(t('checkingSession'))
 
-        const domain = readStoredString('Domain')
-        const masterKey = readStoredString('PrivateKey')
-        const subKey = readStoredString('SubKey')
+            const domain = readStoredString('Domain')
+            const masterKey = readStoredString('PrivateKey')
+            const subKey = readStoredString('SubKey')
 
-        if (!domain || (!masterKey && !subKey)) {
-            console.log('No web session found')
-            clientRef.current?.dispose()
-            clientRef.current = null
-            setClient(null)
-            return
-        }
-
-        const authProvider = new InMemoryAuthProvider(masterKey, subKey)
-        const kvs = resourceCache
-        try {
-            setProgress('サーバーに接続しています...')
-            const client = await Client.create(domain, authProvider, kvs, name)
-
-            // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
-            // (オフライン起動時はどのみち書き込みができないため確認しない)
-            let subkeyIsInvalid = false
-            if (client.ccid !== '' && client.isOnline) {
-                setProgress('鍵の状態を確認しています...')
-                subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
+            if (!domain || (!masterKey && !subKey)) {
+                console.log('No web session found')
+                clientRef.current?.dispose()
+                clientRef.current = null
+                setClient(null)
+                return
             }
 
-            if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
-                setProgress('プロフィールを読み込んでいます...')
-                await client.updateProfiles()
+            const authProvider = new InMemoryAuthProvider(masterKey, subKey)
+            const kvs = resourceCache
+            try {
+                setProgress(t('connectingToServer'))
+                const client = await Client.create(domain, authProvider, kvs, name)
 
-                setProgress('タイムラインを確認しています...')
-                await setupDefaultTimelines(client)
+                // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
+                // (オフライン起動時はどのみち書き込みができないため確認しない)
+                let subkeyIsInvalid = false
+                if (client.ccid !== '' && client.isOnline) {
+                    setProgress(t('checkingKeyStatus'))
+                    subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
+                }
 
-                setProgress('リストを読み込んでいます...')
-                await client.pinnedLists.value()
-            } else if (client.ccid !== '') {
-                // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
-                // setupDefaultTimelinesはcommitを行うため実行しない
-                setProgress('キャッシュから読み込んでいます...')
-                await client.updateProfiles().catch(() => {})
-                await client.pinnedLists.value().catch(() => {})
+                if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
+                    setProgress(t('loadingProfiles'))
+                    await client.updateProfiles()
+
+                    setProgress(t('checkingTimelines'))
+                    await setupDefaultTimelines(client)
+
+                    setProgress(t('loadingLists'))
+                    await client.pinnedLists.value()
+                } else if (client.ccid !== '') {
+                    // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
+                    // setupDefaultTimelinesはcommitを行うため実行しない
+                    setProgress(t('loadingFromCache'))
+                    await client.updateProfiles().catch(() => {})
+                    await client.pinnedLists.value().catch(() => {})
+                }
+
+                console.log('Client created successfully. online:', client.isOnline)
+                clientRef.current?.dispose()
+                clientRef.current = client
+                bootedOfflineRef.current = !client.isOnline
+                setIsDomainOffline(!client.isOnline)
+                setDomainRecovered(false)
+                setSubkeyInvalid(subkeyIsInvalid)
+                setClient(client)
+            } catch (err) {
+                console.error('Failed to create client', err)
+                if (err instanceof ServerOfflineError) {
+                    setIsOffline(true)
+                } else if (err instanceof NotFoundError) {
+                    // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
+                    // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
+                    setNotFoundOn(domain)
+                } else {
+                    setSetupError(err instanceof Error ? err.message : String(err))
+                }
             }
-
-            console.log('Client created successfully. online:', client.isOnline)
-            clientRef.current?.dispose()
-            clientRef.current = client
-            bootedOfflineRef.current = !client.isOnline
-            setIsDomainOffline(!client.isOnline)
-            setDomainRecovered(false)
-            setSubkeyInvalid(subkeyIsInvalid)
-            setClient(client)
-        } catch (err) {
-            console.error('Failed to create client', err)
-            if (err instanceof ServerOfflineError) {
-                setIsOffline(true)
-            } else if (err instanceof NotFoundError) {
-                // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
-                // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
-                setNotFoundOn(domain)
-            } else {
-                setSetupError(err instanceof Error ? err.message : String(err))
-            }
-        }
-    }, [])
+        },
+        [t]
+    )
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -180,7 +185,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         localStorage.removeItem('SubKey')
         await resourceCache.clear()
         await reload()
-    }, [])
+    }, [reload])
 
     const value = useMemo(() => {
         return {
@@ -206,14 +211,14 @@ export const ClientProvider = (props: Props): ReactNode => {
                     gap: '1rem'
                 }}
             >
-                サーバーはオフラインです
+                {t('serverOffline')}
                 <Button
                     onClick={() => {
                         setIsOffline(false)
                         reload()
                     }}
                 >
-                    再試行
+                    {t('retry')}
                 </Button>
                 <Button
                     onClick={async () => {
@@ -221,7 +226,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                         window.location.reload()
                     }}
                 >
-                    ログアウト
+                    {t('logout')}
                 </Button>
             </div>
         )
@@ -242,17 +247,15 @@ export const ClientProvider = (props: Props): ReactNode => {
                     textAlign: 'center'
                 }}
             >
-                サーバー {notFoundOn} にあなたの登録が見つかりませんでした
-                <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-                    サーバーのリセットや、別のサーバーへの移行が原因の可能性があります。
-                </div>
+                {t('registrationNotFound', { domain: notFoundOn })}
+                <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>{t('registrationNotFoundDesc')}</div>
                 <Button
                     onClick={async () => {
                         await logout()
                         window.location.reload()
                     }}
                 >
-                    ログアウト
+                    {t('logout')}
                 </Button>
             </div>
         )
@@ -273,7 +276,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                     textAlign: 'center'
                 }}
             >
-                読み込みに失敗しました
+                {t('loadFailed')}
                 <div style={{ fontSize: '0.85rem', opacity: 0.7, wordBreak: 'break-all' }}>{setupError}</div>
                 <Button
                     onClick={() => {
@@ -281,7 +284,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                         reload()
                     }}
                 >
-                    再試行
+                    {t('retry')}
                 </Button>
                 <Button
                     onClick={async () => {
@@ -289,7 +292,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                         window.location.reload()
                     }}
                 >
-                    ログアウト
+                    {t('logout')}
                 </Button>
             </div>
         )

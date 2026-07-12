@@ -1,4 +1,5 @@
 import { Button, ListItem, Text, useAnchor } from '@concrnt/ui'
+import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
@@ -31,6 +32,7 @@ interface LikeState {
 }
 
 export const MessageActions = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.messageActions' })
     const { client } = useClient()
     const composer = useComposer()
     const { select, close } = useSelect()
@@ -201,18 +203,18 @@ export const MessageActions = (props: Props) => {
                                 key="delete"
                                 onClick={() => {
                                     confirm.open(
-                                        '本当にこの投稿を削除しますか？',
+                                        t('confirmDelete'),
                                         () => {
                                             client?.api.delete(props.message.uri).then(() => hapticSuccess())
                                             close()
                                         },
                                         {
-                                            confirmText: '削除'
+                                            confirmText: t('delete')
                                         }
                                     )
                                 }}
                             >
-                                <Text>投稿を削除</Text>
+                                <Text>{t('deletePost')}</Text>
                             </ListItem>,
                             <ListItem
                                 key="abuse"
@@ -229,7 +231,7 @@ export const MessageActions = (props: Props) => {
                                     )
                                 }}
                             >
-                                通報
+                                {t('report')}
                             </ListItem>,
                             <ListItem
                                 key="inspect"
@@ -238,7 +240,7 @@ export const MessageActions = (props: Props) => {
                                     close()
                                 }}
                             >
-                                <Text>インスペクター</Text>
+                                <Text>{t('inspector')}</Text>
                             </ListItem>
                         ],
                         menuAnchor

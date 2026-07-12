@@ -10,8 +10,10 @@ import { Themes } from '../data/themes'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
+import { useTranslation } from 'react-i18next'
 
 export const ThemeSettingsView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.themeSettings' })
     const [themeName, setThemeName] = usePreference('themeName')
     const { customThemes, deleteTheme, reloadThemes } = useThemeLibrary()
     const drawer = useDrawer()
@@ -19,7 +21,7 @@ export const ThemeSettingsView = () => {
 
     return (
         <View>
-            <Header>テーマ設定</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     flex: 1,
@@ -30,11 +32,11 @@ export const ThemeSettingsView = () => {
                     padding: CssVar.space(4)
                 }}
             >
-                <Text variant="h3">現在のテーマ: {selectedTheme.meta?.name ?? themeName}</Text>
+                <Text variant="h3">{t('currentTheme', { name: selectedTheme.meta?.name ?? themeName })}</Text>
                 <ThemeCard theme={selectedTheme} />
                 <Divider />
 
-                <Text variant="h3">組み込みテーマ</Text>
+                <Text variant="h3">{t('builtinThemes')}</Text>
                 <div
                     style={{
                         display: 'grid',
@@ -57,12 +59,12 @@ export const ThemeSettingsView = () => {
                         flexWrap: 'wrap'
                     }}
                 >
-                    <Text variant="h3">カスタムテーマ</Text>
+                    <Text variant="h3">{t('customThemes')}</Text>
                     <Button
                         variant="outlined"
                         onClick={() => drawer.open(<ThemeImporter onComplete={() => reloadThemes()} />)}
                     >
-                        v1からインポート
+                        {t('importFromV1')}
                     </Button>
                 </div>
                 {Object.keys(customThemes).length > 0 && (

@@ -1,5 +1,6 @@
 import { Text, CssVar } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'
 import {
     Api,
@@ -35,6 +36,7 @@ const storeWebSession = (domain: string, masterKey: string, subKey: string) => {
 }
 
 export const AccountSetup = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.accountSetup' })
     const reload = useReloadClient()
     const reset = useResetPreference()
 
@@ -149,11 +151,9 @@ export const AccountSetup = (props: Props) => {
             {state === 'initial' && (
                 <>
                     <AuthHeader
-                        title="アカウントを作成"
+                        title={t('title')}
                         description={
-                            isConcrntWorld
-                                ? '登録に使うサーバーを選んでから、ブラウザで登録を完了します。'
-                                : `${domain} でアカウントを登録します。`
+                            isConcrntWorld ? t('chooseServerDescription') : t('registerOnDomainDescription', { domain })
                         }
                     />
 
@@ -173,7 +173,7 @@ export const AccountSetup = (props: Props) => {
                         {isConcrntWorld && (
                             <div style={authStyles.inputGroup}>
                                 <Text style={{ color: CssVar.uiText }}>
-                                    {props.entrypoint === domain ? 'おすすめサーバー' : 'カスタムサーバー'}
+                                    {props.entrypoint === domain ? t('recommendedServer') : t('customServer')}
                                 </Text>
                                 <div
                                     style={{
@@ -215,16 +215,14 @@ export const AccountSetup = (props: Props) => {
                                             serverInput.current?.focus()
                                         }}
                                     >
-                                        変更
+                                        {t('change')}
                                     </button>
                                 </div>
                             </div>
                         )}
 
                         <Text style={authStyles.status}>
-                            {registrationPageOpened
-                                ? 'サーバー上でアカウントが作成されるのを待っています。登録が完了すると自動で次へ進みます。'
-                                : ''}
+                            {registrationPageOpened ? t('waitingForRegistrationAuto') : ''}
                         </Text>
                     </div>
 
@@ -278,7 +276,7 @@ export const AccountSetup = (props: Props) => {
                                         lineHeight: 1.35
                                     }}
                                 >
-                                    アプリでの作成がおすすめ
+                                    {t('appRecommendedTitle')}
                                 </Text>
                                 <Text
                                     style={{
@@ -288,7 +286,7 @@ export const AccountSetup = (props: Props) => {
                                         fontSize: '0.92rem'
                                     }}
                                 >
-                                    マスターキーの保存や端末移行まで含めると、アプリ版での作成がより扱いやすくなります。お使いのスマートフォンで下のQRコードを読み取ってアプリを入手してください。
+                                    {t('appRecommendedDescription')}
                                 </Text>
                             </div>
                         </div>
@@ -370,21 +368,18 @@ export const AccountSetup = (props: Props) => {
                             }}
                         >
                             {registrationPageOpened
-                                ? '登録待機中...'
+                                ? t('waitingForRegistrationButton')
                                 : isConcrntWorld && props.entrypoint === domain
-                                  ? 'おすすめサーバーではじめる'
-                                  : 'このサーバーではじめる'}
+                                  ? t('startWithRecommendedServer')
+                                  : t('startWithThisServer')}
                         </AuthButton>
-                        <AuthTextButton onClick={props.onBack}>戻る</AuthTextButton>
+                        <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
                     </AuthActions>
                 </>
             )}
             {state === 'backup' && identity && (
                 <>
-                    <AuthHeader
-                        title="マスターキーを保存"
-                        description="このマスターキーはアカウント復元に必要です。登録を続ける前にダウンロードして、安全な場所に保管してください。"
-                    />
+                    <AuthHeader title={t('backupTitle')} description={t('backupDescription')} />
                     <div style={authStyles.section}>
                         <div
                             style={{
@@ -422,29 +417,22 @@ export const AccountSetup = (props: Props) => {
                                     opacity: 0.72
                                 }}
                             >
-                                登録サーバー
+                                {t('registeredServer')}
                             </Text>
                             <Text style={{ color: CssVar.contentText }}>{domain}</Text>
                         </div>
                         <Text style={authStyles.status}>
-                            {recoveryDownloaded
-                                ? 'ダウンロードを開始しました。保存先を確認してから登録へ進んでください。'
-                                : 'このファイルを失うと、別の端末やブラウザでアカウントを復元できなくなる可能性があります。'}
+                            {recoveryDownloaded ? t('downloadStarted') : t('downloadWarning')}
                         </Text>
                     </div>
                     <AuthActions fixedBottom>
                         <AuthButton
                             onClick={() => {
-                                const text = `Concrnt マスターキー
-このファイルは Concrnt のアカウントを復元するためのものです。
-このファイルを安全な場所に保管してください。
-
-CCID: ${identity.CCID}
-マスターキー: ${identity.mnemonic_ja}
-登録サーバー: ${domain}
-
-マスターキーを紛失した場合、アカウントを復元できなくなる可能性があります。
-この内容を他人に知られると、アカウントが乗っ取られる可能性があります。`
+                                const text = t('masterkeyFileTemplate', {
+                                    ccid: identity.CCID,
+                                    mnemonic: identity.mnemonic_ja,
+                                    domain
+                                })
 
                                 const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
                                 const url = URL.createObjectURL(blob)
@@ -456,7 +444,7 @@ CCID: ${identity.CCID}
                                 setRecoveryDownloaded(true)
                             }}
                         >
-                            マスターキーをダウンロード
+                            {t('downloadMasterkey')}
                         </AuthButton>
                         <AuthButton
                             variant="outlined"
@@ -465,7 +453,7 @@ CCID: ${identity.CCID}
                                 await openRegistrationPage(domain)
                             }}
                         >
-                            登録ページを開く
+                            {t('openRegistrationPage')}
                         </AuthButton>
                         <AuthTextButton
                             onClick={() => {
@@ -473,27 +461,31 @@ CCID: ${identity.CCID}
                                 setRecoveryDownloaded(false)
                             }}
                         >
-                            サーバー選択に戻る
+                            {t('backToServerSelection')}
                         </AuthTextButton>
                     </AuthActions>
                 </>
             )}
             {state === 'done' && (
                 <>
-                    <AuthHeader
-                        title="準備完了"
-                        description="登録が確認できました。最後にこのブラウザで使う鍵を登録します。"
-                    />
+                    <AuthHeader title={t('readyTitle')} description={t('readyDescriptionBrowser')} />
                     <AuthActions fixedBottom>
                         {finalizeError && (
-                            <Text style={{ color: '#ff5b5b', textAlign: 'center', wordBreak: 'break-all' }}>
-                                登録に失敗しました。通信環境を確認して、もう一度お試しください。
+                            <Text
+                                style={{
+                                    color: '#ff5b5b',
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('finalizeFailedNetwork')}
                                 {'\n'}
                                 {finalizeError}
                             </Text>
                         )}
                         <AuthButton disabled={finalizing} onClick={finalize}>
-                            {finalizing ? '登録中...' : '完了'}
+                            {finalizing ? t('registering') : t('done')}
                         </AuthButton>
                     </AuthActions>
                 </>

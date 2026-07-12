@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, IconButton, List, ListItem, Popover, Text, CfmRenderer, useAnchor } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
@@ -32,10 +33,10 @@ const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
     reroute: <MdRepeat size={24} />
 }
 
-const editorModeLabels: Record<EditorMode, string> = {
-    plaintext: 'プレーンテキスト',
-    markdown: 'マークダウン',
-    media: 'メディア'
+const editorModeLabelKeys: Record<EditorMode, string> = {
+    plaintext: 'modePlaintext',
+    markdown: 'modeMarkdown',
+    media: 'modeMedia'
 }
 
 interface Props {
@@ -54,6 +55,7 @@ interface Props {
 }
 
 export const Composer = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.composer' })
     const { client, isDomainOffline } = useClient()
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
@@ -116,23 +118,23 @@ export const Composer = (props: Props) => {
     }, [])
 
     const getSubmitLabel = () => {
-        if (uploading) return '送信中...'
+        if (uploading) return t('sending')
         switch (props.mode) {
             case 'reply':
-                return 'リプライ'
+                return t('submitReply')
             case 'reroute':
-                return 'リルート'
+                return t('submitReroute')
             default:
-                return 'カレント'
+                return t('submit')
         }
     }
 
     const getPlaceholder = () => {
         switch (props.mode) {
             case 'reply':
-                return '返信を入力...'
+                return t('replyPlaceholder')
             default:
-                return '今、なにしてる？'
+                return t('placeholder')
         }
     }
 
@@ -470,9 +472,9 @@ export const Composer = (props: Props) => {
 
             <Popover open={modeSelectOpen} onClose={() => setModeSelectOpen(false)} anchor={modeSelectAnchor}>
                 <List dense disablePadding style={{ minWidth: '200px' }}>
-                    {(Object.keys(editorModeLabels) as EditorMode[]).map((key) => (
+                    {(Object.keys(editorModeLabelKeys) as EditorMode[]).map((key) => (
                         <ListItem key={key} icon={modeIcons[key]} onClick={() => selectEditorMode(key)}>
-                            {editorModeLabels[key]}
+                            {t(editorModeLabelKeys[key])}
                         </ListItem>
                     ))}
                 </List>
@@ -706,7 +708,7 @@ export const Composer = (props: Props) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {isDomainOffline && (
                         <Text variant="caption" style={{ margin: 0 }}>
-                            オフラインのため投稿できません
+                            {t('cannotPostOffline')}
                         </Text>
                     )}
                     <Button

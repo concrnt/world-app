@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
 import { Avatar, ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
@@ -20,6 +21,7 @@ import { useComposer } from '../contexts/Composer'
 import { semantics } from '@concrnt/worldlib'
 
 export const Sidebar = () => {
+    const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
     const navigate = useNavigate()
@@ -79,25 +81,25 @@ export const Sidebar = () => {
                     }}
                 >
                     <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>
-                        ホーム
+                        {t('home')}
                     </ListItem>
                     <ListItem icon={<MdNotifications size={24} />} onClick={() => go('/notifications')}>
-                        通知
+                        {t('notifications')}
                     </ListItem>
                     <ListItem icon={<MdContacts size={24} />} onClick={() => go('/contacts')}>
-                        コンタクト
+                        {t('contacts')}
                     </ListItem>
                     <ListItem icon={<MdExplore size={24} />} onClick={() => go('/explorer')}>
-                        探索
+                        {t('explore')}
                     </ListItem>
                     <ListItem icon={<MdList size={24} />} onClick={() => go('/lists')}>
-                        リスト
+                        {t('lists')}
                     </ListItem>
                     <ListItem icon={<MdTravelExplore size={24} />} onClick={() => go('/query')}>
-                        照会
+                        {t('query')}
                     </ListItem>
                     <ListItem icon={<MdSettings size={24} />} onClick={() => go('/settings')}>
-                        設定
+                        {t('settings')}
                     </ListItem>
                 </List>
                 <div style={{ flex: 1 }} />
@@ -109,7 +111,7 @@ export const Sidebar = () => {
                     style={{ width: '100%' }}
                 >
                     <MdCreate size={20} />
-                    投稿
+                    {t('post')}
                 </Button>
 
                 <Divider
@@ -136,7 +138,7 @@ export const Sidebar = () => {
                         target="_blank"
                         rel="noreferrer"
                     >
-                        ドキュメント
+                        {t('documentation')}
                     </a>
                     {' / '}
                     <a
@@ -148,7 +150,7 @@ export const Sidebar = () => {
                         target="_blank"
                         rel="noreferrer"
                     >
-                        フォーラム
+                        {t('forum')}
                     </a>
                     {' / '}
                     <a

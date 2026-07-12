@@ -2,6 +2,7 @@ import { MessageContainer } from '../components/message'
 import { Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
 import { MdAddReaction } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import {
     Association,
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export const PostView = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.post' })
     const { client } = useClient()
     const navigate = useNavigate()
     const emojiPicker = useEmojiPicker()
@@ -187,7 +189,7 @@ export const PostView = (props: Props) => {
                 >
                     {loading && (
                         <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                            <Text>読み込み中...</Text>
+                            <Text>{t('loading')}</Text>
                         </div>
                     )}
 
@@ -218,7 +220,7 @@ export const PostView = (props: Props) => {
                             )}
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リプライはまだありません</Text>
+                                    <Text>{t('noReplies')}</Text>
                                 </div>
                             )}
                             {replies.map((reply) => (
@@ -242,7 +244,7 @@ export const PostView = (props: Props) => {
                         <>
                             {reroutes.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リルートはまだありません</Text>
+                                    <Text>{t('noReroutes')}</Text>
                                 </div>
                             )}
                             {reroutes.map((reroute) => (
@@ -252,7 +254,7 @@ export const PostView = (props: Props) => {
                                     date={reroute.createdAt}
                                     onClick={() => navigate('/profile/' + reroute.author)}
                                 >
-                                    がリルートしました
+                                    {t('rerouted')}
                                 </AssociationUserItem>
                             ))}
                         </>
@@ -262,7 +264,7 @@ export const PostView = (props: Props) => {
                         <>
                             {favorites.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>お気に入りはまだありません</Text>
+                                    <Text>{t('noFavorites')}</Text>
                                 </div>
                             )}
                             {favorites.map((fav) => (
@@ -272,7 +274,7 @@ export const PostView = (props: Props) => {
                                     date={fav.createdAt}
                                     onClick={() => navigate('/profile/' + fav.author)}
                                 >
-                                    がお気に入りに登録しました
+                                    {t('favorited')}
                                 </AssociationUserItem>
                             ))}
                         </>
@@ -307,11 +309,11 @@ export const PostView = (props: Props) => {
                                 }}
                             >
                                 <MdAddReaction size={18} />
-                                <span style={{ fontSize: '0.95rem' }}>リアクションを追加...</span>
+                                <span style={{ fontSize: '0.95rem' }}>{t('addReaction')}</span>
                             </div>
                             {Object.keys(reactionCounts).length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>リアクションはまだありません</Text>
+                                    <Text>{t('noReactions')}</Text>
                                 </div>
                             )}
 
@@ -370,7 +372,7 @@ export const PostView = (props: Props) => {
                                                 opacity: 0.5
                                             }}
                                         >
-                                            <Text>読み込み中...</Text>
+                                            <Text>{t('loading')}</Text>
                                         </div>
                                     )}
                                     {!loadingMembers &&

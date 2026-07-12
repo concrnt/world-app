@@ -1,6 +1,7 @@
 import { Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError } from '@concrnt/client'
 import { useNavigate } from 'react-router-dom'
@@ -23,6 +24,7 @@ interface ApServerInfo {
 }
 
 export const Activitypub = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.activitypub' })
     const { client } = useClient()
     const drawer = useDrawer()
     const navigate = useNavigate()
@@ -96,7 +98,7 @@ export const Activitypub = () => {
 
     return (
         <View>
-            <Header>Activitypub設定</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -105,12 +107,12 @@ export const Activitypub = () => {
                     padding: CssVar.space(2)
                 }}
             >
-                {settings === undefined && <Text>読み込み中...</Text>}
+                {settings === undefined && <Text>{t('loading')}</Text>}
                 {settings === null && (
                     <>
-                        <Text>Activitypub連携を有効化しましょう</Text>
-                        <Text>連携を有効化すると、Activitypub対応のSNSと繋がることができます。</Text>
-                        <Text>希望のID</Text>
+                        <Text>{t('enableIntro')}</Text>
+                        <Text>{t('enableDescription')}</Text>
+                        <Text>{t('desiredId')}</Text>
                         <TextField value={idDraft} onChange={(e) => setIDDraft(e.target.value)} />
                         <Button
                             disabled={!idOk}
@@ -130,14 +132,14 @@ export const Activitypub = () => {
                                     })
                             }}
                         >
-                            有効化
+                            {t('enable')}
                         </Button>
                     </>
                 )}
                 {settings && (
                     <>
-                        <Text>Activitypub連携は有効化されています。</Text>
-                        <Text>あなたのID: {settings.id}</Text>
+                        <Text>{t('enabled')}</Text>
+                        <Text>{t('yourId', { id: settings.id })}</Text>
                         <Divider />
                         <IconButton
                             onClick={(e) => {
@@ -155,7 +157,7 @@ export const Activitypub = () => {
                                 navigate('/activitypub/view/' + encodeURIComponent(lookupDraft))
                             }}
                         >
-                            照会
+                            {t('inquiry')}
                         </Button>
                     </>
                 )}

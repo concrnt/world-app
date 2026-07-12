@@ -1,5 +1,6 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { Reorder, useDragControls, motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { Text, IconButton, Button, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
@@ -241,6 +242,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
 }
 
 const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.lists' })
     const { client } = useClient()
     const [newListTitle, setNewListTitle] = useState('')
 
@@ -261,7 +263,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                     alignItems: 'center'
                 }}
             >
-                <Text variant="h3">リストを作成</Text>
+                <Text variant="h3">{t('createList')}</Text>
                 <Button
                     disabled={!newListTitle}
                     onClick={() => {
@@ -286,11 +288,11 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                         })
                     }}
                 >
-                    作成
+                    {t('create')}
                 </Button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">タイトル</Text>
+                <Text variant="h5">{t('listTitle')}</Text>
                 <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
             </div>
         </div>

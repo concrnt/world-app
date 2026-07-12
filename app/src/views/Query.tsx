@@ -3,16 +3,18 @@ import { TimelineView } from '../views/Timeline'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CssVar } from '../types/Theme'
 
 export const QueryView = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.query' })
     const { push } = useStack()
 
     const [query, setQuery] = useState('')
 
     return (
         <View>
-            <Header>照会</Header>
+            <Header>{t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -27,7 +29,7 @@ export const QueryView = () => {
                         push?.(<TimelineView uri={query} />)
                     }}
                 >
-                    照会
+                    {t('submit')}
                 </Button>
             </div>
         </View>

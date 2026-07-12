@@ -80,7 +80,15 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun getToken(invoke: Invoke) {
-        FirebaseMessaging.getInstance().token
+        // FirebaseMessaging.getInstance() throws when the app was built without
+        // google-services.json (no default FirebaseApp) — reject instead of crashing.
+        val messaging = try {
+            FirebaseMessaging.getInstance()
+        } catch (e: Exception) {
+            invoke.reject("push notifications unavailable: " + (e.message ?: "Firebase is not configured"))
+            return
+        }
+        messaging.token
             .addOnSuccessListener { token ->
                 PushKeyStore.saveFcmToken(activity, token)
                 invoke.resolve(JSObject().apply {

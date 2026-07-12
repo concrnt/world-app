@@ -1,4 +1,5 @@
 import { Suspense, useDeferredValue, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Text, TextField, CCWallpaper, Avatar, IconButton, Tab, Tabs, useTheme } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useDrawer } from '../contexts/Drawer'
@@ -63,6 +64,7 @@ const fetchSearch = async (tab: TabType, query: string): Promise<CommunityHit[] 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const SearchExplorer = () => {
+    const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
     const theme = useTheme()
     const activeColor = theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.contentLink
     const inactiveColor = `rgb(from ${CssVar.contentText} r g b / 0.35)`
@@ -90,7 +92,7 @@ export const SearchExplorer = () => {
                     style={tabStyle(tab === 'communities')}
                     onClick={() => setTab('communities')}
                 >
-                    <Text>コミュニティ</Text>
+                    <Text>{t('communities')}</Text>
                 </Tab>
                 <Tab
                     selected={tab === 'users'}
@@ -98,13 +100,13 @@ export const SearchExplorer = () => {
                     style={tabStyle(tab === 'users')}
                     onClick={() => setTab('users')}
                 >
-                    <Text>ユーザー</Text>
+                    <Text>{t('users')}</Text>
                 </Tab>
             </Tabs>
 
             <TextField
                 value={query}
-                placeholder={tab === 'communities' ? 'コミュニティを検索...' : 'ユーザーを検索...'}
+                placeholder={tab === 'communities' ? t('searchCommunities') : t('searchUsers')}
                 onChange={(e) => {
                     const value = e.target.value
                     setQuery(value)
@@ -116,7 +118,7 @@ export const SearchExplorer = () => {
             />
 
             <div style={{ opacity: isStale ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-                <Suspense fallback={<Text variant="caption">読み込み中...</Text>}>
+                <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
                     <SearchResults tab={deferredTab} query={deferredQuery} />
                 </Suspense>
             </div>
@@ -125,12 +127,13 @@ export const SearchExplorer = () => {
 }
 
 const SearchResults = ({ tab, query }: { tab: TabType; query: string }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
     const hits = useResource(`crawler-search:${tab}:${query}`, () => fetchSearch(tab, query))
 
     if (hits === null) {
         return (
             <Text variant="caption" style={{ color: 'var(--error, #f44336)' }}>
-                検索サービスに接続できませんでした
+                {t('searchServiceUnavailable')}
             </Text>
         )
     }
@@ -138,9 +141,7 @@ const SearchResults = ({ tab, query }: { tab: TabType; query: string }) => {
     if (hits.length === 0) {
         return (
             <Text variant="caption" style={{ opacity: 0.5 }}>
-                {tab === 'communities'
-                    ? '該当するコミュニティが見つかりませんでした'
-                    : '該当するユーザーが見つかりませんでした'}
+                {tab === 'communities' ? t('noCommunitiesFound') : t('noUsersFound')}
             </Text>
         )
     }
