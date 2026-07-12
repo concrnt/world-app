@@ -324,6 +324,7 @@ const Body = (props: BodyProps) => {
                             ) : (
                                 <AcknowledgeButton
                                     ccid={props.ccid}
+                                    watchTarget={semantics.homeTimeline(props.ccid, props.profileName ?? 'main')}
                                     onChange={() => {
                                         startTransition(() => {
                                             reloadStats()
@@ -494,7 +495,12 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                         justifyContent: 'flex-end'
                     }}
                 >
-                    {!isMe && <AcknowledgeButton ccid={props.ccid} />}
+                    {!isMe && (
+                        <AcknowledgeButton
+                            ccid={props.ccid}
+                            watchTarget={semantics.homeTimeline(props.ccid, props.profileName)}
+                        />
+                    )}
                 </div>
                 <div>
                     <Text
