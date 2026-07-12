@@ -1,4 +1,5 @@
 import { useClient } from '../contexts/Client'
+import { useTranslation } from 'react-i18next'
 
 import { ListItem, Divider, Text, useTheme, List, Avatar } from '@concrnt/ui'
 
@@ -20,6 +21,7 @@ interface Props {
 // モバイル幅のドロワーの中身。app/src/components/Sidebar.tsx のミラー
 // (ボトムタブと重複するホーム/通知等は持たず、プロフィール/リスト/照会/設定に絞る)
 export const DrawerMenu = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
     const navigate = useNavigate()
@@ -90,16 +92,16 @@ export const DrawerMenu = (props: Props) => {
                             icon={<MdPerson size={24} />}
                             onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
                         >
-                            プロフィール
+                            {t('profile')}
                         </ListItem>
                         <ListItem icon={<MdList size={24} />} onClick={() => go('/lists')}>
-                            リスト
+                            {t('lists')}
                         </ListItem>
                         <ListItem icon={<MdTravelExplore size={24} />} onClick={() => go('/query')}>
-                            照会
+                            {t('query')}
                         </ListItem>
                         <ListItem icon={<MdSettings size={24} />} onClick={() => go('/settings')}>
-                            設定
+                            {t('settings')}
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />
@@ -122,7 +124,7 @@ export const DrawerMenu = (props: Props) => {
                             target="_blank"
                             rel="noreferrer"
                         >
-                            ドキュメント
+                            {t('documentation')}
                         </a>
                         {' / '}
                         <a
@@ -134,7 +136,7 @@ export const DrawerMenu = (props: Props) => {
                             target="_blank"
                             rel="noreferrer"
                         >
-                            フォーラム
+                            {t('forum')}
                         </a>
                         {' / '}
                         <a
