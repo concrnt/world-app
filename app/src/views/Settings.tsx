@@ -45,6 +45,8 @@ export const SettingsView = () => {
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
     const [, setAppInfoTapCount] = useState(0)
 
+    const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
+
     const handleAppInfoClick = () => {
         if (developerMode) return
 
@@ -88,13 +90,15 @@ export const SettingsView = () => {
                     >
                         {t('language')}
                     </ListItem>
-                    <ListItem
-                        startIcon={<SiActivitypub size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => stack.push(<Activitypub />)}
-                    >
-                        {t('activitypub')}
-                    </ListItem>
+                    {activitypubEnabled && (
+                        <ListItem
+                            startIcon={<SiActivitypub size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => stack.push(<Activitypub />)}
+                        >
+                            {t('activitypub')}
+                        </ListItem>
+                    )}
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}

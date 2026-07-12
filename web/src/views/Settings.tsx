@@ -32,12 +32,14 @@ const appInfoRows = [
 
 export const SettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.settings' })
-    const { logout } = useClient()
+    const { client, logout } = useClient()
 
     const reset = useResetPreference()
     const navigate = useNavigate()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
     const [, setAppInfoTapCount] = useState(0)
+
+    const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
         if (developerMode) return
@@ -81,13 +83,15 @@ export const SettingsView = () => {
                     >
                         {t('language')}
                     </ListItem>
-                    <ListItem
-                        startIcon={<SiActivitypub size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/activitypub')}
-                    >
-                        {t('activitypub')}
-                    </ListItem>
+                    {activitypubEnabled && (
+                        <ListItem
+                            startIcon={<SiActivitypub size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => navigate('/settings/activitypub')}
+                        >
+                            {t('activitypub')}
+                        </ListItem>
+                    )}
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}
