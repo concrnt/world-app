@@ -410,6 +410,23 @@
             "selectViewers": "Select who can view",
             "selectViewersNote": "To select a user, you need to follow them first."
         },
+        "aliasSetup": {
+            "title": "Set Alias",
+            "description": "You can bind a domain you own to your ID as an alias. Enter a domain to see the DNS record you need to set.",
+            "domainPlaceholder": "example.com",
+            "dnsInstruction": "Add the following TXT record to your domain's DNS, then press Continue.",
+            "recordName": "Name",
+            "recordType": "Type",
+            "recordValue": "Value",
+            "masterKeyRequired": "This operation requires logging in with your master key.",
+            "verificationFailed": "The TXT record could not be verified. DNS changes can take a while to propagate. Please wait a bit and try again.",
+            "genericError": "Failed to set alias: {{message}}",
+            "success": "Alias has been set!",
+            "cancel": "Cancel",
+            "proceed": "Continue",
+            "processing": "Verifying...",
+            "close": "Close"
+        },
         "acknowledgeButton": {
             "follow": "Follow",
             "following": "Following"

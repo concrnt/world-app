@@ -8,10 +8,23 @@ import Tilt from 'react-parallax-tilt'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { MdBadge, MdPublic } from 'react-icons/md'
+import { useModal } from '../contexts/Modal'
+import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 
-const InfoTile = ({ icon, label, value }: { icon: ReactNode; label: string; value: string }) => {
+const InfoTile = ({
+    icon,
+    label,
+    value,
+    onClick
+}: {
+    icon: ReactNode
+    label: string
+    value: string
+    onClick?: () => void
+}) => {
     return (
         <div
+            onClick={onClick}
             style={{
                 border: `1px solid ${CssVar.divider}`,
                 borderRadius: '8px',
@@ -19,7 +32,8 @@ const InfoTile = ({ icon, label, value }: { icon: ReactNode; label: string; valu
                 display: 'grid',
                 gridTemplateRows: '24px 18px 24px',
                 gap: CssVar.space(1),
-                minWidth: 0
+                minWidth: 0,
+                cursor: onClick ? 'pointer' : undefined
             }}
         >
             <div style={{ color: CssVar.contentLink, display: 'flex', alignItems: 'center' }}>{icon}</div>
@@ -45,6 +59,7 @@ const InfoTile = ({ icon, label, value }: { icon: ReactNode; label: string; valu
 export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
+    const modal = useModal()
 
     if (!client) return null
 
@@ -100,7 +115,14 @@ export const IDView = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: CssVar.space(2) }}>
-                    <InfoTile icon={<MdBadge size={24} />} label={t('alias')} value={alias} />
+                    <InfoTile
+                        icon={<MdBadge size={24} />}
+                        label={t('alias')}
+                        value={alias}
+                        onClick={() => {
+                            modal.open(<AliasSetupModalContent onClose={() => modal.close()} />)
+                        }}
+                    />
                     <InfoTile
                         icon={<MdPublic size={24} />}
                         label="Home Server"

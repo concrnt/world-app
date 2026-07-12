@@ -410,6 +410,23 @@
             "selectViewers": "閲覧可能ユーザーを選択",
             "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。"
         },
+        "aliasSetup": {
+            "title": "エイリアスを設定",
+            "description": "自分が所有するドメインをエイリアスとしてIDに紐づけられます。ドメインを入力すると、DNSに設定すべきレコードが表示されます。",
+            "domainPlaceholder": "example.com",
+            "dnsInstruction": "お使いのドメインのDNSに以下のTXTレコードを追加してから、続行を押してください。",
+            "recordName": "名前",
+            "recordType": "タイプ",
+            "recordValue": "値",
+            "masterKeyRequired": "この操作にはマスターキーでのログインが必要です。",
+            "verificationFailed": "TXTレコードを確認できませんでした。DNSの反映には時間がかかることがあります。しばらく待ってから再度お試しください。",
+            "genericError": "エイリアスの設定に失敗しました: {{message}}",
+            "success": "エイリアスを設定しました!",
+            "cancel": "キャンセル",
+            "proceed": "続行",
+            "processing": "確認中...",
+            "close": "閉じる"
+        },
         "acknowledgeButton": {
             "follow": "フォロー",
             "following": "フォロー中"
