@@ -6,6 +6,7 @@ import { MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-ic
 import { CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { ModelViewer } from '../components/ModelViewer'
 import { useAudioPlayer } from './AudioPlayer'
+import { useBackHandler } from './BackHandler'
 
 export interface MediaItem {
     mediaURL: string
@@ -164,6 +165,12 @@ export const MediaViewerProvider = (props: Props) => {
         setCurrentIndex(0)
         resetMotion()
     }, [resetMotion])
+
+    // Androidバックボタンでビューアを閉じる
+    useBackHandler(() => {
+        close()
+        return true
+    }, isOpen)
 
     const changeImage = useCallback(
         (newIndex: number) => {

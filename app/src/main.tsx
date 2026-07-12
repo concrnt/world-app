@@ -20,6 +20,8 @@ import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { KeyboardProvider } from './contexts/Keyboard'
+import { BackHandlerProvider } from './contexts/BackHandler'
+import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
 import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
 
 const ClientLoadingScreen = () => {
@@ -41,40 +43,44 @@ const ClientLoadingScreen = () => {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <KeyboardProvider>
-            <ClientProvider
-                loading={<ClientLoadingScreen />}
-                failed={
-                    <OverlayStackProvider>
-                        <WelcomeView />
-                    </OverlayStackProvider>
-                }
-            >
-                <PreferenceProvider>
-                    <ThemeProvider>
-                        <ImageCropperProvider>
-                            <OverlayStackProvider>
-                                <EmojiPickerProvider>
-                                    <ComposerProvider>
-                                        <ScannerProvider>
-                                            <OverlayProvider>
-                                                <MediaViewerProvider>
-                                                    <AudioPlayerProvider>
-                                                        <TickerProvider>
-                                                            <UrlSummaryProvider>
-                                                                <App />
-                                                            </UrlSummaryProvider>
-                                                        </TickerProvider>
-                                                    </AudioPlayerProvider>
-                                                </MediaViewerProvider>
-                                            </OverlayProvider>
-                                        </ScannerProvider>
-                                    </ComposerProvider>
-                                </EmojiPickerProvider>
-                            </OverlayStackProvider>
-                        </ImageCropperProvider>
-                    </ThemeProvider>
-                </PreferenceProvider>
-            </ClientProvider>
+            <BackHandlerProvider>
+                <ClientProvider
+                    loading={<ClientLoadingScreen />}
+                    failed={
+                        <OverlayStackProvider>
+                            <OverlayStackBackBridge />
+                            <WelcomeView />
+                        </OverlayStackProvider>
+                    }
+                >
+                    <PreferenceProvider>
+                        <ThemeProvider>
+                            <ImageCropperProvider>
+                                <OverlayStackProvider>
+                                    <OverlayStackBackBridge />
+                                    <EmojiPickerProvider>
+                                        <ComposerProvider>
+                                            <ScannerProvider>
+                                                <OverlayProvider>
+                                                    <MediaViewerProvider>
+                                                        <AudioPlayerProvider>
+                                                            <TickerProvider>
+                                                                <UrlSummaryProvider>
+                                                                    <App />
+                                                                </UrlSummaryProvider>
+                                                            </TickerProvider>
+                                                        </AudioPlayerProvider>
+                                                    </MediaViewerProvider>
+                                                </OverlayProvider>
+                                            </ScannerProvider>
+                                        </ComposerProvider>
+                                    </EmojiPickerProvider>
+                                </OverlayStackProvider>
+                            </ImageCropperProvider>
+                        </ThemeProvider>
+                    </PreferenceProvider>
+                </ClientProvider>
+            </BackHandlerProvider>
         </KeyboardProvider>
     </ErrorBoundary>
 )

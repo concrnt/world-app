@@ -19,13 +19,17 @@ interface OverlayStackState {
     close: (id: number) => void
     closeKind: (kind: string) => void
     closeTop: () => boolean
+    anyOpen: boolean
+    handleBackRequest: () => boolean
 }
 
 const OverlayStackContext = createContext<OverlayStackState>({
     push: () => 0,
     close: () => {},
     closeKind: () => {},
-    closeTop: () => false
+    closeTop: () => false,
+    anyOpen: false,
+    handleBackRequest: () => false
 })
 
 interface Props {
@@ -68,24 +72,15 @@ export const OverlayStackProvider = (props: Props) => {
         return true
     }, [close])
 
+    const handleBackRequest = useCallback((): boolean => {
+        const top = stackRef.current[stackRef.current.length - 1]
+        if (!top) return false
+        if (top.closeOnBack) close(top.id)
+        // オーバーレイ表示中はバックイベントをここで消費し、下のナビゲーションに流さない
+        return true
+    }, [close])
+
     const anyOpen = stack.length > 0
-
-    useEffect(() => {
-        if (!anyOpen) return
-
-        const prev = (window as any).__concrntHandleBack
-        ;(window as any).__concrntHandleBack = (): boolean => {
-            const top = stackRef.current[stackRef.current.length - 1]
-            if (top && top.closeOnBack) {
-                close(top.id)
-            }
-            // オーバーレイ表示中はバックイベントをここで消費し、下のナビゲーションに流さない
-            return true
-        }
-        return () => {
-            ;(window as any).__concrntHandleBack = prev
-        }
-    }, [anyOpen, close])
 
     useEffect(() => {
         if (!anyOpen) return
@@ -102,9 +97,11 @@ export const OverlayStackProvider = (props: Props) => {
             push,
             close,
             closeKind,
-            closeTop
+            closeTop,
+            anyOpen,
+            handleBackRequest
         }),
-        [push, close, closeKind, closeTop]
+        [push, close, closeKind, closeTop, anyOpen, handleBackRequest]
     )
 
     return (
