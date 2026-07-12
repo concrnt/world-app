@@ -1,4 +1,14 @@
-import { memo, startTransition, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+    memo,
+    startTransition,
+    Suspense,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useLayoutEffect,
+    useRef,
+    useState
+} from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
@@ -48,6 +58,9 @@ export const RealtimeTimeline = (props: Props) => {
         newArrivalsRef.current = newArrivals
     }, [newArrivals])
 
+    // 呼び出し側が毎レンダー新規配列を渡しても、内容が同じならreaderを作り直さないための内容キー
+    const timelinesKey = props.timelines.join('|')
+
     // 自ドメインがオフラインでも、単一タイムラインならそのホストから直接読める。
     // reader再生成のトリガーは解決済みのhostOverride値の変化のみにする
     // (isDomainOffline自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
@@ -73,9 +86,46 @@ export const RealtimeTimeline = (props: Props) => {
         return () => {
             isCancelled = true
         }
-    }, [client, isDomainOffline, props.timelines])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client, isDomainOffline, timelinesKey])
 
     useEffect(() => {
+        // 再アタッチパス: Activityのhidden→visible復帰などでeffectが再実行されても、
+        // タイムライン構成が同じなら既存readerのbodyとDOMを保ったままsocket購読だけ復帰する
+        // (スクロール位置と表示内容を維持するため、スケルトン表示には戻さない)
+        const existing = reader.current
+        if (
+            client &&
+            existing &&
+            existing.timelines.join('|') === timelinesKey &&
+            existing.hostOverride === hostOverride &&
+            existing.body.length > 0
+        ) {
+            existing.onUpdate = () => {
+                startTransition(() => {
+                    update()
+                })
+            }
+            existing.onNewItem = (item) => {
+                if (!existing.haltUpdate) return
+                if (!item.href) return
+
+                client.getMessage(item.href).then((msg) => {
+                    if (!msg) return
+                    const icon = msg.authorProfile?.avatar
+                    if (!icon) return
+                    setNewArrivals((prev) => {
+                        if (prev.find((e) => e.src === icon)) return prev
+                        return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
+                    })
+                })
+            }
+            existing.resume()
+            return () => {
+                existing.dispose()
+            }
+        }
+
         console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
         setInitialLoaded(false)
@@ -138,9 +188,31 @@ export const RealtimeTimeline = (props: Props) => {
                 t?.dispose()
             })
         }
-    }, [client, reader, props.timelines, update, hostOverride])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client, reader, timelinesKey, update, hostOverride])
 
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
+    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
+    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
+    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
+    useLayoutEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        const saved = scrollPositionRef.current
+        if (saved <= 0) return
+        let raf = 0
+        let attempts = 0
+        const restore = () => {
+            el.scrollTop = saved
+            if (el.scrollTop !== saved && attempts++ < 10) {
+                raf = requestAnimationFrame(restore)
+            }
+        }
+        restore()
+        return () => cancelAnimationFrame(raf)
+    }, [])
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {

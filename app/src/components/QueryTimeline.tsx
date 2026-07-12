@@ -7,6 +7,7 @@ import {
     useContext,
     useEffect,
     useImperativeHandle,
+    useLayoutEffect,
     useRef,
     useState
 } from 'react'
@@ -55,6 +56,22 @@ export const QueryTimeline = (props: Props) => {
     useEffect(() => {
         let isCancelled = false
         if (!client) return
+
+        // 再アタッチパス: Activityのhidden→visible復帰やquery参照の作り直しでeffectが再実行されても、
+        // 対象が同じなら既存readerを保持する(スクロール位置と表示内容を維持)
+        const existing = reader.current
+        if (
+            existing &&
+            existing.prefix === props.prefix &&
+            JSON.stringify(existing.query ?? {}) === JSON.stringify(props.query ?? {}) &&
+            existing.body.length > 0
+        ) {
+            existing.onUpdate = () => {
+                update()
+            }
+            return
+        }
+
         client.newQueryTimelineReader().then((t) => {
             if (isCancelled) return
             t.onUpdate = () => {
@@ -78,6 +95,27 @@ export const QueryTimeline = (props: Props) => {
     }, [client, reader, props.prefix, update, props.batchSize, props.query])
 
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
+    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
+    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
+    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
+    useLayoutEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        const saved = scrollPositionRef.current
+        if (saved <= 0) return
+        let raf = 0
+        let attempts = 0
+        const restore = () => {
+            el.scrollTop = saved
+            if (el.scrollTop !== saved && attempts++ < 10) {
+                raf = requestAnimationFrame(restore)
+            }
+        }
+        restore()
+        return () => cancelAnimationFrame(raf)
+    }, [])
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {

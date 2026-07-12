@@ -1,4 +1,4 @@
-import { startTransition, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { startTransition, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
@@ -193,7 +193,10 @@ const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRe
     const [items] = useSubscribe(props.list.items)
 
     const self = semantics.homeTimeline(client.ccid, client.currentProfile)
-    const timelines = [...new Set([...(props.excludeSelf ? [] : [self]), ...items])]
+    const timelines = useMemo(
+        () => [...new Set([...(props.excludeSelf ? [] : [self]), ...items])],
+        [self, items, props.excludeSelf]
+    )
 
     return <RealtimeTimeline ref={props.ref} timelines={timelines} />
 }

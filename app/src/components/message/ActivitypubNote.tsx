@@ -21,20 +21,16 @@ export const ActivitypubNote = (props: Props) => {
 
     const notePromise = useMemo(() => {
         return client.api
-            .fetchWithCredential<ApObject>(
-                client.server.domain,
-                `/ap/api/resolve?uri=${encodeURIComponent(props.noteURL)}`
-            )
+            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.noteURL })
             .then(async (res) => new ApObject(res))
+            .catch(() => null)
     }, [client, props.noteURL])
 
     const authorPromise = useMemo(() => {
         return client.api
-            .fetchWithCredential<ApObject>(
-                client.server.domain,
-                `/ap/api/resolve?uri=${encodeURIComponent(props.actorURL)}`
-            )
+            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.actorURL })
             .then(async (res) => new ApObject(res))
+            .catch(() => null)
     }, [client, props.actorURL])
 
     return (

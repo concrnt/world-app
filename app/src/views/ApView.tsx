@@ -15,8 +15,11 @@ export const ApView = (props: Props) => {
 
     useEffect(() => {
         client.api
-            .fetchWithCredential<ApObject>(client.server.domain, `/ap/api/resolve?uri=${encodeURIComponent(props.uri)}`)
+            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.uri })
             .then(async (res) => setLd(new ApObject(res)))
+            .catch((err) => {
+                console.log(err)
+            })
     }, [props.uri, client])
 
     if (!ld) {

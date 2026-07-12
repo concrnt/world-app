@@ -147,6 +147,12 @@ export class TimelineReader {
         return hasMore
     }
 
+    // dispose()で解除したsocket購読を再開する。bodyは保持されたままなので、
+    // onUpdate/onNewItemを再設定してから呼べば既存インスタンスをそのまま使い続けられる
+    resume() {
+        this.socket?.listen(this.timelines, this.boundProcessEvent)
+    }
+
     dispose() {
         this.socket?.unlisten(this.timelines, this.boundProcessEvent)
         this.onUpdate = undefined

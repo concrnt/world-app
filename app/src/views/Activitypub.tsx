@@ -38,7 +38,7 @@ export const Activitypub = () => {
 
     useEffect(() => {
         client.api
-            .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/settings')
+            .callConcrntApi<ApSettings>(client.server.domain, 'net.concrnt.activitypub.settings', {})
             .then((res) => {
                 setSettings(res)
             })
@@ -48,7 +48,7 @@ export const Activitypub = () => {
             })
 
         client.api
-            .fetchWithCredential<any>(client.server.domain, '/ap/api/stats')
+            .callConcrntApi<any>(client.server.domain, 'net.concrnt.activitypub.stats', {})
             .then((res) => {
                 console.log('AP stats', res)
             })
@@ -57,7 +57,7 @@ export const Activitypub = () => {
             })
 
         client.api
-            .fetchWithCredential<ApServerInfo>(client.server.domain, '/ap/api/info')
+            .callConcrntApi<ApServerInfo>(client.server.domain, 'net.concrnt.activitypub.info', {})
             .then((res) => {
                 const inboxUri = `cckv://${client.ccid}/activitypub.concrnt.world/inbox`
 
@@ -119,12 +119,17 @@ export const Activitypub = () => {
                             disabled={!idOk}
                             onClick={() => {
                                 client.api
-                                    .fetchWithCredential<ApSettings>(client.server.domain, '/ap/api/setup', {
-                                        method: 'POST',
-                                        body: JSON.stringify({
-                                            id: idDraft
-                                        })
-                                    })
+                                    .callConcrntApi<ApSettings>(
+                                        client.server.domain,
+                                        'net.concrnt.activitypub.setup',
+                                        {},
+                                        {
+                                            method: 'POST',
+                                            body: JSON.stringify({
+                                                id: idDraft
+                                            })
+                                        }
+                                    )
                                     .then((res) => {
                                         setSettings(res)
                                     })

@@ -22,10 +22,15 @@ export const ApPerson = ({ person }: Props) => {
     const followed = followings.includes(person.id?.toString() ?? '')
 
     const updateFollowings = () => {
-        client.api.fetchWithCredential<string[]>(client.server.domain, '/ap/api/following').then((response) => {
-            setFollowings(response)
-            console.log('followings', response)
-        })
+        client.api
+            .callConcrntApi<string[]>(client.server.domain, 'net.concrnt.activitypub.following', {})
+            .then((response) => {
+                setFollowings(response)
+                console.log('followings', response)
+            })
+            .catch((err) => {
+                console.log(err)
+            })
     }
 
     useEffect(() => {
@@ -99,12 +104,17 @@ export const ApPerson = ({ person }: Props) => {
                             <Button
                                 onClick={() => {
                                     client.api
-                                        .fetchWithCredential(client.server.domain, '/ap/api/unfollow', {
-                                            method: 'POST',
-                                            body: JSON.stringify({
-                                                target: person.id?.toString()
-                                            })
-                                        })
+                                        .callConcrntApi(
+                                            client.server.domain,
+                                            'net.concrnt.activitypub.unfollow',
+                                            {},
+                                            {
+                                                method: 'POST',
+                                                body: JSON.stringify({
+                                                    target: person.id?.toString()
+                                                })
+                                            }
+                                        )
                                         .then((response) => {
                                             console.log('unfollow response', response)
                                             updateFollowings()
@@ -117,12 +127,17 @@ export const ApPerson = ({ person }: Props) => {
                             <Button
                                 onClick={() => {
                                     client.api
-                                        .fetchWithCredential(client.server.domain, '/ap/api/follow', {
-                                            method: 'POST',
-                                            body: JSON.stringify({
-                                                target: person.id?.toString()
-                                            })
-                                        })
+                                        .callConcrntApi(
+                                            client.server.domain,
+                                            'net.concrnt.activitypub.follow',
+                                            {},
+                                            {
+                                                method: 'POST',
+                                                body: JSON.stringify({
+                                                    target: person.id?.toString()
+                                                })
+                                            }
+                                        )
                                         .then((response) => {
                                             console.log('follow response', response)
                                         })

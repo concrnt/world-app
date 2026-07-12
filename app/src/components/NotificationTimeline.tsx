@@ -1,4 +1,13 @@
-import { Fragment, Suspense, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+    Fragment,
+    Suspense,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useLayoutEffect,
+    useRef,
+    useState
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
@@ -177,6 +186,16 @@ export const NotificationTimeline = (props: Props) => {
         let isCancelled = false
         if (!client) return
 
+        // 再アタッチパス: Activityのhidden→visible復帰でeffectが再実行された場合、
+        // 既存readerと集約済み表示・iterカーソルをそのまま保持する(スクロール位置維持)
+        const existing = reader.current
+        if (existing && existing.prefix === props.prefix && existing.body.length > 0) {
+            existing.onUpdate = () => {
+                update()
+            }
+            return
+        }
+
         // 初期化: カーソルと表示をリセットしてから Reader を作る
         setNotifications([])
         iter.current = 0
@@ -214,6 +233,27 @@ export const NotificationTimeline = (props: Props) => {
     }, [client, props.prefix, props.query, props.batchSize])
 
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
+    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
+    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
+    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
+    useLayoutEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        const saved = scrollPositionRef.current
+        if (saved <= 0) return
+        let raf = 0
+        let attempts = 0
+        const restore = () => {
+            el.scrollTop = saved
+            if (el.scrollTop !== saved && attempts++ < 10) {
+                raf = requestAnimationFrame(restore)
+            }
+        }
+        restore()
+        return () => cancelAnimationFrame(raf)
+    }, [])
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
