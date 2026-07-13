@@ -1,6 +1,6 @@
 import { MessageContainer } from '../components/message'
 import { Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
-import { MdAddReaction } from 'react-icons/md'
+import { MdAddReaction, MdReply } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
@@ -22,6 +22,9 @@ import { Composer } from '../components/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
+import { FAB } from '../components/FAB'
+import { useComposer } from '../contexts/Composer'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 
@@ -34,6 +37,8 @@ export const PostView = (props: Props) => {
     const { client } = useClient()
     const navigate = useNavigate()
     const emojiPicker = useEmojiPicker()
+    const composer = useComposer()
+    const isMobile = useIsMobile()
     const [tab, setTab] = useState<PostTab>('replies')
     const [message, setMessage] = useState<Message<any> | null>(null)
 
@@ -129,6 +134,19 @@ export const PostView = (props: Props) => {
         fetchAssociations(tab)
     }, [tab, fetchAssociations])
 
+    const handleReply = useCallback(async () => {
+        const msg = await messagePromise
+        if (!msg) return
+        const communityDestinations =
+            msg.distributes?.filter(
+                (uri: string) =>
+                    !uri.includes('/main/home-timeline') &&
+                    !uri.includes('/main/activity-timeline') &&
+                    !uri.includes('/main/notify-timeline')
+            ) ?? []
+        composer.open(communityDestinations, [], 'reply', msg)
+    }, [messagePromise, composer])
+
     return (
         <>
             <View>
@@ -195,7 +213,7 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'replies' && (
                         <>
-                            {message && (
+                            {message && !isMobile && (
                                 <div
                                     style={{
                                         padding: CssVar.space(2),
@@ -390,6 +408,9 @@ export const PostView = (props: Props) => {
                     )}
                 </div>
             </View>
+            <FAB onClick={handleReply}>
+                <MdReply size={24} />
+            </FAB>
         </>
     )
 }

@@ -23,7 +23,6 @@ import { useStack } from '../layouts/Stack'
 import { ProfileView } from './Profile'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
 import { useComposer } from '../contexts/Composer'
-import { Composer } from '../components/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 
 type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
@@ -212,29 +211,6 @@ export const PostView = (props: Props) => {
 
                     {!loading && tab === 'replies' && (
                         <>
-                            {message && (
-                                <div
-                                    style={{
-                                        padding: CssVar.space(2),
-                                        border: `1px solid ${CssVar.divider}`,
-                                        borderRadius: CssVar.round(2)
-                                    }}
-                                >
-                                    <Composer
-                                        mode="reply"
-                                        targetMessage={message}
-                                        destinations={
-                                            message.distributes?.filter(
-                                                (uri: string) =>
-                                                    !uri.includes('/main/home-timeline') &&
-                                                    !uri.includes('/main/activity-timeline') &&
-                                                    !uri.includes('/main/notify-timeline')
-                                            ) ?? []
-                                        }
-                                        onPost={() => fetchAssociations('replies')}
-                                    />
-                                </div>
-                            )}
                             {replies.length === 0 && (
                                 <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
                                     <Text>{t('noReplies')}</Text>

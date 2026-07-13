@@ -9,10 +9,14 @@ import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { Composer } from '../components/Composer'
 import { Timeline } from '@concrnt/worldlib'
-import { MdInfo } from 'react-icons/md'
+import { MdCreate, MdInfo } from 'react-icons/md'
 import { useDrawer } from '../contexts/Drawer'
 import { TimelineSettings } from '../components/TimelineSettings'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
+import { FAB } from '../components/FAB'
+import { useComposer } from '../contexts/Composer'
+import { useIsMobile } from '../hooks/useIsMobile'
+import { hapticLight } from '../utils/haptics'
 
 interface Props {
     uri: string
@@ -21,6 +25,8 @@ interface Props {
 export const TimelineView = (props: Props) => {
     const { client } = useClient()
     const drawer = useDrawer()
+    const composer = useComposer()
+    const isMobile = useIsMobile()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -77,21 +83,35 @@ export const TimelineView = (props: Props) => {
                             ref={scrollRef}
                             timelines={[props.uri]}
                             headElement={
-                                <>
-                                    <div style={{ padding: CssVar.space(2) }}>
-                                        <Composer
-                                            mode="normal"
-                                            destinations={[props.uri]}
-                                            options={timeline ? [timeline] : []}
-                                        />
-                                    </div>
-                                    <Divider />
-                                </>
+                                // モバイルではインラインエディタは出さず、FABからモーダルで投稿する(app版と同じ体験)
+                                isMobile ? undefined : (
+                                    <>
+                                        <div style={{ padding: CssVar.space(2) }}>
+                                            <Composer
+                                                mode="normal"
+                                                destinations={[props.uri]}
+                                                options={timeline ? [timeline] : []}
+                                            />
+                                        </div>
+                                        <Divider />
+                                    </>
+                                )
                             }
                         />
                     )
                 )}
             </View>
+            {!restricted && (
+                <FAB
+                    onClick={() => {
+                        hapticLight()
+                        const options = timeline ? [timeline] : []
+                        composer.open([props.uri], options)
+                    }}
+                >
+                    <MdCreate size={24} />
+                </FAB>
+            )}
         </>
     )
 }
