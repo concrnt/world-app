@@ -14,7 +14,7 @@ export const OnelineMessageLayout = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
-                height: '1.4rem',
+                fontSize: '0.9rem',
                 width: '100%',
                 overflow: 'hidden',
                 alignItems: 'center',
@@ -39,6 +39,7 @@ export const OnelineMessageLayout = (props: Props) => {
                     gap: '4px',
                     flex: 1,
                     overflow: 'hidden',
+                    whiteSpace: 'nowrap',
                     alignItems: 'center',
                     justifyContent: 'center'
                 }}

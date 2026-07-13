@@ -17,7 +17,8 @@ export const Avatar = (props: Props) => {
                         width: '40px',
                         height: '40px',
                         borderRadius: '4px',
-                        backgroundColor: '#e0e0e0'
+                        backgroundColor: '#e0e0e0',
+                        ...props.style
                     }}
                 />
             }
@@ -39,6 +40,7 @@ const Inner = (props: Props) => {
                     width: '40px',
                     height: '40px',
                     borderRadius: '4px',
+                    objectFit: 'cover',
                     ...props.style
                 }}
                 onClick={props.onClick}

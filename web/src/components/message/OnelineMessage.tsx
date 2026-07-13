@@ -30,14 +30,18 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                         navigate('/profile/' + message.author)
                     }}
                 >
-                    <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
+                    <Avatar
+                        ccid={message.author}
+                        src={message.authorUser?.profile.avatar}
+                        style={{ width: '40px', height: '18px' }}
+                    />
                 </div>
             }
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}
         >
-            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+            <CfmRenderer oneline messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
             <div style={{ flex: 1 }} />
             <IconButton
                 onClick={(e) => {
@@ -68,7 +72,9 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             >
                 <MdMoreHoriz size={15} />
             </IconButton>
-            <TimeDiff date={props.message.createdAt} />
+            <div style={{ flexShrink: 0 }}>
+                <TimeDiff date={props.message.createdAt} />
+            </div>
         </OnelineMessageLayout>
     )
 }

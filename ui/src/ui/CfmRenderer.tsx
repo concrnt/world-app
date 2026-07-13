@@ -139,6 +139,7 @@ export interface EmojiLite {
 export interface CfmRendererProps {
     messagebody: string
     emojiDict: Record<string, EmojiLite>
+    oneline?: boolean
 }
 
 export interface RenderAstProps {
@@ -388,9 +389,18 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
 
     return (
         <div
-            style={{
-                whiteSpace: 'pre-wrap'
-            }}
+            style={
+                props.oneline
+                    ? {
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minWidth: 0
+                      }
+                    : {
+                          whiteSpace: 'pre-wrap'
+                      }
+            }
         >
             <RenderAst ast={ast} emojis={props.emojiDict} imageNodes={imageNodes} />
         </div>

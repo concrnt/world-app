@@ -66,7 +66,9 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 >
                     <MdMoreHoriz size={15} />
                 </IconButton>
-                <TimeDiff date={props.message.createdAt} />
+                <div style={{ flexShrink: 0 }}>
+                    <TimeDiff date={props.message.createdAt} />
+                </div>
             </OnelineMessageLayout>
             <MessageContainer uri={props.message.value.targetURI} />
         </div>
