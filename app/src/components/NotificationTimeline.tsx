@@ -489,7 +489,11 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        <CfmRenderer messagebody={target.value.body ?? ''} emojiDict={target.value.emojis ?? {}} />
+                        <CfmRenderer
+                            oneline
+                            messagebody={target.value.body ?? ''}
+                            emojiDict={target.value.emojis ?? {}}
+                        />
                     </div>
                 )}
 
@@ -777,10 +781,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '4px',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                backgroundColor: CssVar.backdropBackground
+                                gap: '4px'
                             }}
                         >
                             {url && <img src={url} style={{ width: '20px', height: '20px' }} alt="" />}
@@ -830,7 +831,11 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        <CfmRenderer messagebody={target.value.body ?? ''} emojiDict={target.value.emojis ?? {}} />
+                        <CfmRenderer
+                            oneline
+                            messagebody={target.value.body ?? ''}
+                            emojiDict={target.value.emojis ?? {}}
+                        />
                     </div>
                 )}
 
