@@ -465,6 +465,11 @@ export class Api {
 
     async getDocument<T>(uri: string, domain?: string, opts?: FetchOptions<SignedDocument>): Promise<Document<T>> {
         const sd = await this.getResource<SignedDocument>(uri, domain, opts)
+        // 負キャッシュ(404の記憶)にヒットするとgetResourceはnullを返す。
+        // ネットワーク経由の404と同じ型のエラーにしないと、呼び出し側のNotFoundErrorハンドリングが機能しない
+        if (!sd) {
+            throw new NotFoundError(`fetch failed on negative cache: ${uri}`, uri)
+        }
         const document: Document<T> = JSON.parse(sd.document)
 
         const legacy = document as any

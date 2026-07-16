@@ -315,7 +315,17 @@ export const ClientProvider = (props: Props): ReactNode => {
     return (
         <ClientContext.Provider value={value as ClientContextState}>
             {props.children}
-            {subkeyInvalid && <SubkeyInvalidDrawer client={client} onRecovered={reload} onLogout={logout} />}
+            {subkeyInvalid && (
+                <SubkeyInvalidDrawer
+                    client={client}
+                    onRecovered={async () => {
+                        // ソフトリロードは差し替え直後の再フェッチ嵐でフリーズし得るため、
+                        // 他のアカウント変更フローと同様にページごと再読み込みして初期状態から構築する
+                        window.location.reload()
+                    }}
+                    onLogout={logout}
+                />
+            )}
         </ClientContext.Provider>
     )
 }
