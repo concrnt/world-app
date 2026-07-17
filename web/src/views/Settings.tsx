@@ -11,6 +11,7 @@ import {
     MdChevronRight,
     MdEmojiEmotions,
     MdLanguage,
+    MdLuggage,
     MdNotifications,
     MdPalette,
     MdTerminal
@@ -112,6 +113,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/notifications')}
                     >
                         {t('notifications')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdLuggage size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/migration')}
+                    >
+                        {t('migration')}
                     </ListItem>
                     {developerMode && (
                         <ListItem

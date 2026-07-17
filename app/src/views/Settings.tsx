@@ -12,11 +12,13 @@ import { EmojiSettingsView } from './EmojiSettings'
 import { ThemeSettingsView } from './ThemeSettings'
 import { LanguageSettingsView } from './LanguageSettings'
 import { NotificationSettingsView } from './NotificationSettings'
+import { MigrationSettingsView } from './MigrationSettings'
 import {
     MdBadge,
     MdChevronRight,
     MdEmojiEmotions,
     MdLanguage,
+    MdLuggage,
     MdNotifications,
     MdPalette,
     MdTerminal
@@ -119,6 +121,13 @@ export const SettingsView = () => {
                         onClick={() => stack.push(<NotificationSettingsView />)}
                     >
                         {t('notifications')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdLuggage size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<MigrationSettingsView />)}
+                    >
+                        {t('migration')}
                     </ListItem>
                     {developerMode && (
                         <ListItem

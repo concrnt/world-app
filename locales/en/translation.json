@@ -40,6 +40,7 @@
             "id": "ID Management",
             "emoji": "Emoji",
             "notifications": "Notifications",
+            "migration": "Migration",
             "devTools": "Developer Tools",
             "account": "Account",
             "clearCache": "Clear Cache",
@@ -84,6 +85,53 @@
                 "lastUpdated": "Last Updated: {{date}}",
                 "notRegistered": "Not registered",
                 "reRegister": "Re-register"
+            }
+        },
+        "migrationSettings": {
+            "title": "Migration",
+            "description": "Move your account to another server. This transfers all of your data and can take a while. Keep this screen open while it runs.",
+            "masterKeyRequired": "Migration requires logging in with your master key. Please log out and log in again with your master key.",
+            "webRecommendedTitle": "We recommend using the web version",
+            "webRecommendedDesc": "Migration transfers all of your account data and can use a lot of bandwidth and time. We recommend running it from the web version in a browser, ideally on a stable connection.",
+            "continueOnApp": "Continue on this app anyway",
+            "step0": {
+                "title": "Enter the destination",
+                "desc": "Enter the domain of the server you want to move to.",
+                "placeholder": "example.com",
+                "sameDomain": "The domain is invalid or the same as your current server.",
+                "resolveError": "Server not found. Please check the domain.",
+                "next": "Next"
+            },
+            "step1": {
+                "title": "Register at the destination",
+                "desc": "Open the registration page and register your account on {{domain}}.",
+                "open": "Open registration page",
+                "waiting": "Waiting for the registration to complete… (this advances automatically)"
+            },
+            "step2": {
+                "title": "Prepare your data",
+                "desc": "Activates your current key on the destination and fetches all of your data from the current server.",
+                "backupNote": "The fetched data is also downloaded as a backup file.",
+                "exec": "Prepare",
+                "working": "Working…"
+            },
+            "step3": {
+                "title": "Transfer your data",
+                "desc": "Transfers the fetched data to the destination. This may take a while.",
+                "stats": "{{total}} commits to transfer ({{resigned}} re-signed / {{skipped}} skipped)",
+                "progress": "{{done}}/{{total}} chunks done ({{imported}} commits transferred)",
+                "confirmTitle": "Start the transfer?",
+                "confirmDesc": "Starts transferring your data to {{domain}}. Keep this screen open while it runs.",
+                "exec": "Start transfer",
+                "working": "Transferring…"
+            },
+            "step4": {
+                "title": "Done",
+                "desc": "Transfer complete. Pressing \"Switch\" unregisters you from the old server and switches this session to {{domain}}.",
+                "failures": "{{count}} commits failed to transfer.",
+                "cleanupError": "Failed to unregister from the old server. You can retry, or skip the cleanup and switch anyway (the registration will remain on the old server).",
+                "skipCleanup": "Skip cleanup and switch",
+                "exec": "Switch"
             }
         },
         "emojiSettings": {

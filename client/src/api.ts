@@ -50,6 +50,11 @@ export interface FetchOptions<T> {
     timeoutms?: number
 }
 
+export interface RepositoryImportResult {
+    document?: string
+    error?: string
+}
+
 export interface NotificationSubscription {
     vendorID: string
     owner: string
@@ -708,6 +713,49 @@ export class Api {
         }
 
         await this.commit(documentObj, domain)
+    }
+
+    // ---
+
+    // net.concrnt.world.repository (GET)
+    // 自分の全commitをNDJSON(1行=SignedDocument, 時系列昇順)で取得する。
+    // fetchHostはJSONパース前提なのでここは生fetchでテキストのまま返す
+    async dumpRepository(host?: string): Promise<string> {
+        const fetchHost = host || this.defaultHost
+        const server = await this.getServer(fetchHost)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.world.repository', {})
+        const authHeaders = await this.getHeaders(fetchHost)
+        const res = await fetch(`https://${fetchHost}${endpoint}`, { headers: authHeaders })
+        if (!res.ok) {
+            throw new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
+        }
+        return await res.text()
+    }
+
+    // net.concrnt.world.repository (POST)
+    // NDJSONをインポートする。レスポンスには失敗した行だけが返る
+    async importRepository(jsonl: string, host?: string): Promise<RepositoryImportResult[]> {
+        const fetchHost = host || this.defaultHost
+        const server = await this.getServer(fetchHost)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.world.repository', {})
+        return await this.fetchWithCredential<RepositoryImportResult[]>(
+            fetchHost,
+            endpoint,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: jsonl
+            },
+            60 * 1000
+        )
+    }
+
+    // net.concrnt.world.register (DELETE)
+    // 引っ越し完了後などに、このサーバー上の登録(entity meta)を解除する。
+    // entityが既に他ドメインを指していないとサーバー側で拒否される
+    async unregister(host?: string): Promise<void> {
+        const fetchHost = host || this.defaultHost
+        await this.callConcrntApi(fetchHost, 'net.concrnt.world.register', {}, { method: 'DELETE' })
     }
 
     // ---
