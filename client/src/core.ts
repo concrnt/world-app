@@ -1,17 +1,32 @@
 export type CCURIScheme = 'cckv' | 'ccfs' | 'http'
 
+export const CCFS_TYPE_CONCRNT = 'concrnt'
+export const CCFS_TYPE_BLOB = 'blob'
+
 export class CCURI {
     scheme: string
     owner: string
     key: string
+    // ccfs only: CCFS_TYPE_CONCRNT or CCFS_TYPE_BLOB
+    type: string
+    // ccfs only: bare cdid (type=concrnt) or bare sha256 hex (type=blob)
     cdid: string
     hint?: string
     raw: string
 
-    constructor(params: { scheme: string; owner?: string; key?: string; cdid?: string; hint?: string; raw?: string }) {
+    constructor(params: {
+        scheme: string
+        owner?: string
+        key?: string
+        type?: string
+        cdid?: string
+        hint?: string
+        raw?: string
+    }) {
         this.scheme = params.scheme
         this.owner = params.owner ?? ''
         this.key = params.key ?? ''
+        this.type = params.type ?? ''
         this.cdid = params.cdid ?? ''
         this.hint = params.hint
         this.raw = params.raw ?? ''
@@ -27,19 +42,18 @@ export class CCURI {
                 } else {
                     result = `cckv://${this.owner}/${this.key}`
                 }
+                if (this.key === '') {
+                    result = trimSuffix(result, '/')
+                }
                 break
 
             case 'ccfs':
                 if (this.hint !== undefined) {
-                    result = `ccfs://${this.owner}@${this.hint}/${this.cdid}`
+                    result = `ccfs://${this.owner}@${this.hint}/${this.type}/${this.cdid}`
                 } else {
-                    result = `ccfs://${this.owner}/${this.cdid}`
+                    result = `ccfs://${this.owner}/${this.type}/${this.cdid}`
                 }
                 break
-        }
-
-        if (this.key === '') {
-            result = trimSuffix(result, '/')
         }
 
         return result
@@ -50,6 +64,7 @@ export class CCURI {
             scheme: this.scheme,
             owner: this.owner,
             key: this.key,
+            ...(this.type !== '' ? { type: this.type } : {}),
             cdid: this.cdid,
             ...(this.hint !== undefined ? { hint: this.hint } : {}),
             raw: this.raw
@@ -91,15 +106,41 @@ export function parseCCURI(escaped: string): CCURI {
                 raw: uriString
             })
 
-        case 'ccfs':
+        case 'ccfs': {
+            const parts = key.split('/')
+            let ccfsType: string
+            let hash: string
+            if (
+                parts.length === 1 &&
+                parts[0] !== '' &&
+                parts[0] !== CCFS_TYPE_CONCRNT &&
+                parts[0] !== CCFS_TYPE_BLOB
+            ) {
+                // legacy flat form ccfs://<owner>/<hash>: interpret as a concrnt object
+                ccfsType = CCFS_TYPE_CONCRNT
+                hash = parts[0]
+            } else if (parts.length === 2 && parts[0] !== '' && parts[1] !== '') {
+                ccfsType = parts[0]
+                hash = parts[1]
+                if (ccfsType !== CCFS_TYPE_CONCRNT && ccfsType !== CCFS_TYPE_BLOB) {
+                    throw new Error(`invalid ccfs type: ${ccfsType}`)
+                }
+                if (ccfsType === CCFS_TYPE_BLOB && !isSha256Hex(hash)) {
+                    throw new Error('invalid ccfs blob hash: expected 64 hex characters')
+                }
+            } else {
+                throw new Error('invalid ccfs uri: expected ccfs://<owner>/<type>/<hash>')
+            }
             return new CCURI({
                 scheme: 'ccfs',
                 owner,
                 key: '',
-                cdid: key,
+                type: ccfsType,
+                cdid: hash,
                 hint,
                 raw: uriString
             })
+        }
 
         case 'http':
         case 'https':
@@ -127,6 +168,19 @@ function queryUnescapeOrThrow(value: string, message: string): string {
     } catch {
         throw new Error(message)
     }
+}
+
+function isSha256Hex(s: string): boolean {
+    if (s.length !== 64) {
+        return false
+    }
+    for (let i = 0; i < s.length; i++) {
+        const c = s[i]
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+            return false
+        }
+    }
+    return true
 }
 
 function trimPrefix(value: string, prefix: string): string {
