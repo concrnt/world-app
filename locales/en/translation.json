@@ -39,6 +39,7 @@
             "activitypub": "ActivityPub",
             "id": "ID Management",
             "emoji": "Emoji",
+            "media": "Media",
             "notifications": "Notifications",
             "migration": "Migration",
             "v1import": "Import from v1",
@@ -169,6 +170,16 @@
                 "desc": "{{count}} commits imported. Your old posts should now appear on your profile page and timeline.",
                 "failures": "{{count}} commits failed to import."
             }
+        },
+        "mediaSettings": {
+            "title": "Media",
+            "storageQuota": "Storage Usage",
+            "noFiles": "No files on the media server yet.",
+            "copyURL": "Copy URL",
+            "copyMarkdown": "Copy Markdown",
+            "delete": "Delete",
+            "deleteConfirmTitle": "Delete this file?",
+            "deleteConfirmDescription": "The file will be permanently deleted from the media server. Posts referencing it will no longer display it."
         },
         "emojiSettings": {
             "title": "Emoji",

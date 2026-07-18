@@ -14,6 +14,7 @@ import {
     MdLuggage,
     MdNotifications,
     MdPalette,
+    MdPermMedia,
     MdRestore,
     MdTerminal
 } from 'react-icons/md'
@@ -42,6 +43,7 @@ export const SettingsView = () => {
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
+    const mediaEnabled = 'net.concrnt.storage.list' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
         if (developerMode) return
@@ -108,6 +110,15 @@ export const SettingsView = () => {
                     >
                         {t('emoji')}
                     </ListItem>
+                    {mediaEnabled && (
+                        <ListItem
+                            startIcon={<MdPermMedia size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => navigate('/settings/media')}
+                        >
+                            {t('media')}
+                        </ListItem>
+                    )}
                     <ListItem
                         startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}

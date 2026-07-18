@@ -12,6 +12,7 @@ import { EmojiSettingsView } from './EmojiSettings'
 import { ThemeSettingsView } from './ThemeSettings'
 import { LanguageSettingsView } from './LanguageSettings'
 import { NotificationSettingsView } from './NotificationSettings'
+import { MediaSettingsView } from './MediaSettings'
 import { MigrationSettingsView } from './MigrationSettings'
 import { V1ImportSettingsView } from './V1ImportSettings'
 import {
@@ -22,6 +23,7 @@ import {
     MdLuggage,
     MdNotifications,
     MdPalette,
+    MdPermMedia,
     MdRestore,
     MdTerminal
 } from 'react-icons/md'
@@ -50,6 +52,7 @@ export const SettingsView = () => {
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
+    const mediaEnabled = 'net.concrnt.storage.list' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
         if (developerMode) return
@@ -117,6 +120,15 @@ export const SettingsView = () => {
                     >
                         {t('emoji')}
                     </ListItem>
+                    {mediaEnabled && (
+                        <ListItem
+                            startIcon={<MdPermMedia size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => stack.push(<MediaSettingsView />)}
+                        >
+                            {t('media')}
+                        </ListItem>
+                    )}
                     <ListItem
                         startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}

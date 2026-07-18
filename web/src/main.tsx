@@ -27,6 +27,7 @@ import { SettingsView } from './views/Settings'
 import { NotificationSettingsView } from './views/NotificationSettings'
 import { ThemeSettingsView } from './views/ThemeSettings'
 import { LanguageSettingsView } from './views/LanguageSettings'
+import { MediaSettingsView } from './views/MediaSettings'
 import { MigrationSettingsView } from './views/MigrationSettings'
 import { V1ImportSettingsView } from './views/V1ImportSettings'
 import { EmojiSettingsView } from './views/EmojiSettings'
@@ -204,6 +205,14 @@ const AuthedRoutes = () => (
                                                             element={
                                                                 <SettingsBackProvider>
                                                                     <EmojiSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/media"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <MediaSettingsView />
                                                                 </SettingsBackProvider>
                                                             }
                                                         />

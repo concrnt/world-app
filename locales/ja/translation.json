@@ -39,6 +39,7 @@
             "activitypub": "ActivityPub設定",
             "id": "ID管理",
             "emoji": "絵文字",
+            "media": "メディア",
             "notifications": "通知",
             "migration": "引っ越し",
             "v1import": "v1からの移行",
@@ -169,6 +170,16 @@
                 "desc": "{{count}}件のコミットを取り込みました。プロフィールページやタイムラインに旧投稿が表示されるようになります。",
                 "failures": "{{count}}件のコミットの取り込みに失敗しました。"
             }
+        },
+        "mediaSettings": {
+            "title": "メディア",
+            "storageQuota": "ストレージ使用量",
+            "noFiles": "メディアサーバーにファイルはまだありません。",
+            "copyURL": "URLをコピー",
+            "copyMarkdown": "Markdownをコピー",
+            "delete": "削除",
+            "deleteConfirmTitle": "このファイルを削除しますか?",
+            "deleteConfirmDescription": "ファイルはメディアサーバーから完全に削除されます。このファイルを参照している投稿では表示されなくなります。"
         },
         "emojiSettings": {
             "title": "絵文字",
