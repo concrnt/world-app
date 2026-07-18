@@ -13,6 +13,7 @@ import { ThemeSettingsView } from './ThemeSettings'
 import { LanguageSettingsView } from './LanguageSettings'
 import { NotificationSettingsView } from './NotificationSettings'
 import { MigrationSettingsView } from './MigrationSettings'
+import { V1ImportSettingsView } from './V1ImportSettings'
 import {
     MdBadge,
     MdChevronRight,
@@ -21,6 +22,7 @@ import {
     MdLuggage,
     MdNotifications,
     MdPalette,
+    MdRestore,
     MdTerminal
 } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
@@ -128,6 +130,13 @@ export const SettingsView = () => {
                         onClick={() => stack.push(<MigrationSettingsView />)}
                     >
                         {t('migration')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdRestore size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<V1ImportSettingsView />)}
+                    >
+                        {t('v1import')}
                     </ListItem>
                     {developerMode && (
                         <ListItem

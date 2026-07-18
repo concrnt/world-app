@@ -41,6 +41,7 @@
             "emoji": "Emoji",
             "notifications": "Notifications",
             "migration": "Migration",
+            "v1import": "Import from v1",
             "devTools": "Developer Tools",
             "account": "Account",
             "clearCache": "Clear Cache",
@@ -132,6 +133,41 @@
                 "cleanupError": "Failed to unregister from the old server. You can retry, or skip the cleanup and switch anyway (the registration will remain on the old server).",
                 "skipCleanup": "Skip cleanup and switch",
                 "exec": "Switch"
+            }
+        },
+        "v1ImportSettings": {
+            "title": "Import from v1",
+            "description": "For those who lost their v1 key: restore posts and your profile from a v1 backup file into this account. The imported content is re-signed with your current key, so it becomes content of this (new) account.",
+            "subkeyRequired": "Importing requires an active session key. Please log in again.",
+            "step0": {
+                "title": "Select your backup file",
+                "desc": "Select the backup file (.txt) you exported from the old v1 client.",
+                "selectFile": "Select file",
+                "parseError": "Could not read this file as a v1 backup. Please check that you selected the correct file.",
+                "readError": "Failed to read the file."
+            },
+            "step1": {
+                "title": "Review the conversion",
+                "oldCcid": "Detected v1 address: {{ccid}}",
+                "stats": "{{messages}} posts and {{profiles}} profile updates will be imported.",
+                "excluded": "Excluded: {{deleted}} deleted, {{skipped}} unsupported (favorites, communities, etc.), {{invalid}} unreadable.",
+                "externalReferences": "{{count}} replies/reroutes reference other users' posts. They may not display if those users have not migrated their server to v2.",
+                "next": "Next",
+                "back": "Choose another file"
+            },
+            "step2": {
+                "title": "Import",
+                "desc": "Re-signs the converted data with your current key and imports it into this server. This may take a while — keep this screen open.",
+                "progress": "{{done}}/{{total}} chunks done ({{imported}} commits imported)",
+                "confirmTitle": "Start the import?",
+                "confirmDesc": "The v1 content will be imported as content of your current account. Undoing this later requires deleting the items one by one.",
+                "exec": "Start import",
+                "working": "Importing…"
+            },
+            "step3": {
+                "title": "Done",
+                "desc": "{{count}} commits imported. Your old posts should now appear on your profile page and timeline.",
+                "failures": "{{count}} commits failed to import."
             }
         },
         "emojiSettings": {

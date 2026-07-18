@@ -14,6 +14,7 @@ import {
     MdLuggage,
     MdNotifications,
     MdPalette,
+    MdRestore,
     MdTerminal
 } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
@@ -120,6 +121,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/migration')}
                     >
                         {t('migration')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdRestore size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/v1import')}
+                    >
+                        {t('v1import')}
                     </ListItem>
                     {developerMode && (
                         <ListItem

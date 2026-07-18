@@ -28,6 +28,7 @@ import { NotificationSettingsView } from './views/NotificationSettings'
 import { ThemeSettingsView } from './views/ThemeSettings'
 import { LanguageSettingsView } from './views/LanguageSettings'
 import { MigrationSettingsView } from './views/MigrationSettings'
+import { V1ImportSettingsView } from './views/V1ImportSettings'
 import { EmojiSettingsView } from './views/EmojiSettings'
 import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
@@ -211,6 +212,14 @@ const AuthedRoutes = () => (
                                                             element={
                                                                 <SettingsBackProvider>
                                                                     <MigrationSettingsView />
+                                                                </SettingsBackProvider>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="settings/v1import"
+                                                            element={
+                                                                <SettingsBackProvider>
+                                                                    <V1ImportSettingsView />
                                                                 </SettingsBackProvider>
                                                             }
                                                         />
