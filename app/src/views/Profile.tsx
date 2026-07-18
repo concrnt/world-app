@@ -34,6 +34,7 @@ import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { MdLock } from 'react-icons/md'
 import { useMediaViewer } from '../contexts/MediaViewer'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     ccid: string
@@ -124,6 +125,7 @@ interface BodyProps {
 }
 
 const Body = (props: BodyProps) => {
+    const { getImageURL } = useMediaProxy()
     const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const [stats, reloadStats] = useSubscribe(props.user.stats)
     const profile = props.profile
@@ -224,7 +226,7 @@ const Body = (props: BodyProps) => {
                         }}
                     >
                         <CCWallpaper
-                            src={profile.value.banner}
+                            src={getImageURL(profile.value.banner)}
                             style={{
                                 paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                                 height: '150px'

@@ -1,5 +1,6 @@
 import BoringAvatar from 'boring-avatars'
 import { Suspense, use, useDeferredValue } from 'react'
+import { CCImage } from '../contexts/CCImage'
 
 interface Props {
     ccid: string
@@ -33,8 +34,9 @@ const Inner = (props: Props) => {
 
     if (src) {
         return (
-            <img
+            <CCImage
                 src={src}
+                maxWidth={256}
                 alt="avatar"
                 style={{
                     width: '40px',

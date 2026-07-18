@@ -8,6 +8,7 @@ import { EmojipackCard, type EmojipackLite } from './EmojipackCard'
 import { IconButton } from './IconButton'
 import { migrateTheme, CssVar } from '../types/Theme'
 import { useCfmActions } from '../contexts/CfmActions'
+import { CCImage } from '../contexts/CCImage'
 
 const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNode => {
     const { importTheme } = useCfmActions()
@@ -281,8 +282,9 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
         case 'Emoji': {
             const emoji = emojis[ast.body]
             return emoji ? (
-                <img
+                <CCImage
                     src={emoji?.imageURL}
+                    maxHeight={128}
                     style={{
                         height: '1.25em',
                         verticalAlign: '-0.45em',
@@ -322,7 +324,7 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
             )
         case 'Image':
             return (
-                <img
+                <CCImage
                     src={ast.url}
                     alt={ast.alt}
                     style={{

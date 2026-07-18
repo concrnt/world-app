@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { type Summary, useUrlSummary } from '../contexts/UrlSummary'
+import { useMediaProxy } from '../contexts/MediaProxy'
 import { CssVar } from '../types/Theme'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 
 export const UrlSummaryCard = (props: Props) => {
     const service = useUrlSummary()
+    const { getImageURL } = useMediaProxy()
     const [preview, setPreview] = useState<Summary | undefined>(undefined)
     const [errored, setErrored] = useState(false)
 
@@ -118,7 +120,7 @@ export const UrlSummaryCard = (props: Props) => {
                         height: '80px',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundImage: `url(${preview.thumbnail || preview.icon})`,
+                        backgroundImage: `url(${getImageURL(preview.thumbnail || preview.icon, { maxWidth: 512 })})`,
                         flexShrink: 0
                     }}
                 />

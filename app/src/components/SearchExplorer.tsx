@@ -9,6 +9,7 @@ import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
 import { useResource } from '../hooks/useResource'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 // Crawler API base URL
 // https://github.com/concrnt/crawler
@@ -164,6 +165,7 @@ const CommunityResultList = ({ communities }: { communities: CommunityHit[] }) =
 )
 
 const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
+    const { getImageURL } = useMediaProxy()
     const drawer = useDrawer()
     const { push } = useStack()
 
@@ -179,7 +181,10 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                 cursor: 'pointer'
             }}
         >
-            <CCWallpaper style={{ height: '100%', aspectRatio: '1/1', flexShrink: 0 }} src={community.banner} />
+            <CCWallpaper
+                style={{ height: '100%', aspectRatio: '1/1', flexShrink: 0 }}
+                src={getImageURL(community.banner)}
+            />
             <div
                 style={{
                     padding: '8px',
@@ -230,6 +235,7 @@ const UserResultList = ({ users }: { users: UserHit[] }) => (
 )
 
 const UserResultCard = ({ user }: { user: UserHit }) => {
+    const { getImageURL } = useMediaProxy()
     const { push } = useStack()
     const ccid = user.ccid
 
@@ -243,7 +249,7 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
             }}
             onClick={() => push(<ProfileView ccid={ccid} />)}
         >
-            <CCWallpaper style={{ height: '60px', width: '100%' }} src={user.banner} />
+            <CCWallpaper style={{ height: '60px', width: '100%' }} src={getImageURL(user.banner)} />
             <div
                 style={{
                     display: 'flex',

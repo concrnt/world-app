@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { CCImage, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
@@ -417,8 +417,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                             } as React.CSSProperties
                                         }
                                     >
-                                        <img
+                                        <CCImage
                                             src={emoji.imageURL}
+                                            maxHeight={128}
                                             alt={emoji.shortcode}
                                             loading="lazy"
                                             style={{
@@ -480,8 +481,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                             gridRef.current?.scrollTo(0, 0)
                                         }}
                                     >
-                                        <img
+                                        <CCImage
                                             src={pkg.iconURL}
+                                            maxHeight={128}
                                             alt={pkg.name}
                                             style={{ width: '20px', height: '20px' }}
                                         />
@@ -631,8 +633,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         WebkitTapHighlightColor: 'transparent'
                                                     }}
                                                 >
-                                                    <img
+                                                    <CCImage
                                                         src={emoji.imageURL}
+                                                        maxHeight={128}
                                                         alt={emoji.shortcode}
                                                         loading="lazy"
                                                         style={{

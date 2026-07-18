@@ -1,5 +1,5 @@
 import { MessageContainer } from '../../components/message'
-import { Avatar, Divider, Tabs, Tab, Text, Button } from '@concrnt/ui'
+import { CCImage, Avatar, Divider, Tabs, Tab, Text, Button } from '@concrnt/ui'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
@@ -287,8 +287,9 @@ export const GuestPostView = (props: Props) => {
                                                 fontSize: '14px'
                                             }}
                                         >
-                                            <img
+                                            <CCImage
                                                 src={imageUrl}
+                                                maxHeight={128}
                                                 alt=""
                                                 style={{ height: '20px', width: '20px', objectFit: 'contain' }}
                                             />

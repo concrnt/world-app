@@ -8,6 +8,7 @@ import { uploadImage } from '../utils/uploadImage'
 import { useImageCropper } from '../contexts/ImageCropper'
 import { ProfileSchema } from '@concrnt/worldlib'
 import { UserPicker } from './UserPicker'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     onComplete?: () => void
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export const ProfileEditor = (props: Props) => {
+    const { getImageURL } = useMediaProxy()
     const { t } = useTranslation('', { keyPrefix: 'components.profileEditor' })
     const { client } = useClient()
     const cropper = useImageCropper()
@@ -150,7 +152,7 @@ export const ProfileEditor = (props: Props) => {
             </div>
 
             <CCWallpaper
-                src={banner}
+                src={getImageURL(banner)}
                 style={{
                     height: `150px`
                 }}

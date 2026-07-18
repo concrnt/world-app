@@ -19,6 +19,7 @@ import TickerProvider from './contexts/Ticer'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
+import { MediaProxyProvider } from './contexts/MediaProxy'
 import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
@@ -55,28 +56,30 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                 >
                     <PreferenceProvider>
                         <ThemeProvider>
-                            <ImageCropperProvider>
-                                <OverlayStackProvider>
-                                    <OverlayStackBackBridge />
-                                    <EmojiPickerProvider>
-                                        <ComposerProvider>
-                                            <ScannerProvider>
-                                                <OverlayProvider>
-                                                    <MediaViewerProvider>
-                                                        <AudioPlayerProvider>
-                                                            <TickerProvider>
-                                                                <UrlSummaryProvider>
-                                                                    <App />
-                                                                </UrlSummaryProvider>
-                                                            </TickerProvider>
-                                                        </AudioPlayerProvider>
-                                                    </MediaViewerProvider>
-                                                </OverlayProvider>
-                                            </ScannerProvider>
-                                        </ComposerProvider>
-                                    </EmojiPickerProvider>
-                                </OverlayStackProvider>
-                            </ImageCropperProvider>
+                            <MediaProxyProvider>
+                                <ImageCropperProvider>
+                                    <OverlayStackProvider>
+                                        <OverlayStackBackBridge />
+                                        <EmojiPickerProvider>
+                                            <ComposerProvider>
+                                                <ScannerProvider>
+                                                    <OverlayProvider>
+                                                        <MediaViewerProvider>
+                                                            <AudioPlayerProvider>
+                                                                <TickerProvider>
+                                                                    <UrlSummaryProvider>
+                                                                        <App />
+                                                                    </UrlSummaryProvider>
+                                                                </TickerProvider>
+                                                            </AudioPlayerProvider>
+                                                        </MediaViewerProvider>
+                                                    </OverlayProvider>
+                                                </ScannerProvider>
+                                            </ComposerProvider>
+                                        </EmojiPickerProvider>
+                                    </OverlayStackProvider>
+                                </ImageCropperProvider>
+                            </MediaProxyProvider>
                         </ThemeProvider>
                     </PreferenceProvider>
                 </ClientProvider>

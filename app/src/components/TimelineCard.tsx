@@ -7,6 +7,7 @@ import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { useDrawer } from '../contexts/Drawer'
 import { Subscription } from './Subscription'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     uri: string
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export const TimelineCard = (props: Props) => {
+    const { getImageURL } = useMediaProxy()
     const { push } = useStack()
 
     const drawer = useDrawer()
@@ -34,7 +36,7 @@ export const TimelineCard = (props: Props) => {
                     height: '100%',
                     aspectRatio: '1/1'
                 }}
-                src={props.document.value.banner}
+                src={getImageURL(props.document.value.banner)}
             />
             <div
                 style={{

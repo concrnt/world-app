@@ -5,6 +5,7 @@ import { CssVar } from '../../types/Theme'
 import { hapticLight } from '../../utils/haptics'
 import { startTransition } from 'react'
 import { ReactionState } from './Footer'
+import { CCImage } from '@concrnt/ui'
 
 interface Props {
     message: Message<any>
@@ -115,8 +116,9 @@ export const MessageReactions = (props: Props) => {
                             WebkitTapHighlightColor: 'transparent'
                         }}
                     >
-                        <img
+                        <CCImage
                             src={imageUrl}
+                            maxHeight={128}
                             alt=""
                             style={{
                                 height: '18px',

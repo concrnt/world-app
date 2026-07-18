@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { ReactionAssociationSchema } from '@concrnt/worldlib'
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { CCImage, Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
@@ -47,8 +47,9 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                     style={{ width: '16px', height: '16px' }}
                 />
                 {reaction?.imageUrl ? (
-                    <img
+                    <CCImage
                         src={reaction.imageUrl}
+                        maxHeight={128}
                         alt={reaction.shortcode ?? ''}
                         style={{
                             height: '16px',

@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { ApObject } from '../utils/activitypub'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     person: ApObject
 }
 
 export const ApPerson = ({ person }: Props) => {
+    const { getImageURL } = useMediaProxy()
     const { t } = useTranslation('', { keyPrefix: 'views.apPerson' })
     const theme = useTheme()
     const navigation = useNavigation()
@@ -45,7 +47,7 @@ export const ApPerson = ({ person }: Props) => {
                 }}
             >
                 <CCWallpaper
-                    src={person.getImages()[0]?.url}
+                    src={getImageURL(person.getImages()[0]?.url)}
                     style={{
                         paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
                         height: '150px'

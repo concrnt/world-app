@@ -7,6 +7,7 @@ import { Subscription } from './Subscription'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { useResource } from '../hooks/useResource'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 // Crawler API base URL
 // https://github.com/concrnt/crawler
@@ -162,6 +163,7 @@ const CommunityResultList = ({ communities }: { communities: CommunityHit[] }) =
 )
 
 const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
+    const { getImageURL } = useMediaProxy()
     const drawer = useDrawer()
     const navigate = useNavigate()
 
@@ -177,7 +179,10 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                 cursor: 'pointer'
             }}
         >
-            <CCWallpaper style={{ height: '100%', aspectRatio: '1/1', flexShrink: 0 }} src={community.banner} />
+            <CCWallpaper
+                style={{ height: '100%', aspectRatio: '1/1', flexShrink: 0 }}
+                src={getImageURL(community.banner)}
+            />
             <div
                 style={{
                     padding: '8px',
@@ -228,6 +233,7 @@ const UserResultList = ({ users }: { users: UserHit[] }) => (
 )
 
 const UserResultCard = ({ user }: { user: UserHit }) => {
+    const { getImageURL } = useMediaProxy()
     const navigate = useNavigate()
     const ccid = user.ccid
 
@@ -241,7 +247,7 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
             }}
             onClick={() => navigate('/profile/' + encodeURIComponent(ccid))}
         >
-            <CCWallpaper style={{ height: '60px', width: '100%' }} src={user.banner} />
+            <CCWallpaper style={{ height: '60px', width: '100%' }} src={getImageURL(user.banner)} />
             <div
                 style={{
                     display: 'flex',

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
+import { CCImage } from '@concrnt/ui'
 
 interface Props {
     textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -179,8 +180,9 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
                                     color: CssVar.contentText
                                 }}
                             >
-                                <img
+                                <CCImage
                                     src={emoji.imageURL}
+                                    maxHeight={128}
                                     alt={emoji.shortcode}
                                     style={{ width: '28px', height: '28px' }}
                                 />

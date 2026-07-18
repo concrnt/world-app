@@ -22,7 +22,7 @@ import {
     ReadAccessRequestAssociationSchema
 } from '@concrnt/worldlib'
 import { MessageContainer } from './message'
-import { Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
+import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
@@ -784,7 +784,9 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                 gap: '4px'
                             }}
                         >
-                            {url && <img src={url} style={{ width: '20px', height: '20px' }} alt="" />}
+                            {url && (
+                                <CCImage src={url} maxHeight={128} style={{ width: '20px', height: '20px' }} alt="" />
+                            )}
                             {group.map((item) => (
                                 <div
                                     key={item.uri}

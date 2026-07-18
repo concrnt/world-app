@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { IconButton, ListItem, Skeleton, Text, useAnchor } from '@concrnt/ui'
+import { CCImage, IconButton, ListItem, Skeleton, Text, useAnchor } from '@concrnt/ui'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { CssVar } from '../types/Theme'
@@ -235,8 +235,9 @@ const FileCard = (props: { file: StorageFile; onDelete: (id: string) => void }) 
             }}
         >
             {file.mime.startsWith('image/') ? (
-                <img
+                <CCImage
                     src={file.url}
+                    maxWidth={512}
                     alt={file.id}
                     loading="lazy"
                     style={{

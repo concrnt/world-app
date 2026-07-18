@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, IconButton, Text, TextField } from '@concrnt/ui'
+import { CCImage, Button, IconButton, Text, TextField } from '@concrnt/ui'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { CssVar } from '../types/Theme'
@@ -107,8 +107,9 @@ export const EmojiSettingsView = () => {
                             padding: CssVar.space(2)
                         }}
                     >
-                        <img
+                        <CCImage
                             src={preview.iconURL}
+                            maxHeight={128}
                             alt={preview.name}
                             style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0 }}
                         />
@@ -178,8 +179,9 @@ const EmojiPackageCard = ({ entry, pkg, onStatus }: EmojiPackageCardProps) => {
             }}
         >
             {pkg ? (
-                <img
+                <CCImage
                     src={pkg.iconURL}
+                    maxHeight={128}
                     alt={pkg.name}
                     style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0 }}
                 />

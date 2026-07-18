@@ -6,6 +6,7 @@ import { MdChevronLeft, MdChevronRight, MdClose, MdMusicNote, MdPlayCircle, MdSt
 import { CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { ModelViewer } from '../components/ModelViewer'
 import { useAudioPlayer } from './AudioPlayer'
+import { useMediaProxy } from './MediaProxy'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 export interface MediaItem {
@@ -461,6 +462,7 @@ export const MediaViewerProvider = (props: Props) => {
     const value = useMemo(() => ({ open }), [open])
 
     const parentCfmActions = useCfmActions()
+    const { getImageURL } = useMediaProxy()
 
     return (
         <MediaViewerContext.Provider value={value}>
@@ -538,7 +540,7 @@ export const MediaViewerProvider = (props: Props) => {
                         >
                             {currentMedia.mediaType.startsWith('image/') ? (
                                 <motion.img
-                                    src={currentMedia.mediaURL}
+                                    src={getImageURL(currentMedia.mediaURL)}
                                     alt={currentMedia.altText ?? ''}
                                     style={{
                                         maxWidth: '90vw',
@@ -727,12 +729,13 @@ export const MediaViewerProvider = (props: Props) => {
 
 // 前後スライド用の軽量プレビュー（modelやaudioは実体をロードしない）
 const SlidePreview = ({ media }: { media: MediaItem }) => {
+    const { getImageURL } = useMediaProxy()
     const kind = media.mediaType.split('/')[0]
     switch (kind) {
         case 'image':
             return (
                 <img
-                    src={media.mediaURL}
+                    src={getImageURL(media.mediaURL)}
                     alt={media.altText ?? ''}
                     style={{
                         maxWidth: '90vw',

@@ -1,5 +1,5 @@
 import { MessageContainer } from '../components/message'
-import { Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
+import { CCImage, Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
 import { MdAddReaction, MdReply } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -367,8 +367,9 @@ export const PostView = (props: Props) => {
                                                 fontSize: '14px'
                                             }}
                                         >
-                                            <img
+                                            <CCImage
                                                 src={imageUrl}
+                                                maxHeight={128}
                                                 alt=""
                                                 style={{ height: '20px', width: '20px', objectFit: 'contain' }}
                                             />

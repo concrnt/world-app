@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Subscription } from './Subscription'
 import { CCEditor } from './CCEditor'
 import { PolicyEditor } from './PolicyEditor'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     uri: string
@@ -31,6 +32,7 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { getImageURL } = useMediaProxy()
     const timeline = use(props.timelinePromise)
 
     const [tab, setTab] = useState<'subscriptions' | 'settings'>('subscriptions')
@@ -48,7 +50,7 @@ const Inner = (props: InnerProps) => {
                 width: '100%'
             }}
         >
-            <CCWallpaper src={timeline.banner}>
+            <CCWallpaper src={getImageURL(timeline.banner)}>
                 <div
                     style={{
                         padding: CssVar.space(2)

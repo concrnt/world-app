@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
 import { Text } from './Text'
+import { CCImage } from '../contexts/CCImage'
 
 // Minimal shape needed to render an emoji package card. A fetched emoji package
 // (name/iconURL/emojis[]) is structurally assignable to this.
@@ -33,8 +34,9 @@ export const EmojipackCard = (props: Props) => {
             }}
             onClick={props.onClick}
         >
-            <img
+            <CCImage
                 src={props.pack.iconURL}
+                maxHeight={128}
                 alt={props.pack.name}
                 style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0 }}
             />
@@ -54,9 +56,10 @@ export const EmojipackCard = (props: Props) => {
                 {previews.length > 0 && (
                     <div style={{ display: 'flex', gap: '4px', overflow: 'hidden' }}>
                         {previews.map((emoji, i) => (
-                            <img
+                            <CCImage
                                 key={`${emoji.shortcode}-${i}`}
                                 src={emoji.imageURL}
+                                maxHeight={128}
                                 alt={emoji.shortcode}
                                 style={{ width: '20px', height: '20px', objectFit: 'contain', flexShrink: 0 }}
                             />

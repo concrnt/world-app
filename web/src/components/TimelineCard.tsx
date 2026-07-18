@@ -6,6 +6,7 @@ import { MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { useDrawer } from '../contexts/Drawer'
 import { Subscription } from './Subscription'
+import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     uri: string
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export const TimelineCard = (props: Props) => {
+    const { getImageURL } = useMediaProxy()
     const navigate = useNavigate()
 
     const drawer = useDrawer()
@@ -33,7 +35,7 @@ export const TimelineCard = (props: Props) => {
                     height: '100%',
                     aspectRatio: '1/1'
                 }}
-                src={props.document.value.banner}
+                src={getImageURL(props.document.value.banner)}
             />
             <div
                 style={{

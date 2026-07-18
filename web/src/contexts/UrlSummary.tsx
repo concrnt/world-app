@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from '@concrnt/client'
+import { fetchWithTimeout, renderUriTemplate } from '@concrnt/client'
 import { createContext, ReactNode, useCallback, useContext, useRef } from 'react'
 import { useClient } from './Client'
 
@@ -29,7 +29,11 @@ export const UrlSummaryProvider = (props: Props): ReactNode => {
     const getSummary = useCallback(
         async (url: string): Promise<Summary | undefined> => {
             if (url in cache.current) return await cache.current[url]
-            const promise = fetchWithTimeout(`https://${host}/summary?url=${encodeURIComponent(url)}`, {})
+            const endpoint =
+                'world.concrnt.hyperproxy.summary' in (client.server?.endpoints ?? {})
+                    ? renderUriTemplate(client.server, 'world.concrnt.hyperproxy.summary', { url })
+                    : `/summary?url=${encodeURIComponent(url)}`
+            const promise = fetchWithTimeout(`https://${host}${endpoint}`, {})
                 .then(async (response) => {
                     if (!response.ok) return undefined
                     const json = await response.json()
@@ -40,7 +44,7 @@ export const UrlSummaryProvider = (props: Props): ReactNode => {
             cache.current[url] = promise
             return promise
         },
-        [host]
+        [client, host]
     )
 
     return <UrlSummaryContext.Provider value={{ getSummary }}>{props.children}</UrlSummaryContext.Provider>
