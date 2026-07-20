@@ -7,6 +7,9 @@ export * from './gfmMessage'
 
 export * from './apNote'
 
+export * from './atprotoRecord'
+export * from './atprotoFollow'
+
 export * from './likeAssociation'
 export * from './mentionAssociation'
 export * from './replyAssociation'

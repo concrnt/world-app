@@ -41,6 +41,8 @@ import { DevView } from './views/Dev'
 import { IDView } from './views/ID'
 import { Activitypub } from './views/Activitypub'
 import { ApView } from './views/ApView'
+import { Bluesky } from './views/Bluesky'
+import { BskyView } from './views/BskyView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { GuestShell } from './views/guest/GuestBase'
@@ -75,7 +77,7 @@ const ProfileRoute = () => {
     return <ProfileView ccid={ccid} profileName={profile} />
 }
 
-const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' }) => {
+const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' | 'bskyView' }) => {
     const { uri = '' } = useParams()
     const decoded = decodeURIComponent(uri)
 
@@ -86,6 +88,8 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' }) => {
             return <TimelineView uri={decoded} />
         case 'apView':
             return <ApView uri={decoded} />
+        case 'bskyView':
+            return <BskyView uri={decoded} />
     }
 }
 
@@ -198,6 +202,14 @@ const AuthedRoutes = () => (
                                                                 }
                                                             />
                                                             <Route
+                                                                path="settings/bluesky"
+                                                                element={
+                                                                    <SettingsBackProvider>
+                                                                        <Bluesky />
+                                                                    </SettingsBackProvider>
+                                                                }
+                                                            />
+                                                            <Route
                                                                 path="settings/id"
                                                                 element={
                                                                     <SettingsBackProvider>
@@ -285,6 +297,22 @@ const AuthedRoutes = () => (
                                                             <Route
                                                                 path="activitypub/view/:uri"
                                                                 element={<UriRoute kind="apView" />}
+                                                            />
+                                                            <Route
+                                                                path="bluesky"
+                                                                element={<Navigate to="/settings/bluesky" replace />}
+                                                            />
+                                                            <Route
+                                                                path="bluesky/person/:uri"
+                                                                element={<UriRoute kind="bskyView" />}
+                                                            />
+                                                            <Route
+                                                                path="bluesky/post/:uri"
+                                                                element={<UriRoute kind="bskyView" />}
+                                                            />
+                                                            <Route
+                                                                path="bluesky/view/:uri"
+                                                                element={<UriRoute kind="bskyView" />}
                                                             />
                                                             <Route path="*" element={<Navigate to="/" replace />} />
                                                         </Route>

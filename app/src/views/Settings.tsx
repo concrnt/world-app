@@ -6,6 +6,7 @@ import { usePreference, useResetPreference } from '../contexts/Preference'
 import { CssVar } from '../types/Theme'
 import { useStack } from '../layouts/Stack'
 import { Activitypub } from './Activitypub'
+import { Bluesky } from './Bluesky'
 import { IDView } from './ID'
 import { DevView } from './Dev'
 import { EmojiSettingsView } from './EmojiSettings'
@@ -27,7 +28,7 @@ import {
     MdRestore,
     MdTerminal
 } from 'react-icons/md'
-import { SiActivitypub } from 'react-icons/si'
+import { SiActivitypub, SiBluesky } from 'react-icons/si'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import buildTime from '~build/time'
@@ -52,6 +53,7 @@ export const SettingsView = () => {
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
+    const blueskyEnabled = 'world.concrnt.atproto.settings' in (client.server?.endpoints ?? {})
     const mediaEnabled = 'net.concrnt.storage.list' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
@@ -104,6 +106,15 @@ export const SettingsView = () => {
                             onClick={() => stack.push(<Activitypub />)}
                         >
                             {t('activitypub')}
+                        </ListItem>
+                    )}
+                    {blueskyEnabled && (
+                        <ListItem
+                            startIcon={<SiBluesky size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => stack.push(<Bluesky />)}
+                        >
+                            {t('bluesky')}
                         </ListItem>
                     )}
                     <ListItem

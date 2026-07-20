@@ -37,6 +37,7 @@
             "theme": "テーマ設定",
             "language": "言語",
             "activitypub": "ActivityPub設定",
+            "bluesky": "Bluesky設定",
             "id": "ID管理",
             "emoji": "絵文字",
             "media": "メディア",
@@ -323,6 +324,35 @@
             "noDescription": "説明はまだありません",
             "apUserNotice": "このユーザーはActivityPubのユーザーです。",
             "openRemote": "リモートで開く"
+        },
+        "bluesky": {
+            "title": "Bluesky設定",
+            "loading": "読み込み中...",
+            "unavailable": "Blueskyブリッジとの通信に失敗しました。",
+            "enableIntro": "Bluesky連携を有効化しましょう",
+            "enableDescription": "連携を有効化すると、Bluesky(AT Protocol)のネットワークと繋がることができます。自分が所有しているドメインが必要です。ドメインがそのままBlueskyのハンドルになります。",
+            "handleLabel": "ハンドル(自分が所有するドメイン)",
+            "setup": "セットアップ開始",
+            "setupFailed": "セットアップに失敗しました。このハンドルは既に使われている可能性があります。",
+            "pendingTitle": "ドメイン所有権の確認",
+            "pendingDescription": "{{handle}} を所有していることを証明するため、以下のいずれかのレコードをドメインに設置してください。",
+            "verifyDnsInstruction": "方法A: DNSのTXTレコードを追加する",
+            "verifyWellKnownInstruction": "方法B: 以下のURLでDIDをプレーンテキストで配信する",
+            "verifyNote": "DNSの変更が反映されるまで数分かかることがあります。設置できたら「確認する」を押してください。",
+            "verify": "確認する",
+            "verifyFailed": "確認に失敗しました。レコードが公開されているか確認し、しばらく待ってから再試行してください。",
+            "active": "Bluesky連携は有効化されています。",
+            "yourHandle": "あなたのハンドル: @{{handle}}",
+            "enabledToggle": "連携を有効にする",
+            "following": "フォロー中",
+            "inquiry": "照会"
+        },
+        "bskyPerson": {
+            "follow": "フォロー",
+            "unfollow": "フォロー解除",
+            "noDescription": "説明はまだありません",
+            "bskyUserNotice": "このユーザーはBlueskyのユーザーです。",
+            "openRemote": "bsky.appで開く"
         },
         "home": {
             "setUpProfile": "プロフィールを設定しましょう！",

@@ -2,7 +2,7 @@ import { ReactNode, use } from 'react'
 
 import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
-import { ApNoteSchema, Message, Schemas } from '@concrnt/worldlib'
+import { ApNoteSchema, AtprotoRecordSchema, Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { PlaintextMessage } from './PlaintextMessage'
 import { MediaMessage } from './MediaMessage'
@@ -15,6 +15,7 @@ import { RerouteAssociation } from './RerouteAssociation'
 import { LegacyNoteMessage } from './legacy/note'
 import { OnelineMessage } from './OnelineMessage'
 import { ActivitypubNote } from './ActivitypubNote'
+import { BlueskyRecord } from './BlueskyRecord'
 
 interface Props {
     uri?: string
@@ -64,6 +65,10 @@ export const MessageContainer = (props: Props): ReactNode | null => {
                     message={message}
                 />
             )
+        }
+        case Schemas.atprotoRecord: {
+            const recordMessage = message as Message<AtprotoRecordSchema>
+            return <BlueskyRecord atUri={recordMessage.value.atUri} message={recordMessage} />
         }
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
             return <LegacyNoteMessage message={message} />

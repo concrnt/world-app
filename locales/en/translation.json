@@ -37,6 +37,7 @@
             "theme": "Theme",
             "language": "Language",
             "activitypub": "ActivityPub",
+            "bluesky": "Bluesky",
             "id": "ID Management",
             "emoji": "Emoji",
             "media": "Media",
@@ -323,6 +324,35 @@
             "noDescription": "No description yet",
             "apUserNotice": "This user is an ActivityPub user.",
             "openRemote": "Open on remote server"
+        },
+        "bluesky": {
+            "title": "Bluesky Settings",
+            "loading": "Loading...",
+            "unavailable": "Failed to communicate with the Bluesky bridge.",
+            "enableIntro": "Let's enable Bluesky integration",
+            "enableDescription": "Enabling integration lets you connect with the Bluesky (AT Protocol) network. You need a domain you own — it becomes your Bluesky handle.",
+            "handleLabel": "Your handle (a domain you own)",
+            "setup": "Start setup",
+            "setupFailed": "Setup failed. The handle may already be taken.",
+            "pendingTitle": "Verify your domain",
+            "pendingDescription": "To prove that you own {{handle}}, publish one of the following records on your domain.",
+            "verifyDnsInstruction": "Option A: Add a DNS TXT record",
+            "verifyWellKnownInstruction": "Option B: Serve the DID as plain text at this URL",
+            "verifyNote": "DNS changes can take a few minutes to propagate. Once published, press Verify.",
+            "verify": "Verify",
+            "verifyFailed": "Verification failed. Check that the record is published and try again after a while.",
+            "active": "Bluesky integration is enabled.",
+            "yourHandle": "Your handle: @{{handle}}",
+            "enabledToggle": "Enable federation",
+            "following": "Following",
+            "inquiry": "Inquiry"
+        },
+        "bskyPerson": {
+            "follow": "Follow",
+            "unfollow": "Unfollow",
+            "noDescription": "No description yet",
+            "bskyUserNotice": "This user is a Bluesky user.",
+            "openRemote": "Open on bsky.app"
         },
         "home": {
             "setUpProfile": "Let's set up your profile!",
