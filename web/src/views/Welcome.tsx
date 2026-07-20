@@ -2,14 +2,13 @@ import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AccountSetup } from '../views/AccountSetup'
-import { AccountImport } from '../views/AccountImport'
+import { Navigate } from 'react-router-dom'
 import { Api, InMemoryAuthProvider, InMemoryKVS, Document, Entity } from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
-import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
+import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 
 const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
@@ -56,9 +55,7 @@ export const WelcomeView = () => {
         return authProvider?.getCCID()
     }, [authProvider])
 
-    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready'>(
-        existingCCID ? 'initial' : 'welcome'
-    )
+    const [state, setState] = useState<'initial' | 'missing' | 'ready'>('initial')
 
     useEffect(() => {
         if (!existingCCID) return
@@ -84,50 +81,21 @@ export const WelcomeView = () => {
         setUpdater((prev) => prev + 1)
     }
 
+    if (!existingCCID) {
+        return <Navigate to="/login" replace />
+    }
+
     switch (state) {
         case 'initial':
             return <LoadingFull />
-        case 'signup':
-            return <AccountSetup entrypoint={resolver} onBack={() => setState('welcome')} />
-        case 'signin':
-            return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
-        case 'welcome':
-            return (
-                <AuthScreen>
-                    <div style={{ flex: 1 }} />
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: CssVar.space(2)
-                        }}
-                    >
-                        <AuthBrand />
-                        <Text
-                            variant="caption"
-                            style={{
-                                color: CssVar.uiText,
-                                opacity: 0.72,
-                                textAlign: 'center'
-                            }}
-                        >
-                            World App
-                        </Text>
-                    </div>
-                    <div style={{ flex: 1 }} />
-                    <AuthActions fixedBottom>
-                        <AuthButton onClick={() => setState('signup')}>{t('getStarted')}</AuthButton>
-                        <AuthTextButton onClick={() => (window.location.href = '/login')}>{t('login')}</AuthTextButton>
-                    </AuthActions>
-                </AuthScreen>
-            )
         case 'missing':
             return (
                 <RecoveryView
-                    ccid={existingCCID!}
+                    ccid={existingCCID}
                     reload={reload}
-                    giveup={() => setState('signup')}
+                    giveup={() => {
+                        window.location.href = '/signup'
+                    }}
                     setDomain={(domain) => {
                         setResolver(domain)
                     }}

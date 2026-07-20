@@ -45,6 +45,7 @@ import { Bluesky } from './views/Bluesky'
 import { BskyView } from './views/BskyView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { Signup } from './pages/Signup'
 import { GuestShell } from './views/guest/GuestBase'
 import { GuestProfileView } from './views/guest/GuestProfile'
 import { GuestPostView } from './views/guest/GuestPost'
@@ -353,6 +354,14 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                         }
                     />
                     <Route
+                        path="/signup"
+                        element={
+                            <BaseThemeProvider theme={Themes.blue}>
+                                <Signup />
+                            </BaseThemeProvider>
+                        }
+                    />
+                    <Route
                         path="/crash"
                         element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}
                     />
@@ -363,7 +372,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
                         </Route>
                     )}
-                    <Route path="*" element={<AuthedRoutes />} />
+                    {hasSession ? (
+                        <Route path="*" element={<AuthedRoutes />} />
+                    ) : (
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                    )}
                 </Routes>
             </BrowserRouter>
         </KeyboardProvider>

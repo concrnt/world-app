@@ -136,6 +136,8 @@ export const AccountSetup = (props: Props) => {
             )
             reset()
             await reload()
+            // ClientProviderの外(/signupルート)ではreloadはno-opなので、フルリロードで確実にログイン状態へ遷移する
+            window.location.href = '/'
         } catch (err) {
             console.error('Failed to finalize registration', err)
             setFinalizeError(err instanceof Error ? err.message : String(err))

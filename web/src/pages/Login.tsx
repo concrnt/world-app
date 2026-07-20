@@ -1,5 +1,6 @@
-import { CssVar, Text, TextField } from '@concrnt/ui'
+import { CssVar, Text, TextField, ToggleGroup } from '@concrnt/ui'
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { QRSetup } from '../components/QRSetup'
@@ -111,6 +112,7 @@ const ensureEntityProof = async (identity: Identity, domain: string) => {
 
 export const Login = () => {
     const { t } = useTranslation('', { keyPrefix: 'web.login' })
+    const navigate = useNavigate()
     const reset = useResetPreference()
     const [method, setMethod] = useState<LoginMethod>('qr')
     const [status, setStatus] = useState('')
@@ -244,42 +246,19 @@ export const Login = () => {
             <AuthHeader title={t('title')} description={t('description')} />
 
             <div style={authStyles.section}>
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
-                        gap: CssVar.space(2),
-                        width: '100%'
+                <ToggleGroup
+                    options={[
+                        { value: 'qr', label: t('methodQr') },
+                        { value: 'passkey', label: t('methodPasskey') },
+                        { value: 'recovery', label: t('methodMasterKey') }
+                    ]}
+                    value={method}
+                    onChange={(value: LoginMethod) => {
+                        setMethod(value)
+                        setStatus('')
                     }}
-                >
-                    <AuthButton
-                        disabled={busy}
-                        variant={method === 'qr' ? 'contained' : 'outlined'}
-                        onClick={() => setMethod('qr')}
-                    >
-                        {t('qrLogin')}
-                    </AuthButton>
-                    <AuthButton
-                        disabled={busy}
-                        variant={method === 'passkey' ? 'contained' : 'outlined'}
-                        onClick={() => {
-                            setMethod('passkey')
-                            setStatus('')
-                        }}
-                    >
-                        {t('passkeyLogin')}
-                    </AuthButton>
-                    <AuthButton
-                        disabled={busy}
-                        variant={method === 'recovery' ? 'contained' : 'outlined'}
-                        onClick={() => {
-                            setMethod('recovery')
-                            setStatus('')
-                        }}
-                    >
-                        {t('masterKeyLogin')}
-                    </AuthButton>
-                </div>
+                    disabled={busy}
+                />
             </div>
 
             {method === 'qr' && (
@@ -363,6 +342,10 @@ export const Login = () => {
                     </AuthActions>
                 </>
             )}
+
+            <AuthActions>
+                <AuthTextButton onClick={() => navigate('/signup')}>{t('signup')}</AuthTextButton>
+            </AuthActions>
         </AuthScreen>
     )
 }
