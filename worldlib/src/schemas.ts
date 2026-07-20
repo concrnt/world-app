@@ -8,6 +8,7 @@ export const Schemas = {
     mfmMessage: 'https://schema.concrnt.world/m/mfm.json',
 
     apNote: 'https://schema.concrnt.world/ap/note.json',
+    apFollow: 'https://schema.concrnt.world/ap/follow.json',
 
     atprotoRecord: 'https://schema.concrnt.world/atproto/record.json',
     atprotoFollow: 'https://schema.concrnt.world/atproto/follow.json',

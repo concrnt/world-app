@@ -6,6 +6,7 @@ export * from './mediaMessage'
 export * from './gfmMessage'
 
 export * from './apNote'
+export * from './apFollow'
 
 export * from './atprotoRecord'
 export * from './atprotoFollow'

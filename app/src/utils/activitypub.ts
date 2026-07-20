@@ -1,8 +1,16 @@
+import { CDID } from '@concrnt/client'
+
 export interface ApImage {
     type: 'Image'
     url: string
     name: string | null
     sensitive: boolean
+}
+
+// APブリッジ(activitypub.concrnt.world)のフォローレコードキー。
+// ハッシュはブリッジ側の CDID.makeHash と同一(keccak256先頭15バイトのx-CDID)。
+export const apFollowKey = (ccid: string, actorURI: string): string => {
+    return `cckv://${ccid}/activitypub.concrnt.world/follows/${CDID.newFromStringX(actorURI).toString()}`
 }
 
 export class ApObject {

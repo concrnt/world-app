@@ -4,7 +4,9 @@ import { useNavigation } from '../contexts/Navigation'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
-import { ApObject } from '../utils/activitypub'
+import { NotFoundError, Document } from '@concrnt/client'
+import { Schemas, ApFollowSchema } from '@concrnt/worldlib'
+import { ApObject, apFollowKey } from '../utils/activitypub'
 import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
@@ -20,24 +22,26 @@ export const ApPerson = ({ person }: Props) => {
 
     console.log(person)
 
-    const [followings, setFollowings] = useState<string[]>([])
-    const followed = followings.includes(person.id?.toString() ?? '')
+    const [followed, setFollowed] = useState<boolean | undefined>(undefined)
 
-    const updateFollowings = () => {
+    const updateFollowed = () => {
         client.api
-            .callConcrntApi<string[]>(client.server.domain, 'net.concrnt.activitypub.following', {})
-            .then((response) => {
-                setFollowings(response)
-                console.log('followings', response)
+            .getDocument(apFollowKey(client.ccid, person.id))
+            .then(() => {
+                setFollowed(true)
             })
             .catch((err) => {
-                console.log(err)
+                if (err instanceof NotFoundError) {
+                    setFollowed(false)
+                } else {
+                    console.log(err)
+                }
             })
     }
 
     useEffect(() => {
-        updateFollowings()
-    }, [])
+        updateFollowed()
+    }, [person.id])
 
     return (
         <View>
@@ -102,52 +106,48 @@ export const ApPerson = ({ person }: Props) => {
                             justifyContent: 'flex-end'
                         }}
                     >
-                        {followed ? (
-                            <Button
-                                onClick={() => {
-                                    client.api
-                                        .callConcrntApi(
-                                            client.server.domain,
-                                            'net.concrnt.activitypub.unfollow',
-                                            {},
-                                            {
-                                                method: 'POST',
-                                                body: JSON.stringify({
-                                                    target: person.id?.toString()
-                                                })
-                                            }
-                                        )
-                                        .then((response) => {
-                                            console.log('unfollow response', response)
-                                            updateFollowings()
-                                        })
-                                }}
-                            >
-                                {t('unfollow')}
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={() => {
-                                    client.api
-                                        .callConcrntApi(
-                                            client.server.domain,
-                                            'net.concrnt.activitypub.follow',
-                                            {},
-                                            {
-                                                method: 'POST',
-                                                body: JSON.stringify({
-                                                    target: person.id?.toString()
-                                                })
-                                            }
-                                        )
-                                        .then((response) => {
-                                            console.log('follow response', response)
-                                        })
-                                }}
-                            >
-                                {t('follow')}
-                            </Button>
-                        )}
+                        {followed !== undefined &&
+                            (followed ? (
+                                <Button
+                                    onClick={() => {
+                                        client.api
+                                            .delete(apFollowKey(client.ccid, person.id))
+                                            .then(() => {
+                                                setFollowed(false)
+                                            })
+                                            .catch((err) => {
+                                                console.log(err)
+                                            })
+                                    }}
+                                >
+                                    {t('unfollow')}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => {
+                                        const document: Document<ApFollowSchema> = {
+                                            kind: 'record',
+                                            key: apFollowKey(client.ccid, person.id),
+                                            author: client.ccid,
+                                            schema: Schemas.apFollow,
+                                            value: {
+                                                actorURI: person.id
+                                            },
+                                            createdAt: new Date()
+                                        }
+                                        client.api
+                                            .commit(document)
+                                            .then(() => {
+                                                setFollowed(true)
+                                            })
+                                            .catch((err) => {
+                                                console.log(err)
+                                            })
+                                    }}
+                                >
+                                    {t('follow')}
+                                </Button>
+                            ))}
                     </div>
                     <div>
                         <Text
