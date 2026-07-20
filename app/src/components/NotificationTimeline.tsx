@@ -19,6 +19,7 @@ import {
     ReactionAssociationSchema,
     LikeAssociationSchema,
     FollowAckSchema,
+    AtprotoFollowNotifySchema,
     ReadAccessRequestAssociationSchema
 } from '@concrnt/worldlib'
 import { MessageContainer } from './message'
@@ -31,17 +32,19 @@ import { MdStar, MdEmojiEmotions, MdPersonAdd, MdLock } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { PostView } from '../views/Post'
 import { ProfileView } from '../views/Profile'
+import { BskyView } from '../views/BskyView'
 import { PullToRefresh } from './PullToRefresh'
 
 // 通知を集約した表示単位
 // - summarised-like: 同じ投稿に対する Like をまとめたもの
 // - summarised-reaction: 同じ投稿に対する Reaction をまとめたもの（絵文字違いでもここでひとまとめ）
 // - follow: フォロー通知（集約せず 1 件ずつ）
+// - bsky-follow: Blueskyユーザーからのフォロー通知（集約せず 1 件ずつ）
 // - readaccess: 閲覧リクエスト通知（集約せず 1 件ずつ、承認/無視ボタン付き）
 // - normal: Reply / Reroute / Mention など、集約しない単発通知
 interface WrappedNotification {
     key: string
-    type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'readaccess' | 'normal'
+    type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'bsky-follow' | 'readaccess' | 'normal'
     items: Message<any>[]
     // normal の元 ChunklineItem 情報（MessageContainer に渡すため）
     href?: string
@@ -60,6 +63,8 @@ const KEY_SUFFIX_LIKE = '$like'
 const KEY_SUFFIX_REACTION = '$reaction'
 // フォローは集約しないが、normal と区別するため専用サフィックスで識別する
 const KEY_SUFFIX_FOLLOW = '$follow'
+// Blueskyからのフォローも集約しない
+const KEY_SUFFIX_BSKYFOLLOW = '$bskyfollow'
 // 閲覧リクエストも集約しない
 const KEY_SUFFIX_READACCESS = '$readaccess'
 
@@ -123,6 +128,10 @@ export const NotificationTimeline = (props: Props) => {
                     // href はこの association 自身の uri なので 1 件ごとに一意なキーになる。
                     key = item.href + KEY_SUFFIX_FOLLOW
                     break
+                case Schemas.atprotoFollowNotify:
+                    // Blueskyからのフォロー通知。集約しない
+                    key = item.href + KEY_SUFFIX_BSKYFOLLOW
+                    break
                 case Schemas.readAccessRequestAssociation:
                     // 閲覧リクエストも集約しない
                     key = item.href + KEY_SUFFIX_READACCESS
@@ -154,6 +163,12 @@ export const NotificationTimeline = (props: Props) => {
                 result.push({
                     key: value.items[0].uri,
                     type: 'summarised-reaction',
+                    items: value.items
+                })
+            } else if (key.endsWith(KEY_SUFFIX_BSKYFOLLOW)) {
+                result.push({
+                    key: value.items[0].uri,
+                    type: 'bsky-follow',
                     items: value.items
                 })
             } else if (key.endsWith(KEY_SUFFIX_FOLLOW)) {
@@ -359,6 +374,7 @@ export const NotificationTimeline = (props: Props) => {
                                 {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}
                                 {n.type === 'summarised-reaction' && <SummarisedReaction items={n.items} />}
                                 {n.type === 'follow' && <FollowNotification item={n.items[0]} />}
+                                {n.type === 'bsky-follow' && <BskyFollowNotification item={n.items[0]} />}
                                 {n.type === 'readaccess' && <ReadAccessRequestNotification item={n.items[0]} />}
                                 {n.type === 'normal' && n.href && (
                                     <Suspense fallback={<MessageSkeleton />}>
@@ -559,6 +575,63 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
 
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
                     <span>{t('follow', { name: author?.profile.username ?? t('unknown') })}</span>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// Blueskyユーザーからのフォロー通知の表示
+// 集約せず 1 件ずつ表示する。author はブリッジのサービスアカウントなので、
+// 表示は value に埋め込まれた profileOverride（ブリッジがingest時に解決済み）を使う。
+// タップでフォロワーの Bluesky プロフィールへ。
+const BskyFollowNotification = (props: { item: Message<AtprotoFollowNotifySchema> }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
+    const { push } = useStack()
+
+    const override = props.item.value.profileOverride
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                cursor: 'pointer'
+            }}
+            onClick={() => {
+                push(<BskyView uri={props.item.value.did} />)
+            }}
+        >
+            {/* 左カラム: フォローアイコン */}
+            <div
+                style={{
+                    width: ICON_COLUMN_WIDTH,
+                    paddingLeft: ICON_COLUMN_PADDING_LEFT,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    paddingTop: '2px'
+                }}
+            >
+                <MdPersonAdd size={ICON_SIZE} style={{ opacity: 0.7 }} />
+            </div>
+
+            {/* 右カラム: アバター / 文言 */}
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    flex: 1,
+                    minWidth: 0
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', flexWrap: 'wrap' }}>
+                    <Avatar ccid={props.item.author} src={override?.avatar} style={{ width: '32px', height: '32px' }} />
+                </div>
+
+                <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                    <span>{t('bskyFollow', { name: override?.username ?? props.item.value.did })}</span>
                 </div>
             </div>
         </div>

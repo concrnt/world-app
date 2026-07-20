@@ -345,6 +345,8 @@
             "yourHandle": "Your handle: @{{handle}}",
             "enabledToggle": "Enable federation",
             "following": "Following",
+            "followers": "Followers",
+            "loadMore": "Show more",
             "inquiry": "Inquiry"
         },
         "bskyPerson": {
@@ -598,6 +600,7 @@
             "reaction": "{{name}} reacted to your post",
             "reactionMany": "{{name}} and {{others}} others reacted to your post",
             "follow": "{{name}} followed you",
+            "bskyFollow": "{{name}} followed you on Bluesky",
             "readAccessRequest": "{{name}} is requesting read access to {{target}}",
             "targetContent": "your content",
             "targetProfile": "profile \"{{name}}\"",

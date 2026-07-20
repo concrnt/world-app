@@ -345,6 +345,8 @@
             "yourHandle": "あなたのハンドル: @{{handle}}",
             "enabledToggle": "連携を有効にする",
             "following": "フォロー中",
+            "followers": "フォロワー",
+            "loadMore": "もっと見る",
             "inquiry": "照会"
         },
         "bskyPerson": {
@@ -598,6 +600,7 @@
             "reaction": "{{name}} さんがあなたの投稿にリアクションしました",
             "reactionMany": "{{name}} さんと他 {{others}} 人があなたの投稿にリアクションしました",
             "follow": "{{name}} さんがあなたをフォローしました",
+            "bskyFollow": "{{name}} さんがBlueskyであなたをフォローしました",
             "readAccessRequest": "{{name}} さんが{{target}}への閲覧アクセスを希望しています",
             "targetContent": "コンテンツ",
             "targetProfile": "プロフィール「{{name}}」",

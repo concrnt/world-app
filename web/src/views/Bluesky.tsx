@@ -49,8 +49,26 @@ export const Bluesky = () => {
 
     const [settings, setSettings] = useState<BskySettings>()
     const [following, setFollowing] = useState<BskyProfile[]>([])
+    const [followers, setFollowers] = useState<BskyProfile[]>([])
+    const [followersCursor, setFollowersCursor] = useState<string>()
 
     const [lookupDraft, setLookupDraft] = useState('')
+
+    const loadFollowers = (cursor?: string) => {
+        client.api
+            .callConcrntApi<{ followers: BskyProfile[]; cursor?: string }>(
+                client.server.domain,
+                'world.concrnt.atproto.followers',
+                cursor ? { cursor } : {}
+            )
+            .then((res) => {
+                setFollowers((prev) => (cursor ? [...prev, ...(res.followers ?? [])] : (res.followers ?? [])))
+                setFollowersCursor(res.cursor)
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+    }
 
     const updateInfo = () => {
         client.api
@@ -90,6 +108,8 @@ export const Bluesky = () => {
             .catch((err) => {
                 console.log(err)
             })
+
+        loadFollowers()
 
         const inboxUri = inboxKey(client.ccid)
         client.api
@@ -302,6 +322,52 @@ export const Bluesky = () => {
                                         <Text variant="caption">@{profile.handle}</Text>
                                     </div>
                                 ))}
+                                <Divider />
+                            </>
+                        )}
+                        {followers.length > 0 && (
+                            <>
+                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
+                                    {t('followers')}
+                                </Text>
+                                {followers.map((profile) => (
+                                    <div
+                                        key={profile.did}
+                                        onClick={() => {
+                                            navigate('/bluesky/view/' + encodeURIComponent(profile.did))
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: CssVar.space(1),
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {profile.avatar && (
+                                            <img
+                                                src={profile.avatar}
+                                                style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '50%'
+                                                }}
+                                            />
+                                        )}
+                                        <Text style={{ fontWeight: 'bold' }}>
+                                            {profile.displayName || profile.handle}
+                                        </Text>
+                                        <Text variant="caption">@{profile.handle}</Text>
+                                    </div>
+                                ))}
+                                {followersCursor && (
+                                    <Button
+                                        onClick={() => {
+                                            loadFollowers(followersCursor)
+                                        }}
+                                    >
+                                        {t('loadMore')}
+                                    </Button>
+                                )}
                                 <Divider />
                             </>
                         )}

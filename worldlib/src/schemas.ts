@@ -11,6 +11,7 @@ export const Schemas = {
 
     atprotoRecord: 'https://schema.concrnt.world/atproto/record.json',
     atprotoFollow: 'https://schema.concrnt.world/atproto/follow.json',
+    atprotoFollowNotify: 'https://schema.concrnt.world/atproto/follow-notify.json',
 
     likeAssociation: 'https://schema.concrnt.world/a/like.json',
     mentionAssociation: 'https://schema.concrnt.world/a/mention.json',

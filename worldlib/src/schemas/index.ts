@@ -9,6 +9,7 @@ export * from './apNote'
 
 export * from './atprotoRecord'
 export * from './atprotoFollow'
+export * from './atprotoFollowNotify'
 
 export * from './likeAssociation'
 export * from './mentionAssociation'
