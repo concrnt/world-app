@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "ios",
+  "description": "iOS-only capabilities for the main window",
+  "windows": ["main"],
+  "platforms": ["iOS"],
+  "permissions": ["ageverify:default"]
+}

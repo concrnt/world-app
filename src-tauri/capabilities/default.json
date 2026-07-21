@@ -15,7 +15,6 @@
     "haptics:allow-vibrate",
     "keyboard:default",
     "push:default",
-    "ageverify:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
