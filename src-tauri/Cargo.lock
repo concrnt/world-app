@@ -3847,6 +3847,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-ageverify"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-plugin-barcode-scanner"
 version = "2.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5310,6 +5320,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-ageverify",
  "tauri-plugin-barcode-scanner",
  "tauri-plugin-biometric",
  "tauri-plugin-dialog",

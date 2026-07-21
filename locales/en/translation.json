@@ -223,6 +223,10 @@
                 "deleteBrowserAccount": "Delete account data from this browser"
             }
         },
+        "ageBlocked": {
+            "title": "You can't use Concrnt yet",
+            "description": "Based on your Apple account's age setting, this app isn't available to people under 13.\nIf you think this is a mistake, please check the age settings on your Apple account."
+        },
         "accountSetup": {
             "title": "Create Account",
             "chooseServerDescription": "Choose a server to register on, then complete registration in your browser.",

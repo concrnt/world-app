@@ -79,6 +79,9 @@ targets:
         aps-environment: development
         com.apple.security.application-groups:
           - group.world.concrnt.app
+        # Required to use Apple's Declared Age Range API (iOS 26.2+) for the
+        # under-13 gate. See plugins/tauri-plugin-ageverify.
+        com.apple.developer.declared-age-range: true
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full

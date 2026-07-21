@@ -41,3 +41,4 @@ tauri-plugin-push = { version = "0.1.0", path = "../plugins/tauri-plugin-push" }
 
 [target.'cfg(any(target_os = "ios"))'.dependencies]
 tauri-plugin-safari-scroll-killer = { version = "0.1.0", path = "../plugins/tauri-plugin-safari-scroll-killer" }
+tauri-plugin-ageverify = { version = "0.1.0", path = "../plugins/tauri-plugin-ageverify" }
