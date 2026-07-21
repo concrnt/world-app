@@ -223,6 +223,10 @@
                 "deleteBrowserAccount": "ブラウザのアカウント情報を削除"
             }
         },
+        "ageBlocked": {
+            "title": "まだConcrntを利用できません",
+            "description": "お使いのAppleアカウントの年齢設定にもとづき、このアプリは13歳未満の方はご利用いただけません。\nもし誤りだと思われる場合は、Appleアカウントの年齢設定をご確認ください。"
+        },
         "accountSetup": {
             "title": "アカウントを作成",
             "chooseServerDescription": "登録に使うサーバーを選んでから、ブラウザで登録を完了します。",

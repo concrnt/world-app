@@ -23,6 +23,7 @@ import { MediaProxyProvider } from './contexts/MediaProxy'
 import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
+import { AgeGateProvider } from './contexts/AgeGate'
 import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
 
 const ClientLoadingScreen = () => {
@@ -45,44 +46,46 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <KeyboardProvider>
             <BackHandlerProvider>
-                <ClientProvider
-                    loading={<ClientLoadingScreen />}
-                    failed={
-                        <OverlayStackProvider>
-                            <OverlayStackBackBridge />
-                            <WelcomeView />
-                        </OverlayStackProvider>
-                    }
-                >
-                    <PreferenceProvider>
-                        <ThemeProvider>
-                            <MediaProxyProvider>
-                                <ImageCropperProvider>
-                                    <OverlayStackProvider>
-                                        <OverlayStackBackBridge />
-                                        <EmojiPickerProvider>
-                                            <ComposerProvider>
-                                                <ScannerProvider>
-                                                    <OverlayProvider>
-                                                        <MediaViewerProvider>
-                                                            <AudioPlayerProvider>
-                                                                <TickerProvider>
-                                                                    <UrlSummaryProvider>
-                                                                        <App />
-                                                                    </UrlSummaryProvider>
-                                                                </TickerProvider>
-                                                            </AudioPlayerProvider>
-                                                        </MediaViewerProvider>
-                                                    </OverlayProvider>
-                                                </ScannerProvider>
-                                            </ComposerProvider>
-                                        </EmojiPickerProvider>
-                                    </OverlayStackProvider>
-                                </ImageCropperProvider>
-                            </MediaProxyProvider>
-                        </ThemeProvider>
-                    </PreferenceProvider>
-                </ClientProvider>
+                <AgeGateProvider>
+                    <ClientProvider
+                        loading={<ClientLoadingScreen />}
+                        failed={
+                            <OverlayStackProvider>
+                                <OverlayStackBackBridge />
+                                <WelcomeView />
+                            </OverlayStackProvider>
+                        }
+                    >
+                        <PreferenceProvider>
+                            <ThemeProvider>
+                                <MediaProxyProvider>
+                                    <ImageCropperProvider>
+                                        <OverlayStackProvider>
+                                            <OverlayStackBackBridge />
+                                            <EmojiPickerProvider>
+                                                <ComposerProvider>
+                                                    <ScannerProvider>
+                                                        <OverlayProvider>
+                                                            <MediaViewerProvider>
+                                                                <AudioPlayerProvider>
+                                                                    <TickerProvider>
+                                                                        <UrlSummaryProvider>
+                                                                            <App />
+                                                                        </UrlSummaryProvider>
+                                                                    </TickerProvider>
+                                                                </AudioPlayerProvider>
+                                                            </MediaViewerProvider>
+                                                        </OverlayProvider>
+                                                    </ScannerProvider>
+                                                </ComposerProvider>
+                                            </EmojiPickerProvider>
+                                        </OverlayStackProvider>
+                                    </ImageCropperProvider>
+                                </MediaProxyProvider>
+                            </ThemeProvider>
+                        </PreferenceProvider>
+                    </ClientProvider>
+                </AgeGateProvider>
             </BackHandlerProvider>
         </KeyboardProvider>
     </ErrorBoundary>
