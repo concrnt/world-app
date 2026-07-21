@@ -713,6 +713,9 @@ export class Api {
         }
 
         await this.commit(documentObj, domain)
+        // deleteドキュメントにはkeyが無いのでcommit側のinvalidateは効かない。
+        // range記法(末尾の* / /*)は素のキーに落としてから無効化する
+        this.cache.invalidate(uri.replace(/\/?\*$/, ''))
     }
 
     // ---

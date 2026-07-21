@@ -309,7 +309,24 @@
             "loginOnAnotherDevice": "Log in on another device",
             "backupMasterKey": "Back up master key",
             "backupNotSaved": "Not saved",
-            "backupFileContent": "Concrnt Web login information\nThis file is a backup of your Concrnt Web login information.\nKeep this file in a safe place.\n\nCCID: {{ccid}}\nMaster private key: {{privateKey}}\nRegistered server at backup: {{server}}\n\nIf you lose your private key, you may not be able to recover your account.\nIf anyone else learns this information, your account could be taken over."
+            "backupFileContent": "Concrnt Web login information\nThis file is a backup of your Concrnt Web login information.\nKeep this file in a safe place.\n\nCCID: {{ccid}}\nMaster private key: {{privateKey}}\nRegistered server at backup: {{server}}\n\nIf you lose your private key, you may not be able to recover your account.\nIf anyone else learns this information, your account could be taken over.",
+            "subkeys": {
+                "title": "Subkeys",
+                "description": "Subkeys authorized for this account. Devices you have logged in on sign with these keys.",
+                "loading": "Loading...",
+                "empty": "No subkeys",
+                "loadFailed": "Failed to load subkeys",
+                "current": "this device",
+                "revoked": "Revoked",
+                "enactedAt": "Enacted: {{date}}",
+                "validPeriod": "Was valid: {{from}} – {{until}}",
+                "revoke": "Revoke",
+                "revokeConfirmTitle": "Revoke this subkey?",
+                "revokeConfirmDescription": "Devices using this subkey will no longer be able to post or log in. Signatures made before revocation remain verifiable.",
+                "revokeConfirmCurrentDescription": "This is the subkey used by this device. Revoking it will log this device out.",
+                "revokeFailed": "Failed to revoke subkey",
+                "masterKeyRequired": "Revoking a subkey requires the master key."
+            }
         },
         "activitypub": {
             "title": "ActivityPub Settings",
@@ -585,6 +602,8 @@
             "pin": "Pin",
             "unpin": "Unpin",
             "deleteList": "Delete List",
+            "confirmDeleteList": "Really delete this list?",
+            "confirmDeleteListDescription": "The list and all its items will be deleted.",
             "listName": "List name",
             "excludeSelf": "Exclude your own posts",
             "containedTimelines": "Included timelines",

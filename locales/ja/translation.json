@@ -309,7 +309,24 @@
             "loginOnAnotherDevice": "他デバイスでログイン",
             "backupMasterKey": "マスターキーをバックアップ",
             "backupNotSaved": "未保存",
-            "backupFileContent": "Concrnt Web ログイン情報\nこのファイルは Concrnt Web のログイン情報をバックアップするためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: {{ccid}}\nマスター秘密鍵: {{privateKey}}\nバックアップ時登録サーバー: {{server}}\n\n秘密鍵を紛失した場合、アカウントを復元できなくなる可能性があります。\nこの内容を他人に知られると、アカウントが乗っ取られる可能性があります。"
+            "backupFileContent": "Concrnt Web ログイン情報\nこのファイルは Concrnt Web のログイン情報をバックアップするためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: {{ccid}}\nマスター秘密鍵: {{privateKey}}\nバックアップ時登録サーバー: {{server}}\n\n秘密鍵を紛失した場合、アカウントを復元できなくなる可能性があります。\nこの内容を他人に知られると、アカウントが乗っ取られる可能性があります。",
+            "subkeys": {
+                "title": "サブキー",
+                "description": "このアカウントで承認されているサブキーの一覧です。ログインした各デバイスはこの鍵で署名を行います。",
+                "loading": "読み込み中...",
+                "empty": "サブキーはありません",
+                "loadFailed": "サブキーの読み込みに失敗しました",
+                "current": "このデバイス",
+                "revoked": "失効済み",
+                "enactedAt": "有効化: {{date}}",
+                "validPeriod": "有効期間: {{from}} 〜 {{until}}",
+                "revoke": "失効",
+                "revokeConfirmTitle": "このサブキーを失効させますか?",
+                "revokeConfirmDescription": "このサブキーを使用しているデバイスは投稿やログインができなくなります。失効前に行われた署名は引き続き検証可能です。",
+                "revokeConfirmCurrentDescription": "これは今このデバイスが使用しているサブキーです。失効させるとこのデバイスはログアウトされます。",
+                "revokeFailed": "サブキーの失効に失敗しました",
+                "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。"
+            }
         },
         "activitypub": {
             "title": "Activitypub設定",
@@ -585,6 +602,8 @@
             "pin": "ピン留めする",
             "unpin": "ピン留めを解除",
             "deleteList": "リストを削除",
+            "confirmDeleteList": "このリストを削除しますか？",
+            "confirmDeleteListDescription": "リストと含まれる全ての項目が削除されます。",
             "listName": "リスト名",
             "excludeSelf": "自分の投稿を含めない",
             "containedTimelines": "含まれるタイムライン",

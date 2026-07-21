@@ -18,6 +18,7 @@ import { MdDelete, MdMoreHoriz, MdOutlinePushPin, MdPlaylistRemove, MdPushPin } 
 import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
 import { useClient } from '../contexts/Client'
+import { useConfirm } from '../contexts/Confirm'
 import { List, Schemas, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -30,6 +31,7 @@ interface Props {
 export const ListSettings = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
+    const confirm = useConfirm()
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const pin = pinnedLists.find((pin) => pin.uri === props.uri)
@@ -113,9 +115,18 @@ export const ListSettings = (props: Props) => {
                         icon={<MdDelete size={20} />}
                         onClick={() => {
                             setMenuOpen(false)
-                            client?.api.delete(props.uri).then(() => {
-                                props.onComplete?.()
-                            })
+                            confirm.open(
+                                t('confirmDeleteList'),
+                                () => {
+                                    client?.deleteList(props.uri).then(() => {
+                                        props.onComplete?.()
+                                    })
+                                },
+                                {
+                                    description: t('confirmDeleteListDescription'),
+                                    confirmText: t('deleteList')
+                                }
+                            )
                         }}
                     >
                         {t('deleteList')}

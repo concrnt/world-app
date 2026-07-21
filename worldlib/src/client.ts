@@ -265,7 +265,10 @@ export class Client {
             const doc = await this.api.getDocument(semantics.subkey(this.ccid, ckid), undefined, {
                 cache: 'no-cache'
             })
-            return doc.kind === 'record' ? 'valid' : 'invalid'
+            // revoked-subkey.jsonによる同一キー上書き(CIP-13)もrevoke扱い
+            return doc.kind === 'record' && doc.schema === 'https://schema.concrnt.net/subkey.json'
+                ? 'valid'
+                : 'invalid'
         } catch (err) {
             if (err instanceof NotFoundError) return 'invalid'
             return 'unknown'
@@ -539,6 +542,18 @@ export class Client {
         const Lists = await Promise.all(rawlists.map((sd) => List.loadFromSD(this, sd)))
 
         return Lists
+    }
+
+    async deleteList(uri: string): Promise<void> {
+        // 末尾*のrange削除でリスト本体と子要素(参照レコード)をまとめて消す。
+        // サーバー側で全対象のpolicyが通った場合のみアトミックに削除される
+        await this.api.delete(uri + '*')
+
+        const pinned = await this.pinnedLists.value()
+        if (pinned.some((item) => item.uri === uri)) {
+            await this.removePin(uri)
+        }
+        this.knownCommunities.reload()
     }
 
     async removePin(uri: string): Promise<void> {

@@ -10,6 +10,7 @@ import { Header } from '../components/Header'
 import { MdBadge, MdPublic } from 'react-icons/md'
 import { useModal } from '../contexts/Modal'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
+import { SubkeyList } from '../components/SubkeyList'
 
 const InfoTile = ({
     icon,
@@ -131,6 +132,8 @@ export const IDView = () => {
                 </div>
 
                 <Button onClick={backupMasterKey}>{t('backupMasterKey')}</Button>
+
+                <SubkeyList />
             </div>
         </View>
     )

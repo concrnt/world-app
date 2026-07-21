@@ -12,6 +12,7 @@ import { QRSetup } from './QRSetup'
 import { BackupKeyButton } from '../components/BackupKeyButton'
 import { useModal } from '../contexts/Modal'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
+import { SubkeyList } from '../components/SubkeyList'
 
 const InfoTile = ({
     icon,
@@ -134,6 +135,8 @@ export const IDView = () => {
                     {t('loginOnAnotherDevice')}
                 </Button>
                 <BackupKeyButton />
+
+                <SubkeyList />
             </div>
         </View>
     )
