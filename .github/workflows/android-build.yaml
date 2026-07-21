@@ -3,6 +3,11 @@ name: AndroidBuild
 on:
   push:
     branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+concurrency:
+  group: android-release-${{ github.ref }}
 
 jobs:
   build-android:
@@ -86,10 +91,13 @@ jobs:
       # ----------------------
       # build
       # ----------------------
+      - name: Compute version code
+        run: echo "VERSION_CODE=$(date -u +%Y%m%d%H)" >> "$GITHUB_ENV"
+
       - run: pnpm build
 
       - name: Build Android
-        run: pnpm tauri android build
+        run: pnpm tauri android build --config "{\"bundle\":{\"android\":{\"versionCode\":${VERSION_CODE}}}}"
 
       # ----------------------
       # artifact
@@ -100,3 +108,16 @@ jobs:
           path: |
             src-tauri/gen/android/app/build/outputs/**/*.apk
             src-tauri/gen/android/app/build/outputs/**/*.aab
+
+      # ----------------------
+      # Google Play
+      # ----------------------
+      - name: Upload to Google Play
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: world.concrnt.app
+          releaseFiles: src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
+          track: internal
+          status: completed
