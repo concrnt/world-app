@@ -8,7 +8,11 @@ name: world-app
 options:
   bundleIdPrefix: world.concrnt.app
   deploymentTarget:
-    iOS: 14.0
+    # NOTE: keep >= 15.0. With 14.0 the linker weak-links Swift Concurrency as
+    # @rpath/libswift_Concurrency.dylib (back-deploy form); since our Swift code
+    # is linked via the Rust staticlib (libapp.a), Xcode never embeds the dylib
+    # and the app crashes at launch on device the first time a Task is created.
+    iOS: 15.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -55,7 +59,11 @@ targets:
         # display name, export-compliance flag, ...) MUST live here or they are
         # dropped on the next `xcodegen generate`. See the header warning above.
         ITSAppUsesNonExemptEncryption: false
-        CFBundleName: Concrnt
+        # NOTE: CFBundleName must stay "concrnt-world" (= productName in
+        # tauri.conf.json): Xcode's export step names the .ipa after it, and
+        # the Tauri CLI looks for build/concrnt-world.ipa when installing on
+        # device. The user-visible name is CFBundleDisplayName.
+        CFBundleName: concrnt-world
         CFBundleDisplayName: Concrnt
         CFBundleShortVersionString: 0.1.5
         CFBundleVersion: "0.1.5"
@@ -122,7 +130,7 @@ targets:
   NotifyService:
     type: app-extension
     platform: iOS
-    deploymentTarget: "14.0"
+    deploymentTarget: "15.0"
     sources:
       - path: NotifyService
       - path: ../../../plugins/tauri-plugin-push/ios/Sources/PushShared
