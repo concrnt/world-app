@@ -81,7 +81,9 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
                     flexDirection: 'column',
                     gap: CssVar.space(3),
                     padding: CssVar.space(4),
-                    overflowY: 'auto'
+                    overflowY: 'auto',
+                    paddingTop: `calc(env(safe-area-inset-top) + ${CssVar.space(4)})`,
+                    paddingBottom: `calc(env(safe-area-inset-bottom) + ${CssVar.space(4)})`
                 }}
             >
                 <Text variant="h3">{t('titleDevice')}</Text>
