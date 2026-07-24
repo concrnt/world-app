@@ -135,7 +135,10 @@ export const BottomSheet = (props: Props) => {
                     <div
                         style={{
                             flexShrink: 0,
-                            height: `${keyboardHeight}px`,
+                            // ネイティブから来る高さは画面下端との重なりなのでsafe area分を含んでいる。
+                            // シート自体がpaddingBottomでsafe areaを確保しているため、
+                            // 引かずに使うとキーボードとの間が二重に空く
+                            height: `max(0px, calc(${keyboardHeight}px - env(safe-area-inset-bottom)))`,
                             transition: `height ${props.keyboardInset.duration}s ease-out`
                         }}
                     />
