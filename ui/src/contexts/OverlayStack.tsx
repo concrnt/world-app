@@ -19,18 +19,20 @@ interface OverlayStackState {
     close: (id: number) => void
     closeKind: (kind: string) => void
     closeTop: () => boolean
-    anyOpen: boolean
     handleBackRequest: () => boolean
 }
 
+// 操作関数と開閉状態を別contextにする。同居させるとpushのたびに操作側の参照も変わり、
+// useOverlayStackを依存配列に持つeffectが再実行されてしまう
 const OverlayStackContext = createContext<OverlayStackState>({
     push: () => 0,
     close: () => {},
     closeKind: () => {},
     closeTop: () => false,
-    anyOpen: false,
     handleBackRequest: () => false
 })
+
+const OverlayAnyOpenContext = createContext<boolean>(false)
 
 interface Props {
     children: ReactNode
@@ -98,34 +100,39 @@ export const OverlayStackProvider = (props: Props) => {
             close,
             closeKind,
             closeTop,
-            anyOpen,
             handleBackRequest
         }),
-        [push, close, closeKind, closeTop, anyOpen, handleBackRequest]
+        [push, close, closeKind, closeTop, handleBackRequest]
     )
 
     return (
         <OverlayStackContext.Provider value={value}>
-            {props.children}
-            {/* zIndexは使わない: childrenの後ろに描画されるので既存UIより前、配列順=push順=重なり順 */}
-            <AnimatePresence>
-                {stack.map((entry) => (
-                    <div
-                        key={entry.id}
-                        style={{
-                            position: 'fixed',
-                            inset: 0,
-                            overflow: 'hidden'
-                        }}
-                    >
-                        {entry.node}
-                    </div>
-                ))}
-            </AnimatePresence>
+            <OverlayAnyOpenContext.Provider value={anyOpen}>
+                {props.children}
+                {/* zIndexは使わない: childrenの後ろに描画されるので既存UIより前、配列順=push順=重なり順 */}
+                <AnimatePresence>
+                    {stack.map((entry) => (
+                        <div
+                            key={entry.id}
+                            style={{
+                                position: 'fixed',
+                                inset: 0,
+                                overflow: 'hidden'
+                            }}
+                        >
+                            {entry.node}
+                        </div>
+                    ))}
+                </AnimatePresence>
+            </OverlayAnyOpenContext.Provider>
         </OverlayStackContext.Provider>
     )
 }
 
 export const useOverlayStack = (): OverlayStackState => {
     return useContext(OverlayStackContext)
+}
+
+export const useOverlayAnyOpen = (): boolean => {
+    return useContext(OverlayAnyOpenContext)
 }
