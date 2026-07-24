@@ -243,6 +243,48 @@ fn save_cloud_best_effort(app_handle: &tauri::AppHandle, file: &AccountsFile) {
     }
 }
 
+/// iCloud同期バックアップへ権威的に書き込む(削除経路専用)。ベストエフォート版と違い、
+/// 反映に失敗したらErrを返す。best-effortで握りつぶすと、キーチェーンに残った古いブロブが
+/// 次回のunion読み取りで復活し、削除が「なかったこと」になるため。呼び出し側はErrを
+/// ユーザーに提示してリトライを促す(clear_allと同じ思想)。
+fn save_cloud(app_handle: &tauri::AppHandle, file: &AccountsFile) -> Result<(), Error> {
+    // 全アカウントが消えた場合はブロブごと削除する。空ブロブの更新より削除の方が確実で、
+    // union復活の余地も残さない。remove_item は success/notFound の両方で true を返す。
+    if file.accounts.is_empty() {
+        let removed = app_handle.keychain().remove_item(KeychainRequest {
+            key: Some(ACCOUNTS_KEY.to_string()),
+            password: None,
+        });
+        if !removed {
+            return Err(
+                "Failed to remove iCloud-synced accounts from keychain (please retry)".to_string(),
+            );
+        }
+        return Ok(());
+    }
+
+    let json =
+        serde_json::to_string(file).map_err(|e| format!("Failed to serialize accounts: {}", e))?;
+    let updated = app_handle.keychain().update_item(KeychainRequest {
+        key: Some(ACCOUNTS_KEY.to_string()),
+        password: Some(json.clone()),
+    });
+    if updated {
+        return Ok(());
+    }
+    // 存在しなければ追加する。
+    let added = app_handle.keychain().save_item(KeychainRequest {
+        key: Some(ACCOUNTS_KEY.to_string()),
+        password: Some(json),
+    });
+    if !added {
+        return Err(
+            "Failed to update iCloud-synced accounts in keychain (please retry)".to_string(),
+        );
+    }
+    Ok(())
+}
+
 /// ローカル正とクラウドを統合した現在のアカウント一覧を返す。
 pub(crate) fn load_accounts(app_handle: &tauri::AppHandle) -> Result<AccountsFile, Error> {
     let local = load_local(app_handle)?;
@@ -293,8 +335,16 @@ pub(crate) fn with_accounts_mut<T>(
     let mut file = before.clone();
     let result = f(&mut file)?;
     guard_no_key_loss(&before, &file, allow_removal)?;
-    save_local(app_handle, &file)?;
-    save_cloud_best_effort(app_handle, &file);
+    // 削除経路(allow_removal)はキーチェーン反映を権威化する。ベストエフォートで握りつぶすと
+    // 残った古いブロブがunion読み取りで復活し、削除が効かなくなるため。キーチェーンを先に
+    // 反映し、失敗したらローカルを消す前に早期returnする(ローカルだけ消えて蘇る窓を作らない)。
+    if allow_removal {
+        save_cloud(app_handle, &file)?;
+        save_local(app_handle, &file)?;
+    } else {
+        save_local(app_handle, &file)?;
+        save_cloud_best_effort(app_handle, &file);
+    }
     Ok(result)
 }
 
