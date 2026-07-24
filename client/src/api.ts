@@ -447,7 +447,7 @@ export class Api {
         return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, {})
     }
 
-    async getEntity(ccid: string, hint?: string): Promise<Document<Entity>> {
+    async getEntity(ccid: string, hint?: string, opts?: FetchOptions<SignedDocument>): Promise<Document<Entity>> {
         if (ccid.startsWith('cckv://')) {
             ccid = ccid.replace('cckv://', '').split('/')[0]
         }
@@ -461,7 +461,7 @@ export class Api {
             owner: ccid
         })
 
-        const sd = await this.fetchWithCache<SignedDocument>(this.defaultHost, endpoint, uri, {})
+        const sd = await this.fetchWithCache<SignedDocument>(this.defaultHost, endpoint, uri, { ...opts })
 
         const document: Document<Entity> = JSON.parse(sd.document)
         if (!document.kind) document.kind = 'entity'

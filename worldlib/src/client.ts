@@ -316,7 +316,10 @@ export class Client {
         const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
-        const entity = await api.getEntity(ccid)
+        // オンライン時はキャッシュを介さず登録の実在をサーバーに確認する。サーバーリセットや移行で
+        // 登録が消えている場合、キャッシュから起動してしまうと後段のsubkeyチェックだけが失敗して
+        // 「subkey無効」と誤検知するため、ここでNotFoundErrorを投げて「登録なし」としてアプリ側に伝える
+        const entity = await api.getEntity(ccid, undefined, online ? { cache: 'no-cache' } : undefined)
 
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
         const client = new Client(api, ccid, entity.value, server, profile)
