@@ -2,6 +2,9 @@ import { type ReactNode } from 'react'
 import { animate, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { CssVar } from '../types/Theme'
 
+// キーボード分の余白でコンテンツを潰し切らないための下限
+const MIN_CONTENT_HEIGHT = 120
+
 interface Props {
     height: number
     onDismiss: () => void
@@ -19,6 +22,10 @@ export const BottomSheet = (props: Props) => {
 
     const height = props.height
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
+
+    // 想定外に大きいキーボード高さが来ても、スペーサーがシートを食い尽くして
+    // スクロールコンテナが高さ0になる(中身が消える)ことがないようクランプする
+    const keyboardHeight = Math.min(props.keyboardInset?.height ?? 0, Math.max(0, height - MIN_CONTENT_HEIGHT))
 
     return (
         <>
@@ -128,7 +135,7 @@ export const BottomSheet = (props: Props) => {
                     <div
                         style={{
                             flexShrink: 0,
-                            height: `${props.keyboardInset.height}px`,
+                            height: `${keyboardHeight}px`,
                             transition: `height ${props.keyboardInset.duration}s ease-out`
                         }}
                     />

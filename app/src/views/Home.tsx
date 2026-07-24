@@ -38,12 +38,16 @@ export const HomeView = (props: ScrollViewProps) => {
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
 
     // fix default settings
+    // depsのtはi18nの言語ロードで参照が変わるので、ガードがないとドロワーが二重にpushされる
+    const profileSetupOpened = useRef(false)
     useEffect(() => {
         if (!client) return
         // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
         // そもそもcommitもできないので表示しない
         if (isDomainOffline) return
+        if (profileSetupOpened.current) return
         if (!(client.currentProfile in client.profiles)) {
+            profileSetupOpened.current = true
             drawer.open(
                 <ProfileEditor
                     noLoading
