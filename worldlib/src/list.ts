@@ -22,10 +22,9 @@ export class List {
     }
 
     items = new CachedPromise<string[]>(async () => {
-        const items = await this.client.api.query(
+        const items = await this.client.api.queryAll(
             {
-                prefix: this.uri,
-                limit: 100 //TODO: pagination
+                prefix: this.uri
             },
             undefined,
             { cache: true }
@@ -37,10 +36,9 @@ export class List {
 
     entries = new CachedPromise<ListEntry[]>(async () => {
         const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
-        const items = await this.client.api.query(
+        const items = await this.client.api.queryAll(
             {
-                prefix,
-                limit: 100 //TODO: pagination
+                prefix
             },
             undefined,
             { cache: true }

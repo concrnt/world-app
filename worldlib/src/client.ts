@@ -11,6 +11,7 @@ import {
     AuthProvider,
     KVS,
     SignedDocument,
+    QueryResult,
     Acknowledge,
     Entity,
     InMemoryAuthProvider,
@@ -74,11 +75,10 @@ export class Client {
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
-        const results = await this.api.query(
+        const results = await this.api.queryAll(
             {
                 prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
-                schema: Schemas.communityTimeline,
-                limit: 100
+                schema: Schemas.communityTimeline
             },
             undefined,
             { cache: true }
@@ -114,10 +114,9 @@ export class Client {
 
     blocks = new CachedPromise<string[]>(async () => {
         const prefix = semantics.blocks(this.ccid) + '/'
-        const results = await this.api.query(
+        const results = await this.api.queryAll(
             {
-                prefix: prefix,
-                limit: 100
+                prefix: prefix
             },
             undefined,
             { cache: true }
@@ -144,6 +143,7 @@ export class Client {
                             undefined,
                             { cache: true }
                         )
+                        .then((res) => res.items)
                         .catch(() => [])
 
                     if (existingList.length > 0) {
@@ -350,11 +350,10 @@ export class Client {
 
     async updateProfiles(): Promise<void> {
         await this.api
-            .query(
+            .queryAll(
                 {
                     parent: semantics.profiles(this.ccid),
-                    order: 'asc',
-                    limit: 100
+                    order: 'asc'
                 },
                 undefined,
                 { cache: true }
@@ -409,7 +408,7 @@ export class Client {
 
     async getOwnReadAccessRequest(target: string): Promise<Association<ReadAccessRequestAssociationSchema> | null> {
         const sds = await this.api
-            .getAssociations(target, { author: this.ccid, schema: Schemas.readAccessRequestAssociation })
+            .getAssociationsAll(target, { author: this.ccid, schema: Schemas.readAccessRequestAssociation })
             .catch(() => []) // 制限中のdocumentに対しては403になる場合がある
         if (sds.length === 0) return null
         return Association.fromSignedDocument(sds[0])
@@ -517,29 +516,52 @@ export class Client {
         this.acknowledgingUsers.reload()
     }
 
-    getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
-        return this.api
-            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
-                from: ccid,
-                schema: Schemas.followAck
-            })
-            .then((res) => res.map((sd) => JSON.parse(sd.document)))
+    async getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
+        const collected = new Map<string, SignedDocument>()
+        let cursor: string | undefined
+        while (true) {
+            const page = await this.api.requestConcrntApi<QueryResult>(
+                this.server.domain,
+                'net.concrnt.core.acknowledges',
+                {
+                    from: ccid,
+                    schema: Schemas.followAck,
+                    limit: '100',
+                    ...(cursor ? { until: cursor } : {})
+                }
+            )
+            for (const sd of page.items) collected.set(sd.ccfs, sd)
+            if (!page.next || page.next === cursor) break
+            cursor = page.next
+        }
+        return Array.from(collected.values()).map((sd) => JSON.parse(sd.document))
     }
 
     async getAcknowledgers(ccid: string): Promise<Document<Acknowledge>[]> {
-        return this.api
-            .requestConcrntApi<Array<SignedDocument>>(this.server.domain, 'net.concrnt.core.acknowledges', {
-                to: ccid,
-                schema: Schemas.followAck
-            })
-            .then((res) => res.map((sd) => JSON.parse(sd.document)))
+        const collected = new Map<string, SignedDocument>()
+        let cursor: string | undefined
+        while (true) {
+            const page = await this.api.requestConcrntApi<QueryResult>(
+                this.server.domain,
+                'net.concrnt.core.acknowledges',
+                {
+                    to: ccid,
+                    schema: Schemas.followAck,
+                    limit: '100',
+                    ...(cursor ? { until: cursor } : {})
+                }
+            )
+            for (const sd of page.items) collected.set(sd.ccfs, sd)
+            if (!page.next || page.next === cursor) break
+            cursor = page.next
+        }
+        return Array.from(collected.values()).map((sd) => JSON.parse(sd.document))
     }
 
     async getLists(): Promise<List[]> {
-        const rawlists = await this.api.query({
+        const rawlists = await this.api.queryAll({
             prefix: semantics.lists(this.ccid, this.currentProfile),
-            schema: Schemas.list,
-            limit: 100
+            schema: Schemas.list
         })
 
         const Lists = await Promise.all(rawlists.map((sd) => List.loadFromSD(this, sd)))

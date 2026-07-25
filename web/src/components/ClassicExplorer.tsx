@@ -110,11 +110,10 @@ const CommunityList = (props: { server: string; dimmed: boolean }) => {
         () => {
             if (!props.server) return Promise.resolve({})
             return client.api
-                .query(
+                .queryAll(
                     {
                         prefix: semantics.communities(props.server),
-                        schema: Schemas.communityTimeline,
-                        limit: '100'
+                        schema: Schemas.communityTimeline
                     },
                     props.server
                 )

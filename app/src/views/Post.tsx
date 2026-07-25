@@ -78,7 +78,7 @@ export const PostView = (props: Props) => {
                         reroutes: Schemas.rerouteAssociation,
                         favorites: Schemas.likeAssociation
                     }
-                    const sds = await client.api.getAssociations(props.uri, {
+                    const sds = await client.api.getAssociationsAll(props.uri, {
                         schema: schemaMap[targetTab]
                     })
                     const associations = sds.map((sd) => Association.fromSignedDocument(sd))
@@ -111,7 +111,7 @@ export const PostView = (props: Props) => {
             setSelectedReaction(imageUrl)
             setLoadingMembers(true)
             try {
-                const sds = await client.api.getAssociations(props.uri, {
+                const sds = await client.api.getAssociationsAll(props.uri, {
                     schema: Schemas.reactionAssociation,
                     variant: imageUrl
                 })

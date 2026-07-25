@@ -30,9 +30,8 @@ export const SubkeyList = () => {
 
     const fetchEntries = useCallback(async (): Promise<SubkeyEntry[]> => {
         if (!client) return []
-        const results = await client.api.query({
-            prefix: `cckv://${client.ccid}/keys/`,
-            limit: 100
+        const results = await client.api.queryAll({
+            prefix: `cckv://${client.ccid}/keys/`
         })
         const parsed: SubkeyEntry[] = []
         for (const sd of results) {

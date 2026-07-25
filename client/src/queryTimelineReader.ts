@@ -14,6 +14,7 @@ export class QueryTimelineReader {
     prefix?: string
     query: Query = {}
     batch: number = 16
+    next: string | null = null
 
     constructor(api: Api) {
         this.api = api
@@ -21,54 +22,51 @@ export class QueryTimelineReader {
 
     async init(prefix: string, query: Query, limit: number): Promise<boolean> {
         this.prefix = prefix
-        let hasMore = true
         this.batch = limit
         this.query = query
 
-        await this.api
-            .query({
-                prefix: this.prefix,
-                ...query
-            })
-            .then((items: SignedDocument[]) => {
-                this.body = items.map((item) => {
-                    const doc: Document<any> = JSON.parse(item.document)
+        const res = await this.api.query({
+            prefix: this.prefix,
+            limit: limit,
+            ...query
+        })
 
-                    let href = item.cckv
-                    if (doc.schema === 'https://schema.concrnt.net/reference.json') {
-                        href = doc.value.href
-                    }
+        this.body = res.items.map((item: SignedDocument) => {
+            const doc: Document<any> = JSON.parse(item.document)
 
-                    return {
-                        href: href,
-                        timestamp: new Date(doc.createdAt),
-                        source: prefix,
-                        lastUpdate: new Date()
-                    }
-                })
+            let href = item.cckv
+            if (doc.schema === 'https://schema.concrnt.net/reference.json') {
+                href = doc.value.href
+            }
 
-                if (Object.keys(items).length == 0) {
-                    hasMore = false
-                }
+            return {
+                href: href,
+                timestamp: new Date(doc.createdAt),
+                source: prefix,
+                lastUpdate: new Date()
+            }
+        })
+        this.next = res.next
 
-                this.onUpdate?.()
-            })
+        this.onUpdate?.()
 
-        return hasMore
+        return this.next !== null
     }
 
     async readMore(): Promise<boolean> {
         if (!this.prefix) return false
-        if (this.body.length === 0) return false
-        const last = this.body[this.body.length - 1]
-        const records = await this.api.query({
+        if (this.next === null) return false
+        const cursor = this.next
+        const res = await this.api.query({
             prefix: this.prefix,
-            until: last.timestamp,
-            limit: `${this.batch}`,
+            until: cursor,
+            limit: this.batch,
             ...this.query
         })
+        // 境界は包含のため同時刻詰まりで無進行になったら停止する
+        this.next = res.next === cursor ? null : res.next
 
-        const items = records.map((item) => {
+        const items = res.items.map((item) => {
             const doc: Document<any> = JSON.parse(item.document)
 
             return {
@@ -80,10 +78,11 @@ export class QueryTimelineReader {
 
         const newdata = items.filter((item) => !this.body.find((i) => i.href === item.href))
         const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
-        if (newdata.length === 0) return false
-        this.body = this.body.concat(newdataWithUpdate)
-        this.onUpdate?.()
-        return true
+        if (newdata.length > 0) {
+            this.body = this.body.concat(newdataWithUpdate)
+            this.onUpdate?.()
+        }
+        return this.next !== null
     }
 
     async reload(): Promise<boolean> {

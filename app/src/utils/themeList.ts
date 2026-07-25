@@ -34,10 +34,9 @@ export const ensureThemeList = async (client: Client): Promise<void> => {
 export const loadCustomThemes = async (client: Client): Promise<Record<string, Theme>> => {
     await ensureThemeList(client)
 
-    const docs = await client.api.query({
+    const docs = await client.api.queryAll({
         prefix: `${semantics.themes(client.ccid)}/`,
-        schema: THEME_SCHEMA,
-        limit: 100
+        schema: THEME_SCHEMA
     })
 
     const themes: Record<string, Theme> = {}

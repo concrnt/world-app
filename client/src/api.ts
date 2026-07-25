@@ -41,6 +41,15 @@ export interface ApiResponse<T> {
     prev?: string
 }
 
+// query/associations/acknowledgesエンドポイントのページング封筒 (CIP-5 §3.2)。
+// prev/nextは日時カーソル文字列。Dateを経由するとms精度に丸まって境界を
+// 取りこぼすため、文字列のまま次のsince/untilへエコーバックする。
+export interface QueryResult {
+    items: SignedDocument[]
+    prev: string | null
+    next: string | null
+}
+
 export interface FetchOptions<T> {
     // fallback: ネットワーク優先で、失敗時のみキャッシュを返す(オフラインフォールバック用)
     cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback'
@@ -539,9 +548,13 @@ export class Api {
             schema?: string
             variant?: string
             author?: string
+            since?: Date | string
+            until?: Date | string
+            limit?: string | number
+            order?: string
         },
         hint?: string
-    ): Promise<Array<SignedDocument>> {
+    ): Promise<QueryResult> {
         const parsed = new URL(uri)
         const owner = parsed.host
 
@@ -550,11 +563,34 @@ export class Api {
         const server = await this.getServer(fqdn)
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.associations', {
+            ...query,
             uri: uri,
-            ...query
+            since: query.since instanceof Date ? query.since.toISOString() : query.since,
+            until: query.until instanceof Date ? query.until.toISOString() : query.until
         })
 
-        return await this.fetchWithCredential<Array<SignedDocument>>(fqdn, endpoint, {})
+        return await this.fetchWithCredential<QueryResult>(fqdn, endpoint, {})
+    }
+
+    // 全ページを順に辿ってAssociationを全件取得する
+    async getAssociationsAll(
+        uri: string,
+        query: {
+            schema?: string
+            variant?: string
+            author?: string
+        },
+        hint?: string
+    ): Promise<SignedDocument[]> {
+        const collected = new Map<string, SignedDocument>()
+        let cursor: string | undefined
+        while (true) {
+            const page = await this.getAssociations(uri, { ...query, limit: 100, until: cursor }, hint)
+            for (const sd of page.items) collected.set(sd.ccfs, sd)
+            if (!page.next || page.next === cursor) break
+            cursor = page.next
+        }
+        return Array.from(collected.values())
     }
 
     // net.concrnt.association-counts
@@ -579,14 +615,14 @@ export class Api {
             prefix?: string
             parent?: string
             schema?: string
-            since?: Date
-            until?: Date
+            since?: Date | string
+            until?: Date | string
             limit?: string | number
             order?: string
         },
         domain?: string,
         opts?: { cache?: boolean }
-    ): Promise<SignedDocument[]> {
+    ): Promise<QueryResult> {
         let fqdn = domain
         const key = query.prefix ?? query.parent
         if (!key) {
@@ -607,21 +643,50 @@ export class Api {
             prefix: query.prefix,
             parent: query.parent,
             schema: query.schema,
-            since: query.since ? query.since.toISOString() : undefined,
-            until: query.until ? query.until.toISOString() : undefined,
+            since: query.since instanceof Date ? query.since.toISOString() : query.since,
+            until: query.until instanceof Date ? query.until.toISOString() : query.until,
             limit: query.limit,
             order: query.order
         })
 
         // ページング付きクエリはキャッシュキーが安定しないため対象外
         if (opts?.cache && !query.since && !query.until) {
-            const cacheKey = `query:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}`
-            return await this.fetchWithCache<SignedDocument[]>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
+            // v2: レスポンスが封筒形式になったため旧素配列キャッシュと分離
+            const cacheKey = `query2:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}`
+            return await this.fetchWithCache<QueryResult>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
         }
 
-        const resource = this.fetchWithCredential<SignedDocument[]>(fqdn, endpoint, {})
+        const resource = this.fetchWithCredential<QueryResult>(fqdn, endpoint, {})
 
         return resource
+    }
+
+    // 全ページを順に辿って全件取得する。2ページ目以降の失敗は取得済み分を返す
+    // (1ページ目のキャッシュフォールバックによるオフライン動作を保つため)
+    async queryAll(
+        query: {
+            prefix?: string
+            parent?: string
+            schema?: string
+            order?: string
+        },
+        domain?: string,
+        opts?: { cache?: boolean }
+    ): Promise<SignedDocument[]> {
+        const collected = new Map<string, SignedDocument>()
+        let cursor: string | undefined
+        while (true) {
+            const window = query.order === 'asc' ? { since: cursor } : { until: cursor }
+            const page = await this.query({ ...query, limit: 100, ...window }, domain, opts).catch((err) => {
+                if (collected.size === 0) throw err
+                return null
+            })
+            if (page === null) break
+            for (const sd of page.items) collected.set(sd.ccfs, sd)
+            if (!page.next || page.next === cursor) break
+            cursor = page.next
+        }
+        return Array.from(collected.values())
     }
 
     async requestConcrntApi<T>(

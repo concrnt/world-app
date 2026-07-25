@@ -66,8 +66,10 @@ export const MessageReactions = (props: Props) => {
                 const sds = await client.api
                     .getAssociations(props.message.uri, {
                         schema: Schemas.reactionAssociation,
-                        variant: imageUrl
+                        variant: imageUrl,
+                        limit: 1
                     })
+                    .then((res) => res.items)
                     .catch((e) => {
                         console.error('Failed to fetch existing reactions:', e)
                         return []
