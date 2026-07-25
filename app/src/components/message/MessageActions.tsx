@@ -20,6 +20,8 @@ import { useConfirm } from '../../contexts/Confirm'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
+import { useStack } from '../../layouts/Stack'
+import { PostView } from '../../views/Post'
 
 interface Props {
     message: Message<any>
@@ -40,6 +42,7 @@ export const MessageActions = (props: Props) => {
     const confirm = useConfirm()
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
+    const { push } = useStack()
     const messageHref = props.message.key ?? props.message.uri
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
@@ -75,6 +78,10 @@ export const MessageActions = (props: Props) => {
                         ) ?? []
                     composer.open(communityDestinations, [], 'reply', props.message)
                 }}
+                onLongPress={() => {
+                    hapticLight()
+                    push(<PostView uri={props.message.uri} initialTab="replies" />)
+                }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
                 <MdReply size={20} />
@@ -94,6 +101,10 @@ export const MessageActions = (props: Props) => {
                                 !uri.includes('/main/notify-timeline')
                         ) ?? []
                     composer.open(communityDestinations, [], 'reroute', props.message)
+                }}
+                onLongPress={() => {
+                    hapticLight()
+                    push(<PostView uri={props.message.uri} initialTab="reroutes" />)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -139,6 +150,10 @@ export const MessageActions = (props: Props) => {
                             qt.update(messageHref)
                         })
                     }
+                }}
+                onLongPress={() => {
+                    hapticLight()
+                    push(<PostView uri={props.message.uri} initialTab="favorites" />)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -186,6 +201,10 @@ export const MessageActions = (props: Props) => {
 
                         emojiPicker.close()
                     })
+                }}
+                onLongPress={() => {
+                    hapticLight()
+                    push(<PostView uri={props.message.uri} initialTab="reactions" />)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >

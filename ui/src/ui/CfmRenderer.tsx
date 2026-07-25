@@ -147,6 +147,7 @@ export interface RenderAstProps {
     ast: any
     emojis: Record<string, EmojiLite>
     imageNodes: any[]
+    oneline?: boolean
 }
 
 const collectImageNodes = (ast: any, result: any[]): any[] => {
@@ -182,14 +183,14 @@ const Spoiler = ({ children }: { children: ReactNode }) => {
     )
 }
 
-const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
+const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactNode => {
     const { openMedias } = useCfmActions()
 
     if (Array.isArray(ast)) {
         return (
             <>
                 {ast.map((node: any, i: number) => (
-                    <RenderAst key={i} ast={node} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst key={i} ast={node} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 ))}
             </>
         )
@@ -198,50 +199,59 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
     if (!ast) return <>null</>
     switch (ast.type) {
         case 'newline':
-            return <br />
+            return oneline ? null : <br />
         case 'Line':
             return (
                 <>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
-                    <br />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
+                    {!oneline && <br />}
                 </>
             )
         case 'Text':
             return ast.body
         case 'Marquee': // TODO: implement marquee
-            return <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+            return <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
         case 'Italic':
             return (
                 <i>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </i>
             )
         case 'Bold':
             return (
                 <b>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </b>
             )
         case 'Strike':
             return (
                 <s>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </s>
             )
         case 'URL':
             return <Link href={ast.body}>{ast.alt || ast.body}</Link>
         case 'Timeline': // TODO: implement TimelineChip
-            return <Text>[Timeline: {ast.body}]</Text>
+            return oneline ? <span>[Timeline: {ast.body}]</span> : <Text>[Timeline: {ast.body}]</Text>
         case 'Spoiler':
             return (
                 <Spoiler>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </Spoiler>
             )
         case 'Quote':
+            if (oneline) {
+                return (
+                    <>
+                        &quot;
+                        <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
+                        &quot;
+                    </>
+                )
+            }
             return (
                 <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: '4px solid #ccc' }}>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </blockquote>
             )
         case 'Tag':
@@ -274,7 +284,7 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
             // TODO: implement CCUserChip
             if (ast.body.startsWith('con1') && ast.body.length === 42) {
                 //return <CCUserChip ccid={ast.body} />
-                return <Text>@{ast.body}</Text>
+                return oneline ? <span>@{ast.body}</span> : <Text>@{ast.body}</Text>
             } else {
                 return <span>@{ast.body}</span>
             }
@@ -296,6 +306,7 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
             )
         }
         case 'Details':
+            if (oneline) return <span>[Details]</span>
             return (
                 <details
                     onClick={(e) => e.stopPropagation()}
@@ -304,7 +315,7 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
                     }}
                 >
                     <summary>{ast.summary.body}</summary>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </details>
             )
         case 'InlineCode':
@@ -323,6 +334,7 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
                 </span>
             )
         case 'Image':
+            if (oneline) return <span>[Image: {ast.alt}]</span>
             return (
                 <CCImage
                     src={ast.url}
@@ -348,16 +360,19 @@ const RenderAst = ({ ast, emojis, imageNodes }: RenderAstProps): ReactNode => {
                 />
             )
         case 'CodeBlock':
+            if (oneline) return <span>[Codeblock]</span>
             if (ast.lang === 'theme') {
                 return <ThemeCodeBlock body={String(ast.body)} lang={ast.lang} />
             }
             return <Codeblock language={ast.lang}>{ast.body}</Codeblock>
         case 'EmojiPack':
+            if (oneline) return <span>[EmojiPack]</span>
             return <EmojiPackBlock url={String(ast.body)} />
         case 'Heading':
+            if (oneline) return <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
             return (
                 <Text variant={`h${ast.level}` as any}>
-                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} />
+                    <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </Text>
             )
         default:
@@ -404,7 +419,7 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
                       }
             }
         >
-            <RenderAst ast={ast} emojis={props.emojiDict} imageNodes={imageNodes} />
+            <RenderAst ast={ast} emojis={props.emojiDict} imageNodes={imageNodes} oneline={props.oneline} />
         </div>
     )
 }

@@ -5,6 +5,7 @@ import { ButtonBase } from './ButtonBase'
 
 interface Props {
     onClick?: (e: MouseEvent<HTMLButtonElement>) => void | Promise<void>
+    onLongPress?: () => void
     children: ReactNode
     busyChildren?: ReactNode
     variant?: 'contained' | 'outlined' | 'text'
@@ -45,6 +46,7 @@ const variantStyles = {
 } satisfies Record<NonNullable<Props['variant']>, CSSProperties>
 export const Button = ({
     onClick,
+    onLongPress,
     children,
     busyChildren,
     variant = 'contained',
@@ -76,6 +78,7 @@ export const Button = ({
         <ButtonBase
             disabled={disabled || busy}
             onClick={handleClick}
+            onLongPress={onLongPress}
             pressedStyle={pressedStyle}
             style={{
                 ...baseStyle,

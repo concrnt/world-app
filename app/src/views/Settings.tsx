@@ -16,11 +16,13 @@ import { NotificationSettingsView } from './NotificationSettings'
 import { MediaSettingsView } from './MediaSettings'
 import { MigrationSettingsView } from './MigrationSettings'
 import { V1ImportSettingsView } from './V1ImportSettings'
+import { ListsView } from './Lists'
 import {
     MdBadge,
     MdChevronRight,
     MdEmojiEmotions,
     MdLanguage,
+    MdList,
     MdLuggage,
     MdNotifications,
     MdPalette,
@@ -130,6 +132,13 @@ export const SettingsView = () => {
                         onClick={() => stack.push(<EmojiSettingsView />)}
                     >
                         {t('emoji')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdList size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<ListsView />)}
+                    >
+                        {t('lists')}
                     </ListItem>
                     {mediaEnabled && (
                         <ListItem

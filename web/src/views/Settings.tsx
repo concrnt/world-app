@@ -11,6 +11,7 @@ import {
     MdChevronRight,
     MdEmojiEmotions,
     MdLanguage,
+    MdList,
     MdLuggage,
     MdNotifications,
     MdPalette,
@@ -119,6 +120,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/emoji')}
                     >
                         {t('emoji')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdList size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/lists')}
+                    >
+                        {t('lists')}
                     </ListItem>
                     {mediaEnabled && (
                         <ListItem

@@ -3,7 +3,7 @@ import { CCImage, Avatar, Divider, Tabs, Tab, Text, View } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
 import { Header } from '../ui/Header'
 import { MdReply, MdAddReaction } from 'react-icons/md'
-import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import {
@@ -25,10 +25,12 @@ import { MessageSkeleton } from '../components/message/MessageSkeleton'
 import { useComposer } from '../contexts/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 
-type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
+export type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 
 interface Props {
     uri: string
+    initialTab?: PostTab
+    initialReaction?: string
 }
 
 export const PostView = (props: Props) => {
@@ -37,7 +39,7 @@ export const PostView = (props: Props) => {
     const { push } = useStack()
     const composer = useComposer()
     const emojiPicker = useEmojiPicker()
-    const [tab, setTab] = useState<PostTab>('replies')
+    const [tab, setTab] = useState<PostTab>(props.initialTab ?? 'replies')
     const [message, setMessage] = useState<Message<any> | null>(null)
 
     // --- Replies / Reroutes / Favorites ---
@@ -61,6 +63,33 @@ export const PostView = (props: Props) => {
         messagePromise?.then((msg) => setMessage(msg ?? null))
     }, [messagePromise])
 
+    // 特定リアクションのメンバー一覧を取得
+    const fetchReactionMembers = useCallback(
+        async (imageUrl: string) => {
+            if (!client) return
+            setSelectedReaction(imageUrl)
+            setLoadingMembers(true)
+            try {
+                const sds = await client.api.getAssociationsAll(props.uri, {
+                    schema: Schemas.reactionAssociation,
+                    variant: imageUrl
+                })
+                const members = sds.map((sd) =>
+                    Association.fromSignedDocument(sd)
+                ) as Association<ReactionAssociationSchema>[]
+                setReactionMembers(members)
+            } catch (e) {
+                console.error('Failed to fetch reaction members:', e)
+            } finally {
+                setLoadingMembers(false)
+            }
+        },
+        [client, props.uri]
+    )
+
+    // 長押し遷移で指定されたリアクションを初回表示時に一度だけ展開する
+    const pendingReaction = useRef<string | null>(props.initialReaction ?? null)
+
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
             if (!client) return
@@ -70,8 +99,14 @@ export const PostView = (props: Props) => {
                     // リアクションは種別ごとのカウントを取得
                     const counts = await client.api.getAssociationCounts(props.uri, Schemas.reactionAssociation)
                     setReactionCounts(counts)
-                    setSelectedReaction(null)
-                    setReactionMembers([])
+                    const initial = pendingReaction.current
+                    pendingReaction.current = null
+                    if (initial && counts[initial]) {
+                        fetchReactionMembers(initial)
+                    } else {
+                        setSelectedReaction(null)
+                        setReactionMembers([])
+                    }
                 } else {
                     const schemaMap: Record<string, string> = {
                         replies: Schemas.replyAssociation,
@@ -101,31 +136,7 @@ export const PostView = (props: Props) => {
                 setLoading(false)
             }
         },
-        [client, props.uri]
-    )
-
-    // 特定リアクションのメンバー一覧を取得
-    const fetchReactionMembers = useCallback(
-        async (imageUrl: string) => {
-            if (!client) return
-            setSelectedReaction(imageUrl)
-            setLoadingMembers(true)
-            try {
-                const sds = await client.api.getAssociationsAll(props.uri, {
-                    schema: Schemas.reactionAssociation,
-                    variant: imageUrl
-                })
-                const members = sds.map((sd) =>
-                    Association.fromSignedDocument(sd)
-                ) as Association<ReactionAssociationSchema>[]
-                setReactionMembers(members)
-            } catch (e) {
-                console.error('Failed to fetch reaction members:', e)
-            } finally {
-                setLoadingMembers(false)
-            }
-        },
-        [client, props.uri]
+        [client, props.uri, fetchReactionMembers]
     )
 
     useEffect(() => {

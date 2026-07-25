@@ -5,7 +5,9 @@ import { CssVar } from '../../types/Theme'
 import { hapticLight } from '../../utils/haptics'
 import { startTransition } from 'react'
 import { ReactionState } from './Footer'
-import { CCImage } from '@concrnt/ui'
+import { ButtonBase, CCImage } from '@concrnt/ui'
+import { useStack } from '../../layouts/Stack'
+import { PostView } from '../../views/Post'
 
 interface Props {
     message: Message<any>
@@ -15,6 +17,7 @@ interface Props {
 
 export const MessageReactions = (props: Props) => {
     const { client } = useClient()
+    const { push } = useStack()
 
     const { reactionCounts, ownReactions } = props.reactionState
 
@@ -97,11 +100,15 @@ export const MessageReactions = (props: Props) => {
             {Object.entries(reactionCounts).map(([imageUrl, count]) => {
                 const isOwn = !!ownReactions[imageUrl]
                 return (
-                    <button
+                    <ButtonBase
                         key={imageUrl}
                         onClick={(e) => {
                             e.stopPropagation()
                             handleReactionClick(imageUrl)
+                        }}
+                        onLongPress={() => {
+                            hapticLight()
+                            push(<PostView uri={props.message.uri} initialTab="reactions" initialReaction={imageUrl} />)
                         }}
                         style={{
                             display: 'flex',
@@ -113,8 +120,7 @@ export const MessageReactions = (props: Props) => {
                             backgroundColor: isOwn ? `rgb(from ${CssVar.contentLink} r g b / 0.15)` : 'transparent',
                             cursor: 'pointer',
                             color: CssVar.contentText,
-                            fontSize: '13px',
-                            WebkitTapHighlightColor: 'transparent'
+                            fontSize: '13px'
                         }}
                     >
                         <CCImage
@@ -128,7 +134,7 @@ export const MessageReactions = (props: Props) => {
                             }}
                         />
                         <span>{count}</span>
-                    </button>
+                    </ButtonBase>
                 )
             })}
         </div>

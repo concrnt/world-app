@@ -33,3 +33,18 @@ export const RichText: Story = {
         messagebody: '# Heading\\n> quote\\n\\n- list-like plain text\\n\\n||spoiler|| and #ff8800 and @someone'
     }
 }
+
+export const Oneline: Story = {
+    args: {
+        oneline: true,
+        messagebody:
+            'line1\nline2 **bold**\n# Heading\n> quote\n![alt text](https://example.com/a.png)\n```ts\nconst x = 1\n```\nlong tail text to overflow the container and show the ellipsis at the end'
+    },
+    decorators: [
+        (S) => (
+            <div style={{ width: '240px', border: '1px dashed #ccc' }}>
+                <S />
+            </div>
+        )
+    ]
+}

@@ -227,6 +227,14 @@ const AuthedRoutes = () => (
                                                                 }
                                                             />
                                                             <Route
+                                                                path="settings/lists"
+                                                                element={
+                                                                    <SettingsBackProvider>
+                                                                        <ListsView />
+                                                                    </SettingsBackProvider>
+                                                                }
+                                                            />
+                                                            <Route
                                                                 path="settings/media"
                                                                 element={
                                                                     <SettingsBackProvider>
