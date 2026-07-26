@@ -22,6 +22,12 @@ export interface CfmActions {
     addEmojipack?: (url: string) => void
     // URLs already in the user's library, used to render the "added" state.
     emojipackURLs?: string[]
+    // Render an inline chip for a mentioned user (ccid is a con1... CCID).
+    // Undefined -> mentions render as plain text.
+    renderUserChip?: (ccid: string) => ReactNode
+    // Render an inline chip for a timeline reference (fqid is "name@domain").
+    // Undefined -> timeline references render as plain text.
+    renderTimelineChip?: (fqid: string) => ReactNode
 }
 
 const CfmActionsContext = createContext<CfmActions>({})

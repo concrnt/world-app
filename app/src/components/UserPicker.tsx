@@ -1,18 +1,15 @@
 import { Chip } from '@concrnt/ui'
 
-import { Suspense, use, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { hapticSelection } from '../utils/haptics'
-import { User } from '@concrnt/worldlib'
 import { useSubscribe } from '../hooks/useSubscribe'
-
-import { IoIosCloseCircle } from 'react-icons/io'
+import { CCUserChip } from './CCUserChip'
 
 interface Props {
     selected: string[]
@@ -50,10 +47,11 @@ export const UserPicker = (props: Props) => {
         >
             {props.selected.map((sel) => {
                 return (
-                    <UserChip
+                    <CCUserChip
                         key={sel}
+                        avatar
                         ccid={sel}
-                        onClick={() => {
+                        onDelete={() => {
                             props.setSelected(props.selected.filter((s) => s !== sel))
                         }}
                     />
@@ -150,65 +148,5 @@ export const UserPicker = (props: Props) => {
                 </div>
             )}
         </div>
-    )
-}
-
-interface UserPickerProps {
-    ccid: string
-    onClick: () => void
-}
-
-const UserChip = (props: UserPickerProps) => {
-    const { t } = useTranslation('', { keyPrefix: 'components.userPicker' })
-    const { client } = useClient()
-
-    const userPromise = useMemo(() => {
-        return client.getUser(props.ccid)
-    }, [props.ccid, client])
-
-    return (
-        <Suspense fallback={<Chip>{t('loading')}</Chip>}>
-            <UserChipBody ccid={props.ccid} userPromise={userPromise} onClick={props.onClick} />
-        </Suspense>
-    )
-}
-
-interface BodyProps {
-    ccid: string
-    userPromise: Promise<User | null>
-    onClick: () => void
-}
-
-const UserChipBody = (props: BodyProps) => {
-    const user = use(props.userPromise)
-
-    if (!user) {
-        return <Chip>{props.ccid}</Chip>
-    }
-
-    return (
-        <Chip
-            headElement={
-                <Avatar
-                    ccid={user.ccid}
-                    src={user.profile.avatar}
-                    style={{
-                        width: 20,
-                        height: 20
-                    }}
-                />
-            }
-            tailElement={
-                <IoIosCloseCircle
-                    size={16}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        props.onClick()
-                    }}
-                />
-            }
-        >
-            {user.profile.username}
-        </Chip>
     )
 }

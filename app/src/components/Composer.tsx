@@ -280,6 +280,7 @@ export const Composer = (props: Props) => {
                         value: {
                             body: draft,
                             targetURI: props.targetMessage.uri,
+                            replyToMessageAuthor: props.targetMessage.author,
                             emojis: emojiDict
                         },
                         author: client.ccid,

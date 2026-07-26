@@ -184,7 +184,7 @@ const Spoiler = ({ children }: { children: ReactNode }) => {
 }
 
 const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactNode => {
-    const { openMedias } = useCfmActions()
+    const { openMedias, renderUserChip, renderTimelineChip } = useCfmActions()
 
     if (Array.isArray(ast)) {
         return (
@@ -231,7 +231,8 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
             )
         case 'URL':
             return <Link href={ast.body}>{ast.alt || ast.body}</Link>
-        case 'Timeline': // TODO: implement TimelineChip
+        case 'Timeline':
+            if (renderTimelineChip) return renderTimelineChip(ast.body)
             return oneline ? <span>[Timeline: {ast.body}]</span> : <Text>[Timeline: {ast.body}]</Text>
         case 'Spoiler':
             return (
@@ -281,9 +282,8 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
             }
             return <span>#{ast.body}</span>
         case 'Mention': {
-            // TODO: implement CCUserChip
             if (ast.body.startsWith('con1') && ast.body.length === 42) {
-                //return <CCUserChip ccid={ast.body} />
+                if (renderUserChip) return renderUserChip(ast.body)
                 return oneline ? <span>@{ast.body}</span> : <Text>@{ast.body}</Text>
             } else {
                 return <span>@{ast.body}</span>

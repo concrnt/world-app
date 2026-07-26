@@ -9,6 +9,8 @@ import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
+import { CCUserChip } from '../CCUserChip'
+import { MdReply } from 'react-icons/md'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const navigate = useNavigate()
@@ -47,6 +49,9 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 }
                 headerRight={<TimeDiff date={props.message.createdAt} />}
             >
+                {props.message.value.replyToMessageAuthor && (
+                    <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
+                )}
                 <AutoSummary body={props.message.value.body ?? ''}>
                     <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
                 </AutoSummary>

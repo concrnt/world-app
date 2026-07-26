@@ -9,6 +9,8 @@ import {
     loadCustomThemes,
     saveCustomTheme as saveCustomThemeDocument
 } from '../utils/themeList'
+import { CCUserChip } from '../components/CCUserChip'
+import { TimelineChip } from '../components/TimelineChip'
 
 interface Props {
     theme?: Theme
@@ -106,7 +108,17 @@ export const ThemeProvider = (props: Props) => {
 
     return (
         <ThemeLibraryContext.Provider value={value}>
-            <CfmActionsProvider value={{ importTheme }}>
+            <CfmActionsProvider
+                value={{
+                    importTheme,
+                    renderUserChip: (ccid) => (
+                        <CCUserChip ccid={ccid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
+                    ),
+                    renderTimelineChip: (fqid) => (
+                        <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
+                    )
+                }}
+            >
                 <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
             </CfmActionsProvider>
         </ThemeLibraryContext.Provider>
