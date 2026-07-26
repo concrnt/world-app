@@ -4,6 +4,7 @@ export * from './rerouteMessage'
 export * from './plaintextMessage'
 export * from './mediaMessage'
 export * from './gfmMessage'
+export * from './mfmMessage'
 
 export * from './apNote'
 export * from './apFollow'

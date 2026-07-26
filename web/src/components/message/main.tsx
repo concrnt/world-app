@@ -4,6 +4,8 @@ import { useClient } from '../../contexts/Client'
 import { Text } from '@concrnt/ui'
 import { ApNoteSchema, AtprotoRecordSchema, Message, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
+import { GfmMessage } from './GfmMessage'
+import { MfmMessage } from './MfmMessage'
 import { PlaintextMessage } from './PlaintextMessage'
 import { MediaMessage } from './MediaMessage'
 import { ReplyMessage } from './ReplyMessage'
@@ -38,8 +40,11 @@ export const MessageContainer = (props: Props): ReactNode | null => {
 
     switch (message.schema) {
         case Schemas.markdownMessage:
-        case Schemas.gfmMessage:
             return <MarkdownMessage message={message} />
+        case Schemas.gfmMessage:
+            return <GfmMessage message={message} />
+        case Schemas.mfmMessage:
+            return <MfmMessage message={message} />
         case Schemas.plaintextMessage:
             return <PlaintextMessage message={message} />
         case Schemas.mediaMessage:
