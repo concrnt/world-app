@@ -10,6 +10,7 @@ import {
     NetworkError
 } from './util'
 import { CSID, FQDN, IsCCID, IsCSID, Document, SignedDocument, Entity } from './model'
+import { parseCCURI } from './core'
 import { ChunklineItem } from './chunkline'
 import { CheckJwtIsValid, JwtPayload } from './crypto'
 
@@ -769,6 +770,20 @@ export class Api {
     }
 
     async delete(uri: string, domain?: string): Promise<void> {
+        // 削除対象のauthoritativeサーバーは対象URIオーナーのサーバー。
+        // 非authoritativeサーバーに送るとReferences不一致でno-op(200)になり何も消えないため、
+        // domain未指定ならオーナーのドメインを解決して直接送る。解決失敗時はホームサーバーに送る
+        if (!domain) {
+            try {
+                const target = parseCCURI(uri.replace(/\/?\*$/, ''))
+                if (IsCCID(target.owner) || IsCSID(target.owner)) {
+                    domain = await this.resolveDomain(target.owner, target.hint)
+                }
+            } catch (e) {
+                console.error('Failed to resolve delete target owner domain:', e)
+            }
+        }
+
         const documentObj: Document<string> = {
             kind: 'delete',
             author: this.authProvider.getCCID(),

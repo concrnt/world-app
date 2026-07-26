@@ -128,7 +128,7 @@ export const MessageActions = (props: Props) => {
                                 }
                             })
                             if (likeState.ownLike) {
-                                await client.api.delete(likeState.ownLike.ccfs)
+                                await likeState.ownLike.delete(client)
                                 qt.update(messageHref)
                             }
                         })
