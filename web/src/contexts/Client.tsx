@@ -16,6 +16,9 @@ export interface ClientContextState {
     isDomainOffline: boolean
     domainRecovered: boolean
     isSubkeyInvalid: boolean
+    isSwitching: boolean
+    switchError: string | null
+    dismissSwitchError: () => void
 }
 
 interface Props {
@@ -30,7 +33,10 @@ const ClientContext = createContext<ClientContextState>({
     logout: async () => {},
     isDomainOffline: false,
     domainRecovered: false,
-    isSubkeyInvalid: false
+    isSubkeyInvalid: false,
+    isSwitching: false,
+    switchError: null,
+    dismissSwitchError: () => {}
 })
 
 const ReloadClientContext = createContext<() => Promise<void>>(async () => {})
@@ -62,83 +68,147 @@ export const ClientProvider = (props: Props): ReactNode => {
     const [notFoundOn, setNotFoundOn] = useState<string | null>(null)
     const clientRef = useRef<Client | null>(null)
     const bootedOfflineRef = useRef(false)
+    const [isSwitching, setIsSwitching] = useState(false)
+    const [switchError, setSwitchError] = useState<string | null>(null)
 
     const reload = useCallback(
         async (name?: string) => {
             console.log('Reloading client for profile', name)
+            // 既にclientがある状態での呼び出し(プロフィール切替など)は、全画面のロード/エラー画面に
+            // 遷移せず、旧clientを表示したままバックグラウンドで新clientを構築して差し替える
+            const isLiveSwitch = clientRef.current != null
+            setSwitchError(null)
             setSetupError(null)
             setNotFoundOn(null)
-            setProgress(t('checkingSession'))
-
-            const domain = readStoredString('Domain')
-            const masterKey = readStoredString('PrivateKey')
-            const subKey = readStoredString('SubKey')
-
-            if (!domain || (!masterKey && !subKey)) {
-                console.log('No web session found')
-                clientRef.current?.dispose()
-                clientRef.current = null
-                setClient(null)
-                return
-            }
-
-            const authProvider = new InMemoryAuthProvider(masterKey, subKey)
-            const kvs = resourceCache
+            if (isLiveSwitch) setIsSwitching(true)
             try {
-                setProgress(t('connectingToServer'))
-                const client = await Client.create(domain, authProvider, kvs, name)
+                setProgress(t('checkingSession'))
 
-                // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
-                // (オフライン起動時はどのみち書き込みができないため確認しない)
-                let subkeyIsInvalid = false
-                if (client.ccid !== '' && client.isOnline) {
-                    setProgress(t('checkingKeyStatus'))
-                    subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
+                const domain = readStoredString('Domain')
+                const masterKey = readStoredString('PrivateKey')
+                const subKey = readStoredString('SubKey')
+
+                if (!domain || (!masterKey && !subKey)) {
+                    console.log('No web session found')
+                    clientRef.current?.dispose()
+                    clientRef.current = null
+                    setClient(null)
+                    return
                 }
 
-                if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
-                    setProgress(t('loadingProfiles'))
-                    await client.updateProfiles()
+                // 選択中のサブプロフィールはログアウト時に他のセッションキーと一緒に破棄する
+                const profileName = name ?? readStoredString('SelectedProfile')
 
-                    setProgress(t('checkingTimelines'))
-                    await setupDefaultTimelines(client)
+                const authProvider = new InMemoryAuthProvider(masterKey, subKey)
+                const kvs = resourceCache
 
-                    setProgress(t('loadingLists'))
-                    await client.pinnedLists.value()
-                } else if (client.ccid !== '') {
-                    // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
-                    // setupDefaultTimelinesはcommitを行うため実行しない
-                    setProgress(t('loadingFromCache'))
-                    await client.updateProfiles().catch(() => {})
-                    await client.pinnedLists.value().catch(() => {})
+                // profiles / デフォルトタイムライン / pinned listsの初期化。
+                // setClient前に済ませてキャッシュを温めておくことで、差し替え直後の
+                // remountがキャッシュから即座に構築される
+                const runProfileSetup = async (client: Client, subkeyIsInvalid: boolean): Promise<void> => {
+                    if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
+                        setProgress(t('loadingProfiles'))
+                        await client.updateProfiles()
+
+                        setProgress(t('checkingTimelines'))
+                        await setupDefaultTimelines(client)
+
+                        setProgress(t('loadingLists'))
+                        await client.pinnedLists.value()
+                    } else if (client.ccid !== '') {
+                        // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
+                        // setupDefaultTimelinesはcommitを行うため実行しない
+                        setProgress(t('loadingFromCache'))
+                        await client.updateProfiles().catch(() => {})
+                        await client.pinnedLists.value().catch(() => {})
+                    }
                 }
 
-                console.log('Client created successfully. online:', client.isOnline)
-                clientRef.current?.dispose()
-                clientRef.current = client
-                bootedOfflineRef.current = !client.isOnline
-                setIsDomainOffline(!client.isOnline)
-                setDomainRecovered(false)
-                setSubkeyInvalid(subkeyIsInvalid)
-                setClient(client)
-            } catch (err) {
-                console.error('Failed to create client', err)
-                if (err instanceof ServerOfflineError) {
-                    setIsOffline(true)
-                } else if (err instanceof NotFoundError) {
-                    // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
-                    // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
-                    setNotFoundOn(domain)
-                } else {
-                    setSetupError(err instanceof Error ? err.message : String(err))
+                try {
+                    let client: Client
+                    let subkeyIsInvalid = false
+
+                    const current = clientRef.current
+                    const canFastPath =
+                        current && current.ccid === authProvider.getCCID() && current.api.defaultHost === domain
+                    if (current && canFastPath) {
+                        // 同一アカウント内のプロフィール切替: Api/entity/serverを再利用して
+                        // ネットワークアクセスを省く。subkeyの状態はアカウント単位なので再チェックしない
+                        try {
+                            client = current.withProfile(profileName ?? 'main')
+                            await runProfileSetup(client, false)
+                        } catch (err) {
+                            console.error('Fast profile switch failed, falling back to full reload', err)
+                            client = await Client.create(domain, authProvider, kvs, profileName)
+                            await runProfileSetup(client, false)
+                        }
+                    } else {
+                        setProgress(t('connectingToServer'))
+                        client = await Client.create(domain, authProvider, kvs, profileName)
+
+                        // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
+                        // (オフライン起動時はどのみち書き込みができないため確認しない)
+                        if (client.ccid !== '' && client.isOnline) {
+                            setProgress(t('checkingKeyStatus'))
+                            subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
+                        }
+
+                        await runProfileSetup(client, subkeyIsInvalid)
+                    }
+
+                    // 保存されていたプロフィールが削除済みの場合はmainへフォールバックする
+                    // (明示的な切替(name指定)は既存プロフィール一覧から選ばれるため対象外)
+                    if (
+                        name === undefined &&
+                        client.currentProfile !== 'main' &&
+                        !(client.currentProfile in client.profiles)
+                    ) {
+                        console.log(`Stored profile ${client.currentProfile} no longer exists. Falling back to main`)
+                        localStorage.removeItem('SelectedProfile')
+                        const stale = client
+                        client = stale.withProfile('main')
+                        stale.dispose()
+                        await runProfileSetup(client, subkeyIsInvalid)
+                    }
+
+                    if (name !== undefined) {
+                        localStorage.setItem('SelectedProfile', name)
+                    }
+
+                    console.log('Client created successfully. online:', client.isOnline)
+                    clientRef.current?.dispose()
+                    clientRef.current = client
+                    bootedOfflineRef.current = !client.isOnline
+                    setIsDomainOffline(!client.isOnline)
+                    setDomainRecovered(false)
+                    setSubkeyInvalid(subkeyIsInvalid)
+                    setClient(client)
+                } catch (err) {
+                    console.error('Failed to create client', err)
+                    if (isLiveSwitch && clientRef.current) {
+                        // 旧clientはdisposeされておらずそのまま使えるため、全画面エラーには落とさず
+                        // バナーで通知するに留める
+                        setSwitchError(err instanceof Error ? err.message : String(err))
+                        return
+                    }
+                    if (err instanceof ServerOfflineError) {
+                        setIsOffline(true)
+                    } else if (err instanceof NotFoundError) {
+                        // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
+                        // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
+                        setNotFoundOn(domain)
+                    } else {
+                        setSetupError(err instanceof Error ? err.message : String(err))
+                    }
                 }
+            } finally {
+                setIsSwitching(false)
             }
         },
         [t]
     )
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         reload()
     }, [reload])
 
@@ -183,9 +253,14 @@ export const ClientProvider = (props: Props): ReactNode => {
         localStorage.removeItem('Domain')
         localStorage.removeItem('PrivateKey')
         localStorage.removeItem('SubKey')
+        localStorage.removeItem('SelectedProfile')
         await resourceCache.clear()
         await reload()
     }, [reload])
+
+    const dismissSwitchError = useCallback(() => {
+        setSwitchError(null)
+    }, [])
 
     const value = useMemo(() => {
         return {
@@ -194,9 +269,22 @@ export const ClientProvider = (props: Props): ReactNode => {
             logout,
             isDomainOffline,
             domainRecovered,
-            isSubkeyInvalid: subkeyInvalid
+            isSubkeyInvalid: subkeyInvalid,
+            isSwitching,
+            switchError,
+            dismissSwitchError
         }
-    }, [client, reload, logout, isDomainOffline, domainRecovered, subkeyInvalid])
+    }, [
+        client,
+        reload,
+        logout,
+        isDomainOffline,
+        domainRecovered,
+        subkeyInvalid,
+        isSwitching,
+        switchError,
+        dismissSwitchError
+    ])
 
     if (isOffline) {
         return (
@@ -314,7 +402,8 @@ export const ClientProvider = (props: Props): ReactNode => {
 
     return (
         <ClientContext.Provider value={value as ClientContextState}>
-            {props.children}
+            {/* プロフィール切替中のバナーでも進捗文言を表示できるよう、メイン分岐にも進捗を提供する */}
+            <ClientSetupProgressContext.Provider value={progress}>{props.children}</ClientSetupProgressContext.Provider>
             {subkeyInvalid && (
                 <SubkeyInvalidDrawer
                     client={client}
@@ -339,7 +428,10 @@ export const GuestClientProvider = (props: { client: Client; children: ReactNode
             logout: async () => {},
             isDomainOffline: false,
             domainRecovered: false,
-            isSubkeyInvalid: false
+            isSubkeyInvalid: false,
+            isSwitching: false,
+            switchError: null,
+            dismissSwitchError: () => {}
         }),
         [props.client]
     )

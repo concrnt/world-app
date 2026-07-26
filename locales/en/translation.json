@@ -433,6 +433,11 @@
             "reconnect": "Reconnect",
             "offline": "Your domain {{domain}} is currently in read-only mode due to being offline. Please wait until it is restored."
         },
+        "accountSwitchingBanner": {
+            "switching": "Switching profile...",
+            "failed": "Failed to switch profile: {{error}}",
+            "dismiss": "Dismiss"
+        },
         "selectWidget": {
             "placeholder": "Select an option"
         },

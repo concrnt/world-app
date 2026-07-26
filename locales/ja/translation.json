@@ -433,6 +433,11 @@
             "reconnect": "再接続",
             "offline": "あなたのドメイン{{domain}}は現在オフラインのため、読み取り専用モードです。復旧までしばらくお待ちください。"
         },
+        "accountSwitchingBanner": {
+            "switching": "プロフィールを切り替えています...",
+            "failed": "プロフィールの切り替えに失敗しました: {{error}}",
+            "dismiss": "閉じる"
+        },
         "selectWidget": {
             "placeholder": "選択してください"
         },

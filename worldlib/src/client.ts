@@ -298,6 +298,15 @@ export class Client {
         this.sockets = {}
     }
 
+    // 同一アカウント内のプロフィール切替用。Apiインスタンスを共有したまま新しいClientを構築する。
+    // コンストラクタがapiのハンドラを新インスタンスへ付け替えるため、旧クライアントは以後dispose()すること。
+    withProfile(profile: string): Client {
+        const client = new Client(this.api, this.ccid, this.entity, this.server, profile)
+        client.isOnline = this.isOnline
+        if (!this.isOnline) client.startRecoveryPoll()
+        return client
+    }
+
     static async create(
         host: FQDN,
         authProvider: AuthProvider,
