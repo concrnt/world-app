@@ -15,6 +15,7 @@ import {
 import { CssVar } from '../../types/Theme'
 import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../../components/message/MessageSkeleton'
+import { RenderError } from '../../components/message/RenderError'
 import { TimeDiff } from '../../components/TimeDiff'
 import { View } from '../../components/View'
 import { Header } from '../../components/Header'
@@ -199,9 +200,11 @@ export const GuestPostView = (props: Props) => {
                                         padding: CssVar.space(1)
                                     }}
                                 >
-                                    <Suspense fallback={<MessageSkeleton />}>
-                                        <MessageContainer uri={reply.value.targetURI} />
-                                    </Suspense>
+                                    <ErrorBoundary FallbackComponent={RenderError}>
+                                        <Suspense fallback={<MessageSkeleton />}>
+                                            <MessageContainer uri={reply.value.targetURI} />
+                                        </Suspense>
+                                    </ErrorBoundary>
                                 </div>
                             ))}
                         </>

@@ -240,9 +240,11 @@ export const PostView = (props: Props) => {
                                         padding: CssVar.space(1)
                                     }}
                                 >
-                                    <Suspense fallback={<MessageSkeleton />}>
-                                        <MessageContainer uri={reply.value.targetURI} />
-                                    </Suspense>
+                                    <ErrorBoundary FallbackComponent={RenderError}>
+                                        <Suspense fallback={<MessageSkeleton />}>
+                                            <MessageContainer uri={reply.value.targetURI} />
+                                        </Suspense>
+                                    </ErrorBoundary>
                                 </div>
                             ))}
                         </>
