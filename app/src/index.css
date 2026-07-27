@@ -33,6 +33,16 @@ body {
     height: 100%;
 }
 
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--content-text) 20%, transparent);
+    border-radius: 10px;
+}
+
 :root {
   --content-text: #000000;
   --content-link: #000000;
