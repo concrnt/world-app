@@ -9,6 +9,8 @@ import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageContainer } from './main'
+import { RenderError } from './RenderError'
+import { ErrorBoundary } from 'react-error-boundary'
 import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
@@ -27,7 +29,9 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 gap: CssVar.space(1)
             }}
         >
-            <MessageContainer oneline uri={props.message.value.targetURI} />
+            <ErrorBoundary FallbackComponent={RenderError}>
+                <MessageContainer oneline uri={props.message.value.targetURI} />
+            </ErrorBoundary>
             <MessageLayout
                 onClick={() => {
                     push(<PostView uri={props.message.uri} />)

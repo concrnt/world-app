@@ -18,6 +18,8 @@ import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
 import { useNavigate } from 'react-router-dom'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { RenderError } from '../components/message/RenderError'
+import { ErrorBoundary } from 'react-error-boundary'
 import { Composer } from '../components/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 import { View } from '../components/View'
@@ -60,7 +62,7 @@ export const PostView = (props: Props) => {
     }, [client, props.uri])
 
     useEffect(() => {
-        messagePromise?.then((msg) => setMessage(msg ?? null))
+        messagePromise?.then((msg) => setMessage(msg ?? null)).catch(() => setMessage(null))
     }, [messagePromise])
 
     const fetchAssociations = useCallback(
@@ -156,9 +158,11 @@ export const PostView = (props: Props) => {
                         padding: CssVar.space(1)
                     }}
                 >
-                    <Suspense fallback={<MessageSkeleton />}>
-                        <MessageContainer uri={props.uri} forceExpanded />
-                    </Suspense>
+                    <ErrorBoundary FallbackComponent={RenderError}>
+                        <Suspense fallback={<MessageSkeleton />}>
+                            <MessageContainer uri={props.uri} forceExpanded />
+                        </Suspense>
+                    </ErrorBoundary>
                 </div>
                 <Divider />
                 <Tabs>

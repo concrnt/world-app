@@ -22,6 +22,8 @@ import { CssVar } from '../types/Theme'
 import { useStack } from '../layouts/Stack'
 import { ProfileView } from './Profile'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { RenderError } from '../components/message/RenderError'
+import { ErrorBoundary } from 'react-error-boundary'
 import { useComposer } from '../contexts/Composer'
 import { TimeDiff } from '../components/TimeDiff'
 
@@ -60,7 +62,7 @@ export const PostView = (props: Props) => {
     }, [client, props.uri])
 
     useEffect(() => {
-        messagePromise?.then((msg) => setMessage(msg ?? null))
+        messagePromise?.then((msg) => setMessage(msg ?? null)).catch(() => setMessage(null))
     }, [messagePromise])
 
     // 特定リアクションのメンバー一覧を取得
@@ -165,9 +167,11 @@ export const PostView = (props: Props) => {
                         padding: CssVar.space(1)
                     }}
                 >
-                    <Suspense fallback={<MessageSkeleton />}>
-                        <MessageContainer uri={props.uri} forceExpanded />
-                    </Suspense>
+                    <ErrorBoundary FallbackComponent={RenderError}>
+                        <Suspense fallback={<MessageSkeleton />}>
+                            <MessageContainer uri={props.uri} forceExpanded />
+                        </Suspense>
+                    </ErrorBoundary>
                 </div>
                 <Divider />
                 <Tabs>

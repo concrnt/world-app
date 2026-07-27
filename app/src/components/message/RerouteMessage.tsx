@@ -12,6 +12,8 @@ import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
+import { RenderError } from './RenderError'
+import { ErrorBoundary } from 'react-error-boundary'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
@@ -70,7 +72,9 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     <TimeDiff date={props.message.createdAt} />
                 </div>
             </OnelineMessageLayout>
-            <MessageContainer uri={props.message.value.targetURI} />
+            <ErrorBoundary FallbackComponent={RenderError}>
+                <MessageContainer uri={props.message.value.targetURI} />
+            </ErrorBoundary>
         </div>
     )
 }
