@@ -24,6 +24,7 @@ interface Props {
     source?: string
     content?: string
     oneline?: boolean
+    forceExpanded?: boolean
 }
 
 export const MessageContainer = (props: Props): ReactNode | null => {
@@ -40,17 +41,17 @@ export const MessageContainer = (props: Props): ReactNode | null => {
 
     switch (message.schema) {
         case Schemas.markdownMessage:
-            return <MarkdownMessage message={message} />
+            return <MarkdownMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.gfmMessage:
-            return <GfmMessage message={message} />
+            return <GfmMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.mfmMessage:
-            return <MfmMessage message={message} />
+            return <MfmMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.plaintextMessage:
-            return <PlaintextMessage message={message} />
+            return <PlaintextMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.mediaMessage:
-            return <MediaMessage message={message} />
+            return <MediaMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.replyMessage:
-            return <ReplyMessage message={message} />
+            return <ReplyMessage message={message} forceExpanded={props.forceExpanded} />
         case Schemas.rerouteMessage:
             return <RerouteMessage message={message} />
         case Schemas.likeAssociation:
@@ -68,6 +69,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
                     actorURL={noteMessage.value.actorURL}
                     noteURL={noteMessage.value.noteURL}
                     message={message}
+                    forceExpanded={props.forceExpanded}
                 />
             )
         }
@@ -76,7 +78,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return <BlueskyRecord atUri={recordMessage.value.atUri} message={recordMessage} />
         }
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
-            return <LegacyNoteMessage message={message} />
+            return <LegacyNoteMessage message={message} forceExpanded={props.forceExpanded} />
         default:
             return (
                 <div

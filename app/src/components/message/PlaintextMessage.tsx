@@ -10,6 +10,7 @@ import { Avatar } from '@concrnt/ui'
 import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
+import { CollapsibleBody } from './CollapsibleBody'
 
 export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) => {
     const { push } = useStack()
@@ -43,14 +44,16 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {/* plaintextはマークダウン・絵文字のレンダリングを行わずそのまま表示する */}
-            <div
-                style={{
-                    whiteSpace: 'pre-wrap',
-                    overflowWrap: 'anywhere'
-                }}
-            >
-                {message.value.body}
-            </div>
+            <CollapsibleBody forceExpanded={props.forceExpanded}>
+                <div
+                    style={{
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'anywhere'
+                    }}
+                >
+                    {message.value.body}
+                </div>
+            </CollapsibleBody>
             <MessageFooter message={message} />
         </MessageLayout>
     )

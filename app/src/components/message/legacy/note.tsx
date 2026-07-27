@@ -6,6 +6,7 @@ import { PostView } from '../../../views/Post'
 
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { MessageLayout } from '../MessageLayout'
+import { CollapsibleBody } from '../CollapsibleBody'
 
 export const LegacyNoteMessage = (props: MessageProps<any>) => {
     const { push } = useStack()
@@ -48,7 +49,9 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                 </div>
             }
         >
-            <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />
+            <CollapsibleBody forceExpanded={props.forceExpanded}>
+                <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />
+            </CollapsibleBody>
             {/*
             <pre>
                 {JSON.stringify(message, null, 2)}

@@ -9,11 +9,13 @@ import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { ApNoteSchema, Message } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
+import { CollapsibleBody } from './CollapsibleBody'
 
 interface Props {
     actorURL: string
     noteURL: string
     message?: Message<ApNoteSchema>
+    forceExpanded?: boolean
 }
 
 export const ActivitypubNote = (props: Props) => {
@@ -35,7 +37,12 @@ export const ActivitypubNote = (props: Props) => {
 
     return (
         <Suspense fallback={<MessageSkeleton />}>
-            <Note notePromise={notePromise} authorPromise={authorPromise} message={props.message} />
+            <Note
+                notePromise={notePromise}
+                authorPromise={authorPromise}
+                message={props.message}
+                forceExpanded={props.forceExpanded}
+            />
         </Suspense>
     )
 }
@@ -44,6 +51,7 @@ const Note = (props: {
     notePromise: Promise<ApObject | null>
     authorPromise: Promise<ApObject | null>
     message?: Message<ApNoteSchema>
+    forceExpanded?: boolean
 }) => {
     const { push } = useStack()
 
@@ -88,7 +96,9 @@ const Note = (props: {
             }
             headerRight={note.published && <TimeDiff date={new Date(note.published)} />}
         >
-            <CfmRenderer messagebody={note.content ?? ''} emojiDict={{}} />
+            <CollapsibleBody forceExpanded={props.forceExpanded}>
+                <CfmRenderer messagebody={note.content ?? ''} emojiDict={{}} />
+            </CollapsibleBody>
             {props.message && <MessageFooter message={props.message} />}
         </MessageLayout>
     )

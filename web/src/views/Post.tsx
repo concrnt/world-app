@@ -157,7 +157,7 @@ export const PostView = (props: Props) => {
                     }}
                 >
                     <Suspense fallback={<MessageSkeleton />}>
-                        <MessageContainer uri={props.uri} />
+                        <MessageContainer uri={props.uri} forceExpanded />
                     </Suspense>
                 </div>
                 <Divider />

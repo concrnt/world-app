@@ -452,6 +452,9 @@
             "report": "通報",
             "inspector": "インスペクター"
         },
+        "collapsibleBody": {
+            "showMore": "もっと見る"
+        },
         "messageInspector": {
             "title": "インスペクター",
             "loadFailed": "読み込みに失敗しました: {{error}}",

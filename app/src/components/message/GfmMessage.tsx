@@ -11,6 +11,7 @@ import { MessageLayout } from './MessageLayout'
 import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
+import { CollapsibleBody } from './CollapsibleBody'
 
 export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
     const { push } = useStack()
@@ -43,9 +44,11 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             }
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <AutoSummary body={message.value.body ?? ''}>
-                <GfmRenderer messagebody={message.value.body} />
-            </AutoSummary>
+            <CollapsibleBody forceExpanded={props.forceExpanded}>
+                <AutoSummary body={message.value.body ?? ''}>
+                    <GfmRenderer messagebody={message.value.body} />
+                </AutoSummary>
+            </CollapsibleBody>
             <MessageFooter message={message} />
         </MessageLayout>
     )

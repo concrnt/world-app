@@ -14,6 +14,7 @@ import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CCUserChip } from '../CCUserChip'
 import { MdReply } from 'react-icons/md'
+import { CollapsibleBody } from './CollapsibleBody'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const { push } = useStack()
@@ -55,9 +56,14 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 {props.message.value.replyToMessageAuthor && (
                     <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
                 )}
-                <AutoSummary body={props.message.value.body ?? ''}>
-                    <CfmRenderer messagebody={props.message.value.body} emojiDict={props.message.value.emojis ?? {}} />
-                </AutoSummary>
+                <CollapsibleBody forceExpanded={props.forceExpanded}>
+                    <AutoSummary body={props.message.value.body ?? ''}>
+                        <CfmRenderer
+                            messagebody={props.message.value.body}
+                            emojiDict={props.message.value.emojis ?? {}}
+                        />
+                    </AutoSummary>
+                </CollapsibleBody>
                 <MessageFooter message={props.message} />
             </MessageLayout>
         </div>

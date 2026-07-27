@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
+import { CollapsibleBody } from './CollapsibleBody'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const navigate = useNavigate()
@@ -42,9 +43,11 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {message.value.body && (
-                <AutoSummary body={message.value.body}>
-                    <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
-                </AutoSummary>
+                <CollapsibleBody forceExpanded={props.forceExpanded}>
+                    <AutoSummary body={message.value.body}>
+                        <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                    </AutoSummary>
+                </CollapsibleBody>
             )}
 
             <MediaGallery medias={message.value.medias ?? []} />

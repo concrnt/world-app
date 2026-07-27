@@ -452,6 +452,9 @@
             "report": "Report",
             "inspector": "Inspector"
         },
+        "collapsibleBody": {
+            "showMore": "Show more"
+        },
         "messageInspector": {
             "title": "Inspector",
             "loadFailed": "Failed to load: {{error}}",
