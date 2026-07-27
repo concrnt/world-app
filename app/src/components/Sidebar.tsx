@@ -75,15 +75,23 @@ export const Sidebar = (props: Props) => {
                             }}
                         >
                             <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
-                            <Text>
+                            <Text
+                                style={{
+                                    flex: 1
+                                }}
+                            >
                                 <ProfileName document={client?.profileDocument} />
                             </Text>
-                            <div style={{ flex: 1 }} />
                             <SwitchAccountButton />
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
-                    <Divider />
+                    <Divider
+                        style={{
+                            marginTop: CssVar.space(2),
+                            borderColor: CssVar.backdropText
+                        }}
+                    />
                     <List
                         dense
                         disablePadding
@@ -112,7 +120,12 @@ export const Sidebar = (props: Props) => {
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />
-                    <Divider />
+                    <Divider
+                        style={{
+                            marginTop: CssVar.space(2),
+                            borderColor: CssVar.backdropText
+                        }}
+                    />
                     <div
                         style={{
                             fontSize: '0.6rem',

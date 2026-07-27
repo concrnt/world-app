@@ -64,15 +64,22 @@ export const Sidebar = () => {
                         }}
                     >
                         <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
-                        <Text>
+                        <Text
+                            style={{
+                                flex: 1
+                            }}
+                        >
                             <ProfileName document={client?.profileDocument} />
                         </Text>
-                        <div style={{ flex: 1 }} />
                         <SwitchAccountButton />
                     </div>
                     <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                 </div>
-                <Divider />
+                <Divider
+                    style={{
+                        borderColor: CssVar.backdropText
+                    }}
+                />
                 <List
                     dense
                     disablePadding
@@ -116,7 +123,8 @@ export const Sidebar = () => {
 
                 <Divider
                     style={{
-                        marginTop: CssVar.space(2)
+                        marginTop: CssVar.space(2),
+                        borderColor: CssVar.backdropText
                     }}
                 />
 
@@ -131,7 +139,7 @@ export const Sidebar = () => {
                     <br />
                     <a
                         style={{
-                            color: CssVar.uiText,
+                            color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://square.concrnt.net/"
@@ -143,7 +151,7 @@ export const Sidebar = () => {
                     {' / '}
                     <a
                         style={{
-                            color: CssVar.uiText,
+                            color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://github.com/orgs/concrnt/discussions"
@@ -155,7 +163,7 @@ export const Sidebar = () => {
                     {' / '}
                     <a
                         style={{
-                            color: CssVar.uiText,
+                            color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://github.com/totegamma/concurrent-world"
