@@ -161,7 +161,7 @@ buildTime: ${buildTime.toLocaleString()}`
     return (
         <div
             style={{
-                minHeight: '100dvh',
+                height: '100dvh',
                 width: '100dvw',
                 padding: 'calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 20px)',
                 boxSizing: 'border-box',

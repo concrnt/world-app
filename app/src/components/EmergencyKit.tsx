@@ -144,7 +144,9 @@ buildTime: ${buildTime.toLocaleString()}`
     return (
         <div
             style={{
-                minHeight: '100dvh',
+                // the app disables document scrolling (html is height:100vh/overflow:hidden, and on iOS
+                // the webview's own scrollView is off), so this has to be its own scroll container
+                height: '100dvh',
                 width: '100dvw',
                 padding: 'calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 20px)',
                 boxSizing: 'border-box',
