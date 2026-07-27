@@ -121,11 +121,11 @@ sha: ${sha}
 buildTime: ${buildTime.toLocaleString()}`
 
     const sendReport = (): void => {
-        // TODO: this blob is XOR-keyed with the v1 official hostname; regenerate it
-        // for the v2 host with: btoa(url.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ host.charCodeAt(i % host.length))).join(''))
+        // Obfuscated only to keep crawlers from picking the webhook up out of the repo.
+        // Regenerate with: btoa(url.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))).join(''))
         const source =
-            'CxsaEwFUWwETBgEPCxELQAAdA1tPBwZdGwEBBwEMGR1bH0RdRVpVWllbVUtaRBtGVkddUExfLS1DKA5iExolVA00PAg8PV0MAz0COSlVCwI/LEReHxwkFyIFXBVCNlQtPzt3MyIhHC0KIAJVPhslTQcpEC4sMykLOQ=='
-        const key = window.location.hostname
+            'CxsaEwFUWwIBBBYRCBcKTRpCBkYVEwZBFBcMHEIKBhZdVlZcVE8cUl9BVVZaU0dfTRhUWUpCJCtfJQNhDxwjWwY5MBQxOx4dQC8fLCBfCxR8JF9ECF09GyIHTFtINVItNio3JzR+GyAdLANYLwc/F10jDyc6NyMLOQ=='
+        const key = 'concrnt-emergency-kit'
         const url = window
             .atob(source)
             .split('')
@@ -141,10 +141,18 @@ buildTime: ${buildTime.toLocaleString()}`
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: report })
-        }).then(() => {
-            alert(t('reportSent'))
-            window.location.replace('/')
         })
+            .then((res) => {
+                if (!res.ok) {
+                    alert(t('reportFailed'))
+                    return
+                }
+                alert(t('reportSent'))
+                window.location.replace('/')
+            })
+            .catch(() => {
+                alert(t('reportFailed'))
+            })
     }
 
     const messages = t('messages', { returnObjects: true }) as string[]
