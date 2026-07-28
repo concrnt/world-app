@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { CCImage, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
@@ -66,7 +66,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const keyboard = useKeyboard()
     const isMobile = useIsMobile()
 
-    const [frequentEmojis, setFrequentEmojis] = useLocalStorage<Emoji[]>('emojiPicker:frequent', [])
+    const [frequentEmojis, setFrequentEmojis] = usePersistent<Emoji[]>('emojiPicker:frequent', [])
     const [query, setQuery] = useState('')
     const [activeTab, setActiveTab] = useState(0)
     // モバイルのみ: 検索欄フォーカス中(=キーボード表示中)は横一列ストリップ表示に切り替える

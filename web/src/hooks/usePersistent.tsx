@@ -1,14 +1,20 @@
 import { useCallback, useState } from 'react'
+
 function parseJsonSafely(input: string): any {
     let parsed: any = null
     try {
         parsed = JSON.parse(input)
-    } catch (e) {
-        // Do nothing ;)
+    } catch (_e) {
+        // Do nothing.
     }
     return parsed
 }
 
+export function usePersistent<T>(key: string, init: T): [value: T, update: (updator: T | ((old: T) => T)) => void]
+export function usePersistent<T>(
+    key: string,
+    init?: T
+): [value: T | undefined, update: (updator: T | ((old: T) => T)) => void]
 export function usePersistent<T>(key: string, init?: T): [value: T, update: (updator: T | ((old: T) => T)) => void] {
     const [value, setValue] = useState<T>(
         (() => {
@@ -16,7 +22,7 @@ export function usePersistent<T>(key: string, init?: T): [value: T, update: (upd
             if (cached) {
                 return parseJsonSafely(cached) ?? init
             } else {
-                if (init) localStorage.setItem(key, JSON.stringify(init))
+                if (init !== undefined) localStorage.setItem(key, JSON.stringify(init))
                 return init
             }
         })()

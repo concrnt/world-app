@@ -10,6 +10,11 @@ function parseJsonSafely(input: string): any {
     return parsed
 }
 
+export function usePersistent<T>(key: string, init: T): [value: T, update: (updator: T | ((old: T) => T)) => void]
+export function usePersistent<T>(
+    key: string,
+    init?: T
+): [value: T | undefined, update: (updator: T | ((old: T) => T)) => void]
 export function usePersistent<T>(key: string, init?: T): [value: T, update: (updator: T | ((old: T) => T)) => void] {
     const [value, setValue] = useState<T>(
         (() => {

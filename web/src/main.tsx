@@ -9,7 +9,8 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from '
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClient, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
-import { PreferenceProvider } from './contexts/Preference'
+import { PreferenceProvider, type Preference } from './contexts/Preference'
+import { usePersistent } from './hooks/usePersistent'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
@@ -120,6 +121,13 @@ const hasSession = (() => {
     return !!domain && (!!masterKey || !!subKey)
 })()
 
+// 設定(cckv)ロード前でも、localStorageにキャッシュされたpreferenceから前回のテーマを引く。
+// カスタムテーマは色が引けないためビルトインのみ・無ければblue
+const CachedThemeProvider = ({ children }: { children: ReactNode }) => {
+    const [cachedPref] = usePersistent<Preference>('preference')
+    return <BaseThemeProvider theme={Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>{children}</BaseThemeProvider>
+}
+
 // client(≒プロフィール)が変わったら配下をまるごと作り直し、
 // 古いプロフィール由来のstate(タブ選択やビューのローカルstateなど)を持ち越さない。
 // BrowserRouterは外側にあるためURLは維持され、ルート要素だけが再構築される
@@ -147,14 +155,14 @@ const SettingsBackProvider = ({ children }: { children: ReactNode }) => {
 const AuthedRoutes = () => (
     <ClientProvider
         loading={
-            <BaseThemeProvider theme={Themes.blue}>
+            <CachedThemeProvider>
                 <ClientLoadingScreen />
-            </BaseThemeProvider>
+            </CachedThemeProvider>
         }
         failed={
-            <BaseThemeProvider theme={Themes.blue}>
+            <CachedThemeProvider>
                 <WelcomeView />
-            </BaseThemeProvider>
+            </CachedThemeProvider>
         }
     >
         <PreferenceProvider>

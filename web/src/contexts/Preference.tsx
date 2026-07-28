@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { usePersistent } from '../hooks/usePersistent'
 import { useClient } from './Client'
 import { semantics } from '@concrnt/worldlib'
 
@@ -36,7 +36,7 @@ interface PreferenceProviderProps {
 
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
     const { client } = useClient()
-    const [pref, setPref] = useLocalStorage<Preference>(`preference`, defaultPreference)
+    const [pref, setPref] = usePersistent<Preference>(`preference`, defaultPreference)
     const [initialized, setInitialized] = useState<boolean>(false)
 
     useEffect(() => {

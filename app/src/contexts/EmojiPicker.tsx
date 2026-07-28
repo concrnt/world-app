@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { CCImage, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
@@ -60,7 +60,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
-    const [frequentEmojis, setFrequentEmojis] = useLocalStorage<Emoji[]>('emojiPicker:frequent', [])
+    const [frequentEmojis, setFrequentEmojis] = usePersistent<Emoji[]>('emojiPicker:frequent', [])
     const [query, setQuery] = useState('')
     const [activeTab, setActiveTab] = useState(0)
     const [searchBoxFocused, setSearchBoxFocused] = useState(false)

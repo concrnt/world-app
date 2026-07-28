@@ -9,7 +9,7 @@ import { ScannerProvider } from './contexts/Scanner'
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { ThemeProvider } from './contexts/Theme'
-import { PreferenceProvider } from './contexts/Preference'
+import { PreferenceProvider, type Preference } from './contexts/Preference'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
@@ -24,7 +24,17 @@ import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
 import { AgeGateProvider } from './contexts/AgeGate'
-import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
+import { CssVar, OverlayStackProvider, Text, ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
+import { Themes } from './data/themes'
+import { usePersistent } from './hooks/usePersistent'
+import { type ReactNode } from 'react'
+
+// 設定(cckv)ロード前でも、localStorageにキャッシュされたpreferenceから前回のテーマを引く。
+// カスタムテーマは色が引けないためビルトインのみ・無ければblue
+const CachedThemeProvider = ({ children }: { children: ReactNode }) => {
+    const [cachedPref] = usePersistent<Preference>('preference')
+    return <BaseThemeProvider theme={Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>{children}</BaseThemeProvider>
+}
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -44,49 +54,54 @@ const ClientLoadingScreen = () => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
-        <KeyboardProvider>
-            <BackHandlerProvider>
-                <AgeGateProvider>
-                    <ClientProvider
-                        loading={<ClientLoadingScreen />}
-                        failed={
-                            <OverlayStackProvider>
-                                <OverlayStackBackBridge />
-                                <WelcomeView />
-                            </OverlayStackProvider>
-                        }
-                    >
-                        <PreferenceProvider>
-                            <ThemeProvider>
-                                <MediaProxyProvider>
-                                    <ImageCropperProvider>
-                                        <OverlayStackProvider>
-                                            <OverlayStackBackBridge />
-                                            <EmojiPickerProvider>
-                                                <ComposerProvider>
-                                                    <ScannerProvider>
-                                                        <OverlayProvider>
-                                                            <MediaViewerProvider>
-                                                                <AudioPlayerProvider>
-                                                                    <TickerProvider>
-                                                                        <UrlSummaryProvider>
-                                                                            <App />
-                                                                        </UrlSummaryProvider>
-                                                                    </TickerProvider>
-                                                                </AudioPlayerProvider>
-                                                            </MediaViewerProvider>
-                                                        </OverlayProvider>
-                                                    </ScannerProvider>
-                                                </ComposerProvider>
-                                            </EmojiPickerProvider>
-                                        </OverlayStackProvider>
-                                    </ImageCropperProvider>
-                                </MediaProxyProvider>
-                            </ThemeProvider>
-                        </PreferenceProvider>
-                    </ClientProvider>
-                </AgeGateProvider>
-            </BackHandlerProvider>
-        </KeyboardProvider>
+        {/* AgeGateやClientProviderのローディング画面はThemeProviderの外にあるため、
+            ここで前回のテーマを適用しておく。本来のThemeProviderがマウントされると
+            CSS変数が上書きされ実際のテーマが優先される */}
+        <CachedThemeProvider>
+            <KeyboardProvider>
+                <BackHandlerProvider>
+                    <AgeGateProvider>
+                        <ClientProvider
+                            loading={<ClientLoadingScreen />}
+                            failed={
+                                <OverlayStackProvider>
+                                    <OverlayStackBackBridge />
+                                    <WelcomeView />
+                                </OverlayStackProvider>
+                            }
+                        >
+                            <PreferenceProvider>
+                                <ThemeProvider>
+                                    <MediaProxyProvider>
+                                        <ImageCropperProvider>
+                                            <OverlayStackProvider>
+                                                <OverlayStackBackBridge />
+                                                <EmojiPickerProvider>
+                                                    <ComposerProvider>
+                                                        <ScannerProvider>
+                                                            <OverlayProvider>
+                                                                <MediaViewerProvider>
+                                                                    <AudioPlayerProvider>
+                                                                        <TickerProvider>
+                                                                            <UrlSummaryProvider>
+                                                                                <App />
+                                                                            </UrlSummaryProvider>
+                                                                        </TickerProvider>
+                                                                    </AudioPlayerProvider>
+                                                                </MediaViewerProvider>
+                                                            </OverlayProvider>
+                                                        </ScannerProvider>
+                                                    </ComposerProvider>
+                                                </EmojiPickerProvider>
+                                            </OverlayStackProvider>
+                                        </ImageCropperProvider>
+                                    </MediaProxyProvider>
+                                </ThemeProvider>
+                            </PreferenceProvider>
+                        </ClientProvider>
+                    </AgeGateProvider>
+                </BackHandlerProvider>
+            </KeyboardProvider>
+        </CachedThemeProvider>
     </ErrorBoundary>
 )
