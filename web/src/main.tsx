@@ -76,7 +76,8 @@ const ClientLoadingScreen = () => {
 
 const ProfileRoute = () => {
     const { ccid = '', profile } = useParams()
-    return <ProfileView ccid={ccid} profileName={profile} />
+    // keyでプロフィール切替時にビューごと再マウントする(タブやドロワー等のstateを持ち越さない)
+    return <ProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} />
 }
 
 const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' | 'bskyView' }) => {
@@ -97,7 +98,7 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' | 'bskyView' 
 
 const GuestProfileRoute = () => {
     const { ccid = '', profile } = useParams()
-    return <GuestProfileView ccid={ccid} profileName={profile} />
+    return <GuestProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} />
 }
 
 const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {

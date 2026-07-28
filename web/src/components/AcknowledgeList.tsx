@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 interface Props {
     targetCcid: string
     initialTab?: 'acknowledging' | 'acknowledgers'
+    onNavigate?: () => void
 }
 
 export const AcknowledgeList = (props: Props) => {
@@ -77,16 +78,17 @@ export const AcknowledgeList = (props: Props) => {
                     </div>
                 }
             >
-                <UserList usersPromise={users} />
+                <UserList usersPromise={users} onNavigate={props.onNavigate} />
             </Suspense>
         </div>
     )
 }
 
-const UserList = (props: { usersPromise: Promise<User[] | null> }) => {
+const UserList = (props: { usersPromise: Promise<User[] | null>; onNavigate?: () => void }) => {
     const navigate = useNavigate()
     const openProfile = (ccid: string) => {
         navigate('/profile/' + ccid)
+        props.onNavigate?.()
     }
 
     const users = use(props.usersPromise)

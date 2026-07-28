@@ -414,7 +414,13 @@ const Body = (props: BodyProps) => {
                 />
             </Drawer>
             <Drawer open={ackListTab !== null} onClose={() => setAckListTab(null)}>
-                {ackListTab && <AcknowledgeList targetCcid={props.ccid} initialTab={ackListTab} />}
+                {ackListTab && (
+                    <AcknowledgeList
+                        targetCcid={props.ccid}
+                        initialTab={ackListTab}
+                        onNavigate={() => setAckListTab(null)}
+                    />
+                )}
             </Drawer>
         </>
     )

@@ -11,6 +11,7 @@ import { ProfileView } from '../views/Profile'
 interface Props {
     targetCcid: string
     initialTab?: 'acknowledging' | 'acknowledgers'
+    onNavigate?: () => void
 }
 
 export const AcknowledgeList = (props: Props) => {
@@ -78,16 +79,17 @@ export const AcknowledgeList = (props: Props) => {
                     </div>
                 }
             >
-                <UserList usersPromise={users} />
+                <UserList usersPromise={users} onNavigate={props.onNavigate} />
             </Suspense>
         </div>
     )
 }
 
-const UserList = (props: { usersPromise: Promise<User[] | null> }) => {
+const UserList = (props: { usersPromise: Promise<User[] | null>; onNavigate?: () => void }) => {
     const stack = useStack()
     const openProfile = (ccid: string) => {
         stack.push(<ProfileView ccid={ccid} />)
+        props.onNavigate?.()
     }
 
     const users = use(props.usersPromise)
