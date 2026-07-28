@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client } from '@concrnt/worldlib'
+import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
 import { InMemoryAuthProvider, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
@@ -112,6 +112,8 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                         setProgress(t('checkingTimelines'))
                         await setupDefaultTimelines(client)
+                        // v1から移行したアカウントの旧形式鍵垢設定をv2形式へ移行する。失敗してもログインは止めない
+                        await migrateLegacyProfilePolicies(client).catch(console.error)
 
                         setProgress(t('loadingLists'))
                         await client.pinnedLists.value()

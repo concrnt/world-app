@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client } from '@concrnt/worldlib'
+import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
 import { NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
@@ -115,6 +115,8 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                         setProgress(t('checkingTimelines'))
                         await setupDefaultTimelines(client)
+                        // v1から移行したアカウントの旧形式鍵垢設定をv2形式へ移行する。失敗してもログインは止めない
+                        await migrateLegacyProfilePolicies(client).catch(console.error)
 
                         setProgress(t('loadingLists'))
                         await client.pinnedLists.value()
