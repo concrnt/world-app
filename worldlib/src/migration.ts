@@ -1,4 +1,13 @@
-import { Api, Document, NotFoundError, PolicyEntry, RepositoryImportResult } from '@concrnt/client'
+import {
+    Api,
+    ComputeCKID,
+    Document,
+    GenerateIdentity,
+    NotFoundError,
+    PolicyEntry,
+    RepositoryImportResult,
+    Sign
+} from '@concrnt/client'
 import { Client } from './client'
 import { semantics } from './semantics'
 import { ProfileSchema } from './schemas/'
@@ -10,15 +19,28 @@ export interface MigrationPreparation {
     skipped: string[] // 再署名できずスキップした行(他人がauthorのnone proofなど)
 }
 
-// dumpを走査し、自分がauthorのnone proof commit(v1→v2移行で投入されたもの)を
-// 現在のsubkeyで署名し直す。documentIDはdocument文字列+createdAtから導出されるため、
+// dumpを走査し、自分がauthorのnone proof commit(v1→v2移行で投入されたもの)とsubkey proof commitを
+// import専用の使い捨てsubkeyで署名し直す。documentIDはdocument文字列+createdAtから導出されるため、
 // document文字列は一切変更せずproofだけ差し替える。
+//
+// セッションのsubkeyで再署名すると、そのenactのcreatedAt(移住先ではインポート前にnowでcommitされる)
+// より古い行が "signed document predates the subkey enact document" で拒否される。元からsubkey署名済みの
+// 行も、dump内の元のenactがaccept-if-newerで移住先の新しいenactに負けるため同様に落ちる。
+// そのため、対象行の最古のcreatedAtまでバックデートしたenactをマスターキーで署名して先頭行に置き、
+// 全行をこのsubkeyの有効期間内に収める。バックデートしたenactのcommitは、import経路
+// (LocalOnlyExecute)の本人commitに対するbackdate window免除で受理される。
+// import subkeyは使い捨てで、末尾のrevocation行で即座に失効させる(取り込んだ行は
+// enact〜revocationの有効期間内に収まるため、以後の検証も通る)。
 export const prepareRepositoryDump = async (api: Api, jsonl: string): Promise<MigrationPreparation> => {
     const ccid = api.authProvider.getCCID()
     const lines = jsonl.split('\n').filter((line) => line.trim() !== '')
 
-    const prepared: string[] = []
+    // 1周目: 再署名対象の選別と、enactのバックデート先(対象行の最古のcreatedAt)の収集。
+    // subkeyでの署名はenactを作ってから行うため、ここでは行の順序と対象だけ確定させる
+    // (documentが立っているentryが再署名対象)
+    const entries: Array<{ line: string; document?: string }> = []
     const skipped: string[] = []
+    let oldest: Date | null = null
     let resigned = 0
 
     for (const line of lines) {
@@ -30,36 +52,103 @@ export const prepareRepositoryDump = async (api: Api, jsonl: string): Promise<Mi
             continue
         }
 
-        if (sd.proof?.type !== 'none') {
-            // 署名済みの行はそのまま通す(パースし直すと空白等が変わる恐れがある)
-            prepared.push(line)
-            continue
-        }
-
-        let author: string | undefined
+        let doc: any
         try {
-            author = JSON.parse(sd.document).author
+            doc = JSON.parse(sd.document)
         } catch (_e) {
-            author = undefined
+            doc = undefined
         }
-        if (author !== ccid) {
-            skipped.push(line)
+
+        const proofType = sd.proof?.type
+        if (doc?.author !== ccid || (proofType !== 'none' && proofType !== 'concrnt-ecrecover-subkey')) {
+            if (proofType === 'none') {
+                // 他人がauthorのnone proof行は署名できない
+                skipped.push(line)
+            } else {
+                // direct署名やdocument-reference等の行はそのまま通す(パースし直すと空白等が変わる恐れがある)
+                entries.push({ line })
+            }
             continue
         }
 
-        const [signature, keyid] = await api.authProvider.signSub(sd.document)
+        if (doc.kind === 'entity') {
+            // entity documentはconcrnt-ecrecover-direct必須のためマスターキーで署名し直す
+            const signature = await api.authProvider.signMaster(sd.document)
+            entries.push({
+                line: JSON.stringify({
+                    document: sd.document,
+                    proof: { type: 'concrnt-ecrecover-direct', signature }
+                })
+            })
+            resigned++
+            continue
+        }
+
+        const createdAt = new Date(doc.createdAt)
+        if (!isNaN(createdAt.getTime()) && (oldest === null || createdAt < oldest)) {
+            oldest = createdAt
+        }
+        entries.push({ line, document: sd.document })
+    }
+
+    if (!entries.some((e) => e.document !== undefined)) {
+        return { lines: entries.map((e) => e.line), total: lines.length, resigned, skipped }
+    }
+
+    // 2周目: import subkeyのenactを先頭に置き、対象行を署名し、revocationで締める
+    const importKey = GenerateIdentity()
+    const importCkid = ComputeCKID(importKey.publicKey)
+    const subkeyUri = semantics.subkey(ccid, importCkid)
+
+    const enactDocument = JSON.stringify({
+        kind: 'record',
+        key: subkeyUri,
+        author: ccid,
+        schema: 'https://schema.concrnt.net/subkey.json',
+        value: { ckid: importCkid },
+        createdAt: oldest ?? new Date()
+    })
+    const enactProof = {
+        type: 'concrnt-ecrecover-direct',
+        signature: await api.authProvider.signMaster(enactDocument)
+    }
+
+    const prepared: string[] = [JSON.stringify({ document: enactDocument, proof: enactProof })]
+    for (const entry of entries) {
+        if (entry.document === undefined) {
+            prepared.push(entry.line)
+            continue
+        }
         prepared.push(
             JSON.stringify({
-                document: sd.document,
+                document: entry.document,
                 proof: {
                     type: 'concrnt-ecrecover-subkey',
-                    signature,
-                    key: `cckv://${ccid}/keys/${keyid}`
+                    signature: Sign(importKey.privateKey, entry.document),
+                    key: subkeyUri
                 }
             })
         )
         resigned++
     }
+
+    const revokeDocument = JSON.stringify({
+        kind: 'record',
+        key: subkeyUri,
+        author: ccid,
+        schema: 'https://schema.concrnt.net/revoked-subkey.json',
+        value: { document: enactDocument, proof: enactProof },
+        createdAt: new Date()
+    })
+    prepared.push(
+        JSON.stringify({
+            document: revokeDocument,
+            proof: {
+                type: 'concrnt-ecrecover-direct',
+                signature: await api.authProvider.signMaster(revokeDocument)
+            }
+        })
+    )
 
     return { lines: prepared, total: lines.length, resigned, skipped }
 }

@@ -31,7 +31,7 @@ export const V1ImportSettingsView = () => {
     const [failures, setFailures] = useState<RepositoryImportResult[]>([])
     const [importConfirmOpen, setImportConfirmOpen] = useState(false)
 
-    const canImport = client.api.authProvider.canSignSub()
+    const canImport = client.api.authProvider.canSignSub() && client.api.authProvider.canSignMaster()
 
     const loadFile = (file: File) => {
         setError(null)
@@ -229,7 +229,7 @@ export const V1ImportSettingsView = () => {
                 <Text style={{ opacity: 0.8 }}>{t('description')}</Text>
 
                 {!canImport ? (
-                    <Text style={{ color: '#ff5b5b' }}>{t('subkeyRequired')}</Text>
+                    <Text style={{ color: '#ff5b5b' }}>{t('masterKeyRequired')}</Text>
                 ) : (
                     steps.map((s, i) => (
                         <div
