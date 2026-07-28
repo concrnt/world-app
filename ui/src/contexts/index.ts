@@ -1,7 +1,4 @@
 export * from './Theme'
 export * from './OverlayStack'
-export * from './Select'
-export * from './Confirm'
-export * from './Modal'
 export * from './CfmActions'
 export * from './CCImage'

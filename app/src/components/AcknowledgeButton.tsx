@@ -1,10 +1,11 @@
 import { Button } from '@concrnt/ui'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../ui/Drawer'
 import { Subscription } from './Subscription'
 import { CssVar } from '../types/Theme'
 
@@ -17,7 +18,7 @@ interface Props {
 export const AcknowledgeButton = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.acknowledgeButton' })
     const { client } = useClient()
-    const drawer = useDrawer()
+    const [subscriptionOpen, setSubscriptionOpen] = useState(false)
 
     const [acknowledging] = useSubscribe(client.acknowledging)
     const acknowledged = acknowledging.find((a) => a.associate === semantics.user(props.ccid))
@@ -58,7 +59,7 @@ export const AcknowledgeButton = (props: Props) => {
             </Button>
             <Button
                 variant={variant}
-                onClick={() => drawer.open(<Subscription target={watchTarget} />)}
+                onClick={() => setSubscriptionOpen(true)}
                 style={{
                     borderTopLeftRadius: 0,
                     borderBottomLeftRadius: 0,
@@ -68,6 +69,9 @@ export const AcknowledgeButton = (props: Props) => {
             >
                 <MdPlaylistAdd size={20} />
             </Button>
+            <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
+                <Subscription target={watchTarget} />
+            </Drawer>
         </div>
     )
 }

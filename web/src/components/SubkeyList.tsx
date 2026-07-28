@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Text } from '@concrnt/ui'
+import { Button, Confirm, Text } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
-import { useConfirm } from '../contexts/Confirm'
 import type { Document, SignedDocument } from '@concrnt/client'
 
 interface SubkeyEntry {
@@ -21,9 +20,9 @@ interface SubkeyEntry {
 export const SubkeyList = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id.subkeys' })
     const { client } = useClient()
-    const confirm = useConfirm()
     const [entries, setEntries] = useState<SubkeyEntry[] | null>(null)
     const [error, setError] = useState('')
+    const [revokeTarget, setRevokeTarget] = useState<SubkeyEntry | null>(null)
 
     const currentCKID = client?.api.authProvider.getCKID()
     const canSignMaster = client?.api.authProvider.canSignMaster() ?? false
@@ -77,40 +76,6 @@ export const SubkeyList = () => {
     }, [fetchEntries, t])
 
     if (!client) return null
-
-    const revoke = (entry: SubkeyEntry) => {
-        confirm.open(
-            t('revokeConfirmTitle'),
-            () => {
-                client.api
-                    .commit(
-                        {
-                            kind: 'record',
-                            key: entry.key,
-                            author: client.ccid,
-                            schema: 'https://schema.concrnt.net/revoked-subkey.json',
-                            value: { document: entry.sd.document, proof: entry.sd.proof },
-                            createdAt: new Date()
-                        },
-                        client.server.domain,
-                        { useMasterkey: true }
-                    )
-                    .then(() => fetchEntries())
-                    .then((parsed) => {
-                        setEntries(parsed)
-                    })
-                    .catch((err) => {
-                        console.error('failed to revoke subkey', err)
-                        setError(t('revokeFailed'))
-                    })
-            },
-            {
-                description:
-                    entry.ckid === currentCKID ? t('revokeConfirmCurrentDescription') : t('revokeConfirmDescription'),
-                confirmText: t('revoke')
-            }
-        )
-    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
@@ -172,7 +137,7 @@ export const SubkeyList = () => {
                                 {t('revoked')}
                             </Text>
                         ) : canSignMaster ? (
-                            <Button variant="outlined" onClick={() => revoke(entry)} style={{ flexShrink: 0 }}>
+                            <Button variant="outlined" onClick={() => setRevokeTarget(entry)} style={{ flexShrink: 0 }}>
                                 {t('revoke')}
                             </Button>
                         ) : null}
@@ -180,6 +145,41 @@ export const SubkeyList = () => {
                 ))
             )}
             {!canSignMaster && <Text variant="caption">{t('masterKeyRequired')}</Text>}
+            <Confirm
+                open={revokeTarget !== null}
+                onClose={() => setRevokeTarget(null)}
+                title={t('revokeConfirmTitle')}
+                description={
+                    revokeTarget?.ckid === currentCKID
+                        ? t('revokeConfirmCurrentDescription')
+                        : t('revokeConfirmDescription')
+                }
+                confirmText={t('revoke')}
+                onConfirm={() => {
+                    if (!revokeTarget) return
+                    client.api
+                        .commit(
+                            {
+                                kind: 'record',
+                                key: revokeTarget.key,
+                                author: client.ccid,
+                                schema: 'https://schema.concrnt.net/revoked-subkey.json',
+                                value: { document: revokeTarget.sd.document, proof: revokeTarget.sd.proof },
+                                createdAt: new Date()
+                            },
+                            client.server.domain,
+                            { useMasterkey: true }
+                        )
+                        .then(() => fetchEntries())
+                        .then((parsed) => {
+                            setEntries(parsed)
+                        })
+                        .catch((err) => {
+                            console.error('failed to revoke subkey', err)
+                            setError(t('revokeFailed'))
+                        })
+                }}
+            />
         </div>
     )
 }

@@ -9,7 +9,7 @@ import { MdCreate } from 'react-icons/md'
 import { hapticLight } from '../utils/haptics'
 import { TimelineTag } from '../components/TimelineTag'
 import { ScrollViewHandle } from '../types/ScrollView'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../ui/Drawer'
 import { TimelineSettings } from '../components/TimelineSettings'
 import { MdInfo } from 'react-icons/md'
 import { Timeline } from '@concrnt/worldlib'
@@ -22,7 +22,7 @@ interface Props {
 export const TimelineView = (props: Props) => {
     const { client } = useClient()
     const composer = useComposer()
-    const drawer = useDrawer()
+    const [settingsOpen, setSettingsOpen] = useState(false)
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -63,7 +63,7 @@ export const TimelineView = (props: Props) => {
                                 justifyContent: 'center',
                                 alignItems: 'center'
                             }}
-                            onClick={() => drawer.open(<TimelineSettings uri={props.uri} />)}
+                            onClick={() => setSettingsOpen(true)}
                         >
                             <MdInfo size={24} />
                         </div>
@@ -88,6 +88,9 @@ export const TimelineView = (props: Props) => {
                     <MdCreate size={24} />
                 </FAB>
             )}
+            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+                <TimelineSettings uri={props.uri} />
+            </Drawer>
         </>
     )
 }

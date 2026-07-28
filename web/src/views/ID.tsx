@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Text } from '@concrnt/ui'
+import { Button, Text, Modal } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
@@ -8,7 +8,6 @@ import Tilt from 'react-parallax-tilt'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { MdBadge, MdPublic } from 'react-icons/md'
-import { useModal } from '../contexts/Modal'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
 
@@ -60,7 +59,7 @@ const InfoTile = ({
 export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
-    const modal = useModal()
+    const [aliasModalOpen, setAliasModalOpen] = useState(false)
 
     if (!client) return null
 
@@ -121,7 +120,7 @@ export const IDView = () => {
                         label={t('alias')}
                         value={alias}
                         onClick={() => {
-                            modal.open(<AliasSetupModalContent onClose={() => modal.close()} />)
+                            setAliasModalOpen(true)
                         }}
                     />
                     <InfoTile
@@ -135,6 +134,9 @@ export const IDView = () => {
 
                 <SubkeyList />
             </div>
+            <Modal open={aliasModalOpen} onClose={() => setAliasModalOpen(false)}>
+                <AliasSetupModalContent onClose={() => setAliasModalOpen(false)} />
+            </Modal>
         </View>
     )
 }

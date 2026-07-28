@@ -1,9 +1,9 @@
 import { useClient } from '../contexts/Client'
-import { useSelect } from '../contexts/Select'
 import { Avatar, CssVar, IconButton, ListItem, Text, useAnchor } from '@concrnt/ui'
-import { ReactNode, useMemo } from 'react'
+import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from './Drawer'
+import { Select } from './Select'
 import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
 import { HiSwitchHorizontal } from 'react-icons/hi'
@@ -13,16 +13,16 @@ import { ProfileName } from './ProfileName'
 export const SwitchAccountButton = (): ReactNode => {
     const { t } = useTranslation('', { keyPrefix: 'components.switchAccountButton' })
     const { client, reload } = useClient()
-    const { select, close } = useSelect()
-    const drawer = useDrawer()
     const menuAnchor = useAnchor()
 
-    const options: ReactNode[] = useMemo(() => {
-        const result: ReactNode[] = []
-        if (!client) return result
+    const [menuOpen, setMenuOpen] = useState(false)
+    // 新規プロフィールのキーは開いた時点で採番して固定する
+    const [newProfileURI, setNewProfileURI] = useState<string | null>(null)
 
+    const options: ReactNode[] = []
+    if (client) {
         for (const [key, profile] of Object.entries(client.profiles)) {
-            result.push(
+            options.push(
                 <ListItem
                     key={key}
                     style={{ marginBottom: CssVar.space(1) }}
@@ -36,8 +36,7 @@ export const SwitchAccountButton = (): ReactNode => {
                     onClick={() => {
                         console.log('Switching account to', key)
                         reload(key)
-                        close()
-                        drawer.close()
+                        setMenuOpen(false)
                     }}
                 >
                     <div
@@ -55,41 +54,51 @@ export const SwitchAccountButton = (): ReactNode => {
             )
         }
 
-        result.push(
+        options.push(
             <ListItem
                 key={'$add'}
                 icon={<MdPersonAdd size={24} />}
                 onClick={() => {
-                    drawer.open(
-                        <ProfileEditor
-                            noLoading
-                            onComplete={() => {
-                                close()
-                                drawer.close()
-                            }}
-                            targetURI={semantics.profile(client.ccid, Date.now().toString())}
-                            title={t('createNewProfile')}
-                        />
-                    )
+                    setNewProfileURI(semantics.profile(client.ccid, Date.now().toString()))
                 }}
             >
                 <Text>{t('addProfile')}</Text>
             </ListItem>
         )
-
-        return result
-    }, [client, reload, close, drawer, t])
+    }
 
     return (
-        <IconButton
-            onClick={(e) => {
-                e.stopPropagation()
-                if (!client) return
-                select(t('switchAccountTitle'), options, menuAnchor)
-            }}
-            style={{ anchorName: menuAnchor } as React.CSSProperties}
-        >
-            <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
-        </IconButton>
+        <>
+            <IconButton
+                onClick={(e) => {
+                    e.stopPropagation()
+                    if (!client) return
+                    setMenuOpen(true)
+                }}
+                style={{ anchorName: menuAnchor } as React.CSSProperties}
+            >
+                <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
+            </IconButton>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                title={t('switchAccountTitle')}
+                options={options}
+                anchor={menuAnchor}
+            />
+            <Drawer open={newProfileURI !== null} onClose={() => setNewProfileURI(null)}>
+                {newProfileURI && (
+                    <ProfileEditor
+                        noLoading
+                        onComplete={() => {
+                            setMenuOpen(false)
+                            setNewProfileURI(null)
+                        }}
+                        targetURI={newProfileURI}
+                        title={t('createNewProfile')}
+                    />
+                )}
+            </Drawer>
+        </>
     )
 }

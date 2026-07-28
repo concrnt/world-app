@@ -2,7 +2,7 @@ import { ReactNode, startTransition, Suspense, useEffect, useImperativeHandle, u
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../components/Drawer'
 
 import { Tabs, Tab, Text, Divider, Button } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -31,7 +31,6 @@ import { useIsMobile } from '../hooks/useIsMobile'
 export const HomeView = (props: ScrollViewProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const { client, isDomainOffline } = useClient()
-    const drawer = useDrawer()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
     useImperativeHandle(props.ref, () => ({
@@ -39,10 +38,12 @@ export const HomeView = (props: ScrollViewProps) => {
     }))
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
+    const [listSettingsOpen, setListSettingsOpen] = useState(false)
 
     // fix default settings
-    // depsのtはi18nの言語ロードで参照が変わるので、ガードがないとドロワーが二重にpushされる
+    // 一度閉じたらeffect再実行(言語ロード等)で再表示しないためのガード
     const profileSetupOpened = useRef(false)
+    const [profileSetupOpen, setProfileSetupOpen] = useState(false)
     useEffect(() => {
         if (!client) return
         // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
@@ -51,16 +52,9 @@ export const HomeView = (props: ScrollViewProps) => {
         if (profileSetupOpened.current) return
         if (!(client.currentProfile in client.profiles)) {
             profileSetupOpened.current = true
-            drawer.open(
-                <ProfileEditor
-                    noLoading
-                    title={t('setUpProfile')}
-                    targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
-                    onComplete={() => drawer.close()}
-                />
-            )
+            setProfileSetupOpen(true)
         }
-    }, [client, drawer, isDomainOffline, t])
+    }, [client, isDomainOffline])
 
     return (
         <>
@@ -76,16 +70,7 @@ export const HomeView = (props: ScrollViewProps) => {
                                 justifyContent: 'center',
                                 alignItems: 'center'
                             }}
-                            onClick={() =>
-                                drawer.open(
-                                    <ListSettings
-                                        uri={selectedTabUri}
-                                        onComplete={() => {
-                                            drawer.close()
-                                        }}
-                                    />
-                                )
-                            }
+                            onClick={() => setListSettingsOpen(true)}
                         >
                             <MdTune size={24} />
                         </div>
@@ -93,6 +78,17 @@ export const HomeView = (props: ScrollViewProps) => {
                 >
                     Home
                 </Header>
+                <Drawer open={listSettingsOpen} onClose={() => setListSettingsOpen(false)}>
+                    <ListSettings uri={selectedTabUri} onComplete={() => setListSettingsOpen(false)} />
+                </Drawer>
+                <Drawer open={profileSetupOpen} onClose={() => setProfileSetupOpen(false)}>
+                    <ProfileEditor
+                        noLoading
+                        title={t('setUpProfile')}
+                        targetURI={semantics.profile(client.ccid, client.currentProfile ?? 'main')}
+                        onComplete={() => setProfileSetupOpen(false)}
+                    />
+                </Drawer>
                 <ErrorBoundary
                     fallbackRender={({ resetErrorBoundary }) => (
                         <div

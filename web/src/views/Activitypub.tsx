@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { Schemas } from '@concrnt/worldlib'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../components/Drawer'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 
@@ -26,7 +26,7 @@ interface ApServerInfo {
 export const Activitypub = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.activitypub' })
     const { client } = useClient()
-    const drawer = useDrawer()
+    const [subscriptionOpen, setSubscriptionOpen] = useState(false)
     const navigate = useNavigate()
 
     const [settings, setSettings] = useState<ApSettings | undefined | null>(undefined)
@@ -149,13 +149,14 @@ export const Activitypub = () => {
                         <IconButton
                             onClick={(e) => {
                                 e.stopPropagation()
-                                drawer.open(
-                                    <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
-                                )
+                                setSubscriptionOpen(true)
                             }}
                         >
                             <MdPlaylistAdd size={24} />
                         </IconButton>
+                        <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
+                            <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
+                        </Drawer>
                         <TextField value={lookupDraft} onChange={(e) => setLookupDraft(e.target.value)} />
                         <Button
                             onClick={() => {

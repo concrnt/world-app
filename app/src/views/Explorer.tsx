@@ -5,7 +5,7 @@ import { Document } from '@concrnt/client'
 import { useState, useRef, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../ui/Header'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../ui/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
@@ -18,7 +18,7 @@ import { useStack } from '../layouts/Stack'
 import { TimelineView } from './Timeline'
 
 export const ExplorerView = () => {
-    const drawer = useDrawer()
+    const [creatorOpen, setCreatorOpen] = useState(false)
     const { push } = useStack()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
@@ -63,19 +63,20 @@ export const ExplorerView = () => {
             <FAB
                 onClick={() => {
                     hapticLight()
-                    drawer.open(
-                        <CommunityCreator
-                            onComplete={(uri) => {
-                                invalidateResource(`communities:${client.server.domain}`)
-                                drawer.close()
-                                push(<TimelineView uri={uri} />)
-                            }}
-                        />
-                    )
+                    setCreatorOpen(true)
                 }}
             >
                 <MdAdd size={24} />
             </FAB>
+            <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+                <CommunityCreator
+                    onComplete={(uri) => {
+                        invalidateResource(`communities:${client.server.domain}`)
+                        setCreatorOpen(false)
+                        push(<TimelineView uri={uri} />)
+                    }}
+                />
+            </Drawer>
         </>
     )
 }

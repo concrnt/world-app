@@ -10,7 +10,7 @@ import { Header } from '../components/Header'
 import { Composer } from '../components/Composer'
 import { Timeline } from '@concrnt/worldlib'
 import { MdCreate, MdInfo } from 'react-icons/md'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../components/Drawer'
 import { TimelineSettings } from '../components/TimelineSettings'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { FAB } from '../components/FAB'
@@ -24,7 +24,7 @@ interface Props {
 
 export const TimelineView = (props: Props) => {
     const { client } = useClient()
-    const drawer = useDrawer()
+    const [settingsOpen, setSettingsOpen] = useState(false)
     const composer = useComposer()
     const isMobile = useIsMobile()
 
@@ -67,7 +67,7 @@ export const TimelineView = (props: Props) => {
                                 justifyContent: 'center',
                                 alignItems: 'center'
                             }}
-                            onClick={() => drawer.open(<TimelineSettings uri={props.uri} />)}
+                            onClick={() => setSettingsOpen(true)}
                         >
                             <MdInfo size={24} />
                         </div>
@@ -112,6 +112,9 @@ export const TimelineView = (props: Props) => {
                     <MdCreate size={24} />
                 </FAB>
             )}
+            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+                <TimelineSettings uri={props.uri} />
+            </Drawer>
         </>
     )
 }

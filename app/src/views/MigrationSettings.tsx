@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { Button, View, Text, TextField } from '@concrnt/ui'
+import { Button, Confirm, View, Text, TextField } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Api, InMemoryAuthProvider, InMemoryKVS, type Document, type RepositoryImportResult } from '@concrnt/client'
@@ -12,7 +12,6 @@ import {
     type ImportProgress
 } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { useConfirm } from '../contexts/Confirm'
 import { getResourceCache } from '../lib/cache'
 import { CssVar } from '../types/Theme'
 import { Header } from '../ui/Header'
@@ -30,7 +29,6 @@ const normalizeFqdn = (input: string) =>
 export const MigrationSettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.migrationSettings' })
     const { client } = useClient()
-    const confirm = useConfirm()
 
     const currentDomain = client.api.defaultHost
 
@@ -48,6 +46,7 @@ export const MigrationSettingsView = () => {
     const [progress, setProgress] = useState<ImportProgress | null>(null)
     const [failures, setFailures] = useState<RepositoryImportResult[]>([])
     const [cleanupFailed, setCleanupFailed] = useState(false)
+    const [importConfirmOpen, setImportConfirmOpen] = useState(false)
 
     // 移住先での登録完了を自動検知する
     useEffect(() => {
@@ -262,10 +261,7 @@ export const MigrationSettingsView = () => {
                     <Button
                         disabled={busy}
                         onClick={() => {
-                            confirm.open(t('step3.confirmTitle'), runImport, {
-                                description: t('step3.confirmDesc', { domain: destination }),
-                                confirmText: t('step3.exec')
-                            })
+                            setImportConfirmOpen(true)
                         }}
                     >
                         {busy ? t('step3.working') : t('step3.exec')}
@@ -381,6 +377,14 @@ export const MigrationSettingsView = () => {
                     </>
                 )}
             </div>
+            <Confirm
+                open={importConfirmOpen}
+                onClose={() => setImportConfirmOpen(false)}
+                title={t('step3.confirmTitle')}
+                description={t('step3.confirmDesc', { domain: destination })}
+                confirmText={t('step3.exec')}
+                onConfirm={runImport}
+            />
         </View>
     )
 }

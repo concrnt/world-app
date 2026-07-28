@@ -1,5 +1,4 @@
-import { Button, Text } from '@concrnt/ui'
-import { useModal } from '../contexts/Modal'
+import { Button, Modal, Text } from '@concrnt/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BackupKeyButton } from './BackupKeyButton'
@@ -64,35 +63,34 @@ export const ResetSessionModalContent = (props: { ccid: string; onDone: () => vo
 
 export const ResetSessionButton = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'app.resetSessionButton' })
-    const modal = useModal()
-
-    const handleClick = () => {
-        modal.open(
-            <ResetSessionModalContent
-                ccid={props.ccid}
-                onDone={() => {
-                    modal.close()
-                    props.onDone?.()
-                }}
-                onCancel={() => {
-                    modal.close()
-                }}
-            />
-        )
-    }
+    const [resetModalOpen, setResetModalOpen] = useState(false)
 
     return (
-        <Button
-            variant="text"
-            onClick={handleClick}
-            style={{
-                width: '100%',
-                minHeight: 44,
-                color: '#ff7676',
-                fontSize: '1rem'
-            }}
-        >
-            {props.children || t('resetSession')}
-        </Button>
+        <>
+            <Button
+                variant="text"
+                onClick={() => setResetModalOpen(true)}
+                style={{
+                    width: '100%',
+                    minHeight: 44,
+                    color: '#ff7676',
+                    fontSize: '1rem'
+                }}
+            >
+                {props.children || t('resetSession')}
+            </Button>
+            <Modal open={resetModalOpen} onClose={() => setResetModalOpen(false)}>
+                <ResetSessionModalContent
+                    ccid={props.ccid}
+                    onDone={() => {
+                        setResetModalOpen(false)
+                        props.onDone?.()
+                    }}
+                    onCancel={() => {
+                        setResetModalOpen(false)
+                    }}
+                />
+            </Modal>
+        </>
     )
 }

@@ -1,74 +1,67 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { OverlayStackProvider, useOverlayStack } from './OverlayStack'
-import { useSelect } from './Select'
-import { useConfirm } from './Confirm'
-import { useModal } from './Modal'
+import { useState } from 'react'
+import { OverlayStackProvider, OverlaySurface, useOverlayStack } from './OverlayStack'
+import { Select } from '../ui/Select'
+import { Confirm } from '../ui/Confirm'
+import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { ListItem } from '../ui/ListItem'
 import { Text } from '../ui/Text'
 import { BottomSheet } from '../ui/BottomSheet'
 import { SideSheet } from '../ui/SideSheet'
 
+// selectを開いたまま上に重ねる入れ子構成。open順=重なり順(LIFO)とexitアニメーションを目視確認する
 const Demo = () => {
-    const { select } = useSelect()
-    const confirm = useConfirm()
-    const modal = useModal()
     const stack = useOverlayStack()
-
-    const openMenu = () => {
-        select('メニュー', [
-            <ListItem
-                key="confirm"
-                onClick={() => {
-                    confirm.open('本当に実行しますか？', () => {}, { confirmText: '実行' })
-                }}
-            >
-                <Text>確認ダイアログを開く</Text>
-            </ListItem>,
-            <ListItem
-                key="modal"
-                onClick={() => {
-                    modal.open(<Text>モーダルの内容</Text>)
-                }}
-            >
-                <Text>モーダルを開く</Text>
-            </ListItem>,
-            <ListItem
-                key="bottomsheet"
-                onClick={() => {
-                    stack.push({
-                        kind: 'drawer',
-                        render: (close) => (
-                            <BottomSheet height={window.innerHeight * 0.9} onDismiss={close}>
-                                <Text>ボトムシートの内容</Text>
-                            </BottomSheet>
-                        )
-                    })
-                }}
-            >
-                <Text>ボトムシートを開く</Text>
-            </ListItem>,
-            <ListItem
-                key="sidesheet"
-                onClick={() => {
-                    stack.push({
-                        kind: 'drawer',
-                        render: (close) => (
-                            <SideSheet onDismiss={close}>
-                                <Text>サイドシートの内容</Text>
-                            </SideSheet>
-                        )
-                    })
-                }}
-            >
-                <Text>サイドシートを開く</Text>
-            </ListItem>
-        ])
-    }
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [modalOpen, setModalOpen] = useState(false)
+    const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+    const [sideSheetOpen, setSideSheetOpen] = useState(false)
 
     return (
-        <div style={{ padding: '16px' }}>
-            <Button onClick={openMenu}>メニューを開く</Button>
+        <div style={{ padding: '16px', display: 'flex', gap: '8px' }}>
+            <Button onClick={() => setMenuOpen(true)}>メニューを開く</Button>
+            <Button onClick={() => stack.closeTop()}>closeTop(バック相当)</Button>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                title="メニュー"
+                options={[
+                    <ListItem key="confirm" onClick={() => setConfirmOpen(true)}>
+                        <Text>確認ダイアログを開く</Text>
+                    </ListItem>,
+                    <ListItem key="modal" onClick={() => setModalOpen(true)}>
+                        <Text>モーダルを開く</Text>
+                    </ListItem>,
+                    <ListItem key="bottomsheet" onClick={() => setBottomSheetOpen(true)}>
+                        <Text>ボトムシートを開く</Text>
+                    </ListItem>,
+                    <ListItem key="sidesheet" onClick={() => setSideSheetOpen(true)}>
+                        <Text>サイドシートを開く</Text>
+                    </ListItem>
+                ]}
+            />
+            <Confirm
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                title="本当に実行しますか？"
+                confirmText="実行"
+                onConfirm={() => {}}
+            />
+            <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+                <Text>モーダルの内容</Text>
+            </Modal>
+            <OverlaySurface open={bottomSheetOpen} onClose={() => setBottomSheetOpen(false)}>
+                <BottomSheet height={window.innerHeight * 0.9} onDismiss={() => setBottomSheetOpen(false)}>
+                    <Text>ボトムシートの内容</Text>
+                </BottomSheet>
+            </OverlaySurface>
+            <OverlaySurface open={sideSheetOpen} onClose={() => setSideSheetOpen(false)}>
+                <SideSheet onDismiss={() => setSideSheetOpen(false)}>
+                    <Text>サイドシートの内容</Text>
+                </SideSheet>
+            </OverlaySurface>
         </div>
     )
 }

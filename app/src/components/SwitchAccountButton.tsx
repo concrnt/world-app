@@ -1,10 +1,8 @@
 import { useClient } from '../contexts/Client'
-import { useSelect } from '../contexts/Select'
-import { Avatar, CssVar, IconButton, ListItem, Text } from '@concrnt/ui'
-import { ReactNode, useCallback, useMemo } from 'react'
+import { Avatar, CssVar, IconButton, ListItem, Modal, Select, Text } from '@concrnt/ui'
+import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDrawer } from '../contexts/Drawer'
-import { useModal } from '../contexts/Modal'
+import { Drawer } from '../ui/Drawer'
 import { ProfileEditor } from './ProfileEditor'
 import { semantics } from '@concrnt/worldlib'
 import { HiSwitchHorizontal } from 'react-icons/hi'
@@ -13,71 +11,53 @@ import { ProfileName } from './ProfileName'
 import { AccountListItem } from './AccountListItem'
 import { AddAccountDrawer } from './AddAccountDrawer'
 import { ResetSessionModalContent } from './ResetSessionButton'
-import { listAccounts, performAccountSwitch } from '../lib/accounts'
+import { AccountSummary, listAccounts, performAccountSwitch } from '../lib/accounts'
 
 export const SwitchAccountButton = (): ReactNode => {
     const { t } = useTranslation('', { keyPrefix: 'components.switchAccountButton' })
     const { client, reload } = useClient()
-    const { select, close } = useSelect()
-    const drawer = useDrawer()
-    const modal = useModal()
 
+    const [menuOpen, setMenuOpen] = useState(false)
     // 2段目のシート: 端末に保存されているアカウント(鍵)の一覧
-    const openAccountSheet = useCallback(async () => {
-        if (!client) return
-        const accounts = await listAccounts().catch(() => [])
+    const [accounts, setAccounts] = useState<AccountSummary[] | null>(null)
+    const [resetTarget, setResetTarget] = useState<string | null>(null)
+    const [addAccountOpen, setAddAccountOpen] = useState(false)
+    // 新規プロフィールのキーは開いた時点で採番して固定する
+    const [newProfileURI, setNewProfileURI] = useState<string | null>(null)
 
-        const options: ReactNode[] = accounts.map((account) => (
-            <AccountListItem
-                key={account.ccid}
-                account={account}
-                onClick={() => {
-                    if (account.isActive) {
-                        close()
-                        return
-                    }
-                    performAccountSwitch(account.ccid)
-                }}
-                onDelete={() => {
-                    modal.open(
-                        <ResetSessionModalContent
-                            ccid={account.ccid}
-                            onDone={() => {
-                                modal.close()
-                                // アクティブアカウントを消した場合はRust側が次のアカウントへ
-                                // 付け替えるので、いずれにせよリロードして整合させる
-                                window.location.reload()
-                            }}
-                            onCancel={() => {
-                                modal.close()
-                            }}
-                        />
-                    )
-                }}
-            />
-        ))
+    const accountOptions: ReactNode[] = (accounts ?? []).map((account) => (
+        <AccountListItem
+            key={account.ccid}
+            account={account}
+            onClick={() => {
+                if (account.isActive) {
+                    setAccounts(null)
+                    return
+                }
+                performAccountSwitch(account.ccid)
+            }}
+            onDelete={() => {
+                setResetTarget(account.ccid)
+            }}
+        />
+    ))
 
-        options.push(
-            <ListItem
-                key={'$addAccount'}
-                icon={<MdPersonAdd size={24} />}
-                onClick={() => {
-                    drawer.open(<AddAccountDrawer previousCcid={client.ccid} onClose={() => drawer.close()} />)
-                }}
-            >
-                <Text>{t('addAccount')}</Text>
-            </ListItem>
-        )
+    accountOptions.push(
+        <ListItem
+            key={'$addAccount'}
+            icon={<MdPersonAdd size={24} />}
+            onClick={() => {
+                setAddAccountOpen(true)
+            }}
+        >
+            <Text>{t('addAccount')}</Text>
+        </ListItem>
+    )
 
-        select(t('accountsTitle'), options)
-    }, [client, select, close, drawer, modal, t])
-
-    const options: ReactNode[] = useMemo(() => {
-        const result: ReactNode[] = []
-        if (!client) return result
-
+    const options: ReactNode[] = []
+    if (client) {
         for (const [key, profile] of Object.entries(client.profiles)) {
-            result.push(
+            options.push(
                 <ListItem
                     key={key}
                     style={{ marginBottom: CssVar.space(1) }}
@@ -91,8 +71,7 @@ export const SwitchAccountButton = (): ReactNode => {
                     onClick={() => {
                         console.log('Switching account to', key)
                         reload(key)
-                        close()
-                        drawer.close()
+                        setMenuOpen(false)
                     }}
                 >
                     <div
@@ -110,52 +89,90 @@ export const SwitchAccountButton = (): ReactNode => {
             )
         }
 
-        result.push(
+        options.push(
             <ListItem
                 key={'$add'}
                 icon={<MdPersonAdd size={24} />}
                 onClick={() => {
-                    drawer.open(
-                        <ProfileEditor
-                            noLoading
-                            onComplete={() => {
-                                close()
-                                drawer.close()
-                            }}
-                            targetURI={semantics.profile(client.ccid, Date.now().toString())}
-                            title={t('createNewProfile')}
-                        />
-                    )
+                    setNewProfileURI(semantics.profile(client.ccid, Date.now().toString()))
                 }}
             >
                 <Text>{t('addProfile')}</Text>
             </ListItem>
         )
 
-        result.push(
+        options.push(
             <ListItem
                 key={'$switchAccount'}
                 icon={<MdManageAccounts size={24} />}
                 onClick={() => {
-                    openAccountSheet()
+                    listAccounts()
+                        .catch(() => [])
+                        .then((accountList) => {
+                            setAccounts(accountList)
+                        })
                 }}
             >
                 <Text>{t('switchAccount')}</Text>
             </ListItem>
         )
-
-        return result
-    }, [client, reload, close, drawer, openAccountSheet, t])
+    }
 
     return (
-        <IconButton
-            onClick={(e) => {
-                e.stopPropagation()
-                if (!client) return
-                select(t('switchAccountTitle'), options)
-            }}
-        >
-            <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
-        </IconButton>
+        <>
+            <IconButton
+                onClick={(e) => {
+                    e.stopPropagation()
+                    if (!client) return
+                    setMenuOpen(true)
+                }}
+            >
+                <HiSwitchHorizontal size={20} color={CssVar.backdropText} />
+            </IconButton>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                title={t('switchAccountTitle')}
+                options={options}
+            />
+            <Select
+                open={accounts !== null}
+                onClose={() => setAccounts(null)}
+                title={t('accountsTitle')}
+                options={accountOptions}
+            />
+            <Modal open={resetTarget !== null} onClose={() => setResetTarget(null)}>
+                {resetTarget && (
+                    <ResetSessionModalContent
+                        ccid={resetTarget}
+                        onDone={() => {
+                            setResetTarget(null)
+                            // アクティブアカウントを消した場合はRust側が次のアカウントへ
+                            // 付け替えるので、いずれにせよリロードして整合させる
+                            window.location.reload()
+                        }}
+                        onCancel={() => {
+                            setResetTarget(null)
+                        }}
+                    />
+                )}
+            </Modal>
+            <Drawer open={addAccountOpen} onClose={() => setAddAccountOpen(false)}>
+                {client && <AddAccountDrawer previousCcid={client.ccid} onClose={() => setAddAccountOpen(false)} />}
+            </Drawer>
+            <Drawer open={newProfileURI !== null} onClose={() => setNewProfileURI(null)}>
+                {newProfileURI && (
+                    <ProfileEditor
+                        noLoading
+                        onComplete={() => {
+                            setMenuOpen(false)
+                            setNewProfileURI(null)
+                        }}
+                        targetURI={newProfileURI}
+                        title={t('createNewProfile')}
+                    />
+                )}
+            </Drawer>
+        </>
     )
 }

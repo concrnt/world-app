@@ -2,6 +2,7 @@ import { type CSSProperties, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Button,
+    Confirm,
     IconButton,
     List as ListView,
     ListItem,
@@ -19,7 +20,6 @@ import { TimelineTag } from './TimelineTag'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { useClient } from '../contexts/Client'
-import { useConfirm } from '../contexts/Confirm'
 import { List, Schemas, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -32,7 +32,6 @@ interface Props {
 export const ListSettings = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
-    const confirm = useConfirm()
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const pin = pinnedLists.find((pin) => pin.uri === props.uri)
@@ -44,6 +43,7 @@ export const ListSettings = (props: Props) => {
     const [excludeSelf, setExcludeSelf] = useState<boolean>(pin?.excludeSelf ?? false)
 
     const [menuOpen, setMenuOpen] = useState(false)
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const menuAnchor = useAnchor()
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
@@ -116,24 +116,25 @@ export const ListSettings = (props: Props) => {
                         icon={<MdDelete size={20} />}
                         onClick={() => {
                             setMenuOpen(false)
-                            confirm.open(
-                                t('confirmDeleteList'),
-                                () => {
-                                    client?.deleteList(props.uri).then(() => {
-                                        props.onComplete?.()
-                                    })
-                                },
-                                {
-                                    description: t('confirmDeleteListDescription'),
-                                    confirmText: t('deleteList')
-                                }
-                            )
+                            setDeleteConfirmOpen(true)
                         }}
                     >
                         {t('deleteList')}
                     </ListItem>
                 </ListView>
             </Popover>
+            <Confirm
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                title={t('confirmDeleteList')}
+                onConfirm={() => {
+                    client?.deleteList(props.uri).then(() => {
+                        props.onComplete?.()
+                    })
+                }}
+                description={t('confirmDeleteListDescription')}
+                confirmText={t('deleteList')}
+            />
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('listName')}</Text>
                 <TextField value={listName} onChange={(e) => setListName(e.target.value)} />

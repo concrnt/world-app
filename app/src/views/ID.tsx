@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View, Button, Text } from '@concrnt/ui'
+import { View, Button, Text, Modal } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
@@ -10,7 +10,6 @@ import { MdArrowForward, MdBadge, MdPublic, MdQrCodeScanner } from 'react-icons/
 import { useStack } from '../layouts/Stack'
 import { QRSetup } from './QRSetup'
 import { BackupKeyButton } from '../components/BackupKeyButton'
-import { useModal } from '../contexts/Modal'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
 
@@ -63,7 +62,7 @@ export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
     const stack = useStack()
-    const modal = useModal()
+    const [aliasModalOpen, setAliasModalOpen] = useState(false)
 
     if (!client) return null
 
@@ -107,7 +106,7 @@ export const IDView = () => {
                         label={t('alias')}
                         value={alias}
                         onClick={() => {
-                            modal.open(<AliasSetupModalContent onClose={() => modal.close()} />)
+                            setAliasModalOpen(true)
                         }}
                     />
                     <InfoTile
@@ -138,6 +137,9 @@ export const IDView = () => {
 
                 <SubkeyList />
             </div>
+            <Modal open={aliasModalOpen} onClose={() => setAliasModalOpen(false)}>
+                <AliasSetupModalContent onClose={() => setAliasModalOpen(false)} />
+            </Modal>
         </View>
     )
 }

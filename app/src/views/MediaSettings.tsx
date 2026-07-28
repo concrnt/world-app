@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CCImage, IconButton, ListItem, Skeleton, Text, View } from '@concrnt/ui'
+import { CCImage, Confirm, IconButton, ListItem, Select, Skeleton, Text, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
-import { useConfirm } from '../contexts/Confirm'
-import { useSelect } from '../contexts/Select'
 import { useMediaViewer } from '../contexts/MediaViewer'
 import { MdMoreHoriz } from 'react-icons/md'
 
@@ -212,106 +210,116 @@ export const MediaSettingsView = () => {
 
 const FileCard = (props: { file: StorageFile; onDelete: (id: string) => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.mediaSettings' })
-    const { select, close } = useSelect()
-    const confirm = useConfirm()
     const mediaViewer = useMediaViewer()
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const file = props.file
     const sizeMB = file.size / 1000 / 1000
 
     return (
-        <div
-            onClick={() => {
-                mediaViewer.open([{ mediaURL: file.url, mediaType: file.mime }])
-            }}
-            style={{
-                position: 'relative',
-                aspectRatio: '1',
-                borderRadius: CssVar.round(1),
-                overflow: 'hidden',
-                border: `1px solid ${CssVar.divider}`,
-                cursor: 'pointer'
-            }}
-        >
-            {file.mime.startsWith('image/') ? (
-                <CCImage
-                    src={file.url}
-                    maxWidth={512}
-                    alt={file.id}
-                    loading="lazy"
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                    }}
-                />
-            ) : (
-                <div
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: CssVar.space(1),
-                        overflowWrap: 'anywhere'
-                    }}
-                >
-                    <Text variant="caption">{file.mime}</Text>
-                </div>
-            )}
-            <IconButton
-                variant="contained"
-                onClick={(e) => {
-                    e.stopPropagation()
-                    select(`${new Date(file.cdate).toLocaleString()} · ${sizeMB.toFixed(2)}MB`, [
-                        <ListItem
-                            key="copyURL"
-                            onClick={() => {
-                                navigator.clipboard.writeText(file.url)
-                                close()
-                            }}
-                        >
-                            <Text>{t('copyURL')}</Text>
-                        </ListItem>,
-                        <ListItem
-                            key="copyMarkdown"
-                            onClick={() => {
-                                navigator.clipboard.writeText(`![image](${file.url})`)
-                                close()
-                            }}
-                        >
-                            <Text>{t('copyMarkdown')}</Text>
-                        </ListItem>,
-                        <ListItem
-                            key="delete"
-                            onClick={() => {
-                                confirm.open(
-                                    t('deleteConfirmTitle'),
-                                    () => {
-                                        props.onDelete(file.id)
-                                    },
-                                    {
-                                        description: t('deleteConfirmDescription'),
-                                        confirmText: t('delete')
-                                    }
-                                )
-                                close()
-                            }}
-                        >
-                            <Text>{t('delete')}</Text>
-                        </ListItem>
-                    ])
+        // overlay内のクリックはReactツリーを遡ってdivのonClickに届くため、divの外に置く
+        <>
+            <div
+                onClick={() => {
+                    mediaViewer.open([{ mediaURL: file.url, mediaType: file.mime }])
                 }}
                 style={{
-                    position: 'absolute',
-                    top: CssVar.space(1),
-                    right: CssVar.space(1)
+                    position: 'relative',
+                    aspectRatio: '1',
+                    borderRadius: CssVar.round(1),
+                    overflow: 'hidden',
+                    border: `1px solid ${CssVar.divider}`,
+                    cursor: 'pointer'
                 }}
             >
-                <MdMoreHoriz size={18} />
-            </IconButton>
-        </div>
+                {file.mime.startsWith('image/') ? (
+                    <CCImage
+                        src={file.url}
+                        maxWidth={512}
+                        alt={file.id}
+                        loading="lazy"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                        }}
+                    />
+                ) : (
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: CssVar.space(1),
+                            overflowWrap: 'anywhere'
+                        }}
+                    >
+                        <Text variant="caption">{file.mime}</Text>
+                    </div>
+                )}
+                <IconButton
+                    variant="contained"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(true)
+                    }}
+                    style={{
+                        position: 'absolute',
+                        top: CssVar.space(1),
+                        right: CssVar.space(1)
+                    }}
+                >
+                    <MdMoreHoriz size={18} />
+                </IconButton>
+            </div>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                title={`${new Date(file.cdate).toLocaleString()} · ${sizeMB.toFixed(2)}MB`}
+                options={[
+                    <ListItem
+                        key="copyURL"
+                        onClick={() => {
+                            navigator.clipboard.writeText(file.url)
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('copyURL')}</Text>
+                    </ListItem>,
+                    <ListItem
+                        key="copyMarkdown"
+                        onClick={() => {
+                            navigator.clipboard.writeText(`![image](${file.url})`)
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('copyMarkdown')}</Text>
+                    </ListItem>,
+                    <ListItem
+                        key="delete"
+                        onClick={() => {
+                            setDeleteConfirmOpen(true)
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('delete')}</Text>
+                    </ListItem>
+                ]}
+            />
+            <Confirm
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                title={t('deleteConfirmTitle')}
+                description={t('deleteConfirmDescription')}
+                confirmText={t('delete')}
+                onConfirm={() => {
+                    props.onDelete(file.id)
+                }}
+            />
+        </>
     )
 }

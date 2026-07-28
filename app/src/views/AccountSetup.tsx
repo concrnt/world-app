@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Text, CssVar } from '@concrnt/ui'
+import { Text, CssVar, Modal } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'
@@ -11,7 +11,6 @@ import { semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
-import { useModal } from '../contexts/Modal'
 import { ServerSelector } from '../components/ServerSelector'
 
 interface Props {
@@ -25,7 +24,7 @@ export const AccountSetup = (props: Props) => {
     const reload = useReloadClient()
     const reset = useResetPreference()
 
-    const modal = useModal()
+    const [serverSelectorOpen, setServerSelectorOpen] = useState(false)
 
     const [domain, setDomain] = useState<string>(props.entrypoint)
     // initialize_masterの返り値をstateで保持する。多アカウント環境では
@@ -164,16 +163,7 @@ export const AccountSetup = (props: Props) => {
                                         fontWeight: 700
                                     }}
                                     onClick={() => {
-                                        modal.open(
-                                            <ServerSelector
-                                                initialServer={domain}
-                                                onSelected={(selected) => {
-                                                    setDomain(selected)
-                                                    modal.close()
-                                                }}
-                                                onCancel={() => modal.close()}
-                                            />
-                                        )
+                                        setServerSelectorOpen(true)
                                     }}
                                 >
                                     {t('change')}
@@ -293,6 +283,16 @@ export const AccountSetup = (props: Props) => {
                     </AuthActions>
                 </>
             )}
+            <Modal open={serverSelectorOpen} onClose={() => setServerSelectorOpen(false)}>
+                <ServerSelector
+                    initialServer={domain}
+                    onSelected={(selected) => {
+                        setDomain(selected)
+                        setServerSelectorOpen(false)
+                    }}
+                    onCancel={() => setServerSelectorOpen(false)}
+                />
+            </Modal>
         </AuthScreen>
     )
 }

@@ -1,11 +1,11 @@
-import { Button, ListItem, Text, useAnchor } from '@concrnt/ui'
+import { Button, Confirm, ListItem, Text, useAnchor } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
 import { hapticLight, hapticSuccess } from '../../utils/haptics'
-import { startTransition, useOptimistic } from 'react'
-import { useSelect } from '../../contexts/Select'
+import { startTransition, useOptimistic, useState } from 'react'
+import { Select } from '../Select'
 import { Report } from '../Report'
 import { MessageInspector } from './MessageInspector'
 
@@ -15,8 +15,7 @@ import { MdReply } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdAddReaction } from 'react-icons/md'
-import { useDrawer } from '../../contexts/Drawer'
-import { useConfirm } from '../../contexts/Confirm'
+import { Drawer } from '../Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
@@ -35,9 +34,10 @@ export const MessageActions = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.messageActions' })
     const { client } = useClient()
     const composer = useComposer()
-    const { select, close } = useSelect()
-    const drawer = useDrawer()
-    const confirm = useConfirm()
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [reportOpen, setReportOpen] = useState(false)
+    const [inspectorOpen, setInspectorOpen] = useState(false)
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
     const menuAnchor = useAnchor()
@@ -196,60 +196,57 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    select(
-                        '',
-                        [
-                            <ListItem
-                                key="delete"
-                                onClick={() => {
-                                    confirm.open(
-                                        t('confirmDelete'),
-                                        () => {
-                                            client?.api.delete(props.message.uri).then(() => hapticSuccess())
-                                            close()
-                                        },
-                                        {
-                                            confirmText: t('delete')
-                                        }
-                                    )
-                                }}
-                            >
-                                <Text>{t('deletePost')}</Text>
-                            </ListItem>,
-                            <ListItem
-                                key="abuse"
-                                onClick={() => {
-                                    drawer.open(
-                                        <Report
-                                            targetURI={props.message.uri}
-                                            onSend={() => {
-                                                drawer.close()
-                                                close()
-                                                hapticSuccess()
-                                            }}
-                                        />
-                                    )
-                                }}
-                            >
-                                {t('report')}
-                            </ListItem>,
-                            <ListItem
-                                key="inspect"
-                                onClick={() => {
-                                    drawer.open(<MessageInspector message={props.message} />)
-                                    close()
-                                }}
-                            >
-                                <Text>{t('inspector')}</Text>
-                            </ListItem>
-                        ],
-                        menuAnchor
-                    )
+                    setMenuOpen(true)
                 }}
                 style={{ anchorName: menuAnchor } as React.CSSProperties}
             >
                 <MdMoreHoriz size={20} />
             </Button>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                anchor={menuAnchor}
+                options={[
+                    <ListItem key="delete" onClick={() => setDeleteConfirmOpen(true)}>
+                        <Text>{t('deletePost')}</Text>
+                    </ListItem>,
+                    <ListItem key="abuse" onClick={() => setReportOpen(true)}>
+                        {t('report')}
+                    </ListItem>,
+                    <ListItem
+                        key="inspect"
+                        onClick={() => {
+                            setInspectorOpen(true)
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('inspector')}</Text>
+                    </ListItem>
+                ]}
+            />
+            <Confirm
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                title={t('confirmDelete')}
+                confirmText={t('delete')}
+                onConfirm={() => {
+                    client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                    setMenuOpen(false)
+                }}
+            />
+            <Drawer open={reportOpen} onClose={() => setReportOpen(false)}>
+                <Report
+                    targetURI={props.message.uri}
+                    onSend={() => {
+                        setReportOpen(false)
+                        setMenuOpen(false)
+                        hapticSuccess()
+                    }}
+                />
+            </Drawer>
+            <Drawer open={inspectorOpen} onClose={() => setInspectorOpen(false)}>
+                <MessageInspector message={props.message} />
+            </Drawer>
         </div>
     )
 }

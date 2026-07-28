@@ -11,7 +11,7 @@ import { MdPlaylistAdd, MdDragHandle } from 'react-icons/md'
 import { RiPushpinFill } from 'react-icons/ri'
 import { RiPushpinLine } from 'react-icons/ri'
 import { ListSettings } from '../components/ListSettings'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../ui/Drawer'
 import { FAB } from '../ui/FAB'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -21,7 +21,7 @@ import { sortByListOrder } from '../utils/listOrder'
 export const ListsView = () => {
     const { client } = useClient()
 
-    const drawer = useDrawer()
+    const [creatorOpen, setCreatorOpen] = useState(false)
 
     const [updater, setUpdater] = useState(0)
     const listsPromise = useMemo(() => {
@@ -57,18 +57,19 @@ export const ListsView = () => {
             </View>
             <FAB
                 onClick={() => {
-                    drawer.open(
-                        <ListCreator
-                            onComplete={() => {
-                                drawer.close()
-                                setUpdater((u) => u + 1)
-                            }}
-                        />
-                    )
+                    setCreatorOpen(true)
                 }}
             >
                 <MdPlaylistAdd size={24} />
             </FAB>
+            <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+                <ListCreator
+                    onComplete={() => {
+                        setCreatorOpen(false)
+                        setUpdater((u) => u + 1)
+                    }}
+                />
+            </Drawer>
         </>
     )
 }
@@ -143,7 +144,7 @@ interface ListRowProps {
 }
 
 const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProps) => {
-    const drawer = useDrawer()
+    const [settingsOpen, setSettingsOpen] = useState(false)
     const controls = useDragControls()
     const [dragging, setDragging] = useState(false)
 
@@ -171,17 +172,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
             }}
         >
             <div
-                onClick={() =>
-                    drawer.open(
-                        <ListSettings
-                            uri={list.uri}
-                            onComplete={() => {
-                                drawer.close()
-                                onUpdate?.()
-                            }}
-                        />
-                    )
-                }
+                onClick={() => setSettingsOpen(true)}
                 style={{
                     flex: 1,
                     minWidth: 0,
@@ -225,6 +216,15 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
                     <MdDragHandle size={20} />
                 </div>
             </div>
+            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+                <ListSettings
+                    uri={list.uri}
+                    onComplete={() => {
+                        setSettingsOpen(false)
+                        onUpdate?.()
+                    }}
+                />
+            </Drawer>
         </Reorder.Item>
     )
 }

@@ -1,11 +1,12 @@
 import { Button, Divider, IconButton, Text } from '@concrnt/ui'
+import { useState } from 'react'
 import { MdContentCopy, MdDeleteForever } from 'react-icons/md'
 import { ThemeCard } from '../components/ThemeCard'
 import { ThemeEditor } from '../components/ThemeEditor'
 import { ThemeImporter } from '../components/ThemeImporter'
 import { usePreference } from '../contexts/Preference'
 import { useThemeLibrary } from '../contexts/Theme'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../components/Drawer'
 import { Themes } from '../data/themes'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
@@ -16,7 +17,7 @@ export const ThemeSettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.themeSettings' })
     const [themeName, setThemeName] = usePreference('themeName')
     const { customThemes, deleteTheme, reloadThemes } = useThemeLibrary()
-    const drawer = useDrawer()
+    const [importerOpen, setImporterOpen] = useState(false)
     const selectedTheme = customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
     return (
@@ -60,10 +61,7 @@ export const ThemeSettingsView = () => {
                     }}
                 >
                     <Text variant="h3">{t('customThemes')}</Text>
-                    <Button
-                        variant="outlined"
-                        onClick={() => drawer.open(<ThemeImporter onComplete={() => reloadThemes()} />)}
-                    >
+                    <Button variant="outlined" onClick={() => setImporterOpen(true)}>
                         {t('importFromV1')}
                     </Button>
                 </div>
@@ -119,6 +117,9 @@ export const ThemeSettingsView = () => {
                 <Divider />
                 <ThemeEditor key={themeName} baseName={themeName} baseTheme={selectedTheme} />
             </div>
+            <Drawer open={importerOpen} onClose={() => setImporterOpen(false)}>
+                <ThemeImporter onComplete={() => reloadThemes()} />
+            </Drawer>
         </View>
     )
 }

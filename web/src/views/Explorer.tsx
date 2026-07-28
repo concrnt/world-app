@@ -4,7 +4,7 @@ import { Text, Button, TextField } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
 import { useState, useRef, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../components/Drawer'
 import { MdAdd } from 'react-icons/md'
 import { hapticSuccess } from '../utils/haptics'
 import { SearchExplorer } from '../components/SearchExplorer'
@@ -18,7 +18,7 @@ import { ClassicExplorer } from '../components/ClassicExplorer'
 import { useNavigate } from 'react-router-dom'
 
 export const ExplorerView = () => {
-    const drawer = useDrawer()
+    const [creatorOpen, setCreatorOpen] = useState(false)
     const navigate = useNavigate()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
@@ -45,15 +45,7 @@ export const ExplorerView = () => {
                         <Button
                             variant="text"
                             onClick={() => {
-                                drawer.open(
-                                    <CommunityCreator
-                                        onComplete={(uri) => {
-                                            invalidateResource(`communities:${client.server.domain}`)
-                                            drawer.close()
-                                            navigate('/timeline/' + encodeURIComponent(uri))
-                                        }}
-                                    />
-                                )
+                                setCreatorOpen(true)
                             }}
                         >
                             <MdAdd size={22} />
@@ -77,19 +69,20 @@ export const ExplorerView = () => {
                 </div>
                 <FAB
                     onClick={() => {
-                        drawer.open(
-                            <CommunityCreator
-                                onComplete={(uri) => {
-                                    invalidateResource(`communities:${client.server.domain}`)
-                                    drawer.close()
-                                    navigate('/timeline/' + encodeURIComponent(uri))
-                                }}
-                            />
-                        )
+                        setCreatorOpen(true)
                     }}
                 >
                     <MdAdd size={24} />
                 </FAB>
+                <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+                    <CommunityCreator
+                        onComplete={(uri) => {
+                            invalidateResource(`communities:${client.server.domain}`)
+                            setCreatorOpen(false)
+                            navigate('/timeline/' + encodeURIComponent(uri))
+                        }}
+                    />
+                </Drawer>
             </View>
         </>
     )

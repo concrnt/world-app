@@ -5,8 +5,9 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 
 import { Avatar, CfmRenderer, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
 
+import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
-import { useSelect } from '../../contexts/Select'
+import { Select } from '../Select'
 import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { TimeDiff } from '../TimeDiff'
@@ -16,8 +17,9 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.onelineMessage' })
     const navigate = useNavigate()
     const { client } = useClient()
-    const { select, close } = useSelect()
     const menuAnchor = useAnchor()
+
+    const [menuOpen, setMenuOpen] = useState(false)
 
     const message = props.message
 
@@ -46,21 +48,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             <IconButton
                 onClick={(e) => {
                     e.stopPropagation()
-                    select(
-                        '',
-                        [
-                            <ListItem
-                                key="delete"
-                                onClick={() => {
-                                    client.api.delete(message.uri).then(() => hapticSuccess())
-                                    close()
-                                }}
-                            >
-                                <Text>{t('deletePost')}</Text>
-                            </ListItem>
-                        ],
-                        menuAnchor
-                    )
+                    setMenuOpen(true)
                 }}
                 style={
                     {
@@ -72,6 +60,22 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             >
                 <MdMoreHoriz size={15} />
             </IconButton>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                options={[
+                    <ListItem
+                        key="delete"
+                        onClick={() => {
+                            client.api.delete(message.uri).then(() => hapticSuccess())
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('deletePost')}</Text>
+                    </ListItem>
+                ]}
+                anchor={menuAnchor}
+            />
             <div style={{ flexShrink: 0 }}>
                 <TimeDiff date={props.message.createdAt} />
             </div>

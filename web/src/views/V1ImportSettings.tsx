@@ -1,4 +1,4 @@
-import { Button, Text } from '@concrnt/ui'
+import { Button, Confirm, Text } from '@concrnt/ui'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type RepositoryImportResult } from '@concrnt/client'
@@ -10,7 +10,6 @@ import {
     type ImportProgress
 } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { useConfirm } from '../contexts/Confirm'
 import { CssVar } from '../types/Theme'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
@@ -18,7 +17,6 @@ import { View } from '../components/View'
 export const V1ImportSettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.v1ImportSettings' })
     const { client } = useClient()
-    const confirm = useConfirm()
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -31,6 +29,7 @@ export const V1ImportSettingsView = () => {
     const [progress, setProgress] = useState<ImportProgress | null>(null)
     const [importedCount, setImportedCount] = useState(0)
     const [failures, setFailures] = useState<RepositoryImportResult[]>([])
+    const [importConfirmOpen, setImportConfirmOpen] = useState(false)
 
     const canImport = client.api.authProvider.canSignSub()
 
@@ -175,10 +174,7 @@ export const V1ImportSettingsView = () => {
                     <Button
                         disabled={busy}
                         onClick={() => {
-                            confirm.open(t('step2.confirmTitle'), runImport, {
-                                description: t('step2.confirmDesc'),
-                                confirmText: t('step2.exec')
-                            })
+                            setImportConfirmOpen(true)
                         }}
                     >
                         {busy ? t('step2.working') : t('step2.exec')}
@@ -262,6 +258,14 @@ export const V1ImportSettingsView = () => {
                     ))
                 )}
             </div>
+            <Confirm
+                open={importConfirmOpen}
+                onClose={() => setImportConfirmOpen(false)}
+                title={t('step2.confirmTitle')}
+                description={t('step2.confirmDesc')}
+                confirmText={t('step2.exec')}
+                onConfirm={runImport}
+            />
         </View>
     )
 }

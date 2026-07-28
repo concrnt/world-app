@@ -5,9 +5,10 @@ import { RerouteMessageSchema } from '@concrnt/worldlib'
 
 import { Avatar, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
 
+import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
-import { useSelect } from '../../contexts/Select'
+import { Select } from '../Select'
 import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { MessageContainer } from './main'
@@ -18,8 +19,9 @@ import { ErrorBoundary } from 'react-error-boundary'
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
-    const { select, close } = useSelect()
     const menuAnchor = useAnchor()
+
+    const [menuOpen, setMenuOpen] = useState(false)
 
     return (
         <div>
@@ -51,21 +53,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <IconButton
                     onClick={(e) => {
                         e.stopPropagation()
-                        select(
-                            '',
-                            [
-                                <ListItem
-                                    key="delete"
-                                    onClick={() => {
-                                        client.api.delete(props.message.uri).then(() => hapticSuccess())
-                                        close()
-                                    }}
-                                >
-                                    <Text>{t('deleteReroute')}</Text>
-                                </ListItem>
-                            ],
-                            menuAnchor
-                        )
+                        setMenuOpen(true)
                     }}
                     style={
                         {
@@ -77,6 +65,22 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 >
                     <MdMoreHoriz size={15} />
                 </IconButton>
+                <Select
+                    open={menuOpen}
+                    onClose={() => setMenuOpen(false)}
+                    options={[
+                        <ListItem
+                            key="delete"
+                            onClick={() => {
+                                client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                setMenuOpen(false)
+                            }}
+                        >
+                            <Text>{t('deleteReroute')}</Text>
+                        </ListItem>
+                    ]}
+                    anchor={menuAnchor}
+                />
                 <div style={{ flexShrink: 0 }}>
                     <TimeDiff date={props.message.createdAt} />
                 </div>

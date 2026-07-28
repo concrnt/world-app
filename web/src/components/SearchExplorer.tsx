@@ -2,7 +2,7 @@ import { Suspense, useDeferredValue, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Text, TextField, CCWallpaper, Avatar, IconButton, Tab, Tabs, useTheme } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from './Drawer'
 import { Subscription } from './Subscription'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
@@ -164,8 +164,8 @@ const CommunityResultList = ({ communities }: { communities: CommunityHit[] }) =
 
 const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
     const { getImageURL } = useMediaProxy()
-    const drawer = useDrawer()
     const navigate = useNavigate()
+    const [subscriptionOpen, setSubscriptionOpen] = useState(false)
 
     return (
         <div
@@ -211,11 +211,14 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                     <IconButton
                         onClick={(e) => {
                             e.stopPropagation()
-                            drawer.open(<Subscription target={community.cckv} />)
+                            setSubscriptionOpen(true)
                         }}
                     >
                         <MdPlaylistAdd size={24} />
                     </IconButton>
+                    <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
+                        <Subscription target={community.cckv} />
+                    </Drawer>
                 </div>
             </div>
         </div>

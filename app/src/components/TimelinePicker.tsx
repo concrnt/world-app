@@ -8,10 +8,9 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar, ListItem } from '@concrnt/ui'
+import { Avatar, ListItem, Select } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { hapticSelection } from '../utils/haptics'
-import { useSelect } from '../contexts/Select'
 import { ProfileName } from './ProfileName'
 
 interface Props {
@@ -29,7 +28,8 @@ interface Props {
 export const TimelinePicker = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.timelinePicker' })
     const { client } = useClient()
-    const { select, close } = useSelect()
+
+    const [profileSelectOpen, setProfileSelectOpen] = useState(false)
 
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)
@@ -50,37 +50,6 @@ export const TimelinePicker = (props: Props) => {
     const profileAvatar = activeProfileDoc?.value.avatar ?? client?.profile.avatar
     const profileUsername = activeProfileDoc?.value.username ?? client?.profile.username ?? 'Home'
 
-    const openProfileSelect = () => {
-        if (!client) return
-        const profileOptions = Object.entries(client.profiles).map(([key, profile]) => (
-            <ListItem
-                key={key}
-                icon={
-                    <Avatar
-                        ccid={profile.author}
-                        src={profile.value.avatar}
-                        style={{ width: '32px', height: '32px' }}
-                    />
-                }
-                onClick={() => {
-                    props.setSelectedProfile?.(key)
-                    close()
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        paddingLeft: CssVar.space(2)
-                    }}
-                >
-                    <ProfileName document={profile} />
-                </div>
-            </ListItem>
-        ))
-        select(t('postProfile'), profileOptions)
-    }
-
     return (
         <div
             style={{
@@ -95,7 +64,8 @@ export const TimelinePicker = (props: Props) => {
                 onClick={() => {
                     if (!props.setSelectedProfile) return
                     hapticSelection()
-                    openProfileSelect()
+                    if (!client) return
+                    setProfileSelectOpen(true)
                 }}
                 headElement={
                     <Avatar
@@ -237,6 +207,37 @@ export const TimelinePicker = (props: Props) => {
                     ))}
                 </div>
             )}
+            <Select
+                open={profileSelectOpen}
+                onClose={() => setProfileSelectOpen(false)}
+                title={t('postProfile')}
+                options={Object.entries(client?.profiles ?? {}).map(([key, profile]) => (
+                    <ListItem
+                        key={key}
+                        icon={
+                            <Avatar
+                                ccid={profile.author}
+                                src={profile.value.avatar}
+                                style={{ width: '32px', height: '32px' }}
+                            />
+                        }
+                        onClick={() => {
+                            props.setSelectedProfile?.(key)
+                            setProfileSelectOpen(false)
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                paddingLeft: CssVar.space(2)
+                            }}
+                        >
+                            <ProfileName document={profile} />
+                        </div>
+                    </ListItem>
+                ))}
+            />
         </div>
     )
 }

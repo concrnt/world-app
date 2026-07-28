@@ -10,7 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { Schemas } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from '../ui/Drawer'
 import { BskyProfile, inboxKey } from '../utils/bluesky'
 
 interface BskyEntity {
@@ -35,7 +35,7 @@ interface BskySettings {
 export const Bluesky = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.bluesky' })
     const { client } = useClient()
-    const drawer = useDrawer()
+    const [subscriptionOpen, setSubscriptionOpen] = useState(false)
     const stack = useStack()
 
     const [info, setInfo] = useState<BridgeInfo | undefined | null>(undefined)
@@ -283,11 +283,14 @@ export const Bluesky = () => {
                         <IconButton
                             onClick={(e) => {
                                 e.stopPropagation()
-                                drawer.open(<Subscription target={inboxKey(client.ccid)} />)
+                                setSubscriptionOpen(true)
                             }}
                         >
                             <MdPlaylistAdd size={24} />
                         </IconButton>
+                        <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
+                            <Subscription target={inboxKey(client.ccid)} />
+                        </Drawer>
                         {following.length > 0 && (
                             <>
                                 <Text variant="h6" style={{ fontWeight: 'bold' }}>

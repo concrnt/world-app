@@ -4,7 +4,8 @@ import { CCWallpaper, Text, IconButton } from '@concrnt/ui'
 
 import { MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-import { useDrawer } from '../contexts/Drawer'
+import { Drawer } from './Drawer'
+import { useState } from 'react'
 import { Subscription } from './Subscription'
 import { useMediaProxy } from '../contexts/MediaProxy'
 
@@ -17,7 +18,7 @@ export const TimelineCard = (props: Props) => {
     const { getImageURL } = useMediaProxy()
     const navigate = useNavigate()
 
-    const drawer = useDrawer()
+    const [subscriptionOpen, setSubscriptionOpen] = useState(false)
 
     return (
         <div
@@ -55,11 +56,14 @@ export const TimelineCard = (props: Props) => {
                     <IconButton
                         onClick={(e) => {
                             e.stopPropagation()
-                            drawer.open(<Subscription target={props.uri} />)
+                            setSubscriptionOpen(true)
                         }}
                     >
                         <MdPlaylistAdd size={24} />
                     </IconButton>
+                    <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
+                        <Subscription target={props.uri} />
+                    </Drawer>
                 </div>
             </div>
         </div>
