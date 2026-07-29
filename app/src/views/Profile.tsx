@@ -28,7 +28,8 @@ import { Document, PermissionError } from '@concrnt/client'
 import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
-import { AcknowledgeList } from '../components/AcknowledgeList'
+import { AcknowledgeListView } from './AcknowledgeList'
+import { useStack } from '../layouts/Stack'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
@@ -135,6 +136,7 @@ const Body = (props: BodyProps) => {
 
     const navigation = useNavigation()
     const mediaViewer = useMediaViewer()
+    const stack = useStack()
 
     const isMe = client.ccid === props.ccid
 
@@ -147,7 +149,6 @@ const Body = (props: BodyProps) => {
     const [blockConfirmOpen, setBlockConfirmOpen] = useState(false)
     const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false)
     const [profileEditorOpen, setProfileEditorOpen] = useState(false)
-    const [ackListTab, setAckListTab] = useState<'acknowledging' | 'acknowledgers' | null>(null)
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -334,10 +335,32 @@ const Body = (props: BodyProps) => {
                                     gap: CssVar.space(2)
                                 }}
                             >
-                                <div style={{ cursor: 'pointer' }} onClick={() => setAckListTab('acknowledging')}>
+                                <div
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() =>
+                                        stack.push(
+                                            <AcknowledgeListView
+                                                targetCcid={props.ccid}
+                                                initialTab="acknowledging"
+                                                title={profile.value.username}
+                                            />
+                                        )
+                                    }
+                                >
                                     <Text>{t('following', { n: stats.acknowledging })}</Text>
                                 </div>
-                                <div style={{ cursor: 'pointer' }} onClick={() => setAckListTab('acknowledgers')}>
+                                <div
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() =>
+                                        stack.push(
+                                            <AcknowledgeListView
+                                                targetCcid={props.ccid}
+                                                initialTab="acknowledgers"
+                                                title={profile.value.username}
+                                            />
+                                        )
+                                    }
+                                >
                                     <Text>{t('followers', { n: stats.acknowledged })}</Text>
                                 </div>
                             </div>
@@ -409,15 +432,6 @@ const Body = (props: BodyProps) => {
                         setProfileEditorOpen(false)
                     }}
                 />
-            </Drawer>
-            <Drawer open={ackListTab !== null} onClose={() => setAckListTab(null)}>
-                {ackListTab && (
-                    <AcknowledgeList
-                        targetCcid={props.ccid}
-                        initialTab={ackListTab}
-                        onNavigate={() => setAckListTab(null)}
-                    />
-                )}
             </Drawer>
         </>
     )
