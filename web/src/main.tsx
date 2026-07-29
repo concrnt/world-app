@@ -8,9 +8,8 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from '
 
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClient, useClientSetupProgress } from './contexts/Client'
-import { ThemeProvider } from './contexts/Theme'
-import { PreferenceProvider, type Preference } from './contexts/Preference'
-import { usePersistent } from './hooks/usePersistent'
+import { CachedThemeProvider, ThemeProvider } from './contexts/Theme'
+import { PreferenceProvider } from './contexts/Preference'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
@@ -57,7 +56,6 @@ import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
 import { Themes } from './data/themes'
-import { type Theme } from './types/Theme'
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -122,18 +120,6 @@ const hasSession = (() => {
     const subKey = localStorage.getItem('SubKey')
     return !!domain && (!!masterKey || !!subKey)
 })()
-
-// 設定(cckv)ロード前でも、前回解決されたテーマのキャッシュ(cachedTheme)から前回のテーマを引く。
-// キャッシュ未生成時はpreferenceのテーマ名をビルトインから引き、それも無ければblue
-const CachedThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [cachedPref] = usePersistent<Preference>('preference')
-    const [cachedTheme] = usePersistent<Theme>('cachedTheme')
-    return (
-        <BaseThemeProvider theme={cachedTheme ?? Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>
-            {children}
-        </BaseThemeProvider>
-    )
-}
 
 // client(≒プロフィール)が変わったら配下をまるごと作り直し、
 // 古いプロフィール由来のstate(タブ選択やビューのローカルstateなど)を持ち越さない。

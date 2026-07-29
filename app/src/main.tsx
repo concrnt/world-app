@@ -8,8 +8,8 @@ import { ScannerProvider } from './contexts/Scanner'
 
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClientSetupProgress } from './contexts/Client'
-import { ThemeProvider } from './contexts/Theme'
-import { PreferenceProvider, type Preference } from './contexts/Preference'
+import { CachedThemeProvider, ThemeProvider } from './contexts/Theme'
+import { PreferenceProvider } from './contexts/Preference'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
@@ -24,23 +24,7 @@ import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
 import { AgeGateProvider } from './contexts/AgeGate'
-import { CssVar, OverlayStackProvider, Text, ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
-import { Themes } from './data/themes'
-import { type Theme } from './types/Theme'
-import { usePersistent } from './hooks/usePersistent'
-import { type ReactNode } from 'react'
-
-// 設定(cckv)ロード前でも、前回解決されたテーマのキャッシュ(cachedTheme)から前回のテーマを引く。
-// キャッシュ未生成時はpreferenceのテーマ名をビルトインから引き、それも無ければblue
-const CachedThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [cachedPref] = usePersistent<Preference>('preference')
-    const [cachedTheme] = usePersistent<Theme>('cachedTheme')
-    return (
-        <BaseThemeProvider theme={cachedTheme ?? Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>
-            {children}
-        </BaseThemeProvider>
-    )
-}
+import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()

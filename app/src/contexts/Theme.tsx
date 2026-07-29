@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Theme } from '../types/Theme'
-import { usePreference } from './Preference'
+import { usePreference, type Preference } from './Preference'
+import { usePersistent } from '../hooks/usePersistent'
 import { Themes } from '../data/themes'
 import { ThemeProvider as BaseThemeProvider, CfmActionsProvider, migrateTheme } from '@concrnt/ui'
 import { useClient } from './Client'
@@ -15,6 +16,24 @@ import { TimelineChip } from '../components/TimelineChip'
 interface Props {
     theme?: Theme
     children: React.ReactNode
+}
+
+// 前回解決されたテーマのlocalStorageキャッシュ。ThemeProviderが解決のたびに書き、
+// client構築前(CachedThemeProvider)とカスタムテーマの非同期ロード完了までのつなぎ
+// (ThemeProvider自身のフォールバック)が読む
+const CACHED_THEME_KEY = 'cachedTheme'
+
+// clientなしで前回のテーマを適用する軽量版Provider。起動時ローディングなど
+// ThemeProviderの外側で使う。キャッシュ未生成時(初回起動)はpreferenceの
+// テーマ名をビルトインから引き、それも無ければblue
+export const CachedThemeProvider = (props: { children: React.ReactNode }) => {
+    const [cachedPref] = usePersistent<Preference>('preference')
+    const [cachedTheme] = usePersistent<Theme>(CACHED_THEME_KEY)
+    return (
+        <BaseThemeProvider theme={cachedTheme ?? Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>
+            {props.children}
+        </BaseThemeProvider>
+    )
 }
 
 interface ThemeLibraryState {
@@ -35,13 +54,16 @@ export const ThemeProvider = (props: Props) => {
     const { client } = useClient()
     const [themeName, setThemeName] = usePreference('themeName')
     const [customThemes, setCustomThemes] = useState<Record<string, Theme>>({})
-    const theme = props.theme ?? customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
+    // カスタムテーマはロード完了までcustomThemesに入らないため、その間は前回キャッシュで
+    // つなぐ(blueに落とすとローディング画面からの切替時に一瞬デフォルトテーマがチラつく)
+    const [cachedTheme] = usePersistent<Theme>(CACHED_THEME_KEY)
+    const theme = props.theme ?? customThemes[themeName] ?? Themes[themeName] ?? cachedTheme ?? Themes.blue
 
-    // 次回起動時のCachedThemeProvider用に、解決できたテーマをキャッシュする。
-    // カスタムテーマはロード完了前は解決できないため、未解決のままblueを書き込まないよう条件付き
+    // 解決できたテーマをキャッシュする。カスタムテーマはロード完了前は解決できないため、
+    // 未解決のままblueを書き込まないよう条件付き
     useEffect(() => {
         const resolved = customThemes[themeName] ?? Themes[themeName]
-        if (resolved) localStorage.setItem('cachedTheme', JSON.stringify(resolved))
+        if (resolved) localStorage.setItem(CACHED_THEME_KEY, JSON.stringify(resolved))
     }, [customThemes, themeName])
 
     const reloadThemes = useCallback(async () => {
