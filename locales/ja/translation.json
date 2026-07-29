@@ -445,6 +445,10 @@
             "userLiked": "{{name}} がお気に入りに登録しました",
             "loading": "読み込み中..."
         },
+        "followAck": {
+            "userFollowed": "{{name}} がフォローしました",
+            "loading": "読み込み中..."
+        },
         "messageActions": {
             "confirmDelete": "本当にこの投稿を削除しますか？",
             "delete": "削除",

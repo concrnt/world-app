@@ -445,6 +445,10 @@
             "userLiked": "{{name}} added this to favorites",
             "loading": "Loading..."
         },
+        "followAck": {
+            "userFollowed": "{{name}} followed",
+            "loading": "Loading..."
+        },
         "messageActions": {
             "confirmDelete": "Really delete this post?",
             "delete": "Delete",
