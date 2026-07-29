@@ -57,6 +57,7 @@ import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
 import { Themes } from './data/themes'
+import { type Theme } from './types/Theme'
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -122,11 +123,16 @@ const hasSession = (() => {
     return !!domain && (!!masterKey || !!subKey)
 })()
 
-// 設定(cckv)ロード前でも、localStorageにキャッシュされたpreferenceから前回のテーマを引く。
-// カスタムテーマは色が引けないためビルトインのみ・無ければblue
+// 設定(cckv)ロード前でも、前回解決されたテーマのキャッシュ(cachedTheme)から前回のテーマを引く。
+// キャッシュ未生成時はpreferenceのテーマ名をビルトインから引き、それも無ければblue
 const CachedThemeProvider = ({ children }: { children: ReactNode }) => {
     const [cachedPref] = usePersistent<Preference>('preference')
-    return <BaseThemeProvider theme={Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>{children}</BaseThemeProvider>
+    const [cachedTheme] = usePersistent<Theme>('cachedTheme')
+    return (
+        <BaseThemeProvider theme={cachedTheme ?? Themes[cachedPref?.themeName ?? ''] ?? Themes.blue}>
+            {children}
+        </BaseThemeProvider>
+    )
 }
 
 // client(≒プロフィール)が変わったら配下をまるごと作り直し、

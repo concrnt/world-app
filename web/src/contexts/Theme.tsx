@@ -37,6 +37,13 @@ export const ThemeProvider = (props: Props) => {
     const [customThemes, setCustomThemes] = useState<Record<string, Theme>>({})
     const theme = props.theme ?? customThemes[themeName] ?? Themes[themeName] ?? Themes.blue
 
+    // 次回起動時のCachedThemeProvider用に、解決できたテーマをキャッシュする。
+    // カスタムテーマはロード完了前は解決できないため、未解決のままblueを書き込まないよう条件付き
+    useEffect(() => {
+        const resolved = customThemes[themeName] ?? Themes[themeName]
+        if (resolved) localStorage.setItem('cachedTheme', JSON.stringify(resolved))
+    }, [customThemes, themeName])
+
     const reloadThemes = useCallback(async () => {
         const themes = await loadCustomThemes(client)
         setCustomThemes(themes)
