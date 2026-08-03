@@ -15,6 +15,7 @@ import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
+import { QueryTimelineContext } from './QueryTimeline'
 import { Text, Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
@@ -241,6 +242,16 @@ export const RealtimeTimeline = (props: Props) => {
         }
     }, [reader])
 
+    // リアクション等のcommit後に、そのアイテムだけ再取得させる。
+    // socketのassociatedイベント任せだとcommit応答より遅れて届いたときに
+    // useOptimisticのrevertが先に走り、リアクションが一瞬消える
+    const itemUpdated = useCallback(
+        (href: string) => {
+            reader.current?.updateItem(href)
+        },
+        [reader]
+    )
+
     /** 新着バッジクリック時の処理 */
     const handleNewArrivalClick = useCallback(() => {
         setNewArrivals([])
@@ -414,9 +425,11 @@ export const RealtimeTimeline = (props: Props) => {
                                 <MessageSkeleton />
                             </div>
                         ))}
-                    {reader.current?.body.map((item) => (
-                        <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
-                    ))}
+                    <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
+                        {reader.current?.body.map((item) => (
+                            <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
+                        ))}
+                    </QueryTimelineContext.Provider>
                     {loading && <Loading message={'Loading...'} />}
                     {!hasMoreData && (
                         <div

@@ -147,6 +147,15 @@ export class TimelineReader {
         return hasMore
     }
 
+    updateItem(href: string) {
+        const item = this.body.find((i) => i.href === href)
+        if (item) {
+            this.api.notifyResourceUpdate(href)
+            item.lastUpdate = new Date()
+            this.onUpdate?.()
+        }
+    }
+
     // dispose()で解除したsocket購読を再開する。bodyは保持されたままなので、
     // onUpdate/onNewItemを再設定してから呼べば既存インスタンスをそのまま使い続けられる
     resume() {

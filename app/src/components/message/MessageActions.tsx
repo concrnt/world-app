@@ -52,6 +52,15 @@ export const MessageActions = (props: Props) => {
         count: props.message.associationCounts?.[Schemas.likeAssociation] ?? 0
     })
 
+    // commit完了後、transitionが終わる(=useOptimisticがrevertする)前に
+    // メッセージ本体を再取得してベース値をサーバー状態に揃える。
+    // これをsocketイベント任せにすると、イベントがcommit応答より遅れたときに
+    // 一瞬いいね/リアクションが消える
+    const refreshMessage = async () => {
+        qt.update(messageHref)
+        await client?.getMessage(messageHref).catch(() => null)
+    }
+
     return (
         <div
             style={{
@@ -128,7 +137,7 @@ export const MessageActions = (props: Props) => {
                             })
                             if (likeState.ownLike) {
                                 await likeState.ownLike.delete(client)
-                                qt.update(messageHref)
+                                await refreshMessage()
                             }
                         })
                     } else {
@@ -146,7 +155,7 @@ export const MessageActions = (props: Props) => {
                                 }
                             })
                             await props.message.favorite(client)
-                            qt.update(messageHref)
+                            await refreshMessage()
                         })
                     }
                 }}
@@ -196,6 +205,7 @@ export const MessageActions = (props: Props) => {
                             await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
                                 console.error('Failed to add reaction:', err)
                             })
+                            await refreshMessage()
                         })
 
                         emojiPicker.close()

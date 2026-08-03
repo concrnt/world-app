@@ -34,7 +34,7 @@ interface QueryTimelineContextState {
     update: (href: string) => void
 }
 
-const QueryTimelineContext = createContext<QueryTimelineContextState>({
+export const QueryTimelineContext = createContext<QueryTimelineContextState>({
     update: (_href: string) => {}
 })
 

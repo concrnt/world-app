@@ -6,6 +6,7 @@ import { hapticLight } from '../../utils/haptics'
 import { startTransition } from 'react'
 import { ReactionState } from './Footer'
 import { CCImage } from '@concrnt/ui'
+import { useQueryTimelineContext } from '../QueryTimeline'
 
 interface Props {
     message: Message<any>
@@ -15,8 +16,19 @@ interface Props {
 
 export const MessageReactions = (props: Props) => {
     const { client } = useClient()
+    const qt = useQueryTimelineContext()
+    const messageHref = props.message.key ?? props.message.uri
 
     const { reactionCounts, ownReactions } = props.reactionState
+
+    // commit完了後、transitionが終わる(=useOptimisticがrevertする)前に
+    // メッセージ本体を再取得してベース値をサーバー状態に揃える。
+    // これをsocketイベント任せにすると、イベントがcommit応答より遅れたときに
+    // 一瞬リアクションが消える
+    const refreshMessage = async () => {
+        qt.update(messageHref)
+        await client?.getMessage(messageHref).catch(() => null)
+    }
 
     const handleReactionClick = async (imageUrl: string) => {
         if (!client) return
@@ -39,6 +51,7 @@ export const MessageReactions = (props: Props) => {
                 await ownReactions[imageUrl].delete(client).catch((e) => {
                     console.error('Failed to delete reaction:', e)
                 })
+                await refreshMessage()
             })
         } else {
             startTransition(async () => {
@@ -83,6 +96,7 @@ export const MessageReactions = (props: Props) => {
                 await props.message.reaction(client, shortcode, imageUrl).catch((e) => {
                     console.error('Failed to add reaction:', e)
                 })
+                await refreshMessage()
             })
         }
     }
