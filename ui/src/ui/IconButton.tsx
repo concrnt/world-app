@@ -8,6 +8,7 @@ interface Props {
     disabled?: boolean
     style?: CSSProperties
     variant?: 'transparent' | 'contained'
+    title?: string
 }
 
 export const IconButton = (props: Props) => {
@@ -41,6 +42,8 @@ export const IconButton = (props: Props) => {
                 <ButtonBase
                     disabled={props.disabled}
                     onClick={props.onClick}
+                    title={props.title}
+                    aria-label={props.title}
                     pressedStyle={pressedStyle}
                     style={{
                         ...transparentStyle,
@@ -55,6 +58,8 @@ export const IconButton = (props: Props) => {
                 <ButtonBase
                     disabled={props.disabled}
                     onClick={props.onClick}
+                    title={props.title}
+                    aria-label={props.title}
                     pressedStyle={pressedStyle}
                     style={{
                         backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.8)`,

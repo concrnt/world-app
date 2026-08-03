@@ -65,6 +65,27 @@ export const PostView = (props: Props) => {
         messagePromise?.then((msg) => setMessage(msg ?? null)).catch(() => setMessage(null))
     }, [messagePromise])
 
+    // リプライの投稿先は元メッセージの配信先(自分のホーム系タイムラインを除く)
+    const replyDestinations = useMemo(
+        () =>
+            message?.distributes?.filter(
+                (uri: string) =>
+                    !uri.includes('/main/home-timeline') &&
+                    !uri.includes('/main/activity-timeline') &&
+                    !uri.includes('/main/notify-timeline')
+            ) ?? [],
+        [message]
+    )
+
+    // インラインのリプライ欄の投稿先。元メッセージ由来の値を初期値にしつつ、その場で編集できるようにする
+    // (元メッセージは非同期ロードなので、届いた時点および別メッセージに移った時点で差し替える)
+    const [destinations, setDestinations] = useState<string[]>(replyDestinations)
+    const [prevReplyDestinations, setPrevReplyDestinations] = useState(replyDestinations)
+    if (prevReplyDestinations !== replyDestinations) {
+        setPrevReplyDestinations(replyDestinations)
+        setDestinations(replyDestinations)
+    }
+
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
             if (!client) return
@@ -228,14 +249,9 @@ export const PostView = (props: Props) => {
                                     <Composer
                                         mode="reply"
                                         targetMessage={message}
-                                        destinations={
-                                            message.distributes?.filter(
-                                                (uri: string) =>
-                                                    !uri.includes('/main/home-timeline') &&
-                                                    !uri.includes('/main/activity-timeline') &&
-                                                    !uri.includes('/main/notify-timeline')
-                                            ) ?? []
-                                        }
+                                        destinations={destinations}
+                                        setDestinations={setDestinations}
+                                        defaultDestinations={replyDestinations}
                                         onPost={() => fetchAssociations('replies')}
                                     />
                                 </div>

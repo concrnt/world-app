@@ -415,7 +415,8 @@
             "submit": "カレント",
             "replyPlaceholder": "返信を入力...",
             "placeholder": "今、なにしてる？",
-            "cannotPostOffline": "オフラインのため投稿できません"
+            "cannotPostOffline": "オフラインのため投稿できません",
+            "resetDestination": "投稿先をデフォルトに戻す"
         },
         "report": {
             "reason": "報告理由",

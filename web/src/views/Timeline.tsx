@@ -17,6 +17,7 @@ import { FAB } from '../components/FAB'
 import { useComposer } from '../contexts/Composer'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { hapticLight } from '../utils/haptics'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
     uri: string
@@ -52,6 +53,17 @@ export const TimelineView = (props: Props) => {
     const timeline = fetched?.uri === props.uri ? fetched.timeline : undefined
 
     const restricted = timeline ? timeline.isRestrictedFor(client.ccid) : false
+
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
+
+    // インラインエディタの投稿先。このタイムラインを初期値にしつつ、その場で編集できるようにする
+    const [destinations, setDestinations] = useState<string[]>([props.uri])
+    // 別のタイムラインに移ったら投稿先も差し替える
+    const [prevUri, setPrevUri] = useState(props.uri)
+    if (prevUri !== props.uri) {
+        setPrevUri(props.uri)
+        setDestinations([props.uri])
+    }
 
     return (
         <>
@@ -89,8 +101,10 @@ export const TimelineView = (props: Props) => {
                                         <div style={{ padding: CssVar.space(2) }}>
                                             <Composer
                                                 mode="normal"
-                                                destinations={[props.uri]}
-                                                options={timeline ? [timeline] : []}
+                                                destinations={destinations}
+                                                setDestinations={setDestinations}
+                                                defaultDestinations={[props.uri]}
+                                                options={knownCommunities}
                                             />
                                         </div>
                                         <Divider />
@@ -105,8 +119,7 @@ export const TimelineView = (props: Props) => {
                 <FAB
                     onClick={() => {
                         hapticLight()
-                        const options = timeline ? [timeline] : []
-                        composer.open([props.uri], options)
+                        composer.open([props.uri])
                     }}
                 >
                     <MdCreate size={24} />

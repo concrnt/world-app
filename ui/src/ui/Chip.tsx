@@ -72,6 +72,10 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
+                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
+                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
+                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
+                        onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -114,6 +118,10 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
+                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
+                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
+                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
+                        onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',
                             alignItems: 'center',

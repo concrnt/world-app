@@ -415,7 +415,8 @@
             "submit": "Post",
             "replyPlaceholder": "Write a reply...",
             "placeholder": "What are you up to?",
-            "cannotPostOffline": "You can't post while offline"
+            "cannotPostOffline": "You can't post while offline",
+            "resetDestination": "Reset destinations to default"
         },
         "report": {
             "reason": "Report reason",

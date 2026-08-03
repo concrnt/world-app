@@ -81,8 +81,7 @@ export const TimelineView = (props: Props) => {
                 <FAB
                     onClick={() => {
                         hapticLight()
-                        const options = timeline ? [timeline] : []
-                        composer.open([props.uri], options)
+                        composer.open([props.uri])
                     }}
                 >
                     <MdCreate size={24} />

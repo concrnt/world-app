@@ -145,7 +145,7 @@ export const TimelinePicker = (props: Props) => {
                                 break
                             case 'Enter':
                                 if (options.length > 0 && focusedIdx >= 0 && focusedIdx < options.length) {
-                                    props.selected.push(props.keyFunc(options[focusedIdx]))
+                                    props.setSelected([...props.selected, props.keyFunc(options[focusedIdx])])
                                     inputRef.current?.blur()
                                 }
                                 break
@@ -199,7 +199,7 @@ export const TimelinePicker = (props: Props) => {
                                 backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
                             }}
                             onMouseDown={() => {
-                                props.selected.push(props.keyFunc(opt))
+                                props.setSelected([...props.selected, props.keyFunc(opt)])
                             }}
                         >
                             {props.labelFunc(opt)}

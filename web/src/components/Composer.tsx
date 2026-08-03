@@ -8,7 +8,17 @@ import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { ComposerMode, DraftBuffer, EditorMode } from '../contexts/Composer'
-import { MdImage, MdClose, MdDeleteOutline, MdUndo, MdTextFields, MdPermMedia, MdReply, MdRepeat } from 'react-icons/md'
+import {
+    MdImage,
+    MdClose,
+    MdDeleteOutline,
+    MdUndo,
+    MdTextFields,
+    MdPermMedia,
+    MdReply,
+    MdRepeat,
+    MdReplay
+} from 'react-icons/md'
 import { FaMarkdown } from 'react-icons/fa'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
@@ -42,6 +52,8 @@ const editorModeLabelKeys: Record<EditorMode, string> = {
 interface Props {
     destinations: string[]
     setDestinations?: (destinations: string[]) => void
+    // 「投稿先をデフォルトに戻す」の復帰先。未指定なら現在の投稿先を基準にする(=投稿先の差分は検出されない)
+    defaultDestinations?: string[]
     options?: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
@@ -59,14 +71,21 @@ export const Composer = (props: Props) => {
     const { client, isDomainOffline } = useClient()
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
-    const [selectedProfile, setSelectedProfile] = useState<string>(
-        props.initialProfile ?? client?.currentProfile ?? 'main'
-    )
+    const defaultDestinations = props.defaultDestinations ?? props.destinations
+    const defaultProfile = props.initialProfile ?? client?.currentProfile ?? 'main'
+    const [selectedProfile, setSelectedProfile] = useState<string>(defaultProfile)
 
     // 投稿先リストが切り替わったときにデフォルトプロフィールを追従させる
     useEffect(() => {
         setSelectedProfile(props.initialProfile ?? client?.currentProfile ?? 'main')
     }, [props.initialProfile, client?.currentProfile])
+
+    // 投稿先・ホームに流すか・投稿元プロフィールのいずれかがデフォルトから外れているか
+    const destinationModified =
+        props.destinations.length !== defaultDestinations.length ||
+        props.destinations.some((dest, i) => dest !== defaultDestinations[i]) ||
+        selectedProfile !== defaultProfile ||
+        !postHome
     const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>(() => {
         if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
         return props.draftBuffer.mediaDrafts.map((m) => ({
@@ -469,6 +488,19 @@ export const Composer = (props: Props) => {
                         setSelectedProfile={setSelectedProfile}
                     />
                 </div>
+                {/* v1と同じく、デフォルトから外れているときだけ復帰ボタンを出す */}
+                {destinationModified && (
+                    <IconButton
+                        title={t('resetDestination')}
+                        onClick={() => {
+                            props.setDestinations?.([...defaultDestinations])
+                            setSelectedProfile(defaultProfile)
+                            setPostHome(true)
+                        }}
+                    >
+                        <MdReplay size={20} />
+                    </IconButton>
+                )}
             </div>
 
             <Popover open={modeSelectOpen} onClose={() => setModeSelectOpen(false)} anchor={modeSelectAnchor}>

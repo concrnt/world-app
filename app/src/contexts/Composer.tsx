@@ -46,6 +46,8 @@ export const ComposerProvider = (props: Props) => {
 
     const [showComposer, setShowComposer] = useState(false)
     const [destinations, setDestinations] = useState<string[]>([])
+    // open()時の投稿先を覚えておき、Composerの「デフォルトに戻す」の復帰先にする
+    const [defaultDestinations, setDefaultDestinations] = useState<string[]>([])
     const [options, setOptions] = useState<Timeline[]>([])
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
@@ -63,6 +65,7 @@ export const ComposerProvider = (props: Props) => {
             profile?: string
         ) => {
             setDestinations(destinations)
+            setDefaultDestinations(destinations)
             setOptions(options ?? knownCommunities)
             setMode(mode ?? 'normal')
             setTargetMessage(targetMessage)
@@ -121,6 +124,7 @@ export const ComposerProvider = (props: Props) => {
                         <ComposerOverlay
                             destinations={destinations}
                             setDestinations={setDestinations}
+                            defaultDestinations={defaultDestinations}
                             options={options}
                             mode={mode}
                             targetMessage={targetMessage}
@@ -140,6 +144,7 @@ export const ComposerProvider = (props: Props) => {
 const ComposerOverlay = (props: {
     destinations: string[]
     setDestinations: (destinations: string[]) => void
+    defaultDestinations: string[]
     options: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
@@ -213,6 +218,7 @@ const ComposerOverlay = (props: {
                                 autoFocus
                                 destinations={props.destinations}
                                 setDestinations={props.setDestinations}
+                                defaultDestinations={props.defaultDestinations}
                                 options={props.options}
                                 mode={props.mode}
                                 targetMessage={props.targetMessage}
