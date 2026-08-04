@@ -155,7 +155,8 @@ export const PostView = (props: Props) => {
                     !uri.includes('/main/activity-timeline') &&
                     !uri.includes('/main/notify-timeline')
             ) ?? []
-        composer.open(communityDestinations, [], 'reply', msg)
+        // 候補は省略してknownCommunities全体にする(投稿先は元メッセージの配信先に限らない)
+        composer.open(communityDestinations, undefined, 'reply', msg)
     }, [messagePromise, composer])
 
     return (

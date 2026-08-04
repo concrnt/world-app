@@ -4,6 +4,7 @@ import { MdAddReaction, MdReply } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
+import { useSubscribe } from '../hooks/useSubscribe'
 import {
     Association,
     LikeAssociationSchema,
@@ -41,6 +42,7 @@ export const PostView = (props: Props) => {
     const emojiPicker = useEmojiPicker()
     const composer = useComposer()
     const isMobile = useIsMobile()
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
     const [tab, setTab] = useState<PostTab>('replies')
     const [message, setMessage] = useState<Message<any> | null>(null)
 
@@ -167,7 +169,8 @@ export const PostView = (props: Props) => {
                     !uri.includes('/main/activity-timeline') &&
                     !uri.includes('/main/notify-timeline')
             ) ?? []
-        composer.open(communityDestinations, [], 'reply', msg)
+        // 候補は省略してknownCommunities全体にする(投稿先は元メッセージの配信先に限らない)
+        composer.open(communityDestinations, undefined, 'reply', msg)
     }, [messagePromise, composer])
 
     return (
@@ -252,6 +255,7 @@ export const PostView = (props: Props) => {
                                         destinations={destinations}
                                         setDestinations={setDestinations}
                                         defaultDestinations={replyDestinations}
+                                        options={knownCommunities}
                                         onPost={() => fetchAssociations('replies')}
                                     />
                                 </div>

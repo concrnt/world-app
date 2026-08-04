@@ -84,7 +84,8 @@ export const MessageActions = (props: Props) => {
                                 !uri.includes('/main/activity-timeline') &&
                                 !uri.includes('/main/notify-timeline')
                         ) ?? []
-                    composer.open(communityDestinations, [], 'reply', props.message)
+                    // 候補は省略してknownCommunities全体にする(投稿先は元メッセージの配信先に限らない)
+                    composer.open(communityDestinations, undefined, 'reply', props.message)
                 }}
                 onLongPress={() => {
                     hapticLight()
@@ -108,7 +109,8 @@ export const MessageActions = (props: Props) => {
                                 !uri.includes('/main/activity-timeline') &&
                                 !uri.includes('/main/notify-timeline')
                         ) ?? []
-                    composer.open(communityDestinations, [], 'reroute', props.message)
+                    // 候補は省略してknownCommunities全体にする(リルート先は元メッセージの配信先に限らない)
+                    composer.open(communityDestinations, undefined, 'reroute', props.message)
                 }}
                 onLongPress={() => {
                     hapticLight()
