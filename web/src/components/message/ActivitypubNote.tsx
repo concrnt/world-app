@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo } from 'react'
 import { ApObject } from '../../utils/activitypub'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CfmRenderer, CssVar, Text } from '@concrnt/ui'
+import { Avatar, CssVar, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
@@ -69,6 +69,13 @@ const Note = (props: {
         )
     }
 
+    const emojiDict: Record<string, EmojiLite> = {}
+    for (const tag of note.getTags()) {
+        if (tag.type !== 'Emoji' || !tag.name) continue
+        const icon = Array.isArray(tag.icon) ? tag.icon[0] : tag.icon
+        if (icon?.url) emojiDict[tag.name.replace(/:/g, '')] = { imageURL: icon.url }
+    }
+
     return (
         <MessageLayout
             onClick={() => {
@@ -96,7 +103,11 @@ const Note = (props: {
             headerRight={note.published && <TimeDiff date={new Date(note.published)} />}
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <CfmRenderer messagebody={note.content ?? ''} emojiDict={{}} />
+                {note._misskey_content ? (
+                    <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
+                ) : (
+                    <GfmRenderer messagebody={note.content ?? ''} />
+                )}
             </CollapsibleBody>
             {props.message && <MessageFooter message={props.message} />}
         </MessageLayout>

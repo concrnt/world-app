@@ -3,6 +3,7 @@ import Markdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 import { Codeblock } from './Codeblock'
 import { Link } from './Link'
 import { Text } from './Text'
@@ -28,7 +29,7 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
         >
             <Markdown
                 remarkPlugins={[remarkBreaks, remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
+                rehypePlugins={[rehypeRaw, rehypeSanitize]}
                 components={{
                     p: ({ children }) => <p style={{ margin: '0.5em 0' }}>{children}</p>,
                     h1: ({ children }) => <Text variant="h1">{children}</Text>,
