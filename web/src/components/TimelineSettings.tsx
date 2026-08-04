@@ -32,6 +32,7 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { client } = useClient()
     const { getImageURL } = useMediaProxy()
     const timeline = use(props.timelinePromise)
 
@@ -40,6 +41,8 @@ const Inner = (props: InnerProps) => {
     if (!timeline) {
         return <>Timeline not found.</>
     }
+
+    const isMe = client.ccid === timeline.author
 
     return (
         <div
@@ -87,16 +90,18 @@ const Inner = (props: InnerProps) => {
                 >
                     <Text>Subscriptions</Text>
                 </Tab>
-                <Tab
-                    selected={tab === 'settings'}
-                    onClick={() => setTab('settings')}
-                    groupId="timeline-settings"
-                    style={{
-                        color: CssVar.contentText
-                    }}
-                >
-                    <Text>Settings</Text>
-                </Tab>
+                {isMe && (
+                    <Tab
+                        selected={tab === 'settings'}
+                        onClick={() => setTab('settings')}
+                        groupId="timeline-settings"
+                        style={{
+                            color: CssVar.contentText
+                        }}
+                    >
+                        <Text>Settings</Text>
+                    </Tab>
+                )}
             </Tabs>
             <div
                 style={{
