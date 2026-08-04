@@ -416,7 +416,8 @@
             "replyPlaceholder": "Write a reply...",
             "placeholder": "What are you up to?",
             "cannotPostOffline": "You can't post while offline",
-            "resetDestination": "Reset destinations to default"
+            "resetDestination": "Reset destinations to default",
+            "dropToUpload": "Drop to upload"
         },
         "report": {
             "reason": "Report reason",

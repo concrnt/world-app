@@ -17,7 +17,8 @@ import {
     MdPermMedia,
     MdReply,
     MdRepeat,
-    MdReplay
+    MdReplay,
+    MdCloudUpload
 } from 'react-icons/md'
 import { FaMarkdown } from 'react-icons/fa'
 import { uploadImage } from '../utils/uploadImage'
@@ -94,6 +95,7 @@ export const Composer = (props: Props) => {
         }))
     })
     const [uploading, setUploading] = useState<boolean>(false)
+    const [dragging, setDragging] = useState<boolean>(false)
     const [editorMode, setEditorMode] = useState<EditorMode>(
         props.draftBuffer?.editorMode ?? ((props.draftBuffer?.mediaDrafts.length ?? 0) > 0 ? 'media' : 'markdown')
     )
@@ -171,6 +173,11 @@ export const Composer = (props: Props) => {
         // inputをリセット（同じファイルを再選択可能にする）
         e.target.value = ''
 
+        await addFiles(selected)
+    }
+
+    // ファイル選択・ペースト・ドロップの3入口から共通で呼ばれる受け入れ口
+    const addFiles = async (selected: File[]) => {
         if (props.mode === 'reply' || editorMode === 'markdown') {
             // リプライ中、またはすでにドラフトがインラインでメディアを扱っている場合は
             // その場でアップロードしてタグを挿入する。そうでなければmediaモードへ切り替える
@@ -457,16 +464,62 @@ export const Composer = (props: Props) => {
         }
     }
 
+    // ドロップ受け入れは添付ボタンと同じ条件のときだけ有効化する
+    const acceptsDrop = props.mode !== 'reroute' && displayMode !== 'plaintext'
+
     return (
         <div
             style={{
+                position: 'relative',
                 flex: 1,
                 minHeight: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: CssVar.space(2)
             }}
+            onDragEnter={(e) => {
+                if (!acceptsDrop || !e.dataTransfer.types.includes('Files')) return
+                e.preventDefault()
+                setDragging(true)
+            }}
+            onDragOver={(e) => {
+                if (!acceptsDrop || !e.dataTransfer.types.includes('Files')) return
+                e.preventDefault()
+                setDragging(true)
+            }}
         >
+            {/* D&D中のオーバーレイ。onDragLeaveは子要素通過でのちらつきを避けるためオーバーレイ側に付ける */}
+            {dragging && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        border: '2px dashed',
+                        borderColor: CssVar.contentLink,
+                        borderRadius: CssVar.round(2),
+                        backgroundColor: CssVar.contentBackground,
+                        opacity: 0.9
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault()
+                        setDragging(false)
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault()
+                        setDragging(false)
+                        addFiles(Array.from(e.dataTransfer.files))
+                    }}
+                >
+                    <MdCloudUpload size={48} color={CssVar.contentLink} />
+                    <Text style={{ margin: 0, color: CssVar.contentLink }}>{t('dropToUpload')}</Text>
+                </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: CssVar.space(1) }}>
                 {/* モードセレクタ。リプライ/リルート時は状態表示のみで切り替え不可 */}
                 <IconButton
@@ -569,6 +622,16 @@ export const Composer = (props: Props) => {
                             e.preventDefault()
                             handleSubmit()
                         }
+                    }}
+                    onPaste={(e) => {
+                        // plaintextは添付非対応なのでテキストペーストだけを通常どおり通す
+                        if (displayMode === 'plaintext') return
+                        const files = Array.from(e.clipboardData.items)
+                            .map((item) => item.getAsFile())
+                            .filter(isNonNullOrUndefined)
+                        if (files.length === 0) return
+                        e.preventDefault()
+                        addFiles(files)
                     }}
                 />
             )}
