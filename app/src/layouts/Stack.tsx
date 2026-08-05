@@ -166,6 +166,10 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
             dragElastic={0}
             dragMomentum={false}
             dragConstraints={enabled ? { left: 0, right: width } : undefined}
+            onPointerDownCapture={(e) => {
+                // テキスト選択中はスワイプバックを開始しない(選択ハンドル操作・拡張と競合するため)
+                if (window.getSelection()?.toString()) e.stopPropagation()
+            }}
             onDragEnd={(_, info) => {
                 if (!enabled) return
 
