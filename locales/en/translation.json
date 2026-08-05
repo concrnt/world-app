@@ -347,6 +347,12 @@
             "update": "Update",
             "inquiry": "Inquiry"
         },
+        "apNote": {
+            "notImported": "This post has not been fetched to this server yet.",
+            "import": "Fetch as Concrnt message",
+            "importing": "Fetching...",
+            "importFailed": "Failed to fetch"
+        },
         "apPerson": {
             "follow": "Follow",
             "unfollow": "Unfollow",

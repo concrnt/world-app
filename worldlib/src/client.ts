@@ -480,6 +480,11 @@ export class Client {
         return msg
     }
 
+    // キャッシュ済みの結果(存在しなかった場合のnull含む)を破棄して次回getMessageを再取得させる
+    invalidateMessage(uri: string): void {
+        delete this.messageCache[uri]
+    }
+
     async getUser(id: CCID, hint?: string): Promise<User | null> {
         return User.load(this, id, hint).catch(() => null)
     }
