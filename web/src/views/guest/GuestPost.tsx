@@ -290,12 +290,7 @@ export const GuestPostView = (props: Props) => {
                                                 fontSize: '14px'
                                             }}
                                         >
-                                            <CCImage
-                                                src={imageUrl}
-                                                maxHeight={128}
-                                                alt=""
-                                                style={{ height: '20px', width: '20px', objectFit: 'contain' }}
-                                            />
+                                            <CCImage src={imageUrl} maxHeight={128} alt="" style={{ height: '20px' }} />
                                             <span>{count}</span>
                                         </button>
                                     ))}

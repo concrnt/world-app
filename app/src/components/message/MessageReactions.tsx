@@ -10,6 +10,9 @@ import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { useQueryTimelineContext } from '../QueryTimeline'
 
+// web版との意図的な差分: appはButtonBase+長押しでリアクション一覧へ遷移、
+// webは素のbutton+hoverでリアクションした人をtooltip表示する(tooltipはweb限定機能)
+
 interface Props {
     message: Message<any>
     reactionState: ReactionState
@@ -142,9 +145,8 @@ export const MessageReactions = (props: Props) => {
                             maxHeight={128}
                             alt=""
                             style={{
-                                height: '18px',
-                                width: '18px',
-                                objectFit: 'contain'
+                                // width指定なし=アスペクト比維持(横長絵文字は潰さずそのまま伸ばす)
+                                height: '20px'
                             }}
                         />
                         <span>{count}</span>
