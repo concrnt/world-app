@@ -3,8 +3,9 @@ import { useOptimistic } from 'react'
 import { MessageActions } from './MessageActions'
 import { MessageReactions } from './MessageReactions'
 import { PostedTimelines } from './PostedTimelines'
-import { CssVar } from '@concrnt/ui'
+import { CssVar, Text } from '@concrnt/ui'
 import { useClient } from '../../contexts/Client'
+import { usePreference } from '../../contexts/Preference'
 
 interface Props {
     message: Message<any>
@@ -17,6 +18,7 @@ export interface ReactionState {
 
 export const MessageFooter = (props: Props) => {
     const { client } = useClient()
+    const [devmode] = usePreference('developerMode')
     const [reactionState, updateReactionState] = useOptimistic<ReactionState>(
         (() => {
             const reactionCounts = props.message.reactionCounts ?? {}
@@ -33,6 +35,7 @@ export const MessageFooter = (props: Props) => {
 
     return (
         <>
+            {devmode && <Text variant="caption">{props.message.uri}</Text>}
             <MessageReactions
                 message={props.message}
                 reactionState={reactionState}

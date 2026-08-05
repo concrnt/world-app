@@ -16,14 +16,13 @@ import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { QueryTimelineContext } from './QueryTimeline'
-import { Text, Avatar, CssVar, Divider } from '@concrnt/ui'
+import { Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { RenderError } from './message/RenderError'
 import { Loading } from './message/Loading'
 import { MdArrowUpward } from 'react-icons/md'
-import { usePreference } from '../contexts/Preference'
 
 interface NewArrivalIcon {
     id: string
@@ -459,8 +458,6 @@ interface CellProps {
 }
 
 const Cell = memo<CellProps>(({ item }: CellProps) => {
-    const [devmode] = usePreference('developerMode')
-
     return (
         <>
             <ErrorBoundary FallbackComponent={RenderError}>
@@ -476,7 +473,6 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     </Suspense>
                 </div>
             </ErrorBoundary>
-            {devmode && <Text variant="caption">{item.href}</Text>}
             <Divider />
         </>
     )

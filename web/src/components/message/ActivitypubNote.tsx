@@ -9,6 +9,7 @@ import { MessageSkeleton } from './MessageSkeleton'
 import { ApNoteSchema, Message } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { usePreference } from '../../contexts/Preference'
 
 interface Props {
     actorURL: string
@@ -39,6 +40,7 @@ export const ActivitypubNote = (props: Props) => {
             <Note
                 notePromise={notePromise}
                 authorPromise={authorPromise}
+                noteURL={props.noteURL}
                 message={props.message}
                 forceExpanded={props.forceExpanded}
             />
@@ -49,10 +51,12 @@ export const ActivitypubNote = (props: Props) => {
 const Note = (props: {
     notePromise: Promise<ApObject | null>
     authorPromise: Promise<ApObject | null>
+    noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
 }) => {
     const navigate = useNavigate()
+    const [devmode] = usePreference('developerMode')
 
     const note = use(props.notePromise)
     const author = use(props.authorPromise)
@@ -109,6 +113,7 @@ const Note = (props: {
                     <GfmRenderer messagebody={note.content ?? ''} />
                 )}
             </CollapsibleBody>
+            {devmode && <Text variant="caption">{props.noteURL}</Text>}
             {props.message && <MessageFooter message={props.message} />}
         </MessageLayout>
     )
