@@ -197,7 +197,8 @@
             "loadFailed": "読み込みに失敗しました",
             "brokenEntry": "壊れた項目",
             "fetchedAt": "取得日: {{date}}",
-            "importFromV1": "v1からインポート"
+            "addPackage": "追加",
+            "addPackageTitle": "絵文字パッケージを追加"
         },
         "welcome": {
             "loadFailed": "アカウント情報の読み込みに失敗しました。\n端末に保存された鍵が消えたわけではありません。もう一度お試しください。",

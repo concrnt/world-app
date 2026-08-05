@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CCImage, Button, IconButton, Text, TextField, View } from '@concrnt/ui'
+import { CCImage, Button, Divider, IconButton, Text, TextField, View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { Drawer } from '../ui/Drawer'
 import { EmojiPackImporter } from '../components/EmojiPackImporter'
@@ -16,7 +16,8 @@ export const EmojiSettingsView = () => {
     const [addingPackageURL, setAddingPackageURL] = useState('')
     const [preview, setPreview] = useState<EmojiPackage | null>(null)
     const [status, setStatus] = useState('')
-    const [importerOpen, setImporterOpen] = useState(false)
+    const [addStatus, setAddStatus] = useState('')
+    const [drawerOpen, setDrawerOpen] = useState(false)
 
     const packagesByURL = useMemo(() => {
         return new Map(picker.packages.map((pkg) => [pkg.packageURL, pkg]))
@@ -37,11 +38,11 @@ export const EmojiSettingsView = () => {
                         packageURL: url,
                         fetchedAt: new Date()
                     })
-                    setStatus('')
+                    setAddStatus('')
                 })
                 .catch(() => {
                     setPreview(null)
-                    setStatus(t('packageNotFound'))
+                    setAddStatus(t('packageNotFound'))
                 })
         }, 500)
 
@@ -75,8 +76,8 @@ export const EmojiSettingsView = () => {
                 >
                     <Text variant="h3">{t('packages')}</Text>
                     <div style={{ display: 'flex', gap: CssVar.space(2), flexWrap: 'wrap' }}>
-                        <Button variant="outlined" onClick={() => setImporterOpen(true)}>
-                            {t('importFromV1')}
+                        <Button variant="outlined" onClick={() => setDrawerOpen(true)}>
+                            {t('addPackage')}
                         </Button>
                         <Button
                             variant="outlined"
@@ -104,61 +105,77 @@ export const EmojiSettingsView = () => {
                     })}
                 </div>
 
-                {preview && (
+                {status && <Text style={{ opacity: 0.7 }}>{status}</Text>}
+            </div>
+            <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                     <div
                         style={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: CssVar.space(2),
-                            border: `1px solid ${CssVar.divider}`,
-                            borderRadius: CssVar.round(1),
-                            padding: CssVar.space(2)
+                            flexDirection: 'column',
+                            gap: CssVar.space(3),
+                            padding: CssVar.space(4)
                         }}
                     >
-                        <CCImage
-                            src={preview.iconURL}
-                            maxHeight={128}
-                            alt={preview.name}
-                            style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0 }}
-                        />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <Text variant="h4">{preview.name}</Text>
-                            <Text style={{ overflowWrap: 'anywhere', opacity: 0.65 }}>{preview.packageURL}</Text>
+                        <Text variant="h3">{t('addPackageTitle')}</Text>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
+                            <Text variant="h5">{t('packageURL')}</Text>
+                            <TextField
+                                value={addingPackageURL}
+                                placeholder="https://example.com/emoji.json"
+                                onChange={(e) => {
+                                    setAddingPackageURL(e.target.value)
+                                    setPreview(null)
+                                    setAddStatus('')
+                                }}
+                            />
                         </div>
-                        <IconButton
-                            onClick={async () => {
-                                if (picker.packageURLs.includes(preview.packageURL)) {
-                                    setStatus(t('alreadyAdded'))
-                                    return
-                                }
-                                await picker.addEmojiPackage(preview.packageURL)
-                                setAddingPackageURL('')
-                                setPreview(null)
-                                setStatus(t('added'))
-                            }}
-                        >
-                            <MdAddCircle size={24} />
-                        </IconButton>
+
+                        {preview && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
+                                    border: `1px solid ${CssVar.divider}`,
+                                    borderRadius: CssVar.round(1),
+                                    padding: CssVar.space(2)
+                                }}
+                            >
+                                <CCImage
+                                    src={preview.iconURL}
+                                    maxHeight={128}
+                                    alt={preview.name}
+                                    style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0 }}
+                                />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <Text variant="h4">{preview.name}</Text>
+                                    <Text style={{ overflowWrap: 'anywhere', opacity: 0.65 }}>
+                                        {preview.packageURL}
+                                    </Text>
+                                </div>
+                                <IconButton
+                                    onClick={async () => {
+                                        if (picker.packageURLs.includes(preview.packageURL)) {
+                                            setAddStatus(t('alreadyAdded'))
+                                            return
+                                        }
+                                        await picker.addEmojiPackage(preview.packageURL)
+                                        setAddingPackageURL('')
+                                        setPreview(null)
+                                        setAddStatus(t('added'))
+                                    }}
+                                >
+                                    <MdAddCircle size={24} />
+                                </IconButton>
+                            </div>
+                        )}
+
+                        {addStatus && <Text style={{ opacity: 0.7 }}>{addStatus}</Text>}
                     </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                    <Text variant="h5">{t('packageURL')}</Text>
-                    <TextField
-                        value={addingPackageURL}
-                        placeholder="https://example.com/emoji.json"
-                        onChange={(e) => {
-                            setAddingPackageURL(e.target.value)
-                            setPreview(null)
-                            setStatus('')
-                        }}
-                    />
+                    <Divider />
+                    <EmojiPackImporter onComplete={() => {}} />
                 </div>
-
-                {status && <Text style={{ opacity: 0.7 }}>{status}</Text>}
-            </div>
-            <Drawer open={importerOpen} onClose={() => setImporterOpen(false)}>
-                <EmojiPackImporter onComplete={() => setStatus('')} />
             </Drawer>
         </View>
     )

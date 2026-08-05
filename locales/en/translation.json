@@ -197,7 +197,8 @@
             "loadFailed": "Failed to load",
             "brokenEntry": "Broken entry",
             "fetchedAt": "Fetched at: {{date}}",
-            "importFromV1": "Import from v1"
+            "addPackage": "Add",
+            "addPackageTitle": "Add Emoji Package"
         },
         "welcome": {
             "loadFailed": "Failed to load account information.\nThe key stored on this device has not been lost. Please try again.",
