@@ -1,6 +1,7 @@
-import { type CSSProperties, Suspense, useEffect, useState } from 'react'
+import { type CSSProperties, Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+    Avatar,
     Button,
     Confirm,
     IconButton,
@@ -8,6 +9,7 @@ import {
     ListItem,
     Popover,
     useAnchor,
+    Skeleton,
     Switch,
     Tab,
     Tabs,
@@ -19,8 +21,9 @@ import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
+import { ProfileView } from '../views/Profile'
 import { useClient } from '../contexts/Client'
-import { List, Schemas, Timeline } from '@concrnt/worldlib'
+import { List, type ListEntry, type ProfileSchema, Schemas, semantics, Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
 
@@ -173,7 +176,7 @@ export const ListSettings = (props: Props) => {
 
 const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
-    const [items] = useSubscribe(props.list.items)
+    const [entries] = useSubscribe(props.list.entries)
     const [tab, setTab] = useState<'community' | 'user'>('community')
 
     const activeColor = CssVar.contentLink
@@ -204,39 +207,23 @@ const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
                     <Text>{t('user')}</Text>
                 </Tab>
             </Tabs>
-            <ResolvedTimelineList list={props.list} uris={items} filter={tab} onComplete={props.onComplete} />
+            <ResolvedTimelineList list={props.list} entries={entries} filter={tab} onComplete={props.onComplete} />
         </div>
     )
 }
 
 const ResolvedTimelineList = (props: {
     list: List
-    uris: string[]
+    entries: ListEntry[]
     filter: 'community' | 'user'
     onComplete?: () => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
     const { push } = useStack()
-    const [resolved, setResolved] = useState<Array<{ uri: string; timeline: Timeline | null }> | null>(null)
-
-    useEffect(() => {
-        if (!client) return
-        let cancelled = false
-        Promise.all(props.uris.map(async (uri) => ({ uri, timeline: await client.getTimeline(uri) }))).then((r) => {
-            if (!cancelled) setResolved(r)
-        })
-        return () => {
-            cancelled = true
-        }
-    }, [client, props.uris])
-
-    if (!resolved) {
-        return <Text style={{ opacity: 0.6 }}>Loading...</Text>
-    }
 
     const targetSchema = props.filter === 'community' ? Schemas.communityTimeline : Schemas.userTimeline
-    const filtered = resolved.filter(({ timeline }) => timeline?.schema === targetSchema)
+    const filtered = props.entries.filter((entry) => entry.value?.href && entry.value?.schema === targetSchema)
 
     if (filtered.length === 0) {
         return <Text style={{ opacity: 0.6 }}>{t('noTimelines')}</Text>
@@ -244,32 +231,93 @@ const ResolvedTimelineList = (props: {
 
     return (
         <ListView dense>
-            {filtered.map(({ uri }) => (
+            {filtered.map((entry) => (
                 <ListItem
-                    key={uri}
+                    key={entry.key}
                     style={{ borderBottom: `1px solid ${CssVar.divider}` }}
                     secondaryAction={
                         <IconButton
                             onClick={() => {
                                 if (!client) return
-                                props.list.removeItem(client, uri)
+                                props.list.removeItem(client, entry.value.href)
                             }}
                         >
                             <MdPlaylistRemove size={20} />
                         </IconButton>
                     }
                 >
-                    <TimelineTag
-                        uri={uri}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                            props.onComplete?.()
-                            push(<TimelineView uri={uri} />)
-                        }}
-                    />
+                    {props.filter === 'community' ? (
+                        <TimelineTag
+                            uri={entry.value.href}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => {
+                                props.onComplete?.()
+                                push(<TimelineView uri={entry.value.href} />)
+                            }}
+                        />
+                    ) : (
+                        <UserTimelineItem
+                            uri={entry.value.href}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => {
+                                props.onComplete?.()
+                                push(<ProfileView ccid={entry.value.href.split('/')[2]} />)
+                            }}
+                        />
+                    )}
                 </ListItem>
             ))}
         </ListView>
+    )
+}
+
+const UserTimelineItem = (props: { uri: string; onClick?: (e: React.MouseEvent) => void; style?: CSSProperties }) => {
+    const { client } = useClient()
+
+    // cckv://<ccid>/concrnt.world/profiles/<profile>/home-timeline
+    const ccid = props.uri.split('/')[2]
+    const profileName = props.uri.split('/')[5]
+
+    const profilePromise = useMemo(() => {
+        if (!client) return Promise.resolve<Partial<ProfileSchema>>({})
+        return Promise.all([
+            client.getUser(ccid),
+            client.api.getDocument<ProfileSchema>(semantics.profile(ccid, profileName)).catch(() => null)
+        ]).then(([user, doc]) => ({ ...user?.profile, ...doc?.value }))
+    }, [client, ccid, profileName])
+
+    return (
+        <Suspense fallback={<Skeleton height={'1rem'} width={'3rem'} />}>
+            <UserTimelineItemInner
+                ccid={ccid}
+                profilePromise={profilePromise}
+                onClick={props.onClick}
+                style={props.style}
+            />
+        </Suspense>
+    )
+}
+
+const UserTimelineItemInner = (props: {
+    ccid: string
+    profilePromise: Promise<Partial<ProfileSchema>>
+    onClick?: (e: React.MouseEvent) => void
+    style?: CSSProperties
+}) => {
+    const profile = use(props.profilePromise)
+
+    return (
+        <span
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+            }}
+            onClick={props.onClick}
+        >
+            <Avatar ccid={props.ccid} src={profile.avatar} style={{ width: 20, height: 20 }} />
+            <Text style={props.style}>{profile.username ?? 'anonymous'}</Text>
+        </span>
     )
 }
 

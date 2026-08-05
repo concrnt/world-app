@@ -22,9 +22,10 @@ export class List {
     }
 
     items = new CachedPromise<string[]>(async () => {
+        const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
         const items = await this.client.api.queryAll(
             {
-                prefix: this.uri
+                prefix
             },
             undefined,
             { cache: true }
