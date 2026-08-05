@@ -23,7 +23,7 @@ export const ActivitypubNote = (props: Props) => {
     const { client } = useClient()
 
     const notePromise = useMemo(() => {
-        return resolveApObject(client, props.noteURL).catch(() => null)
+        return resolveApObject(client, props.noteURL).catch((e) => (e instanceof Error ? e : new Error(String(e))))
     }, [client, props.noteURL])
 
     const authorPromise = useMemo(() => {
@@ -44,7 +44,7 @@ export const ActivitypubNote = (props: Props) => {
 }
 
 const Note = (props: {
-    notePromise: Promise<ApObject | null>
+    notePromise: Promise<ApObject | Error | null>
     authorPromise: Promise<ApObject | null>
     noteURL: string
     message?: Message<ApNoteSchema>
@@ -56,7 +56,7 @@ const Note = (props: {
     const note = use(props.notePromise)
     const author = use(props.authorPromise)
 
-    if (!note) {
+    if (!note || note instanceof Error) {
         return (
             <div
                 style={{
@@ -64,6 +64,10 @@ const Note = (props: {
                 }}
             >
                 <Text>Note not found</Text>
+                {devmode && <Text variant="caption">{props.noteURL}</Text>}
+                {devmode && (
+                    <Text variant="caption">{note instanceof Error ? note.message : 'negative cache hit'}</Text>
+                )}
             </div>
         )
     }
