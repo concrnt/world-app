@@ -24,6 +24,12 @@ class NotificationService: UNNotificationServiceExtension {
         }
         bestAttemptContent = content
 
+        // The relay's APNs payload carries no "sound" key, so without this
+        // the notification would slide into Notification Center silently.
+        if content.sound == nil {
+            content.sound = .default
+        }
+
         Task {
             await process(content: content)
         }
