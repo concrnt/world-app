@@ -18,7 +18,7 @@ import { openUrl } from '@tauri-apps/plugin-opener'
 import { PostView } from '../../views/Post'
 
 interface Props {
-    actorURL: string
+    actorURL?: string
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
@@ -34,8 +34,14 @@ export const ActivitypubNote = (props: Props) => {
     }, [client, props.noteURL])
 
     const authorPromise = useMemo(() => {
-        return resolveApObject(client, props.actorURL).catch(() => null)
-    }, [client, props.actorURL])
+        if (props.actorURL) return resolveApObject(client, props.actorURL).catch(() => null)
+        // actorURL不明(裸URLのAnnounce等)の場合はノート解決後のattributedToから辿る
+        return notePromise.then((n) =>
+            n && !(n instanceof Error) && n.attributedTo
+                ? resolveApObject(client, n.attributedTo).catch(() => null)
+                : null
+        )
+    }, [client, props.actorURL, notePromise])
 
     return (
         <Suspense fallback={<MessageSkeleton />}>

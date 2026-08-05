@@ -1,4 +1,4 @@
-import { CDID, renderUriTemplate } from '@concrnt/client'
+import { CDID, renderUriTemplate, type FetchOptions } from '@concrnt/client'
 import { type Client } from '@concrnt/worldlib'
 
 export interface ApImage {
@@ -37,11 +37,16 @@ export const AP_RESOLVE_NEGATIVE_TTL = 1000 * 60 * 5
 
 // resolveはネットワーク素通しだと表示中のノート数×2(note+author)のリクエストが飛ぶため、
 // 通常メッセージと同じfetchWithCache(KVS永続+in-flight dedup+negative cache)に乗せる
-export const resolveApObject = async (client: Client, uri: string): Promise<ApObject | null> => {
+export const resolveApObject = async (
+    client: Client,
+    uri: string,
+    opts?: FetchOptions<Partial<ApObject> | null>
+): Promise<ApObject | null> => {
     const endpoint = renderUriTemplate(client.server, 'net.concrnt.activitypub.resolve', { uri })
     const res = await client.api.fetchWithCache<Partial<ApObject> | null>(client.server.domain, endpoint, `ap:${uri}`, {
         TTL: AP_RESOLVE_TTL,
-        negativeTTL: AP_RESOLVE_NEGATIVE_TTL
+        negativeTTL: AP_RESOLVE_NEGATIVE_TTL,
+        ...opts
     })
     return res ? new ApObject(res) : null
 }
@@ -83,6 +88,14 @@ export class ApObject {
     to?: string | string[]
     cc?: string | string[]
     inReplyTo?: string
+    // コレクション(outbox等)とアクティビティ(Create/Announce)用。
+    // 参照はサーバーによりURL文字列か埋め込みオブジェクトの両方があり得る
+    first?: string | Partial<ApObject>
+    next?: string | Partial<ApObject>
+    orderedItems?: Partial<ApObject> | string | (Partial<ApObject> | string)[]
+    items?: Partial<ApObject> | string | (Partial<ApObject> | string)[]
+    object?: string | Partial<ApObject>
+    actor?: string
 
     constructor(ld: Partial<ApObject>) {
         Object.assign(this, ld)
@@ -110,6 +123,13 @@ export class ApObject {
         if (!this.attachment) return []
         if (Array.isArray(this.attachment)) return this.attachment
         return [this.attachment]
+    }
+
+    getItems(): (Partial<ApObject> | string)[] {
+        const items = this.orderedItems ?? this.items
+        if (!items) return []
+        if (Array.isArray(items)) return items
+        return [items]
     }
 
     // Mastodon準拠: toにPublic=public / ccにPublic=unlisted / followers URI宛=followers / それ以外=direct。

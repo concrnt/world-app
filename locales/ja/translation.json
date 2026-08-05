@@ -358,7 +358,10 @@
             "unfollow": "フォロー解除",
             "noDescription": "説明はまだありません",
             "apUserNotice": "このユーザーはActivityPubのユーザーです。",
-            "openRemote": "リモートで開く"
+            "openRemote": "リモートで開く",
+            "noPosts": "表示できる投稿はありません",
+            "loadFailed": "投稿を読み込めませんでした",
+            "boosted": "{{name}}がブースト"
         },
         "bluesky": {
             "title": "Bluesky設定",

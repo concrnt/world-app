@@ -358,7 +358,10 @@
             "unfollow": "Unfollow",
             "noDescription": "No description yet",
             "apUserNotice": "This user is an ActivityPub user.",
-            "openRemote": "Open on remote server"
+            "openRemote": "Open on remote server",
+            "noPosts": "No posts to show",
+            "loadFailed": "Failed to load posts",
+            "boosted": "Boosted by {{name}}"
         },
         "bluesky": {
             "title": "Bluesky Settings",

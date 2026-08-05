@@ -1,16 +1,25 @@
-import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text } from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text, Divider } from '@concrnt/ui'
 import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError, Document } from '@concrnt/client'
 import { Schemas, ApFollowSchema } from '@concrnt/worldlib'
-import { ApObject, apFollowKey } from '../utils/activitypub'
+import { ApObject, apFollowKey, resolveApObject } from '../utils/activitypub'
 import { useMediaProxy } from '../contexts/MediaProxy'
+import { ActivitypubNote } from '../components/message/ActivitypubNote'
+import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { MdRepeat } from 'react-icons/md'
 
 interface Props {
     person: ApObject
+}
+
+interface OutboxItem {
+    noteURL: string
+    actorURL?: string
+    boost: boolean
 }
 
 export const ApPerson = ({ person }: Props) => {
@@ -20,9 +29,15 @@ export const ApPerson = ({ person }: Props) => {
     const navigation = useNavigation()
     const { client } = useClient()
 
-    console.log(person)
-
     const [followed, setFollowed] = useState<boolean | undefined>(undefined)
+
+    const [items, setItems] = useState<OutboxItem[]>([])
+    const [next, setNext] = useState<string | null>(null)
+    const [outboxState, setOutboxState] = useState<'loading' | 'done' | 'error'>('loading')
+    const loadingRef = useRef(false)
+    // person切替中に旧ロードの結果が新しい表示へ混入しないよう世代番号で捨てる
+    const sessionRef = useRef(0)
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     const updateFollowed = () => {
         client.api
@@ -39,151 +54,268 @@ export const ApPerson = ({ person }: Props) => {
             })
     }
 
+    // outboxはインデックスとしてだけ読み、各投稿の解決/描画はActivitypubNoteに任せる。
+    // ページ取得はno-cache(SWRの既定だと開いた時点の新着が見えない)、ノート側は既定TTLのまま。
+    const loadPosts = async (uri: string, initial: boolean) => {
+        if (loadingRef.current) return
+        loadingRef.current = true
+        const session = sessionRef.current
+        try {
+            let page = await resolveApObject(client, uri, { cache: 'no-cache' })
+            // Mastodon/Misskeyのoutboxルートはitemsを持たずfirstだけのOrderedCollection
+            if (page && page.getItems().length === 0 && page.first) {
+                page =
+                    typeof page.first === 'string'
+                        ? await resolveApObject(client, page.first, { cache: 'no-cache' })
+                        : new ApObject(page.first)
+            }
+            if (sessionRef.current !== session) return
+            if (!page) {
+                setOutboxState(initial ? 'error' : 'done')
+                setNext(null)
+                return
+            }
+            const collected: OutboxItem[] = []
+            for (const entry of page.getItems()) {
+                // URL文字列だけのentryは1件ずつの追加resolveに見合わないのでスキップ
+                if (typeof entry === 'string') continue
+                const obj = entry.object
+                if (entry.type === 'Create') {
+                    // Createはプロフィール主自身の投稿なのでactorはpersonへ倒せる
+                    if (typeof obj === 'string') collected.push({ noteURL: obj, actorURL: person.id, boost: false })
+                    else if (obj?.id) {
+                        collected.push({ noteURL: obj.id, actorURL: obj.attributedTo ?? person.id, boost: false })
+                    }
+                } else if (entry.type === 'Announce') {
+                    // 裸URLのAnnounceは元投稿者不明のまま渡し、ActivitypubNote側でattributedToから解決させる
+                    if (typeof obj === 'string') collected.push({ noteURL: obj, boost: true })
+                    else if (obj?.id) collected.push({ noteURL: obj.id, actorURL: obj.attributedTo, boost: true })
+                }
+            }
+            setItems((prev) => [...prev, ...collected])
+            setNext(typeof page.next === 'string' ? page.next : (page.next?.id ?? null))
+            setOutboxState('done')
+        } catch (err) {
+            if (sessionRef.current === session) {
+                console.log(err)
+                setOutboxState(initial ? 'error' : 'done')
+                setNext(null)
+            }
+        } finally {
+            loadingRef.current = false
+        }
+    }
+
     useEffect(() => {
         updateFollowed()
+        sessionRef.current++
+        loadingRef.current = false
+        setItems([])
+        setNext(null)
+        if (person.outbox) {
+            setOutboxState('loading')
+            loadPosts(person.outbox, true)
+        } else {
+            setOutboxState('done')
+        }
     }, [person.id])
+
+    // 投稿は折りたたまれるため1ページでコンテナが埋まらないことがあり、
+    // その場合スクロールイベントが発生せず次ページが永遠に読まれない。埋まるまで追い読みする。
+    useEffect(() => {
+        const el = scrollRef.current
+        if (!el || !next || loadingRef.current) return
+        if (el.scrollHeight - el.clientHeight < 500) {
+            loadPosts(next, false)
+        }
+    }, [items, next])
 
     return (
         <View>
             <div
+                ref={scrollRef}
                 style={{
-                    position: 'relative'
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: 'auto'
+                }}
+                onScroll={(e) => {
+                    const el = e.currentTarget
+                    if (el.scrollHeight - el.scrollTop - el.clientHeight < 500 && next && !loadingRef.current) {
+                        loadPosts(next, false)
+                    }
                 }}
             >
-                <CCWallpaper
-                    src={getImageURL(person.getImages()[0]?.url)}
+                <div
                     style={{
-                        paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                        height: '150px'
+                        position: 'relative'
                     }}
                 >
-                    <div
+                    <CCWallpaper
+                        src={getImageURL(person.getImages()[0]?.url)}
                         style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: CssVar.space(1),
-                            gap: CssVar.space(1)
+                            paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                            height: '150px'
                         }}
                     >
                         <div
                             style={{
-                                color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
-                                height: '40px',
-                                width: '40px'
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: CssVar.space(1),
+                                gap: CssVar.space(1)
                             }}
                         >
-                            {navigation.backNode}
+                            <div
+                                style={{
+                                    color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
+                                    height: '40px',
+                                    width: '40px'
+                                }}
+                            >
+                                {navigation.backNode}
+                            </div>
+                            <div style={{ flex: 1 }} />
                         </div>
-                        <div style={{ flex: 1 }} />
-                    </div>
-                </CCWallpaper>
-                <Avatar
-                    ccid={person.id?.toString() ?? ''}
-                    style={{
-                        width: `100px`,
-                        height: `100px`,
-                        position: 'absolute',
-                        transform: 'translateY(-50%)',
-                        left: CssVar.space(2)
-                    }}
-                    src={person.getIcons()[0]?.url}
-                />
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: CssVar.space(2),
-                        padding: `0 ${CssVar.space(2)}`
-                    }}
-                >
+                    </CCWallpaper>
+                    <Avatar
+                        ccid={person.id?.toString() ?? ''}
+                        style={{
+                            width: `100px`,
+                            height: `100px`,
+                            position: 'absolute',
+                            transform: 'translateY(-50%)',
+                            left: CssVar.space(2)
+                        }}
+                        src={person.getIcons()[0]?.url}
+                    />
                     <div
                         style={{
-                            minHeight: `50px`,
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end'
+                            flexDirection: 'column',
+                            gap: CssVar.space(2),
+                            padding: `0 ${CssVar.space(2)}`
                         }}
                     >
-                        {followed !== undefined &&
-                            (followed ? (
-                                <Button
-                                    onClick={() => {
-                                        client.api
-                                            .delete(apFollowKey(client.ccid, person.id))
-                                            .then(() => {
-                                                setFollowed(false)
-                                            })
-                                            .catch((err) => {
-                                                console.log(err)
-                                            })
-                                    }}
-                                >
-                                    {t('unfollow')}
-                                </Button>
-                            ) : (
-                                <Button
-                                    onClick={() => {
-                                        const document: Document<ApFollowSchema> = {
-                                            kind: 'record',
-                                            key: apFollowKey(client.ccid, person.id),
-                                            author: client.ccid,
-                                            schema: Schemas.apFollow,
-                                            value: {
-                                                actorURI: person.id
-                                            },
-                                            createdAt: new Date()
-                                        }
-                                        client.api
-                                            .commit(document)
-                                            .then(() => {
-                                                setFollowed(true)
-                                            })
-                                            .catch((err) => {
-                                                console.log(err)
-                                            })
-                                    }}
-                                >
-                                    {t('follow')}
-                                </Button>
-                            ))}
-                    </div>
-                    <div>
-                        <Text
-                            variant="h6"
+                        <div
                             style={{
-                                fontWeight: 'bold',
-                                fontSize: '1.2rem'
+                                minHeight: `50px`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-end'
                             }}
                         >
-                            {person.name || 'Anonymous'}
-                        </Text>
-                        <Text>
-                            @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}
-                        </Text>
+                            {followed !== undefined &&
+                                (followed ? (
+                                    <Button
+                                        onClick={() => {
+                                            client.api
+                                                .delete(apFollowKey(client.ccid, person.id))
+                                                .then(() => {
+                                                    setFollowed(false)
+                                                })
+                                                .catch((err) => {
+                                                    console.log(err)
+                                                })
+                                        }}
+                                    >
+                                        {t('unfollow')}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => {
+                                            const document: Document<ApFollowSchema> = {
+                                                kind: 'record',
+                                                key: apFollowKey(client.ccid, person.id),
+                                                author: client.ccid,
+                                                schema: Schemas.apFollow,
+                                                value: {
+                                                    actorURI: person.id
+                                                },
+                                                createdAt: new Date()
+                                            }
+                                            client.api
+                                                .commit(document)
+                                                .then(() => {
+                                                    setFollowed(true)
+                                                })
+                                                .catch((err) => {
+                                                    console.log(err)
+                                                })
+                                        }}
+                                    >
+                                        {t('follow')}
+                                    </Button>
+                                ))}
+                        </div>
+                        <div>
+                            <Text
+                                variant="h6"
+                                style={{
+                                    fontWeight: 'bold',
+                                    fontSize: '1.2rem'
+                                }}
+                            >
+                                {person.name || 'Anonymous'}
+                            </Text>
+                            <Text>
+                                @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}
+                            </Text>
+                        </div>
+                        <div>
+                            <Text>{person.summary || t('noDescription')}</Text>
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                gap: CssVar.space(2)
+                            }}
+                        ></div>
                     </div>
-                    <div>
-                        <Text>{person.summary || t('noDescription')}</Text>
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: CssVar.space(2)
-                        }}
-                    ></div>
                 </div>
-            </div>
-            <div>
-                <Text>{t('apUserNotice')}</Text>
-                {person.url && (
-                    <Button
-                        onClick={() => {
-                            window.open(person.url!.toString(), '_blank', 'noopener,noreferrer')
-                        }}
-                    >
-                        {t('openRemote')}
-                    </Button>
+                <div>
+                    <Text>{t('apUserNotice')}</Text>
+                    {person.url && (
+                        <Button
+                            onClick={() => {
+                                window.open(person.url!.toString(), '_blank', 'noopener,noreferrer')
+                            }}
+                        >
+                            {t('openRemote')}
+                        </Button>
+                    )}
+                </div>
+                <Divider />
+                {items.map((item, i) => (
+                    <div key={`${i}:${item.noteURL}`}>
+                        {item.boost && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(1),
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
+                                    opacity: 0.7
+                                }}
+                            >
+                                <MdRepeat size={14} />
+                                <Text variant="caption">
+                                    {t('boosted', { name: person.name || person.preferredUsername || 'Anonymous' })}
+                                </Text>
+                            </div>
+                        )}
+                        <ActivitypubNote actorURL={item.actorURL} noteURL={item.noteURL} />
+                        <Divider />
+                    </div>
+                ))}
+                {outboxState === 'loading' && <MessageSkeleton />}
+                {outboxState === 'done' && items.length === 0 && (
+                    <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('noPosts')}</Text>
+                )}
+                {outboxState === 'error' && (
+                    <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('loadFailed')}</Text>
                 )}
             </div>
         </View>
