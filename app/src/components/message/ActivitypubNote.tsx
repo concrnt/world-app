@@ -11,6 +11,7 @@ import { ApNoteSchema, Message } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
 import { usePreference } from '../../contexts/Preference'
+import { MdLock, MdMail } from 'react-icons/md'
 
 interface Props {
     actorURL: string
@@ -72,6 +73,8 @@ const Note = (props: {
         )
     }
 
+    const visibility = note.getVisibility(author?.followers)
+
     const emojiDict: Record<string, EmojiLite> = {}
     for (const tag of note.getTags()) {
         if (tag.type !== 'Emoji' || !tag.name) continue
@@ -103,7 +106,13 @@ const Note = (props: {
                     {author?.name ?? author?.preferredUsername ?? 'Unknown'}
                 </Text>
             }
-            headerRight={note.published && <TimeDiff date={new Date(note.published)} />}
+            headerRight={
+                <span style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                    {visibility === 'followers' && <MdLock size={14} style={{ opacity: 0.7 }} title="フォロワー限定" />}
+                    {visibility === 'direct' && <MdMail size={14} style={{ opacity: 0.7 }} title="ダイレクト" />}
+                    {note.published && <TimeDiff date={new Date(note.published)} />}
+                </span>
+            }
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
                 {note._misskey_content ? (

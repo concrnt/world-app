@@ -63,8 +63,9 @@ export class ApObject {
     content?: string
     _misskey_content?: string
     published?: string
-    to?: string[]
-    cc?: string[]
+    // fedifyの再シリアライズ経路は単一要素を配列でなく文字列で返すため両方あり得る
+    to?: string | string[]
+    cc?: string | string[]
     inReplyTo?: string
 
     constructor(ld: Partial<ApObject>) {
@@ -93,5 +94,19 @@ export class ApObject {
         if (!this.attachment) return []
         if (Array.isArray(this.attachment)) return this.attachment
         return [this.attachment]
+    }
+
+    // Mastodon準拠: toにPublic=public / ccにPublic=unlisted / followers URI宛=followers / それ以外=direct。
+    // 宛先情報が無い場合はpublic、author未解決でfollowersURI不明ならdirect断定を避けてfollowersに倒す。
+    getVisibility(followersURI?: string): 'public' | 'unlisted' | 'followers' | 'direct' {
+        const to = this.to ? [this.to].flat() : []
+        const cc = this.cc ? [this.cc].flat() : []
+        if (to.length === 0 && cc.length === 0) return 'public'
+        const isPublic = (uri: string): boolean =>
+            uri === 'https://www.w3.org/ns/activitystreams#Public' || uri === 'as:Public' || uri === 'Public'
+        if (to.some(isPublic)) return 'public'
+        if (cc.some(isPublic)) return 'unlisted'
+        if (!followersURI || to.includes(followersURI) || cc.includes(followersURI)) return 'followers'
+        return 'direct'
     }
 }
