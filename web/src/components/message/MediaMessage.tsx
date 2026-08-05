@@ -29,7 +29,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                         navigate('/profile/' + message.author)
                     }}
                 >
-                    <Avatar ccid={message.author} src={message.authorUser?.profile.avatar} />
+                    <Avatar ccid={message.author} src={message.authorProfile?.avatar} />
                 </div>
             }
             headerLeft={
@@ -38,7 +38,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                         fontWeight: 'bold'
                     }}
                 >
-                    {message.authorUser?.profile.username || 'Anonymous'}
+                    {message.authorProfile?.username || 'Anonymous'}
                 </div>
             }
             headerRight={<TimeDiff date={message.createdAt} />}

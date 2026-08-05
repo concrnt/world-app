@@ -49,7 +49,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             >
                 <Avatar
                     ccid={message.author}
-                    src={rerouteAuthor?.profile.avatar}
+                    src={message.authorProfile?.avatar}
                     style={{ width: '16px', height: '16px' }}
                 />
                 <MdRepeat size={14} />
@@ -62,7 +62,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {t('userRerouted', { name: rerouteAuthor?.profile.username ?? '' })}
+                    {t('userRerouted', { name: message.authorProfile?.username ?? '' })}
                 </span>
             </div>
 
@@ -79,10 +79,10 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                                 push(<ProfileView ccid={targetMessage.author} />)
                             }}
                         >
-                            <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
+                            <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
                         </div>
                     }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>}
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
                 >
                     <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
                 </MessageLayout>

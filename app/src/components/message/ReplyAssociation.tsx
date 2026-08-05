@@ -71,7 +71,7 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                 >
                     <Avatar
                         ccid={targetMessage.author}
-                        src={targetMessage.authorUser?.profile.avatar}
+                        src={targetMessage.authorProfile?.avatar}
                         style={{ width: '16px', height: '16px' }}
                     />
                     <span>{targetMessage.value.body}</span>
@@ -95,13 +95,13 @@ export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) =>
                                 }
                             }}
                         >
-                            <Avatar ccid={message.author} src={replyAuthor?.profile.avatar} />
+                            <Avatar ccid={message.author} src={message.authorProfile?.avatar} />
                         </div>
                     }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{replyAuthor?.profile.username}</div>}
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{message.authorProfile?.username}</div>}
                 >
                     <Chip headElement={<MdReply size={12} />}>
-                        {targetMessage?.authorUser?.profile.username || 'Unknown'}
+                        {targetMessage?.authorProfile?.username || 'Unknown'}
                     </Chip>
                     <CfmRenderer messagebody={replyMessage.value.body} emojiDict={{}} />
                 </MessageLayout>

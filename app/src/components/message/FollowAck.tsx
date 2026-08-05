@@ -52,7 +52,7 @@ export const FollowAck = (props: MessageProps<FollowAckSchema>) => {
             >
                 <Avatar
                     ccid={message.author}
-                    src={followAuthor?.profile.avatar}
+                    src={message.authorProfile?.avatar}
                     style={{ width: '16px', height: '16px' }}
                 />
                 <MdPersonAdd size={14} />
@@ -65,7 +65,7 @@ export const FollowAck = (props: MessageProps<FollowAckSchema>) => {
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {t('userFollowed', { name: followAuthor?.profile.username ?? '' })}
+                    {t('userFollowed', { name: message.authorProfile?.username ?? '' })}
                 </span>
             </div>
 

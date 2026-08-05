@@ -44,7 +44,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                             push(<ProfileView ccid={props.message.author} />)
                         }}
                     >
-                        <Avatar ccid={props.message.author} src={props.message.authorUser?.profile.avatar} />
+                        <Avatar ccid={props.message.author} src={props.message.authorProfile?.avatar} />
                     </div>
                 }
                 headerLeft={
@@ -53,7 +53,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                             fontWeight: 'bold'
                         }}
                     >
-                        {props.message.authorUser?.profile.username || 'Anonymous'}
+                        {props.message.authorProfile?.username || 'Anonymous'}
                     </div>
                 }
                 headerRight={<TimeDiff date={props.message.createdAt} />}

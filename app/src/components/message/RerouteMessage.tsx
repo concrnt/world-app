@@ -38,14 +38,14 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         <MdRepeat size={14} />
                         <Avatar
                             ccid={props.message.author}
-                            src={props.message.authorUser?.profile.avatar}
+                            src={props.message.authorProfile?.avatar}
                             style={{ width: '16px', height: '16px' }}
                         />
                     </div>
                 }
             >
                 <Text variant="caption">
-                    {t('userRerouted', { name: props.message.authorUser?.profile.username || 'Anonymous' })}
+                    {t('userRerouted', { name: props.message.authorProfile?.username || 'Anonymous' })}
                 </Text>
                 <div style={{ flex: 1 }} />
                 <IconButton

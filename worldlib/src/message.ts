@@ -68,6 +68,9 @@ export class Message<T> implements Document<T> {
         const message = new Message<T>(uri, res)
         message.hint = hint
         message.authorUser = await User.load(client, message.author, hint).catch(() => undefined)
+        if (message.authorUser?.profile) {
+            message.authorProfile = { ...message.authorProfile, ...message.authorUser.profile }
+        }
 
         const key = message.key
         //  `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,

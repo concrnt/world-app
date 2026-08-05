@@ -600,7 +600,7 @@ export const Composer = (props: Props) => {
                     }}
                 >
                     <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                        {props.targetMessage.authorUser?.profile.username}
+                        {props.targetMessage.authorProfile?.username}
                     </div>
                     <div
                         style={{

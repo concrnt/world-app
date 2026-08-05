@@ -44,7 +44,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             >
                 <Avatar
                     ccid={message.author}
-                    src={likeAuthor?.profile.avatar}
+                    src={message.authorProfile?.avatar}
                     style={{ width: '16px', height: '16px' }}
                 />
                 <MdStar size={14} />
@@ -57,7 +57,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                     }}
                     style={{ cursor: 'pointer' }}
                 >
-                    {t('userLiked', { name: likeAuthor?.profile.username ?? '' })}
+                    {t('userLiked', { name: message.authorProfile?.username ?? '' })}
                 </span>
             </div>
 
@@ -71,10 +71,10 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                                 navigate('/profile/' + targetMessage.author)
                             }}
                         >
-                            <Avatar ccid={targetMessage.author} src={targetMessage.authorUser?.profile.avatar} />
+                            <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
                         </div>
                     }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorUser?.profile.username}</div>}
+                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
                 >
                     <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
                 </MessageLayout>

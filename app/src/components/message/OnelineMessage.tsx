@@ -35,7 +35,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 >
                     <Avatar
                         ccid={message.author}
-                        src={message.authorUser?.profile.avatar}
+                        src={message.authorProfile?.avatar}
                         style={{ width: '40px', height: '18px' }}
                     />
                 </div>
