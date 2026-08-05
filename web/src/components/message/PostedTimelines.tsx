@@ -3,7 +3,7 @@ import { Avatar } from '@concrnt/ui'
 import { TimelineTag } from '../TimelineTag'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
-import { MdArrowForward, MdHomeFilled, MdReplay } from 'react-icons/md'
+import { MdArrowForward, MdOutlineHome, MdReplay } from 'react-icons/md'
 import { useClient } from '../../contexts/Client'
 
 interface Props {
@@ -24,8 +24,25 @@ export const PostedTimelines = (props: Props) => {
 
     return (
         <>
-            {props.message.distributes?.map((uri) =>
-                uri.startsWith('cckv://') && uri.endsWith('/home-timeline') ? (
+            {props.message.distributes
+                ?.filter((uri) => !(uri.startsWith('cckv://') && uri.endsWith('/home-timeline')))
+                .map((uri) => (
+                    <TimelineTag
+                        key={uri}
+                        uri={uri}
+                        schemaFilter={Schemas.communityTimeline}
+                        style={{
+                            fontSize: '0.75rem'
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            navigate('/timeline/' + encodeURIComponent(uri))
+                        }}
+                    />
+                ))}
+            {props.message.distributes
+                ?.filter((uri) => uri.startsWith('cckv://') && uri.endsWith('/home-timeline'))
+                .map((uri) =>
                     props.rerouted ? (
                         <span
                             key={uri}
@@ -42,7 +59,7 @@ export const PostedTimelines = (props: Props) => {
                             />
                         </span>
                     ) : (
-                        <MdHomeFilled
+                        <MdOutlineHome
                             key={uri}
                             size={16}
                             onClick={(e) => {
@@ -51,29 +68,32 @@ export const PostedTimelines = (props: Props) => {
                             }}
                         />
                     )
-                ) : (
-                    <TimelineTag
-                        key={uri}
-                        uri={uri}
-                        schemaFilter={Schemas.communityTimeline}
-                        style={{
-                            fontSize: '0.75rem'
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            navigate('/timeline/' + encodeURIComponent(uri))
-                        }}
-                    />
-                )
-            )}
+                )}
             {props.rerouted &&
                 (reroutedSame ? (
                     <MdReplay size={16} style={{ opacity: 0.7 }} />
                 ) : (
                     <>
                         <MdArrowForward size={16} style={{ opacity: 0.7 }} />
-                        {props.rerouted.distributes?.map((uri) =>
-                            uri.startsWith('cckv://') && uri.endsWith('/home-timeline') ? (
+                        {props.rerouted.distributes
+                            ?.filter((uri) => !(uri.startsWith('cckv://') && uri.endsWith('/home-timeline')))
+                            .map((uri) => (
+                                <TimelineTag
+                                    key={uri}
+                                    uri={uri}
+                                    schemaFilter={Schemas.communityTimeline}
+                                    style={{
+                                        fontSize: '0.75rem'
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        navigate('/timeline/' + encodeURIComponent(uri))
+                                    }}
+                                />
+                            ))}
+                        {props.rerouted.distributes
+                            ?.filter((uri) => uri.startsWith('cckv://') && uri.endsWith('/home-timeline'))
+                            .map((uri) => (
                                 <span
                                     key={uri}
                                     style={{ display: 'inline-flex', alignItems: 'center' }}
@@ -88,21 +108,7 @@ export const PostedTimelines = (props: Props) => {
                                         style={{ width: '16px', height: '16px' }}
                                     />
                                 </span>
-                            ) : (
-                                <TimelineTag
-                                    key={uri}
-                                    uri={uri}
-                                    schemaFilter={Schemas.communityTimeline}
-                                    style={{
-                                        fontSize: '0.75rem'
-                                    }}
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        navigate('/timeline/' + encodeURIComponent(uri))
-                                    }}
-                                />
-                            )
-                        )}
+                            ))}
                     </>
                 ))}
         </>
