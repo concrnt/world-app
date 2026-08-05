@@ -334,7 +334,7 @@ export const WelcomePage = () => {
                                 </Text>
                             </div>
                             <Button
-                                onClick={() => navigate('/register')}
+                                onClick={() => navigate('/signup')}
                                 style={{
                                     marginTop: '20px',
                                     padding: '10px 80px',
@@ -485,7 +485,7 @@ export const WelcomePage = () => {
                     >
                         <Text variant="h1">{t('gettingStarted')}</Text>
                         <Button
-                            onClick={() => navigate('/register')}
+                            onClick={() => navigate('/signup')}
                             style={{
                                 marginTop: '20px',
                                 width: '100%'

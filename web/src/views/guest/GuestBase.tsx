@@ -162,7 +162,7 @@ export const GuestShell = () => {
                                                     <Button variant="text" onClick={() => navigate('/login')}>
                                                         {t('login')}
                                                     </Button>
-                                                    <Button onClick={() => navigate('/register')}>
+                                                    <Button onClick={() => navigate('/signup')}>
                                                         {t('getStarted')}
                                                     </Button>
                                                 </div>
