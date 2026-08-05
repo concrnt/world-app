@@ -14,6 +14,11 @@ export const apFollowKey = (ccid: string, actorURI: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/follows/${CDID.newFromStringX(actorURI).toString()}`
 }
 
+// APブリッジのユーザー設定レコードキー(listenTimelines等)。ブリッジが直接読む。
+export const apSettingsKey = (ccid: string): string => {
+    return `cckv://${ccid}/activitypub.concrnt.world/settings`
+}
+
 // noteはほぼ不変・actorの更新もSWR(stale表示+裏で再取得)で追従できるため1hで共通
 export const AP_RESOLVE_TTL = 1000 * 60 * 60
 // 死んだインスタンス/410はブリッジが404で返すため、失敗resolveの連打を5分抑止

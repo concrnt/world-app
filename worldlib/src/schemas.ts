@@ -9,6 +9,7 @@ export const Schemas = {
 
     apNote: 'https://schema.concrnt.world/ap/note.json',
     apFollow: 'https://schema.concrnt.world/ap/follow.json',
+    apSettings: 'https://schema.concrnt.world/ap/settings.json',
 
     atprotoRecord: 'https://schema.concrnt.world/atproto/record.json',
     atprotoFollow: 'https://schema.concrnt.world/atproto/follow.json',

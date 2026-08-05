@@ -338,6 +338,9 @@
             "enable": "有効化",
             "enabled": "Activitypub連携は有効化されています。",
             "yourId": "あなたのID: {{id}}",
+            "forwardTimeline": "転送元タイムライン",
+            "forwardTimelineDesc": "選択したタイムラインへの自分の投稿がActivityPubへ転送されます。未設定の場合はホームタイムラインが使用されます。",
+            "update": "更新",
             "inquiry": "照会"
         },
         "apPerson": {
