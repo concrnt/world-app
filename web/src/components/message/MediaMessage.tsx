@@ -18,6 +18,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}

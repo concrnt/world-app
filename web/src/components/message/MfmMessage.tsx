@@ -17,6 +17,7 @@ export const MfmMessage = (props: MessageProps<MfmMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}

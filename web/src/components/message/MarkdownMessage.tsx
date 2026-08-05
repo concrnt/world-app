@@ -17,6 +17,7 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}

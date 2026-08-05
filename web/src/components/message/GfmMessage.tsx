@@ -17,6 +17,7 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}

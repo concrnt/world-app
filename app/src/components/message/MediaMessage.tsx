@@ -21,6 +21,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<PostView uri={message.uri} />)
             }}

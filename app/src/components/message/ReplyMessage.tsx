@@ -33,6 +33,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 <MessageContainer oneline uri={props.message.value.targetURI} />
             </ErrorBoundary>
             <MessageLayout
+                detail={props.detail}
                 onClick={() => {
                     push(<PostView uri={props.message.uri} />)
                 }}

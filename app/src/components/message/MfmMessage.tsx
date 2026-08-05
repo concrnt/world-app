@@ -20,6 +20,7 @@ export const MfmMessage = (props: MessageProps<MfmMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<PostView uri={message.uri} />)
             }}

@@ -18,6 +18,7 @@ interface Props {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }
 
@@ -40,6 +41,7 @@ export const ActivitypubNote = (props: Props) => {
                 noteURL={props.noteURL}
                 message={props.message}
                 forceExpanded={props.forceExpanded}
+                detail={props.detail}
                 rerouted={props.rerouted}
             />
         </Suspense>
@@ -52,6 +54,7 @@ const Note = (props: {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }) => {
     const { push } = useStack()
@@ -87,6 +90,7 @@ const Note = (props: {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<ApView uri={note.id} />)
             }}

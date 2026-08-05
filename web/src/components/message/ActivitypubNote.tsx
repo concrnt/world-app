@@ -17,6 +17,7 @@ interface Props {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }
 
@@ -39,6 +40,7 @@ export const ActivitypubNote = (props: Props) => {
                 noteURL={props.noteURL}
                 message={props.message}
                 forceExpanded={props.forceExpanded}
+                detail={props.detail}
                 rerouted={props.rerouted}
             />
         </Suspense>
@@ -51,6 +53,7 @@ const Note = (props: {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }) => {
     const navigate = useNavigate()
@@ -86,6 +89,7 @@ const Note = (props: {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/activitypub/view/' + encodeURIComponent(note.id))
             }}

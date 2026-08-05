@@ -26,6 +26,7 @@ interface Props {
     content?: string
     oneline?: boolean
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }
 
@@ -43,17 +44,59 @@ export const MessageContainer = (props: Props): ReactNode | null => {
 
     switch (message.schema) {
         case Schemas.markdownMessage:
-            return <MarkdownMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <MarkdownMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.gfmMessage:
-            return <GfmMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <GfmMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.mfmMessage:
-            return <MfmMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <MfmMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.plaintextMessage:
-            return <PlaintextMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <PlaintextMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.mediaMessage:
-            return <MediaMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <MediaMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.replyMessage:
-            return <ReplyMessage message={message} forceExpanded={props.forceExpanded} rerouted={props.rerouted} />
+            return (
+                <ReplyMessage
+                    message={message}
+                    forceExpanded={props.forceExpanded}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         case Schemas.rerouteMessage:
             return <RerouteMessage message={message} />
         case Schemas.likeAssociation:
@@ -74,16 +117,24 @@ export const MessageContainer = (props: Props): ReactNode | null => {
                     noteURL={noteMessage.value.noteURL}
                     message={message}
                     forceExpanded={props.forceExpanded}
+                    detail={props.detail}
                     rerouted={props.rerouted}
                 />
             )
         }
         case Schemas.atprotoRecord: {
             const recordMessage = message as Message<AtprotoRecordSchema>
-            return <BlueskyRecord atUri={recordMessage.value.atUri} message={recordMessage} rerouted={props.rerouted} />
+            return (
+                <BlueskyRecord
+                    atUri={recordMessage.value.atUri}
+                    message={recordMessage}
+                    detail={props.detail}
+                    rerouted={props.rerouted}
+                />
+            )
         }
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
-            return <LegacyNoteMessage message={message} forceExpanded={props.forceExpanded} />
+            return <LegacyNoteMessage message={message} forceExpanded={props.forceExpanded} detail={props.detail} />
         default:
             return (
                 <div>

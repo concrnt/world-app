@@ -13,6 +13,7 @@ import { MessageFooter } from './Footer'
 interface Props {
     atUri: string
     message?: Message<AtprotoRecordSchema>
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }
 
@@ -27,7 +28,7 @@ export const BlueskyRecord = (props: Props) => {
 
     return (
         <Suspense fallback={<MessageSkeleton />}>
-            <Post postPromise={postPromise} message={props.message} rerouted={props.rerouted} />
+            <Post postPromise={postPromise} message={props.message} detail={props.detail} rerouted={props.rerouted} />
         </Suspense>
     )
 }
@@ -35,6 +36,7 @@ export const BlueskyRecord = (props: Props) => {
 const Post = (props: {
     postPromise: Promise<BskyPostView | null>
     message?: Message<AtprotoRecordSchema>
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }) => {
     const { push } = useStack()
@@ -59,6 +61,7 @@ const Post = (props: {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<BskyView uri={post.uri} />)
             }}

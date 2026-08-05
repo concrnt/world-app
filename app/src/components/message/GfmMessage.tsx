@@ -20,6 +20,7 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<PostView uri={message.uri} />)
             }}

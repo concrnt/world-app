@@ -170,7 +170,7 @@ export const PostView = (props: Props) => {
                 >
                     <ErrorBoundary FallbackComponent={RenderError}>
                         <Suspense fallback={<MessageSkeleton />}>
-                            <MessageContainer uri={props.uri} forceExpanded />
+                            <MessageContainer uri={props.uri} forceExpanded detail />
                         </Suspense>
                     </ErrorBoundary>
                 </div>

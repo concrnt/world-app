@@ -5,5 +5,6 @@ export interface MessageProps<T> {
     onClick?: (event: React.MouseEvent<HTMLDivElement>) => void
     lastUpdated?: number
     forceExpanded?: boolean
+    detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }

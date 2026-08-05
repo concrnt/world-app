@@ -30,6 +30,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 <MessageContainer oneline uri={props.message.value.targetURI} />
             </ErrorBoundary>
             <MessageLayout
+                detail={props.detail}
                 onClick={() => {
                     navigate('/post/' + encodeURIComponent(props.message.uri))
                 }}

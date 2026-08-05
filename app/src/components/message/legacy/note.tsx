@@ -16,6 +16,7 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 push(<PostView uri={message.uri} />)
             }}

@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 
 interface Props {
     onClick?: () => void
+    detail?: boolean
     left: ReactNode
     headerLeft: ReactNode
     headerRight?: ReactNode
@@ -15,11 +16,13 @@ export const MessageLayout = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                userSelect: props.detail ? 'text' : undefined,
+                WebkitUserSelect: props.detail ? 'text' : undefined
             }}
             onClick={(e) => {
                 e.stopPropagation()
-                props.onClick?.()
+                if (!props.detail) props.onClick?.()
             }}
         >
             {props.left}

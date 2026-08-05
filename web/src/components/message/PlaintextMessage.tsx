@@ -16,6 +16,7 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
 
     return (
         <MessageLayout
+            detail={props.detail}
             onClick={() => {
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}
