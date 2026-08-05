@@ -153,6 +153,8 @@ export const Activitypub = () => {
             <Header>{t('title')}</Header>
             <div
                 style={{
+                    flex: 1,
+                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: CssVar.space(2),

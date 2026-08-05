@@ -1,10 +1,12 @@
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Button, Chip, Tab, Tabs, Text } from '@concrnt/ui'
+import { NotFoundError, Document } from '@concrnt/client'
+import { Schemas, ApFollowSchema } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { CssVar } from '../types/Theme'
-import { ApObject, resolveApObject } from '../utils/activitypub'
+import { ApObject, apFollowKey, resolveApObject } from '../utils/activitypub'
 import { useNavigate } from 'react-router-dom'
 
 // ブリッジのfollowing/followers APIはcc-requester認証で自分のentityを引く自分専用APIのため、
@@ -57,9 +59,7 @@ export const ApFollowList = (props: Props) => {
         <div
             style={{
                 display: 'flex',
-                flexDirection: 'column',
-                flex: 1,
-                overflow: 'hidden'
+                flexDirection: 'column'
             }}
         >
             <Tabs>
@@ -105,8 +105,6 @@ const ActorList = (props: { entriesPromise: Promise<Entry[] | null>; onNavigate?
     return (
         <div
             style={{
-                flex: 1,
-                overflowY: 'auto',
                 padding: CssVar.space(2)
             }}
         >
@@ -147,6 +145,8 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
     const navigate = useNavigate()
 
     const [actor, setActor] = useState<ApObject | null | undefined>(undefined)
+    const [followed, setFollowed] = useState<boolean | undefined>(undefined)
+    const [hovered, setHovered] = useState(false)
 
     useEffect(() => {
         resolveApObject(client, props.entry.actorURI)
@@ -155,7 +155,52 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
                 console.log(err)
                 setActor(null)
             })
+
+        client.api
+            .getDocument(apFollowKey(client.ccid, props.entry.actorURI))
+            .then(() => {
+                setFollowed(true)
+            })
+            .catch((err) => {
+                if (err instanceof NotFoundError) {
+                    setFollowed(false)
+                } else {
+                    console.log(err)
+                }
+            })
     }, [client, props.entry.actorURI])
+
+    const toggleFollow = () => {
+        if (followed) {
+            client.api
+                .delete(apFollowKey(client.ccid, props.entry.actorURI))
+                .then(() => {
+                    setFollowed(false)
+                })
+                .catch((err) => {
+                    console.log(err)
+                })
+        } else {
+            const document: Document<ApFollowSchema> = {
+                kind: 'record',
+                key: apFollowKey(client.ccid, props.entry.actorURI),
+                author: client.ccid,
+                schema: Schemas.apFollow,
+                value: {
+                    actorURI: props.entry.actorURI
+                },
+                createdAt: new Date()
+            }
+            client.api
+                .commit(document)
+                .then(() => {
+                    setFollowed(true)
+                })
+                .catch((err) => {
+                    console.log(err)
+                })
+        }
+    }
 
     // resolveに失敗した(消滅済み等)actorも行としては残し、生のURIで表示する
     const handle =
@@ -238,6 +283,17 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
                     {handle}
                 </Text>
             </div>
+            {followed !== undefined && (
+                <div
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                    style={{ flexShrink: 0 }}
+                >
+                    <Button variant={followed ? 'outlined' : 'contained'} onClick={toggleFollow}>
+                        {followed ? (hovered ? t('unfollow') : t('following')) : t('follow')}
+                    </Button>
+                </div>
+            )}
         </div>
     )
 }

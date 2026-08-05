@@ -619,6 +619,8 @@
         "apFollowList": {
             "following": "フォロー中",
             "followers": "フォロワー",
+            "follow": "フォロー",
+            "unfollow": "フォロー解除",
             "pending": "承認待ち",
             "loadMore": "もっと見る",
             "empty": "ユーザーがいません",
