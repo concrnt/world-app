@@ -1,0 +1,35 @@
+@keyframes welcome-parallax-100 {
+    from {
+        transform: translateY(0%);
+    }
+    to {
+        transform: translateY(-100%);
+    }
+}
+
+@keyframes welcome-parallax-500 {
+    from {
+        transform: translateY(0%);
+    }
+    to {
+        transform: translateY(-500%);
+    }
+}
+
+@keyframes welcome-parallax-1000 {
+    from {
+        transform: translateY(0%);
+    }
+    to {
+        transform: translateY(-1000%);
+    }
+}
+
+@keyframes welcome-parallax-2000 {
+    from {
+        transform: translateY(0%);
+    }
+    to {
+        transform: translateY(-2000%);
+    }
+}

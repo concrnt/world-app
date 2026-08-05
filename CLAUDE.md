@@ -48,4 +48,6 @@ The README documents the `cckv://<owner>/concrnt.world/...` KV layout used for s
 
 - Do NOT create utility functions to deduplicate code — duplication is accepted. Only consider a utility once the same code is used in 10+ places. Same for shared CSS style objects: make a component instead, or don't share at all.
 - Use UI-library components raw. Only wrap a component to add functionality — never create a style-only wrapper; embed the CSS at each usage site instead.
-- Never use `className` (except when required for animations or a specific library). Use the `style` prop with plain objects.
+- Never use hand-written `className` strings. Use the `style` prop with plain objects.
+- For styles inline `style` cannot express (pseudo-classes, `@keyframes`), use a CSS Modules file paired 1:1 with the component (`Foo.module.css` next to `Foo.tsx`). No shared CSS files. Reference keyframe names via the CSS Modules export (`styles.spin`).
+- Never embed `<style>` tags in JSX or inject style elements into `document.head`.

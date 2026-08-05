@@ -17,6 +17,7 @@ import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { AppMock } from '../components/welcome/AppMock'
 import { DummyMessage } from '../components/welcome/DummyMessage'
+import styles from './Welcome.module.css'
 
 const WelcomeTimelineCard = (props: {
     uri: string
@@ -236,7 +237,7 @@ export const WelcomePage = () => {
                                         borderRadius: '4px',
                                         border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,
                                         padding: '0 4px',
-                                        animation: `welcome-parallax-${decoration.parallax} linear`,
+                                        animation: `${styles[`welcome-parallax-${decoration.parallax}`]} linear`,
                                         animationTimeline: 'scroll()'
                                     }}
                                 >
@@ -520,24 +521,6 @@ export const WelcomePage = () => {
                     </div>
                 </div>
             </div>
-            <style>{`
-                @keyframes welcome-parallax-100 {
-                    from { transform: translateY(0%); }
-                    to { transform: translateY(-100%); }
-                }
-                @keyframes welcome-parallax-500 {
-                    from { transform: translateY(0%); }
-                    to { transform: translateY(-500%); }
-                }
-                @keyframes welcome-parallax-1000 {
-                    from { transform: translateY(0%); }
-                    to { transform: translateY(-1000%); }
-                }
-                @keyframes welcome-parallax-2000 {
-                    from { transform: translateY(0%); }
-                    to { transform: translateY(-2000%); }
-                }
-            `}</style>
         </BaseThemeProvider>
     )
 }

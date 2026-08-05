@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from 'react'
 import ReactDOM from 'react-dom/client'
+import '@concrnt/ui/style.css'
 import './index.css'
 import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'

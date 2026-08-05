@@ -24,6 +24,12 @@ export const apInboxKey = (ccid: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/inbox`
 }
 
+// ブリッジがインバウンドnoteを保存するレコードキー(ブリッジ側inboxKeyと同一の決定的導出)。
+// serviceCcidはブリッジのサービスアカウント(net.concrnt.activitypub.infoのserviceAccountId)。
+export const apNoteKey = (serviceCcid: string, noteURL: string): string => {
+    return `cckv://${serviceCcid}/activitypub.concrnt.world/inbox/${CDID.newFromStringX(noteURL).toString()}`
+}
+
 // noteはほぼ不変・actorの更新もSWR(stale表示+裏で再取得)で追従できるため1hで共通
 export const AP_RESOLVE_TTL = 1000 * 60 * 60
 // 死んだインスタンス/410はブリッジが404で返すため、失敗resolveの連打を5分抑止

@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 import { Button, ConcrntLogo, CssVar, Text, TextField } from '@concrnt/ui'
+import css from './Register.module.css'
 
 export const Register = () => {
     const serverPromise = useMemo(() => {
@@ -178,7 +179,6 @@ export const Inner = (props: {
 
     return (
         <AuthScreen align="top">
-            <RegisterPageStyle />
             <PageHeader title={t('title')} description={domain} />
 
             <div style={authStyles.section}>
@@ -196,7 +196,7 @@ export const Inner = (props: {
                 </Text>
                 <Text style={styles.sectionDescription}>{t('formDescription')}</Text>
 
-                <div className="register-form-shell" ref={formShellRef}>
+                <div className={css.formShell} ref={formShellRef}>
                     {server.meta.registration === 'invite' && (
                         <>
                             <Text style={{ color: CssVar.uiText }}>{t('inviteCode')}</Text>
@@ -265,32 +265,6 @@ const PageHeader = (props: { title: string; description?: ReactNode; brandOnly?:
             </div>
             {props.description && <Text style={styles.pageHeaderMeta}>{props.description}</Text>}
         </div>
-    )
-}
-
-const RegisterPageStyle = () => {
-    return (
-        <style>
-            {`
-                .register-form-shell,
-                .register-form-shell form {
-                    width: 100%;
-                }
-
-                .register-form-shell form {
-                    display: flex;
-                    flex-direction: column;
-                    gap: ${CssVar.space(3)};
-                }
-
-                .register-form-shell fieldset {
-                    border: none;
-                    padding: 0;
-                    margin: 0;
-                    min-width: 0;
-                }
-            `}
-        </style>
     )
 }
 

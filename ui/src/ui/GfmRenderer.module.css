@@ -1,0 +1,44 @@
+.body {
+    width: 100%;
+    word-break: break-word;
+}
+
+.body p {
+    margin: 0.5em 0;
+}
+
+.body ul,
+.body ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.body blockquote {
+    margin: 0;
+    padding-left: 1rem;
+    border-left: 4px solid #ccc;
+}
+
+.body table {
+    border: 1px solid #ccc;
+    border-collapse: collapse;
+}
+
+.body th,
+.body td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+/* 先頭/末尾ブロックの外側マージンを殺し、ヘッダーとの間隔を他レンダラと揃える */
+.body > :first-child {
+    margin-top: 0;
+}
+
+.body > :last-child {
+    margin-bottom: 0;
+}

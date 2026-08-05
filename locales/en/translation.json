@@ -469,6 +469,9 @@
             "userLiked": "{{name}} added this to favorites",
             "loading": "Loading..."
         },
+        "activitypubNote": {
+            "openRemote": "Open on remote server"
+        },
         "followAck": {
             "userFollowed": "{{name}} followed",
             "loading": "Loading..."

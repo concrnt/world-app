@@ -27,3 +27,16 @@ export const RawHtml: Story = {
         messagebody: '<details><summary>open me</summary>\n\nhidden content\n\n</details>'
     }
 }
+
+export const Emoji: Story = {
+    args: {
+        messagebody:
+            'custom emoji :wave: in text\n\n<b>inside raw html :wave: too</b>\n\nunknown shortcode :unknown: stays text\n\n`:wave:` in code is not converted',
+        emojiDict: {
+            wave: {
+                imageURL:
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Ccircle cx='36' cy='36' r='30' fill='orange'/%3E%3C/svg%3E"
+            }
+        }
+    }
+}

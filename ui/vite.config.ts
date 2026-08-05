@@ -10,7 +10,8 @@ export default defineConfig({
             entry: path.resolve(__dirname, 'src/index.ts'),
             name: 'concrnt-ui',
             formats: ['es', 'cjs'],
-            fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs')
+            fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
+            cssFileName: 'style'
         },
         rollupOptions: {
             external: ['react', 'react-dom', 'react/jsx-runtime'],

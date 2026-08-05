@@ -12,6 +12,7 @@ import { SelectWidget } from './SelectWidget'
 import { CheckboxWidget } from './CheckboxWidget'
 import { MediaInputWidget } from './MediaInputWidget'
 import { UserPickerWidget } from './UserPickerWidget'
+import styles from './main.module.css'
 
 interface Props {
     schemaURL?: string
@@ -106,7 +107,7 @@ export const CCEditor = (props: Props) => {
                             setErrors(errors)
                             props.setValue(e.formData)
                         }}
-                        className="cc-editor-form"
+                        className={styles.form}
                     >
                         <Button
                             //type="submit"
@@ -119,17 +120,6 @@ export const CCEditor = (props: Props) => {
                             Submit
                         </Button>
                     </Form>
-                    <style>{`
-                        .cc-editor-form fieldset {
-                            border: none;
-                            padding: 0;
-                            margin: 0;
-                            min-width: 0;
-                            display: flex;
-                            flex-direction: column;
-                            gap: ${CssVar.space(4)};
-                        }
-                    `}</style>
                 </>
             )}
         </div>

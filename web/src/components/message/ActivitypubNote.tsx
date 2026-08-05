@@ -10,7 +10,8 @@ import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
 import { usePreference } from '../../contexts/Preference'
-import { MdLock, MdMail } from 'react-icons/md'
+import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
     actorURL: string
@@ -56,6 +57,7 @@ const Note = (props: {
     detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.activitypubNote' })
     const navigate = useNavigate()
     const [devmode] = usePreference('developerMode')
 
@@ -91,7 +93,12 @@ const Note = (props: {
         <MessageLayout
             detail={props.detail}
             onClick={() => {
-                navigate('/activitypub/view/' + encodeURIComponent(note.id))
+                // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
+                if (props.message) {
+                    navigate('/post/' + encodeURIComponent(props.message.uri))
+                } else {
+                    navigate('/activitypub/view/' + encodeURIComponent(note.id))
+                }
             }}
             left={
                 <div
@@ -124,9 +131,28 @@ const Note = (props: {
                 {note._misskey_content ? (
                     <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
                 ) : (
-                    <GfmRenderer messagebody={note.content ?? ''} />
+                    <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
                 )}
             </CollapsibleBody>
+            {props.detail && (
+                <a
+                    href={note.url ?? note.id}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        fontSize: '0.8rem',
+                        color: CssVar.contentLink,
+                        textDecoration: 'none'
+                    }}
+                >
+                    <MdOpenInNew size={14} />
+                    {t('openRemote')}
+                </a>
+            )}
             {devmode && <Text variant="caption">{props.noteURL}</Text>}
             {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
         </MessageLayout>

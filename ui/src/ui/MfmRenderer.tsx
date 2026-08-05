@@ -4,119 +4,10 @@ import { Codeblock } from './Codeblock'
 import { Link } from './Link'
 import { type EmojiLite } from './CfmRenderer'
 import { CCImage } from '../contexts/CCImage'
+import styles from './MfmRenderer.module.css'
 
 // mfm-renderer-reactはMUI/emotion/React18に依存しておりこのmonorepoでは使えないため、
-// パーサ(mfm-js)だけ借りてレンダラは自前実装している。アニメーション定義はv1の
-// mfm-renderer-react 0.0.9と同一。
-const MFM_KEYFRAMES = `
-@keyframes mfm-tada {
-	from { transform: scale3d(1, 1, 1); }
-	10%, 20% { transform: scale3d(0.91, 0.91, 0.91) rotate3d(0, 0, 1, -2deg); }
-	30%, 70% { transform: scale3d(1.09, 1.09, 1.09) rotate3d(0, 0, 1, 2deg); }
-	50%, 90% { transform: scale3d(1.09, 1.09, 1.09) rotate3d(0, 0, 1, -2deg); }
-	to { transform: scale3d(1, 1, 1); }
-}
-@keyframes mfm-jelly {
-	from { transform: scale3d(1, 1, 1); }
-	30% { transform: scale3d(1.25, 0.75, 1); }
-	40% { transform: scale3d(0.75, 1.25, 1); }
-	50% { transform: scale3d(1.15, 0.85, 1); }
-	65% { transform: scale3d(0.95, 1.05, 1); }
-	75% { transform: scale3d(1.05, 0.95, 1); }
-	to { transform: scale3d(1, 1, 1); }
-}
-@keyframes mfm-twitch {
-	0% { transform: translate(7px, -2px) }
-	5% { transform: translate(-3px, 1px) }
-	10% { transform: translate(-7px, -1px) }
-	15% { transform: translate(0px, -1px) }
-	20% { transform: translate(-8px, 6px) }
-	25% { transform: translate(-4px, -3px) }
-	30% { transform: translate(-4px, -6px) }
-	35% { transform: translate(-8px, -8px) }
-	40% { transform: translate(4px, 6px) }
-	45% { transform: translate(-3px, 1px) }
-	50% { transform: translate(2px, -10px) }
-	55% { transform: translate(-7px, 0px) }
-	60% { transform: translate(-2px, 4px) }
-	65% { transform: translate(3px, -8px) }
-	70% { transform: translate(6px, 7px) }
-	75% { transform: translate(-7px, -2px) }
-	80% { transform: translate(-7px, -8px) }
-	85% { transform: translate(9px, 3px) }
-	90% { transform: translate(-3px, -2px) }
-	95% { transform: translate(-10px, 2px) }
-	100% { transform: translate(-2px, -6px) }
-}
-@keyframes mfm-shake {
-	0% { transform: translate(-3px, -1px) rotate(-8deg) }
-	5% { transform: translate(0px, -1px) rotate(-10deg) }
-	10% { transform: translate(1px, -3px) rotate(0deg) }
-	15% { transform: translate(1px, 1px) rotate(11deg) }
-	20% { transform: translate(-2px, 1px) rotate(1deg) }
-	25% { transform: translate(-1px, -2px) rotate(-2deg) }
-	30% { transform: translate(-1px, 2px) rotate(-3deg) }
-	35% { transform: translate(2px, 1px) rotate(6deg) }
-	40% { transform: translate(-2px, -3px) rotate(-9deg) }
-	45% { transform: translate(0px, -1px) rotate(-12deg) }
-	50% { transform: translate(1px, 2px) rotate(10deg) }
-	55% { transform: translate(0px, -3px) rotate(8deg) }
-	60% { transform: translate(1px, -1px) rotate(8deg) }
-	65% { transform: translate(0px, -1px) rotate(-7deg) }
-	70% { transform: translate(-1px, -3px) rotate(6deg) }
-	75% { transform: translate(0px, -2px) rotate(4deg) }
-	80% { transform: translate(-2px, -1px) rotate(3deg) }
-	85% { transform: translate(1px, -3px) rotate(-10deg) }
-	90% { transform: translate(1px, 0px) rotate(3deg) }
-	95% { transform: translate(-2px, 0px) rotate(-3deg) }
-	100% { transform: translate(2px, 1px) rotate(2deg) }
-}
-@keyframes mfm-spin {
-	0% { transform: rotate(0deg); }
-	100% { transform: rotate(360deg); }
-}
-@keyframes mfm-spin-x {
-	0% { transform: perspective(128px) rotateX(0deg); }
-	100% { transform: perspective(128px) rotateX(360deg); }
-}
-@keyframes mfm-spin-y {
-	0% { transform: perspective(128px) rotateY(0deg); }
-	100% { transform: perspective(128px) rotateY(360deg); }
-}
-@keyframes mfm-jump {
-	0% { transform: translateY(0); }
-	25% { transform: translateY(-16px); }
-	50% { transform: translateY(0); }
-	75% { transform: translateY(-8px); }
-	100% { transform: translateY(0); }
-}
-@keyframes mfm-bounce {
-	0% { transform: translateY(0) scale(1, 1); }
-	25% { transform: translateY(-16px) scale(1, 1); }
-	50% { transform: translateY(0) scale(1, 1); }
-	75% { transform: translateY(0) scale(1.5, 0.75); }
-	100% { transform: translateY(0) scale(1, 1); }
-}
-@keyframes mfm-rainbow {
-	0% { filter: hue-rotate(0deg) contrast(150%) saturate(150%); }
-	100% { filter: hue-rotate(360deg) contrast(150%) saturate(150%); }
-}
-@keyframes mfm-sparkle {
-	0% { rotate: 0deg; scale: 0; }
-	50% { scale: var(--size); }
-	100% { rotate: 360deg; scale: 0; }
-}
-`
-
-let mfmStylesInjected = false
-const ensureMfmStyles = (): void => {
-    if (mfmStylesInjected || typeof document === 'undefined') return
-    const style = document.createElement('style')
-    style.textContent = MFM_KEYFRAMES
-    document.head.appendChild(style)
-    mfmStylesInjected = true
-}
-
+// パーサ(mfm-js)だけ借りてレンダラは自前実装している。
 const normalizeColor = (color: string): string => {
     if (color[0] === '#') return color
     return color.replace(/([0-9a-f]{3,6})/g, '#$1')
@@ -223,7 +114,7 @@ const Sparkle = ({ children }: { children: ReactNode }): ReactNode => {
                                 transformOrigin: 'center',
                                 transformBox: 'fill-box',
                                 translate: `${star.x}px ${star.y}px`,
-                                animation: `mfm-sparkle ${star.dur}ms linear infinite`,
+                                animation: `${styles['mfm-sparkle']} ${star.dur}ms linear infinite`,
                                 '--size': star.size
                             } as CSSProperties
                         }
@@ -364,7 +255,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'tada':
                     return (
                         <AnimatedFn
-                            animation="mfm-tada"
+                            animation={styles['mfm-tada']}
                             speed={`${args.speed ?? '1s'} linear infinite both`}
                             delay={args.delay ?? '0s'}
                             style={{ fontSize: '150%' }}
@@ -375,7 +266,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'jelly':
                     return (
                         <AnimatedFn
-                            animation="mfm-jelly"
+                            animation={styles['mfm-jelly']}
                             speed={`${args.speed ?? '1s'} linear infinite both`}
                             delay={args.delay ?? '0s'}
                         >
@@ -385,7 +276,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'twitch':
                     return (
                         <AnimatedFn
-                            animation="mfm-twitch"
+                            animation={styles['mfm-twitch']}
                             speed={`${args.speed ?? '1s'} linear infinite`}
                             delay={args.delay ?? '0s'}
                         >
@@ -395,7 +286,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'shake':
                     return (
                         <AnimatedFn
-                            animation="mfm-shake"
+                            animation={styles['mfm-shake']}
                             speed={`${args.speed ?? '1s'} ease infinite`}
                             delay={args.delay ?? '0s'}
                         >
@@ -404,7 +295,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                     )
                 case 'spin': {
                     const direction = args.left ? 'reverse' : args.alternate ? 'alternate' : 'normal'
-                    const animation = args.x ? 'mfm-spin-x' : args.y ? 'mfm-spin-y' : 'mfm-spin'
+                    const animation = args.x ? styles['mfm-spin-x'] : args.y ? styles['mfm-spin-y'] : styles['mfm-spin']
                     return (
                         <AnimatedFn
                             animation={animation}
@@ -419,7 +310,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'jump':
                     return (
                         <AnimatedFn
-                            animation="mfm-jump"
+                            animation={styles['mfm-jump']}
                             speed={`${args.speed ?? '1s'} linear infinite`}
                             delay={args.delay ?? '0s'}
                         >
@@ -429,7 +320,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'bounce':
                     return (
                         <AnimatedFn
-                            animation="mfm-bounce"
+                            animation={styles['mfm-bounce']}
                             speed={`${args.speed ?? '1s'} linear infinite`}
                             delay={args.delay ?? '0s'}
                         >
@@ -439,7 +330,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 case 'rainbow':
                     return (
                         <AnimatedFn
-                            animation="mfm-rainbow"
+                            animation={styles['mfm-rainbow']}
                             speed={`${args.speed ?? '1s'} linear infinite`}
                             delay={args.delay ?? '0s'}
                         >
@@ -673,8 +564,6 @@ export interface MfmRendererProps {
 }
 
 export const MfmRenderer = (props: MfmRendererProps): ReactNode => {
-    ensureMfmStyles()
-
     const ast = useMemo(() => {
         if (props.messagebody === '') {
             return []

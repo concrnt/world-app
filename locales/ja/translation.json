@@ -469,6 +469,9 @@
             "userLiked": "{{name}} がお気に入りに登録しました",
             "loading": "読み込み中..."
         },
+        "activitypubNote": {
+            "openRemote": "リモートで開く"
+        },
         "followAck": {
             "userFollowed": "{{name}} がフォローしました",
             "loading": "読み込み中..."

@@ -47,7 +47,7 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
                 <AutoSummary body={message.value.body ?? ''}>
-                    <GfmRenderer messagebody={message.value.body} />
+                    <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
                 </AutoSummary>
             </CollapsibleBody>
             <MessageFooter message={message} rerouted={props.rerouted} />
