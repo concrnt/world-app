@@ -10,6 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { Schemas } from '@concrnt/worldlib'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
+import { ApFollowList } from '../components/ApFollowList'
 import { Drawer } from '../ui/Drawer'
 
 interface ApSettings {
@@ -45,15 +46,6 @@ export const Activitypub = () => {
             .catch((err) => {
                 console.log(err)
                 setSettings(null)
-            })
-
-        client.api
-            .callConcrntApi<any>(client.server.domain, 'net.concrnt.activitypub.stats', {})
-            .then((res) => {
-                console.log('AP stats', res)
-            })
-            .catch((err) => {
-                console.log(err)
             })
 
         client.api
@@ -166,6 +158,8 @@ export const Activitypub = () => {
                         >
                             {t('inquiry')}
                         </Button>
+                        <Divider />
+                        <ApFollowList />
                     </>
                 )}
             </div>

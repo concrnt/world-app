@@ -613,6 +613,14 @@
             "following": "Following",
             "followers": "Followers"
         },
+        "apFollowList": {
+            "following": "Following",
+            "followers": "Followers",
+            "pending": "Pending",
+            "loadMore": "Load more",
+            "empty": "No users",
+            "loadError": "Failed to load"
+        },
         "userPicker": {
             "addUser": "Add user",
             "loading": "Loading..."
