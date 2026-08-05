@@ -3,7 +3,7 @@ import { useClient } from '../contexts/Client'
 import { View } from '../components/View'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
-import { ApObject } from '../utils/activitypub'
+import { ApObject, resolveApObject } from '../utils/activitypub'
 
 interface Props {
     uri: string
@@ -14,9 +14,10 @@ export const ApView = (props: Props) => {
     const [ld, setLd] = useState<ApObject>()
 
     useEffect(() => {
-        client.api
-            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.uri })
-            .then(async (res) => setLd(new ApObject(res)))
+        resolveApObject(client, props.uri)
+            .then((res) => {
+                if (res) setLd(res)
+            })
             .catch((err) => {
                 console.log(err)
             })

@@ -1,5 +1,5 @@
 import { Suspense, use, useMemo } from 'react'
-import { ApObject } from '../../utils/activitypub'
+import { ApObject, resolveApObject } from '../../utils/activitypub'
 import { MessageLayout } from './MessageLayout'
 import { Avatar, CssVar, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
@@ -22,17 +22,11 @@ export const ActivitypubNote = (props: Props) => {
     const { client } = useClient()
 
     const notePromise = useMemo(() => {
-        return client.api
-            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.noteURL })
-            .then(async (res) => new ApObject(res))
-            .catch(() => null)
+        return resolveApObject(client, props.noteURL).catch(() => null)
     }, [client, props.noteURL])
 
     const authorPromise = useMemo(() => {
-        return client.api
-            .callConcrntApi<ApObject>(client.server.domain, 'net.concrnt.activitypub.resolve', { uri: props.actorURL })
-            .then(async (res) => new ApObject(res))
-            .catch(() => null)
+        return resolveApObject(client, props.actorURL).catch(() => null)
     }, [client, props.actorURL])
 
     return (

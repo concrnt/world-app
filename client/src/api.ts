@@ -56,6 +56,7 @@ export interface FetchOptions<T> {
     cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback'
     expressGetter?: (data: T) => void
     TTL?: number
+    negativeTTL?: number
     auth?: 'no-auth'
     timeoutms?: number
 }
@@ -325,7 +326,12 @@ export class Api {
                 cached = cachedEntry.data
 
                 const age = Date.now() - cachedEntry.timestamp
-                if (age < (cachedEntry.data ? (opts?.TTL ?? this.defaultCacheTTL) : this.negativeCacheTTL)) {
+                if (
+                    age <
+                    (cachedEntry.data
+                        ? (opts?.TTL ?? this.defaultCacheTTL)
+                        : (opts?.negativeTTL ?? this.negativeCacheTTL))
+                ) {
                     // return cached if TTL is not expired
                     // fallbackモードはネットワーク優先なのでここでは返さない
                     if (opts?.cache !== 'fallback' && !(opts?.cache === 'best-effort' && !cachedEntry.data)) {
@@ -348,24 +354,27 @@ export class Api {
                 return this.inFlightRequests.get(cacheKey)
             }
 
-            let authHeaders = {}
-            if (opts?.auth !== 'no-auth') {
-                try {
-                    authHeaders = await this.getHeaders(fetchHost)
-                } catch (e) {
-                    console.error('failed to get auth headers', e)
-                }
-            }
+            // getHeadersのawait中に別callerがすり抜けて同一リクエストが並列発火しないよう、
+            // in-flight登録(下のset)までをawaitなしで済ませる
+            const authHeadersPromise: Promise<Record<string, string>> =
+                opts?.auth !== 'no-auth'
+                    ? this.getHeaders(fetchHost).catch((e) => {
+                          console.error('failed to get auth headers', e)
+                          return {}
+                      })
+                    : Promise.resolve({})
 
-            const requestOptions = {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    ...authHeaders
-                }
-            }
-
-            const req = fetchWithTimeout(url, requestOptions, opts?.timeoutms)
+            const req = authHeadersPromise
+                .then(async (authHeaders) => {
+                    const requestOptions = {
+                        method: 'GET',
+                        headers: {
+                            Accept: 'application/json',
+                            ...authHeaders
+                        }
+                    }
+                    return await fetchWithTimeout(url, requestOptions, opts?.timeoutms)
+                })
                 .then(async (res) => {
                     if (res.status === 403) {
                         return await Promise.reject(new PermissionError(await res.text()))
@@ -378,7 +387,9 @@ export class Api {
 
                     if (!res.ok) {
                         if (res.status === 404) {
-                            this.cache.set(cacheKey, null)
+                            // 書き込み完了前にin-flightが解除されると後続callerがキャッシュミスして
+                            // 同じリクエストを再発火するためawaitする(成功側も同様)
+                            await this.cache.set(cacheKey, null)
                             throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`, url)
                         }
                         return await Promise.reject(
@@ -391,7 +402,7 @@ export class Api {
                     const data: T = await res.json()
 
                     opts?.expressGetter?.(data)
-                    if (opts?.cache !== 'negative-only') this.cache.set(cacheKey, data)
+                    if (opts?.cache !== 'negative-only') await this.cache.set(cacheKey, data)
 
                     return data
                 })

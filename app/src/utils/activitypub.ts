@@ -1,4 +1,5 @@
-import { CDID } from '@concrnt/client'
+import { CDID, renderUriTemplate } from '@concrnt/client'
+import { type Client } from '@concrnt/worldlib'
 
 export interface ApImage {
     type: 'Image'
@@ -11,6 +12,22 @@ export interface ApImage {
 // ハッシュはブリッジ側の CDID.makeHash と同一(keccak256先頭15バイトのx-CDID)。
 export const apFollowKey = (ccid: string, actorURI: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/follows/${CDID.newFromStringX(actorURI).toString()}`
+}
+
+// noteはほぼ不変・actorの更新もSWR(stale表示+裏で再取得)で追従できるため1hで共通
+export const AP_RESOLVE_TTL = 1000 * 60 * 60
+// 死んだインスタンス/410はブリッジが404で返すため、失敗resolveの連打を5分抑止
+export const AP_RESOLVE_NEGATIVE_TTL = 1000 * 60 * 5
+
+// resolveはネットワーク素通しだと表示中のノート数×2(note+author)のリクエストが飛ぶため、
+// 通常メッセージと同じfetchWithCache(KVS永続+in-flight dedup+negative cache)に乗せる
+export const resolveApObject = async (client: Client, uri: string): Promise<ApObject | null> => {
+    const endpoint = renderUriTemplate(client.server, 'net.concrnt.activitypub.resolve', { uri })
+    const res = await client.api.fetchWithCache<Partial<ApObject> | null>(client.server.domain, endpoint, `ap:${uri}`, {
+        TTL: AP_RESOLVE_TTL,
+        negativeTTL: AP_RESOLVE_NEGATIVE_TTL
+    })
+    return res ? new ApObject(res) : null
 }
 
 export class ApObject {
