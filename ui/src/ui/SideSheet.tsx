@@ -53,7 +53,9 @@ export const SideSheet = (props: Props) => {
                         padding: `0 ${CssVar.space(4)}`,
                         flex: 1,
                         display: 'flex',
-                        minHeight: 0
+                        flexDirection: 'column',
+                        minHeight: 0,
+                        overflow: 'auto'
                     }}
                 >
                     {props.children}
