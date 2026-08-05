@@ -1,4 +1,15 @@
-import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text, Divider } from '@concrnt/ui'
+import {
+    Avatar,
+    Button,
+    CCWallpaper,
+    CssVar,
+    useTheme,
+    Text,
+    Divider,
+    GfmRenderer,
+    MfmRenderer,
+    type EmojiLite
+} from '@concrnt/ui'
 import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -129,6 +140,13 @@ export const ApPerson = ({ person }: Props) => {
             loadPosts(next, false)
         }
     }, [items, next])
+
+    const emojiDict: Record<string, EmojiLite> = {}
+    for (const tag of person.getTags()) {
+        if (tag.type !== 'Emoji' || !tag.name) continue
+        const icon = Array.isArray(tag.icon) ? tag.icon[0] : tag.icon
+        if (icon?.url) emojiDict[tag.name.replace(/:/g, '')] = { imageURL: icon.url }
+    }
 
     return (
         <View>
@@ -265,7 +283,15 @@ export const ApPerson = ({ person }: Props) => {
                             </Text>
                         </div>
                         <div>
-                            <Text>{person.summary || t('noDescription')}</Text>
+                            {person.summary ? (
+                                person._misskey_summary ? (
+                                    <MfmRenderer messagebody={person._misskey_summary} emojiDict={emojiDict} />
+                                ) : (
+                                    <GfmRenderer messagebody={person.summary} emojiDict={emojiDict} />
+                                )
+                            ) : (
+                                <Text>{t('noDescription')}</Text>
+                            )}
                         </div>
                         <div
                             style={{
