@@ -174,7 +174,10 @@ export const OverlaySurface = (props: OverlaySurfaceProps) => {
 
     if (!mounted || !hostRef.current) return null
     // portalはDOMを飛ばしてもReactツリー上の親へ合成イベントをバブリングさせるため、
-    // 呼び出し元(リスト行のonClick等)にオーバーレイ内の操作が漏れないようここで堰き止める
+    // 呼び出し元(リスト行のonClick等)にオーバーレイ内の操作が漏れないようここで堰き止める。
+    // ただしpointerupは止めない: framer-motionのドラッグ終了はwindowのpointerupリスナーで
+    // 検知されるため、ここで止めるとオーバーレイ内のドラッグ(BottomSheet等)が終了できず
+    // 放した位置で固まる。clickは別途止まるので呼び出し元への漏れは実害なし
     const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
     return createPortal(
         <div
@@ -183,7 +186,6 @@ export const OverlaySurface = (props: OverlaySurfaceProps) => {
             onMouseDown={stop}
             onMouseUp={stop}
             onPointerDown={stop}
-            onPointerUp={stop}
             onTouchStart={stop}
             onTouchEnd={stop}
             onKeyDown={stop}
