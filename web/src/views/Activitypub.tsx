@@ -14,7 +14,7 @@ import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { apSettingsKey } from '../utils/activitypub'
+import { apInboxKey, apSettingsKey } from '../utils/activitypub'
 
 interface ApSettings {
     id: string
@@ -46,6 +46,22 @@ export const Activitypub = () => {
     const [listenCommunities, setListenCommunities] = useState<string[]>([])
 
     const homeTimelineRegex = new RegExp(`^cckv://${client.ccid}/concrnt\\.world/profiles/([^/]+)/home-timeline$`)
+    const inboxUri = apInboxKey(client.ccid)
+
+    // ActivityPubタイムラインはリスト未登録だとknownCommunitiesに出ない上、
+    // どのリストにも無いと受信した投稿を見る手段が無いので警告を出す
+    const [pinnedLists] = useSubscribe(client.pinnedLists)
+    const [inboxListed, setInboxListed] = useState(true)
+    useEffect(() => {
+        Promise.all(
+            pinnedLists.map(async (pin) => {
+                const list = await pin.list.value()
+                return list ? await list.items.value() : []
+            })
+        )
+            .then((arr) => setInboxListed(arr.some((items) => items.includes(inboxUri))))
+            .catch(() => {})
+    }, [pinnedLists, subscriptionOpen])
 
     useEffect(() => {
         client.api
@@ -74,7 +90,6 @@ export const Activitypub = () => {
         client.api
             .callConcrntApi<ApServerInfo>(client.server.domain, 'net.concrnt.activitypub.info', {})
             .then((res) => {
-                const inboxUri = `cckv://${client.ccid}/activitypub.concrnt.world/inbox`
                 const inboxValue = {
                     name: 'ActivityPub',
                     shortname: 'activitypub',
@@ -208,15 +223,29 @@ export const Activitypub = () => {
                             <MdPlaylistAdd size={24} />
                         </IconButton>
                         <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
-                            <Subscription target={`cckv://${client.ccid}/activitypub.concrnt.world/inbox`} />
+                            <Subscription target={inboxUri} />
                         </Drawer>
+                        {!inboxListed && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                                <Text variant="caption" style={{ color: 'red' }}>
+                                    {t('inboxNotListed')}
+                                </Text>
+                                <Button variant="text" onClick={() => setSubscriptionOpen(true)}>
+                                    {t('addToList')}
+                                </Button>
+                            </div>
+                        )}
                         <Divider />
                         <Text>{t('forwardTimeline')}</Text>
                         <Text>{t('forwardTimelineDesc')}</Text>
                         <TimelinePicker
-                            items={knownCommunities.filter(
-                                (tl: Timeline) => !tl.uri.includes('/activitypub.concrnt.world/')
-                            )}
+                            items={[
+                                // リスト未登録だとknownCommunitiesに現れないため、自分のinboxは常に候補に出す
+                                { uri: inboxUri, name: 'ActivityPub' },
+                                ...knownCommunities.filter(
+                                    (tl: Timeline) => !tl.uri.includes('/activitypub.concrnt.world/')
+                                )
+                            ]}
                             selected={listenCommunities}
                             setSelected={setListenCommunities}
                             keyFunc={(item: Timeline) => item.uri}

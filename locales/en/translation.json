@@ -342,6 +342,8 @@
             "yourId": "Your ID: {{id}}",
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to ActivityPub. If none are set, your home timeline is used.",
+            "inboxNotListed": "The ActivityPub timeline is not in any of your lists. Add it to a list to see incoming posts.",
+            "addToList": "Add to list",
             "update": "Update",
             "inquiry": "Inquiry"
         },
