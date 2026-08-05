@@ -476,7 +476,9 @@
             "loading": "Loading..."
         },
         "activitypubNote": {
-            "openRemote": "Open on remote server"
+            "openRemote": "Open on remote server",
+            "unavailable": "This post could not be fetched (it may have been deleted or is private)",
+            "fetchFailed": "Failed to load this post (server unreachable)"
         },
         "followAck": {
             "userFollowed": "{{name}} followed",

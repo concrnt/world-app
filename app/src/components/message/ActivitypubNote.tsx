@@ -7,6 +7,7 @@ import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
+import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
@@ -68,13 +69,38 @@ const Note = (props: {
     const author = use(props.authorPromise)
 
     if (!note || note instanceof Error) {
+        // nullはnegative cacheヒット(=404由来)。404以外のエラーは接続系として文言を分ける
+        const unreachable = note instanceof Error && !(note instanceof NotFoundError)
         return (
             <div
                 style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: CssVar.space(1),
                     padding: CssVar.space(2)
                 }}
             >
-                <Text>Note not found</Text>
+                <Text style={{ opacity: 0.7 }}>{unreachable ? t('fetchFailed') : t('unavailable')}</Text>
+                <a
+                    href={props.noteURL}
+                    onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        openUrl(props.noteURL, 'inAppBrowser')
+                    }}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        fontSize: '0.8rem',
+                        color: CssVar.contentLink,
+                        textDecoration: 'none'
+                    }}
+                >
+                    <MdOpenInNew size={14} />
+                    {t('openRemote')}
+                </a>
                 {devmode && <Text variant="caption">{props.noteURL}</Text>}
                 {devmode && (
                     <Text variant="caption">{note instanceof Error ? note.message : 'negative cache hit'}</Text>

@@ -476,7 +476,9 @@
             "loading": "読み込み中..."
         },
         "activitypubNote": {
-            "openRemote": "リモートで開く"
+            "openRemote": "リモートで開く",
+            "unavailable": "この投稿は取得できませんでした(削除済みか、非公開の可能性があります)",
+            "fetchFailed": "この投稿を読み込めませんでした(サーバーに接続できません)"
         },
         "followAck": {
             "userFollowed": "{{name}} がフォローしました",

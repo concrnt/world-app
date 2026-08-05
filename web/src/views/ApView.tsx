@@ -4,6 +4,9 @@ import { View } from '../components/View'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
 import { ApObject, resolveApObject } from '../utils/activitypub'
+import { CssVar, Text } from '@concrnt/ui'
+import { MdOpenInNew } from 'react-icons/md'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
     uri: string
@@ -11,20 +14,57 @@ interface Props {
 
 export const ApView = (props: Props) => {
     const { client } = useClient()
-    const [ld, setLd] = useState<ApObject>()
+    const { t } = useTranslation('', { keyPrefix: 'components.activitypubNote' })
+    // undefined=読み込み中, null=取得失敗(404/接続不可)
+    const [ld, setLd] = useState<ApObject | null>()
 
     useEffect(() => {
         resolveApObject(client, props.uri)
             .then((res) => {
-                if (res) setLd(res)
+                setLd(res)
             })
             .catch((err) => {
                 console.log(err)
+                setLd(null)
             })
     }, [props.uri, client])
 
-    if (!ld) {
+    if (ld === undefined) {
         return <View></View>
+    }
+
+    if (ld === null) {
+        return (
+            <View>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: CssVar.space(1),
+                        padding: CssVar.space(2)
+                    }}
+                >
+                    <Text style={{ opacity: 0.7 }}>{t('unavailable')}</Text>
+                    <a
+                        href={props.uri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1),
+                            fontSize: '0.8rem',
+                            color: CssVar.contentLink,
+                            textDecoration: 'none'
+                        }}
+                    >
+                        <MdOpenInNew size={14} />
+                        {t('openRemote')}
+                    </a>
+                </div>
+            </View>
+        )
     }
 
     switch (ld.type) {
