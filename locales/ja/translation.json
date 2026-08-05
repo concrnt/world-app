@@ -196,7 +196,8 @@
             "urlCopied": "URLをコピーしました",
             "loadFailed": "読み込みに失敗しました",
             "brokenEntry": "壊れた項目",
-            "fetchedAt": "取得日: {{date}}"
+            "fetchedAt": "取得日: {{date}}",
+            "importFromV1": "v1からインポート"
         },
         "welcome": {
             "loadFailed": "アカウント情報の読み込みに失敗しました。\n端末に保存された鍵が消えたわけではありません。もう一度お試しください。",
@@ -536,6 +537,14 @@
             "variantLabel": "表示タイプ",
             "preview": "プレビュー",
             "currentlyInUse": "現在このテーマを使用しています"
+        },
+        "emojiPackImporter": {
+            "title": "v1からインポート",
+            "description": "v1の絵文字設定で「全部コピー」したJSON(絵文字パッケージURLの配列)を貼り付けてください。すでに追加済みのパッケージはスキップします。",
+            "placeholder": "ここにJSONを貼り付け",
+            "noPackagesFound": "絵文字パッケージが見つかりませんでした",
+            "importResult": "{{added}}件追加 / {{skipped}}件スキップ",
+            "import": "インポート"
         },
         "themeImporter": {
             "title": "v1からインポート",

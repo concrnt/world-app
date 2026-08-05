@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { CCImage, Button, IconButton, Text, TextField } from '@concrnt/ui'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
+import { Drawer } from '../components/Drawer'
+import { EmojiPackImporter } from '../components/EmojiPackImporter'
 import { CssVar } from '../types/Theme'
 import { type EmojiPackage, type RawEmojiPackage, useEmojiPicker } from '../contexts/EmojiPicker'
 import type { ListEntry } from '@concrnt/worldlib'
@@ -15,6 +17,7 @@ export const EmojiSettingsView = () => {
     const [addingPackageURL, setAddingPackageURL] = useState('')
     const [preview, setPreview] = useState<EmojiPackage | null>(null)
     const [status, setStatus] = useState('')
+    const [importerOpen, setImporterOpen] = useState(false)
 
     const packagesByURL = useMemo(() => {
         return new Map(picker.packages.map((pkg) => [pkg.packageURL, pkg]))
@@ -71,15 +74,20 @@ export const EmojiSettingsView = () => {
                     }}
                 >
                     <Text variant="h3">{t('packages')}</Text>
-                    <Button
-                        variant="outlined"
-                        onClick={async () => {
-                            await Promise.all(picker.packageURLs.map((url) => picker.updateEmojiPackage(url)))
-                            setStatus(t('updated'))
-                        }}
-                    >
-                        {t('updateAll')}
-                    </Button>
+                    <div style={{ display: 'flex', gap: CssVar.space(2), flexWrap: 'wrap' }}>
+                        <Button variant="outlined" onClick={() => setImporterOpen(true)}>
+                            {t('importFromV1')}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={async () => {
+                                await Promise.all(picker.packageURLs.map((url) => picker.updateEmojiPackage(url)))
+                                setStatus(t('updated'))
+                            }}
+                        >
+                            {t('updateAll')}
+                        </Button>
+                    </div>
                 </div>
 
                 <div
@@ -149,6 +157,9 @@ export const EmojiSettingsView = () => {
 
                 {status && <Text style={{ opacity: 0.7 }}>{status}</Text>}
             </div>
+            <Drawer open={importerOpen} onClose={() => setImporterOpen(false)}>
+                <EmojiPackImporter onComplete={() => setStatus('')} />
+            </Drawer>
         </View>
     )
 }

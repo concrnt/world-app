@@ -196,7 +196,8 @@
             "urlCopied": "Copied URL",
             "loadFailed": "Failed to load",
             "brokenEntry": "Broken entry",
-            "fetchedAt": "Fetched at: {{date}}"
+            "fetchedAt": "Fetched at: {{date}}",
+            "importFromV1": "Import from v1"
         },
         "welcome": {
             "loadFailed": "Failed to load account information.\nThe key stored on this device has not been lost. Please try again.",
@@ -536,6 +537,14 @@
             "variantLabel": "Display type",
             "preview": "Preview",
             "currentlyInUse": "This theme is currently in use"
+        },
+        "emojiPackImporter": {
+            "title": "Import from v1",
+            "description": "Paste the JSON (an array of emoji package URLs) exported with \"Copy all\" in the v1 emoji settings. Packages that are already added will be skipped.",
+            "placeholder": "Paste JSON here",
+            "noPackagesFound": "No emoji packages found",
+            "importResult": "{{added}} added / {{skipped}} skipped",
+            "import": "Import"
         },
         "themeImporter": {
             "title": "Import from v1",
