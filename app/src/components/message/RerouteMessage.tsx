@@ -79,7 +79,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 </div>
             </OnelineMessageLayout>
             <ErrorBoundary FallbackComponent={RenderError}>
-                <MessageContainer uri={props.message.value.targetURI} />
+                <MessageContainer uri={props.message.value.targetURI} rerouted={props.message} />
             </ErrorBoundary>
         </div>
     )

@@ -1,4 +1,4 @@
-import { Association, Message, ReactionAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { Association, Message, ReactionAssociationSchema, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
 import { useOptimistic } from 'react'
 import { MessageActions } from './MessageActions'
 import { MessageReactions } from './MessageReactions'
@@ -9,6 +9,7 @@ import { usePreference } from '../../contexts/Preference'
 
 interface Props {
     message: Message<any>
+    rerouted?: Message<RerouteMessageSchema>
 }
 
 export interface ReactionState {
@@ -58,7 +59,7 @@ export const MessageFooter = (props: Props) => {
                         alignItems: 'center'
                     }}
                 >
-                    <PostedTimelines message={props.message} />
+                    <PostedTimelines message={props.message} rerouted={props.rerouted} />
                 </div>
                 <div
                     style={{

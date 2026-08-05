@@ -46,7 +46,7 @@ export const MfmMessage = (props: MessageProps<MfmMessageSchema>) => {
                     <MfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
                 </AutoSummary>
             </CollapsibleBody>
-            <MessageFooter message={message} />
+            <MessageFooter message={message} rerouted={props.rerouted} />
         </MessageLayout>
     )
 }

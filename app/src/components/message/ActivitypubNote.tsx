@@ -7,7 +7,7 @@ import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
-import { ApNoteSchema, Message } from '@concrnt/worldlib'
+import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
 import { usePreference } from '../../contexts/Preference'
@@ -18,6 +18,7 @@ interface Props {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    rerouted?: Message<RerouteMessageSchema>
 }
 
 export const ActivitypubNote = (props: Props) => {
@@ -39,6 +40,7 @@ export const ActivitypubNote = (props: Props) => {
                 noteURL={props.noteURL}
                 message={props.message}
                 forceExpanded={props.forceExpanded}
+                rerouted={props.rerouted}
             />
         </Suspense>
     )
@@ -50,6 +52,7 @@ const Note = (props: {
     noteURL: string
     message?: Message<ApNoteSchema>
     forceExpanded?: boolean
+    rerouted?: Message<RerouteMessageSchema>
 }) => {
     const { push } = useStack()
     const [devmode] = usePreference('developerMode')
@@ -122,7 +125,7 @@ const Note = (props: {
                 )}
             </CollapsibleBody>
             {devmode && <Text variant="caption">{props.noteURL}</Text>}
-            {props.message && <MessageFooter message={props.message} />}
+            {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
         </MessageLayout>
     )
 }

@@ -54,7 +54,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             )}
 
             <MediaGallery medias={message.value.medias ?? []} />
-            <MessageFooter message={message} />
+            <MessageFooter message={message} rerouted={props.rerouted} />
         </MessageLayout>
     )
 }

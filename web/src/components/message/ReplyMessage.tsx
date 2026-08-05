@@ -65,7 +65,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                         />
                     </AutoSummary>
                 </CollapsibleBody>
-                <MessageFooter message={props.message} />
+                <MessageFooter message={props.message} rerouted={props.rerouted} />
             </MessageLayout>
         </div>
     )

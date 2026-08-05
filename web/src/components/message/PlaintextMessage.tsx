@@ -51,7 +51,7 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
                     {message.value.body}
                 </div>
             </CollapsibleBody>
-            <MessageFooter message={message} />
+            <MessageFooter message={message} rerouted={props.rerouted} />
         </MessageLayout>
     )
 }
