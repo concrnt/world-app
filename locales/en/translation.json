@@ -417,7 +417,22 @@
             "placeholder": "What are you up to?",
             "cannotPostOffline": "You can't post while offline",
             "resetDestination": "Reset destinations to default",
-            "dropToUpload": "Drop to upload"
+            "dropToUpload": "Drop to upload",
+            "flagTitle": "Content flag (optional)",
+            "flagNone": "None",
+            "flagWarn": "Content Warning",
+            "flagNude": "Nudity",
+            "flagPorn": "Pornography",
+            "flagHard": "Hard Violence",
+            "flagCustomPlaceholder": "You can write freely"
+        },
+        "mediaGallery": {
+            "clickToReveal": "Click to reveal",
+            "hideAgain": "Hide again",
+            "flagWarn": "Content Warning",
+            "flagNude": "Nudity",
+            "flagPorn": "Pornography",
+            "flagHard": "Hard Violence"
         },
         "report": {
             "reason": "Report reason",

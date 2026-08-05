@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, IconButton, List, ListItem, Popover, Text, CfmRenderer, useAnchor } from '@concrnt/ui'
+import {
+    Button,
+    IconButton,
+    List,
+    ListItem,
+    Popover,
+    Select,
+    Text,
+    TextField,
+    CfmRenderer,
+    useAnchor
+} from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
@@ -11,7 +22,9 @@ import { ComposerMode, DraftBuffer, EditorMode } from '../contexts/Composer'
 import {
     MdImage,
     MdClose,
+    MdCheck,
     MdDeleteOutline,
+    MdFlag,
     MdUndo,
     MdTextFields,
     MdPermMedia,
@@ -34,7 +47,10 @@ import { CDID } from '@concrnt/client'
 interface MediaDraft {
     file: File
     previewUrl?: string
+    flag?: string
 }
+
+const knownFlags = ['warn', 'nude', 'porn', 'hard']
 
 const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
     plaintext: <MdTextFields size={24} />,
@@ -89,6 +105,7 @@ export const Composer = (props: Props) => {
         if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
         return props.draftBuffer.mediaDrafts.map((m) => ({
             file: m.file,
+            flag: m.flag,
             previewUrl: m.file.type.startsWith('image/') ? URL.createObjectURL(m.file) : undefined
         }))
     })
@@ -98,6 +115,7 @@ export const Composer = (props: Props) => {
         props.draftBuffer?.editorMode ?? ((props.draftBuffer?.mediaDrafts.length ?? 0) > 0 ? 'media' : 'markdown')
     )
     const [modeSelectOpen, setModeSelectOpen] = useState(false)
+    const [flagMenuIndex, setFlagMenuIndex] = useState<number | null>(null)
     const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>(props.draftBuffer?.emojiDict ?? {})
     const [undoCache, setUndoCache] = useState<{
         draft: string
@@ -124,7 +142,7 @@ export const Composer = (props: Props) => {
             const { draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft } = stateRef.current
             onSaveDraft?.({
                 draftText: draft,
-                mediaDrafts: mediaDrafts.map((m) => ({ file: m.file })),
+                mediaDrafts: mediaDrafts.map((m) => ({ file: m.file, flag: m.flag })),
                 emojiDict,
                 postHome,
                 editorMode
@@ -256,6 +274,18 @@ export const Composer = (props: Props) => {
             return prev.filter((_, i) => i !== index)
         })
     }
+
+    const setMediaFlag = (index: number, flag: string | undefined) => {
+        setMediaDrafts((prev) => prev.map((m, i) => (i === index ? { ...m, flag } : m)))
+    }
+
+    const flagLabels: Record<string, string> = {
+        warn: t('flagWarn'),
+        nude: t('flagNude'),
+        porn: t('flagPorn'),
+        hard: t('flagHard')
+    }
+    const currentFlag = flagMenuIndex !== null ? mediaDrafts[flagMenuIndex]?.flag : undefined
 
     const reset = () => {
         setDraft('')
@@ -408,7 +438,8 @@ export const Composer = (props: Props) => {
                                     return {
                                         mediaURL: url,
                                         mediaType: typ,
-                                        ...(blurhash ? { blurhash } : {})
+                                        ...(blurhash ? { blurhash } : {}),
+                                        ...(media.flag ? { flag: media.flag } : {})
                                     }
                                 })
                             )
@@ -666,8 +697,10 @@ export const Composer = (props: Props) => {
                             style={{
                                 position: 'relative',
                                 width: '80px',
-                                height: '80px'
+                                height: '80px',
+                                cursor: 'pointer'
                             }}
+                            onClick={() => setFlagMenuIndex(index)}
                         >
                             {media.previewUrl ? (
                                 <img
@@ -708,7 +741,10 @@ export const Composer = (props: Props) => {
                                 </div>
                             )}
                             <IconButton
-                                onClick={() => removeMedia(index)}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    removeMedia(index)
+                                }}
                                 style={{
                                     position: 'absolute',
                                     top: '-8px',
@@ -722,10 +758,70 @@ export const Composer = (props: Props) => {
                             >
                                 <MdClose size={16} />
                             </IconButton>
+                            {media.flag && (
+                                <div
+                                    title={media.flag}
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: '-8px',
+                                        left: '-8px',
+                                        backgroundColor: CssVar.divider,
+                                        borderRadius: CssVar.round(4),
+                                        width: '24px',
+                                        height: '24px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        pointerEvents: 'none'
+                                    }}
+                                >
+                                    <MdFlag size={16} />
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
             )}
+
+            {/* 添付ごとのフラグ設定メニュー(サムネイルタップで開く) */}
+            <Select
+                open={flagMenuIndex !== null}
+                onClose={() => setFlagMenuIndex(null)}
+                title={t('flagTitle')}
+                options={[
+                    <ListItem
+                        key="none"
+                        endIcon={currentFlag === undefined ? <MdCheck size={20} /> : undefined}
+                        onClick={() => {
+                            setMediaFlag(flagMenuIndex!, undefined)
+                            setFlagMenuIndex(null)
+                        }}
+                    >
+                        {t('flagNone')}
+                    </ListItem>,
+                    ...knownFlags.map((flag) => (
+                        <ListItem
+                            key={flag}
+                            endIcon={currentFlag === flag ? <MdCheck size={20} /> : undefined}
+                            onClick={() => {
+                                setMediaFlag(flagMenuIndex!, flag)
+                                setFlagMenuIndex(null)
+                            }}
+                        >
+                            {flagLabels[flag]}
+                        </ListItem>
+                    )),
+                    <div key="custom" style={{ padding: `${CssVar.space(1)} ${CssVar.space(2)}` }}>
+                        <TextField
+                            placeholder={t('flagCustomPlaceholder')}
+                            value={currentFlag !== undefined && !knownFlags.includes(currentFlag) ? currentFlag : ''}
+                            onChange={(e) =>
+                                setMediaFlag(flagMenuIndex!, e.target.value === '' ? undefined : e.target.value)
+                            }
+                        />
+                    </div>
+                ]}
+            />
 
             {/* ツールバー + 送信ボタン */}
             <div

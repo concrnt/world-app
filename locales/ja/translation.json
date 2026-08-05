@@ -417,7 +417,22 @@
             "placeholder": "今、なにしてる？",
             "cannotPostOffline": "オフラインのため投稿できません",
             "resetDestination": "投稿先をデフォルトに戻す",
-            "dropToUpload": "ドロップしてアップロード"
+            "dropToUpload": "ドロップしてアップロード",
+            "flagTitle": "フラグ設定(任意)",
+            "flagNone": "なし",
+            "flagWarn": "注意",
+            "flagNude": "ヌード",
+            "flagPorn": "ポルノ",
+            "flagHard": "ハード",
+            "flagCustomPlaceholder": "自由に記述できます"
+        },
+        "mediaGallery": {
+            "clickToReveal": "タップして表示",
+            "hideAgain": "再度隠す",
+            "flagWarn": "注意",
+            "flagNude": "ヌード",
+            "flagPorn": "ポルノ",
+            "flagHard": "ハード"
         },
         "report": {
             "reason": "報告理由",

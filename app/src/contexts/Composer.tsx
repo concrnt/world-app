@@ -15,7 +15,7 @@ export type EditorMode = 'plaintext' | 'markdown' | 'media'
 
 export interface DraftBuffer {
     draftText: string
-    mediaDrafts: Array<{ file: File }>
+    mediaDrafts: Array<{ file: File; flag?: string }>
     emojiDict: Record<string, { imageURL: string }>
     postHome: boolean
     editorMode?: EditorMode
