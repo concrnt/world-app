@@ -131,6 +131,7 @@ export const WelcomeView = () => {
                             onClick={() => {
                                 localStorage.removeItem('Domain')
                                 localStorage.removeItem('PrivateKey')
+                                localStorage.removeItem('Mnemonic')
                                 localStorage.removeItem('SubKey')
                                 reload()
                             }}
@@ -202,6 +203,7 @@ const RecoveryView = (props: {
                         onClick={() => {
                             localStorage.removeItem('Domain')
                             localStorage.removeItem('PrivateKey')
+                            localStorage.removeItem('Mnemonic')
                             localStorage.removeItem('SubKey')
                             props.reload()
                         }}

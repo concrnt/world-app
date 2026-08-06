@@ -254,6 +254,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
         localStorage.removeItem('Domain')
         localStorage.removeItem('PrivateKey')
+        localStorage.removeItem('Mnemonic')
         localStorage.removeItem('SubKey')
         localStorage.removeItem('SelectedProfile')
         await resourceCache.clear()

@@ -91,7 +91,7 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
 
     const softReset = (): void => {
         for (const key in localStorage) {
-            if (['Domain', 'PrivateKey', 'SubKey'].includes(key)) continue
+            if (['Domain', 'PrivateKey', 'Mnemonic', 'SubKey'].includes(key)) continue
             localStorage.removeItem(key)
         }
         window.location.replace('/')

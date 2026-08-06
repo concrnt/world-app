@@ -47,12 +47,23 @@ const loadRecoveryIdentity = (value: string): Identity | null => {
     }
 }
 
-const storeWebSession = (domain: string, masterKey: string | undefined, subKey: string) => {
+const storeWebSession = (
+    domain: string,
+    masterKey: string | undefined,
+    mnemonic: string | undefined,
+    subKey: string
+) => {
     localStorage.setItem('Domain', domain)
     if (masterKey) {
         localStorage.setItem('PrivateKey', masterKey)
     } else {
         localStorage.removeItem('PrivateKey')
+    }
+    if (mnemonic) {
+        localStorage.setItem('Mnemonic', mnemonic)
+    } else {
+        // 前セッションの別アカウントのニーモニックが残るとID画面で誤ったマスターキーをDLさせてしまう
+        localStorage.removeItem('Mnemonic')
     }
     localStorage.setItem('SubKey', subKey)
 }
@@ -198,7 +209,7 @@ export const Login = () => {
             const identity = DeriveIdentity(new Uint8Array(prfRes.first))
             const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
 
-            storeWebSession(domain, undefined, subkeyStr)
+            storeWebSession(domain, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -233,7 +244,7 @@ export const Login = () => {
                 return
             }
 
-            storeWebSession(subkey.domain, undefined, subkeyStr)
+            storeWebSession(subkey.domain, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -277,7 +288,7 @@ export const Login = () => {
                 console.error('Failed to migrate entity proof type', err)
             })
 
-            storeWebSession(domain, identity.privateKey, subkeyStr)
+            storeWebSession(domain, identity.privateKey, identity.mnemonic, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)

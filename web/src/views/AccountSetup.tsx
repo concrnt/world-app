@@ -29,9 +29,10 @@ interface Props {
 const encodeRegistrationDocument = (input: string) =>
     btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-const storeWebSession = (domain: string, masterKey: string, subKey: string) => {
+const storeWebSession = (domain: string, masterKey: string, mnemonic: string, subKey: string) => {
     localStorage.setItem('Domain', domain)
     localStorage.setItem('PrivateKey', masterKey)
+    localStorage.setItem('Mnemonic', mnemonic)
     localStorage.setItem('SubKey', subKey)
 }
 
@@ -132,6 +133,7 @@ export const AccountSetup = (props: Props) => {
             storeWebSession(
                 domain,
                 identity.privateKey,
+                identity.mnemonic,
                 `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
             )
             reset()

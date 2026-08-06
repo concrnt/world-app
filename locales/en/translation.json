@@ -313,8 +313,7 @@
             "backupMasterKey": "Back up master key",
             "copySubkey": "Copy Subkey",
             "subkeyCopied": "Copied!",
-            "backupNotSaved": "Not saved",
-            "backupFileContent": "Concrnt Web login information\nThis file is a backup of your Concrnt Web login information.\nKeep this file in a safe place.\n\nCCID: {{ccid}}\nMaster private key: {{privateKey}}\nRegistered server at backup: {{server}}\n\nIf you lose your private key, you may not be able to recover your account.\nIf anyone else learns this information, your account could be taken over.",
+            "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
             "subkeys": {
                 "title": "Subkeys",
                 "description": "Subkeys authorized for this account. Devices you have logged in on sign with these keys.",
