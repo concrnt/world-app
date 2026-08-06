@@ -13,7 +13,7 @@ import {
 } from '@concrnt/ui'
 import { useNavigation } from '../contexts/Navigation'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError, Document } from '@concrnt/client'
@@ -314,36 +314,46 @@ export const ApPerson = ({ person }: Props) => {
                         </Button>
                     )}
                 </div>
-                <Divider />
-                {items.map((item, i) => (
-                    <div key={`${i}:${item.noteURL}`}>
-                        {item.boost && (
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: CssVar.space(1),
-                                    padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
-                                    opacity: 0.7
-                                }}
-                            >
-                                <MdRepeat size={14} />
-                                <Text variant="caption">
-                                    {t('boosted', { name: person.name || person.preferredUsername || 'Anonymous' })}
-                                </Text>
+                {/* QueryTimelineの行構造(gap 8px+行のpadding 0 space(2)+Divider)に合わせる */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Divider />
+                    {items.map((item, i) => (
+                        <Fragment key={`${i}:${item.noteURL}`}>
+                            <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                                {item.boost && (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: CssVar.space(1),
+                                            opacity: 0.7
+                                        }}
+                                    >
+                                        <MdRepeat size={14} />
+                                        <Text variant="caption">
+                                            {t('boosted', {
+                                                name: person.name || person.preferredUsername || 'Anonymous'
+                                            })}
+                                        </Text>
+                                    </div>
+                                )}
+                                <ActivitypubNote actorURL={item.actorURL} noteURL={item.noteURL} />
                             </div>
-                        )}
-                        <ActivitypubNote actorURL={item.actorURL} noteURL={item.noteURL} />
-                        <Divider />
-                    </div>
-                ))}
-                {outboxState === 'loading' && <MessageSkeleton />}
-                {outboxState === 'done' && items.length === 0 && (
-                    <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('noPosts')}</Text>
-                )}
-                {outboxState === 'error' && (
-                    <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('loadFailed')}</Text>
-                )}
+                            <Divider />
+                        </Fragment>
+                    ))}
+                    {outboxState === 'loading' && (
+                        <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                            <MessageSkeleton />
+                        </div>
+                    )}
+                    {outboxState === 'done' && items.length === 0 && (
+                        <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('noPosts')}</Text>
+                    )}
+                    {outboxState === 'error' && (
+                        <Text style={{ padding: CssVar.space(2), opacity: 0.7 }}>{t('loadFailed')}</Text>
+                    )}
+                </div>
             </div>
         </View>
     )
