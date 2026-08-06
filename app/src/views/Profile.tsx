@@ -1,4 +1,4 @@
-import { ReactNode, startTransition, Suspense, use, useMemo, useState } from 'react'
+import { ReactNode, startTransition, Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Avatar,
@@ -49,7 +49,28 @@ export const ProfileView = (props: Props) => {
         return client.getUser(props.ccid).catch(() => null)
     }, [client, props.ccid])
 
+    const profileKey = semantics.profile(props.ccid, props.profileName ?? 'main')
+
+    // 表示はキャッシュ即出し(profilePromise)のまま、裏で最新を取得して置き換える(SWR)。
+    // no-cacheの結果はKVSにも書き戻されるので次回表示の即出しキャッシュも最新化される
+    const [freshProfile, setFreshProfile] = useState<Document<ProfileSchema> | null>(null)
+    const [prevProfileKey, setPrevProfileKey] = useState(profileKey)
+    if (prevProfileKey !== profileKey) {
+        setPrevProfileKey(profileKey)
+        setFreshProfile(null)
+    }
+
     const [reload, setReload] = useState(0)
+
+    useEffect(() => {
+        client.api
+            .getDocument<ProfileSchema>(profileKey, undefined, { cache: 'no-cache' })
+            .then((doc) => setFreshProfile(doc))
+            .catch(() => {
+                // 権限エラー/404等はキャッシュ由来の表示(restricted/Anonymous)を維持する
+            })
+    }, [client, profileKey, reload])
+
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
@@ -81,6 +102,7 @@ export const ProfileView = (props: Props) => {
                     ccid={props.ccid}
                     userPromise={userPromise}
                     profilePromise={profilePromise}
+                    freshProfile={freshProfile}
                     profileName={props.profileName ?? 'main'}
                     reload={() => {
                         setReload((prev) => prev + 1)
@@ -95,6 +117,7 @@ interface InnerProps {
     ccid: string
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema> | 'restricted'>
+    freshProfile: Document<ProfileSchema> | null
     profileName: string
     reload: () => void
 }
@@ -102,7 +125,8 @@ interface InnerProps {
 const Inner = (props: InnerProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const user = use(props.userPromise)
-    const profile = use(props.profilePromise)
+    // use()は条件付き呼び出しが許可されている。fresh値が届いたらキャッシュ側は読まない
+    const profile = props.freshProfile ?? use(props.profilePromise)
 
     if (user === null) {
         return <Text>{t('userNotFound')}</Text>

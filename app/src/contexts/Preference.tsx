@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { usePersistent } from '../hooks/usePersistent'
 import { useClient } from './Client'
 import { semantics } from '@concrnt/worldlib'
@@ -37,37 +37,49 @@ interface PreferenceProviderProps {
 export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode => {
     const { client } = useClient()
     const [pref, setPref] = usePersistent<Preference>(`preference`, defaultPreference)
-    const [initialized, setInitialized] = useState<boolean>(false)
 
+    // 別端末での設定変更を取り込む同期チャンネル。localStorageが真のソースで即時表示は
+    // 既に効いているため、cckvはno-cacheで読み、起動時とアプリ復帰時に取り込む
     useEffect(() => {
-        if (!client || !client.api) return
-        if (initialized) return
-        const isNoloadSettings = localStorage.getItem('noloadsettings')
-        if (isNoloadSettings) {
-            localStorage.removeItem('noloadsettings')
-            return
-        }
+        if (!client || !client.api || client.ccid === '') return
 
-        client.api
-            .getDocument<Preference>(semantics.settings(client.ccid))
-            .then((doc) => {
-                setInitialized(true)
-                if (!doc) return
-                const data = doc.value
-                if (!data) return
-                const { customThemes: _legacyCustomThemes, ...settings } = data as Preference & {
-                    customThemes?: unknown
-                }
-                setPref({
-                    ...pref,
-                    ...settings
+        let lastLoaded = 0
+        const load = () => {
+            if (Date.now() - lastLoaded < 30_000) return
+            lastLoaded = Date.now()
+            if (localStorage.getItem('noloadsettings')) {
+                localStorage.removeItem('noloadsettings')
+                return
+            }
+
+            client.api
+                .getDocument<Preference>(semantics.settings(client.ccid), undefined, { cache: 'no-cache' })
+                .then((doc) => {
+                    if (!doc) return
+                    const data = doc.value
+                    if (!data) return
+                    const { customThemes: _legacyCustomThemes, ...settings } = data as Preference & {
+                        customThemes?: unknown
+                    }
+                    setPref((old) => ({
+                        ...old,
+                        ...settings
+                    }))
                 })
-            })
-            .catch((e: any) => {
-                console.error('Failed to load settings from cckv', e)
-                setInitialized(true)
-            })
-    }, [client, initialized, pref, setPref])
+                .catch((e: any) => {
+                    console.error('Failed to load settings from cckv', e)
+                })
+        }
+        load()
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') load()
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange)
+        }
+    }, [client, setPref])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })

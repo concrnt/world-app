@@ -80,7 +80,9 @@ export class Api {
     authProvider: AuthProvider
     cache: KVS
     defaultHost: string = ''
-    defaultCacheTTL: number = Infinity
+    // 期限切れ後も即キャッシュを返しつつ裏で再取得する(SWR)ため、表示は常に高速なまま。
+    // 明示invalidateされないリソースが恒久的にstaleになるのを防ぐ安全弁として有限にしている
+    defaultCacheTTL: number = 1000 * 60 * 60 * 24
     negativeCacheTTL: number = 300
     tokens: Record<string, string> = {}
     self: SignedDocument | null = null

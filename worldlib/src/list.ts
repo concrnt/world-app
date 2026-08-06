@@ -1,4 +1,4 @@
-import { CDID, Document, SignedDocument } from '@concrnt/client'
+import { CDID, Document, FetchOptions, SignedDocument } from '@concrnt/client'
 import { Client } from './client'
 import { ListSchema } from './schemas/list'
 import { CachedPromise } from './cachedPromise'
@@ -66,8 +66,13 @@ export class List {
         this.iconURL = iconURL
     }
 
-    static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
-        const res = await client.api.getDocument<ListSchema>(uri, hint)
+    static async load(
+        client: Client,
+        uri: string,
+        hint?: string,
+        opts?: FetchOptions<SignedDocument>
+    ): Promise<List | null> {
+        const res = await client.api.getDocument<ListSchema>(uri, hint, opts)
         if (!res) {
             return null
         }

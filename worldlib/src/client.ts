@@ -11,6 +11,7 @@ import {
     AuthProvider,
     KVS,
     SignedDocument,
+    FetchOptions,
     QueryResult,
     Acknowledge,
     Entity,
@@ -44,13 +45,16 @@ export class PinnedListItemClass implements PinnedListItem {
     excludeSelf?: boolean
     isIconTab?: boolean
 
-    list = new CachedPromise<List | null>(async () => {
-        const list = await this.client.getList(this.uri)
-        if (!list) {
-            return null
-        }
-        return list
-    })
+    list = new CachedPromise<List | null>(
+        async (fresh) => {
+            const list = await this.client.getList(this.uri, undefined, fresh ? { cache: 'no-cache' } : undefined)
+            if (!list) {
+                return null
+            }
+            return list
+        },
+        (a, b) => JSON.stringify(a?.toJSON()) === JSON.stringify(b?.toJSON())
+    )
 
     constructor(client: Client, item: PinnedListItem) {
         this.client = client
@@ -100,9 +104,12 @@ export class Client {
         return Array.from(uniqueResults.values())
     })
 
-    acknowledging = new CachedPromise<Document<Acknowledge>[]>(async () => {
-        return this.getAcknowledging(this.ccid)
-    })
+    acknowledging = new CachedPromise<Document<Acknowledge>[]>(
+        async () => {
+            return this.getAcknowledging(this.ccid)
+        },
+        (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    )
 
     acknowledgingUsers = new CachedPromise<User[]>(async () => {
         const acks = await this.getAcknowledging(this.ccid)
@@ -110,86 +117,115 @@ export class Client {
         return users.filter((u): u is User => u !== null)
     })
 
-    acknowledgers = new CachedPromise<Document<Acknowledge>[]>(async () => {
-        return this.getAcknowledgers(this.ccid)
-    })
+    acknowledgers = new CachedPromise<Document<Acknowledge>[]>(
+        async () => {
+            return this.getAcknowledgers(this.ccid)
+        },
+        (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    )
 
-    blocks = new CachedPromise<string[]>(async () => {
-        const prefix = semantics.blocks(this.ccid) + '/'
-        const results = await this.api.queryAll(
-            {
-                prefix: prefix
-            },
-            undefined,
-            { cache: true }
-        )
-        return results.map((sd) => sd.cckv.substring(prefix.length))
-    })
+    blocks = new CachedPromise<string[]>(
+        async () => {
+            const prefix = semantics.blocks(this.ccid) + '/'
+            const results = await this.api.queryAll(
+                {
+                    prefix: prefix
+                },
+                undefined,
+                { cache: true }
+            )
+            return results.map((sd) => sd.cckv.substring(prefix.length))
+        },
+        (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    )
 
-    pinnedLists = new CachedPromise<PinnedListItemClass[]>(async () => {
-        const uri = semantics.lists(this.ccid, this.currentProfile)
-        const item = await this.api
-            .getDocument<PinnedListsSchema>(uri)
-            .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
-            .catch(async (err) => {
-                if (err instanceof NotFoundError) {
-                    // listから1つ選ぶ
-                    let key = ''
-                    const existingList = await this.api
-                        .query(
-                            {
-                                prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+    pinnedLists = new CachedPromise<PinnedListItemClass[]>(
+        async (fresh) => {
+            const uri = semantics.lists(this.ccid, this.currentProfile)
+            const item = await this.api
+                .getDocument<PinnedListsSchema>(uri, undefined, fresh ? { cache: 'no-cache' } : undefined)
+                .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
+                .catch(async (err) => {
+                    if (err instanceof NotFoundError) {
+                        // listから1つ選ぶ
+                        let key = ''
+                        const existingList = await this.api
+                            .query(
+                                {
+                                    prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                                    schema: Schemas.list,
+                                    limit: 1
+                                },
+                                undefined,
+                                { cache: true }
+                            )
+                            .then((res) => res.items)
+                            .catch(() => [])
+
+                        if (existingList.length > 0) {
+                            key = existingList[0].cckv
+                        } else {
+                            key = semantics.list(this.ccid, this.currentProfile, Date.now().toString())
+                            const document: Document<ListSchema> = {
+                                kind: 'record',
+                                key: key,
                                 schema: Schemas.list,
-                                limit: 1
-                            },
-                            undefined,
-                            { cache: true }
-                        )
-                        .then((res) => res.items)
-                        .catch(() => [])
+                                value: {
+                                    name: 'home'
+                                },
+                                author: this.ccid,
+                                createdAt: new Date()
+                            }
 
-                    if (existingList.length > 0) {
-                        key = existingList[0].cckv
-                    } else {
-                        key = semantics.list(this.ccid, this.currentProfile, Date.now().toString())
-                        const document: Document<ListSchema> = {
+                            await this.api.commit(document)
+                        }
+
+                        const initial = [
+                            {
+                                uri: key,
+                                defaultPostHome: true,
+                                defaultPostTimelines: []
+                            }
+                        ]
+                        const document: Document<PinnedListsSchema> = {
                             kind: 'record',
-                            key: key,
-                            schema: Schemas.list,
-                            value: {
-                                name: 'home'
-                            },
+                            key: uri,
                             author: this.ccid,
+                            schema: Schemas.pinnedLists,
+                            value: initial,
                             createdAt: new Date()
                         }
-
-                        await this.api.commit(document)
+                        this.api.commit(document)
+                        return initial
+                    } else {
+                        throw err
                     }
+                })
 
-                    const initial = [
-                        {
-                            uri: key,
-                            defaultPostHome: true,
-                            defaultPostTimelines: []
-                        }
-                    ]
-                    const document: Document<PinnedListsSchema> = {
-                        kind: 'record',
-                        key: uri,
-                        author: this.ccid,
-                        schema: Schemas.pinnedLists,
-                        value: initial,
-                        createdAt: new Date()
-                    }
-                    this.api.commit(document)
-                    return initial
-                } else {
-                    throw err
-                }
-            })
-
-        return item.map((i) => new PinnedListItemClass(this, i))
-    })
+            return item.map((i) => new PinnedListItemClass(this, i))
+        },
+        (a, b) =>
+            JSON.stringify(
+                a.map((i) => [
+                    i.uri,
+                    i.defaultPostHome,
+                    i.defaultPostTimelines,
+                    i.defaultProfile,
+                    i.excludeSelf,
+                    i.isIconTab
+                ])
+            ) ===
+            JSON.stringify(
+                b.map((i) => [
+                    i.uri,
+                    i.defaultPostHome,
+                    i.defaultPostTimelines,
+                    i.defaultProfile,
+                    i.excludeSelf,
+                    i.isIconTab
+                ])
+            )
+    )
 
     profiles: Record<string, Document<ProfileSchema>> = {}
     get profile(): ProfileSchema {
@@ -210,6 +246,9 @@ export class Client {
     isOnline: boolean = true
     private onlineSubscriptions: Array<(online: boolean) => void> = []
     private recoveryTimer: ReturnType<typeof setInterval> | null = null
+
+    private profilesSubscriptions: Array<() => void> = []
+    private lastFreshResourcesRefresh = 0
 
     constructor(api: Api, ccid: string, entity: Entity, server: Server, profile?: string) {
         this.api = api
@@ -249,6 +288,14 @@ export class Client {
 
     unsubscribeOnlineStatus(callback: (online: boolean) => void) {
         this.onlineSubscriptions = this.onlineSubscriptions.filter((sub) => sub !== callback)
+    }
+
+    subscribeProfilesUpdated(callback: () => void) {
+        this.profilesSubscriptions.push(callback)
+    }
+
+    unsubscribeProfilesUpdated(callback: () => void) {
+        this.profilesSubscriptions = this.profilesSubscriptions.filter((sub) => sub !== callback)
     }
 
     // バックオフゲートを迂回して自ドメインへ直接プローブする
@@ -360,6 +407,7 @@ export class Client {
     }
 
     async updateProfiles(): Promise<void> {
+        const before = JSON.stringify(this.profiles)
         await this.api
             .queryAll(
                 {
@@ -377,6 +425,28 @@ export class Client {
                 }
                 console.log('Profiles updated:', this.profiles)
             })
+        if (JSON.stringify(this.profiles) !== before) {
+            for (const callback of this.profilesSubscriptions) {
+                callback()
+            }
+        }
+    }
+
+    // 鮮度が重要なリソース(プロフィール・リスト設定等)をキャッシュ即表示のまま裏で最新化する。
+    // 起動直後とアプリ復帰時に呼ぶ。30秒以内の連続呼び出しはスキップ
+    async refreshFreshResources(): Promise<void> {
+        if (this.ccid === '') return
+        if (Date.now() - this.lastFreshResourcesRefresh < 30_000) return
+        this.lastFreshResourcesRefresh = Date.now()
+        await Promise.allSettled([
+            this.updateProfiles(),
+            this.pinnedLists.refresh(),
+            this.acknowledging.refresh(),
+            this.acknowledgers.refresh(),
+            this.blocks.refresh()
+        ])
+        const pins = await this.pinnedLists.value().catch((): PinnedListItemClass[] => [])
+        await Promise.allSettled(pins.map((pin) => pin.list.refresh()))
     }
 
     async block(target: string): Promise<void> {
@@ -495,8 +565,8 @@ export class Client {
         return Timeline.load(this, uri, hint).catch(() => null)
     }
 
-    async getList(uri: string, hint?: string): Promise<List | null> {
-        return List.load(this, uri, hint).catch(() => null)
+    async getList(uri: string, hint?: string, opts?: FetchOptions<SignedDocument>): Promise<List | null> {
+        return List.load(this, uri, hint, opts).catch(() => null)
     }
 
     async Acknowledge(to: string): Promise<void> {
@@ -590,7 +660,12 @@ export class Client {
         // サーバー側で全対象のpolicyが通った場合のみアトミックに削除される
         await this.api.delete(uri + '*')
 
-        const pinned = await this.pinnedLists.value()
+        // stale なpinnedListsキャッシュで「pinされていない」と誤判定するとdangling pinが残るため最新を読む
+        const pinned = await this.api
+            .getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile), undefined, {
+                cache: 'no-cache'
+            })
+            .then((doc) => doc.value)
         if (pinned.some((item) => item.uri === uri)) {
             await this.removePin(uri)
         }
@@ -598,7 +673,12 @@ export class Client {
     }
 
     async removePin(uri: string): Promise<void> {
-        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        // 別端末の変更をstaleキャッシュ由来のread-modify-writeで巻き戻さないよう最新を読む
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(
+            semantics.lists(this.ccid, this.currentProfile),
+            undefined,
+            { cache: 'no-cache' }
+        )
         const newValue = latestDoc.value.filter((item) => item.uri !== uri)
         const newDocument: Document<PinnedListsSchema> = {
             kind: 'record',
@@ -622,7 +702,12 @@ export class Client {
             excludeSelf?: boolean
         }
     ): Promise<void> {
-        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        // 別端末の変更をstaleキャッシュ由来のread-modify-writeで巻き戻さないよう最新を読む
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(
+            semantics.lists(this.ccid, this.currentProfile),
+            undefined,
+            { cache: 'no-cache' }
+        )
         const newValue = [
             ...latestDoc.value,
             {
@@ -656,7 +741,12 @@ export class Client {
             isIconTab?: boolean
         }
     ): Promise<void> {
-        const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
+        // 別端末の変更をstaleキャッシュ由来のread-modify-writeで巻き戻さないよう最新を読む
+        const latestDoc = await this.api.getDocument<PinnedListsSchema>(
+            semantics.lists(this.ccid, this.currentProfile),
+            undefined,
+            { cache: 'no-cache' }
+        )
         const newValue = latestDoc.value.map((item) => {
             if (item.uri === uri) {
                 return {

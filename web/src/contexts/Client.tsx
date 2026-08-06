@@ -70,6 +70,9 @@ export const ClientProvider = (props: Props): ReactNode => {
     const bootedOfflineRef = useRef(false)
     const [isSwitching, setIsSwitching] = useState(false)
     const [switchError, setSwitchError] = useState<string | null>(null)
+    // client.profilesはミューテートされるだけなので、更新通知でcontext valueを再生成して
+    // client.profile直読みのコンポーネント(Sidebar等)へ反映する
+    const [profilesVersion, setProfilesVersion] = useState(0)
 
     const reload = useCallback(
         async (name?: string) => {
@@ -231,6 +234,11 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
         client.subscribeOnlineStatus(onStatusChanged)
 
+        const onProfilesUpdated = () => {
+            setProfilesVersion((v) => v + 1)
+        }
+        client.subscribeProfilesUpdated(onProfilesUpdated)
+
         // オンライン/オフラインとも即時プローブする(オフライン時はプローブが失敗して遷移が発火し、
         // リクエストが発生しないアイドル状態でもバナーが表示される)
         const onBrowserNetworkChange = () => {
@@ -239,10 +247,23 @@ export const ClientProvider = (props: Props): ReactNode => {
         window.addEventListener('online', onBrowserNetworkChange)
         window.addEventListener('offline', onBrowserNetworkChange)
 
+        // 起動/クライアント差し替え直後と、アプリ復帰時に鮮度重視リソースを裏で最新化する
+        // (キャッシュ即表示→取得後にpush通知でUI更新)。TauriのWebViewでも
+        // foreground/backgroundでvisibilitychangeが発火するためweb/app共通実装
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                client.refreshFreshResources()
+            }
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        client.refreshFreshResources()
+
         return () => {
             client.unsubscribeOnlineStatus(onStatusChanged)
+            client.unsubscribeProfilesUpdated(onProfilesUpdated)
             window.removeEventListener('online', onBrowserNetworkChange)
             window.removeEventListener('offline', onBrowserNetworkChange)
+            document.removeEventListener('visibilitychange', onVisibilityChange)
         }
     }, [client])
 
@@ -286,7 +307,8 @@ export const ClientProvider = (props: Props): ReactNode => {
         subkeyInvalid,
         isSwitching,
         switchError,
-        dismissSwitchError
+        dismissSwitchError,
+        profilesVersion
     ])
 
     if (isOffline) {
