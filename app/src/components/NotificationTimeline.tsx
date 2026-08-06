@@ -204,7 +204,12 @@ export const NotificationTimeline = (props: Props) => {
         // 再アタッチパス: Activityのhidden→visible復帰でeffectが再実行された場合、
         // 既存readerと集約済み表示・iterカーソルをそのまま保持する(スクロール位置維持)
         const existing = reader.current
-        if (existing && existing.prefix === props.prefix && existing.body.length > 0) {
+        if (
+            existing &&
+            existing.prefix === props.prefix &&
+            JSON.stringify(existing.query) === JSON.stringify(props.query ?? {}) &&
+            existing.body.length > 0
+        ) {
             existing.onUpdate = () => {
                 update()
             }

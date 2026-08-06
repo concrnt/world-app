@@ -14,6 +14,7 @@ import { LikeAssociation } from './LikeAssociation'
 import { ReactionAssociation } from './ReactionAssociation'
 import { ReplyAssociation } from './ReplyAssociation'
 import { RerouteAssociation } from './RerouteAssociation'
+import { MentionAssociation } from './MentionAssociation'
 import { FollowAck } from './FollowAck'
 import { LegacyNoteMessage } from './legacy/note'
 import { OnelineMessage } from './OnelineMessage'
@@ -107,6 +108,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return <ReplyAssociation message={message} />
         case Schemas.rerouteAssociation:
             return <RerouteAssociation message={message} />
+        case Schemas.mentionAssociation:
+            return <MentionAssociation message={message} />
         case Schemas.followAck:
             return <FollowAck message={message} />
         case Schemas.apNote: {

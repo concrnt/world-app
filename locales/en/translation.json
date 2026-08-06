@@ -505,6 +505,10 @@
             "verificationError": "Verification error: {{error}}",
             "keyMismatch": "The key recovered from the signature does not match the verification key"
         },
+        "mentionAssociation": {
+            "userMentioned": "{{name}} mentioned you",
+            "loading": "Loading..."
+        },
         "onelineMessage": {
             "deletePost": "Delete post"
         },
