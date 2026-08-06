@@ -80,6 +80,9 @@ export class ApObject {
         publicKeyPem: string
     }
     attachment?: ApObject | ApObject[]
+    mediaType?: string
+    sensitive?: boolean
+    blurhash?: string
     attributedTo?: string
     content?: string
     _misskey_content?: string
@@ -123,6 +126,34 @@ export class ApObject {
         if (!this.attachment) return []
         if (Array.isArray(this.attachment)) return this.attachment
         return [this.attachment]
+    }
+
+    // 添付をMediaGallery互換の形に正規化する。actorのattachmentに入るPropertyValue等の非メディアは落とす。
+    // mediaType欠落時はAPのtypeから補う(空だとMediaBodyのsplit('/')分岐でUnsupported扱いになる)
+    getMedias(): { mediaURL: string; mediaType: string; altText?: string; flag?: string; blurhash?: string }[] {
+        const fallbackMediaType: Record<string, string> = {
+            Image: 'image/*',
+            Video: 'video/*',
+            Audio: 'audio/*',
+            Document: 'image/*'
+        }
+        const medias = []
+        for (const a of this.getAttachments()) {
+            const fallback = fallbackMediaType[a.type]
+            if (!fallback) continue
+            // urlはサーバーにより文字列/Linkオブジェクト/それらの配列のいずれもあり得る
+            const urls = (a.url ? [a.url].flat() : []) as (string | { href?: string })[]
+            const mediaURL = urls.map((u) => (typeof u === 'string' ? u : u?.href)).find((u) => u)
+            if (!mediaURL) continue
+            medias.push({
+                mediaURL,
+                mediaType: a.mediaType ?? fallback,
+                altText: a.name ?? undefined,
+                flag: a.sensitive ? 'warn' : undefined,
+                blurhash: a.blurhash
+            })
+        }
+        return medias
     }
 
     getItems(): (Partial<ApObject> | string)[] {

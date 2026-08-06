@@ -10,6 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { MediaGallery } from '../MediaGallery/main'
 import { usePreference } from '../../contexts/Preference'
 import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
@@ -110,6 +111,7 @@ const Note = (props: {
     }
 
     const visibility = note.getVisibility(author?.followers)
+    const medias = note.getMedias()
 
     const emojiDict: Record<string, EmojiLite> = {}
     for (const tag of note.getTags()) {
@@ -163,6 +165,7 @@ const Note = (props: {
                     <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
                 )}
             </CollapsibleBody>
+            {medias.length > 0 && <MediaGallery medias={medias} />}
             {props.detail && (
                 <a
                     href={note.url ?? note.id}
