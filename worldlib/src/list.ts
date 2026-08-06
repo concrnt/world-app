@@ -13,11 +13,13 @@ export class List {
     uri: string
 
     title: string
+    iconURL?: string
 
     toJSON() {
         return {
             uri: this.uri,
-            title: this.title
+            title: this.title,
+            iconURL: this.iconURL
         }
     }
 
@@ -57,10 +59,11 @@ export class List {
         })
     })
 
-    constructor(client: Client, uri: string, title: string) {
+    constructor(client: Client, uri: string, title: string, iconURL?: string) {
         this.client = client
         this.uri = uri
         this.title = title
+        this.iconURL = iconURL
     }
 
     static async load(client: Client, uri: string, hint?: string): Promise<List | null> {
@@ -68,14 +71,14 @@ export class List {
         if (!res) {
             return null
         }
-        const list = new List(client, uri, res.value.name)
+        const list = new List(client, uri, res.value.name, res.value.iconURL)
 
         return list
     }
 
     static async loadFromSD(client: Client, sd: SignedDocument): Promise<List> {
         const doc = JSON.parse(sd.document)
-        const list = new List(client, sd.cckv ?? sd.ccfs, doc.value.name)
+        const list = new List(client, sd.cckv ?? sd.ccfs, doc.value.name, doc.value.iconURL)
 
         return list
     }

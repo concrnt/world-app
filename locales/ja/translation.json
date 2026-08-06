@@ -683,7 +683,8 @@
             "community": "コミュニティ",
             "user": "ユーザー",
             "noTimelines": "タイムラインがありません",
-            "defaultPostTimelines": "デフォルト投稿先"
+            "defaultPostTimelines": "デフォルト投稿先",
+            "isIconTab": "タブ表示にアイコンを使用"
         },
         "subscription": {
             "addToList": "リストに追加"

@@ -1,7 +1,7 @@
 import { useClient } from '../contexts/Client'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Checkbox, Text, List, ListItem } from '@concrnt/ui'
+import { CCImage, Checkbox, Text, List, ListItem } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { PinnedListItemClass } from '@concrnt/worldlib'
@@ -77,7 +77,20 @@ const Item = ({ list, target }: { list: ListType; target: string }) => {
                 />
             }
         >
-            <Text>{list.title}</Text>
+            <span style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                {list.iconURL && (
+                    <CCImage
+                        src={list.iconURL}
+                        maxHeight={128}
+                        alt=""
+                        style={{
+                            height: '1.125rem',
+                            flexShrink: 0
+                        }}
+                    />
+                )}
+                <Text>{list.title}</Text>
+            </span>
         </ListItem>
     )
 }

@@ -2,7 +2,7 @@ import { Suspense, use, useMemo, useState } from 'react'
 import { Reorder, useDragControls, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../ui/Header'
-import { View, Text, IconButton, Button, TextField } from '@concrnt/ui'
+import { View, Text, IconButton, Button, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
@@ -22,6 +22,8 @@ export const ListsView = () => {
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
+    const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+    const [settingsOpen, setSettingsOpen] = useState(false)
 
     const [updater, setUpdater] = useState(0)
     const listsPromise = useMemo(() => {
@@ -48,8 +50,9 @@ export const ListsView = () => {
                     <Suspense fallback={<Text>Loading...</Text>}>
                         <Lists
                             listsPromise={listsPromise}
-                            onUpdate={() => {
-                                setUpdater((u) => u + 1)
+                            onOpenSettings={(uri) => {
+                                setSettingsTarget(uri)
+                                setSettingsOpen(true)
                             }}
                         />
                     </Suspense>
@@ -70,13 +73,29 @@ export const ListsView = () => {
                     }}
                 />
             </Drawer>
+            {/* 保存時のpinnedLists reloadで<Lists>のSuspenseが落ちるため、
+                行の中に置くとドロワーのportalだけが閉じられず取り残される。境界の外で開く */}
+            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+                <Suspense fallback={<Text>Loading...</Text>}>
+                    {settingsTarget && (
+                        <ListSettings
+                            key={settingsTarget}
+                            uri={settingsTarget}
+                            onComplete={() => {
+                                setSettingsOpen(false)
+                                setUpdater((u) => u + 1)
+                            }}
+                        />
+                    )}
+                </Suspense>
+            </Drawer>
         </>
     )
 }
 
 interface ListsProps {
     listsPromise: Promise<ListType[]>
-    onUpdate?: () => void
+    onOpenSettings: (uri: string) => void
 }
 
 const Lists = (props: ListsProps) => {
@@ -96,12 +115,15 @@ const Lists = (props: ListsProps) => {
 
     const [ordered, setOrdered] = useState<ListType[]>(sorted)
 
-    // lists や order が外部で更新されたら並びを同期する(レンダー中の状態調整)
+    // lists や order が外部で更新されたら並びを同期する(レンダー中の状態調整)。
+    // 並びが同じでも再取得で新しいListオブジェクトが来たら差し替える(リネーム/アイコン変更の反映)
     const sortedKey = sorted.map((l) => l.uri).join(',')
     const [prevKey, setPrevKey] = useState(sortedKey)
-    if (sortedKey !== prevKey) {
+    const [prevLists, setPrevLists] = useState(lists)
+    if (sortedKey !== prevKey || lists !== prevLists) {
         setOrdered(sorted)
         setPrevKey(sortedKey)
+        setPrevLists(lists)
     }
 
     const persistOrder = (items: ListType[]) => {
@@ -128,7 +150,7 @@ const Lists = (props: ListsProps) => {
                         }
                     }}
                     onPersist={() => persistOrder(ordered)}
-                    onUpdate={props.onUpdate}
+                    onOpenSettings={props.onOpenSettings}
                 />
             ))}
         </Reorder.Group>
@@ -140,11 +162,10 @@ interface ListRowProps {
     pinned: boolean
     onTogglePin: () => void
     onPersist: () => void
-    onUpdate?: () => void
+    onOpenSettings: (uri: string) => void
 }
 
-const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProps) => {
-    const [settingsOpen, setSettingsOpen] = useState(false)
+const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListRowProps) => {
     const controls = useDragControls()
     const [dragging, setDragging] = useState(false)
 
@@ -172,7 +193,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
             }}
         >
             <div
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => onOpenSettings(list.uri)}
                 style={{
                     flex: 1,
                     minWidth: 0,
@@ -183,6 +204,18 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
                     overflow: 'hidden'
                 }}
             >
+                {list.iconURL && (
+                    <CCImage
+                        src={list.iconURL}
+                        maxHeight={128}
+                        alt=""
+                        style={{
+                            height: '1.125rem',
+                            marginRight: CssVar.space(1),
+                            flexShrink: 0
+                        }}
+                    />
+                )}
                 <Text>{list.title}</Text>
             </div>
             <div
@@ -216,15 +249,6 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onUpdate }: ListRowProp
                     <MdDragHandle size={20} />
                 </div>
             </div>
-            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-                <ListSettings
-                    uri={list.uri}
-                    onComplete={() => {
-                        setSettingsOpen(false)
-                        onUpdate?.()
-                    }}
-                />
-            </Drawer>
         </Reorder.Item>
     )
 }

@@ -169,7 +169,7 @@ const HomeMain = ({
                                 flexShrink: 0
                             }}
                         >
-                            <ListName uri={tab.uri} />
+                            <ListName pin={tab} />
                         </Tab>
                     ))}
                 </Tabs>

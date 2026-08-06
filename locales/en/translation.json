@@ -683,7 +683,8 @@
             "community": "Community",
             "user": "User",
             "noTimelines": "No timelines",
-            "defaultPostTimelines": "Default destination"
+            "defaultPostTimelines": "Default destination",
+            "isIconTab": "Use icon on tab"
         },
         "subscription": {
             "addToList": "Add to List"

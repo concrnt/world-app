@@ -42,6 +42,7 @@ export class PinnedListItemClass implements PinnedListItem {
     defaultPostTimelines: string[]
     defaultProfile?: string
     excludeSelf?: boolean
+    isIconTab?: boolean
 
     list = new CachedPromise<List | null>(async () => {
         const list = await this.client.getList(this.uri)
@@ -58,6 +59,7 @@ export class PinnedListItemClass implements PinnedListItem {
         this.defaultPostTimelines = item.defaultPostTimelines
         this.defaultProfile = item.defaultProfile
         this.excludeSelf = item.excludeSelf
+        this.isIconTab = item.isIconTab
     }
 }
 
@@ -651,17 +653,19 @@ export class Client {
             defaultPostTimelines?: string[]
             defaultProfile?: string
             excludeSelf?: boolean
+            isIconTab?: boolean
         }
     ): Promise<void> {
         const latestDoc = await this.api.getDocument<PinnedListsSchema>(semantics.lists(this.ccid, this.currentProfile))
         const newValue = latestDoc.value.map((item) => {
             if (item.uri === uri) {
                 return {
-                    uri,
+                    ...item,
                     defaultPostHome: options.defaultPostHome ?? item.defaultPostHome,
                     defaultPostTimelines: options.defaultPostTimelines ?? item.defaultPostTimelines,
                     defaultProfile: options.defaultProfile ?? item.defaultProfile,
-                    excludeSelf: options.excludeSelf ?? item.excludeSelf
+                    excludeSelf: options.excludeSelf ?? item.excludeSelf,
+                    isIconTab: options.isIconTab ?? item.isIconTab
                 }
             }
             return item

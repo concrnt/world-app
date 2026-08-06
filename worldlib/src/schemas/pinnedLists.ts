@@ -11,4 +11,5 @@ export type PinnedListsSchema = {
     defaultPostTimelines: string[]
     defaultProfile?: string
     excludeSelf?: boolean
+    isIconTab?: boolean
 }[]

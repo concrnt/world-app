@@ -163,7 +163,7 @@ const HomeMain = ({
                                 width: '120px'
                             }}
                         >
-                            <ListName uri={tab.uri} />
+                            <ListName pin={tab} />
                         </Tab>
                     ))}
                 </Tabs>

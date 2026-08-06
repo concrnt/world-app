@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
     Avatar,
     Button,
+    CCImage,
     Confirm,
     IconButton,
     List as ListView,
@@ -17,11 +18,21 @@ import {
     TextField
 } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
-import { MdDelete, MdMoreHoriz, MdOutlinePushPin, MdPlaylistRemove, MdPushPin } from 'react-icons/md'
+import {
+    MdClose,
+    MdDelete,
+    MdMoreHoriz,
+    MdOutlineEmojiEmotions,
+    MdOutlinePushPin,
+    MdPlaylistRemove,
+    MdPushPin
+} from 'react-icons/md'
 import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
 import { useClient } from '../contexts/Client'
-import { List, type ListEntry, type ProfileSchema, Schemas, semantics, Timeline } from '@concrnt/worldlib'
+import { useEmojiPicker } from '../contexts/EmojiPicker'
+import { List, type ListEntry, ListSchema, type ProfileSchema, Schemas, semantics, Timeline } from '@concrnt/worldlib'
+import { Document } from '@concrnt/client'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
 
@@ -37,11 +48,15 @@ export const ListSettings = (props: Props) => {
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const pin = pinnedLists.find((pin) => pin.uri === props.uri)
 
+    const emojiPicker = useEmojiPicker()
+
     const [list, setList] = useState<List | null>(null)
     const [listName, setListName] = useState<string>('')
+    const [iconURL, setIconURL] = useState<string>('')
     const [postTimelines, setPostTimelines] = useState<string[]>(pin?.defaultPostTimelines ?? [])
     const [postProfile, setPostProfile] = useState<string>(pin?.defaultProfile ?? client?.currentProfile ?? 'main')
     const [excludeSelf, setExcludeSelf] = useState<boolean>(pin?.excludeSelf ?? false)
+    const [isIconTab, setIsIconTab] = useState<boolean>(pin?.isIconTab ?? false)
 
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -55,16 +70,33 @@ export const ListSettings = (props: Props) => {
         client.getList(props.uri).then((data) => {
             setList(data)
             setListName(data?.title ?? '')
+            setIconURL(data?.iconURL ?? '')
         })
     }, [props.uri, client])
 
     const saveSettings = async () => {
         if (!client || !list) return
 
+        const latest = await client.api.getDocument<ListSchema>(props.uri)
+        const document: Document<ListSchema> = {
+            kind: 'record',
+            key: props.uri,
+            schema: Schemas.list,
+            value: {
+                ...latest.value,
+                name: listName,
+                iconURL: iconURL || undefined
+            },
+            author: client.ccid,
+            createdAt: new Date()
+        }
+        await client.api.commit(document)
+
         await client.updatePinnedList(props.uri, {
             defaultPostTimelines: postTimelines,
             defaultProfile: postProfile,
-            excludeSelf
+            excludeSelf,
+            isIconTab
         })
 
         props.onComplete?.()
@@ -138,7 +170,37 @@ export const ListSettings = (props: Props) => {
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('listName')}</Text>
-                <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                    <IconButton
+                        onClick={() => {
+                            emojiPicker.open((emoji) => {
+                                setIconURL(emoji.imageURL)
+                                emojiPicker.close()
+                            })
+                        }}
+                    >
+                        {iconURL ? (
+                            <CCImage
+                                src={iconURL}
+                                maxHeight={128}
+                                alt=""
+                                style={{
+                                    height: 'calc(1.125rem * 1.6)'
+                                }}
+                            />
+                        ) : (
+                            <MdOutlineEmojiEmotions size={20} />
+                        )}
+                    </IconButton>
+                    {iconURL && (
+                        <IconButton onClick={() => setIconURL('')}>
+                            <MdClose size={20} />
+                        </IconButton>
+                    )}
+                    <div style={{ flexGrow: 1, minWidth: 0 }}>
+                        <TextField value={listName} onChange={(e) => setListName(e.target.value)} />
+                    </div>
+                </div>
             </div>
             {isPinned && (
                 <Suspense fallback={<Text>Loading...</Text>}>
@@ -160,6 +222,18 @@ export const ListSettings = (props: Props) => {
                 >
                     <Text variant="h5">{t('excludeSelf')}</Text>
                     <Switch checked={excludeSelf} onChange={setExcludeSelf} />
+                </div>
+            )}
+            {isPinned && iconURL && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Text variant="h5">{t('isIconTab')}</Text>
+                    <Switch checked={isIconTab} onChange={setIsIconTab} />
                 </div>
             )}
 

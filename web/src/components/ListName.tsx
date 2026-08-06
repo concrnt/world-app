@@ -1,28 +1,35 @@
-import { Suspense, use, useMemo } from 'react'
-import { Text } from '@concrnt/ui'
-import { useClient } from '../contexts/Client'
+import { Suspense } from 'react'
+import { CCImage, Text } from '@concrnt/ui'
+import { PinnedListItemClass } from '@concrnt/worldlib'
+import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
-    uri: string
+    pin: PinnedListItemClass
 }
 
 export const ListName = (props: Props) => {
-    const { client } = useClient()
-
-    const textPromise = useMemo(
-        () => client!.getList(props.uri).then((list) => list?.title ?? 'No Name'),
-        [client, props.uri]
-    )
-
     return (
-        <Suspense key={props.uri} fallback={<Text>Loading...</Text>}>
-            <Inner textPromise={textPromise} />
+        <Suspense key={props.pin.uri} fallback={<Text>Loading...</Text>}>
+            <Inner pin={props.pin} />
         </Suspense>
     )
 }
 
-const Inner = ({ textPromise }: { textPromise: Promise<string> }) => {
-    const text = use(textPromise)
+const Inner = ({ pin }: { pin: PinnedListItemClass }) => {
+    const [list] = useSubscribe(pin.list)
 
-    return <Text>{text}</Text>
+    if (pin.isIconTab && list?.iconURL) {
+        return (
+            <CCImage
+                src={list.iconURL}
+                maxHeight={128}
+                alt={list.title}
+                style={{
+                    height: '1.125rem'
+                }}
+            />
+        )
+    }
+
+    return <Text>{list?.title ?? 'No Name'}</Text>
 }
