@@ -311,6 +311,8 @@
             "alias": "Alias",
             "loginOnAnotherDevice": "Log in on another device",
             "backupMasterKey": "Back up master key",
+            "copySubkey": "Copy Subkey",
+            "subkeyCopied": "Copied!",
             "backupNotSaved": "Not saved",
             "backupFileContent": "Concrnt Web login information\nThis file is a backup of your Concrnt Web login information.\nKeep this file in a safe place.\n\nCCID: {{ccid}}\nMaster private key: {{privateKey}}\nRegistered server at backup: {{server}}\n\nIf you lose your private key, you may not be able to recover your account.\nIf anyone else learns this information, your account could be taken over.",
             "subkeys": {
@@ -782,12 +784,12 @@
             "masterKeyLogin": "Log in with master key",
             "methodQr": "App QR",
             "methodPasskey": "Passkey",
-            "methodMasterKey": "Master Key",
+            "methodManual": "Manual",
             "signup": "New here? Create an account",
             "checking": "Checking...",
             "usePasskey": "Use passkey",
-            "masterKey": "Master Key",
-            "masterKeyPlaceholder": "Enter your 12-word master key",
+            "manualKey": "Master Key or Subkey",
+            "manualKeyPlaceholder": "Enter your 12-word master key, or a subkey starting with concrnt-subkey",
             "registeredServer": "Registered server",
             "serverPlaceholder": "e.g. v2dev.concrnt.net",
             "masterKeyInvalid": "Could not verify this master key.",
@@ -806,7 +808,12 @@
             "registrationNotFoundOnServer": "No registration was found on the specified server.",
             "registeringKey": "Registering the key this browser will use...",
             "masterKeyLoginFailed": "Login with master key failed.",
-            "subkeyCommitFailed": "Subkey commit failed."
+            "subkeyCommitFailed": "Subkey commit failed.",
+            "subkeyLogin": "Log in with subkey",
+            "checkingSubkey": "Checking your subkey on {{domain}}...",
+            "subkeyInvalid": "This subkey is not in a valid format.",
+            "subkeyInvalidOnServer": "This subkey has been revoked or is not registered.",
+            "subkeyLoginFailed": "Login with subkey failed."
         },
         "register": {
             "title": "Account Registration",

@@ -60,6 +60,7 @@ export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
+    const [subkeyCopied, setSubkeyCopied] = useState(false)
 
     if (!client) return null
 
@@ -82,6 +83,23 @@ export const IDView = () => {
         anchor.download = `concrnt-web-backup-${client.ccid}.txt`
         anchor.click()
         URL.revokeObjectURL(url)
+    }
+
+    const copySubkey = () => {
+        let subkey = localStorage.getItem('SubKey')
+        if (!subkey) return
+        // QRSetup経由のセッションはusePersistentがJSON文字列化して保存している
+        if (subkey.startsWith('"')) {
+            try {
+                subkey = JSON.parse(subkey)
+            } catch {
+                /* raw文字列のまま使う */
+            }
+        }
+        if (!subkey) return
+        navigator.clipboard.writeText(subkey)
+        setSubkeyCopied(true)
+        setTimeout(() => setSubkeyCopied(false), 2000)
     }
 
     return (
@@ -131,6 +149,10 @@ export const IDView = () => {
                 </div>
 
                 <Button onClick={backupMasterKey}>{t('backupMasterKey')}</Button>
+
+                {localStorage.getItem('SubKey') && (
+                    <Button onClick={copySubkey}>{subkeyCopied ? t('subkeyCopied') : t('copySubkey')}</Button>
+                )}
 
                 <SubkeyList />
             </div>

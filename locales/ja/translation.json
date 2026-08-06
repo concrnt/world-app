@@ -311,6 +311,8 @@
             "alias": "エイリアス",
             "loginOnAnotherDevice": "他デバイスでログイン",
             "backupMasterKey": "マスターキーをバックアップ",
+            "copySubkey": "サブキーをコピー",
+            "subkeyCopied": "コピーしました",
             "backupNotSaved": "未保存",
             "backupFileContent": "Concrnt Web ログイン情報\nこのファイルは Concrnt Web のログイン情報をバックアップするためのものです。\nこのファイルを安全な場所に保管してください。\n\nCCID: {{ccid}}\nマスター秘密鍵: {{privateKey}}\nバックアップ時登録サーバー: {{server}}\n\n秘密鍵を紛失した場合、アカウントを復元できなくなる可能性があります。\nこの内容を他人に知られると、アカウントが乗っ取られる可能性があります。",
             "subkeys": {
@@ -782,12 +784,12 @@
             "masterKeyLogin": "マスターキーでログイン",
             "methodQr": "アプリでQR",
             "methodPasskey": "パスキー",
-            "methodMasterKey": "マスターキー",
+            "methodManual": "手動入力",
             "signup": "アカウントをお持ちでない方は新規登録",
             "checking": "確認中...",
             "usePasskey": "パスキーを使う",
-            "masterKey": "マスターキー",
-            "masterKeyPlaceholder": "12語のマスターキーを入力",
+            "manualKey": "マスターキーまたはサブキー",
+            "manualKeyPlaceholder": "12語のマスターキー、または concrnt-subkey から始まるサブキーを入力",
             "registeredServer": "登録サーバー",
             "serverPlaceholder": "例: v2dev.concrnt.net",
             "masterKeyInvalid": "マスターキーを確認できません。",
@@ -806,7 +808,12 @@
             "registrationNotFoundOnServer": "指定されたサーバーで登録情報が見つかりませんでした。",
             "registeringKey": "このブラウザで使う鍵を登録しています...",
             "masterKeyLoginFailed": "マスターキーでのログインに失敗しました。",
-            "subkeyCommitFailed": "サブキーの登録に失敗しました。"
+            "subkeyCommitFailed": "サブキーの登録に失敗しました。",
+            "subkeyLogin": "サブキーでログイン",
+            "checkingSubkey": "{{domain}} でサブキーを確認しています...",
+            "subkeyInvalid": "サブキーの形式が正しくありません。",
+            "subkeyInvalidOnServer": "このサブキーは無効化されているか、登録されていません。",
+            "subkeyLoginFailed": "サブキーでのログインに失敗しました。"
         },
         "register": {
             "title": "アカウント登録",
