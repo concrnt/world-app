@@ -414,10 +414,14 @@
             "title": "照会",
             "submit": "照会"
         },
+        "list": {
+            "listNotFound": "リストが見つかりませんでした"
+        },
         "lists": {
             "createList": "リストを作成",
             "create": "作成",
-            "listTitle": "タイトル"
+            "listTitle": "タイトル",
+            "openSettings": "リスト設定"
         }
     },
     "components": {

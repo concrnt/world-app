@@ -414,10 +414,14 @@
             "title": "Inquiry",
             "submit": "Inquiry"
         },
+        "list": {
+            "listNotFound": "List not found"
+        },
         "lists": {
             "createList": "Create List",
             "create": "Create",
-            "listTitle": "Title"
+            "listTitle": "Title",
+            "openSettings": "List settings"
         }
     },
     "components": {

@@ -6,7 +6,9 @@ import { View, Text, IconButton, Button, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
-import { MdPlaylistAdd, MdDragHandle } from 'react-icons/md'
+import { MdPlaylistAdd, MdDragHandle, MdTune } from 'react-icons/md'
+import { useStack } from '../layouts/Stack'
+import { ListView } from './List'
 
 import { RiPushpinFill } from 'react-icons/ri'
 import { RiPushpinLine } from 'react-icons/ri'
@@ -166,6 +168,8 @@ interface ListRowProps {
 }
 
 const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListRowProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.lists' })
+    const { push } = useStack()
     const controls = useDragControls()
     const [dragging, setDragging] = useState(false)
 
@@ -193,7 +197,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
             }}
         >
             <div
-                onClick={() => onOpenSettings(list.uri)}
+                onClick={() => push(<ListView uri={list.uri} />)}
                 style={{
                     flex: 1,
                     minWidth: 0,
@@ -226,6 +230,15 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                     gap: CssVar.space(1)
                 }}
             >
+                <IconButton
+                    title={t('openSettings')}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenSettings(list.uri)
+                    }}
+                >
+                    <MdTune />
+                </IconButton>
                 <IconButton
                     onClick={(e) => {
                         e.stopPropagation()

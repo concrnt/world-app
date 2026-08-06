@@ -37,6 +37,7 @@ import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
 import { TimelineView } from './views/Timeline'
 import { ListsView } from './views/Lists'
+import { ListView } from './views/List'
 import { QueryView } from './views/Query'
 import { DevView } from './views/Dev'
 import { IDView } from './views/ID'
@@ -81,7 +82,7 @@ const ProfileRoute = () => {
     return <ProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} />
 }
 
-const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' | 'bskyView' }) => {
+const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'bskyView' }) => {
     const { uri = '' } = useParams()
     const decoded = decodeURIComponent(uri)
 
@@ -90,6 +91,8 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'apView' | 'bskyView' 
             return <PostView uri={decoded} />
         case 'timeline':
             return <TimelineView uri={decoded} />
+        case 'list':
+            return <ListView uri={decoded} />
         case 'apView':
             return <ApView uri={decoded} />
         case 'bskyView':
@@ -291,7 +294,10 @@ const AuthedRoutes = () => (
                                                                     element={<UriRoute kind="timeline" />}
                                                                 />
                                                                 <Route path="lists" element={<ListsView />} />
-                                                                <Route path="lists/:uri" element={<ListsView />} />
+                                                                <Route
+                                                                    path="lists/:uri"
+                                                                    element={<UriRoute kind="list" />}
+                                                                />
                                                                 <Route path="query" element={<QueryView />} />
                                                                 <Route
                                                                     path="dev"
