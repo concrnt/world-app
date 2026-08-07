@@ -108,13 +108,17 @@ export class Api {
         this.authProvider = authProvider
     }
 
-    async signJWT(claim: JwtPayload): Promise<string> {
-        const ckid = this.authProvider.getCKID()
-
+    // useMasterkeyは明示指定のみ(自動フォールバック禁止: アプリのAuthProviderでは
+    // マスター鍵署名のたびにbiometrics認証が走る)。kidを省略するとサーバーは
+    // issuerをraw keyとして扱い、マスター鍵のecrecoverで検証する
+    async signJWT(claim: JwtPayload, opts?: { useMasterkey?: boolean }): Promise<string> {
         const headerJson: Record<string, string> = {
             alg: 'CONCRNT',
-            typ: 'JWT',
-            kid: `cckv://${this.authProvider.getCCID()}/keys/${ckid}`
+            typ: 'JWT'
+        }
+        if (!opts?.useMasterkey) {
+            const ckid = this.authProvider.getCKID()
+            headerJson.kid = `cckv://${this.authProvider.getCCID()}/keys/${ckid}`
         }
 
         const header = JSON.stringify(headerJson)
@@ -123,7 +127,9 @@ export class Api {
 
         const body = makeUrlSafe(btoa(header) + '.' + btoa(payload))
 
-        const [hexSig, _] = await this.authProvider.signSub(body)
+        const hexSig = opts?.useMasterkey
+            ? await this.authProvider.signMaster(body)
+            : (await this.authProvider.signSub(body))[0]
 
         const r_raw = parseHexString(hexSig.slice(0, 64))
         const s_raw = parseHexString(hexSig.slice(64, 128))
@@ -139,31 +145,34 @@ export class Api {
         return body + '.' + base64Sig
     }
 
-    async generateApiToken(remote: string): Promise<string> {
-        const token = await this.signJWT({
-            aud: remote,
-            iss: `cckv://${this.authProvider.getCCID()}@${this.defaultHost}`,
-            sub: 'concrnt',
-            jti: crypto.randomUUID(),
-            iat: Math.floor(new Date().getTime() / 1000).toString(),
-            exp: Math.floor((new Date().getTime() + 5 * 60 * 1000) / 1000).toString()
-        })
+    async generateApiToken(remote: string, opts?: { useMasterkey?: boolean }): Promise<string> {
+        const token = await this.signJWT(
+            {
+                aud: remote,
+                iss: `cckv://${this.authProvider.getCCID()}@${this.defaultHost}`,
+                sub: 'concrnt',
+                jti: crypto.randomUUID(),
+                iat: Math.floor(new Date().getTime() / 1000).toString(),
+                exp: Math.floor((new Date().getTime() + 5 * 60 * 1000) / 1000).toString()
+            },
+            opts
+        )
 
-        this.tokens[remote] = token
+        this.tokens[opts?.useMasterkey ? `${remote}#master` : remote] = token
         return token
     }
 
-    async getAuthToken(remote: string): Promise<string> {
-        let token = this.tokens[remote]
+    async getAuthToken(remote: string, opts?: { useMasterkey?: boolean }): Promise<string> {
+        let token = this.tokens[opts?.useMasterkey ? `${remote}#master` : remote]
         if (!token || !CheckJwtIsValid(token)) {
-            token = await this.generateApiToken(remote)
+            token = await this.generateApiToken(remote, opts)
         }
         return token
     }
 
-    async getHeaders(domain: string) {
+    async getHeaders(domain: string, opts?: { useMasterkey?: boolean }) {
         return {
-            authorization: `Bearer ${await this.getAuthToken(domain)}`
+            authorization: `Bearer ${await this.getAuthToken(domain, opts)}`
         }
     }
 
@@ -233,17 +242,28 @@ export class Api {
         return this.fetchWithCredential<T>(fetchHost, endpoint, init)
     }
 
-    async fetchWithCredential<T>(host: string, path: string, init: RequestInit = {}, timeoutms?: number): Promise<T> {
+    async fetchWithCredential<T>(
+        host: string,
+        path: string,
+        init: RequestInit = {},
+        timeoutms?: number,
+        opts?: { useMasterkey?: boolean }
+    ): Promise<T> {
         const fetchHost = host || this.defaultHost
 
-        try {
-            const authHeaders = await this.getHeaders(fetchHost)
-            init.headers = {
-                ...init.headers,
-                ...authHeaders
+        // 署名鍵を持たない(ゲスト等)場合は無認証で通信するのが正常系なので試行もログもしない
+        if (opts?.useMasterkey || this.authProvider.canSignSub()) {
+            try {
+                const authHeaders = await this.getHeaders(fetchHost, opts)
+                init.headers = {
+                    ...init.headers,
+                    ...authHeaders
+                }
+            } catch (e) {
+                // useMasterkey明示時は無認証で送っても意味がないので失敗させる
+                if (opts?.useMasterkey) throw e
+                console.error('failed to get auth headers', e)
             }
-        } catch (e) {
-            console.error('failed to get auth headers', e)
         }
 
         return this.fetchHost<T>(fetchHost, path, init, timeoutms)
@@ -358,8 +378,9 @@ export class Api {
 
             // getHeadersのawait中に別callerがすり抜けて同一リクエストが並列発火しないよう、
             // in-flight登録(下のset)までをawaitなしで済ませる
+            // 署名鍵を持たない(ゲスト等)場合は無認証で読むのが正常系なので試行もログもしない
             const authHeadersPromise: Promise<Record<string, string>> =
-                opts?.auth !== 'no-auth'
+                opts?.auth !== 'no-auth' && this.authProvider.canSignSub()
                     ? this.getHeaders(fetchHost).catch((e) => {
                           console.error('failed to get auth headers', e)
                           return {}
@@ -830,7 +851,11 @@ export class Api {
 
     // net.concrnt.world.repository (POST)
     // NDJSONをインポートする。レスポンスには失敗した行だけが返る
-    async importRepository(jsonl: string, host?: string): Promise<RepositoryImportResult[]> {
+    async importRepository(
+        jsonl: string,
+        host?: string,
+        opts?: { useMasterkey?: boolean }
+    ): Promise<RepositoryImportResult[]> {
         const fetchHost = host || this.defaultHost
         const server = await this.getServer(fetchHost)
         const endpoint = renderUriTemplate(server, 'net.concrnt.world.repository', {})
@@ -842,7 +867,8 @@ export class Api {
                 headers: { 'Content-Type': 'text/plain' },
                 body: jsonl
             },
-            60 * 1000
+            60 * 1000,
+            opts
         )
     }
 
