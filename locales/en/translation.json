@@ -834,6 +834,9 @@
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
             "yes": "Yes",
+            "passkeyUnavailable": "Passkeys are not available in this browser.",
+            "passkeyCreateFailed": "Could not create a passkey. Passkeys may not be available in this environment. Select \"No\" to log in with a regular key instead.",
+            "passkeyNoPrf": "Your passkey does not support the required PRF extension 😭 The passkey that was just created cannot be used for login, so please delete it manually from your device's passkey settings. Try another passkey provider, or select \"No\" to use a regular key.",
             "confirmEmoji": "Check the emoji shown on your device, and if it matches, select \"Yes\" on the device."
         },
         "guestBase": {

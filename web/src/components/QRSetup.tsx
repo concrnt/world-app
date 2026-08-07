@@ -33,6 +33,9 @@ export const QRSetup = () => {
 
     const keyTypeSelectionRef = useRef<((typ: 'instant' | 'passkey') => void) | null>(null)
     const [pendingKeyGeneration, setPendingKeyGeneration] = useState<{ ccid: string; domain: string } | null>(null)
+    const [passkeyError, setPasskeyError] = useState<string>('')
+
+    const passkeyAvailable = !!window.PublicKeyCredential && !!navigator.credentials
 
     const waitForKeyTypeSelection = (ccid: string, domain: string): Promise<'instant' | 'passkey'> => {
         setPendingKeyGeneration({ ccid, domain })
@@ -63,71 +66,81 @@ export const QRSetup = () => {
                 }
             })
 
-            const keyType = await waitForKeyTypeSelection(ccid, domain)
+            // パスキー作成に失敗してもrejectせず、選択UIに戻して成功するまでやり直す
+            // (SignalLoginReceiverはこのコールバックを一度しか呼ばないため、rejectすると画面が進まなくなる)
+            while (true) {
+                const keyType = await waitForKeyTypeSelection(ccid, domain)
 
-            console.log('Selected key type:', keyType)
+                console.log('Selected key type:', keyType)
 
-            if (keyType === 'passkey') {
+                if (keyType !== 'passkey') {
+                    const identity = GenerateIdentity()
+                    const keyID = ComputeCKID(identity.publicKey)
+                    setKeyFingerprint(emojihash(keyID))
+                    subkey = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain}`
+
+                    return keyID
+                }
+
                 let id = `${ccid}@${domain}`
                 if (id.length > 64) {
                     id = ccid
                 }
 
-                const challenge = new Uint8Array(32)
-                crypto.getRandomValues(challenge)
-                const cred = await navigator.credentials.create({
-                    publicKey: {
-                        challenge: challenge,
-                        rp: {
-                            name: 'concrnt.world',
-                            id: window.location.hostname
-                        },
-                        pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
-                        user: {
-                            id: string2Uint8Array(id),
-                            name: ccid,
-                            displayName: 'concrnt'
-                        },
-                        authenticatorSelection: {
-                            userVerification: 'required',
-                            residentKey: 'required'
-                        },
-                        extensions: {
-                            prf: {
-                                eval: {
-                                    first: string2Uint8Array('concrnt-world-passkey')
+                let cred
+                try {
+                    const challenge = new Uint8Array(32)
+                    crypto.getRandomValues(challenge)
+                    cred = await navigator.credentials.create({
+                        publicKey: {
+                            challenge: challenge,
+                            rp: {
+                                name: 'concrnt.world',
+                                id: window.location.hostname
+                            },
+                            pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+                            user: {
+                                id: string2Uint8Array(id),
+                                name: ccid,
+                                displayName: 'concrnt'
+                            },
+                            authenticatorSelection: {
+                                userVerification: 'required',
+                                residentKey: 'required'
+                            },
+                            extensions: {
+                                prf: {
+                                    eval: {
+                                        first: string2Uint8Array('concrnt-world-passkey')
+                                    }
                                 }
                             }
                         }
-                    }
-                })
-
-                if (!cred) {
-                    console.error('Credential creation failed')
-                    throw new Error('Failed to create credential')
+                    })
+                } catch (err) {
+                    console.error('Credential creation failed', err)
+                    cred = null
                 }
 
-                // @ts-expect-error - TypeScript does not yet recognize the prf extension results
+                if (!cred) {
+                    setPasskeyError(t('passkeyCreateFailed'))
+                    continue
+                }
+
                 const credentialResults = cred.getClientExtensionResults()
                 console.log('Credential Results:', credentialResults)
 
                 const prfRes = credentialResults?.prf?.results
                 if (!prfRes?.first) {
                     console.error('PRF results not available')
-                    throw new Error('PRF results not available')
+                    setPasskeyError(t('passkeyNoPrf'))
+                    continue
                 }
                 console.log('PRF First:', prfRes.first)
 
                 const firstBuf = new Uint8Array(prfRes.first)
                 const identity = DeriveIdentity(firstBuf)
 
-                const keyID = ComputeCKID(identity.publicKey)
-                setKeyFingerprint(emojihash(keyID))
-                subkey = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain}`
-
-                return keyID
-            } else {
-                const identity = GenerateIdentity()
                 const keyID = ComputeCKID(identity.publicKey)
                 setKeyFingerprint(emojihash(keyID))
                 subkey = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain}`
@@ -210,6 +223,10 @@ export const QRSetup = () => {
                     >
                         <Text variant="h4">{t('usePasskeyTitle')}</Text>
                         <Text>{t('usePasskeyDescription')}</Text>
+                        {!passkeyAvailable && (
+                            <Text style={{ color: 'var(--error, #f44336)' }}>{t('passkeyUnavailable')}</Text>
+                        )}
+                        {passkeyError && <Text style={{ color: 'var(--error, #f44336)' }}>{passkeyError}</Text>}
                         <div
                             style={{
                                 display: 'flex',
@@ -222,6 +239,7 @@ export const QRSetup = () => {
                         >
                             <Button
                                 onClick={() => {
+                                    setPasskeyError('')
                                     if (keyTypeSelectionRef.current) {
                                         keyTypeSelectionRef.current('instant')
                                     }
@@ -230,7 +248,9 @@ export const QRSetup = () => {
                                 {t('no')}
                             </Button>
                             <Button
+                                disabled={!passkeyAvailable}
                                 onClick={() => {
+                                    setPasskeyError('')
                                     if (keyTypeSelectionRef.current) {
                                         keyTypeSelectionRef.current('passkey')
                                     }

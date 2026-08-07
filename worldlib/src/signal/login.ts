@@ -52,9 +52,15 @@ export class SignalLoginReceiver {
                     {
                         if (!this.init) {
                             this.init = data
-                            keyGenerationCallback(data.ccid, data.domain).then((ckid) => {
-                                this.ckid = ckid
-                            })
+                            keyGenerationCallback(data.ccid, data.domain)
+                                .then((ckid) => {
+                                    this.ckid = ckid
+                                })
+                                .catch((err) => {
+                                    console.error('Key generation failed:', err)
+                                    // tickerがinit_requestを再送するので、initを空に戻せば再試行できる
+                                    this.init = null
+                                })
                         }
                     }
                     break
@@ -151,14 +157,20 @@ export class SignalLoginSender {
                             if (this.generatingKey) return
                             const ckid = data.ckid
                             if (!ckid) return
-                            keyCreationCallback(ckid).then((keyURI) => {
-                                this.keyURI = keyURI
-                                const response: SignalLoginSignatureResponse = {
-                                    type: 'signal_login_signature_response',
-                                    keyURI: keyURI
-                                }
-                                ws.send(JSON.stringify(response))
-                            })
+                            keyCreationCallback(ckid)
+                                .then((keyURI) => {
+                                    this.keyURI = keyURI
+                                    const response: SignalLoginSignatureResponse = {
+                                        type: 'signal_login_signature_response',
+                                        keyURI: keyURI
+                                    }
+                                    ws.send(JSON.stringify(response))
+                                })
+                                .catch((err) => {
+                                    console.error('Key creation failed:', err)
+                                    // キャンセル時に立てっぱなしだと次のsignature_requestで再確認できない
+                                    this.generatingKey = false
+                                })
                             this.generatingKey = true
                         }
                     }
