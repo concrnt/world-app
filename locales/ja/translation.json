@@ -552,7 +552,8 @@
             "settings": "設定",
             "post": "投稿",
             "documentation": "ドキュメント",
-            "forum": "フォーラム"
+            "forum": "フォーラム",
+            "notFound": "見つかりません"
         },
         "themeEditor": {
             "title": "テーマエディタ",

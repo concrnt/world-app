@@ -1,0 +1,50 @@
+/* スクロールバーはhover中のみ表示する(グローバルのthumb色を上書き) */
+.scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.scroll:hover {
+    scrollbar-color: color-mix(in srgb, var(--backdrop-text) 20%, transparent) transparent;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+    background-color: transparent;
+}
+
+.scroll:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--backdrop-text) 20%, transparent);
+}
+
+/* アイコン付きリスト行: hoverでアイコンから展開矢印にフェード切替 */
+.iconStack {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fadeIcon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s;
+}
+
+.fadeArrow {
+    position: absolute;
+    opacity: 0;
+    transition:
+        transform 0.2s,
+        opacity 0.2s;
+}
+
+.iconStack:hover .fadeIcon {
+    opacity: 0;
+}
+
+.iconStack:hover .fadeArrow {
+    opacity: 1;
+}

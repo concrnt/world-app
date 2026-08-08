@@ -9,13 +9,16 @@ export interface Preference {
     developerMode: boolean
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
+    // プロフィール名 -> サイドバーで展開中のリストURI
+    expandedLists?: Record<string, string[]>
 }
 
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
     developerMode: false,
-    listOrder: {}
+    listOrder: {},
+    expandedLists: {}
 }
 
 interface PreferenceState {

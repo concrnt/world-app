@@ -16,6 +16,7 @@ import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
 import { ProfileName } from './ProfileName'
+import { SidebarLists } from './SidebarLists'
 import { useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
 import { semantics } from '@concrnt/worldlib'
@@ -109,7 +110,12 @@ export const Sidebar = () => {
                         {t('settings')}
                     </ListItem>
                 </List>
-                <div style={{ flex: 1 }} />
+                <Divider
+                    style={{
+                        borderColor: CssVar.backdropText
+                    }}
+                />
+                <SidebarLists />
                 <Button
                     onClick={() => {
                         const home = semantics.homeTimeline(client.ccid, client.currentProfile)

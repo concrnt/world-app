@@ -552,7 +552,8 @@
             "settings": "Settings",
             "post": "Post",
             "documentation": "Documentation",
-            "forum": "Forum"
+            "forum": "Forum",
+            "notFound": "Not found"
         },
         "themeEditor": {
             "title": "Theme Editor",
