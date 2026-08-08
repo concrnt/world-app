@@ -345,6 +345,10 @@
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to ActivityPub. If none are set, your home timeline is used.",
             "inboxNotListed": "The ActivityPub timeline is not in any of your lists. Add it to a list to see incoming posts.",
             "addToList": "Add to list",
+            "inboxPolicyBroken": "There is a problem with the inbox list permissions. Posts from ActivityPub cannot be delivered.",
+            "repair": "Repair",
+            "repairing": "Repairing...",
+            "repairFailed": "Repair failed. Please try again later.",
             "update": "Update",
             "inquiry": "Inquiry"
         },

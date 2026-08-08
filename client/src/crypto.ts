@@ -172,6 +172,8 @@ export const ValidateSignature = (body: string, signature: string, expectedKeyID
 }
 
 export const LoadKey = (privateKey: string): KeyPair | null => {
+    // ellipticは非hex文字列からも黙って鍵を導出してしまうため、ここで弾く
+    if (!/^[0-9a-f]{64}$/i.test(privateKey)) return null
     try {
         const ellipsis = new Ec('secp256k1')
         const keyPair = ellipsis.keyFromPrivate(privateKey)

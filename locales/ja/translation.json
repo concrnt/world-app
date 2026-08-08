@@ -345,6 +345,10 @@
             "forwardTimelineDesc": "選択したタイムラインへの自分の投稿がActivityPubへ転送されます。未設定の場合はホームタイムラインが使用されます。",
             "inboxNotListed": "ActivityPubタイムラインがどのリストにも登録されていません。リストに追加しないと受信した投稿が表示されません。",
             "addToList": "リストに追加",
+            "inboxPolicyBroken": "受信リストの権限設定に問題があり、ActivityPubからの投稿が届かない状態です。",
+            "repair": "修復する",
+            "repairing": "修復中...",
+            "repairFailed": "修復に失敗しました。時間をおいて再度お試しください。",
             "update": "更新",
             "inquiry": "照会"
         },
