@@ -7,6 +7,7 @@ import { QRSetup } from '../components/QRSetup'
 import { string2Uint8Array } from '../util'
 import {
     Api,
+    ComputeCCID,
     ComputeCKID,
     DeriveIdentity,
     Document,
@@ -14,7 +15,9 @@ import {
     GenerateIdentity,
     InMemoryAuthProvider,
     InMemoryKVS,
+    IsValid256k1PrivateKey,
     LoadIdentity,
+    LoadKey,
     LoadSubKey,
     NotFoundError,
     SignedDocument,
@@ -39,6 +42,22 @@ const normalizeRecoveryPhrase = (value: string) => value.trim().normalize('NFKD'
 
 const loadRecoveryIdentity = (value: string): Identity | null => {
     if (!value) return null
+
+    // 旧webバックアップファイルやv1環境からの復元用に、64桁hexの生秘密鍵も受け付ける
+    const hexMatch = value.match(/^(?:0x)?([0-9a-f]{64})$/)
+    if (hexMatch) {
+        // ellipticのkeyFromPrivateは曲線オーダー外の鍵も黙って受けるため先に弾く
+        if (!IsValid256k1PrivateKey(hexMatch[1])) return null
+        const keypair = LoadKey(hexMatch[1])
+        if (!keypair) return null
+        return {
+            mnemonic: '',
+            mnemonic_ja: '',
+            privateKey: keypair.privatekey,
+            publicKey: keypair.publickey,
+            CCID: ComputeCCID(keypair.publickey)
+        }
+    }
 
     try {
         return LoadIdentity(value)
