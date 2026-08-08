@@ -16,23 +16,30 @@ self.addEventListener('message', (event) => {
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+// Vite-internal URLs (/@fs, /@vite, /@id, bare node_modules) are dev-only and
+// unversioned — caching them serves stale linked-package code forever.
 const sameOriginAsset = (url: URL): boolean =>
     url.origin === self.location.origin &&
+    !url.pathname.startsWith('/@') &&
+    !url.pathname.startsWith('/node_modules/') &&
     /\.(?:js|css|woff2?|ttf|json|png|jpg|jpeg|gif|webp|svg|ico|mp3|mp4|webm|wasm)$/.test(url.pathname)
 
-registerRoute(
-    ({ url }) => sameOriginAsset(url),
-    new CacheFirst({
-        cacheName: 'app-assets',
-        plugins: [
-            new CacheableResponsePlugin({ statuses: [0, 200] }),
-            new ExpirationPlugin({
-                maxEntries: 500,
-                purgeOnQuotaError: true
-            })
-        ]
-    })
-)
+if (!import.meta.env.DEV) {
+    registerRoute(
+        ({ url }) => sameOriginAsset(url),
+        new CacheFirst({
+            cacheName: 'app-assets',
+            plugins: [
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new ExpirationPlugin({
+                    maxEntries: 500,
+                    maxAgeSeconds: 30 * 24 * 60 * 60,
+                    purgeOnQuotaError: true
+                })
+            ]
+        })
+    )
+}
 
 // --- Push notifications ---
 // The push carries only the minimal notification struct
