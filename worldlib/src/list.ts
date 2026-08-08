@@ -111,7 +111,8 @@ export class List {
                 href: item,
                 schema: schema
             },
-            createdAt: new Date()
+            createdAt: new Date(),
+            onUpdate: 'forget'
         }
 
         await client.api.commit(document)

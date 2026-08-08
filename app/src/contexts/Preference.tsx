@@ -131,7 +131,8 @@ export function usePreference<K extends keyof Preference>(
                             url: 'https://policy.concrnt.world/private.json'
                         }
                     ]
-                }
+                },
+                onUpdate: 'forget'
             }
 
             client.api.commit(document).catch((e) => {

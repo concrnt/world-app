@@ -252,7 +252,8 @@ export const ApPerson = ({ person }: Props) => {
                                                 value: {
                                                     actorURI: person.id
                                                 },
-                                                createdAt: new Date()
+                                                createdAt: new Date(),
+                                                onUpdate: 'forget'
                                             }
                                             client.api
                                                 .commit(document)

@@ -128,7 +128,8 @@ export const BskyPerson = ({ person }: Props) => {
                                             value: {
                                                 did: person.did
                                             },
-                                            createdAt: new Date()
+                                            createdAt: new Date(),
+                                            onUpdate: 'forget'
                                         }
                                         client.api
                                             .commit(document)

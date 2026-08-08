@@ -77,7 +77,8 @@ export const saveCustomTheme = async (client: Client, theme: Theme): Promise<The
         schema: THEME_SCHEMA,
         value: normalizedTheme,
         author: client.ccid,
-        createdAt: new Date()
+        createdAt: new Date(),
+        onUpdate: 'forget'
     }
 
     await client.api.commit(document)
