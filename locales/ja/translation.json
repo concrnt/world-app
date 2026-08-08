@@ -678,6 +678,11 @@
             "schema": "スキーマ",
             "attributes": "属性"
         },
+        "policyEditor": {
+            "modeEditor": "ポリシーエディタ",
+            "modeJson": "JSON",
+            "invalidJson": "JSONが不正です"
+        },
         "listSettings": {
             "title": "リスト設定",
             "save": "保存",

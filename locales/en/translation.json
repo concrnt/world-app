@@ -678,6 +678,11 @@
             "schema": "Schema",
             "attributes": "Attributes"
         },
+        "policyEditor": {
+            "modeEditor": "Policy Editor",
+            "modeJson": "JSON",
+            "invalidJson": "Invalid JSON"
+        },
         "listSettings": {
             "title": "List Settings",
             "save": "Save",
