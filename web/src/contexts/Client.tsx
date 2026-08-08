@@ -73,6 +73,9 @@ export const ClientProvider = (props: Props): ReactNode => {
     // client.profilesはミューテートされるだけなので、更新通知でcontext valueを再生成して
     // client.profile直読みのコンポーネント(Sidebar等)へ反映する
     const [profilesVersion, setProfilesVersion] = useState(0)
+    // client.server(well-known)も同様。復帰時リフレッシュでサービス広告が変わったら
+    // client.server.endpoints直読みのコンポーネント(Settings等)へ反映する
+    const [serverVersion, setServerVersion] = useState(0)
 
     const reload = useCallback(
         async (name?: string) => {
@@ -239,6 +242,11 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
         client.subscribeProfilesUpdated(onProfilesUpdated)
 
+        const onServerUpdated = () => {
+            setServerVersion((v) => v + 1)
+        }
+        client.subscribeServerUpdated(onServerUpdated)
+
         // オンライン/オフラインとも即時プローブする(オフライン時はプローブが失敗して遷移が発火し、
         // リクエストが発生しないアイドル状態でもバナーが表示される)
         const onBrowserNetworkChange = () => {
@@ -261,6 +269,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         return () => {
             client.unsubscribeOnlineStatus(onStatusChanged)
             client.unsubscribeProfilesUpdated(onProfilesUpdated)
+            client.unsubscribeServerUpdated(onServerUpdated)
             window.removeEventListener('online', onBrowserNetworkChange)
             window.removeEventListener('offline', onBrowserNetworkChange)
             document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -308,7 +317,8 @@ export const ClientProvider = (props: Props): ReactNode => {
         isSwitching,
         switchError,
         dismissSwitchError,
-        profilesVersion
+        profilesVersion,
+        serverVersion
     ])
 
     if (isOffline) {
