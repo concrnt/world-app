@@ -144,11 +144,7 @@ const Note = (props: {
                         if (note.attributedTo) push(<ApView uri={note.attributedTo} />)
                     }}
                 >
-                    <Avatar
-                        ccid={note.attributedTo ?? ''}
-                        src={author?.getIcons()[0]?.url}
-                        style={{ width: '48px', height: '48px' }}
-                    />
+                    <Avatar ccid={note.attributedTo ?? ''} src={author?.getIcons()[0]?.url} />
                 </div>
             }
             headerLeft={

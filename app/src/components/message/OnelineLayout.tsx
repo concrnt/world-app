@@ -28,7 +28,7 @@ export const OnelineMessageLayout = (props: Props) => {
         >
             <div
                 style={{
-                    width: '48px',
+                    width: '40px',
                     flexShrink: 0
                 }}
             >

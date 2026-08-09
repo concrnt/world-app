@@ -31,11 +31,7 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
                         push(<ProfileView ccid={message.author} />)
                     }}
                 >
-                    <Avatar
-                        ccid={message.author}
-                        src={message.authorProfile?.avatar}
-                        style={{ width: '48px', height: '48px' }}
-                    />
+                    <Avatar ccid={message.author} src={message.authorProfile?.avatar} />
                 </div>
             }
             headerLeft={<MessageAuthor message={message} />}

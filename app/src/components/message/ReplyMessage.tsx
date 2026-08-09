@@ -44,11 +44,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                             push(<ProfileView ccid={props.message.author} />)
                         }}
                     >
-                        <Avatar
-                            ccid={props.message.author}
-                            src={props.message.authorProfile?.avatar}
-                            style={{ width: '48px', height: '48px' }}
-                        />
+                        <Avatar ccid={props.message.author} src={props.message.authorProfile?.avatar} />
                     </div>
                 }
                 headerLeft={<MessageAuthor message={props.message} />}

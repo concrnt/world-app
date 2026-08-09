@@ -69,9 +69,9 @@ const KEY_SUFFIX_BSKYFOLLOW = '$bskyfollow'
 const KEY_SUFFIX_READACCESS = '$readaccess'
 
 // 左アイコンコラムの共通スタイル
-// - 幅 56px は既存 MessageLayout のアバタースペース(48px+gap8px)と揃えるため
+// - 幅 48px は既存 MessageLayout のアバタースペース(40px+gap8px)と揃えるため
 // - paddingLeft 5px は画面端とアイコンの間の余白
-const ICON_COLUMN_WIDTH = '56px'
+const ICON_COLUMN_WIDTH = '48px'
 const ICON_COLUMN_PADDING_LEFT = '5px'
 const ICON_SIZE = 32
 
