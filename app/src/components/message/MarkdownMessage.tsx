@@ -32,7 +32,11 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                         push(<ProfileView ccid={message.author} />)
                     }}
                 >
-                    <Avatar ccid={message.author} src={message.authorProfile?.avatar} />
+                    <Avatar
+                        ccid={message.author}
+                        src={message.authorProfile?.avatar}
+                        style={{ width: '48px', height: '48px' }}
+                    />
                 </div>
             }
             headerLeft={<MessageAuthor message={message} />}

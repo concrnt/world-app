@@ -1,7 +1,7 @@
 import { MessageProps } from './types'
 import { ReplyMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CfmRenderer } from '@concrnt/ui'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -23,8 +23,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
         <div
             style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: CssVar.space(1)
+                flexDirection: 'column'
             }}
         >
             <ErrorBoundary FallbackComponent={RenderError}>
@@ -42,7 +41,11 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                             navigate('/profile/' + props.message.author)
                         }}
                     >
-                        <Avatar ccid={props.message.author} src={props.message.authorProfile?.avatar} />
+                        <Avatar
+                            ccid={props.message.author}
+                            src={props.message.authorProfile?.avatar}
+                            style={{ width: '48px', height: '48px' }}
+                        />
                     </div>
                 }
                 headerLeft={<MessageAuthor message={props.message} />}

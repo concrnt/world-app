@@ -72,7 +72,7 @@ const Post = (props: {
                         push(<BskyView uri={post.author.did} />)
                     }}
                 >
-                    <Avatar ccid={post.author.did} src={post.author.avatar} />
+                    <Avatar ccid={post.author.did} src={post.author.avatar} style={{ width: '48px', height: '48px' }} />
                 </div>
             }
             headerLeft={

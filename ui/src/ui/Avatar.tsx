@@ -15,6 +15,7 @@ export const Avatar = (props: Props) => {
             fallback={
                 <div
                     style={{
+                        display: 'block',
                         width: '40px',
                         height: '40px',
                         borderRadius: '4px',
@@ -39,6 +40,7 @@ const Inner = (props: Props) => {
                 maxWidth={256}
                 alt="avatar"
                 style={{
+                    display: 'block',
                     width: '40px',
                     height: '40px',
                     borderRadius: '4px',
@@ -55,6 +57,7 @@ const Inner = (props: Props) => {
                 size={40}
                 variant="beam"
                 style={{
+                    display: 'block',
                     borderRadius: '4px',
                     ...props.style
                 }}

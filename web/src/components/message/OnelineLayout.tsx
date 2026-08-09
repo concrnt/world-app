@@ -14,7 +14,7 @@ export const OnelineMessageLayout = (props: Props) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
-                fontSize: '0.9rem',
+                fontSize: '0.75rem',
                 width: '100%',
                 overflow: 'hidden',
                 alignItems: 'center',
@@ -28,7 +28,8 @@ export const OnelineMessageLayout = (props: Props) => {
         >
             <div
                 style={{
-                    width: '40px'
+                    width: '48px',
+                    flexShrink: 0
                 }}
             >
                 {props.left}
@@ -38,6 +39,7 @@ export const OnelineMessageLayout = (props: Props) => {
                     display: 'flex',
                     gap: '4px',
                     flex: 1,
+                    opacity: 0.7,
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
                     alignItems: 'center',

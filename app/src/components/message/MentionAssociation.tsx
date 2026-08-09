@@ -37,7 +37,7 @@ export const MentionAssociation = (props: MessageProps<MentionAssociationSchema>
                     gap: '8px',
                     fontSize: '12px',
                     opacity: 0.7,
-                    paddingLeft: '48px'
+                    paddingLeft: '56px'
                 }}
             >
                 <Avatar
@@ -54,7 +54,7 @@ export const MentionAssociation = (props: MessageProps<MentionAssociationSchema>
 
             {/* ローディング */}
             {!mentionSourceURI && (
-                <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>
+                <div style={{ paddingLeft: '56px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>
             )}
         </div>
     )

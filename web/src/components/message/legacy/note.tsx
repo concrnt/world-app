@@ -24,7 +24,7 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                         navigate('/profile/' + message.author)
                     }}
                 >
-                    <Avatar ccid={message.author} />
+                    <Avatar ccid={message.author} style={{ width: '48px', height: '48px' }} />
                 </div>
             }
             headerLeft={

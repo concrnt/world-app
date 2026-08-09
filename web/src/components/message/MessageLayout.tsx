@@ -25,7 +25,7 @@ export const MessageLayout = (props: Props) => {
                 if (!props.detail) props.onClick?.()
             }}
         >
-            {props.left}
+            <div style={{ flexShrink: 0, marginTop: '5px' }}>{props.left}</div>
             <div
                 style={{
                     display: 'flex',
