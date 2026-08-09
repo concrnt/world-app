@@ -165,8 +165,10 @@ const HomeMain = ({
                             groupId="home-timeline-tabs"
                             style={{
                                 color: CssVar.contentText,
-                                width: '120px',
-                                flexShrink: 0
+                                flex: '0 0 auto',
+                                width: 'auto',
+                                minWidth: '90px',
+                                maxWidth: '360px'
                             }}
                         >
                             <ListName pin={tab} />

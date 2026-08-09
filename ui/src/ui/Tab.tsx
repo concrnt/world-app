@@ -25,10 +25,14 @@ export const Tab = (props: Props) => {
             style={{
                 flex: 1,
                 width: '100%',
+                minHeight: '48px',
                 padding: '0.5rem',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                fontFamily: 'inherit',
                 borderRadius: CssVar.round(1),
                 ...props.style
             }}
