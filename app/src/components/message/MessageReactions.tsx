@@ -111,7 +111,7 @@ export const MessageReactions = (props: Props) => {
             style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '6px'
+                gap: '8px'
             }}
         >
             {Object.entries(reactionCounts).map(([imageUrl, count]) => {
@@ -130,14 +130,17 @@ export const MessageReactions = (props: Props) => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 8px',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '0 8px',
+                            minWidth: '64px',
+                            minHeight: '26px',
                             borderRadius: CssVar.round(1),
                             border: isOwn ? `1.5px solid ${CssVar.contentLink}` : `1px solid ${CssVar.divider}`,
                             backgroundColor: isOwn ? `rgb(from ${CssVar.contentLink} r g b / 0.15)` : 'transparent',
                             cursor: 'pointer',
                             color: CssVar.contentText,
-                            fontSize: '13px'
+                            fontSize: '1rem'
                         }}
                     >
                         <CCImage
