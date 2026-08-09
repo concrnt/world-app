@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
@@ -14,14 +14,36 @@ interface Props {
 export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }: Props) => {
     const emojiPicker = useEmojiPicker()
 
-    const [cursorPos, setCursorPos] = useState<number>(0)
-    const [forceOff, setForceOff] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
 
+    // カーソル位置とフォーカスはstateとして持たず、DOMを直接読む。
+    // カーソル移動はReactの再レンダーを起こさないため、selectionchange/focus/blurの購読で通知だけ受ける
+    // (selectionchangeはtext control自体をターゲットにするブラウザとdocumentにしか発火しないブラウザがあるため両方に登録)
+    const subscribe = useCallback(
+        (onChange: () => void) => {
+            const ta = textareaRef.current
+            if (!ta) return () => {}
+            ta.addEventListener('focus', onChange)
+            ta.addEventListener('blur', onChange)
+            ta.addEventListener('selectionchange', onChange)
+            document.addEventListener('selectionchange', onChange)
+            return () => {
+                ta.removeEventListener('focus', onChange)
+                ta.removeEventListener('blur', onChange)
+                ta.removeEventListener('selectionchange', onChange)
+                document.removeEventListener('selectionchange', onChange)
+            }
+        },
+        [textareaRef]
+    )
+    const cursorPos = useSyncExternalStore(subscribe, () => textareaRef.current?.selectionEnd ?? 0)
+    const focused = useSyncExternalStore(subscribe, () => document.activeElement === textareaRef.current)
+
     // カーソル前のテキストから `:query` パターンを検出
+    // 先頭ガードで、完結済み `:name:` の閉じコロンやURLのポート番号をトリガーと誤認しない
     const query = useMemo(() => {
         const before = text.slice(0, cursorPos)
-        const match = /:(\w+)$/.exec(before)
+        const match = /(?:^|[^\w:]):(\w+)$/.exec(before)
         return match?.[1] ?? null
     }, [text, cursorPos])
 
@@ -31,7 +53,7 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
         return emojiPicker.search(query, 16)
     }, [query, emojiPicker])
 
-    const showSuggestions = query !== null && suggestions.length > 0 && !forceOff
+    const showSuggestions = focused && query !== null && suggestions.length > 0
 
     // query が変わったら選択をリセット（レンダー中のstate調整パターン）
     const [prevQuery, setPrevQuery] = useState(query)
@@ -59,13 +81,12 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
                 [emoji.shortcode]: { imageURL: emoji.imageURL }
             }))
 
-            setForceOff(true)
-
             // カーソルを挿入位置の後ろに移動
+            // (setSelectionRangeがselectionchangeを発火するので、パレットは導出的に閉じる)
+            const newPos = colonPos + emoji.shortcode.length + 3
             requestAnimationFrame(() => {
                 const ta = textareaRef.current
                 if (ta) {
-                    const newPos = colonPos + emoji.shortcode.length + 3
                     ta.setSelectionRange(newPos, newPos)
                     ta.focus()
                 }
@@ -74,29 +95,9 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
         [text, cursorPos, suggestions, textareaRef, setText, updateEmojiDict]
     )
 
-    // カーソル位置の追跡
-    useEffect(() => {
-        const ta = textareaRef.current
-        if (!ta) return
-
-        const updateCursor = () => {
-            setCursorPos(ta.selectionEnd ?? 0)
-            setForceOff(false)
-        }
-
-        ta.addEventListener('input', updateCursor)
-        ta.addEventListener('click', updateCursor)
-
-        return () => {
-            ta.removeEventListener('input', updateCursor)
-            ta.removeEventListener('click', updateCursor)
-        }
-    }, [textareaRef])
-
     // keydown: Enter確定 + 矢印キー移動（サジェスト表示中のみ）
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
-            setForceOff(false)
             if (!showSuggestions) return
 
             if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
@@ -117,24 +118,16 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
         [showSuggestions, suggestions.length, selectedIndex, onConfirm]
     )
 
-    const onBlur = useCallback(() => {
-        setTimeout(() => {
-            setForceOff(true)
-        }, 100)
-    }, [])
-
     useEffect(() => {
         const ta = textareaRef.current
         if (!ta) return
 
         ta.addEventListener('keydown', onKeyDown)
-        ta.addEventListener('blur', onBlur)
 
         return () => {
             ta.removeEventListener('keydown', onKeyDown)
-            ta.removeEventListener('blur', onBlur)
         }
-    }, [textareaRef, onKeyDown, onBlur])
+    }, [textareaRef, onKeyDown])
 
     return (
         <AnimatePresence>
