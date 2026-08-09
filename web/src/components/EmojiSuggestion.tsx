@@ -51,7 +51,9 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
             if (!emoji) return
 
             const newText = before.slice(0, colonPos) + `:${emoji.shortcode}: ` + after
+            const newPos = colonPos + emoji.shortcode.length + 3
             setText(newText)
+            setCursorPos(newPos)
             setSelectedIndex(0)
 
             updateEmojiDict((prev) => ({
@@ -65,7 +67,6 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
             requestAnimationFrame(() => {
                 const ta = textareaRef.current
                 if (ta) {
-                    const newPos = colonPos + emoji.shortcode.length + 3
                     ta.setSelectionRange(newPos, newPos)
                     ta.focus()
                 }
@@ -96,6 +97,7 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
     // keydown: Enter確定 + 矢印キー移動（サジェスト表示中のみ）
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
+            if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift') return
             setForceOff(false)
             if (!showSuggestions) return
 
