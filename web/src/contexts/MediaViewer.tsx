@@ -195,6 +195,35 @@ export const MediaViewerProvider = (props: Props) => {
         return () => window.removeEventListener('keydown', onKeyDown)
     }, [isOpen, currentIndex, medias.length, close, changeImage])
 
+    // ホイール操作(デスクトップ向け): 画像をカーソル位置基準でズーム
+    useEffect(() => {
+        if (!isOpen) return
+        const onWheel = (e: WheelEvent): void => {
+            if (!stateRef.current.isImage) return
+            e.preventDefault()
+
+            const currentScale = mvScale.get()
+            // deltaMode 1 は行単位(Firefox)なのでピクセル相当に正規化。ctrlKey付きはトラックパッドのピンチでdeltaが小さい
+            const delta = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY
+            const factor = Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.002))
+            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * factor))
+            if (newScale === currentScale) return
+
+            const focalX = e.clientX - window.innerWidth / 2
+            const focalY = e.clientY - window.innerHeight / 2
+            const scaleChange = newScale / currentScale
+            const newPanX = mvPanX.get() * scaleChange - focalX * (scaleChange - 1)
+            const newPanY = mvPanY.get() * scaleChange - focalY * (scaleChange - 1)
+
+            const clamped = clampPan(newPanX, newPanY, newScale)
+            mvScale.set(newScale)
+            mvPanX.set(clamped.x)
+            mvPanY.set(clamped.y)
+        }
+        window.addEventListener('wheel', onWheel, { passive: false })
+        return () => window.removeEventListener('wheel', onWheel)
+    }, [isOpen, mvScale, mvPanX, mvPanY, clampPan])
+
     // --- ダブルタップ処理（ズームは画像のみ） ---
     const handleDoubleTap = useCallback(
         (clientX: number, clientY: number) => {
