@@ -125,7 +125,8 @@ export const MigrationSettingsView = () => {
                 value: {
                     ckid
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
+                onUpdate: 'retain'
             }
             await client.api.commit(subkeyDoc, destination, { useMasterkey: true })
 

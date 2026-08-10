@@ -125,7 +125,8 @@ export const AccountSetup = (props: Props) => {
                 value: {
                     ckid
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
+                onUpdate: 'retain'
             }
 
             await api.commit(subkeyDoc, domain, { useMasterkey: true })

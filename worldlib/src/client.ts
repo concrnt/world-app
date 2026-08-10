@@ -193,8 +193,7 @@ export class Client {
                             author: this.ccid,
                             schema: Schemas.pinnedLists,
                             value: initial,
-                            createdAt: new Date(),
-                            onUpdate: 'forget'
+                            createdAt: new Date()
                         }
                         this.api.commit(document)
                         return initial
@@ -486,8 +485,7 @@ export class Client {
             schema: Schemas.empty,
             value: {},
             author: this.ccid,
-            createdAt: new Date(),
-            onUpdate: 'forget'
+            createdAt: new Date()
         }
         await this.api.commit(blockDocument)
         this.blocks.reload()
@@ -542,7 +540,7 @@ export class Client {
             author: this.ccid,
             createdAt: new Date(),
             policy: doc.policy,
-            onUpdate: 'forget'
+            onUpdate: doc.onUpdate
         }
         await this.api.commit(newDoc)
     }
@@ -717,8 +715,7 @@ export class Client {
             author: this.ccid,
             schema: Schemas.pinnedLists,
             value: newValue,
-            createdAt: new Date(),
-            onUpdate: 'forget'
+            createdAt: new Date()
         }
 
         await this.api.commit(newDocument)
@@ -756,8 +753,7 @@ export class Client {
             author: this.ccid,
             schema: Schemas.pinnedLists,
             value: newValue,
-            createdAt: new Date(),
-            onUpdate: 'forget'
+            createdAt: new Date()
         }
 
         await this.api.commit(newDocument)
@@ -799,8 +795,7 @@ export class Client {
             author: this.ccid,
             schema: Schemas.pinnedLists,
             value: newValue,
-            createdAt: new Date(),
-            onUpdate: 'forget'
+            createdAt: new Date()
         }
 
         await this.api.commit(newDocument)

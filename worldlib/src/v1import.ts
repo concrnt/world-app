@@ -142,8 +142,7 @@ export const convertV1Backup = (backupText: string, newCcid: string): V1Conversi
                     value: body,
                     author: newCcid,
                     schema: doc.schema,
-                    createdAt: doc.signedAt,
-                    onUpdate: 'forget'
+                    createdAt: doc.signedAt
                 }
                 const timelines: string[] = Array.isArray(doc.timelines) ? doc.timelines : []
                 if (timelines.includes(homeTimelineV1)) {
@@ -218,8 +217,7 @@ export const insertHomeTimelineRecords = (resignedLines: string[], newCcid: stri
             },
             author: newCcid,
             schema: 'https://schema.concrnt.net/reference.json',
-            createdAt: doc.createdAt,
-            onUpdate: 'forget'
+            createdAt: doc.createdAt
         }
         out.push(
             JSON.stringify({

@@ -189,8 +189,7 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
                 value: {
                     actorURI: props.entry.actorURI
                 },
-                createdAt: new Date(),
-                onUpdate: 'forget'
+                createdAt: new Date()
             }
             client.api
                 .commit(document)

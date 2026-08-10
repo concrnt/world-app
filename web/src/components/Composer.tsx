@@ -334,8 +334,7 @@ export const Composer = (props: Props) => {
                         },
                         author: client.ccid,
                         distributes,
-                        createdAt: timestamp,
-                        onUpdate: 'forget'
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(replyDocument)
@@ -377,8 +376,7 @@ export const Composer = (props: Props) => {
                         },
                         author: client.ccid,
                         distributes,
-                        createdAt: timestamp,
-                        onUpdate: 'forget'
+                        createdAt: timestamp
                     }
 
                     await client.api.commit(rerouteDocument)
@@ -417,8 +415,7 @@ export const Composer = (props: Props) => {
                                 },
                                 author: client.ccid,
                                 distributes,
-                                createdAt: timestamp,
-                                onUpdate: 'forget'
+                                createdAt: timestamp
                             }
                             await client.api.commit(document)
                             break
@@ -451,8 +448,7 @@ export const Composer = (props: Props) => {
                                 },
                                 author: client.ccid,
                                 distributes,
-                                createdAt: timestamp,
-                                onUpdate: 'forget'
+                                createdAt: timestamp
                             }
                             await client.api.commit(document)
                             break
@@ -468,8 +464,7 @@ export const Composer = (props: Props) => {
                                 },
                                 author: client.ccid,
                                 distributes,
-                                createdAt: timestamp,
-                                onUpdate: 'forget'
+                                createdAt: timestamp
                             }
                             await client.api.commit(document)
                         }

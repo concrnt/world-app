@@ -33,7 +33,8 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
                     author: ccid,
                     schema: 'https://schema.concrnt.net/subkey.json',
                     value: { ckid },
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    onUpdate: 'retain'
                 },
                 client.server.domain,
                 { useMasterkey: true }

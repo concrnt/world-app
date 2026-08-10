@@ -234,8 +234,7 @@ export const Activitypub = () => {
                 author: client.ccid,
                 schema: Schemas.apSettings,
                 value: { listenTimelines },
-                createdAt: new Date(),
-                onUpdate: 'forget'
+                createdAt: new Date()
             })
             .catch((err) => {
                 console.log(err)

@@ -165,7 +165,8 @@ export const SubkeyList = () => {
                                 author: client.ccid,
                                 schema: 'https://schema.concrnt.net/revoked-subkey.json',
                                 value: { document: revokeTarget.sd.document, proof: revokeTarget.sd.proof },
-                                createdAt: new Date()
+                                createdAt: new Date(),
+                                onUpdate: 'retain'
                             },
                             client.server.domain,
                             { useMasterkey: true }

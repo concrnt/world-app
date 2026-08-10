@@ -32,7 +32,7 @@ export interface Document<T> {
 
     policy?: Policy
 
-    onUpdate?: string
+    onUpdate?: 'forget' | 'retain'
 }
 
 export interface Policy {

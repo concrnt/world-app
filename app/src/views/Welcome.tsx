@@ -252,7 +252,8 @@ export const WelcomeView = () => {
                                         value: {
                                             ckid
                                         },
-                                        createdAt: new Date()
+                                        createdAt: new Date(),
+                                        onUpdate: 'retain'
                                     }
 
                                     const authProvider = new TauriAuthProvider(user.ccid)

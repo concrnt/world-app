@@ -62,7 +62,8 @@ export const QRSetup = (props: Props) => {
             value: {
                 ckid
             },
-            createdAt: new Date()
+            createdAt: new Date(),
+            onUpdate: 'retain'
         }
 
         await client.api.commit(subkeyDoc, client.server.domain, { useMasterkey: true })

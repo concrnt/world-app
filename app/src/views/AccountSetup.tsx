@@ -253,7 +253,8 @@ export const AccountSetup = (props: Props) => {
                                         value: {
                                             ckid
                                         },
-                                        createdAt: new Date()
+                                        createdAt: new Date(),
+                                        onUpdate: 'retain'
                                     }
 
                                     console.log('Committing subkey document:', subkeyDoc)

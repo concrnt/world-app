@@ -111,7 +111,8 @@ const createAndCommitSubkey = async (identity: Identity, domain: string) => {
         value: {
             ckid
         },
-        createdAt: new Date()
+        createdAt: new Date(),
+        onUpdate: 'retain'
     }
 
     const committed = await api.commit(subkeyDoc, domain, { useMasterkey: true })

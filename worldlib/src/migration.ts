@@ -106,7 +106,8 @@ export const prepareRepositoryDump = async (api: Api, jsonl: string): Promise<Mi
         author: ccid,
         schema: 'https://schema.concrnt.net/subkey.json',
         value: { ckid: importCkid },
-        createdAt: oldest ?? new Date()
+        createdAt: oldest ?? new Date(),
+        onUpdate: 'retain'
     })
     const enactProof = {
         type: 'concrnt-ecrecover-direct',
@@ -138,7 +139,8 @@ export const prepareRepositoryDump = async (api: Api, jsonl: string): Promise<Mi
         author: ccid,
         schema: 'https://schema.concrnt.net/revoked-subkey.json',
         value: { document: enactDocument, proof: enactProof },
-        createdAt: new Date()
+        createdAt: new Date(),
+        onUpdate: 'retain'
     })
     prepared.push(
         JSON.stringify({
@@ -232,8 +234,7 @@ export const migrateLegacyProfilePolicies = async (client: Client): Promise<void
                         defaults: { 'record:read': 'no' }
                     }
                 ]
-            },
-            onUpdate: 'forget'
+            }
         }
         await client.api.commit(newProfileDoc)
         client.profiles[profile] = newProfileDoc
@@ -270,8 +271,7 @@ export const migrateLegacyProfilePolicies = async (client: Client): Promise<void
             value: doc.value,
             author: ccid,
             createdAt: new Date(),
-            policy: entries.length > 0 ? { entries } : undefined,
-            onUpdate: 'forget'
+            policy: entries.length > 0 ? { entries } : undefined
         }
         await client.api.commit(newDoc)
     }
