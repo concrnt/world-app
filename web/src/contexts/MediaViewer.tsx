@@ -566,6 +566,10 @@ export const MediaViewerProvider = (props: Props) => {
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}
+                            // このラッパーがbackdrop全面を覆うため、余白クリックでの閉じるはここで拾う
+                            onClick={(e) => {
+                                if (e.target === e.currentTarget) close()
+                            }}
                         >
                             {currentMedia.mediaType.startsWith('image/') ? (
                                 <motion.img
