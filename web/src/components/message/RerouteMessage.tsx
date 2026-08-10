@@ -59,6 +59,8 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         {
                             padding: 0,
                             margin: 0,
+                            width: '15px',
+                            height: '15px',
                             anchorName: menuAnchor
                         } as React.CSSProperties
                     }

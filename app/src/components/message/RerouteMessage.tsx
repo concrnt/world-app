@@ -55,7 +55,9 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     }}
                     style={{
                         padding: 0,
-                        margin: 0
+                        margin: 0,
+                        width: '15px',
+                        height: '15px'
                     }}
                 >
                     <MdMoreHoriz size={15} />
