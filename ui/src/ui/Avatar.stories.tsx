@@ -39,3 +39,15 @@ export const RoundedLarge: Story = {
         }
     }
 }
+
+export const WithBadge: Story = {
+    args: {
+        style: {
+            width: '48px',
+            height: '48px'
+        },
+        badge: <span style={{ fontSize: '10px', lineHeight: 1 }}>AP</span>,
+        badgeColor: '#f1007e',
+        badgeSize: 18
+    }
+}

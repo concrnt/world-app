@@ -52,7 +52,9 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                     {
                         padding: 0,
                         margin: 0,
-                        anchorName: menuAnchor
+                        anchorName: menuAnchor,
+                        width: '15px',
+                        height: '15px'
                     } as React.CSSProperties
                 }
             >

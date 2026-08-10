@@ -7,10 +7,13 @@ interface Props {
     src?: string | Promise<string | undefined>
     style?: React.CSSProperties
     onClick?: () => void
+    badge?: React.ReactNode
+    badgeColor?: string
+    badgeSize?: number
 }
 
 export const Avatar = (props: Props) => {
-    return (
+    const body = (
         <Suspense
             fallback={
                 <div
@@ -27,6 +30,33 @@ export const Avatar = (props: Props) => {
         >
             {useDeferredValue(<Inner {...props} />)}
         </Suspense>
+    )
+
+    if (!props.badge) return body
+
+    const badgeSize = props.badgeSize ?? 16
+    return (
+        <div style={{ position: 'relative', width: 'fit-content' }}>
+            {body}
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: '-3px',
+                    right: '-3px',
+                    width: `${badgeSize}px`,
+                    height: `${badgeSize}px`,
+                    borderRadius: '4px',
+                    backgroundColor: props.badgeColor,
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none'
+                }}
+            >
+                {props.badge}
+            </div>
+        </div>
     )
 }
 

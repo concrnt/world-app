@@ -14,6 +14,7 @@ import { CollapsibleBody } from './CollapsibleBody'
 import { MediaGallery } from '../MediaGallery/main'
 import { usePreference } from '../../contexts/Preference'
 import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
+import { SiActivitypub } from 'react-icons/si'
 import { useTranslation } from 'react-i18next'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { PostView } from '../../views/Post'
@@ -148,13 +149,26 @@ const Note = (props: {
                 </div>
             }
             headerLeft={
-                <Text
+                <span
                     style={{
-                        fontWeight: 'bold'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
                     }}
                 >
-                    {author?.name ?? author?.preferredUsername ?? 'Unknown'}
-                </Text>
+                    <Text
+                        style={{
+                            fontWeight: 'bold',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}
+                    >
+                        {author?.name ?? author?.preferredUsername ?? 'Unknown'}
+                    </Text>
+                    <SiActivitypub size={14} style={{ flexShrink: 0 }} title="ActivityPub" />
+                </span>
             }
             headerRight={
                 <span style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>

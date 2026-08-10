@@ -53,7 +53,9 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 }}
                 style={{
                     padding: 0,
-                    margin: 0
+                    margin: 0,
+                    width: '15px',
+                    height: '15px'
                 }}
             >
                 <MdMoreHoriz size={15} />
