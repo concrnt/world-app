@@ -357,7 +357,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             <motion.div
                                 style={{
                                     position: 'fixed',
-                                    bottom: `${keyboard.height}px`,
+                                    bottom: 0,
                                     left: 0,
                                     right: 0,
                                     backgroundColor: CssVar.contentBackground,
@@ -365,9 +365,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                     borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    maxHeight: '50vh',
+                                    height: searchBoxFocused ? 'auto' : `calc(50vh + ${keyboard.height}px)`,
                                     paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                    transition: `bottom ${keyboard.duration}s ease-out`,
+                                    transition: `height ${keyboard.duration}s ease-out`,
                                     zIndex: 1001
                                 }}
                                 initial={{ y: '100%' }}
@@ -654,6 +654,15 @@ export const EmojiPickerProvider = (props: Props) => {
                                         ))
                                     )}
                                 </div>
+
+                                {/* キーボードの裏まで背景を敷くスペーサ */}
+                                <div
+                                    style={{
+                                        flexShrink: 0,
+                                        height: `${keyboard.height}px`,
+                                        transition: `height ${keyboard.duration}s ease-out`
+                                    }}
+                                />
                             </motion.div>
                         ) : (
                             /* Centered dialog */
