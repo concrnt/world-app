@@ -361,6 +361,7 @@ export const NotificationTimeline = (props: Props) => {
                     paddingTop: '5px',
                     overflowX: 'hidden',
                     overflowY: 'auto',
+                    touchAction: 'pan-y',
                     // iOS の慣性スクロール跨ね返りを抑制して PullToRefresh との干渉を防ぐ
                     overscrollBehaviorY: 'none'
                 }}

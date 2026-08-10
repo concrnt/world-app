@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { CCImage, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { CCImage, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
@@ -386,11 +386,10 @@ export const EmojiPickerProvider = (props: Props) => {
                             </div>
 
                             {/* One-line emoji strip (キーボード表示中) */}
-                            <div
+                            <HorizontalLayout
                                 style={{
                                     display: searchBoxFocused ? 'flex' : 'none',
                                     alignItems: 'center',
-                                    overflowX: 'auto',
                                     overflowY: 'hidden',
                                     padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
                                     flexShrink: 0
@@ -441,13 +440,12 @@ export const EmojiPickerProvider = (props: Props) => {
                                         {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
                                     </div>
                                 )}
-                            </div>
+                            </HorizontalLayout>
 
                             {/* Tabs */}
-                            <div
+                            <HorizontalLayout
                                 style={{
                                     display: searchBoxFocused ? 'none' : 'flex',
-                                    overflowX: 'auto',
                                     gap: CssVar.space(1),
                                     padding: `0 ${CssVar.space(2)}`,
                                     flexShrink: 0
@@ -489,7 +487,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                         />
                                     </TabButton>
                                 ))}
-                            </div>
+                            </HorizontalLayout>
 
                             {/* Divider */}
                             <div

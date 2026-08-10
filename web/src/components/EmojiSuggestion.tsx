@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { AnimatePresence, motion } from 'motion/react'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
-import { CCImage } from '@concrnt/ui'
+import { CCImage, HorizontalLayout } from '@concrnt/ui'
 
 interface Props {
     textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -139,10 +139,8 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
                     transition={{ duration: 0.15 }}
                     style={{ overflow: 'hidden' }}
                 >
-                    <div
+                    <HorizontalLayout
                         style={{
-                            display: 'flex',
-                            overflowX: 'auto',
                             gap: CssVar.space(1),
                             padding: `${CssVar.space(1)} 0`,
                             WebkitOverflowScrolling: 'touch'
@@ -193,7 +191,7 @@ export const EmojiSuggestion = ({ textareaRef, text, setText, updateEmojiDict }:
                                 </span>
                             </button>
                         ))}
-                    </div>
+                    </HorizontalLayout>
                 </motion.div>
             )}
         </AnimatePresence>

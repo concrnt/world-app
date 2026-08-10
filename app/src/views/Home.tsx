@@ -146,7 +146,6 @@ const HomeMain = ({
                 <Tabs
                     style={{
                         color: CssVar.contentLink,
-                        overflowX: 'auto',
                         justifyContent: 'flex-start'
                     }}
                 >

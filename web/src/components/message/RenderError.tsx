@@ -1,5 +1,5 @@
 import { NotFoundError, ServerOfflineError } from '@concrnt/client'
-import { Text } from '@concrnt/ui'
+import { HorizontalLayout, Text } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 import { FallbackProps } from 'react-error-boundary'
 import { usePreference } from '../../contexts/Preference'
@@ -64,14 +64,15 @@ export const RenderError = ({ error }: FallbackProps) => {
     return (
         <div>
             {message}
-            <pre
-                style={{
-                    fontSize: '12px',
-                    overflowX: 'auto'
-                }}
-            >
-                {(error as any)?.stack}
-            </pre>
+            <HorizontalLayout>
+                <pre
+                    style={{
+                        fontSize: '12px'
+                    }}
+                >
+                    {(error as any)?.stack}
+                </pre>
+            </HorizontalLayout>
         </div>
     )
 }

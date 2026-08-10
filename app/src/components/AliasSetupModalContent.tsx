@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Document } from '@concrnt/client'
-import { Button, CopyButton, Text, TextField } from '@concrnt/ui'
+import { Button, CopyButton, HorizontalLayout, Text, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 
@@ -92,12 +92,11 @@ export const AliasSetupModalContent = (props: Props) => {
                                     <Text variant="caption" style={{ margin: 0, width: '56px', flexShrink: 0 }}>
                                         {t('recordName')}
                                     </Text>
-                                    <div
+                                    <HorizontalLayout
                                         style={{
                                             fontFamily: 'monospace',
                                             fontSize: '12px',
                                             whiteSpace: 'nowrap',
-                                            overflowX: 'auto',
                                             flex: 1,
                                             padding: CssVar.space(1),
                                             border: `1px solid ${CssVar.divider}`,
@@ -105,7 +104,7 @@ export const AliasSetupModalContent = (props: Props) => {
                                         }}
                                     >
                                         {recordName}
-                                    </div>
+                                    </HorizontalLayout>
                                     <CopyButton text={recordName} />
                                 </div>
 
@@ -113,12 +112,11 @@ export const AliasSetupModalContent = (props: Props) => {
                                     <Text variant="caption" style={{ margin: 0, width: '56px', flexShrink: 0 }}>
                                         {t('recordType')}
                                     </Text>
-                                    <div
+                                    <HorizontalLayout
                                         style={{
                                             fontFamily: 'monospace',
                                             fontSize: '12px',
                                             whiteSpace: 'nowrap',
-                                            overflowX: 'auto',
                                             flex: 1,
                                             padding: CssVar.space(1),
                                             border: `1px solid ${CssVar.divider}`,
@@ -126,7 +124,7 @@ export const AliasSetupModalContent = (props: Props) => {
                                         }}
                                     >
                                         TXT
-                                    </div>
+                                    </HorizontalLayout>
                                     <div style={{ width: '32px', flexShrink: 0 }} />
                                 </div>
 
@@ -134,12 +132,11 @@ export const AliasSetupModalContent = (props: Props) => {
                                     <Text variant="caption" style={{ margin: 0, width: '56px', flexShrink: 0 }}>
                                         {t('recordValue')}
                                     </Text>
-                                    <div
+                                    <HorizontalLayout
                                         style={{
                                             fontFamily: 'monospace',
                                             fontSize: '12px',
                                             whiteSpace: 'nowrap',
-                                            overflowX: 'auto',
                                             flex: 1,
                                             padding: CssVar.space(1),
                                             border: `1px solid ${CssVar.divider}`,
@@ -147,7 +144,7 @@ export const AliasSetupModalContent = (props: Props) => {
                                         }}
                                     >
                                         {recordValue}
-                                    </div>
+                                    </HorizontalLayout>
                                     <CopyButton text={recordValue} />
                                 </div>
                             </div>

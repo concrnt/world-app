@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CssVar } from '../../types/Theme'
-import { IconButton, Text } from '@concrnt/ui'
+import { HorizontalLayout, IconButton, Text } from '@concrnt/ui'
 import { MediaMessageSchema } from '@concrnt/worldlib'
 import { GalleryImage } from './Image'
 import { GalleryVideo } from './Video'
@@ -21,11 +21,9 @@ export const MediaGallery = (props: Props) => {
     const mediaViewer = useMediaViewer()
 
     return (
-        <div
+        <HorizontalLayout
             style={{
-                display: 'flex',
                 gap: CssVar.space(2),
-                overflowX: 'auto',
                 height: '200px'
             }}
         >
@@ -38,7 +36,7 @@ export const MediaGallery = (props: Props) => {
                     }}
                 />
             ))}
-        </div>
+        </HorizontalLayout>
     )
 }
 

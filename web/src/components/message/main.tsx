@@ -1,7 +1,7 @@
 import { ReactNode, use } from 'react'
 
 import { useClient } from '../../contexts/Client'
-import { Text } from '@concrnt/ui'
+import { HorizontalLayout, Text } from '@concrnt/ui'
 import { ApNoteSchema, AtprotoRecordSchema, Message, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { GfmMessage } from './GfmMessage'
@@ -142,13 +142,9 @@ export const MessageContainer = (props: Props): ReactNode | null => {
             return (
                 <div>
                     <Text>Unsupported message schema: {message.schema}</Text>
-                    <pre
-                        style={{
-                            overflowX: 'auto'
-                        }}
-                    >
-                        {JSON.stringify(message, null, 2)}
-                    </pre>
+                    <HorizontalLayout>
+                        <pre>{JSON.stringify(message, null, 2)}</pre>
+                    </HorizontalLayout>
                 </div>
             )
     }

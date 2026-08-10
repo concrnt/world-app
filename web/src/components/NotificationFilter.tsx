@@ -1,5 +1,5 @@
 import { Schemas } from '@concrnt/worldlib'
-import { Chip } from '@concrnt/ui'
+import { Chip, HorizontalLayout } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
@@ -19,17 +19,14 @@ const filters: { labelKey: string; schema: string }[] = [
 export const NotificationFilter = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.notificationFilter' })
     return (
-        <div
+        <HorizontalLayout
             style={{
-                display: 'flex',
                 flexDirection: 'row',
                 gap: '8px',
                 paddingTop: '8px',
                 paddingBottom: '8px',
                 paddingLeft: '8px',
                 paddingRight: '8px',
-                // 画面幅が狭いときにチップが途切れないよう横スクロール対応
-                overflowX: 'auto',
                 // スクロールバーは隠してチップ本体だけ見せる（Firefox）
                 scrollbarWidth: 'none',
                 // 各チップが flex 縮小で潰れないよう shrink させない
@@ -50,6 +47,6 @@ export const NotificationFilter = (props: Props) => {
                     </Chip>
                 )
             })}
-        </div>
+        </HorizontalLayout>
     )
 }

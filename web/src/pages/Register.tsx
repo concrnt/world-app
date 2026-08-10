@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
-import { Button, ConcrntLogo, CssVar, Text, TextField } from '@concrnt/ui'
+import { Button, ConcrntLogo, CssVar, HorizontalLayout, Text, TextField } from '@concrnt/ui'
 import css from './Register.module.css'
 
 export const Register = () => {
@@ -220,12 +220,12 @@ export const Inner = (props: {
                         {server.meta.captchaSiteKey && (
                             <div style={authStyles.section}>
                                 <Text style={{ color: CssVar.uiText }}>reCAPTCHA</Text>
-                                <div style={styles.captchaWrap}>
+                                <HorizontalLayout>
                                     <ReCAPTCHA
                                         sitekey={server.meta.captchaSiteKey}
                                         onChange={(value) => setCaptcha(value ?? '')}
                                     />
-                                </div>
+                                </HorizontalLayout>
                             </div>
                         )}
 
@@ -634,9 +634,6 @@ const styles: Record<string, CSSProperties> = {
         fontSize: '0.95rem',
         margin: 0,
         textAlign: 'left'
-    },
-    captchaWrap: {
-        overflowX: 'auto'
     },
     input: {
         padding: '8px',
