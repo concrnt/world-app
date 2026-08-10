@@ -860,9 +860,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                 gap: '4px'
                             }}
                         >
-                            {url && (
-                                <CCImage src={url} maxHeight={128} style={{ width: '20px', height: '20px' }} alt="" />
-                            )}
+                            {url && <CCImage src={url} maxHeight={128} style={{ height: '32px' }} alt="" />}
                             {group.map((item) => (
                                 <div
                                     key={item.uri}
@@ -876,7 +874,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                     <Avatar
                                         ccid={item.author}
                                         src={item.authorProfile?.avatar}
-                                        style={{ width: '20px', height: '20px' }}
+                                        style={{ width: '32px', height: '32px' }}
                                     />
                                 </div>
                             ))}
