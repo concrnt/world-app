@@ -18,7 +18,13 @@ import {
     InMemoryAuthProvider,
     InMemoryKVS
 } from '@concrnt/client'
-import { ListSchema, PinnedListsSchema, ProfileSchema, ReadAccessRequestAssociationSchema } from './schemas/'
+import {
+    ListSchema,
+    PinnedListsSchema,
+    ProfileSchema,
+    ReadAccessRequestAssociationSchema,
+    RerouteMessageSchema
+} from './schemas/'
 import { User } from './user'
 import { List } from './list'
 import { Message } from './message'
@@ -79,6 +85,9 @@ export class Client {
     sockets: Record<string, Socket> = {}
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
+    // rerouteメッセージのuri → targetURI。invalidateMessageのカスケード用
+    // (キャッシュの中身はPromiseなのでinvalidate時に同期的にrerouteか判定できない)
+    private rerouteTargets: Record<string, string> = {}
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
         const results = await this.api.queryAll(
@@ -259,7 +268,7 @@ export class Client {
         this.currentProfile = profile ?? 'main'
 
         this.api.onResourceUpdated = (uri) => {
-            delete this.messageCache[uri]
+            this.invalidateMessage(uri)
         }
 
         this.api.onHostOnlineStatusChanged = (host, online) => {
@@ -573,7 +582,12 @@ export class Client {
             return cached.data
         }
 
-        const msg = Message.load<T>(this, uri, hint)
+        const msg = Message.load<T>(this, uri, hint).then((m) => {
+            if (m?.schema === Schemas.rerouteMessage) {
+                this.rerouteTargets[uri] = (m.value as RerouteMessageSchema).targetURI
+            }
+            return m
+        })
         this.messageCache[uri] = {
             data: msg,
             expire: Date.now() + cacheLifetime
@@ -581,9 +595,12 @@ export class Client {
         return msg
     }
 
-    // キャッシュ済みの結果(存在しなかった場合のnull含む)を破棄して次回getMessageを再取得させる
+    // キャッシュ済みの結果(存在しなかった場合のnull含む)を破棄して次回getMessageを再取得させる。
+    // rerouteメッセージの場合はネストされたMessageContainerが表示するtargetも古いので巻き込んで破棄する
     invalidateMessage(uri: string): void {
         delete this.messageCache[uri]
+        const target = this.rerouteTargets[uri]
+        if (target) delete this.messageCache[target]
     }
 
     async getUser(id: CCID, hint?: string): Promise<User | null> {

@@ -39,6 +39,7 @@ export const MessageFooter = (props: Props) => {
             {devmode && <Text variant="caption">{props.message.uri}</Text>}
             <MessageReactions
                 message={props.message}
+                rerouted={props.rerouted}
                 reactionState={reactionState}
                 updateReactionState={updateReactionState}
             />
@@ -73,7 +74,11 @@ export const MessageFooter = (props: Props) => {
                 >
                     {/* ゲスト(未ログイン)はEmojiPickerProvider等が無いため、アクション群自体を描画しない */}
                     {client.ccid !== '' && (
-                        <MessageActions message={props.message} updateReactionState={updateReactionState} />
+                        <MessageActions
+                            message={props.message}
+                            rerouted={props.rerouted}
+                            updateReactionState={updateReactionState}
+                        />
                     )}
                 </div>
             </div>

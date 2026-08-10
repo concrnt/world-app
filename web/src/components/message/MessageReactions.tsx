@@ -1,4 +1,4 @@
-import { Association, Message, ReactionAssociationSchema, Schemas, User } from '@concrnt/worldlib'
+import { Association, Message, ReactionAssociationSchema, RerouteMessageSchema, Schemas, User } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { useClient } from '../../contexts/Client'
 import { CssVar } from '../../types/Theme'
@@ -13,6 +13,7 @@ import { useQueryTimelineContext } from '../QueryTimeline'
 
 interface Props {
     message: Message<any>
+    rerouted?: Message<RerouteMessageSchema>
     reactionState: ReactionState
     updateReactionState: React.Dispatch<React.SetStateAction<ReactionState>>
 }
@@ -52,8 +53,18 @@ export const MessageReactions = (props: Props) => {
     // これをsocketイベント任せにすると、イベントがcommit応答より遅れたときに
     // 一瞬リアクションが消える
     const refreshMessage = async () => {
-        qt.update(messageHref)
-        await client?.getMessage(messageHref).catch(() => null)
+        if (props.rerouted) {
+            // リルート経由の場合: タイムライン項目のhrefはリルート文書のもの。
+            // qt.update(=invalidateMessage)がリルート文書とそのtargetの両キャッシュを破棄するので、
+            // 再レンダリングがuse()する両方を再取得してtransition内で解決させる
+            const rerouteHref = props.rerouted.key ?? props.rerouted.uri
+            qt.update(rerouteHref)
+            await client?.getMessage(props.message.uri).catch(() => null)
+            await client?.getMessage(rerouteHref).catch(() => null)
+        } else {
+            qt.update(messageHref)
+            await client?.getMessage(messageHref).catch(() => null)
+        }
     }
 
     const handleReactionClick = async (imageUrl: string) => {

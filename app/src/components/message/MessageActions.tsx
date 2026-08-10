@@ -1,6 +1,6 @@
 import { Button, Confirm, ListItem, Select, Text } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
-import { Association, LikeAssociationSchema, Schemas, type Message } from '@concrnt/worldlib'
+import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
 import { hapticLight, hapticSuccess } from '../../utils/haptics'
@@ -23,6 +23,7 @@ import { PostView } from '../../views/Post'
 
 interface Props {
     message: Message<any>
+    rerouted?: Message<RerouteMessageSchema>
     updateReactionState: React.Dispatch<React.SetStateAction<ReactionState>>
 }
 
@@ -57,8 +58,18 @@ export const MessageActions = (props: Props) => {
     // これをsocketイベント任せにすると、イベントがcommit応答より遅れたときに
     // 一瞬いいね/リアクションが消える
     const refreshMessage = async () => {
-        qt.update(messageHref)
-        await client?.getMessage(messageHref).catch(() => null)
+        if (props.rerouted) {
+            // リルート経由の場合: タイムライン項目のhrefはリルート文書のもの。
+            // qt.update(=invalidateMessage)がリルート文書とそのtargetの両キャッシュを破棄するので、
+            // 再レンダリングがuse()する両方を再取得してtransition内で解決させる
+            const rerouteHref = props.rerouted.key ?? props.rerouted.uri
+            qt.update(rerouteHref)
+            await client?.getMessage(props.message.uri).catch(() => null)
+            await client?.getMessage(rerouteHref).catch(() => null)
+        } else {
+            qt.update(messageHref)
+            await client?.getMessage(messageHref).catch(() => null)
+        }
     }
 
     return (

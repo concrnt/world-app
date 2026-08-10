@@ -37,6 +37,7 @@ export const MessageFooter = (props: Props) => {
             {devmode && <Text variant="caption">{props.message.uri}</Text>}
             <MessageReactions
                 message={props.message}
+                rerouted={props.rerouted}
                 reactionState={reactionState}
                 updateReactionState={updateReactionState}
             />
@@ -69,7 +70,11 @@ export const MessageFooter = (props: Props) => {
                         marginLeft: `calc(${CssVar.space(2)} * -1)`
                     }}
                 >
-                    <MessageActions message={props.message} updateReactionState={updateReactionState} />
+                    <MessageActions
+                        message={props.message}
+                        rerouted={props.rerouted}
+                        updateReactionState={updateReactionState}
+                    />
                 </div>
             </div>
         </>
