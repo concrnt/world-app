@@ -129,7 +129,7 @@ export const GuestPostView = (props: Props) => {
                 >
                     <ErrorBoundary FallbackComponent={RestrictedFallback}>
                         <Suspense fallback={<MessageSkeleton />}>
-                            <MessageContainer uri={props.uri} />
+                            <MessageContainer uri={props.uri} forceExpanded detail />
                         </Suspense>
                     </ErrorBoundary>
                 </div>

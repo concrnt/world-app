@@ -10,6 +10,7 @@ import { MdMoreHoriz } from 'react-icons/md'
 import { Select } from '../Select'
 import { hapticSuccess } from '../../utils/haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
+import { Timestamp } from './Timestamp'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 
@@ -39,9 +40,6 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                     />
                 </div>
             }
-            onClick={() => {
-                navigate('/post/' + encodeURIComponent(message.uri))
-            }}
         >
             <CfmRenderer oneline messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
             <div style={{ flex: 1 }} />
@@ -76,9 +74,13 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 ]}
                 anchor={menuAnchor}
             />
-            <div style={{ flexShrink: 0 }}>
+            <Timestamp
+                onClick={() => {
+                    navigate('/post/' + encodeURIComponent(message.uri))
+                }}
+            >
                 <TimeDiff date={props.message.createdAt} />
-            </div>
+            </Timestamp>
         </OnelineMessageLayout>
     )
 }

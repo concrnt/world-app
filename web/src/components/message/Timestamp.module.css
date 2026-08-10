@@ -1,0 +1,13 @@
+.timestamp {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    /* ヒットエリア拡大。ネガティブマージン相殺でレイアウト不変 */
+    padding: 6px 8px;
+    margin: -6px -8px;
+}
+
+.timestamp:hover {
+    text-decoration: underline;
+}

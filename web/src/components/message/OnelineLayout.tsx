@@ -1,12 +1,13 @@
 import { ReactNode } from 'react'
 
 interface Props {
-    onClick?: () => void
     left: ReactNode
     children?: ReactNode
     style?: React.CSSProperties
 }
 
+// app版との意図的な差分(web): テキストの部分選択コピーを妨げないよう全体クリックのonClickは
+// 受け取らない。遷移は呼び出し側(OnelineMessage)が時刻クリックで行う。
 export const OnelineMessageLayout = (props: Props) => {
     return (
         <div
@@ -23,7 +24,6 @@ export const OnelineMessageLayout = (props: Props) => {
             }}
             onClick={(e) => {
                 e.stopPropagation()
-                props.onClick?.()
             }}
         >
             <div
