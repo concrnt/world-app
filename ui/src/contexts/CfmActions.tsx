@@ -28,6 +28,9 @@ export interface CfmActions {
     // Render an inline chip for a timeline reference (fqid is "name@domain").
     // Undefined -> timeline references render as plain text.
     renderTimelineChip?: (fqid: string) => ReactNode
+    // Open a URL in the external (OS) browser. Undefined -> ExternalLink falls
+    // back to the anchor's default target="_blank" behavior.
+    openExternal?: (url: string) => void
 }
 
 const CfmActionsContext = createContext<CfmActions>({})

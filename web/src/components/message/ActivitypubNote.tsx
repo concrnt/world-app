@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo } from 'react'
 import { ApObject, resolveApObject } from '../../utils/activitypub'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CssVar, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
+import { Avatar, CssVar, ExternalLink, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
@@ -87,10 +87,8 @@ const Note = (props: {
                 }}
             >
                 <Text style={{ opacity: 0.7 }}>{unreachable ? t('fetchFailed') : t('unavailable')}</Text>
-                <a
+                <ExternalLink
                     href={props.noteURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -102,7 +100,7 @@ const Note = (props: {
                 >
                     <MdOpenInNew size={14} />
                     {t('openRemote')}
-                </a>
+                </ExternalLink>
                 {devmode && <Text variant="caption">{props.noteURL}</Text>}
                 {devmode && (
                     <Text variant="caption">{note instanceof Error ? note.message : 'negative cache hit'}</Text>
@@ -185,11 +183,8 @@ const Note = (props: {
             </CollapsibleBody>
             {medias.length > 0 && <MediaGallery medias={medias} />}
             {props.detail && (
-                <a
+                <ExternalLink
                     href={note.url ?? note.id}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
                     style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -201,7 +196,7 @@ const Note = (props: {
                 >
                     <MdOpenInNew size={14} />
                     {t('openRemote')}
-                </a>
+                </ExternalLink>
             )}
             {devmode && <Text variant="caption">{props.noteURL}</Text>}
             {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}

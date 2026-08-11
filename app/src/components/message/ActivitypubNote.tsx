@@ -2,7 +2,7 @@ import { Suspense, use, useMemo } from 'react'
 import { ApObject, resolveApObject } from '../../utils/activitypub'
 import { useStack } from '../../layouts/Stack'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CssVar, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
+import { Avatar, CssVar, ExternalLink, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
@@ -16,7 +16,6 @@ import { usePreference } from '../../contexts/Preference'
 import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 import { useTranslation } from 'react-i18next'
-import { openUrl } from '@tauri-apps/plugin-opener'
 import { PostView } from '../../views/Post'
 
 interface Props {
@@ -90,13 +89,8 @@ const Note = (props: {
                 }}
             >
                 <Text style={{ opacity: 0.7 }}>{unreachable ? t('fetchFailed') : t('unavailable')}</Text>
-                <a
+                <ExternalLink
                     href={props.noteURL}
-                    onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        openUrl(props.noteURL, 'inAppBrowser')
-                    }}
                     style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -108,7 +102,7 @@ const Note = (props: {
                 >
                     <MdOpenInNew size={14} />
                     {t('openRemote')}
-                </a>
+                </ExternalLink>
                 {devmode && <Text variant="caption">{props.noteURL}</Text>}
                 {devmode && (
                     <Text variant="caption">{note instanceof Error ? note.message : 'negative cache hit'}</Text>
@@ -187,13 +181,8 @@ const Note = (props: {
             </CollapsibleBody>
             {medias.length > 0 && <MediaGallery medias={medias} />}
             {props.detail && (
-                <a
+                <ExternalLink
                     href={note.url ?? note.id}
-                    onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        openUrl(note.url ?? note.id, 'inAppBrowser')
-                    }}
                     style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -205,7 +194,7 @@ const Note = (props: {
                 >
                     <MdOpenInNew size={14} />
                     {t('openRemote')}
-                </a>
+                </ExternalLink>
             )}
             {devmode && <Text variant="caption">{props.noteURL}</Text>}
             {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}

@@ -4,6 +4,7 @@ import { Codeblock } from './Codeblock'
 import { Link } from './Link'
 import { type EmojiLite } from './CfmRenderer'
 import { CCImage } from '../contexts/CCImage'
+import { useCfmActions } from '../contexts/CfmActions'
 import styles from './MfmRenderer.module.css'
 
 // mfm-renderer-reactはMUI/emotion/React18に依存しておりこのmonorepoでは使えないため、
@@ -128,6 +129,7 @@ const Sparkle = ({ children }: { children: ReactNode }): ReactNode => {
 }
 
 const Search = ({ query }: { query: string }): ReactNode => {
+    const { openExternal } = useCfmActions()
     return (
         <span style={{ display: 'flex', margin: '8px 0' }}>
             <span
@@ -152,7 +154,12 @@ const Search = ({ query }: { query: string }): ReactNode => {
                     e.stopPropagation()
                     const params = new URLSearchParams()
                     params.append('q', query)
-                    window.open(`https://www.google.com/search?${params.toString()}`, '_blank', 'noopener')
+                    const url = `https://www.google.com/search?${params.toString()}`
+                    if (openExternal) {
+                        openExternal(url)
+                    } else {
+                        window.open(url, '_blank', 'noopener')
+                    }
                 }}
                 style={{
                     flexShrink: 0,

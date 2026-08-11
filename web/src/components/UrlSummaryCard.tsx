@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { type Summary, useUrlSummary } from '../contexts/UrlSummary'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { CssVar } from '../types/Theme'
+import { ExternalLink } from '@concrnt/ui'
 
 interface Props {
     url: string
@@ -95,13 +96,8 @@ export const UrlSummaryCard = (props: Props) => {
     }
 
     return (
-        <a
+        <ExternalLink
             href={props.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => {
-                e.stopPropagation()
-            }}
             style={{
                 display: 'flex',
                 height: '80px',
@@ -176,6 +172,6 @@ export const UrlSummaryCard = (props: Props) => {
                     {hostname}
                 </div>
             </div>
-        </a>
+        </ExternalLink>
     )
 }

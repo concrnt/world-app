@@ -2,7 +2,7 @@ import { Suspense, use, useMemo } from 'react'
 import { BskyPostView, getPostImages, getPostExternal } from '../../utils/bluesky'
 import { useStack } from '../../layouts/Stack'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CssVar, Text } from '@concrnt/ui'
+import { Avatar, CssVar, ExternalLink, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { BskyView } from '../../views/BskyView'
 import { useClient } from '../../contexts/Client'
@@ -118,11 +118,8 @@ const Post = (props: {
                 </div>
             )}
             {external && (
-                <a
+                <ExternalLink
                     href={external.uri}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
                     style={{
                         display: 'block',
                         border: `1px solid ${CssVar.divider}`,
@@ -133,7 +130,7 @@ const Post = (props: {
                 >
                     <Text style={{ fontWeight: 'bold' }}>{external.title || external.uri}</Text>
                     {external.description && <Text variant="caption">{external.description}</Text>}
-                </a>
+                </ExternalLink>
             )}
             {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
         </MessageLayout>

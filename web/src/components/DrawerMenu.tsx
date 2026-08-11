@@ -1,7 +1,7 @@
 import { useClient } from '../contexts/Client'
 import { useTranslation } from 'react-i18next'
 
-import { ListItem, Divider, Text, useTheme, List, Avatar } from '@concrnt/ui'
+import { ListItem, Divider, Text, useTheme, List, Avatar, ExternalLink } from '@concrnt/ui'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
@@ -115,41 +115,35 @@ export const DrawerMenu = (props: Props) => {
                     >
                         Concrnt World App
                         <br />
-                        <a
+                        <ExternalLink
                             style={{
                                 color: CssVar.backdropText,
                                 textDecoration: 'none'
                             }}
                             href="https://square.concrnt.net/"
-                            target="_blank"
-                            rel="noreferrer"
                         >
                             {t('documentation')}
-                        </a>
+                        </ExternalLink>
                         {' / '}
-                        <a
+                        <ExternalLink
                             style={{
                                 color: CssVar.backdropText,
                                 textDecoration: 'none'
                             }}
                             href="https://github.com/orgs/concrnt/discussions"
-                            target="_blank"
-                            rel="noreferrer"
                         >
                             {t('forum')}
-                        </a>
+                        </ExternalLink>
                         {' / '}
-                        <a
+                        <ExternalLink
                             style={{
                                 color: CssVar.backdropText,
                                 textDecoration: 'none'
                             }}
                             href="https://github.com/totegamma/concurrent-world"
-                            target="_blank"
-                            rel="noreferrer"
                         >
                             GitHub
-                        </a>
+                        </ExternalLink>
                     </div>
                 </div>
             </div>

@@ -165,7 +165,7 @@ export const BskyPerson = ({ person }: Props) => {
                 <Text>{t('bskyUserNotice')}</Text>
                 <Button
                     onClick={() => {
-                        openUrl(bskyProfileUrl(person.handle || person.did), 'inAppBrowser')
+                        openUrl(bskyProfileUrl(person.handle || person.did))
                     }}
                 >
                     {t('openRemote')}

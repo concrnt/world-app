@@ -307,7 +307,7 @@ export const ApPerson = ({ person }: Props) => {
                     {person.url && (
                         <Button
                             onClick={() => {
-                                openUrl(person.url!.toString(), 'inAppBrowser')
+                                openUrl(person.url!.toString())
                             }}
                         >
                             {t('openRemote')}

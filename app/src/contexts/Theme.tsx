@@ -12,6 +12,7 @@ import {
 } from '../utils/themeList'
 import { CCUserChip } from '../components/CCUserChip'
 import { TimelineChip } from '../components/TimelineChip'
+import { openUrl } from '@tauri-apps/plugin-opener'
 
 interface Props {
     theme?: Theme
@@ -145,7 +146,11 @@ export const ThemeProvider = (props: Props) => {
                     ),
                     renderTimelineChip: (fqid) => (
                         <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    )
+                    ),
+                    openExternal: (url) => {
+                        // 第2引数なし = システム既定ブラウザ(inAppBrowserではない)
+                        openUrl(url)
+                    }
                 }}
             >
                 <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>

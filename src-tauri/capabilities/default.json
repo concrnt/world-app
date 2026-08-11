@@ -21,6 +21,10 @@
         {
           "url": "https://*",
           "app": true
+        },
+        {
+          "url": "http://*",
+          "app": true
         }
       ]
     }

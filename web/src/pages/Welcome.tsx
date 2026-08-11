@@ -8,6 +8,7 @@ import {
     CCWallpaper,
     ConcrntLogo,
     Divider,
+    ExternalLink,
     Passport,
     Text,
     ThemeProvider as BaseThemeProvider
@@ -506,10 +507,8 @@ export const WelcomePage = () => {
                         }}
                     >
                         <Text>You can contribute ;)</Text>
-                        <a
+                        <ExternalLink
                             href="https://github.com/concrnt/world-app"
-                            target="_blank"
-                            rel="noopener noreferrer"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -517,7 +516,7 @@ export const WelcomePage = () => {
                             }}
                         >
                             <FaGithub size={32} />
-                        </a>
+                        </ExternalLink>
                     </div>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { Text, CssVar } from '@concrnt/ui'
+import { Text, CssVar, ExternalLink } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'
@@ -316,11 +316,9 @@ export const AccountSetup = (props: Props) => {
                                     url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
                                 }
                             ].map((store) => (
-                                <a
+                                <ExternalLink
                                     key={store.label}
                                     href={store.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
                                     style={{
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -360,7 +358,7 @@ export const AccountSetup = (props: Props) => {
                                             width: 'auto'
                                         }}
                                     />
-                                </a>
+                                </ExternalLink>
                             ))}
                         </div>
                     </div>

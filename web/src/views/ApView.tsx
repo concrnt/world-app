@@ -4,7 +4,7 @@ import { View } from '../components/View'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
 import { ApObject, resolveApObject } from '../utils/activitypub'
-import { CssVar, Text } from '@concrnt/ui'
+import { CssVar, ExternalLink, Text } from '@concrnt/ui'
 import { MdOpenInNew } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 
@@ -46,10 +46,8 @@ export const ApView = (props: Props) => {
                     }}
                 >
                     <Text style={{ opacity: 0.7 }}>{t('unavailable')}</Text>
-                    <a
+                    <ExternalLink
                         href={props.uri}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -61,7 +59,7 @@ export const ApView = (props: Props) => {
                     >
                         <MdOpenInNew size={14} />
                         {t('openRemote')}
-                    </a>
+                    </ExternalLink>
                 </div>
             </View>
         )

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
+import { ExternalLink } from './ExternalLink'
 
 interface Props {
     href: string
@@ -8,18 +9,13 @@ interface Props {
 
 export const Link = (props: Props) => {
     return (
-        <a
+        <ExternalLink
             href={props.href}
-            target="_blank"
-            rel="noopener noreferrer"
             style={{
                 color: CssVar.contentLink
             }}
-            onClick={(e) => {
-                e.stopPropagation()
-            }}
         >
             {props.children}
-        </a>
+        </ExternalLink>
     )
 }

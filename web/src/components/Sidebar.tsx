@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
-import { Avatar, ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
+import { Avatar, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -144,41 +144,35 @@ export const Sidebar = () => {
                 >
                     Concrnt World App
                     <br />
-                    <a
+                    <ExternalLink
                         style={{
                             color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://square.concrnt.net/"
-                        target="_blank"
-                        rel="noreferrer"
                     >
                         {t('documentation')}
-                    </a>
+                    </ExternalLink>
                     {' / '}
-                    <a
+                    <ExternalLink
                         style={{
                             color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://github.com/orgs/concrnt/discussions"
-                        target="_blank"
-                        rel="noreferrer"
                     >
                         {t('forum')}
-                    </a>
+                    </ExternalLink>
                     {' / '}
-                    <a
+                    <ExternalLink
                         style={{
                             color: CssVar.backdropText,
                             textDecoration: 'none'
                         }}
                         href="https://github.com/totegamma/concurrent-world"
-                        target="_blank"
-                        rel="noreferrer"
                     >
                         GitHub
-                    </a>
+                    </ExternalLink>
                 </div>
             </div>
         </>

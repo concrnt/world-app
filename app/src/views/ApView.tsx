@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
-import { CssVar, Text, View } from '@concrnt/ui'
+import { CssVar, ExternalLink, Text, View } from '@concrnt/ui'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
 import { ApObject, resolveApObject } from '../utils/activitypub'
 import { MdOpenInNew } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
-import { openUrl } from '@tauri-apps/plugin-opener'
 
 interface Props {
     uri: string
@@ -46,13 +45,8 @@ export const ApView = (props: Props) => {
                     }}
                 >
                     <Text style={{ opacity: 0.7 }}>{t('unavailable')}</Text>
-                    <a
+                    <ExternalLink
                         href={props.uri}
-                        onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            openUrl(props.uri, 'inAppBrowser')
-                        }}
                         style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -64,7 +58,7 @@ export const ApView = (props: Props) => {
                     >
                         <MdOpenInNew size={14} />
                         {t('openRemote')}
-                    </a>
+                    </ExternalLink>
                 </div>
             </View>
         )
