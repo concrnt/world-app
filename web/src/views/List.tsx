@@ -8,13 +8,12 @@ import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { Composer } from '../components/Composer'
 import { List, semantics } from '@concrnt/worldlib'
-import { MdCreate, MdTune } from 'react-icons/md'
+import { MdTune } from 'react-icons/md'
 import { Drawer } from '../components/Drawer'
 import { ListSettings } from '../components/ListSettings'
-import { FAB } from '../components/FAB'
-import { useComposer } from '../contexts/Composer'
+import { ComposeFAB } from '../components/ComposeFAB'
+import { PostContextProvider } from '../contexts/PostContext'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { hapticLight } from '../utils/haptics'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { useTranslation } from 'react-i18next'
 
@@ -26,7 +25,6 @@ export const ListView = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'views.list' })
     const { client } = useClient()
     const [settingsOpen, setSettingsOpen] = useState(false)
-    const composer = useComposer()
     const isMobile = useIsMobile()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
@@ -72,7 +70,7 @@ export const ListView = (props: Props) => {
     }
 
     return (
-        <>
+        <PostContextProvider destinations={pin?.defaultPostTimelines ?? []} profile={pin?.defaultProfile}>
             <View>
                 <Header
                     onTitleTap={() => scrollRef.current?.scrollToTop()}
@@ -132,14 +130,7 @@ export const ListView = (props: Props) => {
                     )
                 )}
             </View>
-            <FAB
-                onClick={() => {
-                    hapticLight()
-                    composer.open(pin?.defaultPostTimelines ?? [], undefined, undefined, undefined, pin?.defaultProfile)
-                }}
-            >
-                <MdCreate size={24} />
-            </FAB>
+            <ComposeFAB />
             <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
                 <ListSettings
                     uri={props.uri}
@@ -149,7 +140,7 @@ export const ListView = (props: Props) => {
                     }}
                 />
             </Drawer>
-        </>
+        </PostContextProvider>
     )
 }
 

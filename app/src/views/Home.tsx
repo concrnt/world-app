@@ -5,19 +5,17 @@ import { useClient } from '../contexts/Client'
 import { Drawer } from '../ui/Drawer'
 
 import { Header } from '../ui/Header'
-import { FAB } from '../ui/FAB'
 import { View, Tabs, Tab, Text, Button } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useTranslation } from 'react-i18next'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
+import { ComposeFAB } from '../components/ComposeFAB'
+import { PostContextProvider } from '../contexts/PostContext'
 
 import { MdTune } from 'react-icons/md'
-import { MdCreate } from 'react-icons/md'
-import { useComposer } from '../contexts/Composer'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
-import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -172,7 +170,11 @@ const HomeMain = ({
                     ))}
                 </Tabs>
             )}
-            {pin && <TimelineWrap ref={ref} pin={pin} />}
+            {pin && (
+                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                    <TimelineWrap ref={ref} pin={pin} />
+                </PostContextProvider>
+            )}
         </>
     )
 }
@@ -186,7 +188,7 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
     return (
         <>
             <Timeline ref={props.ref} list={list} excludeSelf={props.pin.excludeSelf} />
-            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} defaultProfile={props.pin.defaultProfile} />
+            <ComposeFAB />
         </>
     )
 }
@@ -203,19 +205,4 @@ const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRe
     )
 
     return <RealtimeTimeline ref={props.ref} timelines={timelines} />
-}
-
-const InnerFab = (props: { defaultPostTimelines: string[]; defaultProfile?: string }) => {
-    const composer = useComposer()
-
-    return (
-        <FAB
-            onClick={() => {
-                hapticLight()
-                composer.open(props.defaultPostTimelines, undefined, undefined, undefined, props.defaultProfile)
-            }}
-        >
-            <MdCreate size={24} />
-        </FAB>
-    )
 }

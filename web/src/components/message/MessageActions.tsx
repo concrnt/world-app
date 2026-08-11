@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
+import { usePostContext } from '../../contexts/PostContext'
 import { hapticLight, hapticSuccess } from '../../utils/haptics'
 import { startTransition, useOptimistic, useState } from 'react'
 import { Select } from '../Select'
@@ -35,6 +36,7 @@ export const MessageActions = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.messageActions' })
     const { client } = useClient()
     const composer = useComposer()
+    const postCtx = usePostContext()
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [reportOpen, setReportOpen] = useState(false)
@@ -109,15 +111,8 @@ export const MessageActions = (props: Props) => {
                 variant="text"
                 onClick={(e) => {
                     e.stopPropagation()
-                    const communityDestinations =
-                        props.message.distributes?.filter(
-                            (uri) =>
-                                !uri.includes('/main/home-timeline') &&
-                                !uri.includes('/main/activity-timeline') &&
-                                !uri.includes('/main/notify-timeline')
-                        ) ?? []
-                    // 候補は省略してknownCommunities全体にする(リルート先は元メッセージの配信先に限らない)
-                    composer.open(communityDestinations, undefined, 'reroute', props.message)
+                    // リルート先は現在開いているビューのデフォルト投稿先。文脈のないページではホームのみ
+                    composer.open(postCtx.destinations, undefined, 'reroute', props.message, postCtx.profile)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >

@@ -14,9 +14,7 @@ import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 
 import { MdTune } from 'react-icons/md'
-import { MdCreate } from 'react-icons/md'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
-import { hapticLight } from '../utils/haptics'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -24,8 +22,8 @@ import { useSubscribe } from '../hooks/useSubscribe'
 import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 import { Composer } from '../components/Composer'
-import { FAB } from '../components/FAB'
-import { useComposer } from '../contexts/Composer'
+import { ComposeFAB } from '../components/ComposeFAB'
+import { PostContextProvider } from '../contexts/PostContext'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 export const HomeView = (props: ScrollViewProps) => {
@@ -175,7 +173,11 @@ const HomeMain = ({
                     ))}
                 </Tabs>
             )}
-            {pin && <TimelineWrap ref={ref} pin={pin} />}
+            {pin && (
+                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                    <TimelineWrap ref={ref} pin={pin} />
+                </PostContextProvider>
+            )}
         </>
     )
 }
@@ -224,23 +226,8 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
                     )
                 }
             />
-            <InnerFab defaultPostTimelines={props.pin.defaultPostTimelines} defaultProfile={props.pin.defaultProfile} />
+            <ComposeFAB />
         </>
-    )
-}
-
-const InnerFab = (props: { defaultPostTimelines: string[]; defaultProfile?: string }) => {
-    const composer = useComposer()
-
-    return (
-        <FAB
-            onClick={() => {
-                hapticLight()
-                composer.open(props.defaultPostTimelines, undefined, undefined, undefined, props.defaultProfile)
-            }}
-        >
-            <MdCreate size={24} />
-        </FAB>
     )
 }
 

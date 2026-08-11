@@ -19,7 +19,7 @@ import { ProfileName } from './ProfileName'
 import { SidebarLists } from './SidebarLists'
 import { useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
-import { semantics } from '@concrnt/worldlib'
+import { currentPostContext } from '../contexts/PostContext'
 
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
@@ -118,8 +118,9 @@ export const Sidebar = () => {
                 <SidebarLists />
                 <Button
                     onClick={() => {
-                        const home = semantics.homeTimeline(client.ccid, client.currentProfile)
-                        composer.open([home])
+                        // 最前面のビューが提供するデフォルト投稿先で開く。文脈のないページではホームのみ
+                        const postCtx = currentPostContext()
+                        composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
                     }}
                     style={{ width: '100%' }}
                 >

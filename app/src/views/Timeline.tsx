@@ -3,10 +3,8 @@ import { Header } from '../ui/Header'
 import { useEffect, useRef, useState } from 'react'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
-import { FAB } from '../ui/FAB'
-import { useComposer } from '../contexts/Composer'
-import { MdCreate } from 'react-icons/md'
-import { hapticLight } from '../utils/haptics'
+import { ComposeFAB } from '../components/ComposeFAB'
+import { PostContextProvider } from '../contexts/PostContext'
 import { TimelineTag } from '../components/TimelineTag'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { Drawer } from '../ui/Drawer'
@@ -21,7 +19,6 @@ interface Props {
 
 export const TimelineView = (props: Props) => {
     const { client } = useClient()
-    const composer = useComposer()
     const [settingsOpen, setSettingsOpen] = useState(false)
 
     const scrollRef = useRef<ScrollViewHandle>(null)
@@ -50,7 +47,7 @@ export const TimelineView = (props: Props) => {
     const restricted = timeline ? timeline.isRestrictedFor(client!.ccid) : false
 
     return (
-        <>
+        <PostContextProvider destinations={[props.uri]}>
             <View>
                 <Header
                     onTitleTap={() => scrollRef.current?.scrollToTop()}
@@ -77,19 +74,10 @@ export const TimelineView = (props: Props) => {
                     timeline !== undefined && <RealtimeTimeline ref={scrollRef} timelines={[props.uri]} />
                 )}
             </View>
-            {!restricted && (
-                <FAB
-                    onClick={() => {
-                        hapticLight()
-                        composer.open([props.uri])
-                    }}
-                >
-                    <MdCreate size={24} />
-                </FAB>
-            )}
+            {!restricted && <ComposeFAB />}
             <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
                 <TimelineSettings uri={props.uri} />
             </Drawer>
-        </>
+        </PostContextProvider>
     )
 }
