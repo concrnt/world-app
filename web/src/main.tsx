@@ -86,17 +86,19 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'b
     const { uri = '' } = useParams()
     const decoded = decodeURIComponent(uri)
 
+    // keyでuri切替時にビューごと再マウントする。同一ルート内のuri差し替えでマウント済みSuspense配下が
+    // サスペンドするとナビゲーションのtransitionがコミットできず画面が旧uriのまま固まるのを防ぐ
     switch (kind) {
         case 'post':
-            return <PostView uri={decoded} />
+            return <PostView key={decoded} uri={decoded} />
         case 'timeline':
-            return <TimelineView uri={decoded} />
+            return <TimelineView key={decoded} uri={decoded} />
         case 'list':
-            return <ListView uri={decoded} />
+            return <ListView key={decoded} uri={decoded} />
         case 'apView':
-            return <ApView uri={decoded} />
+            return <ApView key={decoded} uri={decoded} />
         case 'bskyView':
-            return <BskyView uri={decoded} />
+            return <BskyView key={decoded} uri={decoded} />
     }
 }
 
@@ -111,9 +113,9 @@ const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {
 
     switch (kind) {
         case 'post':
-            return <GuestPostView uri={decoded} />
+            return <GuestPostView key={decoded} uri={decoded} />
         case 'timeline':
-            return <GuestTimelineView uri={decoded} />
+            return <GuestTimelineView key={decoded} uri={decoded} />
     }
 }
 
