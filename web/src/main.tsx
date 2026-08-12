@@ -59,6 +59,7 @@ import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { MdArrowBack } from 'react-icons/md'
 import { Themes } from './data/themes'
+import { migrateV1Storage } from './lib/v1storage'
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -118,6 +119,9 @@ const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {
             return <GuestTimelineView key={decoded} uri={decoded} />
     }
 }
+
+// v1クライアント(concrnt-world)の残留ストレージはセッション判定より先に変換・掃除する
+migrateV1Storage()
 
 // ログインセッションの有無(モジュールロード時に1回判定)。
 // 無い場合のみゲスト閲覧ルートを登録する。ログイン/登録完了時はフルリロードされるため再評価される

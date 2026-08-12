@@ -1,8 +1,19 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
-import { InMemoryAuthProvider, NotFoundError, ServerOfflineError } from '@concrnt/client'
+import { Client, migrateLegacyProfilePolicies, semantics } from '@concrnt/worldlib'
+import {
+    Api,
+    ComputeCKID,
+    Document,
+    Entity,
+    GenerateIdentity,
+    InMemoryAuthProvider,
+    InMemoryKVS,
+    NotFoundError,
+    ServerOfflineError,
+    SignedDocument
+} from '@concrnt/client'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
 import { resourceCache } from '../lib/cache'
@@ -92,7 +103,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                 const domain = readStoredString('Domain')
                 const masterKey = readStoredString('PrivateKey')
-                const subKey = readStoredString('SubKey')
+                let subKey = readStoredString('SubKey')
 
                 if (!domain || (!masterKey && !subKey)) {
                     console.log('No web session found')
@@ -100,6 +111,35 @@ export const ClientProvider = (props: Props): ReactNode => {
                     clientRef.current = null
                     setClient(null)
                     return
+                }
+
+                // マスターキーのみのセッションはv1(concrnt-world)からの引き継ぎでしか発生しない
+                // (v2のログインは必ずsubkeyを発行する)。通常の書き込みはsubkey署名なので、
+                // ここでログインフローと同様にsubkeyを発行して揃える。失敗してもマスターキーのみで
+                // 続行する(読み取りは可能・次回起動で再試行される)
+                if (masterKey && !subKey) {
+                    try {
+                        const masterProvider = new InMemoryAuthProvider(masterKey)
+                        const ccid = masterProvider.getCCID()
+                        const api = new Api(domain, masterProvider, new InMemoryKVS())
+                        const subIdentity = GenerateIdentity()
+                        const ckid = ComputeCKID(subIdentity.publicKey)
+                        const subkeyDoc: Document<any> = {
+                            kind: 'record',
+                            key: semantics.subkey(ccid, ckid),
+                            author: ccid,
+                            schema: 'https://schema.concrnt.net/subkey.json',
+                            value: { ckid },
+                            createdAt: new Date(),
+                            onUpdate: 'retain'
+                        }
+                        await api.commit(subkeyDoc, domain, { useMasterkey: true })
+                        subKey = `concrnt-subkey ${subIdentity.privateKey} ${ccid}@${domain} -`
+                        localStorage.setItem('SubKey', subKey)
+                        console.log('Provisioned a subkey for the migrated master key session')
+                    } catch (err) {
+                        console.error('Failed to provision subkey for master key session', err)
+                    }
                 }
 
                 // 選択中のサブプロフィールはログアウト時に他のセッションキーと一緒に破棄する
@@ -120,6 +160,35 @@ export const ClientProvider = (props: Props): ReactNode => {
                         await setupDefaultTimelines(client)
                         // v1から移行したアカウントの旧形式鍵垢設定をv2形式へ移行する。失敗してもログインは止めない
                         await migrateLegacyProfilePolicies(client).catch(console.error)
+
+                        // v1から自動移行されたエンティティ(proof:none)のマスターキーによる再コミット。
+                        // 通常はログイン画面(ensureEntityProof)が行うが、v1のlocalStorageからセッションを
+                        // 引き継いだ場合はログイン画面を通らないため、移行時に立てたフラグを見てここで行う。
+                        // 失敗してもログインは止めない(フラグが残るため次回起動で再試行される)
+                        if (
+                            localStorage.getItem('V1EntityProofPending') !== null &&
+                            client.api.authProvider.canSignMaster()
+                        ) {
+                            await (async () => {
+                                const self = await client.api.getResource<SignedDocument>(
+                                    semantics.user(client.ccid),
+                                    undefined,
+                                    { cache: 'no-cache' }
+                                )
+                                if (self.proof?.type === 'none') {
+                                    console.log('Entity proof type is "none", re-committing entity with master key...')
+                                    const entityDoc: Document<Entity> = {
+                                        kind: 'entity',
+                                        author: client.ccid,
+                                        schema: 'https://schema.concrnt.net/entity.json',
+                                        value: JSON.parse(self.document).value,
+                                        createdAt: new Date()
+                                    }
+                                    await client.api.commit(entityDoc, client.server.domain, { useMasterkey: true })
+                                }
+                                localStorage.removeItem('V1EntityProofPending')
+                            })().catch(console.error)
+                        }
 
                         setProgress(t('loadingLists'))
                         await client.pinnedLists.value()
@@ -209,6 +278,15 @@ export const ClientProvider = (props: Props): ReactNode => {
                         setSetupError(err instanceof Error ? err.message : String(err))
                     }
                 }
+            } catch (err) {
+                // authProviderの構築(壊れた鍵素材でのthrow)など、内側のcatchが覆わない範囲の失敗。
+                // 放置するとunhandled rejectionになりロード画面のまま固まるため、エラー画面に落とす
+                console.error('Failed to set up client', err)
+                if (isLiveSwitch && clientRef.current) {
+                    setSwitchError(err instanceof Error ? err.message : String(err))
+                } else {
+                    setSetupError(err instanceof Error ? err.message : String(err))
+                }
             } finally {
                 setIsSwitching(false)
             }
@@ -287,6 +365,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         localStorage.removeItem('Mnemonic')
         localStorage.removeItem('SubKey')
         localStorage.removeItem('SelectedProfile')
+        localStorage.removeItem('V1EntityProofPending')
         await resourceCache.clear()
         await reload()
     }, [reload])
