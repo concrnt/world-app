@@ -10,6 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
 import { usePreference } from '../../contexts/Preference'
 import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
@@ -175,11 +176,13 @@ const Note = (props: {
             }
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
-                {note._misskey_content ? (
-                    <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
-                ) : (
-                    <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
-                )}
+                <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
+                    {note._misskey_content ? (
+                        <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
+                    ) : (
+                        <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
+                    )}
+                </AutoSummary>
             </CollapsibleBody>
             {medias.length > 0 && <MediaGallery medias={medias} />}
             {props.detail && (
