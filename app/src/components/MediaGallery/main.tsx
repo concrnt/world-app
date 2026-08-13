@@ -60,6 +60,7 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
                 overflow: 'hidden',
                 borderRadius: CssVar.round(2),
                 aspectRatio: '4/3',
+                flexShrink: 0,
                 position: 'relative',
                 cursor: 'pointer'
             }}
