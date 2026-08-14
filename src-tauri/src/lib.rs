@@ -46,7 +46,6 @@ pub fn run() {
             commands::remove_account,
             commands::clear_session,
             commands::set_domain,
-            commands::clear_all,
             commands::load_identity,
             backup::backup_masterkey,
         ])

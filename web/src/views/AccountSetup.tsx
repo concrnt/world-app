@@ -4,11 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'
 import {
     Api,
+    ComputeCCID,
     ComputeCKID,
     Document,
     GenerateIdentity,
     InMemoryAuthProvider,
     InMemoryKVS,
+    LoadIdentity,
+    LoadKey,
     type Identity
 } from '@concrnt/client'
 import { useReloadClient } from '../contexts/Client'
@@ -29,7 +32,35 @@ interface Props {
 const encodeRegistrationDocument = (input: string) =>
     btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-const storeWebSession = (domain: string, masterKey: string, mnemonic: string, subKey: string) => {
+const storeWebSession = (domain: string, ccid: string, masterKey: string, mnemonic: string, subKey: string) => {
+    // 新規登録で既存の別アカウントのマスターキーが黙って上書きされる事故を防ぐ。
+    // 削除はせずEvacuatedKeys:<旧ccid>へ退避してID画面から回収できるようにする
+    const prevKeyRaw = localStorage.getItem('PrivateKey')
+    const prevMnemonicRaw = localStorage.getItem('Mnemonic')
+    if (prevKeyRaw !== null || prevMnemonicRaw !== null) {
+        let prevCcid: string | null = null
+        try {
+            if (prevKeyRaw) {
+                const keypair = LoadKey(prevKeyRaw)
+                prevCcid = keypair ? ComputeCCID(keypair.publickey) : null
+            } else if (prevMnemonicRaw) {
+                prevCcid = LoadIdentity(prevMnemonicRaw).CCID
+            }
+        } catch {
+            prevCcid = null
+        }
+        if (prevCcid !== ccid) {
+            localStorage.setItem(
+                `EvacuatedKeys:${prevCcid ?? 'unknown'}`,
+                JSON.stringify({
+                    privateKey: prevKeyRaw ?? undefined,
+                    mnemonic: prevMnemonicRaw ?? undefined,
+                    evacuatedAt: new Date().toISOString()
+                })
+            )
+        }
+    }
+
     localStorage.setItem('Domain', domain)
     localStorage.setItem('PrivateKey', masterKey)
     localStorage.setItem('Mnemonic', mnemonic)
@@ -133,6 +164,7 @@ export const AccountSetup = (props: Props) => {
 
             storeWebSession(
                 domain,
+                identity.CCID,
                 identity.privateKey,
                 identity.mnemonic,
                 `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`

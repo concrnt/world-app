@@ -223,7 +223,8 @@
                 "registrationNotFound": "Registration not found.",
                 "continue": "Continue",
                 "registerNew": "Register a new account",
-                "deleteBrowserAccount": "Delete account data from this browser"
+                "deleteBrowserAccount": "Delete account data from this browser",
+                "checkFailed": "Could not verify. Please check your connection or the server status and try again."
             }
         },
         "ageBlocked": {
@@ -330,6 +331,12 @@
                 "revokeConfirmCurrentDescription": "This is the subkey used by this device. Revoking it will log this device out.",
                 "revokeFailed": "Failed to revoke subkey",
                 "masterKeyRequired": "Revoking a subkey requires the master key."
+            },
+            "evacuated": {
+                "title": "Evacuated keys",
+                "description": "Master keys of previous accounts, preserved when you signed in with a different account. Download a backup and store it somewhere safe. Deletion becomes available after downloading.",
+                "download": "Download backup",
+                "delete": "Delete"
             }
         },
         "activitypub": {
@@ -999,7 +1006,9 @@
             "cancel": "Cancel",
             "delete": "Delete",
             "deleteFailed": "Could not delete. Please try again.",
-            "resetSession": "Reset Session"
+            "resetSession": "Reset Session",
+            "noKeyToBackup": "This session does not hold a master key, so no key will be lost.",
+            "confirmDelete": "This will remove this account (including its master key) from this browser. Are you sure?"
         },
         "storeMocks": {
             "idTitle": "ID Management",

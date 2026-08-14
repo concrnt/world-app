@@ -126,10 +126,12 @@ migrateV1Storage()
 // ログインセッションの有無(モジュールロード時に1回判定)。
 // 無い場合のみゲスト閲覧ルートを登録する。ログイン/登録完了時はフルリロードされるため再評価される
 const hasSession = (() => {
-    const domain = localStorage.getItem('Domain')
+    // Domainが無くても鍵が残っていればWelcomeView(AuthedRoutesのfailedノード)に入れる。
+    // ログアウトはDomain/SubKeyのみ破棄しマスターキーを残すため、ここでDomainを必須にすると
+    // ログアウト後の再訪がランディングページに飛ばされ「このアカウントで続行」導線に到達できない
     const masterKey = localStorage.getItem('PrivateKey')
     const subKey = localStorage.getItem('SubKey')
-    return !!domain && (!!masterKey || !!subKey)
+    return !!masterKey || !!subKey
 })()
 
 // client(≒プロフィール)が変わったら配下をまるごと作り直し、
@@ -165,7 +167,10 @@ const AuthedRoutes = () => (
         }
         failed={
             <CachedThemeProvider>
-                <WelcomeView />
+                {/* WelcomeView内のResetSessionButtonがModal(OverlaySurface)を使うため必要(app版と同構造) */}
+                <OverlayStackProvider>
+                    <WelcomeView />
+                </OverlayStackProvider>
             </CachedThemeProvider>
         }
     >

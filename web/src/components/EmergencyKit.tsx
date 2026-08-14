@@ -92,13 +92,18 @@ export function EmergencyKit({ error }: FallbackProps): ReactNode {
     const softReset = (): void => {
         for (const key in localStorage) {
             if (['Domain', 'PrivateKey', 'Mnemonic', 'SubKey'].includes(key)) continue
+            if (key.startsWith('EvacuatedKeys:')) continue
             localStorage.removeItem(key)
         }
         window.location.replace('/')
     }
 
     const hardReset = (): void => {
+        // クラッシュ画面からでもマスターキーの削除はさせない(hard=ログアウト相当まで)。
+        // 鍵を消す操作はバックアップDLを強制するResetSessionButtonだけに限定する
         for (const key in localStorage) {
+            if (['PrivateKey', 'Mnemonic'].includes(key)) continue
+            if (key.startsWith('EvacuatedKeys:')) continue
             localStorage.removeItem(key)
         }
         window.location.replace('/')

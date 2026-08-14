@@ -246,7 +246,7 @@ fn save_cloud_best_effort(app_handle: &tauri::AppHandle, file: &AccountsFile) {
 /// iCloud同期バックアップへ権威的に書き込む(削除経路専用)。ベストエフォート版と違い、
 /// 反映に失敗したらErrを返す。best-effortで握りつぶすと、キーチェーンに残った古いブロブが
 /// 次回のunion読み取りで復活し、削除が「なかったこと」になるため。呼び出し側はErrを
-/// ユーザーに提示してリトライを促す(clear_allと同じ思想)。
+/// ユーザーに提示してリトライを促す。
 fn save_cloud(app_handle: &tauri::AppHandle, file: &AccountsFile) -> Result<(), Error> {
     // 全アカウントが消えた場合はブロブごと削除する。空ブロブの更新より削除の方が確実で、
     // union復活の余地も残さない。remove_item は success/notFound の両方で true を返す。
@@ -380,36 +380,6 @@ pub(crate) fn remove_account(app_handle: &tauri::AppHandle, ccid: &str) -> Resul
         Some(next) => set_active_ccid(app_handle, &next),
         None => clear_active_ccid(app_handle),
     }
-}
-
-/// 全アカウントとアクティブポインタを消す非常口。通常のフローからは呼ばないこと。
-/// ローカル正・クラウド同期の両方を消す。クラウド削除に失敗するとローカルを消しても
-/// 次回のunion読み取りで復活し得るため、その場合はエラーを返してリトライを促す。
-pub(crate) fn clear_all(app_handle: &tauri::AppHandle) -> Result<(), Error> {
-    let lock = app_handle.state::<AccountsLock>();
-    let _guard = lock
-        .0
-        .lock()
-        .map_err(|_| "Accounts lock is poisoned".to_string())?;
-
-    let cloud_removed = app_handle.keychain().remove_item(KeychainRequest {
-        key: Some(ACCOUNTS_KEY.to_string()),
-        password: None,
-    });
-
-    let store = session_store(app_handle)?;
-    store.clear();
-    store
-        .save()
-        .map_err(|e| format!("Failed to persist store: {}", e))?;
-
-    if !cloud_removed {
-        return Err(
-            "Failed to clear iCloud-synced accounts from keychain (local copy was cleared)"
-                .to_string(),
-        );
-    }
-    Ok(())
 }
 
 // ===== アクティブアカウント =====

@@ -5,10 +5,19 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountSetup } from '../views/AccountSetup'
 import { AccountImport } from '../views/AccountImport'
-import { Api, InMemoryKVS, Document, Entity, InMemoryAuthProvider, SignedDocument } from '@concrnt/client'
+import {
+    Api,
+    InMemoryKVS,
+    Document,
+    Entity,
+    InMemoryAuthProvider,
+    NotFoundError,
+    SignedDocument
+} from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
+import { listAccounts } from '../lib/accounts'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
@@ -54,7 +63,11 @@ export const WelcomeView = () => {
     const [continuing, setContinuing] = useState(false)
     const [continueError, setContinueError] = useState<string | null>(null)
     const reset = useResetPreference()
-    const [resolver, setResolver] = useState<string>(resolveEntrypoint())
+    // null = 未解決。端末に残っている自分の登録サーバー(AccountRecord.domain)を最優先で使い、
+    // 無ければエントリポイント(ariake)、それでも見つからなければRecoveryViewの手入力にフォールバックする。
+    // エントリポイントはhint無しでは他ドメインのユーザーを解決できないため、これが無いと
+    // ログアウト後に他サーバーのユーザーが常に「登録なし」に誤診される
+    const [resolver, setResolver] = useState<string | null>(null)
 
     useEffect(() => {
         const load = async () => {
@@ -81,12 +94,40 @@ export const WelcomeView = () => {
             }
             setExistingCCID(ccid)
 
+            // resolverの初期化は一度きり(RecoveryViewの手入力によるsetResolverをloadが巻き戻さないため)。
+            // setResolverでeffectが再実行され、次周回で照会に進む
+            if (resolver === null) {
+                let accountDomain: string | null = null
+                try {
+                    const accounts = await listAccounts()
+                    accountDomain = accounts.find((a) => a.ccid === ccid)?.domain ?? null
+                } catch (e) {
+                    console.error('Failed to list accounts', e)
+                }
+                setResolver(accountDomain ?? resolveEntrypoint())
+                return
+            }
+
             const authProvider = new InMemoryAuthProvider()
             const kvs = new InMemoryKVS()
 
             const api = new Api(resolver, authProvider, kvs)
 
-            const entity = await api.getEntity(ccid).catch(() => undefined)
+            // 「登録なし」と断定するのはサーバーが404を返した時だけ。通信失敗やサーバーエラーを
+            // missingにすると、鍵が端末に残っているのに新規鍵生成への導線が開いてしまう
+            let entity: Document<Entity> | undefined
+            try {
+                entity = await api.getEntity(ccid)
+            } catch (e) {
+                if (e instanceof NotFoundError) {
+                    entity = undefined
+                } else {
+                    console.error('Failed to check registration', e)
+                    setLoadError(e instanceof Error ? e.message : String(e))
+                    setState('error')
+                    return
+                }
+            }
             const profile = await api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main')).catch(() => undefined)
 
             setUser({
@@ -160,7 +201,7 @@ export const WelcomeView = () => {
                 </AuthScreen>
             )
         case 'signup':
-            return <AccountSetup entrypoint={resolver} onBack={() => setState('welcome')} />
+            return <AccountSetup entrypoint={resolver ?? resolveEntrypoint()} onBack={() => setState('welcome')} />
         case 'signin':
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
         case 'welcome':
@@ -323,28 +364,44 @@ const RecoveryView = (props: {
     ccid: string
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
-    const [found, setFound] = useState<boolean>(false)
+    // unknown=未入力(何も表示しない)。「見つからない」と表示・断定するのはサーバーが404を返した時だけで、
+    // 通信失敗はerrorとして区別する(誤って新規登録/削除に誘導しないため)
+    const [found, setFound] = useState<'unknown' | 'found' | 'notfound' | 'error'>('unknown')
     const [domain, setDomain] = useState<string>()
+
+    // 入力が変わったら判定結果を描画中にリセットする(照会完了までは何も表示しない)
+    const [checkedDomain, setCheckedDomain] = useState<string | undefined>(undefined)
+    if (domain !== checkedDomain) {
+        setCheckedDomain(domain)
+        setFound('unknown')
+    }
 
     useEffect(() => {
         if (!domain) return
 
-        const auth = new InMemoryAuthProvider()
-        const kvs = new InMemoryKVS()
-        const api = new Api(domain, auth, kvs)
+        // 打鍵ごとに照会が飛ばないようデバウンスする
+        const timer = setTimeout(() => {
+            const auth = new InMemoryAuthProvider()
+            const kvs = new InMemoryKVS()
+            const api = new Api(domain, auth, kvs)
 
-        api.getEntity(props.ccid)
-            .then((entity) => {
-                if (entity) {
-                    setFound(true)
-                    props.setDomain?.(entity.value.domain)
-                } else {
-                    setFound(false)
-                }
-            })
-            .catch(() => {
-                setFound(false)
-            })
+            api.getEntity(props.ccid)
+                .then((entity) => {
+                    if (entity) {
+                        setFound('found')
+                        props.setDomain?.(entity.value.domain)
+                    } else {
+                        setFound('notfound')
+                    }
+                })
+                .catch((e) => {
+                    setFound(e instanceof NotFoundError ? 'notfound' : 'error')
+                })
+        }, 500)
+
+        return () => {
+            clearTimeout(timer)
+        }
     }, [domain])
 
     return (
@@ -360,14 +417,20 @@ const RecoveryView = (props: {
                     />
                 </div>
                 <Text style={authStyles.status}>
-                    {found ? t('recovery.registrationFound') : t('recovery.registrationNotFound')}
+                    {found === 'found'
+                        ? t('recovery.registrationFound')
+                        : found === 'notfound'
+                          ? t('recovery.registrationNotFound')
+                          : found === 'error'
+                            ? t('recovery.checkFailed')
+                            : ''}
                 </Text>
             </div>
-            {found ? (
+            {found === 'found' ? (
                 <AuthActions fixedBottom>
                     <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
-            ) : (
+            ) : found === 'error' ? null : (
                 <AuthActions fixedBottom>
                     <AuthButton
                         onClick={() => {

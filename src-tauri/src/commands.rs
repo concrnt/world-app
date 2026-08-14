@@ -173,7 +173,9 @@ pub(crate) async fn remove_account(app_handle: tauri::AppHandle, ccid: &str) -> 
     Ok(true)
 }
 
-/// アカウント単位のログアウト: subkey/domainを破棄するが、mnemonicと一覧掲載は維持する。
+/// アカウント単位のログアウト: subkey系のみ破棄し、mnemonicと一覧掲載は維持する。
+/// domainも保持する: ログアウト後のWelcomeが自分の登録サーバーへ照会して復帰する導線に必要
+/// (消すとエントリポイント決め打ちの解決になり、他ドメインのユーザーが「登録なし」に誤診される)。
 /// 再ログイン(subkey再エンロール)はWelcomeのready状態から行う。
 #[tauri::command]
 pub(crate) async fn clear_session(
@@ -184,14 +186,7 @@ pub(crate) async fn clear_session(
     accounts::update_account(&app_handle, &target.ccid, |rec| {
         rec.sub_priv = None;
         rec.ckid = None;
-        rec.domain = None;
     })
-}
-
-/// 全アカウントを消去する非常口。通常のUIフローからは呼ばないこと。
-#[tauri::command]
-pub(crate) async fn clear_all(app_handle: tauri::AppHandle) -> Result<(), Error> {
-    accounts::clear_all(&app_handle)
 }
 
 #[tauri::command]

@@ -223,7 +223,8 @@
                 "registrationNotFound": "登録情報が見つかりませんでした。",
                 "continue": "続行",
                 "registerNew": "新規登録する",
-                "deleteBrowserAccount": "ブラウザのアカウント情報を削除"
+                "deleteBrowserAccount": "ブラウザのアカウント情報を削除",
+                "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
             }
         },
         "ageBlocked": {
@@ -330,6 +331,12 @@
                 "revokeConfirmCurrentDescription": "これは今このデバイスが使用しているサブキーです。失効させるとこのデバイスはログアウトされます。",
                 "revokeFailed": "サブキーの失効に失敗しました",
                 "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。"
+            },
+            "evacuated": {
+                "title": "退避された鍵",
+                "description": "別のアカウントでログインした際に退避された旧マスターキーです。バックアップをダウンロードして安全な場所に保管してください。削除はダウンロード後に可能になります。",
+                "download": "バックアップをダウンロード",
+                "delete": "削除"
             }
         },
         "activitypub": {
@@ -999,7 +1006,9 @@
             "cancel": "キャンセル",
             "delete": "削除",
             "deleteFailed": "削除できませんでした。もう一度お試しください。",
-            "resetSession": "セッションをリセット"
+            "resetSession": "セッションをリセット",
+            "noKeyToBackup": "このセッションはマスターキーを保持していないため、失われる鍵はありません。",
+            "confirmDelete": "このアカウントの情報(マスターキーを含む)をこのブラウザから削除します。よろしいですか？"
         },
         "storeMocks": {
             "idTitle": "ID管理",

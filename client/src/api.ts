@@ -506,6 +506,11 @@ export class Api {
         })
 
         const sd = await this.fetchWithCache<SignedDocument>(this.defaultHost, endpoint, uri, { ...opts })
+        // 負キャッシュ(404の記憶)にヒットするとfetchWithCacheはnullを返す。
+        // ネットワーク経由の404と同じ型のエラーにしないと、呼び出し側のNotFoundErrorハンドリングが機能しない
+        if (!sd) {
+            throw new NotFoundError(`fetch failed on negative cache: ${uri}`, uri)
+        }
 
         const document: Document<Entity> = JSON.parse(sd.document)
         if (!document.kind) document.kind = 'entity'

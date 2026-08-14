@@ -63,6 +63,8 @@ export const IDView = () => {
     const { client } = useClient()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
     const [subkeyCopied, setSubkeyCopied] = useState(false)
+    const [downloadedSlots, setDownloadedSlots] = useState<string[]>([])
+    const [slotVersion, setSlotVersion] = useState(0)
 
     if (!client) return null
 
@@ -94,6 +96,44 @@ export const IDView = () => {
         anchor.download = `concrnt-masterkey-${client.ccid}.txt`
         anchor.click()
         URL.revokeObjectURL(url)
+    }
+
+    // 別アカウントでのログイン/新規登録時に退避された旧マスターキー。バックアップDLで回収できる。
+    // 削除はDL済みのスロットに限定する(バックアップ無しで鍵を消させないという全体の方針に合わせる)
+    void slotVersion
+    const evacuatedSlots = Object.keys(localStorage).filter((key) => key.startsWith('EvacuatedKeys:'))
+
+    const downloadEvacuatedSlot = (slotKey: string) => {
+        const raw = localStorage.getItem(slotKey)
+        if (!raw) return
+        const slotCcid = slotKey.slice('EvacuatedKeys:'.length)
+        let text: string | null = null
+        try {
+            const parsed = JSON.parse(raw)
+            if (typeof parsed.mnemonic === 'string' && parsed.mnemonic) {
+                const identity = LoadIdentity(parsed.mnemonic)
+                text = i18n.t('views.accountSetup.masterkeyFileTemplate', {
+                    ccid: slotCcid,
+                    mnemonic: identity.mnemonic_ja,
+                    domain: 'N/A'
+                })
+            } else if (typeof parsed.privateKey === 'string' && parsed.privateKey) {
+                text = parsed.privateKey
+            }
+        } catch {
+            // パース不能でも生値ごと救出できるようにする
+            text = raw
+        }
+        if (!text) text = raw
+
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = `concrnt-masterkey-${slotCcid}.txt`
+        anchor.click()
+        URL.revokeObjectURL(url)
+        setDownloadedSlots((prev) => (prev.includes(slotKey) ? prev : [...prev, slotKey]))
     }
 
     const copySubkey = () => {
@@ -166,6 +206,55 @@ export const IDView = () => {
 
                 {localStorage.getItem('SubKey') && (
                     <Button onClick={copySubkey}>{subkeyCopied ? t('subkeyCopied') : t('copySubkey')}</Button>
+                )}
+
+                {evacuatedSlots.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
+                        <Text variant="h3">{t('evacuated.title')}</Text>
+                        <Text variant="caption">{t('evacuated.description')}</Text>
+                        {evacuatedSlots.map((slotKey) => (
+                            <div
+                                key={slotKey}
+                                style={{
+                                    border: `1px solid ${CssVar.divider}`,
+                                    borderRadius: '8px',
+                                    padding: CssVar.space(2),
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: CssVar.space(1)
+                                }}
+                            >
+                                <Text
+                                    variant="caption"
+                                    style={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {slotKey.slice('EvacuatedKeys:'.length)}
+                                </Text>
+                                <div style={{ display: 'flex', gap: CssVar.space(1) }}>
+                                    <Button
+                                        onClick={() => {
+                                            downloadEvacuatedSlot(slotKey)
+                                        }}
+                                    >
+                                        {t('evacuated.download')}
+                                    </Button>
+                                    <Button
+                                        disabled={!downloadedSlots.includes(slotKey)}
+                                        onClick={() => {
+                                            localStorage.removeItem(slotKey)
+                                            setSlotVersion((v) => v + 1)
+                                        }}
+                                    >
+                                        {t('evacuated.delete')}
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
 
                 <SubkeyList />

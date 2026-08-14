@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useTranslation } from 'react-i18next'
 
 import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
-import { NotFoundError, ServerOfflineError } from '@concrnt/client'
+import { Api, InMemoryAuthProvider, InMemoryKVS, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
@@ -204,12 +204,47 @@ export const ClientProvider = (props: Props): ReactNode => {
                     if (err instanceof ServerOfflineError) {
                         setIsOffline(true)
                     } else if (err instanceof NotFoundError) {
-                        // サーバーは応答しているが、自分の登録が見つからない(サーバーのリセットや移行など)。
-                        // 再試行しても復帰しないため、ログアウトを促す専用画面を出す。
-                        setNotFoundOn(domain)
+                        // NotFoundErrorはentity 404以外(well-knownの404、セットアップ中のcommitの404、
+                        // キャプティブポータルやデプロイ中CDNの404)でも届く。「登録が見つからない」と
+                        // 断定する前に、自分の登録が本当に無いのかを使い捨てApiで直接確認する
+                        const probe = new Api(domain, new InMemoryAuthProvider(), new InMemoryKVS())
+                        const serverErr = await probe
+                            .getServer(domain, { cache: 'no-cache' })
+                            .then(() => null)
+                            .catch((e) => e)
+                        if (serverErr) {
+                            // well-known自体が取れない = サーバー側/経路の問題。一過性として再試行画面へ
+                            if (serverErr instanceof ServerOfflineError) {
+                                setIsOffline(true)
+                            } else {
+                                setSetupError(err.message)
+                            }
+                        } else {
+                            const entityErr = await probe
+                                .getEntity(ccid, undefined, { cache: 'no-cache' })
+                                .then(() => null)
+                                .catch((e) => e)
+                            if (entityErr instanceof NotFoundError) {
+                                // 本当に登録が無い(サーバーのリセットや移行など)
+                                setNotFoundOn(domain)
+                            } else {
+                                // entityは実在する(or判定不能) = 別の404が原因。再試行画面へ
+                                setSetupError(err.message)
+                            }
+                        }
                     } else {
                         setSetupError(err instanceof Error ? err.message : String(err))
                     }
+                }
+            } catch (err) {
+                // authProviderの構築(セッション欠落でのthrow)やget_session自体の失敗など、
+                // 内側のcatchが覆わない範囲の失敗。放置するとunhandled rejectionになり
+                // ロード画面のまま固まるため、エラー画面に落とす
+                console.error('Failed to set up client', err)
+                if (isLiveSwitch && clientRef.current) {
+                    setSwitchError(err instanceof Error ? err.message : String(err))
+                } else {
+                    setSetupError(err instanceof Error ? err.message : String(err))
                 }
             } finally {
                 setIsSwitching(false)
@@ -372,6 +407,14 @@ export const ClientProvider = (props: Props): ReactNode => {
             >
                 {t('registrationNotFound', { domain: notFoundOn })}
                 <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>{t('registrationNotFoundDesc')}</div>
+                <Button
+                    onClick={() => {
+                        setNotFoundOn(null)
+                        reload()
+                    }}
+                >
+                    {t('retry')}
+                </Button>
                 <Button
                     onClick={async () => {
                         await logout()

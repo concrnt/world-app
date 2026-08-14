@@ -68,21 +68,48 @@ const loadRecoveryIdentity = (value: string): Identity | null => {
 
 const storeWebSession = (
     domain: string,
+    ccid: string,
     masterKey: string | undefined,
     mnemonic: string | undefined,
     subKey: string
 ) => {
+    // ログインし直しで既存のマスターキーが黙って消える事故を防ぐ。同一アカウントなら
+    // 既存のPrivateKey/Mnemonicをそのまま残し(パスキー/サブキーで入り直してもバックアップDL可能なまま)、
+    // 別アカウントなら削除せずEvacuatedKeys:<旧ccid>へ退避してID画面から回収できるようにする
+    const prevKeyRaw = localStorage.getItem('PrivateKey')
+    const prevMnemonicRaw = localStorage.getItem('Mnemonic')
+    if (prevKeyRaw !== null || prevMnemonicRaw !== null) {
+        let prevCcid: string | null = null
+        try {
+            if (prevKeyRaw) {
+                const keypair = LoadKey(prevKeyRaw)
+                prevCcid = keypair ? ComputeCCID(keypair.publickey) : null
+            } else if (prevMnemonicRaw) {
+                prevCcid = LoadIdentity(prevMnemonicRaw).CCID
+            }
+        } catch {
+            prevCcid = null
+        }
+        if (prevCcid !== ccid) {
+            localStorage.setItem(
+                `EvacuatedKeys:${prevCcid ?? 'unknown'}`,
+                JSON.stringify({
+                    privateKey: prevKeyRaw ?? undefined,
+                    mnemonic: prevMnemonicRaw ?? undefined,
+                    evacuatedAt: new Date().toISOString()
+                })
+            )
+            localStorage.removeItem('PrivateKey')
+            localStorage.removeItem('Mnemonic')
+        }
+    }
+
     localStorage.setItem('Domain', domain)
     if (masterKey) {
         localStorage.setItem('PrivateKey', masterKey)
-    } else {
-        localStorage.removeItem('PrivateKey')
     }
     if (mnemonic) {
         localStorage.setItem('Mnemonic', mnemonic)
-    } else {
-        // 前セッションの別アカウントのニーモニックが残るとID画面で誤ったマスターキーをDLさせてしまう
-        localStorage.removeItem('Mnemonic')
     }
     localStorage.setItem('SubKey', subKey)
 }
@@ -229,7 +256,7 @@ export const Login = () => {
             const identity = DeriveIdentity(new Uint8Array(prfRes.first))
             const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
 
-            storeWebSession(domain, undefined, undefined, subkeyStr)
+            storeWebSession(domain, ccid, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -264,7 +291,7 @@ export const Login = () => {
                 return
             }
 
-            storeWebSession(subkey.domain, undefined, undefined, subkeyStr)
+            storeWebSession(subkey.domain, subkey.ccid, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -308,7 +335,7 @@ export const Login = () => {
                 console.error('Failed to migrate entity proof type', err)
             })
 
-            storeWebSession(domain, identity.privateKey, identity.mnemonic, subkeyStr)
+            storeWebSession(domain, identity.CCID, identity.privateKey, identity.mnemonic, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)

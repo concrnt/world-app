@@ -1,11 +1,14 @@
 import {
     Api,
+    ComputeCCID,
     ComputeCKID,
     DeriveIdentity,
     type Document,
     GenerateIdentity,
     InMemoryAuthProvider,
-    InMemoryKVS
+    InMemoryKVS,
+    LoadIdentity,
+    LoadKey
 } from '@concrnt/client'
 import { Button, CssVar, Passport, Text } from '@concrnt/ui'
 import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from '@concrnt/worldlib'
@@ -50,10 +53,11 @@ export const QRSetup = () => {
 
     useEffect(() => {
         let d = ''
+        let c = ''
         let subkey = ''
 
         const keyGenerationCallback = async (ccid: string, domain: string): Promise<string> => {
-            setCCID(ccid)
+            setCCID((c = ccid))
             setDomain((d = domain))
 
             const authProvider = new InMemoryAuthProvider()
@@ -150,6 +154,37 @@ export const QRSetup = () => {
         }
 
         const receiver = new SignalLoginReceiver(signalURL, keyGenerationCallback, (keyURI: string) => {
+            // 前セッションの別アカウントのマスターキーが残ったままだと、subkeyのccidと不一致のまま
+            // マスターキー署名が使われてしまう。削除はせずEvacuatedKeys:<旧ccid>へ退避して
+            // ID画面から回収できるようにする(同一アカウントならそのまま残す)
+            const prevKeyRaw = localStorage.getItem('PrivateKey')
+            const prevMnemonicRaw = localStorage.getItem('Mnemonic')
+            if (prevKeyRaw !== null || prevMnemonicRaw !== null) {
+                let prevCcid: string | null = null
+                try {
+                    if (prevKeyRaw) {
+                        const keypair = LoadKey(prevKeyRaw)
+                        prevCcid = keypair ? ComputeCCID(keypair.publickey) : null
+                    } else if (prevMnemonicRaw) {
+                        prevCcid = LoadIdentity(prevMnemonicRaw).CCID
+                    }
+                } catch {
+                    prevCcid = null
+                }
+                if (prevCcid !== c) {
+                    localStorage.setItem(
+                        `EvacuatedKeys:${prevCcid ?? 'unknown'}`,
+                        JSON.stringify({
+                            privateKey: prevKeyRaw ?? undefined,
+                            mnemonic: prevMnemonicRaw ?? undefined,
+                            evacuatedAt: new Date().toISOString()
+                        })
+                    )
+                    localStorage.removeItem('PrivateKey')
+                    localStorage.removeItem('Mnemonic')
+                }
+            }
+
             setPersistentDomain(d)
             setPersistentSubkey(subkey)
 

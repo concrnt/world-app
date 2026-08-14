@@ -36,6 +36,8 @@ export const migrateV1Storage = (): void => {
                     `concrnt-subkey ${parsed.keypair.privatekey} ${parsed.ccid}@${parsed.domain} -`
                 )
             } else {
+                // 鍵素材を無警告で消さない: パース不能でも生値を退避してから起動経路から外す
+                localStorage.setItem('SubKey_broken', localStorage.getItem('SubKey') ?? '')
                 localStorage.removeItem('SubKey')
             }
         }
@@ -60,6 +62,8 @@ export const migrateV1Storage = (): void => {
                 // ログイン画面を通る通常フロー(ensureEntityProof)の代替
                 localStorage.setItem('V1EntityProofPending', 'true')
             } else {
+                // マスターキーは絶対に無警告で消さない: 判定側のバグや壊れ値でも生値を退避して残す
+                localStorage.setItem('PrivateKey_broken', localStorage.getItem('PrivateKey') ?? '')
                 localStorage.removeItem('PrivateKey')
             }
         }
