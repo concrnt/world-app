@@ -317,6 +317,8 @@
             "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
             "subkeys": {
                 "title": "Subkeys",
+                "count_one": "{{count}} key",
+                "count_other": "{{count}} keys",
                 "description": "Subkeys authorized for this account. Devices you have logged in on sign with these keys.",
                 "loading": "Loading...",
                 "empty": "No subkeys",

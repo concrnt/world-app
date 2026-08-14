@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, Button, Text, Modal } from '@concrnt/ui'
 import { Header } from '../ui/Header'
@@ -6,12 +6,14 @@ import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
-import { MdArrowForward, MdBadge, MdPublic, MdQrCodeScanner } from 'react-icons/md'
+import { MdArrowForward, MdBadge, MdKey, MdPublic, MdQrCodeScanner } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { QRSetup } from './QRSetup'
 import { BackupKeyButton } from '../components/BackupKeyButton'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
+import { Drawer } from '../ui/Drawer'
+import type { Document } from '@concrnt/client'
 
 const InfoTile = ({
     icon,
@@ -63,6 +65,30 @@ export const IDView = () => {
     const { client } = useClient()
     const stack = useStack()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
+    const [subkeyDrawerOpen, setSubkeyDrawerOpen] = useState(false)
+    const [subkeyCount, setSubkeyCount] = useState<number | null>(null)
+
+    // ドロワー内でのrevokeで数が変わりうるので、閉じたタイミングでも取り直す
+    useEffect(() => {
+        if (!client || subkeyDrawerOpen) return
+        client.api
+            .queryAll({ prefix: `cckv://${client.ccid}/keys/` })
+            .then((results) => {
+                let count = 0
+                for (const sd of results) {
+                    try {
+                        const doc: Document<any> = JSON.parse(sd.document)
+                        if (doc.schema === 'https://schema.concrnt.net/subkey.json') count++
+                    } catch (err) {
+                        console.error('failed to parse subkey document', err)
+                    }
+                }
+                setSubkeyCount(count)
+            })
+            .catch((err) => {
+                console.error('failed to count subkeys', err)
+            })
+    }, [client, subkeyDrawerOpen])
 
     if (!client) return null
 
@@ -116,6 +142,15 @@ export const IDView = () => {
                     />
                 </div>
 
+                <InfoTile
+                    icon={<MdKey size={24} />}
+                    label={t('subkeys.title')}
+                    value={subkeyCount !== null ? t('subkeys.count', { count: subkeyCount }) : '…'}
+                    onClick={() => {
+                        setSubkeyDrawerOpen(true)
+                    }}
+                />
+
                 <Button
                     startIcon={<MdQrCodeScanner />}
                     endIcon={<MdArrowForward size={20} />}
@@ -134,12 +169,17 @@ export const IDView = () => {
                     {t('loginOnAnotherDevice')}
                 </Button>
                 <BackupKeyButton />
-
-                <SubkeyList />
             </div>
             <Modal open={aliasModalOpen} onClose={() => setAliasModalOpen(false)}>
                 <AliasSetupModalContent onClose={() => setAliasModalOpen(false)} />
             </Modal>
+            <Drawer open={subkeyDrawerOpen} onClose={() => setSubkeyDrawerOpen(false)}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: CssVar.space(4) }}>
+                        <SubkeyList />
+                    </div>
+                </div>
+            </Drawer>
         </View>
     )
 }
