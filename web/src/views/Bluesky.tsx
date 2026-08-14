@@ -5,13 +5,15 @@ import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError } from '@concrnt/client'
 import { useNavigate } from 'react-router-dom'
-import { Schemas } from '@concrnt/worldlib'
+import { Schemas, semantics, type Timeline } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { Drawer } from '../components/Drawer'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
-import { BskyProfile, inboxKey } from '../utils/bluesky'
+import { TimelinePicker } from '../components/TimelinePicker'
+import { useSubscribe } from '../hooks/useSubscribe'
+import { BskyProfile, bskySettingsKey, inboxKey } from '../utils/bluesky'
 
 interface BskyEntity {
     did: string
@@ -25,11 +27,6 @@ interface BridgeInfo {
     version: string
     serviceCcid: string
     entity?: BskyEntity
-}
-
-interface BskySettings {
-    enabled: boolean
-    listenTimelines: string[]
 }
 
 export const Bluesky = () => {
@@ -47,7 +44,35 @@ export const Bluesky = () => {
     const [verifyError, setVerifyError] = useState<string>()
     const [verifying, setVerifying] = useState(false)
 
-    const [settings, setSettings] = useState<BskySettings>()
+    // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
+    // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
+    const [bridgeEnabled, setBridgeEnabled] = useState(true)
+    const [listenHome, setListenHome] = useState(true)
+    const [listenProfile, setListenProfile] = useState('main')
+    const [listenCommunities, setListenCommunities] = useState<string[]>([])
+
+    const homeTimelineRegex = new RegExp(`^cckv://${client.ccid}/concrnt\\.world/profiles/([^/]+)/home-timeline$`)
+
+    const commitSettings = (enabled: boolean) => {
+        const listenTimelines = [
+            ...(listenHome ? [semantics.homeTimeline(client.ccid, listenProfile)] : []),
+            ...listenCommunities
+        ]
+        client.api
+            .commit({
+                kind: 'record' as const,
+                key: bskySettingsKey(client.ccid),
+                author: client.ccid,
+                schema: Schemas.atprotoSettings,
+                value: { listenTimelines, enabled },
+                createdAt: new Date()
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+    }
+
     const [following, setFollowing] = useState<BskyProfile[]>([])
     const [followers, setFollowers] = useState<BskyProfile[]>([])
     const [followersCursor, setFollowersCursor] = useState<string>()
@@ -92,12 +117,17 @@ export const Bluesky = () => {
         if (!active) return
 
         client.api
-            .callConcrntApi<BskySettings>(client.server.domain, 'world.concrnt.atproto.settings', {})
-            .then((res) => {
-                setSettings(res)
+            .getDocument<{ listenTimelines: string[]; enabled?: boolean }>(bskySettingsKey(client.ccid))
+            .then((doc) => {
+                const timelines = doc.value?.listenTimelines ?? []
+                const homeProfile = timelines.map((uri) => uri.match(homeTimelineRegex)?.[1]).find((m) => m)
+                setListenHome(timelines.length === 0 || homeProfile !== undefined)
+                if (homeProfile) setListenProfile(homeProfile)
+                setListenCommunities(timelines.filter((uri) => !homeTimelineRegex.test(uri)))
+                setBridgeEnabled(doc.value?.enabled ?? true)
             })
             .catch((err) => {
-                console.log(err)
+                if (!(err instanceof NotFoundError)) console.log(err)
             })
 
         client.api
@@ -245,40 +275,43 @@ export const Bluesky = () => {
                         <Text>{t('active')}</Text>
                         <Text>{t('yourHandle', { handle: info.entity.handle })}</Text>
                         <Text variant="caption">{info.entity.did}</Text>
-                        {settings && (
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between'
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                            }}
+                        >
+                            <Text>{t('enabledToggle')}</Text>
+                            <Switch
+                                checked={bridgeEnabled}
+                                onChange={(checked) => {
+                                    setBridgeEnabled(checked)
+                                    commitSettings(checked)
                                 }}
-                            >
-                                <Text>{t('enabledToggle')}</Text>
-                                <Switch
-                                    checked={settings.enabled}
-                                    onChange={(checked) => {
-                                        client.api
-                                            .callConcrntApi<BskySettings>(
-                                                client.server.domain,
-                                                'world.concrnt.atproto.settings',
-                                                {},
-                                                {
-                                                    method: 'POST',
-                                                    body: JSON.stringify({
-                                                        enabled: checked
-                                                    })
-                                                }
-                                            )
-                                            .then((res) => {
-                                                setSettings(res)
-                                            })
-                                            .catch((err) => {
-                                                console.log(err)
-                                            })
-                                    }}
-                                />
-                            </div>
-                        )}
+                            />
+                        </div>
+                        <Divider />
+                        <Text>{t('forwardTimeline')}</Text>
+                        <Text>{t('forwardTimelineDesc')}</Text>
+                        <TimelinePicker
+                            items={[
+                                // リスト未登録だとknownCommunitiesに現れないため、自分のinboxは常に候補に出す
+                                { uri: inboxKey(client.ccid), name: 'Bluesky' },
+                                ...knownCommunities.filter(
+                                    (tl: Timeline) => !tl.uri.includes('/atproto.concrnt.world/')
+                                )
+                            ]}
+                            selected={listenCommunities}
+                            setSelected={setListenCommunities}
+                            keyFunc={(item: Timeline) => item.uri}
+                            labelFunc={(item: Timeline) => item.name ?? 'no name'}
+                            postHome={listenHome}
+                            setPostHome={setListenHome}
+                            selectedProfile={listenProfile}
+                            setSelectedProfile={setListenProfile}
+                        />
+                        <Button onClick={() => commitSettings(bridgeEnabled)}>{t('update')}</Button>
                         <Divider />
                         <IconButton
                             onClick={(e) => {

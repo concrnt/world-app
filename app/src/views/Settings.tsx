@@ -55,7 +55,7 @@ export const SettingsView = () => {
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
-    const blueskyEnabled = 'world.concrnt.atproto.settings' in (client.server?.endpoints ?? {})
+    const blueskyEnabled = 'world.concrnt.atproto.info' in (client.server?.endpoints ?? {})
     const mediaEnabled = 'net.concrnt.storage.list' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
