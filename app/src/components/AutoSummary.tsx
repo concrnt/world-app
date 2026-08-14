@@ -79,9 +79,10 @@ export const AutoSummary = (props: Props) => {
                         >
                             <iframe
                                 allowFullScreen
-                                src={`https://www.youtube.com/embed/${matchYoutube[1]}`}
+                                src={`https://www.youtube.com/embed/${matchYoutube[1]}?playsinline=1`}
                                 title="YouTube video player"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                referrerPolicy="strict-origin-when-cross-origin"
                                 style={{
                                     width: '100%',
                                     height: '100%',
