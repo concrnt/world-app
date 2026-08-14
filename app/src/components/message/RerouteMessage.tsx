@@ -8,7 +8,7 @@ import { Avatar, Text, IconButton, ListItem, Select } from '@concrnt/ui'
 import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
-import { hapticSuccess } from '../../utils/haptics'
+import { useHaptics } from '../../contexts/Haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
@@ -18,6 +18,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
+    const { hapticSuccess } = useHaptics()
 
     const [menuOpen, setMenuOpen] = useState(false)
 

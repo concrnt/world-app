@@ -39,6 +39,7 @@
             "activitypub": "ActivityPub",
             "bluesky": "Bluesky",
             "id": "ID Management",
+            "haptics": "Haptic Feedback",
             "emoji": "Emoji",
             "lists": "Lists",
             "media": "Media",

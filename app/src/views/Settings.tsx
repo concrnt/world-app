@@ -1,4 +1,4 @@
-import { Button, View, Divider, Text, List, ListItem } from '@concrnt/ui'
+import { Button, View, Divider, Text, List, ListItem, Switch } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { getResourceCache } from '../lib/cache'
 import { Header } from '../ui/Header'
@@ -28,7 +28,8 @@ import {
     MdPalette,
     MdPermMedia,
     MdRestore,
-    MdTerminal
+    MdTerminal,
+    MdVibration
 } from 'react-icons/md'
 import { SiActivitypub, SiBluesky } from 'react-icons/si'
 import { Fragment, useState } from 'react'
@@ -52,6 +53,7 @@ export const SettingsView = () => {
     const reset = useResetPreference()
     const stack = useStack()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
+    const [hapticsEnabled, setHapticsEnabled] = usePreference('hapticsEnabled')
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
@@ -119,6 +121,12 @@ export const SettingsView = () => {
                             {t('bluesky')}
                         </ListItem>
                     )}
+                    <ListItem
+                        startIcon={<MdVibration size={24} />}
+                        secondaryAction={<Switch checked={hapticsEnabled} onChange={setHapticsEnabled} />}
+                    >
+                        {t('haptics')}
+                    </ListItem>
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}

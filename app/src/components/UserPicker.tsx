@@ -7,7 +7,7 @@ import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
-import { hapticSelection } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { CCUserChip } from './CCUserChip'
 
@@ -19,6 +19,7 @@ interface Props {
 export const UserPicker = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.userPicker' })
     const { client } = useClient()
+    const { hapticSelection } = useHaptics()
 
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)

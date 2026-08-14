@@ -7,6 +7,7 @@ export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
     developerMode: boolean
+    hapticsEnabled: boolean
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
     // プロフィール名 -> サイドバーで展開中のリストURI
@@ -17,6 +18,7 @@ export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
     developerMode: false,
+    hapticsEnabled: true,
     listOrder: {},
     expandedLists: {}
 }

@@ -6,7 +6,7 @@ import { useState, useRef, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Drawer } from '../components/Drawer'
 import { MdAdd } from 'react-icons/md'
-import { hapticSuccess } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 import { View } from '../components/View'
@@ -90,6 +90,7 @@ export const ExplorerView = () => {
 
 const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
+    const { hapticSuccess } = useHaptics()
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
     const { client } = useClient()

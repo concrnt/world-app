@@ -17,7 +17,7 @@ import {
     User
 } from '@concrnt/worldlib'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
-import { hapticLight } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { CssVar } from '../types/Theme'
 import { useStack } from '../layouts/Stack'
 import { ProfileView } from './Profile'
@@ -39,6 +39,7 @@ export const PostView = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'views.post' })
     const { client } = useClient()
     const { push } = useStack()
+    const { hapticLight } = useHaptics()
     const composer = useComposer()
     const emojiPicker = useEmojiPicker()
     const [tab, setTab] = useState<PostTab>(props.initialTab ?? 'replies')

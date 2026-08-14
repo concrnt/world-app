@@ -10,7 +10,7 @@ import { IoMdAdd } from 'react-icons/io'
 import { useClient } from '../contexts/Client'
 import { Avatar, ListItem, Select } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
-import { hapticSelection } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { ProfileName } from './ProfileName'
 
 interface Props {
@@ -28,6 +28,7 @@ interface Props {
 export const TimelinePicker = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.timelinePicker' })
     const { client } = useClient()
+    const { hapticSelection } = useHaptics()
 
     const [profileSelectOpen, setProfileSelectOpen] = useState(false)
 

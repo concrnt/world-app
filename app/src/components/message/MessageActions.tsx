@@ -4,7 +4,7 @@ import { Association, LikeAssociationSchema, Schemas, type Message, type Reroute
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
 import { usePostContext } from '../../contexts/PostContext'
-import { hapticLight, hapticSuccess } from '../../utils/haptics'
+import { useHaptics } from '../../contexts/Haptics'
 import { startTransition, useOptimistic, useState } from 'react'
 import { Report } from '../Report'
 import { MessageInspector } from './MessageInspector'
@@ -36,6 +36,7 @@ interface LikeState {
 export const MessageActions = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.messageActions' })
     const { client } = useClient()
+    const { hapticLight, hapticSuccess } = useHaptics()
     const composer = useComposer()
     const postCtx = usePostContext()
     const [menuOpen, setMenuOpen] = useState(false)

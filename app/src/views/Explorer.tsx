@@ -8,7 +8,7 @@ import { Header } from '../ui/Header'
 import { Drawer } from '../ui/Drawer'
 import { FAB } from '../ui/FAB'
 import { MdAdd } from 'react-icons/md'
-import { hapticLight, hapticSuccess } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { SearchExplorer } from '../components/SearchExplorer'
 import { CssVar } from '../types/Theme'
 import { ClassicExplorer } from '../components/ClassicExplorer'
@@ -20,6 +20,7 @@ import { TimelineView } from './Timeline'
 export const ExplorerView = () => {
     const [creatorOpen, setCreatorOpen] = useState(false)
     const { push } = useStack()
+    const { hapticLight } = useHaptics()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
 
@@ -83,6 +84,7 @@ export const ExplorerView = () => {
 
 const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
+    const { hapticSuccess } = useHaptics()
     const [communityName, setCommunityName] = useState('')
     const [communityDescription, setCommunityDescription] = useState('')
     const { client } = useClient()

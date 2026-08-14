@@ -36,7 +36,7 @@ import {
 import { FaMarkdown } from 'react-icons/fa'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
-import { hapticSuccess } from '../utils/haptics'
+import { useHaptics } from '../contexts/Haptics'
 import { MdSend } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
@@ -84,6 +84,7 @@ interface Props {
 export const Composer = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.composer' })
     const { client, isDomainOffline } = useClient()
+    const { hapticSuccess } = useHaptics()
     const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
     const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
     const defaultDestinations = props.defaultDestinations ?? props.destinations

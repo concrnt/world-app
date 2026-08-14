@@ -2,7 +2,7 @@ import { Association, Message, ReactionAssociationSchema, RerouteMessageSchema, 
 import { Document } from '@concrnt/client'
 import { useClient } from '../../contexts/Client'
 import { CssVar } from '../../types/Theme'
-import { hapticLight } from '../../utils/haptics'
+import { useHaptics } from '../../contexts/Haptics'
 import { startTransition, useEffect, useState } from 'react'
 import { ReactionState } from './Footer'
 import { Avatar, CCImage, Divider, Tooltip } from '@concrnt/ui'
@@ -20,6 +20,7 @@ interface Props {
 
 export const MessageReactions = (props: Props) => {
     const { client } = useClient()
+    const { hapticLight } = useHaptics()
     const qt = useQueryTimelineContext()
     const messageHref = props.message.key ?? props.message.uri
 

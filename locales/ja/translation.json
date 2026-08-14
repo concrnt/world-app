@@ -39,6 +39,7 @@
             "activitypub": "ActivityPub設定",
             "bluesky": "Bluesky設定",
             "id": "ID管理",
+            "haptics": "触覚フィードバック",
             "emoji": "絵文字",
             "lists": "リスト",
             "media": "メディア",

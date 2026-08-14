@@ -8,7 +8,7 @@ import { Avatar, CfmRenderer, Text, IconButton, ListItem, useAnchor } from '@con
 import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
 import { Select } from '../Select'
-import { hapticSuccess } from '../../utils/haptics'
+import { useHaptics } from '../../contexts/Haptics'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { Timestamp } from './Timestamp'
 import { TimeDiff } from '../TimeDiff'
@@ -18,6 +18,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.onelineMessage' })
     const navigate = useNavigate()
     const { client } = useClient()
+    const { hapticSuccess } = useHaptics()
     const menuAnchor = useAnchor()
 
     const [menuOpen, setMenuOpen] = useState(false)

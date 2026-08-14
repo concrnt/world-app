@@ -11,6 +11,7 @@ import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClientSetupProgress } from './contexts/Client'
 import { CachedThemeProvider, ThemeProvider } from './contexts/Theme'
 import { PreferenceProvider } from './contexts/Preference'
+import { HapticsProvider } from './contexts/Haptics'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { MediaViewerProvider } from './contexts/MediaViewer'
@@ -62,32 +63,34 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             }
                         >
                             <PreferenceProvider>
-                                <ThemeProvider>
-                                    <MediaProxyProvider>
-                                        <ImageCropperProvider>
-                                            <OverlayStackProvider>
-                                                <OverlayStackBackBridge />
-                                                <EmojiPickerProvider>
-                                                    <ComposerProvider>
-                                                        <ScannerProvider>
-                                                            <OverlayProvider>
-                                                                <MediaViewerProvider>
-                                                                    <AudioPlayerProvider>
-                                                                        <TickerProvider>
-                                                                            <UrlSummaryProvider>
-                                                                                <App />
-                                                                            </UrlSummaryProvider>
-                                                                        </TickerProvider>
-                                                                    </AudioPlayerProvider>
-                                                                </MediaViewerProvider>
-                                                            </OverlayProvider>
-                                                        </ScannerProvider>
-                                                    </ComposerProvider>
-                                                </EmojiPickerProvider>
-                                            </OverlayStackProvider>
-                                        </ImageCropperProvider>
-                                    </MediaProxyProvider>
-                                </ThemeProvider>
+                                <HapticsProvider>
+                                    <ThemeProvider>
+                                        <MediaProxyProvider>
+                                            <ImageCropperProvider>
+                                                <OverlayStackProvider>
+                                                    <OverlayStackBackBridge />
+                                                    <EmojiPickerProvider>
+                                                        <ComposerProvider>
+                                                            <ScannerProvider>
+                                                                <OverlayProvider>
+                                                                    <MediaViewerProvider>
+                                                                        <AudioPlayerProvider>
+                                                                            <TickerProvider>
+                                                                                <UrlSummaryProvider>
+                                                                                    <App />
+                                                                                </UrlSummaryProvider>
+                                                                            </TickerProvider>
+                                                                        </AudioPlayerProvider>
+                                                                    </MediaViewerProvider>
+                                                                </OverlayProvider>
+                                                            </ScannerProvider>
+                                                        </ComposerProvider>
+                                                    </EmojiPickerProvider>
+                                                </OverlayStackProvider>
+                                            </ImageCropperProvider>
+                                        </MediaProxyProvider>
+                                    </ThemeProvider>
+                                </HapticsProvider>
                             </PreferenceProvider>
                         </ClientProvider>
                     </AgeGateProvider>
