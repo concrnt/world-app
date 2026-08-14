@@ -7,6 +7,7 @@ import {
     ComputeCKID,
     Document,
     Entity,
+    ErrorCodeRegistrationNotFound,
     GenerateIdentity,
     InMemoryAuthProvider,
     InMemoryKVS,
@@ -271,31 +272,21 @@ export const ClientProvider = (props: Props): ReactNode => {
                     if (err instanceof ServerOfflineError) {
                         setIsOffline(true)
                     } else if (err instanceof NotFoundError) {
-                        // NotFoundErrorはentity 404以外(well-knownの404、セットアップ中のcommitの404、
-                        // キャプティブポータルやデプロイ中CDNの404)でも届く。「登録が見つからない」と
-                        // 断定する前に、自分の登録が本当に無いのかを使い捨てApiで直接確認する
-                        const probe = new Api(domain, new InMemoryAuthProvider(), new InMemoryKVS())
-                        const serverErr = await probe
-                            .getServer(domain, { cache: 'no-cache' })
-                            .then(() => null)
-                            .catch((e) => e)
-                        if (serverErr) {
-                            // well-known自体が取れない = サーバー側/経路の問題。一過性として再試行画面へ
-                            if (serverErr instanceof ServerOfflineError) {
+                        // NotFoundErrorはwell-knownの404、セットアップ中のcommitの404、キャプティブポータルや
+                        // デプロイ中CDNの404でも届く。「登録が無い」と断定できるのは、認証付きGET /registerが
+                        // registration-not-foundコードを返した時だけ。それ以外(403=認証不成立/entityなし、
+                        // コード無し404=旧サーバー/経路の問題、その他)は一過性として再試行画面へ
+                        const probe = new Api(domain, authProvider, new InMemoryKVS())
+                        try {
+                            await probe.getRegistration(domain, { useMasterkey: !authProvider.canSignSub() })
+                            // 登録は健在 = 別の404が原因
+                            setSetupError(err.message)
+                        } catch (e2) {
+                            if (e2 instanceof NotFoundError && e2.code === ErrorCodeRegistrationNotFound) {
+                                setNotFoundOn(domain)
+                            } else if (e2 instanceof ServerOfflineError) {
                                 setIsOffline(true)
                             } else {
-                                setSetupError(err.message)
-                            }
-                        } else {
-                            const entityErr = await probe
-                                .getEntity(authProvider.getCCID(), undefined, { cache: 'no-cache' })
-                                .then(() => null)
-                                .catch((e) => e)
-                            if (entityErr instanceof NotFoundError) {
-                                // 本当に登録が無い(サーバーのリセットや移行など)
-                                setNotFoundOn(domain)
-                            } else {
-                                // entityは実在する(or判定不能) = 別の404が原因。再試行画面へ
                                 setSetupError(err.message)
                             }
                         }

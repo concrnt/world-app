@@ -20,11 +20,18 @@ export class ServerOfflineError extends Error {
     }
 }
 
+// サーバーのエラーレスポンスが持つ機械可読コード(errorメッセージ文字列はAPI契約として不安定なため、
+// 種別判定は必ずcodeで行う)。サーバー側 internal/domain/errors.go の定数と対
+export const ErrorCodeRegistrationNotFound = 'net.concrnt.errors.registration-not-found'
+
 export class NotFoundError extends Error {
     uri: string
-    constructor(msg: string, uri: string) {
+    // 404ボディの{"code": "..."}。素の404(プロキシ/旧サーバー/障害)では未設定
+    code?: string
+    constructor(msg: string, uri: string, code?: string) {
         super(msg)
         this.uri = uri
+        this.code = code
     }
 }
 
@@ -64,6 +71,13 @@ export interface FetchOptions<T> {
 export interface RepositoryImportResult {
     document?: string
     error?: string
+}
+
+// GET /register のレスポンス。metaはサーバー側entity_metas.infoの生JSON(nullは正常な登録済み)
+export interface Registration {
+    ccid: string
+    inviter?: string
+    meta: any
 }
 
 export interface NotificationSubscription {
@@ -289,8 +303,17 @@ export class Api {
                     switch (res.status) {
                         case 403:
                             throw new PermissionError(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                        case 404:
-                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`, url)
+                        case 404: {
+                            const body = await res.text()
+                            let code: string | undefined
+                            try {
+                                const parsed = JSON.parse(body)
+                                if (typeof parsed?.code === 'string') code = parsed.code
+                            } catch {
+                                /* JSONでないボディはコード無し扱い */
+                            }
+                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${body}`, url, code)
+                        }
                         case 502:
                         case 503:
                         case 504:
@@ -875,6 +898,19 @@ export class Api {
             60 * 1000,
             opts
         )
+    }
+
+    // net.concrnt.world.register (GET)
+    // 自分(requester)の登録情報(entity meta)を取得する。本人認証必須。
+    // 未登録(entity metaなし)はNotFoundError(code=ErrorCodeRegistrationNotFound)がthrowされる。
+    // このcodeを持つ404だけが「このサーバーに登録が無い」ことの確定シグナルであり、
+    // 素の404(プロキシ/旧サーバー/障害)や403(認証不成立・entityなし)とは区別できる
+    async getRegistration(host?: string, opts?: { useMasterkey?: boolean }): Promise<Registration> {
+        const fetchHost = host || this.defaultHost
+        const server = await this.getServer(fetchHost)
+        const endpoint = renderUriTemplate(server, 'net.concrnt.world.register', {})
+        const resp = await this.fetchWithCredential<ApiResponse<Registration>>(fetchHost, endpoint, {}, undefined, opts)
+        return resp.content
     }
 
     // net.concrnt.world.register (DELETE)
