@@ -34,12 +34,11 @@
     "views": {
         "settings": {
             "title": "Settings",
+            "general": "General",
             "theme": "Theme",
-            "language": "Language",
             "activitypub": "ActivityPub",
             "bluesky": "Bluesky",
             "id": "ID Management",
-            "haptics": "Haptic Feedback",
             "emoji": "Emoji",
             "lists": "Lists",
             "media": "Media",
@@ -57,6 +56,11 @@
                 "branch": "Branch",
                 "commit": "Commit"
             }
+        },
+        "generalSettings": {
+            "title": "General",
+            "language": "Language",
+            "haptics": "Haptic Feedback"
         },
         "languageSettings": {
             "title": "Language"

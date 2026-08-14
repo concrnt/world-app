@@ -1,4 +1,4 @@
-import { Button, View, Divider, Text, List, ListItem, Switch } from '@concrnt/ui'
+import { Button, View, Divider, Text, List, ListItem } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { getResourceCache } from '../lib/cache'
 import { Header } from '../ui/Header'
@@ -11,7 +11,7 @@ import { IDView } from './ID'
 import { DevView } from './Dev'
 import { EmojiSettingsView } from './EmojiSettings'
 import { ThemeSettingsView } from './ThemeSettings'
-import { LanguageSettingsView } from './LanguageSettings'
+import { GeneralSettingsView } from './GeneralSettings'
 import { NotificationSettingsView } from './NotificationSettings'
 import { MediaSettingsView } from './MediaSettings'
 import { MigrationSettingsView } from './MigrationSettings'
@@ -21,7 +21,6 @@ import {
     MdBadge,
     MdChevronRight,
     MdEmojiEmotions,
-    MdLanguage,
     MdList,
     MdLuggage,
     MdNotifications,
@@ -29,7 +28,7 @@ import {
     MdPermMedia,
     MdRestore,
     MdTerminal,
-    MdVibration
+    MdTune
 } from 'react-icons/md'
 import { SiActivitypub, SiBluesky } from 'react-icons/si'
 import { Fragment, useState } from 'react'
@@ -53,7 +52,6 @@ export const SettingsView = () => {
     const reset = useResetPreference()
     const stack = useStack()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
-    const [hapticsEnabled, setHapticsEnabled] = usePreference('hapticsEnabled')
     const [, setAppInfoTapCount] = useState(0)
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
@@ -90,18 +88,18 @@ export const SettingsView = () => {
                 <Text variant="h3">{t('title')}</Text>
                 <List>
                     <ListItem
+                        startIcon={<MdTune size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<GeneralSettingsView />)}
+                    >
+                        {t('general')}
+                    </ListItem>
+                    <ListItem
                         startIcon={<MdPalette size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => stack.push(<ThemeSettingsView />)}
                     >
                         {t('theme')}
-                    </ListItem>
-                    <ListItem
-                        startIcon={<MdLanguage size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => stack.push(<LanguageSettingsView />)}
-                    >
-                        {t('language')}
                     </ListItem>
                     {activitypubEnabled && (
                         <ListItem
@@ -121,12 +119,6 @@ export const SettingsView = () => {
                             {t('bluesky')}
                         </ListItem>
                     )}
-                    <ListItem
-                        startIcon={<MdVibration size={24} />}
-                        secondaryAction={<Switch checked={hapticsEnabled} onChange={setHapticsEnabled} />}
-                    >
-                        {t('haptics')}
-                    </ListItem>
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}

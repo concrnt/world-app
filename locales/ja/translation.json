@@ -34,12 +34,11 @@
     "views": {
         "settings": {
             "title": "設定",
+            "general": "一般",
             "theme": "テーマ設定",
-            "language": "言語",
             "activitypub": "ActivityPub設定",
             "bluesky": "Bluesky設定",
             "id": "ID管理",
-            "haptics": "触覚フィードバック",
             "emoji": "絵文字",
             "lists": "リスト",
             "media": "メディア",
@@ -57,6 +56,11 @@
                 "branch": "ブランチ",
                 "commit": "コミット"
             }
+        },
+        "generalSettings": {
+            "title": "一般",
+            "language": "言語",
+            "haptics": "触覚フィードバック"
         },
         "languageSettings": {
             "title": "言語"

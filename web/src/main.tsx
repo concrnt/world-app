@@ -29,6 +29,7 @@ import { ContactsView } from './views/Contacts'
 import { SettingsView } from './views/Settings'
 import { NotificationSettingsView } from './views/NotificationSettings'
 import { ThemeSettingsView } from './views/ThemeSettings'
+import { GeneralSettingsView } from './views/GeneralSettings'
 import { LanguageSettingsView } from './views/LanguageSettings'
 import { MediaSettingsView } from './views/MediaSettings'
 import { MigrationSettingsView } from './views/MigrationSettings'
@@ -143,13 +144,13 @@ const RemountOnProfileChange = ({ children }: { children: ReactNode }) => {
     return <Fragment key={`${client.ccid}:${client.currentProfile}`}>{children}</Fragment>
 }
 
-const SettingsBackProvider = ({ children }: { children: ReactNode }) => {
+const SettingsBackProvider = ({ children, to = '/settings' }: { children: ReactNode; to?: string }) => {
     const navigate = useNavigate()
 
     return (
         <NavigationProvider
             backNode={
-                <IconButton onClick={() => navigate('/settings')}>
+                <IconButton onClick={() => navigate(to)}>
                     <MdArrowBack size={24} />
                 </IconButton>
             }
@@ -207,9 +208,17 @@ const AuthedRoutes = () => (
                                                                         }
                                                                     />
                                                                     <Route
-                                                                        path="settings/language"
+                                                                        path="settings/general"
                                                                         element={
                                                                             <SettingsBackProvider>
+                                                                                <GeneralSettingsView />
+                                                                            </SettingsBackProvider>
+                                                                        }
+                                                                    />
+                                                                    <Route
+                                                                        path="settings/language"
+                                                                        element={
+                                                                            <SettingsBackProvider to="/settings/general">
                                                                                 <LanguageSettingsView />
                                                                             </SettingsBackProvider>
                                                                         }
