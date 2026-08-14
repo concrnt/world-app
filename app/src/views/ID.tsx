@@ -12,6 +12,7 @@ import { QRSetup } from './QRSetup'
 import { BackupKeyButton } from '../components/BackupKeyButton'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
+import { RegistrationInfo } from '../components/RegistrationInfo'
 import { Drawer } from '../ui/Drawer'
 import type { Document } from '@concrnt/client'
 
@@ -66,6 +67,7 @@ export const IDView = () => {
     const stack = useStack()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
     const [subkeyDrawerOpen, setSubkeyDrawerOpen] = useState(false)
+    const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
     const [subkeyCount, setSubkeyCount] = useState<number | null>(null)
 
     // ドロワー内でのrevokeで数が変わりうるので、閉じたタイミングでも取り直す
@@ -137,8 +139,11 @@ export const IDView = () => {
                     />
                     <InfoTile
                         icon={<MdPublic size={24} />}
-                        label="Home Server"
+                        label={t('homeServer.title')}
                         value={client.server.domain ?? 'Unknown'}
+                        onClick={() => {
+                            setRegistrationDrawerOpen(true)
+                        }}
                     />
                 </div>
 
@@ -177,6 +182,13 @@ export const IDView = () => {
                 <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: CssVar.space(4) }}>
                         <SubkeyList />
+                    </div>
+                </div>
+            </Drawer>
+            <Drawer open={registrationDrawerOpen} onClose={() => setRegistrationDrawerOpen(false)}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: CssVar.space(4) }}>
+                        <RegistrationInfo />
                     </div>
                 </div>
             </Drawer>

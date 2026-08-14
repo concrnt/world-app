@@ -10,6 +10,7 @@ import { Header } from '../components/Header'
 import { MdBadge, MdKey, MdPublic } from 'react-icons/md'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
+import { RegistrationInfo } from '../components/RegistrationInfo'
 import { Drawer } from '../components/Drawer'
 import { LoadIdentity, type Document } from '@concrnt/client'
 import i18n from '../i18n'
@@ -67,6 +68,7 @@ export const IDView = () => {
     const [downloadedSlots, setDownloadedSlots] = useState<string[]>([])
     const [slotVersion, setSlotVersion] = useState(0)
     const [subkeyDrawerOpen, setSubkeyDrawerOpen] = useState(false)
+    const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
     const [subkeyCount, setSubkeyCount] = useState<number | null>(null)
 
     // ドロワー内でのrevokeで数が変わりうるので、閉じたタイミングでも取り直す
@@ -219,8 +221,11 @@ export const IDView = () => {
                     />
                     <InfoTile
                         icon={<MdPublic size={24} />}
-                        label="Home Server"
+                        label={t('homeServer.title')}
                         value={client.server.domain ?? 'Unknown'}
+                        onClick={() => {
+                            setRegistrationDrawerOpen(true)
+                        }}
                     />
                 </div>
 
@@ -298,6 +303,13 @@ export const IDView = () => {
                 <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: CssVar.space(4) }}>
                         <SubkeyList />
+                    </div>
+                </div>
+            </Drawer>
+            <Drawer open={registrationDrawerOpen} onClose={() => setRegistrationDrawerOpen(false)}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: CssVar.space(4) }}>
+                        <RegistrationInfo />
                     </div>
                 </div>
             </Drawer>

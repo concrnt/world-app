@@ -316,6 +316,19 @@
             "copySubkey": "Copy Subkey",
             "subkeyCopied": "Copied!",
             "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
+            "homeServer": {
+                "title": "Home Server",
+                "description": "View and edit your registration info stored on this server.",
+                "domain": "Domain",
+                "inviter": "Invited by",
+                "loading": "Loading...",
+                "fetchError": "Failed to load registration info",
+                "notRegistered": "No registration was found on this server",
+                "schemaUnavailable": "This server does not serve a registration form definition, so editing is unavailable.",
+                "save": "Save",
+                "saved": "Saved!",
+                "saveError": "Failed to save"
+            },
             "subkeys": {
                 "title": "Subkeys",
                 "count_one": "{{count}} key",

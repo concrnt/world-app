@@ -913,6 +913,24 @@ export class Api {
         return resp.content
     }
 
+    // net.concrnt.world.register (PUT)
+    // 自分(requester)の登録情報のmetaを更新する。本人認証必須。
+    // metaは生JSONの全置換で、inviterはサーバー側で不変(送っても無視される)。
+    // 未登録はGET同様NotFoundError(code=ErrorCodeRegistrationNotFound)
+    async updateRegistration(meta: any, host?: string): Promise<void> {
+        const fetchHost = host || this.defaultHost
+        await this.callConcrntApi(
+            fetchHost,
+            'net.concrnt.world.register',
+            {},
+            {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meta })
+            }
+        )
+    }
+
     // net.concrnt.world.register (DELETE)
     // 引っ越し完了後などに、このサーバー上の登録(entity meta)を解除する。
     // entityが既に他ドメインを指していないとサーバー側で拒否される
