@@ -86,6 +86,7 @@ const Inner = (props: Props) => {
                 square
                 size={40}
                 variant="beam"
+                preserveAspectRatio="xMidYMid slice"
                 style={{
                     display: 'block',
                     borderRadius: '4px',
