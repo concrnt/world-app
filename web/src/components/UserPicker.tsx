@@ -140,7 +140,7 @@ export const UserPicker = (props: Props) => {
                                 backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
                             }}
                             onMouseDown={() => {
-                                props.selected.push(opt.ccid)
+                                props.setSelected([...props.selected, opt.ccid])
                             }}
                         >
                             {opt.profile.username}
