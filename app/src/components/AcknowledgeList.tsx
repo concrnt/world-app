@@ -7,6 +7,8 @@ import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from './AcknowledgeButton'
 import { useStack } from '../layouts/Stack'
 import { ProfileView } from '../views/Profile'
+import { ErrorBoundary } from 'react-error-boundary'
+import { RenderError } from './message/RenderError'
 
 interface Props {
     targetCcid: string
@@ -71,16 +73,17 @@ export const AcknowledgeList = (props: Props) => {
                     {t('followers')}
                 </Tab>
             </Tabs>
-            <Suspense
-                key={tab + props.targetCcid}
-                fallback={
-                    <div style={{ padding: CssVar.space(2) }}>
-                        <Text variant="caption">Loading...</Text>
-                    </div>
-                }
-            >
-                <UserList usersPromise={users} onNavigate={props.onNavigate} />
-            </Suspense>
+            <ErrorBoundary key={tab + props.targetCcid} FallbackComponent={RenderError}>
+                <Suspense
+                    fallback={
+                        <div style={{ padding: CssVar.space(2) }}>
+                            <Text variant="caption">Loading...</Text>
+                        </div>
+                    }
+                >
+                    <UserList usersPromise={users} onNavigate={props.onNavigate} />
+                </Suspense>
+            </ErrorBoundary>
         </div>
     )
 }
