@@ -34,6 +34,9 @@
     "android": {
       "autoIncrementVersionCode": false,
       "versionCode": 2026080603
+    },
+    "iOS": {
+      "minimumSystemVersion": "18.0"
     }
   }
 }

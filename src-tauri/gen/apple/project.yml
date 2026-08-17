@@ -8,11 +8,15 @@ name: world-app
 options:
   bundleIdPrefix: world.concrnt.app
   deploymentTarget:
-    # NOTE: keep >= 15.0. With 14.0 the linker weak-links Swift Concurrency as
-    # @rpath/libswift_Concurrency.dylib (back-deploy form); since our Swift code
-    # is linked via the Rust staticlib (libapp.a), Xcode never embeds the dylib
-    # and the app crashes at launch on device the first time a Task is created.
-    iOS: 15.0
+    # NOTE: keep >= 18.0. The frontend uses APIs that WKWebView only provides
+    # from iOS 18 (e.g. URL.parse — on iOS <18 it throws
+    # "URL.parse is not a function" on the Welcome screen's continue flow).
+    # Independently, keep >= 15.0: with 14.0 the linker weak-links Swift
+    # Concurrency as @rpath/libswift_Concurrency.dylib (back-deploy form); since
+    # our Swift code is linked via the Rust staticlib (libapp.a), Xcode never
+    # embeds the dylib and the app crashes at launch the first time a Task is
+    # created.
+    iOS: 18.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -130,7 +134,7 @@ targets:
   NotifyService:
     type: app-extension
     platform: iOS
-    deploymentTarget: "15.0"
+    deploymentTarget: "18.0"
     sources:
       - path: NotifyService
       - path: ../../../plugins/tauri-plugin-push/ios/Sources/PushShared
