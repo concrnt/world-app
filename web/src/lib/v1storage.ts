@@ -1,10 +1,13 @@
-import { LoadIdentity, LoadKey, LoadSubKey } from '@concrnt/client'
+import { ComputeCCID, LoadIdentity, LoadKey, LoadSubKey } from '@concrnt/client'
 
 // concrnt.worldでv1クライアント(concrnt-world)から差し替えられた際に残るlocalStorage等の移行。
 // v1はセッションキーをJSON.stringifyで保存し、SubKeyのプレフィックスもconcurrent-subkey
 // (v2はconcrnt-subkey)のため、放置するとInMemoryAuthProviderの構築がthrowして起動できない。
 // v2のQRログインもusePersistent経由でJSON形式のDomain/SubKeyを書くため、クォートの有無ではなく
 // v1にしか無い痕跡(IdentityキーとSubKeyのプレフィックス)で判定する。
+// v1の設定(テーマ・絵文字パック)はサーバー移行されずこのlocalStorageが唯一のソースなので、
+// V1PreferencePendingへ退避し、書き込み可能なclientが出来た時点でClient.tsxのrunProfileSetupが
+// v2形式(cckv)へ反映して消す。
 export const migrateV1Storage = (): void => {
     try {
         const unwrap = (value: string | null): string | null => {
@@ -80,6 +83,50 @@ export const migrateV1Storage = (): void => {
             } catch (err) {
                 console.error('failed to migrate v1 mnemonic', err)
             }
+        }
+
+        // テーマ・絵文字パック・頻出絵文字の退避。本人確認のためccidを付け、決められなければ退避しない
+        try {
+            const parsedSub = subKey ? LoadSubKey(subKey.replace(/^concurrent-subkey/, 'concrnt-subkey')) : null
+            const masterPair = masterKey ? LoadKey(masterKey) : null
+            const identityCCID = identityRaw !== null ? JSON.parse(identityRaw)?.CCID : null
+            const ccid: string | null =
+                parsedSub?.ccid ??
+                (masterPair ? ComputeCCID(masterPair.publickey) : null) ??
+                (typeof identityCCID === 'string' ? identityCCID : null)
+
+            const prefRaw = localStorage.getItem('preference')
+            if (ccid && prefRaw) {
+                const pref = JSON.parse(prefRaw)
+                const pending = {
+                    ccid,
+                    themeName: typeof pref?.themeName === 'string' ? pref.themeName : undefined,
+                    emojiPackages: Array.isArray(pref?.emojiPackages)
+                        ? pref.emojiPackages.filter((u: unknown): u is string => typeof u === 'string')
+                        : [],
+                    customThemes: pref?.customThemes && typeof pref.customThemes === 'object' ? pref.customThemes : {}
+                }
+                localStorage.setItem('V1PreferencePending', JSON.stringify(pending))
+            }
+        } catch (err) {
+            console.error('failed to stash v1 preference', err)
+        }
+
+        // 頻出絵文字はローカル専用なのでここで直接v2キーへ射影する(v2側に既にあれば触らない)
+        try {
+            const frequentRaw = localStorage.getItem('FrequentEmojis')
+            if (frequentRaw && localStorage.getItem('emojiPicker:frequent') === null) {
+                const frequent = JSON.parse(frequentRaw)
+                if (Array.isArray(frequent)) {
+                    const projected = frequent
+                        .filter((e) => typeof e?.shortcode === 'string' && typeof e?.imageURL === 'string')
+                        .map((e) => ({ shortcode: e.shortcode, imageURL: e.imageURL }))
+                        .slice(0, 60)
+                    localStorage.setItem('emojiPicker:frequent', JSON.stringify(projected))
+                }
+            }
+        } catch (err) {
+            console.error('failed to migrate v1 frequent emojis', err)
         }
 
         // v1固有キーと、v1スキーマが混入すると実害のある共有キーを削除。

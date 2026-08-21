@@ -15,8 +15,12 @@ import {
     ServerOfflineError,
     SignedDocument
 } from '@concrnt/client'
-import { Button } from '@concrnt/ui'
+import { Button, migrateTheme } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
+import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
+import { loadCustomThemes, saveCustomTheme } from '../utils/themeList'
+import { Themes } from '../data/themes'
+import { defaultPreference, type Preference } from './Preference'
 import { resourceCache } from '../lib/cache'
 import { isPushEnabled, unregisterPush } from '../lib/push'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
@@ -189,6 +193,71 @@ export const ClientProvider = (props: Props): ReactNode => {
                                 }
                                 localStorage.removeItem('V1EntityProofPending')
                             })().catch(console.error)
+                        }
+
+                        // v1のlocalStorageから退避したテーマ・絵文字パック設定(v1storage.ts)をv2形式へ反映する。
+                        // 後続でマウントされるPreference/Theme/EmojiPickerの各Providerがロード時に拾えるよう
+                        // awaitする。失敗時は退避キーを残して次回起動で再試行する
+                        const pendingRaw = localStorage.getItem('V1PreferencePending')
+                        if (pendingRaw !== null) {
+                            await (async () => {
+                                const pending = JSON.parse(pendingRaw) as {
+                                    ccid?: string
+                                    themeName?: string
+                                    emojiPackages?: string[]
+                                    customThemes?: Record<string, any>
+                                }
+                                // 別アカウントで再ログインした場合は他人の設定を適用しない
+                                if (pending.ccid !== client.ccid) {
+                                    localStorage.removeItem('V1PreferencePending')
+                                    return
+                                }
+
+                                const list = await ensureEmojiPackageList(client)
+                                const entries = await list.entries.value()
+                                const existingURLs = new Set(entries.map((e) => e.value?.href))
+                                for (const url of pending.emojiPackages ?? []) {
+                                    if (existingURLs.has(url)) continue
+                                    await list.addItem(client, url, EMOJI_PACKAGE_SCHEMA)
+                                }
+
+                                // v2側で既に同名テーマがある場合は上書きしない
+                                const customThemes = await loadCustomThemes(client)
+                                for (const [name, v1theme] of Object.entries(pending.customThemes ?? {})) {
+                                    if (name in customThemes || !v1theme || typeof v1theme !== 'object') continue
+                                    const saved = await saveCustomTheme(
+                                        client,
+                                        migrateTheme({ ...v1theme, meta: { ...(v1theme.meta ?? {}), name } })
+                                    )
+                                    customThemes[name] = saved
+                                }
+
+                                // テーマ選択はv2の設定が無い(=v2初回)時だけ引き継ぐ。v2に無いビルトイン名はデフォルトのまま
+                                const name = pending.themeName
+                                const settingsDoc = await client.api
+                                    .getDocument<Preference>(semantics.settings(client.ccid), undefined, {
+                                        cache: 'no-cache'
+                                    })
+                                    .catch(() => null)
+                                if (!settingsDoc && name && (name in Themes || name in customThemes)) {
+                                    const preference: Preference = { ...defaultPreference, themeName: name }
+                                    localStorage.setItem('preference', JSON.stringify(preference))
+                                    await client.api.commit({
+                                        kind: 'record',
+                                        key: semantics.settings(client.ccid),
+                                        author: client.ccid,
+                                        schema: 'https://schemas.concrnt.net/utils/settings',
+                                        value: preference,
+                                        createdAt: new Date(),
+                                        policy: { entries: [{ url: 'https://policy.concrnt.world/private.json' }] }
+                                    })
+                                }
+
+                                localStorage.removeItem('V1PreferencePending')
+                                console.log('Migrated v1 preference (themes/emoji packages)')
+                            })().catch((err) => {
+                                console.error('Failed to migrate v1 preference', err)
+                            })
                         }
 
                         setProgress(t('loadingLists'))
