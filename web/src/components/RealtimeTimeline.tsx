@@ -301,10 +301,14 @@ export const RealtimeTimeline = (props: Props) => {
         }
 
         el.addEventListener('scroll', handleScroll)
+        // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
+        // 読み込みが落ち着いた1秒後に一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)
+        const fill = setTimeout(handleScroll, 1000)
         return () => {
             el.removeEventListener('scroll', handleScroll)
+            clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, initialLoaded])
+    }, [scrollRef, reader, hasMoreData, initialLoaded, loading])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
