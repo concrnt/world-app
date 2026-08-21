@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "lib": ["esnext"],
+        "types": ["@cloudflare/workers-types"],
+        "strict": true,
+        "noEmit": true,
+        "composite": true,
+        "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.functions.tsbuildinfo",
+        "skipLibCheck": true
+    },
+    "include": ["./**/*.ts"]
+}
