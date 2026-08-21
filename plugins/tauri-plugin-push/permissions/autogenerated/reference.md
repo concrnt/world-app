@@ -11,6 +11,7 @@ Default permissions for the push notification plugin
 - `allow-reset-keys`
 - `allow-set-context`
 - `allow-get-launch-notification`
+- `allow-set-badge`
 - `allow-register-listener`
 - `allow-remove-listener`
 
@@ -227,6 +228,32 @@ Enables the reset_keys command without any pre-configured scope.
 <td>
 
 Denies the reset_keys command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`push:allow-set-badge`
+
+</td>
+<td>
+
+Enables the set_badge command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`push:deny-set-badge`
+
+</td>
+<td>
+
+Denies the set_badge command without any pre-configured scope.
 
 </td>
 </tr>

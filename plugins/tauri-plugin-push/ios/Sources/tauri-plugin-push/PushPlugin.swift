@@ -30,6 +30,10 @@ class SetContextArgs: Decodable {
     let ccid: String?
 }
 
+class SetBadgeArgs: Decodable {
+    let count: Int?
+}
+
 struct GetLaunchNotificationResponse: Codable {
     let uri: String?
     let view: String?
@@ -196,6 +200,20 @@ class PushPlugin: Plugin, UNUserNotificationCenterDelegate {
     @objc public func getLaunchNotification(_ invoke: Invoke) {
         let (uri, view) = PushKeyStore.consumeLaunch()
         invoke.resolve(GetLaunchNotificationResponse(uri: uri, view: view))
+    }
+
+    /// Mirrors the server-side unread counter onto the app icon (0 clears it).
+    /// Pushes set the badge from their payload in the NSE; this covers the
+    /// in-app reset and foreground refreshes.
+    @objc public func setBadge(_ invoke: Invoke) throws {
+        let args = try invoke.parseArgs(SetBadgeArgs.self)
+        UNUserNotificationCenter.current().setBadgeCount(args.count ?? 0) { error in
+            if let error = error {
+                invoke.reject(error.localizedDescription)
+            } else {
+                invoke.resolve()
+            }
+        }
     }
 }
 

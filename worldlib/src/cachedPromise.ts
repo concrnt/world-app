@@ -15,6 +15,11 @@ export class CachedPromise<T> {
                 (value) => {
                     if (this.promise === promise) {
                         this.settled = { value }
+                        // current で非サスペンド読みしている購読者へ解決を知らせる。
+                        // (use()経由の購読者は同じpromiseを読み直すだけなので無害)
+                        for (const callback of this.subscriptions) {
+                            callback()
+                        }
                     }
                 },
                 () => {
@@ -34,6 +39,12 @@ export class CachedPromise<T> {
             this.promise = promise
         }
         return this.promise
+    }
+
+    // 解決済みの値をサスペンドせずに読む(未解決ならundefined)。
+    // タブバー等、Suspense境界を置きたくない場所向け。取得の起動はvalue()で行うこと
+    get current(): T | undefined {
+        return this.settled?.value
     }
 
     // 最新値で置き換えて購読者へ再通知する。isEqualで前回解決値と同一なら何もしない

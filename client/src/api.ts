@@ -329,6 +329,8 @@ export class Api {
 
                     this.markHostOnline(fetchHost)
 
+                    // 204(購読解除・カウンターリセット等)は本文が無い
+                    if (res.status === 204) return undefined as T
                     return await res.json()
                 })
                 .catch(async (err) => {
@@ -1003,6 +1005,32 @@ export class Api {
         await this.callConcrntApi<ApiResponse<NotificationSubscription>>(
             fetchHost,
             'net.concrnt.world.subscribe',
+            { owner, vendor_id: vendorID },
+            { method: 'DELETE' }
+        )
+    }
+
+    // 未読カウンター: 配送ごとにサーバーが加算し、通知画面を開いたらリセットする愚直方式。
+    // 旧サーバーはエンドポイントを広告しないので、その場合はundefined(=機能なし)を返す。
+    async getNotificationCounter(owner: string, vendorID: string, host?: string): Promise<number | undefined> {
+        const fetchHost = host ?? this.defaultHost
+        const server = await this.getServer(fetchHost)
+        if (!server.endpoints['net.concrnt.world.subscribe.counter']) return undefined
+        const resp = await this.callConcrntApi<ApiResponse<{ count: number }>>(
+            fetchHost,
+            'net.concrnt.world.subscribe.counter',
+            { owner, vendor_id: vendorID }
+        )
+        return resp.content.count
+    }
+
+    async resetNotificationCounter(owner: string, vendorID: string, host?: string): Promise<void> {
+        const fetchHost = host ?? this.defaultHost
+        const server = await this.getServer(fetchHost)
+        if (!server.endpoints['net.concrnt.world.subscribe.counter']) return
+        await this.callConcrntApi<ApiResponse<unknown>>(
+            fetchHost,
+            'net.concrnt.world.subscribe.counter',
             { owner, vendor_id: vendorID },
             { method: 'DELETE' }
         )

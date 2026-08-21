@@ -85,6 +85,17 @@ impl<R: Runtime> Push<R> {
             .map_err(Into::into)
     }
 
+    /// Mirrors the unread counter onto the app icon. iOS sets the badge
+    /// number; Android has no public app-icon badge API, so 0 clears the
+    /// posted notifications (which clears the launcher dot) and other values
+    /// are a no-op (the number rides on each notification via setNumber).
+    pub async fn set_badge(&self, payload: SetBadgeRequest) -> crate::Result<()> {
+        self.0
+            .run_mobile_plugin_async("setBadge", payload)
+            .await
+            .map_err(Into::into)
+    }
+
     /// Returns (and clears) the deep-link payload of the notification that
     /// launched the app, if the app was cold-started from a tap.
     pub async fn get_launch_notification(&self) -> crate::Result<GetLaunchNotificationResponse> {

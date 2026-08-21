@@ -10,6 +10,7 @@ permissions = [
     "allow-reset-keys",
     "allow-set-context",
     "allow-get-launch-notification",
+    "allow-set-badge",
     "allow-register-listener",
     "allow-remove-listener",
 ]

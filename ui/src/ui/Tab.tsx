@@ -2,6 +2,7 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { ButtonBase } from './ButtonBase'
+import { Badge } from './Badge'
 
 interface Props {
     selected?: boolean
@@ -9,6 +10,8 @@ interface Props {
     onClick?: (e: MouseEvent<HTMLButtonElement>) => void
     groupId?: string
     style?: CSSProperties
+    // 未読件数。0以下なら非表示
+    badge?: number
 }
 
 const pressedStyle: CSSProperties = {
@@ -50,6 +53,17 @@ export const Tab = (props: Props) => {
                 }}
             >
                 {props.children}
+                {props.badge !== undefined && (
+                    <Badge
+                        count={props.badge}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            transform: 'translate(40%, -30%)'
+                        }}
+                    />
+                )}
                 {props.selected && (
                     <motion.div
                         layoutId={'tab-underline-' + props.groupId}

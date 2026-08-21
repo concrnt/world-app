@@ -43,6 +43,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::reset_keys,
             commands::set_context,
             commands::get_launch_notification,
+            commands::set_badge,
         ])
         .setup(|app, api| {
             #[cfg(mobile)]

@@ -1,7 +1,11 @@
-import { Client, Schemas, semantics } from '@concrnt/worldlib'
+import { Client, PUSH_VENDOR_ID, Schemas, semantics } from '@concrnt/worldlib'
 import i18n from '../i18n'
 
-export const PUSH_VENDOR_ID = 'world.concrnt.web'
+export { PUSH_VENDOR_ID }
+
+// app/webでvendor_idを分けていた頃の購読行。残っていると同じ端末に二重配送されるので一度だけ消す
+const LEGACY_VENDOR_ID = 'world.concrnt.web'
+const LS_LEGACY_VENDOR_REMOVED_KEY = 'push:legacyVendorRemoved'
 
 const LS_ENABLED_KEY = 'push:enabled'
 const LS_SCHEMAS_KEY = 'push:schemas'
@@ -137,8 +141,19 @@ export async function registerPush(client: Client, schemas: string[]): Promise<v
 
     await writeHomeDomain(client.server.domain)
 
+    if (localStorage.getItem(LS_LEGACY_VENDOR_REMOVED_KEY) !== 'true') {
+        await client.api.deleteNotificationSubscription(client.ccid, LEGACY_VENDOR_ID).catch(() => {})
+        localStorage.setItem(LS_LEGACY_VENDOR_REMOVED_KEY, 'true')
+    }
+
     localStorage.setItem(LS_ENABLED_KEY, 'true')
     localStorage.setItem(LS_SCHEMAS_KEY, JSON.stringify(schemas))
+}
+
+/** Mirrors the unread count onto the installed PWA's icon. No-op where the Badging API is missing. */
+export const setAppBadge = (count: number): Promise<void> => {
+    if (typeof navigator.setAppBadge !== 'function') return Promise.resolve()
+    return (count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge()).catch(() => {})
 }
 
 /** Deletes the server-side subscription and the browser subscription. Best-effort. */

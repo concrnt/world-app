@@ -20,6 +20,8 @@ import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { CssVar } from '../types/Theme'
 import { useTheme } from '@concrnt/ui'
+import { useNotificationCounter } from '../hooks/useNotificationCounter'
+import { setAppBadge } from '../lib/push'
 
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
@@ -30,8 +32,13 @@ export const MainView = () => {
 
     const theme = useTheme()
 
-    // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
-    // const [hasNewNotification, setHasNewNotification] = useState(false)
+    // 未読通知数はサーバーのカウンターが正(web/appで同期)。タブバッジとOSバッジの両方に使う。
+    // 起動/復帰時の再取得や他端末でのリセットで値が変わるたびにアイコンバッジも追従させる
+    const unreadCount = useNotificationCounter(client)
+    useEffect(() => {
+        if (!client) return
+        setAppBadge(unreadCount)
+    }, [client, unreadCount])
 
     const tabs = useMemo(() => {
         return {
@@ -73,25 +80,6 @@ export const MainView = () => {
                         <NotificationsView />
                     </StackLayout>
                 ),
-                // TODO: 通知バッジはOS側のバッジと同期する必要があるため、rust側で状態管理が必要
-                // tab: (
-                //     <div style={{ position: 'relative', display: 'inline-flex' }}>
-                //         <MdNotifications size={24} />
-                //         {hasNewNotification && (
-                //             <div
-                //                 style={{
-                //                     position: 'absolute',
-                //                     top: -2,
-                //                     right: -2,
-                //                     width: 8,
-                //                     height: 8,
-                //                     borderRadius: '50%',
-                //                     backgroundColor: '#ff4444'
-                //                 }}
-                //             />
-                //         )}
-                //     </div>
-                // )
                 tab: <MdNotifications size={24} />
             },
             contacts: {
@@ -199,7 +187,7 @@ export const MainView = () => {
                     <TabLayout
                         selectedTab={selectedTab}
                         setSelectedTab={selectTab}
-                        tabs={tabs}
+                        tabs={{ ...tabs, notifications: { ...tabs.notifications, badge: unreadCount } }}
                         style={{
                             paddingBottom: 'env(safe-area-inset-bottom)',
                             borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined

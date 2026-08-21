@@ -1,7 +1,7 @@
 import { invoke, addPluginListener, type PluginListener } from '@tauri-apps/api/core'
-import { Client, Schemas, semantics } from '@concrnt/worldlib'
+import { Client, PUSH_VENDOR_ID, Schemas, semantics } from '@concrnt/worldlib'
 
-export const PUSH_VENDOR_ID = 'world.concrnt.app'
+export { PUSH_VENDOR_ID }
 
 // Deployed webpush-relay origin (webpush-relay / webpush-relay-workers).
 export const PUSH_RELAY = 'https://webpush-relay.concrnt.net'
@@ -69,6 +69,10 @@ export interface LaunchNotification {
 }
 
 export const getLaunchNotification = (): Promise<LaunchNotification> => invoke('plugin:push|get_launch_notification')
+
+/** Mirrors the unread count onto the app icon (iOS). On Android 0 clears posted notifications. */
+export const setAppBadge = (count: number): Promise<void> =>
+    invoke<void>('plugin:push|set_badge', { payload: { count } }).catch(() => {})
 
 export const onNotificationTapped = (cb: (payload: LaunchNotification) => void): Promise<PluginListener> =>
     addPluginListener('push', 'notificationTapped', cb)

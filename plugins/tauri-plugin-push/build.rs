@@ -14,6 +14,7 @@ const COMMANDS: &[&str] = &[
     "reset_keys",
     "set_context",
     "get_launch_notification",
+    "set_badge",
     "register_listener",
     "remove_listener",
 ];

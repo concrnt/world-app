@@ -50,7 +50,10 @@ object NotificationRenderer {
         val largeIcon: Bitmap? = null,
         // When set, overrides the default concrnt status-bar icon (used to show
         // a reaction emoji as an alpha silhouette badge, v1-style).
-        val smallIcon: IconCompat? = null
+        val smallIcon: IconCompat? = null,
+        // Server-side unread counter (post-increment); shown as the launcher
+        // badge number where the launcher supports it.
+        val badge: Int? = null
     )
 
     fun ensureChannel(context: Context) {
@@ -63,6 +66,16 @@ object NotificationRenderer {
 
     /** Builds and shows a notification. `decrypted` is null if decryption failed. */
     fun show(context: Context, decrypted: ByteArray?) {
+        // counter-reset: the owner looked at their notifications on another
+        // device. Drop everything we posted (which clears the launcher badge)
+        // and show nothing.
+        val type = decrypted?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)).optString("type", "") }.getOrNull() }
+        if (type == "counter-reset") {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.cancelAll()
+            return
+        }
+
         val content = decrypted
             ?.let {
                 val json = String(it, Charsets.UTF_8)
@@ -77,7 +90,13 @@ object NotificationRenderer {
             }
             ?: Content(FALLBACK_TITLE, null, null, "notifications")
 
-        display(context, content)
+        // Read the badge independently of buildContent so the generic fallback
+        // still carries the right count.
+        val badge = decrypted
+            ?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)).optInt("badge", 0) }.getOrNull() }
+            ?.takeIf { it > 0 }
+
+        display(context, content.copy(badge = badge))
     }
 
     private fun buildContent(context: Context, payloadJson: String): Content? {
@@ -281,6 +300,8 @@ object NotificationRenderer {
             .apply { content.body?.let { setContentText(it) } }
             .apply { content.largeIcon?.let { setLargeIcon(it) } }
             .setAutoCancel(true)
+            .apply { content.badge?.let { setNumber(it) } }
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .setContentIntent(pendingIntent)
             .apply { content.targetUri?.let { setGroup(it) } }
             .build()

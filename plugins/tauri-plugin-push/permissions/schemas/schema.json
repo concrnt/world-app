@@ -391,6 +391,18 @@
           "markdownDescription": "Denies the reset_keys command without any pre-configured scope."
         },
         {
+          "description": "Enables the set_badge command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-badge",
+          "markdownDescription": "Enables the set_badge command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_badge command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-badge",
+          "markdownDescription": "Denies the set_badge command without any pre-configured scope."
+        },
+        {
           "description": "Enables the set_context command without any pre-configured scope.",
           "type": "string",
           "const": "allow-set-context",
@@ -403,10 +415,10 @@
           "markdownDescription": "Denies the set_context command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the push notification plugin\n#### This default permission set includes:\n\n- `allow-check-permission`\n- `allow-request-permission`\n- `allow-get-token`\n- `allow-get-or-create-keys`\n- `allow-reset-keys`\n- `allow-set-context`\n- `allow-get-launch-notification`\n- `allow-register-listener`\n- `allow-remove-listener`",
+          "description": "Default permissions for the push notification plugin\n#### This default permission set includes:\n\n- `allow-check-permission`\n- `allow-request-permission`\n- `allow-get-token`\n- `allow-get-or-create-keys`\n- `allow-reset-keys`\n- `allow-set-context`\n- `allow-get-launch-notification`\n- `allow-set-badge`\n- `allow-register-listener`\n- `allow-remove-listener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the push notification plugin\n#### This default permission set includes:\n\n- `allow-check-permission`\n- `allow-request-permission`\n- `allow-get-token`\n- `allow-get-or-create-keys`\n- `allow-reset-keys`\n- `allow-set-context`\n- `allow-get-launch-notification`\n- `allow-register-listener`\n- `allow-remove-listener`"
+          "markdownDescription": "Default permissions for the push notification plugin\n#### This default permission set includes:\n\n- `allow-check-permission`\n- `allow-request-permission`\n- `allow-get-token`\n- `allow-get-or-create-keys`\n- `allow-reset-keys`\n- `allow-set-context`\n- `allow-get-launch-notification`\n- `allow-set-badge`\n- `allow-register-listener`\n- `allow-remove-listener`"
         }
       ]
     }

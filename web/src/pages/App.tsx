@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
 import { DrawerMenu } from '../components/DrawerMenu'
@@ -10,6 +10,9 @@ import { PwaManager } from '../components/PwaManager'
 import { NavigationProvider } from '../contexts/Navigation'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useNotificationCounter } from '../hooks/useNotificationCounter'
+import { useClient } from '../contexts/Client'
+import { setAppBadge } from '../lib/push'
 import { IconButton, Tabs, Tab, useTheme } from '@concrnt/ui'
 import { MdArrowBack, MdHome, MdExplore, MdNotifications, MdContacts } from 'react-icons/md'
 
@@ -110,6 +113,13 @@ const MobileShell = () => {
     const location = useLocation()
     const navigate = useNavigate()
     const theme = useTheme()
+    const { client } = useClient()
+    // 未読通知数はサーバーのカウンターが正(web/appで同期)。インストール済みPWAのアイコンにも追従
+    const unreadCount = useNotificationCounter(client)
+    useEffect(() => {
+        if (!client) return
+        setAppBadge(unreadCount)
+    }, [client, unreadCount])
 
     const isTabRoot = TABS.some((tab) => tab.path === location.pathname)
 
@@ -200,6 +210,7 @@ const MobileShell = () => {
                                     style={{
                                         color: CssVar.backdropText
                                     }}
+                                    badge={tab.path === '/notifications' ? unreadCount : undefined}
                                 >
                                     {tab.icon}
                                 </Tab>

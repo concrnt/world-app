@@ -45,3 +45,10 @@ pub struct GetLaunchNotificationResponse {
     pub uri: Option<String>,
     pub view: Option<String>,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetBadgeRequest {
+    /// Unread count to show on the app icon; 0 clears it.
+    pub count: u32,
+}

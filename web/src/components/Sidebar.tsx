@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 
-import { Avatar, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
+import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -19,12 +19,14 @@ import { ProfileName } from './ProfileName'
 import { SidebarLists } from './SidebarLists'
 import { useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
+import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { currentPostContext } from '../contexts/PostContext'
 
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
+    const unreadCount = useNotificationCounter(client)
     const navigate = useNavigate()
     const composer = useComposer()
 
@@ -91,7 +93,11 @@ export const Sidebar = () => {
                     <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>
                         {t('home')}
                     </ListItem>
-                    <ListItem icon={<MdNotifications size={24} />} onClick={() => go('/notifications')}>
+                    <ListItem
+                        icon={<MdNotifications size={24} />}
+                        endIcon={<Badge count={unreadCount} />}
+                        onClick={() => go('/notifications')}
+                    >
                         {t('notifications')}
                     </ListItem>
                     <ListItem icon={<MdContacts size={24} />} onClick={() => go('/contacts')}>

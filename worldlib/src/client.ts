@@ -73,6 +73,10 @@ export class PinnedListItemClass implements PinnedListItem {
     }
 }
 
+// push購読と未読カウンターのvendor_id。vendorは「concrnt上のアプリケーション」単位で、
+// world-appはアプリ版もweb版も同じアプリケーションなので共通の値を使う
+export const PUSH_VENDOR_ID = 'world.concrnt.app'
+
 export class Client {
     api: Api
     ccid: string
@@ -131,6 +135,17 @@ export class Client {
             return this.getAcknowledgers(this.ccid)
         },
         (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    )
+
+    // 未読通知数。サーバーが配送ごとに加算し、通知画面を開いたらresetNotificationCounter()で0に戻す。
+    // 旧サーバー(エンドポイント未広告)やオフラインでは0のまま
+    notificationCounter = new CachedPromise<number>(
+        async () => {
+            if (this.ccid === '') return 0
+            const count = await this.api.getNotificationCounter(this.ccid, PUSH_VENDOR_ID).catch(() => undefined)
+            return count ?? 0
+        },
+        (a, b) => a === b
     )
 
     blocks = new CachedPromise<string[]>(
@@ -481,10 +496,18 @@ export class Client {
             this.pinnedLists.refresh(),
             this.acknowledging.refresh(),
             this.acknowledgers.refresh(),
-            this.blocks.refresh()
+            this.blocks.refresh(),
+            this.notificationCounter.refresh()
         ])
         const pins = await this.pinnedLists.value().catch((): PinnedListItemClass[] => [])
         await Promise.allSettled(pins.map((pin) => pin.list.refresh()))
+    }
+
+    // 通知画面を開いた=全部見たとみなして未読を0にする(既読位置は追跡しない)
+    async resetNotificationCounter(): Promise<void> {
+        this.notificationCounter.push(0)
+        if (this.ccid === '') return
+        await this.api.resetNotificationCounter(this.ccid, PUSH_VENDOR_ID).catch(() => {})
     }
 
     async block(target: string): Promise<void> {

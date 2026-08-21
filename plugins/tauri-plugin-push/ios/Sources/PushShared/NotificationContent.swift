@@ -65,6 +65,19 @@ public enum NotificationContent {
         return result.flatMap { $0 } ?? fallback
     }
 
+    /// Reads the server's post-increment unread counter from the decrypted
+    /// payload. Independent of enrichment so the app icon badge is right even
+    /// when the alert falls back to the generic content.
+    public static func badgeCount(fromDecryptedEvent decrypted: Data) -> Int? {
+        guard let event = try? JSONSerialization.jsonObject(with: decrypted) as? [String: Any] else {
+            return nil
+        }
+        guard let badge = event["badge"] as? NSNumber, badge.intValue > 0 else {
+            return nil
+        }
+        return badge.intValue
+    }
+
     private static func buildContent(payload: [String: Any]) async -> Result? {
         // The push carries only the minimal notification struct
         // {uri, schema, author, createdAt}; everything else is fetched from the

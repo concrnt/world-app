@@ -2,6 +2,8 @@ package world.concrnt.plugin.push
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -19,6 +21,11 @@ import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
 
 private const val PERMISSION_ALIAS = "postNotification"
+
+@InvokeArg
+class SetBadgeArgs {
+    var count: Int = 0
+}
 
 @InvokeArg
 class SetContextArgs {
@@ -129,5 +136,20 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun getLaunchNotification(invoke: Invoke) {
         invoke.resolve(PushKeyStore.consumeLaunch(activity))
+    }
+
+    /**
+     * Android has no public app-icon badge API; the launcher dot/number follows
+     * posted notifications (each carries the count via setNumber). So 0 clears
+     * the posted notifications and any other value is a no-op.
+     */
+    @Command
+    fun setBadge(invoke: Invoke) {
+        val args = invoke.parseArgs(SetBadgeArgs::class.java)
+        if (args.count == 0) {
+            val manager = activity.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.cancelAll()
+        }
+        invoke.resolve()
     }
 }

@@ -44,4 +44,8 @@ impl<R: Runtime> Push<R> {
     pub async fn get_launch_notification(&self) -> crate::Result<GetLaunchNotificationResponse> {
         Err(crate::Error::UnsupportedPlatform(UNSUPPORTED))
     }
+
+    pub async fn set_badge(&self, _payload: SetBadgeRequest) -> crate::Result<()> {
+        Err(crate::Error::UnsupportedPlatform(UNSUPPORTED))
+    }
 }

@@ -44,6 +44,11 @@ pub(crate) async fn get_launch_notification<R: Runtime>(
     app.push().get_launch_notification().await
 }
 
+#[command]
+pub(crate) async fn set_badge<R: Runtime>(app: AppHandle<R>, payload: SetBadgeRequest) -> Result<()> {
+    app.push().set_badge(payload).await
+}
+
 // "register_listener" and "remove_listener" are intentionally NOT defined
 // here. On mobile, invoke("plugin:push|register_listener"/"remove_listener")
 // falls back automatically (since our own invoke_handler below doesn't match
