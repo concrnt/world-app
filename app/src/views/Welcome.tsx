@@ -17,7 +17,8 @@ import {
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
-import { listAccounts } from '../lib/accounts'
+import { AccountSummary, listAccounts, performAccountSwitch } from '../lib/accounts'
+import { AccountListItem } from '../components/AccountListItem'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
@@ -68,6 +69,9 @@ export const WelcomeView = () => {
     // エントリポイントはhint無しでは他ドメインのユーザーを解決できないため、これが無いと
     // ログアウト後に他サーバーのユーザーが常に「登録なし」に誤診される
     const [resolver, setResolver] = useState<string | null>(null)
+    // 端末に保存されている全アカウント(鍵)。エラー/登録なし画面で「どの鍵を見ているか」「他の鍵があるか」を
+    // 見せて切り替えられるようにするための診断用。取得失敗は空扱いにして画面を止めない
+    const [accounts, setAccounts] = useState<AccountSummary[]>([])
 
     useEffect(() => {
         const load = async () => {
@@ -94,16 +98,18 @@ export const WelcomeView = () => {
             }
             setExistingCCID(ccid)
 
+            let accountList: AccountSummary[] = []
+            try {
+                accountList = await listAccounts()
+            } catch (e) {
+                console.error('Failed to list accounts', e)
+            }
+            setAccounts(accountList)
+
             // resolverの初期化は一度きり(RecoveryViewの手入力によるsetResolverをloadが巻き戻さないため)。
             // setResolverでeffectが再実行され、次周回で照会に進む
             if (resolver === null) {
-                let accountDomain: string | null = null
-                try {
-                    const accounts = await listAccounts()
-                    accountDomain = accounts.find((a) => a.ccid === ccid)?.domain ?? null
-                } catch (e) {
-                    console.error('Failed to list accounts', e)
-                }
+                const accountDomain = accountList.find((a) => a.ccid === ccid)?.domain ?? null
                 setResolver(accountDomain ?? resolveEntrypoint())
                 return
             }
@@ -185,7 +191,22 @@ export const WelcomeView = () => {
                                 {loadError}
                             </Text>
                         )}
+                        {existingCCID && (
+                            <Text
+                                variant="caption"
+                                style={{
+                                    color: CssVar.uiText,
+                                    opacity: 0.6,
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('checkingAccount', { ccid: existingCCID, resolver: resolver ?? '-' })}
+                            </Text>
+                        )}
                     </div>
+                    <StoredAccounts accounts={accounts} />
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>
                         <AuthButton
@@ -239,6 +260,7 @@ export const WelcomeView = () => {
             return (
                 <RecoveryView
                     ccid={existingCCID!}
+                    accounts={accounts}
                     reload={reload}
                     giveup={() => setState('signup')}
                     setDomain={(domain) => {
@@ -362,6 +384,7 @@ const RecoveryView = (props: {
     giveup: () => void
     setDomain?: (domain: string) => void
     ccid: string
+    accounts: AccountSummary[]
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     // unknown=未入力(何も表示しない)。「見つからない」と表示・断定するのはサーバーが404を返した時だけで、
@@ -407,6 +430,12 @@ const RecoveryView = (props: {
     return (
         <AuthScreen align="top">
             <AuthHeader title={t('recovery.title')} description={t('recovery.descriptionDevice')} />
+            <Text
+                variant="caption"
+                style={{ color: CssVar.uiText, opacity: 0.6, textAlign: 'center', wordBreak: 'break-all' }}
+            >
+                {props.ccid}
+            </Text>
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>
                     <Text style={{ color: CssVar.uiText }}>{t('recovery.serverAddress')}</Text>
@@ -426,6 +455,7 @@ const RecoveryView = (props: {
                             : ''}
                 </Text>
             </div>
+            <StoredAccounts accounts={props.accounts} />
             {found === 'found' ? (
                 <AuthActions fixedBottom>
                     <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
@@ -450,5 +480,31 @@ const RecoveryView = (props: {
                 </AuthActions>
             )}
         </AuthScreen>
+    )
+}
+
+// 端末に保存されているアカウント(鍵)の一覧。非アクティブな行をタップすると切り替えて再起動する。
+// 復旧画面では通信が出来ない前提なので、プロフィール取得に依存せずccidで識別できるようにする
+const StoredAccounts = (props: { accounts: AccountSummary[] }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
+    if (props.accounts.length === 0) return null
+    return (
+        <div style={authStyles.section}>
+            <Text style={{ color: CssVar.uiText }}>{t('storedAccounts')}</Text>
+            <Text variant="caption" style={{ color: CssVar.uiText, opacity: 0.6 }}>
+                {t('storedAccountsHint')}
+            </Text>
+            {props.accounts.map((account) => (
+                <AccountListItem
+                    key={account.ccid}
+                    account={account}
+                    showCCID
+                    onClick={() => {
+                        if (account.isActive) return
+                        performAccountSwitch(account.ccid)
+                    }}
+                />
+            ))}
+        </div>
     )
 }

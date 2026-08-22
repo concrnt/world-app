@@ -144,6 +144,18 @@ export const WelcomeView = () => {
                                 {loadError}
                             </Text>
                         )}
+                        <Text
+                            variant="caption"
+                            style={{
+                                color: CssVar.uiText,
+                                opacity: 0.6,
+                                textAlign: 'center',
+                                wordBreak: 'break-all',
+                                whiteSpace: 'pre-line'
+                            }}
+                        >
+                            {t('checkingAccount', { ccid: existingCCID, resolver })}
+                        </Text>
                     </div>
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>

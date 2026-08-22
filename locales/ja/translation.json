@@ -208,6 +208,9 @@
         "welcome": {
             "loadFailed": "アカウント情報の読み込みに失敗しました。\n端末に保存された鍵が消えたわけではありません。もう一度お試しください。",
             "retry": "再試行",
+            "storedAccounts": "端末に保存されているアカウント",
+            "storedAccountsHint": "別のアカウントを選ぶと切り替えて再起動します。",
+            "checkingAccount": "照会中のアカウント: {{ccid}}\n照会先: {{resolver}}",
             "getStarted": "はじめる",
             "login": "ログイン",
             "welcomeBackTitle": "おかえりなさい",

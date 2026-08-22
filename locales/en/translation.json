@@ -208,6 +208,9 @@
         "welcome": {
             "loadFailed": "Failed to load account information.\nThe key stored on this device has not been lost. Please try again.",
             "retry": "Retry",
+            "storedAccounts": "Accounts stored on this device",
+            "storedAccountsHint": "Selecting another account switches to it and restarts the app.",
+            "checkingAccount": "Checking account: {{ccid}}\nResolver: {{resolver}}",
             "getStarted": "Get Started",
             "login": "Log In",
             "welcomeBackTitle": "Welcome back",

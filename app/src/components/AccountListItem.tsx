@@ -10,6 +10,8 @@ interface Props {
     account: AccountSummary
     onClick?: () => void
     onDelete?: () => void
+    // エラー/復旧画面向け: 通信不能でも鍵の識別ができるようフルccidを併記する
+    showCCID?: boolean
 }
 
 // 非アクティブアカウントのプロフィールは認証なしでそのアカウントのドメインから取得する
@@ -74,6 +76,18 @@ export const AccountListItem = (props: Props) => {
                 >
                     {setupIncomplete ? t('setupIncomplete') : account.domain}
                 </Text>
+                {props.showCCID && (
+                    <Text
+                        variant="caption"
+                        style={{
+                            wordBreak: 'break-all',
+                            whiteSpace: 'normal',
+                            opacity: 0.7
+                        }}
+                    >
+                        {account.ccid}
+                    </Text>
+                )}
             </div>
         </ListItem>
     )
