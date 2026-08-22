@@ -163,6 +163,9 @@ const Note = (props: {
                         {author?.name ?? author?.preferredUsername ?? 'Unknown'}
                     </Text>
                     <SiActivitypub size={14} style={{ flexShrink: 0 }} title="ActivityPub" />
+                    {author?.getHandle() && (
+                        <span style={{ fontSize: '0.75rem', opacity: 0.7, flexShrink: 0 }}>{author.getHandle()}</span>
+                    )}
                 </span>
             }
             headerRight={

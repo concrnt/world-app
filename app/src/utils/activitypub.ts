@@ -132,6 +132,14 @@ export class ApObject {
             .trim()
     }
 
+    // アクター用。concrntネイティブのaliasに相当する @user@host 形式のハンドルを返す。
+    // hostは(WebFingerを引かず)アクターIDのホストで代用する
+    getHandle(): string | undefined {
+        if (!this.preferredUsername) return undefined
+        const host = URL.parse(this.id)?.host
+        return host ? `@${this.preferredUsername}@${host}` : `@${this.preferredUsername}`
+    }
+
     getTags(): ApObject[] {
         if (!this.tag) return []
         if (Array.isArray(this.tag)) return this.tag
