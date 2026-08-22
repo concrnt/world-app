@@ -15,10 +15,12 @@ import { MessageContainer } from './main'
 import { TimeDiff } from '../TimeDiff'
 import { RenderError } from './RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
+import { useNavigate } from 'react-router-dom'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
+    const navigate = useNavigate()
     const { hapticSuccess } = useHaptics()
     const menuAnchor = useAnchor()
 
@@ -39,17 +41,33 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         }}
                     >
                         <MdRepeat size={14} />
-                        <Avatar
-                            ccid={props.message.author}
-                            src={props.message.authorProfile?.avatar}
-                            style={{ width: '16px', height: '16px' }}
-                        />
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                navigate('/profile/' + props.message.author)
+                            }}
+                            style={{ display: 'flex', cursor: 'pointer' }}
+                        >
+                            <Avatar
+                                ccid={props.message.author}
+                                src={props.message.authorProfile?.avatar}
+                                style={{ width: '16px', height: '16px' }}
+                            />
+                        </div>
                     </div>
                 }
             >
-                <Text variant="caption">
-                    {t('userRerouted', { name: props.message.authorProfile?.username || 'Anonymous' })}
-                </Text>
+                <span
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        navigate('/profile/' + props.message.author)
+                    }}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <Text variant="caption">
+                        {t('userRerouted', { name: props.message.authorProfile?.username || 'Anonymous' })}
+                    </Text>
+                </span>
                 <div style={{ flex: 1 }} />
                 <IconButton
                     onClick={(e) => {

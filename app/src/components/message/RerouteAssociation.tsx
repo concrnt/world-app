@@ -47,11 +47,21 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     paddingLeft: '48px'
                 }}
             >
-                <Avatar
-                    ccid={message.author}
-                    src={message.authorProfile?.avatar}
-                    style={{ width: '16px', height: '16px' }}
-                />
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        if (rerouteAuthor) {
+                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
+                        }
+                    }}
+                    style={{ display: 'flex', cursor: 'pointer' }}
+                >
+                    <Avatar
+                        ccid={message.author}
+                        src={message.authorProfile?.avatar}
+                        style={{ width: '16px', height: '16px' }}
+                    />
+                </div>
                 <MdRepeat size={14} />
                 <span
                     onClick={(e) => {
