@@ -31,7 +31,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={message.author} />)
+                        push(<ProfileView ccid={message.author} profileName={message.authorProfileName ?? undefined} />)
                     }}
                 >
                     <Avatar

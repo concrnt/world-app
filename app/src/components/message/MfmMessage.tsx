@@ -29,7 +29,7 @@ export const MfmMessage = (props: MessageProps<MfmMessageSchema>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={message.author} />)
+                        push(<ProfileView ccid={message.author} profileName={message.authorProfileName ?? undefined} />)
                     }}
                 >
                     <Avatar ccid={message.author} src={message.authorProfile?.avatar} />

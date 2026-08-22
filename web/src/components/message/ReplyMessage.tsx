@@ -38,7 +38,13 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                     <div
                         onClick={(e) => {
                             e.stopPropagation()
-                            navigate('/profile/' + props.message.author)
+                            navigate(
+                                '/profile/' +
+                                    props.message.author +
+                                    (props.message.authorProfileName && props.message.authorProfileName !== 'main'
+                                        ? '/' + props.message.authorProfileName
+                                        : '')
+                            )
                         }}
                     >
                         <Avatar

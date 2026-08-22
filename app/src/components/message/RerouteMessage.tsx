@@ -43,7 +43,12 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={props.message.author} />)
+                                push(
+                                    <ProfileView
+                                        ccid={props.message.author}
+                                        profileName={props.message.authorProfileName ?? undefined}
+                                    />
+                                )
                             }}
                             style={{ display: 'flex', cursor: 'pointer' }}
                         >
@@ -59,7 +64,12 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={props.message.author} />)
+                        push(
+                            <ProfileView
+                                ccid={props.message.author}
+                                profileName={props.message.authorProfileName ?? undefined}
+                            />
+                        )
                     }}
                     style={{ cursor: 'pointer' }}
                 >

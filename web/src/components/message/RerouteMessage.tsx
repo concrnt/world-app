@@ -44,7 +44,13 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                navigate('/profile/' + props.message.author)
+                                navigate(
+                                    '/profile/' +
+                                        props.message.author +
+                                        (props.message.authorProfileName && props.message.authorProfileName !== 'main'
+                                            ? '/' + props.message.authorProfileName
+                                            : '')
+                                )
                             }}
                             style={{ display: 'flex', cursor: 'pointer' }}
                         >
@@ -60,7 +66,13 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate('/profile/' + props.message.author)
+                        navigate(
+                            '/profile/' +
+                                props.message.author +
+                                (props.message.authorProfileName && props.message.authorProfileName !== 'main'
+                                    ? '/' + props.message.authorProfileName
+                                    : '')
+                        )
                     }}
                     style={{ cursor: 'pointer' }}
                 >

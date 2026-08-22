@@ -26,7 +26,13 @@ export const MfmMessage = (props: MessageProps<MfmMessageSchema>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate('/profile/' + message.author)
+                        navigate(
+                            '/profile/' +
+                                message.author +
+                                (message.authorProfileName && message.authorProfileName !== 'main'
+                                    ? '/' + message.authorProfileName
+                                    : '')
+                        )
                     }}
                 >
                     <Avatar

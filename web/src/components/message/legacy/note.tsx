@@ -21,7 +21,13 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate('/profile/' + message.author)
+                        navigate(
+                            '/profile/' +
+                                message.author +
+                                (message.authorProfileName && message.authorProfileName !== 'main'
+                                    ? '/' + message.authorProfileName
+                                    : '')
+                        )
                     }}
                 >
                     <Avatar ccid={message.author} style={{ width: '48px', height: '48px' }} />

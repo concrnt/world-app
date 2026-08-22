@@ -41,7 +41,12 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                     <div
                         onClick={(e) => {
                             e.stopPropagation()
-                            push(<ProfileView ccid={props.message.author} />)
+                            push(
+                                <ProfileView
+                                    ccid={props.message.author}
+                                    profileName={props.message.authorProfileName ?? undefined}
+                                />
+                            )
                         }}
                     >
                         <Avatar ccid={props.message.author} src={props.message.authorProfile?.avatar} />

@@ -28,7 +28,7 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={message.author} />)
+                        push(<ProfileView ccid={message.author} profileName={message.authorProfileName ?? undefined} />)
                     }}
                 >
                     <Avatar ccid={message.author} src={message.authorProfile?.avatar} />

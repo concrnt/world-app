@@ -24,7 +24,7 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(<ProfileView ccid={message.author} />)
+                        push(<ProfileView ccid={message.author} profileName={message.authorProfileName ?? undefined} />)
                     }}
                 >
                     <Avatar ccid={message.author} />
