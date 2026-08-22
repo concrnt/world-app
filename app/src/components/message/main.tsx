@@ -19,6 +19,7 @@ import { FollowAck } from './FollowAck'
 import { LegacyNoteMessage } from './legacy/note'
 import { OnelineMessage } from './OnelineMessage'
 import { ActivitypubNote } from './ActivitypubNote'
+import { ActivitypubNoteOneline } from './ActivitypubNoteOneline'
 import { BlueskyRecord } from './BlueskyRecord'
 
 interface Props {
@@ -40,6 +41,9 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     if (!message) return <div>Message not found</div>
 
     if (props.oneline) {
+        if (message.schema === Schemas.apNote) {
+            return <ActivitypubNoteOneline message={message as Message<ApNoteSchema>} />
+        }
         return <OnelineMessage message={message} />
     }
 

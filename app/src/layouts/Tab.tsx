@@ -5,7 +5,6 @@ import { ActivityProvider } from '../contexts/Activity'
 interface Tab {
     body: ReactNode
     tab: ReactNode
-    badge?: number
 }
 
 interface Props {
@@ -42,7 +41,6 @@ export const TabLayout = (props: Props) => {
                                 onClick={() => props.setSelectedTab(key)}
                                 selected={key === props.selectedTab}
                                 style={props.tabStyle}
-                                badge={tab.badge}
                             >
                                 {tab.tab}
                             </Tab>
@@ -68,7 +66,6 @@ export const TabLayout = (props: Props) => {
                                 key={key}
                                 onClick={() => props.setSelectedTab(key)}
                                 selected={key === props.selectedTab}
-                                badge={tab.badge}
                             >
                                 {tab.tab}
                             </Tab>

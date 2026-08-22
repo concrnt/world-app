@@ -14,8 +14,7 @@ const meta = {
         children: { control: 'text' },
         onClick: { action: 'clicked' },
         groupId: { control: 'text' },
-        style: { control: 'object' },
-        badge: { control: 'number' }
+        style: { control: 'object' }
     },
     args: {
         selected: false,
@@ -34,12 +33,6 @@ export const Default: Story = {}
 export const Selected: Story = {
     args: {
         selected: true
-    }
-}
-
-export const WithBadge: Story = {
-    args: {
-        badge: 5
     }
 }
 

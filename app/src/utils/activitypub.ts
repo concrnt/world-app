@@ -116,6 +116,22 @@ export class ApObject {
         return [this.image]
     }
 
+    // oneline表示などHTMLを描画できない場所向けに本文をプレーンテキスト化する。
+    // MisskeyはMFMソース(_misskey_content)を持つのでそちらを優先し、それ以外はHTMLのタグ除去+エンティティ復号
+    getPlainText(): string {
+        if (this._misskey_content) return this._misskey_content.replace(/\s+/g, ' ').trim()
+        return (this.content ?? '')
+            .replace(/<br\s*\/?>|<\/p>/gi, ' ')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&quot;/g, '"')
+            .replace(/&#0?39;/g, "'")
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/\s+/g, ' ')
+            .trim()
+    }
+
     getTags(): ApObject[] {
         if (!this.tag) return []
         if (Array.isArray(this.tag)) return this.tag

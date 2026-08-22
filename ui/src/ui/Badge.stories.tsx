@@ -28,3 +28,20 @@ export const Overflow: Story = {
 export const Zero: Story = {
     args: { count: 0 }
 }
+
+export const Anchored: Story = {
+    render: (args) => (
+        <div style={{ display: 'flex', gap: 24, fontSize: 24 }}>
+            <Badge {...args}>🔔</Badge>
+            <Badge {...args} anchorOrigin={{ vertical: 'top', horizontal: 'left' }}>
+                🔔
+            </Badge>
+            <Badge {...args} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                🔔
+            </Badge>
+            <Badge {...args} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}>
+                🔔
+            </Badge>
+        </div>
+    )
+}

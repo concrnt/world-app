@@ -19,7 +19,7 @@ import { MdContacts } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { CssVar } from '../types/Theme'
-import { useTheme } from '@concrnt/ui'
+import { Badge, useTheme } from '@concrnt/ui'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { setAppBadge } from '../lib/push'
 
@@ -187,7 +187,23 @@ export const MainView = () => {
                     <TabLayout
                         selectedTab={selectedTab}
                         setSelectedTab={selectTab}
-                        tabs={{ ...tabs, notifications: { ...tabs.notifications, badge: unreadCount } }}
+                        tabs={{
+                            ...tabs,
+                            notifications: {
+                                ...tabs.notifications,
+                                tab: (
+                                    <Badge
+                                        count={unreadCount}
+                                        style={{
+                                            backgroundColor: CssVar.backdropText,
+                                            color: CssVar.backdropBackground
+                                        }}
+                                    >
+                                        {tabs.notifications.tab}
+                                    </Badge>
+                                )
+                            }
+                        }}
                         style={{
                             paddingBottom: 'env(safe-area-inset-bottom)',
                             borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined

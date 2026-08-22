@@ -95,7 +95,15 @@ export const Sidebar = () => {
                     </ListItem>
                     <ListItem
                         icon={<MdNotifications size={24} />}
-                        endIcon={<Badge count={unreadCount} />}
+                        endIcon={
+                            <Badge
+                                style={{
+                                    color: CssVar.backdropBackground,
+                                    backgroundColor: CssVar.backdropText
+                                }}
+                                count={unreadCount}
+                            />
+                        }
                         onClick={() => go('/notifications')}
                     >
                         {t('notifications')}

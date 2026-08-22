@@ -13,7 +13,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { useClient } from '../contexts/Client'
 import { setAppBadge } from '../lib/push'
-import { IconButton, Tabs, Tab, useTheme } from '@concrnt/ui'
+import { Badge, IconButton, Tabs, Tab, useTheme } from '@concrnt/ui'
 import { MdArrowBack, MdHome, MdExplore, MdNotifications, MdContacts } from 'react-icons/md'
 
 export const AppShell = () => {
@@ -210,9 +210,20 @@ const MobileShell = () => {
                                     style={{
                                         color: CssVar.backdropText
                                     }}
-                                    badge={tab.path === '/notifications' ? unreadCount : undefined}
                                 >
-                                    {tab.icon}
+                                    {tab.path === '/notifications' ? (
+                                        <Badge
+                                            count={unreadCount}
+                                            style={{
+                                                backgroundColor: CssVar.backdropText,
+                                                color: CssVar.backdropBackground
+                                            }}
+                                        >
+                                            {tab.icon}
+                                        </Badge>
+                                    ) : (
+                                        tab.icon
+                                    )}
                                 </Tab>
                             ))}
                         </Tabs>
