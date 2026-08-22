@@ -1,7 +1,9 @@
 import { Document, Policy } from '@concrnt/client'
 import { Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
-import { Button, CCWallpaper, CssVar, Tab, Tabs, TextField } from '@concrnt/ui'
+import { Button, CCWallpaper, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
+import { MdMoreHoriz } from 'react-icons/md'
+import { shareText } from '../lib/share'
 
 import { useClient } from '../contexts/Client'
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
@@ -32,17 +34,22 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.timelineSettings' })
     const { client } = useClient()
     const { getImageURL } = useMediaProxy()
     const timeline = use(props.timelinePromise)
 
     const [tab, setTab] = useState<'subscriptions' | 'settings'>('subscriptions')
+    const [menuOpen, setMenuOpen] = useState(false)
 
     if (!timeline) {
         return <>Timeline not found.</>
     }
 
     const isMe = client.ccid === timeline.author
+
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL = 'https://concrnt.world/timeline/' + encodeURIComponent(timeline.uri)
 
     return (
         <div
@@ -74,11 +81,30 @@ const Inner = (props: InnerProps) => {
                             }}
                         >
                             <Text variant="h2">{timeline.name}</Text>
+                            <div style={{ flex: 1 }} />
+                            <IconButton onClick={() => setMenuOpen(true)}>
+                                <MdMoreHoriz size={24} />
+                            </IconButton>
                         </div>
                         <Text>{timeline.description}</Text>
                     </div>
                 </div>
             </CCWallpaper>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                options={[
+                    <ListItem
+                        key="share"
+                        onClick={() => {
+                            shareText(shareURL, timeline.name).catch(() => {})
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('share')}</Text>
+                    </ListItem>
+                ]}
+            />
             <Tabs>
                 <Tab
                     selected={tab === 'subscriptions'}

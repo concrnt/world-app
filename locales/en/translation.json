@@ -299,7 +299,10 @@
             "unblock": "Unblock",
             "noDescription": "No description yet",
             "following": "{{n}} Following",
-            "followers": "{{n}} Followers"
+            "followers": "{{n}} Followers",
+            "share": "Share",
+            "copyLink": "Copy link",
+            "linkCopied": "Copied"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -534,7 +537,10 @@
             "delete": "Delete",
             "deletePost": "Delete post",
             "report": "Report",
-            "inspector": "Inspector"
+            "inspector": "Inspector",
+            "share": "Share",
+            "copyLink": "Copy link",
+            "linkCopied": "Copied"
         },
         "collapsibleBody": {
             "showMore": "Show more"
@@ -709,7 +715,10 @@
         },
         "timelineSettings": {
             "schema": "Schema",
-            "attributes": "Attributes"
+            "attributes": "Attributes",
+            "share": "Share",
+            "copyLink": "Copy link",
+            "linkCopied": "Copied"
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",

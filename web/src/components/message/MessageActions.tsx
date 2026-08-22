@@ -20,6 +20,7 @@ import { Drawer } from '../Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 interface Props {
     message: Message<any>
@@ -45,6 +46,11 @@ export const MessageActions = (props: Props) => {
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
     const menuAnchor = useAnchor()
+    const isMobile = useIsMobile()
+    const [linkCopied, setLinkCopied] = useState(false)
+
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -228,6 +234,38 @@ export const MessageActions = (props: Props) => {
                 onClose={() => setMenuOpen(false)}
                 anchor={menuAnchor}
                 options={[
+                    // v1踏襲: モバイル幅はOSのシェアシート、それ以外はリンクのコピー
+                    isMobile && typeof navigator.share === 'function' ? (
+                        <ListItem
+                            key="share"
+                            onClick={() => {
+                                navigator
+                                    .share({
+                                        title: props.message.value.body ?? '',
+                                        text: props.message.value.body ?? '',
+                                        url: shareURL
+                                    })
+                                    .catch(() => {})
+                                setMenuOpen(false)
+                            }}
+                        >
+                            <Text>{t('share')}</Text>
+                        </ListItem>
+                    ) : (
+                        <ListItem
+                            key="copyLink"
+                            onClick={() => {
+                                navigator.clipboard?.writeText(shareURL)
+                                setLinkCopied(true)
+                                setTimeout(() => {
+                                    setLinkCopied(false)
+                                    setMenuOpen(false)
+                                }, 800)
+                            }}
+                        >
+                            <Text>{linkCopied ? t('linkCopied') : t('copyLink')}</Text>
+                        </ListItem>
+                    ),
                     <ListItem key="delete" onClick={() => setDeleteConfirmOpen(true)}>
                         <Text>{t('deletePost')}</Text>
                     </ListItem>,

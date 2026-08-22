@@ -299,7 +299,10 @@
             "unblock": "ブロック解除",
             "noDescription": "説明はまだありません",
             "following": "{{n}} フォロー",
-            "followers": "{{n}} フォロワー"
+            "followers": "{{n}} フォロワー",
+            "share": "シェア",
+            "copyLink": "リンクをコピー",
+            "linkCopied": "コピーしました"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -533,7 +536,10 @@
             "delete": "削除",
             "deletePost": "投稿を削除",
             "report": "通報",
-            "inspector": "インスペクター"
+            "inspector": "インスペクター",
+            "share": "シェア",
+            "copyLink": "リンクをコピー",
+            "linkCopied": "コピーしました"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
@@ -708,7 +714,10 @@
         },
         "timelineSettings": {
             "schema": "スキーマ",
-            "attributes": "属性"
+            "attributes": "属性",
+            "share": "シェア",
+            "copyLink": "リンクをコピー",
+            "linkCopied": "コピーしました"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",

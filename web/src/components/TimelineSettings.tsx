@@ -1,7 +1,10 @@
 import { Document, Policy } from '@concrnt/client'
 import { Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
-import { Button, CCWallpaper, CssVar, Tab, Tabs, TextField } from '@concrnt/ui'
+import { Button, CCWallpaper, CssVar, IconButton, ListItem, Tab, Tabs, TextField, useAnchor } from '@concrnt/ui'
+import { MdMoreHoriz } from 'react-icons/md'
+import { Select } from './Select'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 import { useClient } from '../contexts/Client'
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
@@ -32,17 +35,25 @@ interface InnerProps {
 }
 
 const Inner = (props: InnerProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.timelineSettings' })
     const { client } = useClient()
     const { getImageURL } = useMediaProxy()
     const timeline = use(props.timelinePromise)
+    const isMobile = useIsMobile()
+    const menuAnchor = useAnchor()
 
     const [tab, setTab] = useState<'subscriptions' | 'settings'>('subscriptions')
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [linkCopied, setLinkCopied] = useState(false)
 
     if (!timeline) {
         return <>Timeline not found.</>
     }
 
     const isMe = client.ccid === timeline.author
+
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL = 'https://concrnt.world/timeline/' + encodeURIComponent(timeline.uri)
 
     return (
         <div
@@ -74,11 +85,57 @@ const Inner = (props: InnerProps) => {
                             }}
                         >
                             <Text variant="h2">{timeline.name}</Text>
+                            <div style={{ flex: 1 }} />
+                            <IconButton
+                                onClick={() => setMenuOpen(true)}
+                                style={{ anchorName: menuAnchor } as React.CSSProperties}
+                            >
+                                <MdMoreHoriz size={24} />
+                            </IconButton>
                         </div>
                         <Text>{timeline.description}</Text>
                     </div>
                 </div>
             </CCWallpaper>
+            <Select
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                anchor={menuAnchor}
+                options={[
+                    // v1踏襲: モバイル幅はOSのシェアシート、それ以外はリンクのコピー
+                    isMobile && typeof navigator.share === 'function' ? (
+                        <ListItem
+                            key="share"
+                            onClick={() => {
+                                navigator
+                                    .share({
+                                        title: timeline.name,
+                                        text: timeline.description ?? '',
+                                        url: shareURL
+                                    })
+                                    .catch(() => {})
+                                setMenuOpen(false)
+                            }}
+                        >
+                            <Text>{t('share')}</Text>
+                        </ListItem>
+                    ) : (
+                        <ListItem
+                            key="copyLink"
+                            onClick={() => {
+                                navigator.clipboard?.writeText(shareURL)
+                                setLinkCopied(true)
+                                setTimeout(() => {
+                                    setLinkCopied(false)
+                                    setMenuOpen(false)
+                                }, 800)
+                            }}
+                        >
+                            <Text>{linkCopied ? t('linkCopied') : t('copyLink')}</Text>
+                        </ListItem>
+                    )
+                ]}
+            />
             <Tabs>
                 <Tab
                     selected={tab === 'subscriptions'}

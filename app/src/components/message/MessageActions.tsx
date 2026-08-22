@@ -21,6 +21,7 @@ import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
+import { shareText } from '../../lib/share'
 
 interface Props {
     message: Message<any>
@@ -47,6 +48,9 @@ export const MessageActions = (props: Props) => {
     const qt = useQueryTimelineContext()
     const { push } = useStack()
     const messageHref = props.message.key ?? props.message.uri
+
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0
@@ -242,6 +246,15 @@ export const MessageActions = (props: Props) => {
                 open={menuOpen}
                 onClose={() => setMenuOpen(false)}
                 options={[
+                    <ListItem
+                        key="share"
+                        onClick={() => {
+                            shareText(shareURL, props.message.value.body ?? '').catch(() => {})
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('share')}</Text>
+                    </ListItem>,
                     <ListItem key="delete" onClick={() => setDeleteConfirmOpen(true)}>
                         <Text>{t('deletePost')}</Text>
                     </ListItem>,

@@ -30,6 +30,7 @@ import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
 import { useStack } from '../layouts/Stack'
+import { shareText } from '../lib/share'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
@@ -196,12 +197,28 @@ const Body = (props: BodyProps) => {
         }
     }, [props.ccid, props.profileName, tab])
 
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL =
+        'https://concrnt.world/profile/' + props.ccid + (props.profileName !== 'main' ? '/' + props.profileName : '')
+
     const selectOptions = useMemo(() => {
         const options: ReactNode[] = []
+        options.push(
+            <ListItem
+                key="share"
+                onClick={() => {
+                    shareText(shareURL, profile.value.username ?? props.ccid).catch(() => {})
+                    setMenuOpen(false)
+                }}
+            >
+                <Text>{t('share')}</Text>
+            </ListItem>
+        )
         if (!isMe) {
             if (isBlocking) {
                 options.push(
                     <ListItem
+                        key="unblock"
                         onClick={() => {
                             setUnblockConfirmOpen(true)
                         }}
@@ -212,6 +229,7 @@ const Body = (props: BodyProps) => {
             } else {
                 options.push(
                     <ListItem
+                        key="block"
                         onClick={() => {
                             setBlockConfirmOpen(true)
                         }}
@@ -222,7 +240,7 @@ const Body = (props: BodyProps) => {
             }
         }
         return options
-    }, [isBlocking, isMe, t])
+    }, [isBlocking, isMe, t, shareURL, profile.value.username, props.ccid])
 
     return (
         <>

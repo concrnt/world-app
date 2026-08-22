@@ -36,6 +36,7 @@ import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { MdLock } from 'react-icons/md'
 import { useMediaViewer } from '../contexts/MediaViewer'
 import { useMediaProxy } from '../contexts/MediaProxy'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 interface Props {
     ccid: string
@@ -174,6 +175,12 @@ const Body = (props: BodyProps) => {
     const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false)
     const [profileEditorOpen, setProfileEditorOpen] = useState(false)
     const [ackListTab, setAckListTab] = useState<'acknowledging' | 'acknowledgers' | null>(null)
+    const isMobile = useIsMobile()
+    const [linkCopied, setLinkCopied] = useState(false)
+
+    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    const shareURL =
+        'https://concrnt.world/profile/' + props.ccid + (props.profileName !== 'main' ? '/' + props.profileName : '')
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -199,10 +206,47 @@ const Body = (props: BodyProps) => {
 
     const selectOptions = useMemo(() => {
         const options: ReactNode[] = []
+        // v1踏襲: モバイル幅はOSのシェアシート、それ以外はリンクのコピー
+        if (isMobile && typeof navigator.share === 'function') {
+            options.push(
+                <ListItem
+                    key="share"
+                    onClick={() => {
+                        navigator
+                            .share({
+                                title: profile.value.username ?? props.ccid,
+                                text: profile.value.description ?? '',
+                                url: shareURL
+                            })
+                            .catch(() => {})
+                        setMenuOpen(false)
+                    }}
+                >
+                    <Text>{t('share')}</Text>
+                </ListItem>
+            )
+        } else {
+            options.push(
+                <ListItem
+                    key="copyLink"
+                    onClick={() => {
+                        navigator.clipboard?.writeText(shareURL)
+                        setLinkCopied(true)
+                        setTimeout(() => {
+                            setLinkCopied(false)
+                            setMenuOpen(false)
+                        }, 800)
+                    }}
+                >
+                    <Text>{linkCopied ? t('linkCopied') : t('copyLink')}</Text>
+                </ListItem>
+            )
+        }
         if (!isMe) {
             if (isBlocking) {
                 options.push(
                     <ListItem
+                        key="unblock"
                         onClick={() => {
                             setUnblockConfirmOpen(true)
                         }}
@@ -213,6 +257,7 @@ const Body = (props: BodyProps) => {
             } else {
                 options.push(
                     <ListItem
+                        key="block"
                         onClick={() => {
                             setBlockConfirmOpen(true)
                         }}
@@ -223,7 +268,17 @@ const Body = (props: BodyProps) => {
             }
         }
         return options
-    }, [isBlocking, isMe, t])
+    }, [
+        isBlocking,
+        isMe,
+        t,
+        isMobile,
+        linkCopied,
+        shareURL,
+        profile.value.username,
+        profile.value.description,
+        props.ccid
+    ])
 
     return (
         <>
