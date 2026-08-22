@@ -220,7 +220,8 @@ export const RealtimeTimeline = (props: Props) => {
             if (scrollRef.current) {
                 scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
             }
-        }
+        },
+        isAtTop: () => (scrollRef.current?.scrollTop ?? 0) <= 0
     }))
 
     /** Pull to Refreshのリフレッシュ処理 */

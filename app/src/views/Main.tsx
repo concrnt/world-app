@@ -103,7 +103,9 @@ export const MainView = () => {
         (tab: string) => {
             if (tab === selectedTab) {
                 if (!stackRefs.current[tab]?.clear()) {
-                    scrollRefs.current[tab]?.scrollToTop()
+                    const handle = scrollRefs.current[tab]
+                    if (handle?.reselect) handle.reselect()
+                    else handle?.scrollToTop()
                 }
             }
             setSelectedTab(tab)

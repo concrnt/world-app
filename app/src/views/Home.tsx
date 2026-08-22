@@ -29,7 +29,8 @@ export const HomeView = (props: ScrollViewProps) => {
 
     const scrollRef = useRef<ScrollViewHandle>(null)
     useImperativeHandle(props.ref, () => ({
-        scrollToTop: () => scrollRef.current?.scrollToTop()
+        scrollToTop: () => scrollRef.current?.scrollToTop(),
+        reselect: () => scrollRef.current?.reselect?.()
     }))
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
@@ -132,6 +133,27 @@ const HomeMain = ({
 
     const pin = sortedPins.find((pin) => pin.uri === selectedTabUri)
 
+    // 下部タブのホーム再タップ: 先頭以外のリストを完全にトップで見ているときだけ先頭リストへ戻す。
+    // それ以外(スクロール中/先頭リスト/ピン1つ)は従来どおりスクロールトップ
+    const timelineRef = useRef<ScrollViewHandle>(null)
+    useImperativeHandle(
+        ref,
+        () => ({
+            scrollToTop: () => timelineRef.current?.scrollToTop(),
+            reselect: () => {
+                const first = sortedPins[0]
+                if (first && first.uri !== selectedTabUri && timelineRef.current?.isAtTop?.()) {
+                    startTransition(() => {
+                        setSelectedTabUri(first.uri)
+                    })
+                } else {
+                    timelineRef.current?.scrollToTop()
+                }
+            }
+        }),
+        [sortedPins, selectedTabUri, setSelectedTabUri]
+    )
+
     useEffect(() => {
         if (selectedTabUri === '' && sortedPins.length > 0) {
             setSelectedTabUri(sortedPins[0].uri)
@@ -172,7 +194,7 @@ const HomeMain = ({
             )}
             {pin && (
                 <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
-                    <TimelineWrap ref={ref} pin={pin} />
+                    <TimelineWrap ref={timelineRef} pin={pin} />
                 </PostContextProvider>
             )}
         </>
