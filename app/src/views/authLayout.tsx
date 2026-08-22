@@ -36,7 +36,7 @@ export const AuthScreen = (props: { children: ReactNode; align?: 'center' | 'top
     return (
         <div
             style={{
-                minHeight: '100dvh',
+                height: '100dvh',
                 width: '100dvw',
                 padding: `calc(env(safe-area-inset-top) + ${CssVar.space(8)}) ${CssVar.space(5)} calc(env(safe-area-inset-bottom) + ${CssVar.space(5)})`,
                 color: CssVar.uiText,

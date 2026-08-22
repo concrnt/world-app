@@ -279,7 +279,6 @@
             "descriptionDevice": "Enter your master key to use your account on this device.",
             "descriptionBrowser": "Enter your master key to use your account in this browser.",
             "masterKey": "Master Key",
-            "masterKeyPlaceholder": "Enter master key",
             "masterKeyValid": "This master key is valid.",
             "masterKeyInvalid": "Could not verify this master key.",
             "import": "Import",
@@ -287,7 +286,8 @@
             "existingAccountTitle": "A saved account already exists",
             "existingAccountDescription": "To import a new account, you must first delete the account data saved in this browser.",
             "existingMasterKeyNotice": "This browser already has a master key.",
-            "deleteBrowserAccount": "Delete account data from this browser"
+            "deleteBrowserAccount": "Delete account data from this browser",
+            "masterKeyHint": "Enter the 12 words in order. You can also paste all 12 words at once."
         },
         "profile": {
             "userNotFound": "User not found",
@@ -771,6 +771,10 @@
             "fav": "Favorite",
             "reaction": "Reaction",
             "readRequest": "Read Request"
+        },
+        "mnemonicInput": {
+            "wordLabel": "Word {{index}}",
+            "unknownWords": "Some words are not in the word list (word {{positions}}). Please check the spelling."
         }
     },
     "contexts": {
@@ -839,8 +843,6 @@
             "signup": "New here? Create an account",
             "checking": "Checking...",
             "usePasskey": "Use passkey",
-            "manualKey": "Master Key or Subkey",
-            "manualKeyPlaceholder": "Enter your 12-word master key, a 64-char hex private key, or a subkey starting with concrnt-subkey",
             "registeredServer": "Registered server",
             "serverPlaceholder": "e.g. v2dev.concrnt.net",
             "masterKeyInvalid": "Could not verify this master key.",
@@ -864,7 +866,13 @@
             "checkingSubkey": "Checking your subkey on {{domain}}...",
             "subkeyInvalid": "This subkey is not in a valid format.",
             "subkeyInvalidOnServer": "This subkey has been revoked or is not registered.",
-            "subkeyLoginFailed": "Login with subkey failed."
+            "subkeyLoginFailed": "Login with subkey failed.",
+            "manualMasterKey": "Master key",
+            "manualMasterKeyHint": "Enter the 12 words in order. You can also paste all 12 words at once.",
+            "manualRawKey": "Subkey or private key",
+            "manualRawKeyPlaceholder": "Enter a subkey starting with concrnt-subkey, or a 64-char hex private key",
+            "switchToRawKey": "Use a subkey / private key instead",
+            "switchToMasterKey": "Use the 12-word master key instead"
         },
         "register": {
             "title": "Account Registration",

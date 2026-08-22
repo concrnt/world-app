@@ -279,7 +279,6 @@
             "descriptionDevice": "マスターキーを入力して、この端末でアカウントを使えるようにします。",
             "descriptionBrowser": "マスターキーを入力して、このブラウザでアカウントを使えるようにします。",
             "masterKey": "マスターキー",
-            "masterKeyPlaceholder": "マスターキーを入力",
             "masterKeyValid": "このマスターキーは利用できます。",
             "masterKeyInvalid": "マスターキーを確認できません。",
             "import": "インポート",
@@ -287,7 +286,8 @@
             "existingAccountTitle": "保存済みアカウントがあります",
             "existingAccountDescription": "新しくインポートするには、ブラウザに保存されたアカウント情報を先に削除する必要があります。",
             "existingMasterKeyNotice": "このブラウザには既にマスターキーがあります。",
-            "deleteBrowserAccount": "ブラウザのアカウント情報を削除"
+            "deleteBrowserAccount": "ブラウザのアカウント情報を削除",
+            "masterKeyHint": "12個の単語を順番に入力してください。12語をまとめて貼り付けることもできます。"
         },
         "profile": {
             "userNotFound": "ユーザーが見つかりませんでした",
@@ -770,6 +770,10 @@
             "fav": "お気に入り",
             "reaction": "リアクション",
             "readRequest": "閲覧リクエスト"
+        },
+        "mnemonicInput": {
+            "wordLabel": "{{index}}番目の単語",
+            "unknownWords": "単語帳にない単語が入力されています({{positions}}番目)。綴りを確認してください。"
         }
     },
     "contexts": {
@@ -838,8 +842,6 @@
             "signup": "アカウントをお持ちでない方は新規登録",
             "checking": "確認中...",
             "usePasskey": "パスキーを使う",
-            "manualKey": "マスターキーまたはサブキー",
-            "manualKeyPlaceholder": "12語のマスターキー、64桁のhex秘密鍵、または concrnt-subkey から始まるサブキーを入力",
             "registeredServer": "登録サーバー",
             "serverPlaceholder": "例: v2dev.concrnt.net",
             "masterKeyInvalid": "マスターキーを確認できません。",
@@ -863,7 +865,13 @@
             "checkingSubkey": "{{domain}} でサブキーを確認しています...",
             "subkeyInvalid": "サブキーの形式が正しくありません。",
             "subkeyInvalidOnServer": "このサブキーは無効化されているか、登録されていません。",
-            "subkeyLoginFailed": "サブキーでのログインに失敗しました。"
+            "subkeyLoginFailed": "サブキーでのログインに失敗しました。",
+            "manualMasterKey": "マスターキー",
+            "manualMasterKeyHint": "12個の単語を順番に入力してください。12語をまとめて貼り付けることもできます。",
+            "manualRawKey": "サブキーまたは秘密鍵",
+            "manualRawKeyPlaceholder": "concrnt-subkey から始まるサブキー、または64桁のhex秘密鍵を入力",
+            "switchToRawKey": "サブキー・秘密鍵で入力する",
+            "switchToMasterKey": "マスターキー(12語)で入力する"
         },
         "register": {
             "title": "アカウント登録",

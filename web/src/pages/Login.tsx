@@ -27,6 +27,7 @@ import {
 import { semantics } from '@concrnt/worldlib'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from '../views/authLayout'
 import { useResetPreference } from '../contexts/Preference'
+import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
 
 const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
@@ -37,6 +38,7 @@ const resolveEntrypoint = (): string => {
 }
 
 type LoginMethod = 'qr' | 'passkey' | 'recovery'
+type ManualMode = 'mnemonic' | 'raw'
 
 const normalizeRecoveryPhrase = (value: string) => value.trim().normalize('NFKD').toLowerCase().replace(/\s+/g, ' ')
 
@@ -178,10 +180,24 @@ export const Login = () => {
     const [method, setMethod] = useState<LoginMethod>('qr')
     const [status, setStatus] = useState('')
     const [busy, setBusy] = useState(false)
-    const [mnemonic, setMnemonic] = useState('')
+    const [manualMode, setManualMode] = useState<ManualMode>('mnemonic')
+    const [words, setWords] = useState<string[]>(() => Array(MNEMONIC_WORD_COUNT).fill(''))
+    const [rawInput, setRawInput] = useState('')
     const [manualServer, setManualServer] = useState('')
     const [needsServer, setNeedsServer] = useState(false)
     const [resolvedCCID, setResolvedCCID] = useState<string>()
+
+    // 12語入力は全欄が埋まったときだけ1本の文字列として扱う(途中の入力で検証を走らせない)
+    const mnemonic = useMemo(
+        () => (manualMode === 'mnemonic' ? (words.every((w) => w !== '') ? words.join(' ') : '') : rawInput),
+        [manualMode, words, rawInput]
+    )
+
+    const resetManualInput = () => {
+        setNeedsServer(false)
+        setResolvedCCID(undefined)
+        setStatus('')
+    }
 
     const normalizedMnemonic = useMemo(() => normalizeRecoveryPhrase(mnemonic), [mnemonic])
     const recoveryIdentity = useMemo(() => {
@@ -388,17 +404,53 @@ export const Login = () => {
                 <>
                     <div style={authStyles.section}>
                         <div style={authStyles.inputGroup}>
-                            <Text style={{ color: CssVar.uiText }}>{t('manualKey')}</Text>
-                            <TextField
-                                value={mnemonic}
-                                onChange={(e) => {
-                                    setMnemonic(e.target.value)
-                                    setNeedsServer(false)
-                                    setResolvedCCID(undefined)
-                                    setStatus('')
+                            <Text style={{ color: CssVar.uiText }}>
+                                {manualMode === 'mnemonic' ? t('manualMasterKey') : t('manualRawKey')}
+                            </Text>
+                            {manualMode === 'mnemonic' ? (
+                                <>
+                                    <Text
+                                        style={{
+                                            color: CssVar.uiText,
+                                            opacity: 0.78,
+                                            fontSize: '0.9rem',
+                                            lineHeight: 1.6
+                                        }}
+                                    >
+                                        {t('manualMasterKeyHint')}
+                                    </Text>
+                                    <MnemonicInput
+                                        words={words}
+                                        onChange={(next) => {
+                                            setWords(next)
+                                            resetManualInput()
+                                        }}
+                                        onRawInput={(text) => {
+                                            // サブキー/hex秘密鍵が貼られたら単一欄へ切り替えてそのまま受け取る
+                                            setManualMode('raw')
+                                            setRawInput(text)
+                                            resetManualInput()
+                                        }}
+                                    />
+                                </>
+                            ) : (
+                                <TextField
+                                    value={rawInput}
+                                    onChange={(e) => {
+                                        setRawInput(e.target.value)
+                                        resetManualInput()
+                                    }}
+                                    placeholder={t('manualRawKeyPlaceholder')}
+                                />
+                            )}
+                            <AuthTextButton
+                                onClick={() => {
+                                    setManualMode(manualMode === 'mnemonic' ? 'raw' : 'mnemonic')
+                                    resetManualInput()
                                 }}
-                                placeholder={t('manualKeyPlaceholder')}
-                            />
+                            >
+                                {manualMode === 'mnemonic' ? t('switchToRawKey') : t('switchToMasterKey')}
+                            </AuthTextButton>
                         </div>
 
                         {resolvedCCID && <Text style={authStyles.ccid}>{resolvedCCID}</Text>}
@@ -448,11 +500,10 @@ export const Login = () => {
                         )}
                         <AuthTextButton
                             onClick={() => {
-                                setMnemonic('')
+                                setWords(Array(MNEMONIC_WORD_COUNT).fill(''))
+                                setRawInput('')
                                 setManualServer('')
-                                setNeedsServer(false)
-                                setResolvedCCID(undefined)
-                                setStatus('')
+                                resetManualInput()
                             }}
                         >
                             {t('clearInput')}
