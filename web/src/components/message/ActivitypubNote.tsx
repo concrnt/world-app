@@ -158,6 +158,7 @@ const Note = (props: {
                     <Text
                         style={{
                             fontWeight: 'bold',
+                            whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis'
                         }}
@@ -166,12 +167,32 @@ const Note = (props: {
                     </Text>
                     <SiActivitypub size={14} style={{ flexShrink: 0 }} title="ActivityPub" />
                     {author?.getHandle() && (
-                        <span style={{ fontSize: '0.75rem', opacity: 0.7, flexShrink: 0 }}>{author.getHandle()}</span>
+                        <span
+                            style={{
+                                fontSize: '0.75rem',
+                                opacity: 0.7,
+                                // 幅が足りないときは名前より先にこちらを見切る
+                                flexShrink: 1000,
+                                minWidth: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }}
+                        >
+                            {author.getHandle()}
+                        </span>
                     )}
                 </span>
             }
             headerRight={
-                <span style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                <span
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap'
+                    }}
+                >
                     {visibility === 'followers' && <MdLock size={14} style={{ opacity: 0.7 }} title="フォロワー限定" />}
                     {visibility === 'direct' && <MdMail size={14} style={{ opacity: 0.7 }} title="ダイレクト" />}
                     {note.published && <TimeDiff date={new Date(note.published)} />}
