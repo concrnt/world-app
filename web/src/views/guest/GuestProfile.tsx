@@ -11,7 +11,7 @@ import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
 import { ProfileName } from '../../components/ProfileName'
-import { MdLock } from 'react-icons/md'
+import { MdLock, MdDns } from 'react-icons/md'
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { useMediaProxy } from '../../contexts/MediaProxy'
 
@@ -201,6 +201,10 @@ const Body = (props: BodyProps) => {
                         <div>
                             <Text variant="caption">{props.ccid}</Text>
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(0.5) }}>
+                            <MdDns size={14} style={{ opacity: 0.7 }} />
+                            <Text variant="caption">{props.user.domain}</Text>
+                        </div>
                         <div>
                             <Text>{profile.value.description || t('noDescription')}</Text>
                         </div>
@@ -318,6 +322,10 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                 </div>
                 <div>
                     <Text variant="caption">{props.ccid}</Text>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(0.5) }}>
+                    <MdDns size={14} style={{ opacity: 0.7 }} />
+                    <Text variant="caption">{props.user.domain}</Text>
                 </div>
             </div>
             <div
