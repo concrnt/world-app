@@ -4,6 +4,7 @@ import { Button, Checkbox, Divider, Switch, Text } from '@concrnt/ui'
 import { NotFoundError, NotificationSubscription } from '@concrnt/client'
 import { Schemas } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
+import { usePreference } from '../contexts/Preference'
 import { Header } from '../components/Header'
 import { View } from '../components/View'
 import { CssVar } from '../types/Theme'
@@ -31,6 +32,7 @@ const schemaOptions: { labelKey: string; schema: string }[] = [
 export const NotificationSettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.notificationSettings' })
     const { client } = useClient()
+    const [badgeEnabled, setBadgeEnabled] = usePreference('unreadBadgeEnabled')
 
     const [enabled, setEnabled] = useState(isPushEnabled)
     const [schemas, setSchemas] = useState<string[]>(getPushSchemas)
@@ -105,6 +107,14 @@ export const NotificationSettingsView = () => {
                     padding: CssVar.space(4)
                 }}
             >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text variant="h3">{t('showBadge')}</Text>
+                    <Switch checked={badgeEnabled} onChange={setBadgeEnabled} />
+                </div>
+                <Text variant="caption">{t('showBadgeNote')}</Text>
+
+                <Divider />
+
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text variant="h3">{t('enablePush')}</Text>
                     <Switch checked={enabled} disabled={busy} onChange={handleToggle} />

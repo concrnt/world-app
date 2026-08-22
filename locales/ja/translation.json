@@ -74,6 +74,8 @@
         },
         "notificationSettings": {
             "title": "通知",
+            "showBadge": "未読バッジを表示",
+            "showBadgeNote": "通知タブやアプリアイコンに未読件数を表示します。",
             "enablePush": "プッシュ通知を受け取る",
             "singleDeviceNote": "通知を受け取れるのは最後に有効化した1ブラウザ(または1端末)のみです。別のブラウザで有効化すると、このブラウザでは受け取れなくなります。",
             "permissionDeniedApp": "通知の許可がOS側で拒否されています。端末の設定アプリからこのアプリの通知を許可してください。",

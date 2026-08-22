@@ -74,6 +74,8 @@
         },
         "notificationSettings": {
             "title": "Notifications",
+            "showBadge": "Show unread badge",
+            "showBadgeNote": "Shows the unread count on the notifications tab and the app icon.",
             "enablePush": "Receive push notifications",
             "singleDeviceNote": "Push notifications are delivered only to the last browser (or device) where they were enabled. Enabling them in another browser will stop delivery to this one.",
             "permissionDeniedApp": "Notification permission has been denied by the OS. Please allow notifications for this app in your device settings.",

@@ -8,6 +8,8 @@ export interface Preference {
     themeVariant: 'classic' | 'world'
     developerMode: boolean
     hapticsEnabled: boolean
+    // タブバー・サイドバー・OSアイコンの未読バッジ表示
+    unreadBadgeEnabled: boolean
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
     // プロフィール名 -> サイドバーで展開中のリストURI
@@ -19,6 +21,7 @@ export const defaultPreference: Preference = {
     themeVariant: 'classic',
     developerMode: false,
     hapticsEnabled: true,
+    unreadBadgeEnabled: true,
     listOrder: {},
     expandedLists: {}
 }
