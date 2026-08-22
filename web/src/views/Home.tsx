@@ -1,4 +1,5 @@
 import { ReactNode, startTransition, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
@@ -35,7 +36,15 @@ export const HomeView = (props: ScrollViewProps) => {
         scrollToTop: () => scrollRef.current?.scrollToTop()
     }))
 
-    const [selectedTabUri, setSelectedTabUri] = useState<string>('')
+    // 選択中のリストはURLハッシュ(/#<encodeURIComponent(uri)>)で保持する。stateだと戻るで前のリストに戻れず、
+    // リロードや共有でも選択が失われるため。ハッシュ無しは先頭のピンを意味し、URLは書き換えない
+    const location = useLocation()
+    const navigate = useNavigate()
+    const hashTabUri = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
+    const selectTab = (uri: string) => {
+        if (uri === hashTabUri) return
+        navigate({ hash: encodeURIComponent(uri) })
+    }
     const [listSettingsOpen, setListSettingsOpen] = useState(false)
 
     // fix default settings
@@ -76,9 +85,6 @@ export const HomeView = (props: ScrollViewProps) => {
                 >
                     Home
                 </Header>
-                <Drawer open={listSettingsOpen} onClose={() => setListSettingsOpen(false)}>
-                    <ListSettings uri={selectedTabUri} onComplete={() => setListSettingsOpen(false)} />
-                </Drawer>
                 <Drawer open={profileSetupOpen} onClose={() => setProfileSetupOpen(false)}>
                     <ProfileEditor
                         noLoading
@@ -106,8 +112,10 @@ export const HomeView = (props: ScrollViewProps) => {
                     <Suspense>
                         <HomeMain
                             ref={scrollRef}
-                            selectedTabUri={selectedTabUri}
-                            setSelectedTabUri={setSelectedTabUri}
+                            hashTabUri={hashTabUri}
+                            selectTab={selectTab}
+                            listSettingsOpen={listSettingsOpen}
+                            closeListSettings={() => setListSettingsOpen(false)}
                         />
                     </Suspense>
                 </ErrorBoundary>
@@ -118,12 +126,16 @@ export const HomeView = (props: ScrollViewProps) => {
 
 const HomeMain = ({
     ref,
-    selectedTabUri,
-    setSelectedTabUri
+    hashTabUri,
+    selectTab,
+    listSettingsOpen,
+    closeListSettings
 }: {
     ref?: ScrollViewRef
-    selectedTabUri: string
-    setSelectedTabUri: (uri: string) => void
+    hashTabUri: string
+    selectTab: (uri: string) => void
+    listSettingsOpen: boolean
+    closeListSettings: () => void
 }) => {
     const { client } = useClient()
 
@@ -133,16 +145,15 @@ const HomeMain = ({
     const order = listOrder?.[client.currentProfile] ?? []
     const sortedPins = sortByListOrder(pinnedLists, order)
 
-    const pin = sortedPins.find((pin) => pin.uri === selectedTabUri)
-
-    useEffect(() => {
-        if (selectedTabUri === '' && sortedPins.length > 0) {
-            setSelectedTabUri(sortedPins[0].uri)
-        }
-    }, [selectedTabUri])
+    // ハッシュ無し・ピン解除済み等で該当しないときは先頭のピンにフォールバックする
+    const effectiveTabUri = sortedPins.some((pin) => pin.uri === hashTabUri) ? hashTabUri : (sortedPins[0]?.uri ?? '')
+    const pin = sortedPins.find((pin) => pin.uri === effectiveTabUri)
 
     return (
         <>
+            <Drawer open={listSettingsOpen} onClose={closeListSettings}>
+                <ListSettings uri={effectiveTabUri} onComplete={closeListSettings} />
+            </Drawer>
             {sortedPins.length > 1 && (
                 <Tabs
                     style={{
@@ -153,10 +164,10 @@ const HomeMain = ({
                     {sortedPins.map((tab) => (
                         <Tab
                             key={tab.uri}
-                            selected={selectedTabUri === tab.uri}
+                            selected={effectiveTabUri === tab.uri}
                             onClick={() =>
                                 startTransition(() => {
-                                    setSelectedTabUri(tab.uri)
+                                    selectTab(tab.uri)
                                 })
                             }
                             groupId="home-timeline-tabs"
