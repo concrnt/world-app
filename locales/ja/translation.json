@@ -779,6 +779,13 @@
         }
     },
     "contexts": {
+        "commandPalette": {
+            "placeholder": "コミュニティ・ユーザーを検索...",
+            "communities": "コミュニティ",
+            "users": "ユーザー",
+            "noResults": "該当する結果が見つかりませんでした",
+            "unavailable": "検索サービスに接続できませんでした"
+        },
         "composer": {
             "cancel": "キャンセル"
         },

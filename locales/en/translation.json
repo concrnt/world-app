@@ -780,6 +780,13 @@
         }
     },
     "contexts": {
+        "commandPalette": {
+            "placeholder": "Search communities and users...",
+            "communities": "Communities",
+            "users": "Users",
+            "noResults": "No results matched your search",
+            "unavailable": "Could not reach the search service"
+        },
         "composer": {
             "cancel": "Cancel"
         },

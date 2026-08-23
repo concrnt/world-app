@@ -45,10 +45,10 @@ interface SearchResponse<T> {
     processingTimeMs: number
 }
 
-type TabType = 'communities' | 'users'
+export type SearchTab = 'communities' | 'users'
 
 // エラーは呼び出し側で表示するためrejectさせずnullをresolveする
-const fetchSearch = async (tab: TabType, query: string): Promise<CommunityHit[] | UserHit[] | null> => {
+export const fetchSearch = async (tab: SearchTab, query: string): Promise<CommunityHit[] | UserHit[] | null> => {
     try {
         const q = encodeURIComponent(query)
         const res = await fetch(`${CRAWLER_URL}/api/v1/search/${tab}?q=${q}&limit=20`)
@@ -72,7 +72,7 @@ export const SearchExplorer = () => {
         fontWeight: selected ? ('bold' as const) : ('normal' as const)
     })
 
-    const [tab, setTab] = useState<TabType>('communities')
+    const [tab, setTab] = useState<SearchTab>('communities')
     const [query, setQuery] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -125,7 +125,7 @@ export const SearchExplorer = () => {
     )
 }
 
-const SearchResults = ({ tab, query }: { tab: TabType; query: string }) => {
+const SearchResults = ({ tab, query }: { tab: SearchTab; query: string }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
     const hits = useResource(`crawler-search:${tab}:${query}`, () => fetchSearch(tab, query))
 

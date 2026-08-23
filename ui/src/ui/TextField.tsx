@@ -5,6 +5,7 @@ interface Props {
     value?: string
     placeholder?: string
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
 export const TextField = (props: Props) => {
@@ -15,6 +16,7 @@ export const TextField = (props: Props) => {
             value={props.value}
             placeholder={props.placeholder}
             onChange={props.onChange}
+            onKeyDown={props.onKeyDown}
             style={{
                 padding: '8px',
                 fontSize: '16px',
