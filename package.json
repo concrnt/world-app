@@ -6,10 +6,12 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm --filter world-app dev",
+    "og:dev": "wrangler pages dev web/dist --binding OG_ENTRYPOINT=localhost:8000",
     "tauri": "tauri",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@eslint/js": "^9.39.2",
     "@tauri-apps/cli": "^2.9.6",
     "eslint": "^9.39.2",
@@ -19,7 +21,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "typescript-eslint": "^8.50.0"
+    "typescript-eslint": "^8.50.0",
+    "wrangler": "^4.125.0"
   },
   "packageManager": "pnpm@10.33.0",
   "volta": {
