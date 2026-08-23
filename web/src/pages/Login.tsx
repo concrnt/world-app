@@ -31,7 +31,7 @@ import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
 
 const resolveEntrypoint = (): string => {
     const hostname = window.location.hostname
-    if (hostname === 'localhost') {
+    if (hostname === 'localhost' || hostname === 'concrnt.world') {
         return 'ariake.concrnt.net'
     }
     return hostname
