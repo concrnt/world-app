@@ -1,3 +1,4 @@
+import { resolveEntrypoint } from '../../utils/entrypoint'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from 'react-router-dom'
@@ -15,14 +16,6 @@ import { LoadingFull } from '../../components/LoadingFull'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { CCUserChip } from '../../components/CCUserChip'
 import { TimelineChip } from '../../components/TimelineChip'
-
-const resolveEntrypoint = (): string => {
-    const hostname = window.location.hostname
-    if (hostname === 'localhost') {
-        return 'ariake.concrnt.net'
-    }
-    return hostname
-}
 
 // 未ログイン閲覧用のシェル。鍵を持たないゲストクライアントを生成し、
 // 閲覧に必要な最小限のプロバイダのみをマウントする(書き込みを伴うプロバイダは置かない)

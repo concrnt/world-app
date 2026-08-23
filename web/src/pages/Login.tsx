@@ -1,3 +1,4 @@
+import { resolveEntrypoint } from '../utils/entrypoint'
 import { CssVar, Text, TextField, ToggleGroup } from '@concrnt/ui'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -28,14 +29,6 @@ import { semantics } from '@concrnt/worldlib'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from '../views/authLayout'
 import { useResetPreference } from '../contexts/Preference'
 import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
-
-const resolveEntrypoint = (): string => {
-    const hostname = window.location.hostname
-    if (hostname === 'localhost' || hostname === 'concrnt.world') {
-        return 'ariake.concrnt.net'
-    }
-    return hostname
-}
 
 type LoginMethod = 'qr' | 'passkey' | 'recovery'
 type ManualMode = 'mnemonic' | 'raw'

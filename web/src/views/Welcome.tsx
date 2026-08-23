@@ -1,3 +1,4 @@
+import { resolveEntrypoint } from '../utils/entrypoint'
 import { CssVar, Text, TextField } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { useEffect, useMemo, useState } from 'react'
@@ -10,14 +11,6 @@ import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { ResetSessionButton } from '../components/ResetSessionButton'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, authStyles } from './authLayout'
-
-const resolveEntrypoint = (): string => {
-    const hostname = window.location.hostname
-    if (hostname === 'localhost' || hostname === 'concrnt.world') {
-        return 'ariake.concrnt.net'
-    }
-    return hostname
-}
 
 interface User {
     ccid: string
