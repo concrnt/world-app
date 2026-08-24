@@ -339,7 +339,19 @@
                 "schemaUnavailable": "This server does not serve a registration form definition, so editing is unavailable.",
                 "save": "Save",
                 "saved": "Saved!",
-                "saveError": "Failed to save"
+                "saveError": "Failed to save",
+                "dangerZone": {
+                    "title": "Danger Zone",
+                    "deleteAccount": "Delete Account",
+                    "confirmTitle": "Delete your registration",
+                    "warning": "This deletes your registration and posted data from this server. For a while after deletion, data already delivered to other servers or caches may remain and cannot be deleted from here. This cannot be undone.",
+                    "downloadArchive": "Download an archive of your data first",
+                    "downloaded": "Archive saved",
+                    "downloadFailed": "Failed to download the archive",
+                    "cancel": "Cancel",
+                    "delete": "Delete my account",
+                    "deleteFailed": "Failed to delete. Please try again."
+                }
             },
             "subkeys": {
                 "title": "Subkeys",

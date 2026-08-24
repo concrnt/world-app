@@ -934,8 +934,9 @@ export class Api {
     }
 
     // net.concrnt.world.register (DELETE)
-    // 引っ越し完了後などに、このサーバー上の登録(entity meta)を解除する。
-    // entityが既に他ドメインを指していないとサーバー側で拒否される
+    // このサーバー上の登録(entity meta)を即時解除し、自分が単独ownerの
+    // commitをサーバー側でGC候補にする(実データはgc-commitlog実行時に消える)。
+    // アカウント削除と引っ越し後の後始末の両方で使う統一動作で、未登録でも成功する(冪等)
     async unregister(host?: string): Promise<void> {
         const fetchHost = host || this.defaultHost
         await this.callConcrntApi(fetchHost, 'net.concrnt.world.register', {}, { method: 'DELETE' })

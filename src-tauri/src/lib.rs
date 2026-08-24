@@ -49,6 +49,7 @@ pub fn run() {
             commands::set_domain,
             commands::load_identity,
             backup::backup_masterkey,
+            backup::save_backup_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
