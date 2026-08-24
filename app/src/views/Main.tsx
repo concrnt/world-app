@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TabLayout } from '../layouts/Tab'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { Sidebar } from '../components/Sidebar'
@@ -8,6 +8,10 @@ import { ExplorerView } from './Explorer'
 import { NotificationsView } from './Notifications'
 import { ContactsView } from './Contacts'
 import { PostView } from './Post'
+import { TimelineView } from './Timeline'
+import { ProfileView } from './Profile'
+import { ApView } from './ApView'
+import { BskyView } from './BskyView'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
@@ -19,7 +23,7 @@ import { MdContacts } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { CssVar } from '../types/Theme'
-import { Badge, useTheme } from '@concrnt/ui'
+import { Badge, CfmActionsProvider, useCfmActions, useTheme } from '@concrnt/ui'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { setAppBadge } from '../lib/push'
 
@@ -113,6 +117,55 @@ export const MainView = () => {
         [selectedTab]
     )
 
+    // openInternalはCfmActionsとしてメモ化して配るため、押し先のタブはrefで最新値を追う
+    const selectedTabRef = useRef(selectedTab)
+    useEffect(() => {
+        selectedTabRef.current = selectedTab
+    }, [selectedTab])
+
+    const parentCfmActions = useCfmActions()
+
+    // concrnt.worldオリジンの共有URLは外部ブラウザに出さず、対応するビューを現在のタブのスタックに積む
+    const openInternal = useCallback((url: string): boolean => {
+        let parsed: URL
+        try {
+            parsed = new URL(url)
+        } catch {
+            return false
+        }
+        if (parsed.hostname !== 'concrnt.world') return false
+        const path = parsed.pathname
+        let view: ReactNode | null = null
+        let match: RegExpMatchArray | null
+        if ((match = path.match(/^\/post\/([^/]+)$/))) {
+            view = <PostView uri={decodeURIComponent(match[1])} />
+        } else if ((match = path.match(/^\/timeline\/([^/]+)$/))) {
+            view = <TimelineView uri={decodeURIComponent(match[1])} />
+        } else if ((match = path.match(/^\/profile\/([^/]+)(?:\/([^/]+))?$/))) {
+            view = (
+                <ProfileView
+                    ccid={decodeURIComponent(match[1])}
+                    profileName={match[2] ? decodeURIComponent(match[2]) : undefined}
+                />
+            )
+        } else if ((match = path.match(/^\/activitypub\/(?:person|note|view)\/([^/]+)$/))) {
+            view = <ApView uri={decodeURIComponent(match[1])} />
+        } else if ((match = path.match(/^\/bluesky\/(?:person|post|view)\/([^/]+)$/))) {
+            view = <BskyView uri={decodeURIComponent(match[1])} />
+        }
+        if (!view) return false
+        stackRefs.current[selectedTabRef.current]?.push(view)
+        return true
+    }, [])
+
+    const cfmActions = useMemo(
+        () => ({
+            ...parentCfmActions,
+            openInternal
+        }),
+        [parentCfmActions, openInternal]
+    )
+
     // Android back button handling: ナビゲーションハンドラは常時登録(=スタックの最下段)
     useBackHandler(() => {
         const stackRef = stackRefs.current[selectedTab]
@@ -164,7 +217,7 @@ export const MainView = () => {
     }, [client])
 
     return (
-        <>
+        <CfmActionsProvider value={cfmActions}>
             <SidebarLayout
                 opened={opened}
                 setOpen={setOpen}
@@ -216,6 +269,6 @@ export const MainView = () => {
                     />
                 </div>
             </SidebarLayout>
-        </>
+        </CfmActionsProvider>
     )
 }

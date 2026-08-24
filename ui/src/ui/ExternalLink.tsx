@@ -11,7 +11,7 @@ interface Props {
 // CfmActions.openExternal (the Tauri app does, to reach the OS browser),
 // it takes over; otherwise this is a plain <a target="_blank">.
 export const ExternalLink = (props: Props) => {
-    const { openExternal } = useCfmActions()
+    const { openExternal, openInternal } = useCfmActions()
     return (
         <a
             href={props.href}
@@ -20,6 +20,10 @@ export const ExternalLink = (props: Props) => {
             style={props.style}
             onClick={(e) => {
                 e.stopPropagation()
+                if (openInternal?.(props.href)) {
+                    e.preventDefault()
+                    return
+                }
                 if (openExternal) {
                     e.preventDefault()
                     openExternal(props.href)

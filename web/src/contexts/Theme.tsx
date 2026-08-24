@@ -12,6 +12,7 @@ import {
 } from '../utils/themeList'
 import { CCUserChip } from '../components/CCUserChip'
 import { TimelineChip } from '../components/TimelineChip'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
     theme?: Theme
@@ -125,6 +126,31 @@ export const ThemeProvider = (props: Props) => {
         [saveTheme, setThemeName]
     )
 
+    const navigate = useNavigate()
+
+    // concrnt.worldオリジンの共有URLは外部ブラウザに出さず内部ルートで開く
+    const openInternal = useCallback(
+        (url: string): boolean => {
+            let parsed: URL
+            try {
+                parsed = new URL(url)
+            } catch {
+                return false
+            }
+            if (parsed.hostname !== 'concrnt.world') return false
+            const path = parsed.pathname
+            const isInternal =
+                /^\/(post|timeline)\/[^/]+$/.test(path) ||
+                /^\/profile\/[^/]+(\/[^/]+)?$/.test(path) ||
+                /^\/activitypub\/(person|note|view)\/[^/]+$/.test(path) ||
+                /^\/bluesky\/(person|post|view)\/[^/]+$/.test(path)
+            if (!isInternal) return false
+            navigate(path + parsed.search + parsed.hash)
+            return true
+        },
+        [navigate]
+    )
+
     const value = useMemo(
         () => ({
             customThemes,
@@ -145,7 +171,8 @@ export const ThemeProvider = (props: Props) => {
                     ),
                     renderTimelineChip: (fqid) => (
                         <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    )
+                    ),
+                    openInternal
                 }}
             >
                 <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>

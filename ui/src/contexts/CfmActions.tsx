@@ -31,6 +31,9 @@ export interface CfmActions {
     // Open a URL in the external (OS) browser. Undefined -> ExternalLink falls
     // back to the anchor's default target="_blank" behavior.
     openExternal?: (url: string) => void
+    // Try to open a URL as in-app navigation (e.g. https://concrnt.world/post/...).
+    // Returns true if handled; false -> ExternalLink opens it externally as usual.
+    openInternal?: (url: string) => boolean
 }
 
 const CfmActionsContext = createContext<CfmActions>({})
