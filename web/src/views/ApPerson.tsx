@@ -291,14 +291,22 @@ export const ApPerson = ({ person }: Props) => {
                                 variant="h6"
                                 style={{
                                     fontWeight: 'bold',
-                                    fontSize: '1.2rem',
+                                    fontSize: '1.2rem'
+                                }}
+                            >
+                                {person.name || 'Anonymous'}
+                            </Text>
+                            <Text
+                                style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: CssVar.space(1),
                                     flexWrap: 'wrap'
                                 }}
                             >
-                                {person.name || 'Anonymous'}
+                                <span>
+                                    @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}
+                                </span>
                                 {followedBy && (
                                     <Text
                                         variant="caption"
@@ -316,9 +324,6 @@ export const ApPerson = ({ person }: Props) => {
                                         {t('followsYou')}
                                     </Text>
                                 )}
-                            </Text>
-                            <Text>
-                                @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}
                             </Text>
                         </div>
                         <div>

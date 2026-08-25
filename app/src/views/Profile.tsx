@@ -384,21 +384,26 @@ const Body = (props: BodyProps) => {
                                     style={{
                                         fontWeight: 'bold',
                                         fontSize: '1.2rem',
-                                        textDecoration: isBlocking ? 'line-through' : undefined,
+                                        textDecoration: isBlocking ? 'line-through' : undefined
+                                    }}
+                                >
+                                    <ProfileName document={profile} />
+                                </Text>
+                                <Text
+                                    style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: CssVar.space(1),
                                         flexWrap: 'wrap'
                                     }}
                                 >
-                                    <ProfileName document={profile} />
+                                    {props.user?.alias ? '@' + props.user.alias : null}
                                     {client.ccid && !isMe && (
                                         <Suspense fallback={null}>
                                             <FollowedBadge ccid={props.ccid} />
                                         </Suspense>
                                     )}
                                 </Text>
-                                <Text>{props.user?.alias ? props.user.alias : null}</Text>
                             </div>
                             <div>
                                 <Text variant="caption">{props.ccid}</Text>
