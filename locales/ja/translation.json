@@ -300,6 +300,7 @@
             "unblockConfirmDescription": "ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。",
             "unblock": "ブロック解除",
             "noDescription": "説明はまだありません",
+            "followsYou": "フォローされています",
             "following": "{{n}} フォロー",
             "followers": "{{n}} フォロワー",
             "share": "シェア",
@@ -407,6 +408,7 @@
         "apPerson": {
             "follow": "フォロー",
             "unfollow": "フォロー解除",
+            "followsYou": "フォローされています",
             "noDescription": "説明はまだありません",
             "apUserNotice": "このユーザーはActivityPubのユーザーです。",
             "openRemote": "リモートで開く",

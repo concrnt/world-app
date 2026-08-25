@@ -41,6 +41,7 @@ export const ApPerson = ({ person }: Props) => {
     const { client } = useClient()
 
     const [followed, setFollowed] = useState<boolean | undefined>(undefined)
+    const [followedBy, setFollowedBy] = useState(false)
 
     const [items, setItems] = useState<OutboxItem[]>([])
     const [next, setNext] = useState<string | null>(null)
@@ -62,6 +63,21 @@ export const ApPerson = ({ person }: Props) => {
                 } else {
                     console.log(err)
                 }
+            })
+    }
+
+    // 被フォローはブリッジの自分専用followers API(actorURIの一覧)にこのactorが含まれるかで判定する
+    const updateFollowedBy = () => {
+        if (!client.ccid) return
+        if (!('net.concrnt.activitypub.followers' in (client.server?.endpoints ?? {}))) return
+        client.api
+            .callConcrntApi<string[]>(client.server.domain, 'net.concrnt.activitypub.followers', {})
+            .then((uris) => {
+                setFollowedBy(uris.includes(person.id))
+            })
+            .catch((err) => {
+                // AP未セットアップのユーザーは404になるが、その場合は単に表示しない
+                console.log(err)
             })
     }
 
@@ -119,6 +135,8 @@ export const ApPerson = ({ person }: Props) => {
 
     useEffect(() => {
         updateFollowed()
+        setFollowedBy(false)
+        updateFollowedBy()
         sessionRef.current++
         loadingRef.current = false
         setItems([])
@@ -273,10 +291,31 @@ export const ApPerson = ({ person }: Props) => {
                                 variant="h6"
                                 style={{
                                     fontWeight: 'bold',
-                                    fontSize: '1.2rem'
+                                    fontSize: '1.2rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(1),
+                                    flexWrap: 'wrap'
                                 }}
                             >
                                 {person.name || 'Anonymous'}
+                                {followedBy && (
+                                    <Text
+                                        variant="caption"
+                                        style={{
+                                            fontSize: '0.65rem',
+                                            opacity: 0.6,
+                                            fontWeight: 'normal',
+                                            flexShrink: 0,
+                                            border: `1px solid ${CssVar.divider}`,
+                                            borderRadius: CssVar.round(0.5),
+                                            padding: `1px ${CssVar.space(1)}`,
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {t('followsYou')}
+                                    </Text>
+                                )}
                             </Text>
                             <Text>
                                 @{person.preferredUsername}@{new URL(person.id).host ?? 'unknown'}

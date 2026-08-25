@@ -300,6 +300,7 @@
             "unblockConfirmDescription": "Unblocking will allow this user to reply to you and react to your posts again.",
             "unblock": "Unblock",
             "noDescription": "No description yet",
+            "followsYou": "Follows you",
             "following": "{{n}} Following",
             "followers": "{{n}} Followers",
             "share": "Share",
@@ -408,6 +409,7 @@
         "apPerson": {
             "follow": "Follow",
             "unfollow": "Unfollow",
+            "followsYou": "Follows you",
             "noDescription": "No description yet",
             "apUserNotice": "This user is an ActivityPub user.",
             "openRemote": "Open on remote server",

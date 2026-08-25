@@ -43,6 +43,32 @@ interface Props {
     profileName?: string
 }
 
+// useSubscribeはsuspendするので単独コンポーネントに分離し、利用側で<Suspense fallback={null}>に包む
+const FollowedBadge = (props: { ccid: string }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.profile' })
+    const { client } = useClient()
+    const [acknowledgers] = useSubscribe(client.acknowledgers)
+    const followed = acknowledgers.some((a) => a.author === props.ccid)
+    if (!followed) return null
+    return (
+        <Text
+            variant="caption"
+            style={{
+                fontSize: '0.65rem',
+                opacity: 0.6,
+                fontWeight: 'normal',
+                flexShrink: 0,
+                border: `1px solid ${CssVar.divider}`,
+                borderRadius: CssVar.round(0.5),
+                padding: `1px ${CssVar.space(1)}`,
+                whiteSpace: 'nowrap'
+            }}
+        >
+            {t('followsYou')}
+        </Text>
+    )
+}
+
 export const ProfileView = (props: Props) => {
     const { client } = useClient()
 
@@ -358,10 +384,19 @@ const Body = (props: BodyProps) => {
                                     style={{
                                         fontWeight: 'bold',
                                         fontSize: '1.2rem',
-                                        textDecoration: isBlocking ? 'line-through' : undefined
+                                        textDecoration: isBlocking ? 'line-through' : undefined,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        flexWrap: 'wrap'
                                     }}
                                 >
                                     <ProfileName document={profile} />
+                                    {client.ccid && !isMe && (
+                                        <Suspense fallback={null}>
+                                            <FollowedBadge ccid={props.ccid} />
+                                        </Suspense>
+                                    )}
                                 </Text>
                                 <Text>{props.user?.alias ? props.user.alias : null}</Text>
                             </div>
@@ -583,6 +618,11 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                     >
                         {props.user.alias ?? props.ccid}
                         <MdLock />
+                        {client.ccid && !isMe && (
+                            <Suspense fallback={null}>
+                                <FollowedBadge ccid={props.ccid} />
+                            </Suspense>
+                        )}
                     </Text>
                 </div>
                 <div>
