@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { CCImage, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { useNavigate } from 'react-router-dom'
+import { Button, CCImage, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
@@ -65,6 +66,7 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const keyboard = useKeyboard()
     const isMobile = useIsMobile()
+    const navigate = useNavigate()
 
     const [frequentEmojis, setFrequentEmojis] = usePersistent<Emoji[]>('emojiPicker:frequent', [])
     const [query, setQuery] = useState('')
@@ -899,26 +901,32 @@ export const EmojiPickerProvider = (props: Props) => {
                                     }}
                                 />
 
-                                {/* Hover preview */}
+                                {/* Hover preview + add emojis */}
                                 <div
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
+                                        justifyContent: 'space-between',
                                         gap: CssVar.space(1),
                                         padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                        height: '44px',
+                                        height: '52px',
                                         flexShrink: 0
                                     }}
                                 >
-                                    {(() => {
-                                        const previewEmoji = hoveredEmoji ?? displayEmojis[0]
-                                        if (!previewEmoji) return null
-                                        return (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: CssVar.space(1),
+                                            minWidth: 0
+                                        }}
+                                    >
+                                        {hoveredEmoji && (
                                             <>
                                                 <CCImage
-                                                    src={previewEmoji.imageURL}
+                                                    src={hoveredEmoji.imageURL}
                                                     maxHeight={128}
-                                                    alt={previewEmoji.shortcode}
+                                                    alt={hoveredEmoji.shortcode}
                                                     style={{
                                                         width: '28px',
                                                         height: '28px',
@@ -934,11 +942,21 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         whiteSpace: 'nowrap'
                                                     }}
                                                 >
-                                                    :{previewEmoji.shortcode}:
+                                                    :{hoveredEmoji.shortcode}:
                                                 </span>
                                             </>
-                                        )
-                                    })()}
+                                        )}
+                                    </div>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => {
+                                            close()
+                                            navigate('/settings/emoji')
+                                        }}
+                                        style={{ flexShrink: 0 }}
+                                    >
+                                        {t('addEmojis')}
+                                    </Button>
                                 </div>
                             </motion.div>
                         )}

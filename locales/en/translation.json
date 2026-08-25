@@ -810,7 +810,8 @@
             "searchPlaceholder": "Search emojis...",
             "noMatchingEmojis": "No matching emojis",
             "noEmojis": "No emojis",
-            "noRecentEmojis": "No emojis used yet"
+            "noRecentEmojis": "No emojis used yet",
+            "addEmojis": "Add emojis"
         },
         "client": {
             "checkingSession": "Checking session...",

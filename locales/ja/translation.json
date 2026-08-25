@@ -809,7 +809,8 @@
             "searchPlaceholder": "絵文字を検索...",
             "noMatchingEmojis": "一致する絵文字がありません",
             "noEmojis": "絵文字がありません",
-            "noRecentEmojis": "まだ使った絵文字がありません"
+            "noRecentEmojis": "まだ使った絵文字がありません",
+            "addEmojis": "絵文字を追加"
         },
         "client": {
             "checkingSession": "セッションを確認しています...",
