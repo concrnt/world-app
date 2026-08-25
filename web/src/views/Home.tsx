@@ -40,9 +40,22 @@ export const HomeView = (props: ScrollViewProps) => {
     // リロードや共有でも選択が失われるため。ハッシュ無しは先頭のピンを意味し、URLは書き換えない
     const location = useLocation()
     const navigate = useNavigate()
-    const hashTabUri = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
+    let hashTabUri = ''
+    try {
+        hashTabUri = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
+    } catch {
+        // 手打ちURL等の不正なパーセントエンコーディングは先頭タブ扱いにする(decodeで落とさない)
+    }
     const selectTab = (uri: string) => {
-        if (uri === hashTabUri) return
+        // 重複push防止のガードはrenderのclosure(hashTabUri)ではなくURLから直接読む。
+        // 切替先の読み込みでtransitionが保留中だとclosureは古く、元のタブへ戻るクリックを飲み込んでしまう
+        let current = ''
+        try {
+            current = window.location.hash ? decodeURIComponent(window.location.hash.slice(1)) : ''
+        } catch {
+            /* 不正なハッシュは不一致扱いでそのままnavigateする */
+        }
+        if (uri === current) return
         navigate({ hash: encodeURIComponent(uri) })
     }
     const [listSettingsOpen, setListSettingsOpen] = useState(false)
