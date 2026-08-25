@@ -71,6 +71,8 @@ export const EmojiPickerProvider = (props: Props) => {
     const [activeTab, setActiveTab] = useState(0)
     // モバイルのみ: 検索欄フォーカス中(=キーボード表示中)は横一列ストリップ表示に切り替える
     const [searchBoxFocused, setSearchBoxFocused] = useState(false)
+    // デスクトップのみ: ホバー中の絵文字を下部フッターにプレビュー表示する
+    const [hoveredEmoji, setHoveredEmoji] = useState<Emoji | null>(null)
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
@@ -210,6 +212,7 @@ export const EmojiPickerProvider = (props: Props) => {
         setIsOpen(false)
         setQuery('')
         setSearchBoxFocused(false)
+        setHoveredEmoji(null)
         onSelectedRef.current = null
     }, [])
 
@@ -465,6 +468,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             selected={effectiveActiveTab === 0}
                                             onClick={() => {
                                                 setActiveTab(0)
+                                                setHoveredEmoji(null)
                                                 gridRef.current?.scrollTo(0, 0)
                                             }}
                                         >
@@ -483,6 +487,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             onClick={() => {
                                                 setQuery('')
                                                 setActiveTab(index + 1)
+                                                setHoveredEmoji(null)
                                                 gridRef.current?.scrollTo(0, 0)
                                             }}
                                         >
@@ -702,6 +707,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             selected={effectiveActiveTab === 0}
                                             onClick={() => {
                                                 setActiveTab(0)
+                                                setHoveredEmoji(null)
                                                 gridRef.current?.scrollTo(0, 0)
                                             }}
                                         >
@@ -720,6 +726,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             onClick={() => {
                                                 setQuery('')
                                                 setActiveTab(index + 1)
+                                                setHoveredEmoji(null)
                                                 gridRef.current?.scrollTo(0, 0)
                                             }}
                                         >
@@ -765,7 +772,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                             type="text"
                                             placeholder={t('searchPlaceholder')}
                                             value={query}
-                                            onChange={(e) => setQuery(e.target.value)}
+                                            onChange={(e) => {
+                                                setQuery(e.target.value)
+                                                setHoveredEmoji(null)
+                                            }}
                                             style={{
                                                 flex: 1,
                                                 border: 'none',
@@ -856,6 +866,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         onMouseOver={(e) => {
                                                             ;(e.currentTarget as HTMLElement).style.backgroundColor =
                                                                 `rgb(from ${CssVar.contentText} r g b / 0.1)`
+                                                            setHoveredEmoji(emoji)
                                                         }}
                                                         onMouseOut={(e) => {
                                                             ;(e.currentTarget as HTMLElement).style.backgroundColor =
@@ -877,6 +888,57 @@ export const EmojiPickerProvider = (props: Props) => {
                                             </div>
                                         ))
                                     )}
+                                </div>
+
+                                {/* Divider */}
+                                <div
+                                    style={{
+                                        height: '1px',
+                                        backgroundColor: CssVar.divider,
+                                        flexShrink: 0
+                                    }}
+                                />
+
+                                {/* Hover preview */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                        height: '44px',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    {(() => {
+                                        const previewEmoji = hoveredEmoji ?? displayEmojis[0]
+                                        if (!previewEmoji) return null
+                                        return (
+                                            <>
+                                                <CCImage
+                                                    src={previewEmoji.imageURL}
+                                                    maxHeight={128}
+                                                    alt={previewEmoji.shortcode}
+                                                    style={{
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        flexShrink: 0
+                                                    }}
+                                                />
+                                                <span
+                                                    style={{
+                                                        fontSize: '12px',
+                                                        opacity: 0.6,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    :{previewEmoji.shortcode}:
+                                                </span>
+                                            </>
+                                        )
+                                    })()}
                                 </div>
                             </motion.div>
                         )}
