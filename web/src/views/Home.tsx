@@ -13,6 +13,7 @@ import { View } from '../components/View'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
+import { MessageSkeleton } from '../components/message/MessageSkeleton'
 
 import { MdTune } from 'react-icons/md'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
@@ -36,26 +37,16 @@ export const HomeView = (props: ScrollViewProps) => {
         scrollToTop: () => scrollRef.current?.scrollToTop()
     }))
 
-    // 選択中のリストはURLハッシュ(/#<encodeURIComponent(uri)>)で保持する。stateだと戻るで前のリストに戻れず、
-    // リロードや共有でも選択が失われるため。ハッシュ無しは先頭のピンを意味し、URLは書き換えない
     const location = useLocation()
     const navigate = useNavigate()
     let hashTabUri = ''
     try {
         hashTabUri = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
-    } catch {
-        // 手打ちURL等の不正なパーセントエンコーディングは先頭タブ扱いにする(decodeで落とさない)
+    } catch (e) {
+        console.warn('HomeView decodeURIComponent error', e)
     }
     const selectTab = (uri: string) => {
-        // 重複push防止のガードはrenderのclosure(hashTabUri)ではなくURLから直接読む。
-        // 切替先の読み込みでtransitionが保留中だとclosureは古く、元のタブへ戻るクリックを飲み込んでしまう
-        let current = ''
-        try {
-            current = window.location.hash ? decodeURIComponent(window.location.hash.slice(1)) : ''
-        } catch {
-            /* 不正なハッシュは不一致扱いでそのままnavigateする */
-        }
-        if (uri === current) return
+        if (uri === hashTabUri) return
         navigate({ hash: encodeURIComponent(uri) })
     }
     const [listSettingsOpen, setListSettingsOpen] = useState(false)
@@ -198,9 +189,11 @@ const HomeMain = ({
                 </Tabs>
             )}
             {pin && (
-                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
-                    <TimelineWrap ref={ref} pin={pin} />
-                </PostContextProvider>
+                <Suspense key={pin.uri} fallback={<MessageSkeleton />}>
+                    <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                        <TimelineWrap ref={ref} pin={pin} />
+                    </PostContextProvider>
+                </Suspense>
             )}
         </>
     )
