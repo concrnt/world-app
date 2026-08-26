@@ -676,9 +676,8 @@ export const EmojiPickerProvider = (props: Props) => {
                             <motion.div
                                 style={{
                                     position: 'fixed',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
+                                    inset: 0,
+                                    margin: 'auto',
                                     backgroundColor: CssVar.contentBackground,
                                     color: CssVar.contentText,
                                     borderRadius: CssVar.round(2),
@@ -686,7 +685,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                     flexDirection: 'column',
                                     width: '380px',
                                     maxWidth: '90vw',
-                                    maxHeight: '480px',
+                                    height: '480px',
+                                    maxHeight: '90vh',
                                     zIndex: 1001,
                                     overflow: 'hidden'
                                 }}
