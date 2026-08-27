@@ -8,7 +8,7 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar, ListItem, useAnchor } from '@concrnt/ui'
+import { Avatar, ListItem, Popover, useAnchor } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useHaptics } from '../contexts/Haptics'
 import { Select } from './Select'
@@ -31,6 +31,7 @@ export const TimelinePicker = (props: Props) => {
     const { client } = useClient()
     const { hapticSelection } = useHaptics()
     const profileAnchor = useAnchor()
+    const dropdownAnchor = useAnchor()
 
     const [profileSelectOpen, setProfileSelectOpen] = useState(false)
 
@@ -55,13 +56,16 @@ export const TimelinePicker = (props: Props) => {
 
     return (
         <div
-            style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                position: 'relative',
-                alignItems: 'center'
-            }}
+            style={
+                {
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    position: 'relative',
+                    alignItems: 'center',
+                    anchorName: dropdownAnchor
+                } as React.CSSProperties
+            }
         >
             <Chip
                 onClick={() => {
@@ -181,46 +185,45 @@ export const TimelinePicker = (props: Props) => {
                     {t('addDestination')}
                 </Chip>
             )}
-            {focused && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        width: '100%',
-                        top: '100%',
-                        left: 0,
-                        borderRadius: '4px',
-                        marginTop: '4px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                        zIndex: 1000,
-                        backgroundColor: CssVar.contentBackground,
-                        // 候補が多くても投稿欄からはみ出さないように内部スクロールにする
-                        maxHeight: 'min(40vh, 300px)',
-                        overflowY: 'auto',
-                        overscrollBehavior: 'contain'
-                    }}
-                >
-                    {options.map((opt) => (
-                        <div
-                            key={props.keyFunc(opt)}
-                            ref={(el) => {
-                                // 内部スクロール化に伴い、キーボード選択中の候補が見切れないよう追従させる
-                                if (focusedIdx === options.indexOf(opt)) el?.scrollIntoView({ block: 'nearest' })
-                            }}
-                            style={{
-                                padding: '8px',
-                                cursor: 'pointer',
-                                borderBottom: `1px solid ${CssVar.divider}`,
-                                backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
-                            }}
-                            onMouseDown={() => {
-                                props.setSelected([...props.selected, props.keyFunc(opt)])
-                            }}
-                        >
-                            {props.labelFunc(opt)}
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* モーダル(Composer等)のoverflowにクリップされないよう、候補一覧はtop layerに出す。
+                開閉はinputのfocus/blurが真実の源泉なのでlight dismissのないmanualにする(onCloseは発火しない) */}
+            <Popover
+                open={focused && options.length > 0}
+                onClose={() => {}}
+                mode="manual"
+                anchor={dropdownAnchor}
+                style={{
+                    width: 'anchor-size(width)',
+                    padding: 0,
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    // 候補が多くても投稿欄からはみ出さないように内部スクロールにする
+                    maxHeight: 'min(40vh, 300px)',
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain'
+                }}
+            >
+                {options.map((opt) => (
+                    <div
+                        key={props.keyFunc(opt)}
+                        ref={(el) => {
+                            // 内部スクロール化に伴い、キーボード選択中の候補が見切れないよう追従させる
+                            if (focusedIdx === options.indexOf(opt)) el?.scrollIntoView({ block: 'nearest' })
+                        }}
+                        style={{
+                            padding: '8px',
+                            cursor: 'pointer',
+                            borderBottom: `1px solid ${CssVar.divider}`,
+                            backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
+                        }}
+                        onMouseDown={() => {
+                            props.setSelected([...props.selected, props.keyFunc(opt)])
+                        }}
+                    >
+                        {props.labelFunc(opt)}
+                    </div>
+                ))}
+            </Popover>
             <Select
                 open={profileSelectOpen}
                 onClose={() => setProfileSelectOpen(false)}

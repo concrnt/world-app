@@ -13,6 +13,7 @@ interface Props {
     anchor: string // トリガー側が style={{ anchorName: '--xxx' }} で宣言したアンカー名
     children: ReactNode
     style?: CSSProperties
+    mode?: 'auto' | 'manual' // manualはlight dismiss・auto同士の排他制御の対象外。openを外部stateだけで制御したいとき用
 }
 
 export const Popover = (props: Props) => {
@@ -31,7 +32,7 @@ export const Popover = (props: Props) => {
     return (
         <div
             ref={ref}
-            popover="auto"
+            popover={props.mode ?? 'auto'}
             onToggle={(e) => {
                 // light dismiss(外側クリック/Esc)で閉じたときに親のstateへ反映する
                 if (e.newState === 'closed' && props.open) props.onClose()
