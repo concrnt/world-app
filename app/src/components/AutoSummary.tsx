@@ -62,6 +62,8 @@ export const AutoSummary = (props: Props) => {
             {props.children}
             {urls.slice(0, limit).map((url, i) => {
                 // YouTube embed
+                // iOSはtauriスキームオリジンのためreferrer不正で直接埋め込みが再生拒否される(Error 153)。
+                // https配信のラッパー(functions/embed/youtube.ts)を経由する
                 let matchYoutube = url.match(/https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/)
                 if (!matchYoutube) matchYoutube = url.match(/https:\/\/youtu\.be\/([a-zA-Z0-9_-]+)/)
                 if (matchYoutube) {
@@ -79,7 +81,7 @@ export const AutoSummary = (props: Props) => {
                         >
                             <iframe
                                 allowFullScreen
-                                src={`https://www.youtube.com/embed/${matchYoutube[1]}?playsinline=1`}
+                                src={`https://concrnt.world/embed/youtube?v=${matchYoutube[1]}`}
                                 title="YouTube video player"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 referrerPolicy="strict-origin-when-cross-origin"
