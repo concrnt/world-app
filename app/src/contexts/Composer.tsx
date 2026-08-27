@@ -11,16 +11,6 @@ import { useKeyboard } from './Keyboard'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
-export type EditorMode = 'plaintext' | 'markdown' | 'media'
-
-export interface DraftBuffer {
-    draftText: string
-    mediaDrafts: Array<{ file: File; flag?: string }>
-    emojiDict: Record<string, { imageURL: string }>
-    postHome: boolean
-    editorMode?: EditorMode
-}
-
 interface ComposerContextState {
     open: (
         destinations: string[],
@@ -52,7 +42,6 @@ export const ComposerProvider = (props: Props) => {
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
     const [profile, setProfile] = useState<string | undefined>(undefined)
-    const [draftBuffer, setDraftBuffer] = useState<DraftBuffer | null>(null)
 
     const [knownCommunities] = useSubscribe(client.knownCommunities)
 
@@ -128,8 +117,6 @@ export const ComposerProvider = (props: Props) => {
                             options={options}
                             mode={mode}
                             targetMessage={targetMessage}
-                            draftBuffer={mode === 'normal' ? draftBuffer : null}
-                            onSaveDraft={mode === 'normal' ? setDraftBuffer : undefined}
                             initialProfile={profile}
                             onClosed={close}
                         />
@@ -148,8 +135,6 @@ const ComposerOverlay = (props: {
     options: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
-    draftBuffer?: DraftBuffer | null
-    onSaveDraft?: (buf: DraftBuffer) => void
     initialProfile?: string
     onClosed: () => void
 }) => {
@@ -222,8 +207,6 @@ const ComposerOverlay = (props: {
                                 options={props.options}
                                 mode={props.mode}
                                 targetMessage={props.targetMessage}
-                                draftBuffer={props.draftBuffer}
-                                onSaveDraft={props.onSaveDraft}
                                 initialProfile={props.initialProfile}
                                 onPost={() => setWillClose(true)}
                             />

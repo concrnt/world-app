@@ -18,7 +18,8 @@ import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worl
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
-import { ComposerMode, DraftBuffer, EditorMode } from '../contexts/Composer'
+import { ComposerMode } from '../contexts/Composer'
+import { EditorMode, MediaDraft, useComposerDraft } from '../contexts/ComposerDraft'
 import {
     MdImage,
     MdClose,
@@ -44,12 +45,6 @@ import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
 
-interface MediaDraft {
-    file: File
-    previewUrl?: string
-    flag?: string
-}
-
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
 
 const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
@@ -74,8 +69,6 @@ interface Props {
     options?: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
-    draftBuffer?: DraftBuffer | null
-    onSaveDraft?: (buf: DraftBuffer) => void
     onPost?: () => void
     initialProfile?: string
     autoFocus?: boolean
@@ -85,8 +78,16 @@ export const Composer = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.composer' })
     const { client, isDomainOffline } = useClient()
     const { hapticSuccess } = useHaptics()
-    const [draft, setDraft] = useState<string>(props.draftBuffer?.draftText ?? '')
-    const [postHome, setPostHome] = useState<boolean>(props.draftBuffer?.postHome ?? true)
+    // 通常投稿はアプリ全体で共有される下書き(ComposerDraftProvider)を直接読み書きし、
+    // タブ切替・モーダル開閉・画面遷移をまたいで内容を保持する。リプライ/リルートはこのインスタンス限り
+    const sharedDraft = useComposerDraft()
+    const isShared = props.mode === 'normal'
+    const [localDraft, setLocalDraft] = useState<string>('')
+    const draft = isShared ? sharedDraft.draftText : localDraft
+    const setDraft = isShared ? sharedDraft.setDraftText : setLocalDraft
+    const [localPostHome, setLocalPostHome] = useState<boolean>(true)
+    const postHome = isShared ? sharedDraft.postHome : localPostHome
+    const setPostHome = isShared ? sharedDraft.setPostHome : setLocalPostHome
     const defaultDestinations = props.defaultDestinations ?? props.destinations
     const defaultProfile = props.initialProfile ?? client?.currentProfile ?? 'main'
     const [selectedProfile, setSelectedProfile] = useState<string>(defaultProfile)
@@ -102,22 +103,19 @@ export const Composer = (props: Props) => {
         props.destinations.some((dest, i) => dest !== defaultDestinations[i]) ||
         selectedProfile !== defaultProfile ||
         !postHome
-    const [mediaDrafts, setMediaDrafts] = useState<MediaDraft[]>(() => {
-        if (!props.draftBuffer || props.draftBuffer.mediaDrafts.length === 0) return []
-        return props.draftBuffer.mediaDrafts.map((m) => ({
-            file: m.file,
-            flag: m.flag,
-            previewUrl: m.file.type.startsWith('image/') ? URL.createObjectURL(m.file) : undefined
-        }))
-    })
+    const [localMediaDrafts, setLocalMediaDrafts] = useState<MediaDraft[]>([])
+    const mediaDrafts = isShared ? sharedDraft.mediaDrafts : localMediaDrafts
+    const setMediaDrafts = isShared ? sharedDraft.setMediaDrafts : setLocalMediaDrafts
     const [uploading, setUploading] = useState<boolean>(false)
     const [dragging, setDragging] = useState<boolean>(false)
-    const [editorMode, setEditorMode] = useState<EditorMode>(
-        props.draftBuffer?.editorMode ?? ((props.draftBuffer?.mediaDrafts.length ?? 0) > 0 ? 'media' : 'markdown')
-    )
+    const [localEditorMode, setLocalEditorMode] = useState<EditorMode>('markdown')
+    const editorMode = isShared ? sharedDraft.editorMode : localEditorMode
+    const setEditorMode = isShared ? sharedDraft.setEditorMode : setLocalEditorMode
     const [modeSelectOpen, setModeSelectOpen] = useState(false)
     const [flagMenuIndex, setFlagMenuIndex] = useState<number | null>(null)
-    const [emojiDict, setEmojiDict] = useState<Record<string, { imageURL: string }>>(props.draftBuffer?.emojiDict ?? {})
+    const [localEmojiDict, setLocalEmojiDict] = useState<Record<string, { imageURL: string }>>({})
+    const emojiDict = isShared ? sharedDraft.emojiDict : localEmojiDict
+    const setEmojiDict = isShared ? sharedDraft.setEmojiDict : setLocalEmojiDict
     const [undoCache, setUndoCache] = useState<{
         draft: string
         emojiDict: Record<string, { imageURL: string }>
@@ -133,27 +131,6 @@ export const Composer = (props: Props) => {
 
     // リプライ/リルート時はモードを外部から固定し、通常時はユーザーが選択したエディタモードを表示する
     const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode
-
-    // アンマウント時の下書き保存とプレビューURL解放のために最新の状態を参照できるようにする
-    const stateRef = useRef({ draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft: props.onSaveDraft })
-    stateRef.current = { draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft: props.onSaveDraft }
-
-    useEffect(() => {
-        return () => {
-            const { draft, emojiDict, mediaDrafts, postHome, editorMode, onSaveDraft } = stateRef.current
-            onSaveDraft?.({
-                draftText: draft,
-                mediaDrafts: mediaDrafts.map((m) => ({ file: m.file, flag: m.flag })),
-                emojiDict,
-                postHome,
-                editorMode
-            })
-            mediaDrafts
-                .map((media) => media.previewUrl)
-                .filter(isNonNullOrUndefined)
-                .forEach((url) => URL.revokeObjectURL(url))
-        }
-    }, [])
 
     const getSubmitLabel = () => {
         if (uploading) return t('sending')

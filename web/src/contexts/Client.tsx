@@ -452,6 +452,7 @@ export const ClientProvider = (props: Props): ReactNode => {
         localStorage.removeItem('SubKey')
         localStorage.removeItem('SelectedProfile')
         localStorage.removeItem('V1EntityProofPending')
+        localStorage.removeItem('composerDraft')
         await resourceCache.clear()
         await reload()
     }, [reload])

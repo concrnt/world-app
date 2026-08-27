@@ -14,6 +14,7 @@ import { PreferenceProvider } from './contexts/Preference'
 import { HapticsProvider } from './contexts/Haptics'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
+import { ComposerDraftProvider } from './contexts/ComposerDraft'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
@@ -70,21 +71,23 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                 <OverlayStackProvider>
                                                     <OverlayStackBackBridge />
                                                     <EmojiPickerProvider>
-                                                        <ComposerProvider>
-                                                            <ScannerProvider>
-                                                                <OverlayProvider>
-                                                                    <MediaViewerProvider>
-                                                                        <AudioPlayerProvider>
-                                                                            <TickerProvider>
-                                                                                <UrlSummaryProvider>
-                                                                                    <App />
-                                                                                </UrlSummaryProvider>
-                                                                            </TickerProvider>
-                                                                        </AudioPlayerProvider>
-                                                                    </MediaViewerProvider>
-                                                                </OverlayProvider>
-                                                            </ScannerProvider>
-                                                        </ComposerProvider>
+                                                        <ComposerDraftProvider>
+                                                            <ComposerProvider>
+                                                                <ScannerProvider>
+                                                                    <OverlayProvider>
+                                                                        <MediaViewerProvider>
+                                                                            <AudioPlayerProvider>
+                                                                                <TickerProvider>
+                                                                                    <UrlSummaryProvider>
+                                                                                        <App />
+                                                                                    </UrlSummaryProvider>
+                                                                                </TickerProvider>
+                                                                            </AudioPlayerProvider>
+                                                                        </MediaViewerProvider>
+                                                                    </OverlayProvider>
+                                                                </ScannerProvider>
+                                                            </ComposerProvider>
+                                                        </ComposerDraftProvider>
                                                     </EmojiPickerProvider>
                                                 </OverlayStackProvider>
                                             </ImageCropperProvider>
