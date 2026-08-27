@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
 
 import { MdMenu } from 'react-icons/md'
@@ -27,6 +27,10 @@ export const SidebarLayout = (props: Props) => {
     const width = props.width ?? SIDEBAR_W
 
     const x = useMotionValue(props.opened ? width : 0)
+
+    // directionLockでyにロックされた縦スクロールでもonDragEndは発火し、infoには
+    // 生のジェスチャのoffset/velocityが入るため、xロック時以外は開閉判定しない
+    const lockedDirection = useRef<'x' | 'y' | null>(null)
 
     useEffect(() => {
         const target = props.opened ? width : 0
@@ -58,12 +62,18 @@ export const SidebarLayout = (props: Props) => {
                 dragElastic={0}
                 dragMomentum={false}
                 dragConstraints={{ left: 0, right: width }}
+                onPointerDownCapture={() => {
+                    // ジェスチャごとにロック方向をリセットする。onDragStartはframe経由の遅延実行で
+                    // 同期発火のonDirectionLockより後に走ることがあるため、ここで行う
+                    lockedDirection.current = null
+                }}
+                onDirectionLock={(axis) => {
+                    lockedDirection.current = axis
+                }}
                 onDragEnd={(_, info) => {
                     const current = x.get()
 
                     const vx = info.velocity.x
-                    const vy = info.velocity.y
-
                     const dx = info.offset.x
 
                     const fast = Math.abs(vx) > popVelocity
@@ -71,8 +81,11 @@ export const SidebarLayout = (props: Props) => {
 
                     let shouldOpen: boolean
 
-                    if (fast) {
-                        shouldOpen = vx > 0 && Math.abs(vx) > Math.abs(vy)
+                    if (lockedDirection.current !== 'x') {
+                        // yロック中はビューが動いていないので、現在位置=元の開閉状態を維持する
+                        shouldOpen = current > width / 2
+                    } else if (fast) {
+                        shouldOpen = vx > 0
                     } else if (far) {
                         shouldOpen = dx > 0
                     } else {
