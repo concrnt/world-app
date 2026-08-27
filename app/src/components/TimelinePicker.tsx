@@ -187,12 +187,20 @@ export const TimelinePicker = (props: Props) => {
                         marginTop: '4px',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                         zIndex: 1000,
-                        backgroundColor: CssVar.contentBackground
+                        backgroundColor: CssVar.contentBackground,
+                        // 候補が多くても投稿欄からはみ出さないように内部スクロールにする
+                        maxHeight: 'min(40vh, 300px)',
+                        overflowY: 'auto',
+                        overscrollBehavior: 'contain'
                     }}
                 >
                     {options.map((opt) => (
                         <div
                             key={props.keyFunc(opt)}
+                            ref={(el) => {
+                                // 内部スクロール化に伴い、キーボード選択中の候補が見切れないよう追従させる
+                                if (focusedIdx === options.indexOf(opt)) el?.scrollIntoView({ block: 'nearest' })
+                            }}
                             style={{
                                 padding: '8px',
                                 cursor: 'pointer',
