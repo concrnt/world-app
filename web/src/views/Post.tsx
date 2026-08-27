@@ -1,5 +1,5 @@
 import { MessageContainer } from '../components/message'
-import { CCImage, Avatar, Divider, Tabs, Tab, Text } from '@concrnt/ui'
+import { CCImage, Avatar, Divider, Tabs, Tab, Text, useAnchor } from '@concrnt/ui'
 import { MdAddReaction, MdReply } from 'react-icons/md'
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +40,7 @@ export const PostView = (props: Props) => {
     const { client } = useClient()
     const navigate = useNavigate()
     const emojiPicker = useEmojiPicker()
+    const addReactionAnchor = useAnchor()
     const composer = useComposer()
     const isMobile = useIsMobile()
     const [knownCommunities] = useSubscribe(client.knownCommunities)
@@ -338,19 +339,22 @@ export const PostView = (props: Props) => {
                                             fetchAssociations('reactions')
                                         })
                                         emojiPicker.close()
-                                    })
+                                    }, addReactionAnchor)
                                 }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: CssVar.space(2),
-                                    padding: CssVar.space(2),
-                                    border: `1px solid ${CssVar.divider}`,
-                                    borderRadius: CssVar.round(2),
-                                    cursor: 'pointer',
-                                    color: CssVar.contentText,
-                                    opacity: 0.6
-                                }}
+                                style={
+                                    {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(2),
+                                        padding: CssVar.space(2),
+                                        border: `1px solid ${CssVar.divider}`,
+                                        borderRadius: CssVar.round(2),
+                                        cursor: 'pointer',
+                                        color: CssVar.contentText,
+                                        opacity: 0.6,
+                                        anchorName: addReactionAnchor
+                                    } as React.CSSProperties
+                                }
                             >
                                 <MdAddReaction size={18} />
                                 <span style={{ fontSize: '0.95rem' }}>{t('addReaction')}</span>

@@ -61,6 +61,7 @@ export const ListSettings = (props: Props) => {
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const menuAnchor = useAnchor()
+    const emojiPickerAnchor = useAnchor()
 
     const isPinned = pinnedLists.some((pin) => pin.uri === props.uri)
 
@@ -172,11 +173,12 @@ export const ListSettings = (props: Props) => {
                 <Text variant="h5">{t('listName')}</Text>
                 <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
                     <IconButton
+                        style={{ anchorName: emojiPickerAnchor } as React.CSSProperties}
                         onClick={() => {
                             emojiPicker.open((emoji) => {
                                 setIconURL(emoji.imageURL)
                                 emojiPicker.close()
-                            })
+                            }, emojiPickerAnchor)
                         }}
                     >
                         {iconURL ? (

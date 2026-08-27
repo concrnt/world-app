@@ -46,6 +46,7 @@ export const MessageActions = (props: Props) => {
     const emojiPicker = useEmojiPicker()
     const qt = useQueryTimelineContext()
     const menuAnchor = useAnchor()
+    const reactionAnchor = useAnchor()
     const isMobile = useIsMobile()
     const [linkCopied, setLinkCopied] = useState(false)
 
@@ -212,9 +213,9 @@ export const MessageActions = (props: Props) => {
                         })
 
                         emojiPicker.close()
-                    })
+                    }, reactionAnchor)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', anchorName: reactionAnchor } as React.CSSProperties}
             >
                 <MdAddReaction size={20} />
             </Button>

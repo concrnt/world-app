@@ -5,7 +5,7 @@ import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-import { Button, CCImage, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { Button, CCImage, HorizontalLayout, IconButton, Popover, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
@@ -40,7 +40,8 @@ const COLS_MOBILE = 7
 // ---- Context ----
 
 export interface EmojiPickerState {
-    open: (onSelected: (emoji: Emoji) => void) => void
+    // anchor: 開いたボタン側が useAnchor() で宣言したアンカー名(デスクトップでボタンの右下に出す。省略時は画面中央)
+    open: (onSelected: (emoji: Emoji) => void, anchor?: string) => void
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
@@ -75,6 +76,8 @@ export const EmojiPickerProvider = (props: Props) => {
     const [searchBoxFocused, setSearchBoxFocused] = useState(false)
     // デスクトップのみ: ホバー中の絵文字を下部フッターにプレビュー表示する
     const [hoveredEmoji, setHoveredEmoji] = useState<Emoji | null>(null)
+    // デスクトップのみ: 開いたボタンのアンカー名(nullなら画面中央にフォールバック)
+    const [anchorName, setAnchorName] = useState<string | null>(null)
 
     const [emojiPackageList, setEmojiPackageList] = useState<List | null>(null)
     const [emojiPackageURLs, setEmojiPackageURLs] = useState<string[]>([])
@@ -196,10 +199,11 @@ export const EmojiPickerProvider = (props: Props) => {
     // ---- Actions ----
 
     const open = useCallback(
-        (onSelected: (emoji: Emoji) => void) => {
+        (onSelected: (emoji: Emoji) => void, anchor?: string) => {
             onSelectedRef.current = onSelected
             setActiveTab(frequentEmojis.length > 0 ? 0 : 1)
             setQuery('')
+            setAnchorName(anchor ?? null)
             setIsOpen(true)
             // auto focus search on next tick
             // (モバイルではフォーカス=キーボード表示=onBlurで閉じるため、ユーザーのタップに任せる。app版と同じ)
@@ -341,7 +345,7 @@ export const EmojiPickerProvider = (props: Props) => {
             </CfmActionsProvider>
 
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && isMobile && (
                     <>
                         {/* Backdrop */}
                         <motion.div
@@ -357,612 +361,611 @@ export const EmojiPickerProvider = (props: Props) => {
                             onClick={close}
                         />
 
-                        {isMobile ? (
-                            /* Bottom sheet (app版ミラー): キーボードの上に持ち上がる */
-                            <motion.div
+                        {/* Bottom sheet (app版ミラー): キーボードの上に持ち上がる */}
+                        <motion.div
+                            style={{
+                                position: 'fixed',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                backgroundColor: CssVar.contentBackground,
+                                color: CssVar.contentText,
+                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                height: searchBoxFocused ? 'auto' : `calc(50vh + ${keyboard.height}px)`,
+                                paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                                transition: `height ${keyboard.duration}s ease-out`,
+                                zIndex: 1001
+                            }}
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Handle */}
+                            <div
                                 style={{
-                                    position: 'fixed',
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    backgroundColor: CssVar.contentBackground,
-                                    color: CssVar.contentText,
-                                    borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    height: searchBoxFocused ? 'auto' : `calc(50vh + ${keyboard.height}px)`,
-                                    paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                    transition: `height ${keyboard.duration}s ease-out`,
-                                    zIndex: 1001
+                                    display: searchBoxFocused ? 'none' : 'flex',
+                                    justifyContent: 'center',
+                                    padding: `${CssVar.space(2)} 0 ${CssVar.space(1)}`
                                 }}
-                                initial={{ y: '100%' }}
-                                animate={{ y: 0 }}
-                                exit={{ y: '100%' }}
-                                transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
-                                onClick={(e) => e.stopPropagation()}
                             >
-                                {/* Handle */}
                                 <div
                                     style={{
-                                        display: searchBoxFocused ? 'none' : 'flex',
-                                        justifyContent: 'center',
-                                        padding: `${CssVar.space(2)} 0 ${CssVar.space(1)}`
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: '30px',
-                                            height: '6px',
-                                            borderRadius: CssVar.round(0.5),
-                                            backgroundColor: CssVar.divider
-                                        }}
-                                    />
-                                </div>
-
-                                {/* One-line emoji strip (キーボード表示中) */}
-                                <HorizontalLayout
-                                    style={{
-                                        display: searchBoxFocused ? 'flex' : 'none',
-                                        alignItems: 'center',
-                                        overflowY: 'hidden',
-                                        padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {displayEmojis.map((emoji, index) => (
-                                        <button
-                                            key={`${emoji.shortcode}-${index}`}
-                                            onMouseDown={() => selectEmoji(emoji)}
-                                            style={
-                                                {
-                                                    display: 'flex',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    border: 'none',
-                                                    background: 'transparent',
-                                                    borderRadius: CssVar.round(0.5),
-                                                    cursor: 'pointer',
-                                                    padding: '6px',
-                                                    flexShrink: 0,
-                                                    WebkitTapHighlightColor: 'transparent',
-                                                    contentVisibility: 'auto',
-                                                    containIntrinsicSize: '40px 40px'
-                                                } as React.CSSProperties
-                                            }
-                                        >
-                                            <CCImage
-                                                src={emoji.imageURL}
-                                                maxHeight={128}
-                                                alt={emoji.shortcode}
-                                                loading="lazy"
-                                                style={{
-                                                    width: '28px',
-                                                    height: '28px'
-                                                }}
-                                            />
-                                        </button>
-                                    ))}
-                                    {displayEmojis.length === 0 && (
-                                        <div
-                                            style={{
-                                                padding: `${CssVar.space(1)} 0`,
-                                                opacity: 0.4,
-                                                fontSize: '14px',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
-                                        </div>
-                                    )}
-                                </HorizontalLayout>
-
-                                {/* Tabs */}
-                                <HorizontalLayout
-                                    style={{
-                                        display: searchBoxFocused ? 'none' : 'flex',
-                                        gap: CssVar.space(1),
-                                        padding: `0 ${CssVar.space(2)}`,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {query.length === 0 ? (
-                                        <TabButton
-                                            selected={effectiveActiveTab === 0}
-                                            onClick={() => {
-                                                setActiveTab(0)
-                                                setHoveredEmoji(null)
-                                                gridRef.current?.scrollTo(0, 0)
-                                            }}
-                                        >
-                                            <MdAccessTime size={20} />
-                                        </TabButton>
-                                    ) : (
-                                        <TabButton selected>
-                                            <MdSearch size={20} />
-                                        </TabButton>
-                                    )}
-
-                                    {emojiPackages.map((pkg, index) => (
-                                        <TabButton
-                                            key={pkg.packageURL}
-                                            selected={query.length === 0 && effectiveActiveTab === index + 1}
-                                            onClick={() => {
-                                                setQuery('')
-                                                setActiveTab(index + 1)
-                                                setHoveredEmoji(null)
-                                                gridRef.current?.scrollTo(0, 0)
-                                            }}
-                                        >
-                                            <CCImage
-                                                src={pkg.iconURL}
-                                                maxHeight={128}
-                                                alt={pkg.name}
-                                                style={{ width: '20px', height: '20px' }}
-                                            />
-                                        </TabButton>
-                                    ))}
-                                </HorizontalLayout>
-
-                                {/* Divider */}
-                                <div
-                                    style={{
-                                        height: '1px',
-                                        backgroundColor: CssVar.divider,
-                                        margin: `${CssVar.space(1)} 0`
+                                        width: '30px',
+                                        height: '6px',
+                                        borderRadius: CssVar.round(0.5),
+                                        backgroundColor: CssVar.divider
                                     }}
                                 />
+                            </div>
 
-                                {/* Search */}
-                                <div
-                                    style={{
-                                        padding: `0 ${CssVar.space(2)}`,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                            borderRadius: CssVar.round(0.5),
-                                            backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
-                                        }}
-                                    >
-                                        <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
-                                        <input
-                                            type="text"
-                                            placeholder={t('searchPlaceholder')}
-                                            value={query}
-                                            onChange={(e) => setQuery(e.target.value)}
-                                            onFocus={() => {
-                                                // キーボード表示に伴うページのスクロールずれを補正
-                                                setTimeout(() => {
-                                                    window.scrollTo(0, 0)
-                                                }, 100)
-                                                setSearchBoxFocused(true)
-                                            }}
-                                            onBlur={() => {
-                                                close()
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && displayEmojis.length > 0) {
-                                                    e.preventDefault()
-                                                    selectEmoji(displayEmojis[0])
-                                                    close()
-                                                }
-                                            }}
-                                            style={{
-                                                flex: 1,
-                                                border: 'none',
-                                                outline: 'none',
-                                                background: 'transparent',
-                                                color: CssVar.contentText,
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                        {query.length > 0 && (
-                                            // mousedownによる検索欄のblur(=close)を防いでクリアだけ行う
-                                            <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
-                                                <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
-                                                    <MdClose size={16} />
-                                                </IconButton>
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Title */}
-                                <div
-                                    style={{
-                                        display: searchBoxFocused ? 'none' : 'block',
-                                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                        fontSize: '12px',
-                                        opacity: 0.6,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {title}
-                                </div>
-
-                                {/* Emoji grid */}
-                                <div
-                                    ref={gridRef}
-                                    style={{
-                                        display: searchBoxFocused ? 'none' : 'block',
-                                        flex: 1,
-                                        overflowY: 'auto',
-                                        overflowX: 'hidden',
-                                        padding: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
-                                        minHeight: 0
-                                    }}
-                                >
-                                    {rows.length === 0 ? (
-                                        <div
-                                            style={{
+                            {/* One-line emoji strip (キーボード表示中) */}
+                            <HorizontalLayout
+                                style={{
+                                    display: searchBoxFocused ? 'flex' : 'none',
+                                    alignItems: 'center',
+                                    overflowY: 'hidden',
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)} 0`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {displayEmojis.map((emoji, index) => (
+                                    <button
+                                        key={`${emoji.shortcode}-${index}`}
+                                        onMouseDown={() => selectEmoji(emoji)}
+                                        style={
+                                            {
                                                 display: 'flex',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
-                                                height: '100px',
-                                                opacity: 0.4,
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            {query.length > 0
-                                                ? t('noMatchingEmojis')
-                                                : effectiveActiveTab === 0
-                                                  ? t('noRecentEmojis')
-                                                  : t('noEmojis')}
-                                        </div>
-                                    ) : (
-                                        rows.map((row, rowIndex) => (
-                                            <div
-                                                key={rowIndex}
-                                                style={
-                                                    {
-                                                        display: 'grid',
-                                                        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                                                        contentVisibility: 'auto',
-                                                        containIntrinsicHeight: '44px'
-                                                    } as React.CSSProperties
-                                                }
-                                            >
-                                                {row.map((emoji) => (
-                                                    <button
-                                                        key={emoji.shortcode}
-                                                        onClick={() => selectEmoji(emoji)}
-                                                        style={{
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            width: '100%',
-                                                            aspectRatio: '1',
-                                                            border: 'none',
-                                                            background: 'transparent',
-                                                            borderRadius: CssVar.round(0.5),
-                                                            cursor: 'pointer',
-                                                            padding: '4px',
-                                                            WebkitTapHighlightColor: 'transparent'
-                                                        }}
-                                                    >
-                                                        <CCImage
-                                                            src={emoji.imageURL}
-                                                            maxHeight={128}
-                                                            alt={emoji.shortcode}
-                                                            loading="lazy"
-                                                            style={{
-                                                                width: '28px',
-                                                                height: '28px'
-                                                            }}
-                                                        />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-
-                                {/* キーボードの裏まで背景を敷くスペーサ */}
-                                <div
-                                    style={{
-                                        flexShrink: 0,
-                                        height: `${keyboard.height}px`,
-                                        transition: `height ${keyboard.duration}s ease-out`
-                                    }}
-                                />
-                            </motion.div>
-                        ) : (
-                            /* Centered dialog */
-                            <motion.div
-                                style={{
-                                    position: 'fixed',
-                                    inset: 0,
-                                    margin: 'auto',
-                                    backgroundColor: CssVar.contentBackground,
-                                    color: CssVar.contentText,
-                                    borderRadius: CssVar.round(2),
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    width: '380px',
-                                    maxWidth: '90vw',
-                                    height: '480px',
-                                    maxHeight: '90vh',
-                                    zIndex: 1001,
-                                    overflow: 'hidden'
-                                }}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ type: 'tween', ease: 'easeOut', duration: 0.15 }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {/* Tabs */}
-                                <HorizontalLayout
-                                    style={{
-                                        gap: CssVar.space(1),
-                                        padding: `${CssVar.space(2)} ${CssVar.space(2)} 0`,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {query.length === 0 ? (
-                                        <TabButton
-                                            selected={effectiveActiveTab === 0}
-                                            onClick={() => {
-                                                setActiveTab(0)
-                                                setHoveredEmoji(null)
-                                                gridRef.current?.scrollTo(0, 0)
-                                            }}
-                                        >
-                                            <MdAccessTime size={20} />
-                                        </TabButton>
-                                    ) : (
-                                        <TabButton selected>
-                                            <MdSearch size={20} />
-                                        </TabButton>
-                                    )}
-
-                                    {emojiPackages.map((pkg, index) => (
-                                        <TabButton
-                                            key={pkg.packageURL}
-                                            selected={query.length === 0 && effectiveActiveTab === index + 1}
-                                            onClick={() => {
-                                                setQuery('')
-                                                setActiveTab(index + 1)
-                                                setHoveredEmoji(null)
-                                                gridRef.current?.scrollTo(0, 0)
-                                            }}
-                                        >
-                                            <CCImage
-                                                src={pkg.iconURL}
-                                                maxHeight={128}
-                                                alt={pkg.name}
-                                                style={{ width: '20px', height: '20px' }}
-                                            />
-                                        </TabButton>
-                                    ))}
-                                </HorizontalLayout>
-
-                                {/* Divider */}
-                                <div
-                                    style={{
-                                        height: '1px',
-                                        backgroundColor: CssVar.divider,
-                                        margin: `${CssVar.space(1)} 0`
-                                    }}
-                                />
-
-                                {/* Search */}
-                                <div
-                                    style={{
-                                        padding: `0 ${CssVar.space(2)}`,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                            borderRadius: CssVar.round(0.5),
-                                            backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
-                                        }}
-                                    >
-                                        <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
-                                        <input
-                                            ref={searchInputRef}
-                                            type="text"
-                                            placeholder={t('searchPlaceholder')}
-                                            value={query}
-                                            onChange={(e) => {
-                                                setQuery(e.target.value)
-                                                setHoveredEmoji(null)
-                                            }}
-                                            style={{
-                                                flex: 1,
                                                 border: 'none',
-                                                outline: 'none',
                                                 background: 'transparent',
-                                                color: CssVar.contentText,
-                                                fontSize: '14px'
+                                                borderRadius: CssVar.round(0.5),
+                                                cursor: 'pointer',
+                                                padding: '6px',
+                                                flexShrink: 0,
+                                                WebkitTapHighlightColor: 'transparent',
+                                                contentVisibility: 'auto',
+                                                containIntrinsicSize: '40px 40px'
+                                            } as React.CSSProperties
+                                        }
+                                    >
+                                        <CCImage
+                                            src={emoji.imageURL}
+                                            maxHeight={128}
+                                            alt={emoji.shortcode}
+                                            loading="lazy"
+                                            style={{
+                                                width: '28px',
+                                                height: '28px'
                                             }}
                                         />
-                                        {query.length > 0 && (
-                                            <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
-                                                <MdClose size={16} />
-                                            </IconButton>
-                                        )}
+                                    </button>
+                                ))}
+                                {displayEmojis.length === 0 && (
+                                    <div
+                                        style={{
+                                            padding: `${CssVar.space(1)} 0`,
+                                            opacity: 0.4,
+                                            fontSize: '14px',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
                                     </div>
-                                </div>
+                                )}
+                            </HorizontalLayout>
 
-                                {/* Title */}
-                                <div
-                                    style={{
-                                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                        fontSize: '12px',
-                                        opacity: 0.6,
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {title}
-                                </div>
+                            {/* Tabs */}
+                            <HorizontalLayout
+                                style={{
+                                    display: searchBoxFocused ? 'none' : 'flex',
+                                    gap: CssVar.space(1),
+                                    padding: `0 ${CssVar.space(2)}`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {query.length === 0 ? (
+                                    <TabButton
+                                        selected={effectiveActiveTab === 0}
+                                        onClick={() => {
+                                            setActiveTab(0)
+                                            setHoveredEmoji(null)
+                                            gridRef.current?.scrollTo(0, 0)
+                                        }}
+                                    >
+                                        <MdAccessTime size={20} />
+                                    </TabButton>
+                                ) : (
+                                    <TabButton selected>
+                                        <MdSearch size={20} />
+                                    </TabButton>
+                                )}
 
-                                {/* Emoji grid */}
-                                <div
-                                    ref={gridRef}
-                                    style={{
-                                        flex: 1,
-                                        overflowY: 'auto',
-                                        overflowX: 'hidden',
-                                        padding: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
-                                        minHeight: 0
-                                    }}
-                                >
-                                    {rows.length === 0 ? (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                height: '100px',
-                                                opacity: 0.4,
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            {query.length > 0
-                                                ? t('noMatchingEmojis')
-                                                : effectiveActiveTab === 0
-                                                  ? t('noRecentEmojis')
-                                                  : t('noEmojis')}
-                                        </div>
-                                    ) : (
-                                        rows.map((row, rowIndex) => (
-                                            <div
-                                                key={rowIndex}
-                                                style={
-                                                    {
-                                                        display: 'grid',
-                                                        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                                                        contentVisibility: 'auto',
-                                                        containIntrinsicHeight: '44px'
-                                                    } as React.CSSProperties
-                                                }
-                                            >
-                                                {row.map((emoji) => (
-                                                    <button
-                                                        key={emoji.shortcode}
-                                                        onClick={() => selectEmoji(emoji)}
-                                                        style={{
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            width: '100%',
-                                                            aspectRatio: '1',
-                                                            border: 'none',
-                                                            background: 'transparent',
-                                                            borderRadius: CssVar.round(0.5),
-                                                            cursor: 'pointer',
-                                                            padding: '4px',
-                                                            WebkitTapHighlightColor: 'transparent'
-                                                        }}
-                                                        onMouseOver={(e) => {
-                                                            ;(e.currentTarget as HTMLElement).style.backgroundColor =
-                                                                `rgb(from ${CssVar.contentText} r g b / 0.1)`
-                                                            setHoveredEmoji(emoji)
-                                                        }}
-                                                        onMouseOut={(e) => {
-                                                            ;(e.currentTarget as HTMLElement).style.backgroundColor =
-                                                                'transparent'
-                                                        }}
-                                                    >
-                                                        <CCImage
-                                                            src={emoji.imageURL}
-                                                            maxHeight={128}
-                                                            alt={emoji.shortcode}
-                                                            loading="lazy"
-                                                            style={{
-                                                                width: '28px',
-                                                                height: '28px'
-                                                            }}
-                                                        />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
+                                {emojiPackages.map((pkg, index) => (
+                                    <TabButton
+                                        key={pkg.packageURL}
+                                        selected={query.length === 0 && effectiveActiveTab === index + 1}
+                                        onClick={() => {
+                                            setQuery('')
+                                            setActiveTab(index + 1)
+                                            setHoveredEmoji(null)
+                                            gridRef.current?.scrollTo(0, 0)
+                                        }}
+                                    >
+                                        <CCImage
+                                            src={pkg.iconURL}
+                                            maxHeight={128}
+                                            alt={pkg.name}
+                                            style={{ width: '20px', height: '20px' }}
+                                        />
+                                    </TabButton>
+                                ))}
+                            </HorizontalLayout>
 
-                                {/* Divider */}
-                                <div
-                                    style={{
-                                        height: '1px',
-                                        backgroundColor: CssVar.divider,
-                                        flexShrink: 0
-                                    }}
-                                />
+                            {/* Divider */}
+                            <div
+                                style={{
+                                    height: '1px',
+                                    backgroundColor: CssVar.divider,
+                                    margin: `${CssVar.space(1)} 0`
+                                }}
+                            />
 
-                                {/* Hover preview + add emojis */}
+                            {/* Search */}
+                            <div
+                                style={{
+                                    padding: `0 ${CssVar.space(2)}`,
+                                    flexShrink: 0
+                                }}
+                            >
                                 <div
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'space-between',
                                         gap: CssVar.space(1),
                                         padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                        height: '52px',
-                                        flexShrink: 0
+                                        borderRadius: CssVar.round(0.5),
+                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
                                     }}
                                 >
+                                    <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                    <input
+                                        type="text"
+                                        placeholder={t('searchPlaceholder')}
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        onFocus={() => {
+                                            // キーボード表示に伴うページのスクロールずれを補正
+                                            setTimeout(() => {
+                                                window.scrollTo(0, 0)
+                                            }, 100)
+                                            setSearchBoxFocused(true)
+                                        }}
+                                        onBlur={() => {
+                                            close()
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && displayEmojis.length > 0) {
+                                                e.preventDefault()
+                                                selectEmoji(displayEmojis[0])
+                                                close()
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            border: 'none',
+                                            outline: 'none',
+                                            background: 'transparent',
+                                            color: CssVar.contentText,
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    {query.length > 0 && (
+                                        // mousedownによる検索欄のblur(=close)を防いでクリアだけ行う
+                                        <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                                            <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
+                                                <MdClose size={16} />
+                                            </IconButton>
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Title */}
+                            <div
+                                style={{
+                                    display: searchBoxFocused ? 'none' : 'block',
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                    fontSize: '12px',
+                                    opacity: 0.6,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {title}
+                            </div>
+
+                            {/* Emoji grid */}
+                            <div
+                                ref={gridRef}
+                                style={{
+                                    display: searchBoxFocused ? 'none' : 'block',
+                                    flex: 1,
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    padding: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
+                                    minHeight: 0
+                                }}
+                            >
+                                {rows.length === 0 ? (
                                     <div
                                         style={{
                                             display: 'flex',
+                                            justifyContent: 'center',
                                             alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            minWidth: 0
+                                            height: '100px',
+                                            opacity: 0.4,
+                                            fontSize: '14px'
                                         }}
                                     >
-                                        {hoveredEmoji && (
-                                            <>
-                                                <CCImage
-                                                    src={hoveredEmoji.imageURL}
-                                                    maxHeight={128}
-                                                    alt={hoveredEmoji.shortcode}
+                                        {query.length > 0
+                                            ? t('noMatchingEmojis')
+                                            : effectiveActiveTab === 0
+                                              ? t('noRecentEmojis')
+                                              : t('noEmojis')}
+                                    </div>
+                                ) : (
+                                    rows.map((row, rowIndex) => (
+                                        <div
+                                            key={rowIndex}
+                                            style={
+                                                {
+                                                    display: 'grid',
+                                                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                                    contentVisibility: 'auto',
+                                                    containIntrinsicHeight: '44px'
+                                                } as React.CSSProperties
+                                            }
+                                        >
+                                            {row.map((emoji) => (
+                                                <button
+                                                    key={emoji.shortcode}
+                                                    onClick={() => selectEmoji(emoji)}
                                                     style={{
-                                                        width: '28px',
-                                                        height: '28px',
-                                                        flexShrink: 0
-                                                    }}
-                                                />
-                                                <span
-                                                    style={{
-                                                        fontSize: '12px',
-                                                        opacity: 0.6,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        width: '100%',
+                                                        aspectRatio: '1',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        borderRadius: CssVar.round(0.5),
+                                                        cursor: 'pointer',
+                                                        padding: '4px',
+                                                        WebkitTapHighlightColor: 'transparent'
                                                     }}
                                                 >
-                                                    :{hoveredEmoji.shortcode}:
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => {
-                                            close()
-                                            navigate('/settings/emoji')
-                                        }}
-                                        style={{ flexShrink: 0 }}
-                                    >
-                                        {t('addEmojis')}
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        )}
+                                                    <CCImage
+                                                        src={emoji.imageURL}
+                                                        maxHeight={128}
+                                                        alt={emoji.shortcode}
+                                                        loading="lazy"
+                                                        style={{
+                                                            width: '28px',
+                                                            height: '28px'
+                                                        }}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* キーボードの裏まで背景を敷くスペーサ */}
+                            <div
+                                style={{
+                                    flexShrink: 0,
+                                    height: `${keyboard.height}px`,
+                                    transition: `height ${keyboard.duration}s ease-out`
+                                }}
+                            />
+                        </motion.div>
                     </>
                 )}
             </AnimatePresence>
+
+            {/* デスクトップ: 開いたボタン(アンカー)の右下に出すPopover。アンカー未指定時は画面中央 */}
+            {!isMobile && (
+                <Popover
+                    open={isOpen}
+                    onClose={close}
+                    anchor={anchorName ?? '--emoji-picker-unanchored'}
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '380px',
+                        maxWidth: '90vw',
+                        height: '480px',
+                        maxHeight: '90vh',
+                        overflow: 'hidden',
+                        padding: 0,
+                        borderRadius: CssVar.round(2),
+                        // アンカーが無いときはanchor()が解決できずtop/leftが無効になるため、明示的に画面中央へ
+                        ...(anchorName ? {} : { top: 'calc(50% - 240px)', left: 'calc(50% - 190px)' })
+                    }}
+                >
+                    {isOpen && (
+                        <>
+                            {/* Tabs */}
+                            <HorizontalLayout
+                                style={{
+                                    gap: CssVar.space(1),
+                                    padding: `${CssVar.space(2)} ${CssVar.space(2)} 0`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {query.length === 0 ? (
+                                    <TabButton
+                                        selected={effectiveActiveTab === 0}
+                                        onClick={() => {
+                                            setActiveTab(0)
+                                            setHoveredEmoji(null)
+                                            gridRef.current?.scrollTo(0, 0)
+                                        }}
+                                    >
+                                        <MdAccessTime size={20} />
+                                    </TabButton>
+                                ) : (
+                                    <TabButton selected>
+                                        <MdSearch size={20} />
+                                    </TabButton>
+                                )}
+
+                                {emojiPackages.map((pkg, index) => (
+                                    <TabButton
+                                        key={pkg.packageURL}
+                                        selected={query.length === 0 && effectiveActiveTab === index + 1}
+                                        onClick={() => {
+                                            setQuery('')
+                                            setActiveTab(index + 1)
+                                            setHoveredEmoji(null)
+                                            gridRef.current?.scrollTo(0, 0)
+                                        }}
+                                    >
+                                        <CCImage
+                                            src={pkg.iconURL}
+                                            maxHeight={128}
+                                            alt={pkg.name}
+                                            style={{ width: '20px', height: '20px' }}
+                                        />
+                                    </TabButton>
+                                ))}
+                            </HorizontalLayout>
+
+                            {/* Divider */}
+                            <div
+                                style={{
+                                    height: '1px',
+                                    backgroundColor: CssVar.divider,
+                                    margin: `${CssVar.space(1)} 0`
+                                }}
+                            />
+
+                            {/* Search */}
+                            <div
+                                style={{
+                                    padding: `0 ${CssVar.space(2)}`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                        borderRadius: CssVar.round(0.5),
+                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
+                                    }}
+                                >
+                                    <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="text"
+                                        placeholder={t('searchPlaceholder')}
+                                        value={query}
+                                        onChange={(e) => {
+                                            setQuery(e.target.value)
+                                            setHoveredEmoji(null)
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            border: 'none',
+                                            outline: 'none',
+                                            background: 'transparent',
+                                            color: CssVar.contentText,
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    {query.length > 0 && (
+                                        <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
+                                            <MdClose size={16} />
+                                        </IconButton>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Title */}
+                            <div
+                                style={{
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                    fontSize: '12px',
+                                    opacity: 0.6,
+                                    flexShrink: 0
+                                }}
+                            >
+                                {title}
+                            </div>
+
+                            {/* Emoji grid */}
+                            <div
+                                ref={gridRef}
+                                style={{
+                                    flex: 1,
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    padding: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
+                                    minHeight: 0
+                                }}
+                            >
+                                {rows.length === 0 ? (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            height: '100px',
+                                            opacity: 0.4,
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        {query.length > 0
+                                            ? t('noMatchingEmojis')
+                                            : effectiveActiveTab === 0
+                                              ? t('noRecentEmojis')
+                                              : t('noEmojis')}
+                                    </div>
+                                ) : (
+                                    rows.map((row, rowIndex) => (
+                                        <div
+                                            key={rowIndex}
+                                            style={
+                                                {
+                                                    display: 'grid',
+                                                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                                    contentVisibility: 'auto',
+                                                    containIntrinsicHeight: '44px'
+                                                } as React.CSSProperties
+                                            }
+                                        >
+                                            {row.map((emoji) => (
+                                                <button
+                                                    key={emoji.shortcode}
+                                                    onClick={() => selectEmoji(emoji)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        width: '100%',
+                                                        aspectRatio: '1',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        borderRadius: CssVar.round(0.5),
+                                                        cursor: 'pointer',
+                                                        padding: '4px',
+                                                        WebkitTapHighlightColor: 'transparent'
+                                                    }}
+                                                    onMouseOver={(e) => {
+                                                        ;(e.currentTarget as HTMLElement).style.backgroundColor =
+                                                            `rgb(from ${CssVar.contentText} r g b / 0.1)`
+                                                        setHoveredEmoji(emoji)
+                                                    }}
+                                                    onMouseOut={(e) => {
+                                                        ;(e.currentTarget as HTMLElement).style.backgroundColor =
+                                                            'transparent'
+                                                    }}
+                                                >
+                                                    <CCImage
+                                                        src={emoji.imageURL}
+                                                        maxHeight={128}
+                                                        alt={emoji.shortcode}
+                                                        loading="lazy"
+                                                        style={{
+                                                            width: '28px',
+                                                            height: '28px'
+                                                        }}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Divider */}
+                            <div
+                                style={{
+                                    height: '1px',
+                                    backgroundColor: CssVar.divider,
+                                    flexShrink: 0
+                                }}
+                            />
+
+                            {/* Hover preview + add emojis */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: CssVar.space(1),
+                                    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                    height: '52px',
+                                    flexShrink: 0
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        minWidth: 0
+                                    }}
+                                >
+                                    {hoveredEmoji && (
+                                        <>
+                                            <CCImage
+                                                src={hoveredEmoji.imageURL}
+                                                maxHeight={128}
+                                                alt={hoveredEmoji.shortcode}
+                                                style={{
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    flexShrink: 0
+                                                }}
+                                            />
+                                            <span
+                                                style={{
+                                                    fontSize: '12px',
+                                                    opacity: 0.6,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                :{hoveredEmoji.shortcode}:
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        close()
+                                        navigate('/settings/emoji')
+                                    }}
+                                    style={{ flexShrink: 0 }}
+                                >
+                                    {t('addEmojis')}
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </Popover>
+            )}
         </EmojiPickerContext.Provider>
     )
 }

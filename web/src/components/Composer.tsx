@@ -123,6 +123,7 @@ export const Composer = (props: Props) => {
     // Composerは複数同時にマウントされ得るため、アンカー名をインスタンスごとに一意にする
     const modeSelectAnchor = useAnchor()
     const flagAnchor = useAnchor()
+    const emojiPickerAnchor = useAnchor()
 
     // リプライ/リルート時はモードを外部から固定し、通常時はユーザーが選択したエディタモードを表示する
     const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode
@@ -843,6 +844,7 @@ export const Composer = (props: Props) => {
                     {/* 絵文字ピッカーボタン（リルート・プレーンテキスト以外） */}
                     {props.mode !== 'reroute' && displayMode !== 'plaintext' && (
                         <IconButton
+                            style={{ anchorName: emojiPickerAnchor } as React.CSSProperties}
                             onClick={() => {
                                 emojiPicker.open((emoji: Emoji) => {
                                     const ta = textareaRef.current
@@ -859,7 +861,7 @@ export const Composer = (props: Props) => {
                                         ...prev,
                                         [emoji.shortcode]: { imageURL: emoji.imageURL }
                                     }))
-                                })
+                                }, emojiPickerAnchor)
                             }}
                         >
                             <MdEmojiEmotions size={24} />
