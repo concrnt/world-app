@@ -739,7 +739,10 @@
             "attributes": "属性",
             "share": "シェア",
             "copyLink": "リンクをコピー",
-            "linkCopied": "コピーしました"
+            "linkCopied": "コピーしました",
+            "deleteTimeline": "コミュニティを削除",
+            "confirmDeleteTimeline": "このコミュニティを削除しますか？",
+            "confirmDeleteTimelineDescription": "この操作は取り消せません。"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",

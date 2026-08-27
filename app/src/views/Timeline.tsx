@@ -12,6 +12,7 @@ import { TimelineSettings } from '../components/TimelineSettings'
 import { MdInfo } from 'react-icons/md'
 import { Timeline } from '@concrnt/worldlib'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
+import { useStack } from '../layouts/Stack'
 
 interface Props {
     uri: string
@@ -20,6 +21,7 @@ interface Props {
 export const TimelineView = (props: Props) => {
     const { client } = useClient()
     const [settingsOpen, setSettingsOpen] = useState(false)
+    const stack = useStack()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -76,7 +78,13 @@ export const TimelineView = (props: Props) => {
             </View>
             {!restricted && <ComposeFAB />}
             <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-                <TimelineSettings uri={props.uri} />
+                <TimelineSettings
+                    uri={props.uri}
+                    onDeleted={() => {
+                        setSettingsOpen(false)
+                        stack.pop()
+                    }}
+                />
             </Drawer>
         </PostContextProvider>
     )

@@ -1,7 +1,7 @@
 import { Document, Policy } from '@concrnt/client'
-import { Timeline } from '@concrnt/worldlib'
+import { Schemas, Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
-import { Button, CCWallpaper, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
+import { Button, CCWallpaper, Confirm, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
 import { MdMoreHoriz } from 'react-icons/md'
 import { shareText } from '../lib/share'
 
@@ -16,6 +16,7 @@ import { useMediaProxy } from '../contexts/MediaProxy'
 
 interface Props {
     uri: string
+    onDeleted?: () => void
 }
 
 export const TimelineSettings = (props: Props) => {
@@ -25,13 +26,14 @@ export const TimelineSettings = (props: Props) => {
 
     return (
         <Suspense>
-            <Inner timelinePromise={timelinePromise} />
+            <Inner timelinePromise={timelinePromise} onDeleted={props.onDeleted} />
         </Suspense>
     )
 }
 
 interface InnerProps {
     timelinePromise: Promise<Timeline | null>
+    onDeleted?: () => void
 }
 
 const Inner = (props: InnerProps) => {
@@ -144,7 +146,7 @@ const Inner = (props: InnerProps) => {
                 }}
             >
                 {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
-                {tab === 'settings' && <TimelineEditor timeline={timeline} />}
+                {tab === 'settings' && <TimelineEditor timeline={timeline} onDeleted={props.onDeleted} />}
             </div>
         </div>
     )
@@ -152,6 +154,7 @@ const Inner = (props: InnerProps) => {
 
 interface EditorProps {
     timeline: Timeline
+    onDeleted?: () => void
 }
 
 const TimelineEditor = (props: EditorProps) => {
@@ -161,6 +164,7 @@ const TimelineEditor = (props: EditorProps) => {
     const [valueDraft, setValueDraft] = useState<any>()
     const [policyDraft, setPolicyDraft] = useState<Policy>()
     const [key, setKey] = useState<string>()
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     useEffect(() => {
         client.api
@@ -226,6 +230,26 @@ const TimelineEditor = (props: EditorProps) => {
             <PolicyEditor policy={policyDraft} setPolicy={setPolicyDraft} />
 
             <Button onClick={handleSave}>Save</Button>
+
+            {/* homeタイムライン等を誤って消せないよう、削除はコミュニティタイムラインに限定する */}
+            {props.timeline.schema === Schemas.communityTimeline && (
+                <Button variant="outlined" onClick={() => setDeleteConfirmOpen(true)}>
+                    {t('deleteTimeline')}
+                </Button>
+            )}
+            <Confirm
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                title={t('confirmDeleteTimeline')}
+                description={t('confirmDeleteTimelineDescription')}
+                confirmText={t('deleteTimeline')}
+                onConfirm={() => {
+                    client.api.delete(props.timeline.uri).then(() => {
+                        client.knownCommunities.reload()
+                        props.onDeleted?.()
+                    })
+                }}
+            />
         </div>
     )
 }

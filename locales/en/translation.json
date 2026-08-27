@@ -740,7 +740,10 @@
             "attributes": "Attributes",
             "share": "Share",
             "copyLink": "Copy link",
-            "linkCopied": "Copied"
+            "linkCopied": "Copied",
+            "deleteTimeline": "Delete Community",
+            "confirmDeleteTimeline": "Really delete this community?",
+            "confirmDeleteTimelineDescription": "This action cannot be undone."
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",

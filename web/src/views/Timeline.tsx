@@ -1,5 +1,6 @@
 import { Divider } from '@concrnt/ui'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
@@ -26,6 +27,7 @@ export const TimelineView = (props: Props) => {
     const { client } = useClient()
     const [settingsOpen, setSettingsOpen] = useState(false)
     const isMobile = useIsMobile()
+    const navigate = useNavigate()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
 
@@ -115,7 +117,13 @@ export const TimelineView = (props: Props) => {
             </View>
             {!restricted && <ComposeFAB />}
             <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-                <TimelineSettings uri={props.uri} />
+                <TimelineSettings
+                    uri={props.uri}
+                    onDeleted={() => {
+                        setSettingsOpen(false)
+                        navigate('/')
+                    }}
+                />
             </Drawer>
         </PostContextProvider>
     )
