@@ -134,6 +134,10 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
 
     const initialized = useRef(false)
 
+    // directionLockでyにロックされた縦スクロールでもonDragEndは発火し、infoには
+    // 生のジェスチャの速度が入るため、xロック時以外はpop判定しない
+    const lockedDirection = useRef<'x' | 'y' | null>(null)
+
     useEffect(() => {
         if (initialized.current) {
             controls.set({ x: 0 })
@@ -167,13 +171,20 @@ const SwipableView = ({ enabled, onPop, children }: { enabled: boolean; onPop: (
             dragMomentum={false}
             dragConstraints={enabled ? { left: 0, right: width } : undefined}
             onPointerDownCapture={(e) => {
+                // ジェスチャごとにロック方向をリセットする。onDragStartはframe経由の遅延実行で
+                // 同期発火のonDirectionLockより後に走ることがあるため、ここで行う
+                lockedDirection.current = null
                 // テキスト選択中はスワイプバックを開始しない(選択ハンドル操作・拡張と競合するため)
                 if (window.getSelection()?.toString()) e.stopPropagation()
+            }}
+            onDirectionLock={(axis) => {
+                lockedDirection.current = axis
             }}
             onDragEnd={(_, info) => {
                 if (!enabled) return
 
-                const shouldPop = info.offset.x > popDistance || info.velocity.x > popVelocity
+                const shouldPop =
+                    lockedDirection.current === 'x' && (info.offset.x > popDistance || info.velocity.x > popVelocity)
 
                 if (shouldPop) {
                     onPop()

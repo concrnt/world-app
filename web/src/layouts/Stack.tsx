@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
@@ -22,6 +22,10 @@ export const SwipableView = ({ onPop, children }: { onPop: () => void; children:
 
     const popDistance = Math.max(80, width * 0.3) // 画面幅の30% or 80px
     const popVelocity = 50 // px/s 目安
+
+    // directionLockでyにロックされた縦スクロールでもonDragEndは発火し、infoには
+    // 生のジェスチャの速度が入るため、xロック時以外はpop判定しない
+    const lockedDirection = useRef<'x' | 'y' | null>(null)
 
     const hintOpacity = useTransform(x, [0, popDistance], [0, 1])
 
@@ -71,8 +75,18 @@ export const SwipableView = ({ onPop, children }: { onPop: () => void; children:
                 dragElastic={0}
                 dragMomentum={false}
                 dragConstraints={{ left: 0, right: width }}
+                onPointerDownCapture={() => {
+                    // ジェスチャごとにロック方向をリセットする。onDragStartはframe経由の遅延実行で
+                    // 同期発火のonDirectionLockより後に走ることがあるため、ここで行う
+                    lockedDirection.current = null
+                }}
+                onDirectionLock={(axis) => {
+                    lockedDirection.current = axis
+                }}
                 onDragEnd={(_, info) => {
-                    const shouldPop = info.offset.x > popDistance || info.velocity.x > popVelocity
+                    const shouldPop =
+                        lockedDirection.current === 'x' &&
+                        (info.offset.x > popDistance || info.velocity.x > popVelocity)
 
                     if (shouldPop) {
                         animate(x, width, { duration: 0.12 }).then(() => {
