@@ -556,7 +556,8 @@
             "inspector": "Inspector",
             "share": "Share",
             "copyLink": "Copy link",
-            "linkCopied": "Copied"
+            "linkCopied": "Copied",
+            "copySource": "Copy source"
         },
         "collapsibleBody": {
             "showMore": "Show more"

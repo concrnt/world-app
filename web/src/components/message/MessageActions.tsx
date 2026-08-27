@@ -49,6 +49,7 @@ export const MessageActions = (props: Props) => {
     const reactionAnchor = useAnchor()
     const isMobile = useIsMobile()
     const [linkCopied, setLinkCopied] = useState(false)
+    const [sourceCopied, setSourceCopied] = useState(false)
 
     // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
     const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
@@ -267,6 +268,21 @@ export const MessageActions = (props: Props) => {
                             <Text>{linkCopied ? t('linkCopied') : t('copyLink')}</Text>
                         </ListItem>
                     ),
+                    <ListItem
+                        key="copySource"
+                        onClick={() => {
+                            if (props.message.value.body) {
+                                navigator.clipboard?.writeText(props.message.value.body)
+                            }
+                            setSourceCopied(true)
+                            setTimeout(() => {
+                                setSourceCopied(false)
+                                setMenuOpen(false)
+                            }, 800)
+                        }}
+                    >
+                        <Text>{sourceCopied ? t('linkCopied') : t('copySource')}</Text>
+                    </ListItem>,
                     <ListItem key="delete" onClick={() => setDeleteConfirmOpen(true)}>
                         <Text>{t('deletePost')}</Text>
                     </ListItem>,

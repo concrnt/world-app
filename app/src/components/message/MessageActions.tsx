@@ -255,6 +255,18 @@ export const MessageActions = (props: Props) => {
                     >
                         <Text>{t('share')}</Text>
                     </ListItem>,
+                    <ListItem
+                        key="copySource"
+                        onClick={() => {
+                            if (props.message.value.body) {
+                                navigator.clipboard?.writeText(props.message.value.body)
+                            }
+                            hapticSuccess()
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('copySource')}</Text>
+                    </ListItem>,
                     <ListItem key="delete" onClick={() => setDeleteConfirmOpen(true)}>
                         <Text>{t('deletePost')}</Text>
                     </ListItem>,

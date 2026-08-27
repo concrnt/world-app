@@ -555,7 +555,8 @@
             "inspector": "インスペクター",
             "share": "シェア",
             "copyLink": "リンクをコピー",
-            "linkCopied": "コピーしました"
+            "linkCopied": "コピーしました",
+            "copySource": "ソースをコピー"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
