@@ -71,15 +71,16 @@ export class Message<T> implements Document<T> {
         if (message.authorUser?.profile) {
             message.authorProfile = { ...message.authorProfile, ...message.authorUser.profile }
         }
+        // author本人が所有するリソース(プロフィール・association)は本人のホームドメインが最良のhint
+        const authorHint = message.authorUser?.domain ?? hint
 
         const key = message.key
         //  `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
         const profileName = key?.split('/')[5]
         if (profileName) {
-            console.log('profile name', profileName)
             message.authorProfileName = profileName
             const profile = await client.api
-                .getDocument<ProfileSchema>(semantics.profile(message.author, profileName))
+                .getDocument<ProfileSchema>(semantics.profile(message.author, profileName), authorHint)
                 .then((res) => res.value)
                 .catch(() => undefined)
             if (profile) {
@@ -97,16 +98,16 @@ export class Message<T> implements Document<T> {
         }
 
         message.ownAssociations = client.ccid
-            ? (await client.api.getAssociationsAll(uri, { author: client.ccid })).map((sd) =>
+            ? (await client.api.getAssociationsAll(uri, { author: client.ccid }, authorHint)).map((sd) =>
                   Association.fromSignedDocument(sd)
               )
             : []
 
-        message.associationCounts = await client.api.getAssociationCounts(uri)
-        message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation)
+        message.associationCounts = await client.api.getAssociationCounts(uri, undefined, authorHint)
+        message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation, authorHint)
 
         if (res.associate) {
-            message.associationTarget = await Message.load<any>(client, res.associate).catch(() => undefined)
+            message.associationTarget = await Message.load<any>(client, res.associate, hint).catch(() => undefined)
         }
 
         return message

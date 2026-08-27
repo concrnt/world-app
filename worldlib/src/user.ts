@@ -57,7 +57,7 @@ export class User {
         })
 
         const profile = await client.api
-            .getDocument<ProfileSchema>(semantics.profile(entity.author, 'main'))
+            .getDocument<ProfileSchema>(semantics.profile(entity.author, 'main'), entity.value.domain)
             .catch((_e) => {
                 // ignore error, profile is optional
                 return undefined

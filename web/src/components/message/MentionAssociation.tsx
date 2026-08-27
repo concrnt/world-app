@@ -49,7 +49,9 @@ export const MentionAssociation = (props: MessageProps<MentionAssociationSchema>
             </div>
 
             {/* 下部: メンション元の投稿 */}
-            {mentionSourceURI && <MessageContainer uri={mentionSourceURI} />}
+            {mentionSourceURI && (
+                <MessageContainer uri={mentionSourceURI} hint={message.authorUser?.domain ?? message.hint} />
+            )}
 
             {/* ローディング */}
             {!mentionSourceURI && (

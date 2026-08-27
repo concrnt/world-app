@@ -119,7 +119,12 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 </div>
             </OnelineMessageLayout>
             <ErrorBoundary FallbackComponent={RenderError}>
-                <MessageContainer uri={props.message.value.targetURI} rerouted={props.message} />
+                {/* rerouteした本人は元投稿が見えているはずなので、そのホームドメインを解決hintに使う */}
+                <MessageContainer
+                    uri={props.message.value.targetURI}
+                    hint={props.message.authorUser?.domain ?? props.message.hint}
+                    rerouted={props.message}
+                />
             </ErrorBoundary>
         </div>
     )

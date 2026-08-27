@@ -521,6 +521,10 @@ export class Api {
             ccid = ccid.replace('cckv://', '').split('/')[0]
         }
 
+        // タイムラインURIのhostname等からCCID/CSIDがhintとして紛れ込むことがあるが、
+        // hintはFQDNでないとサーバー側の解決が必ず失敗するので捨てる
+        if (hint && (IsCCID(hint) || IsCSID(hint))) hint = undefined
+
         const uri = hint ? `cckv://${ccid}@${hint}` : `cckv://${ccid}`
 
         const server = await this.getServer(this.defaultHost)
@@ -535,6 +539,11 @@ export class Api {
         // ネットワーク経由の404と同じ型のエラーにしないと、呼び出し側のNotFoundErrorハンドリングが機能しない
         if (!sd) {
             throw new NotFoundError(`fetch failed on negative cache: ${uri}`, uri)
+        }
+
+        // hint付きで解決できたentityはhintなしの経路(URL直アクセス等)でも引けるようミラーする
+        if (hint) {
+            await this.cache.set(`cckv://${ccid}`, sd)
         }
 
         const document: Document<Entity> = JSON.parse(sd.document)
@@ -571,6 +580,7 @@ export class Api {
 
     // owner(CCID/CSID/FQDN)からリソースの所在ドメインを解決する
     async resolveDomain(owner: string, hint?: string): Promise<FQDN> {
+        if (hint && (IsCCID(hint) || IsCSID(hint))) hint = undefined
         let fqdn = owner
         if (IsCCID(fqdn)) {
             const entity = await this.getEntity(owner, hint)

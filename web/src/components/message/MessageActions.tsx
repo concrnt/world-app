@@ -75,11 +75,11 @@ export const MessageActions = (props: Props) => {
             // 再レンダリングがuse()する両方を再取得してtransition内で解決させる
             const rerouteHref = props.rerouted.key ?? props.rerouted.uri
             qt.update(rerouteHref)
-            await client?.getMessage(props.message.uri).catch(() => null)
-            await client?.getMessage(rerouteHref).catch(() => null)
+            await client?.getMessage(props.message.uri, props.message.hint).catch(() => null)
+            await client?.getMessage(rerouteHref, props.rerouted.hint).catch(() => null)
         } else {
             qt.update(messageHref)
-            await client?.getMessage(messageHref).catch(() => null)
+            await client?.getMessage(messageHref, props.message.hint).catch(() => null)
         }
     }
 

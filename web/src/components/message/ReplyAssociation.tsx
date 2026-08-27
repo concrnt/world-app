@@ -4,5 +4,10 @@ import { MessageContainer } from './main'
 
 export const ReplyAssociation = (props: MessageProps<ReplyAssociationSchema>) => {
     // リプライメッセージをタイムラインと同一の表示で描画する
-    return <MessageContainer uri={props.message.value.targetURI} />
+    return (
+        <MessageContainer
+            uri={props.message.value.targetURI}
+            hint={props.message.authorUser?.domain ?? props.message.hint}
+        />
+    )
 }

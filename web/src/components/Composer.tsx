@@ -343,7 +343,7 @@ export const Composer = (props: Props) => {
 
                     // リプライアソシエーションを作成
                     const targetAuthorDomain = await client
-                        .getUser(props.targetMessage.author)
+                        .getUser(props.targetMessage.author, props.targetMessage.hint)
                         .then((user) => user?.domain)
                     const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 
@@ -374,7 +374,8 @@ export const Composer = (props: Props) => {
                         key: newPostUri,
                         schema: Schemas.rerouteMessage,
                         value: {
-                            targetURI: props.targetMessage.uri
+                            targetURI: props.targetMessage.uri,
+                            rerouteMessageAuthor: props.targetMessage.author
                         },
                         author: client.ccid,
                         distributes,
@@ -385,7 +386,7 @@ export const Composer = (props: Props) => {
 
                     // リルートアソシエーションを作成
                     const targetAuthorDomain = await client
-                        .getUser(props.targetMessage.author)
+                        .getUser(props.targetMessage.author, props.targetMessage.hint)
                         .then((user) => user?.domain)
                     const notifyTimeline = semantics.notificationTimeline(props.targetMessage.author, 'main') // TODO: update main to specific
 

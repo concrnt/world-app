@@ -599,7 +599,9 @@ export class Client {
     }
 
     getMessage<T>(uri: string, hint?: string): Promise<Message<T> | null> {
-        const cached = this.messageCache[uri]
+        // hintなしの失敗結果がhint付き呼び出しを巻き込まないよう、hint込みでキャッシュを分ける
+        const cacheKey = `${uri}\0${hint ?? ''}`
+        const cached = this.messageCache[cacheKey]
 
         if (cached && cached.expire > Date.now()) {
             return cached.data
@@ -611,7 +613,7 @@ export class Client {
             }
             return m
         })
-        this.messageCache[uri] = {
+        this.messageCache[cacheKey] = {
             data: msg,
             expire: Date.now() + cacheLifetime
         }
@@ -621,9 +623,12 @@ export class Client {
     // キャッシュ済みの結果(存在しなかった場合のnull含む)を破棄して次回getMessageを再取得させる。
     // rerouteメッセージの場合はネストされたMessageContainerが表示するtargetも古いので巻き込んで破棄する
     invalidateMessage(uri: string): void {
-        delete this.messageCache[uri]
         const target = this.rerouteTargets[uri]
-        if (target) delete this.messageCache[target]
+        for (const key of Object.keys(this.messageCache)) {
+            if (key.startsWith(`${uri}\0`) || (target && key.startsWith(`${target}\0`))) {
+                delete this.messageCache[key]
+            }
+        }
     }
 
     async getUser(id: CCID, hint?: string): Promise<User | null> {

@@ -45,6 +45,7 @@ export class TimelineReader {
                 if (this.body.find((item) => item.href === href)) return
                 const item: ChunklineItem = {
                     href: href,
+                    source: event.source,
                     timestamp: new Date()
                 }
                 this.onNewItem?.(item)

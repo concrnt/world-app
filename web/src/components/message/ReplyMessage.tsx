@@ -27,7 +27,11 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
             }}
         >
             <ErrorBoundary FallbackComponent={RenderError}>
-                <MessageContainer oneline uri={props.message.value.targetURI} />
+                <MessageContainer
+                    oneline
+                    uri={props.message.value.targetURI}
+                    hint={props.message.authorUser?.domain ?? props.message.hint}
+                />
             </ErrorBoundary>
             <MessageLayout
                 detail={props.detail}

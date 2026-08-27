@@ -25,6 +25,7 @@ import { BlueskyRecord } from './BlueskyRecord'
 interface Props {
     uri?: string
     source?: string
+    hint?: string
     content?: string
     oneline?: boolean
     forceExpanded?: boolean
@@ -36,7 +37,8 @@ export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
-    const message = props.content ? JSON.parse(props.content) : use(client!.getMessage<any>(props.uri!, sourceDomain))
+    const hint = props.hint ?? sourceDomain
+    const message = props.content ? JSON.parse(props.content) : use(client!.getMessage<any>(props.uri!, hint))
 
     if (!message) return <div>Message not found</div>
 
