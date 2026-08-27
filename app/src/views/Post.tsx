@@ -3,7 +3,7 @@ import { CCImage, Avatar, Divider, Tabs, Tab, Text, View } from '@concrnt/ui'
 import { FAB } from '../ui/FAB'
 import { Header } from '../ui/Header'
 import { MdReply, MdAddReaction } from 'react-icons/md'
-import { Suspense, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import {
@@ -26,6 +26,7 @@ import { RenderError } from '../components/message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useComposer } from '../contexts/Composer'
 import { TimeDiff } from '../components/TimeDiff'
+import { QueryTimelineContext } from '../components/QueryTimeline'
 
 export type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 
@@ -57,10 +58,25 @@ export const PostView = (props: Props) => {
     const [reactionMembers, setReactionMembers] = useState<Association<ReactionAssociationSchema>[]>([])
     const [loadingMembers, setLoadingMembers] = useState(false)
 
+    // PostViewはQueryTimelineの外なので、リアクション時のqt.update(メッセージキャッシュ破棄)が素通りして
+    // useOptimisticのrevertで表示が巻き戻る。ここで破棄+再レンダーを肩代わりして、
+    // transition内でMessageContainerが新鮮な値を取り直せるようにする
+    const [messageRevision, bumpMessageRevision] = useReducer((x: number) => x + 1, 0)
+    const refreshMessageCache = useCallback(
+        (href: string) => {
+            client?.invalidateMessage(href)
+            // hrefはmessage.key側のことがあるが、MessageContainerはprops.uriをキーにキャッシュしている
+            if (href !== props.uri) client?.invalidateMessage(props.uri)
+            bumpMessageRevision()
+        },
+        [client, props.uri]
+    )
+
     // メッセージのdistributes取得用
     const messagePromise = useMemo(() => {
+        void messageRevision // キャッシュ破棄後に取り直す
         return client?.getMessage<any>(props.uri)
-    }, [client, props.uri])
+    }, [client, props.uri, messageRevision])
 
     useEffect(() => {
         messagePromise?.then((msg) => setMessage(msg ?? null)).catch(() => setMessage(null))
@@ -176,11 +192,13 @@ export const PostView = (props: Props) => {
                             padding: CssVar.space(1)
                         }}
                     >
-                        <ErrorBoundary FallbackComponent={RenderError}>
-                            <Suspense fallback={<MessageSkeleton />}>
-                                <MessageContainer uri={props.uri} forceExpanded detail />
-                            </Suspense>
-                        </ErrorBoundary>
+                        <QueryTimelineContext.Provider value={{ update: refreshMessageCache }}>
+                            <ErrorBoundary FallbackComponent={RenderError}>
+                                <Suspense fallback={<MessageSkeleton />}>
+                                    <MessageContainer uri={props.uri} forceExpanded detail />
+                                </Suspense>
+                            </ErrorBoundary>
+                        </QueryTimelineContext.Provider>
                     </div>
                     <Divider />
                     <Tabs>
@@ -249,11 +267,13 @@ export const PostView = (props: Props) => {
                                             padding: CssVar.space(1)
                                         }}
                                     >
-                                        <ErrorBoundary FallbackComponent={RenderError}>
-                                            <Suspense fallback={<MessageSkeleton />}>
-                                                <MessageContainer uri={reply.value.targetURI} />
-                                            </Suspense>
-                                        </ErrorBoundary>
+                                        <QueryTimelineContext.Provider value={{ update: refreshMessageCache }}>
+                                            <ErrorBoundary FallbackComponent={RenderError}>
+                                                <Suspense fallback={<MessageSkeleton />}>
+                                                    <MessageContainer uri={reply.value.targetURI} />
+                                                </Suspense>
+                                            </ErrorBoundary>
+                                        </QueryTimelineContext.Provider>
                                     </div>
                                 ))}
                             </>
