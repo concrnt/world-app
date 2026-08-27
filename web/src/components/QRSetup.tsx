@@ -243,7 +243,19 @@ export const QRSetup = () => {
                     textAlign: 'center'
                 }}
             >
-                {!ccid && <Text>{t('scanWithApp')}</Text>}
+                {!ccid && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: CssVar.space(1)
+                        }}
+                    >
+                        <Text>{t('scanWithApp')}</Text>
+                        <Text variant="caption">{t('scanWithAppHint')}</Text>
+                    </div>
+                )}
 
                 {pendingKeyGeneration && (
                     <div

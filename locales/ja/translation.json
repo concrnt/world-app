@@ -913,6 +913,7 @@
         },
         "qrSetup": {
             "scanWithApp": "ConcrntアプリでQRコードをスキャンしてください",
+            "scanWithAppHint": "スキャナーはアプリの設定 > ID管理にあります",
             "usePasskeyTitle": "パスキーを利用しますか？",
             "usePasskeyDescription": "パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。",
             "no": "いいえ",

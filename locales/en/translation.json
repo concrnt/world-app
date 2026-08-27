@@ -914,6 +914,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
+            "scanWithAppHint": "You can find the scanner in the app under Settings > ID Management",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
