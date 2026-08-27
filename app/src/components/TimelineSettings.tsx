@@ -9,6 +9,7 @@ import { useClient } from '../contexts/Client'
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Subscription } from './Subscription'
+import { ServerChip } from './ServerChip'
 import { CCEditor } from './CCEditor'
 import { PolicyEditor } from './PolicyEditor'
 import { useMediaProxy } from '../contexts/MediaProxy'
@@ -85,6 +86,14 @@ const Inner = (props: InnerProps) => {
                             <IconButton onClick={() => setMenuOpen(true)}>
                                 <MdMoreHoriz size={24} />
                             </IconButton>
+                        </div>
+                        <div
+                            style={{
+                                marginTop: CssVar.space(1),
+                                marginBottom: CssVar.space(1)
+                            }}
+                        >
+                            <ServerChip uri={timeline.uri} />
                         </div>
                         <Text>{timeline.description}</Text>
                     </div>

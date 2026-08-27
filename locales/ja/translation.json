@@ -728,6 +728,11 @@
             "postProfile": "投稿元プロフィール",
             "addDestination": "投稿先を追加"
         },
+        "serverChip": {
+            "codeOfConduct": "コード・オブ・コンダクト",
+            "cocNotAvailable": "コード・オブ・コンダクトはありません。",
+            "termsOfService": "利用規約"
+        },
         "timelineSettings": {
             "schema": "スキーマ",
             "attributes": "属性",

@@ -729,6 +729,11 @@
             "postProfile": "Posting profile",
             "addDestination": "Add destination"
         },
+        "serverChip": {
+            "codeOfConduct": "Code of Conduct",
+            "cocNotAvailable": "Code of Conduct is not available.",
+            "termsOfService": "Terms of Service"
+        },
         "timelineSettings": {
             "schema": "Schema",
             "attributes": "Attributes",
