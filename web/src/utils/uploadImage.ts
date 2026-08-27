@@ -9,7 +9,11 @@ interface PreSignResponse {
     }
 }
 
-export const uploadImage = async (client: Client, file: File): Promise<[string, string]> => {
+export const uploadImage = async (
+    client: Client,
+    file: File,
+    onProgress?: (progress: number) => void
+): Promise<[string, string]> => {
     let fileType = file.type
     if (!fileType) {
         const ext = file.name.split('.').pop()?.toLowerCase()
@@ -49,12 +53,27 @@ export const uploadImage = async (client: Client, file: File): Promise<[string, 
         throw new Error('Failed to get pre-signed URL')
     }
 
-    await fetch(preSignReq.content.url, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': fileType
-        },
-        body: file
+    // fetchはアップロード進捗を取れないためXHRでPUTする
+    await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', preSignReq.content.url)
+        xhr.setRequestHeader('Content-Type', fileType)
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                onProgress?.(e.loaded / e.total)
+            }
+        }
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve()
+            } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`))
+            }
+        }
+        xhr.onerror = () => {
+            reject(new Error('Upload failed'))
+        }
+        xhr.send(file)
     })
 
     return [preSignReq.content.file.url, fileType]

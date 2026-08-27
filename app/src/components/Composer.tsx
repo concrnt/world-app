@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Button,
+    CircularProgress,
     IconButton,
     List,
     ListItem,
@@ -107,6 +108,8 @@ export const Composer = (props: Props) => {
     const mediaDrafts = isShared ? sharedDraft.mediaDrafts : localMediaDrafts
     const setMediaDrafts = isShared ? sharedDraft.setMediaDrafts : setLocalMediaDrafts
     const [uploading, setUploading] = useState<boolean>(false)
+    // アップロード中のファイルごとの進捗(0〜1)。キーはアップロード対象配列のindex
+    const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({})
     const [dragging, setDragging] = useState<boolean>(false)
     const [localEditorMode, setLocalEditorMode] = useState<EditorMode>('markdown')
     const editorMode = isShared ? sharedDraft.editorMode : localEditorMode
@@ -133,7 +136,15 @@ export const Composer = (props: Props) => {
     const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode
 
     const getSubmitLabel = () => {
-        if (uploading) return t('sending')
+        if (uploading) {
+            // ファイル転送中は全体進捗のパーセントを添える(転送完了後のcommit待ちは表示しない)
+            const progressValues = Object.values(uploadProgress)
+            const overall = progressValues.reduce((a, b) => a + b, 0) / progressValues.length
+            if (progressValues.length > 0 && overall < 1) {
+                return `${t('sending')} ${Math.round(overall * 100)}%`
+            }
+            return t('sending')
+        }
         switch (props.mode) {
             case 'reply':
                 return t('submitReply')
@@ -179,10 +190,13 @@ export const Composer = (props: Props) => {
             if (props.mode === 'reply' || hasInlineMedia) {
                 if (!client || uploading) return
                 setUploading(true)
+                setUploadProgress(Object.fromEntries(selected.map((_, index) => [index, 0])))
                 try {
                     const tags = await Promise.all(
-                        selected.map(async (file) => {
-                            const [url, typ] = await uploadImage(client, file)
+                        selected.map(async (file, index) => {
+                            const [url, typ] = await uploadImage(client, file, (progress) => {
+                                setUploadProgress((prev) => ({ ...prev, [index]: progress }))
+                            })
                             return mediaToTag(url, typ, file.name)
                         })
                     )
@@ -199,6 +213,7 @@ export const Composer = (props: Props) => {
                     console.error('Upload error:', error)
                 } finally {
                     setUploading(false)
+                    setUploadProgress({})
                 }
                 return
             }
@@ -220,10 +235,13 @@ export const Composer = (props: Props) => {
                 // 添付済みメディアをアップロードしてインラインタグへ変換する
                 if (!client || uploading) return
                 setUploading(true)
+                setUploadProgress(Object.fromEntries(mediaDrafts.map((_, index) => [index, 0])))
                 try {
                     const tags = await Promise.all(
-                        mediaDrafts.map(async (media) => {
-                            const [url, typ] = await uploadImage(client, media.file)
+                        mediaDrafts.map(async (media, index) => {
+                            const [url, typ] = await uploadImage(client, media.file, (progress) => {
+                                setUploadProgress((prev) => ({ ...prev, [index]: progress }))
+                            })
                             return mediaToTag(url, typ, media.file.name)
                         })
                     )
@@ -233,6 +251,7 @@ export const Composer = (props: Props) => {
                     return
                 } finally {
                     setUploading(false)
+                    setUploadProgress({})
                 }
             }
             // plaintextへの切り替えではタグ変換できないため破棄する
@@ -246,6 +265,8 @@ export const Composer = (props: Props) => {
     }
 
     const removeMedia = (index: number) => {
+        // アップロード中は進捗表示のindexとズレるため添付の増減を禁止する
+        if (uploading) return
         setMediaDrafts((prev) => {
             const removed = prev[index]
             if (removed.previewUrl) URL.revokeObjectURL(removed.previewUrl)
@@ -408,10 +429,13 @@ export const Composer = (props: Props) => {
                         }
                         case 'media': {
                             // 画像をアップロード
+                            setUploadProgress(Object.fromEntries(mediaDrafts.map((_, index) => [index, 0])))
                             const uploadedMedias = await Promise.all(
-                                mediaDrafts.map(async (media) => {
+                                mediaDrafts.map(async (media, index) => {
                                     const [[url, typ], blurhash] = await Promise.all([
-                                        uploadImage(client, media.file),
+                                        uploadImage(client, media.file, (progress) => {
+                                            setUploadProgress((prev) => ({ ...prev, [index]: progress }))
+                                        }),
                                         computeBlurhash(media.file)
                                     ])
                                     return {
@@ -462,6 +486,7 @@ export const Composer = (props: Props) => {
             console.error('Submit error:', error)
         } finally {
             setUploading(false)
+            setUploadProgress({})
         }
 
         // 失敗時は入力を保持したまま（コンテナも閉じない）
@@ -679,7 +704,9 @@ export const Composer = (props: Props) => {
                                 height: '80px',
                                 cursor: 'pointer'
                             }}
-                            onClick={() => setFlagMenuIndex(index)}
+                            onClick={() => {
+                                if (!uploading) setFlagMenuIndex(index)
+                            }}
                         >
                             {media.previewUrl ? (
                                 <img
@@ -755,6 +782,27 @@ export const Composer = (props: Props) => {
                                     }}
                                 >
                                     <MdFlag size={16} />
+                                </div>
+                            )}
+                            {/* アップロード中の進捗表示。転送完了後のcommit待ちはindeterminateで回す */}
+                            {uploading && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                        borderRadius: CssVar.round(2),
+                                        color: 'white'
+                                    }}
+                                >
+                                    <CircularProgress
+                                        value={
+                                            (uploadProgress[index] ?? 0) < 1 ? (uploadProgress[index] ?? 0) : undefined
+                                        }
+                                    />
                                 </div>
                             )}
                         </div>
