@@ -685,8 +685,6 @@ export const EmojiPickerProvider = (props: Props) => {
                     onClose={close}
                     anchor={anchorName ?? '--emoji-picker-unanchored'}
                     style={{
-                        display: 'flex',
-                        flexDirection: 'column',
                         width: '380px',
                         maxWidth: '90vw',
                         height: '480px',
@@ -699,7 +697,14 @@ export const EmojiPickerProvider = (props: Props) => {
                     }}
                 >
                     {isOpen && (
-                        <>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                height: '100%',
+                                overflow: 'hidden'
+                            }}
+                        >
                             {/* Tabs */}
                             <HorizontalLayout
                                 style={{
@@ -962,7 +967,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                     {t('addEmojis')}
                                 </Button>
                             </div>
-                        </>
+                        </div>
                     )}
                 </Popover>
             )}
