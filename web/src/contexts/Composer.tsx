@@ -143,7 +143,9 @@ interface ComposerOverlayProps {
 }
 
 // モバイル用の全画面モーダルのchrome（背景・アニメーション・キャンセルボタン）を担当し、中身はComposerに任せる。
-// ソフトキーボードに合わせて高さを追従させる(app版と同じ式)
+// ソフトキーボードに合わせて高さを追従させる。
+// app版はdisableInputAccessoryViewでアクセサリービューが無いためキーボードとの隙間を式に足しているが、
+// webはブラウザのアクセサリーバーが健在でそれ自体が隙間になるので足さない(意図的な差分)
 const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.composer' })
     const [willClose, setWillClose] = useState(false)
@@ -172,8 +174,8 @@ const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
                             height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top))`,
                             display: 'flex',
                             flexDirection: 'column',
-                            maxHeight: '50vh',
-                            transition: `height ${keyboard.duration || 0.1}s ease-out`
+                            maxHeight: '80vh',
+                            transition: `height ${keyboard.duration || 0.1}s cubic-bezier(0.22, 1, 0.36, 1)`
                         }}
                     >
                         <div

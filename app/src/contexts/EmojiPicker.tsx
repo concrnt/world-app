@@ -356,15 +356,18 @@ export const EmojiPickerProvider = (props: Props) => {
                                 borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                height: searchBoxFocused ? 'auto' : `calc(50vh + ${keyboard.height}px)`,
+                                height: searchBoxFocused
+                                    ? 'auto'
+                                    : `calc(50vh + ${keyboard.height}px + ${keyboard.visible ? CssVar.space(2) : '0px'})`,
                                 paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                transition: `height ${keyboard.duration}s ease-out`,
+                                // iOSキーボードは立ち上がりの速いスプリングで動くため、ease-outだと追従が遅れて見える
+                                transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`,
                                 zIndex: 1001
                             }}
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                            transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.15 }}
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Handle */}
@@ -648,12 +651,12 @@ export const EmojiPickerProvider = (props: Props) => {
                                 )}
                             </div>
 
-                            {/* キーボードの裏まで背景を敷くスペーサ */}
+                            {/* キーボードの裏まで背景を敷くスペーサ。アクセサリービューが無いため隙間分も足す */}
                             <div
                                 style={{
                                     flexShrink: 0,
-                                    height: `${keyboard.height}px`,
-                                    transition: `height ${keyboard.duration}s ease-out`
+                                    height: `calc(${keyboard.height}px + ${keyboard.visible ? CssVar.space(2) : '0px'})`,
+                                    transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`
                                 }}
                             />
                         </motion.div>

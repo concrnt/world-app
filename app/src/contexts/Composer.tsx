@@ -163,11 +163,15 @@ const ComposerOverlay = (props: {
                 >
                     <div
                         style={{
-                            height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top))`,
+                            // disableInputAccessoryViewによりアクセサリービューが無いため、キーボードとの隙間を自前で確保する
+                            height: `calc(100dvh - ${keyboard.height}px - env(safe-area-inset-top) - ${
+                                keyboard.visible ? CssVar.space(2) : '0px'
+                            })`,
                             display: 'flex',
                             flexDirection: 'column',
-                            maxHeight: '50vh',
-                            transition: `height ${keyboard.duration || 0.1}s ease-out`
+                            maxHeight: '80vh',
+                            // iOSキーボードは立ち上がりの速いスプリングで動くため、ease-outだと追従が遅れて見える
+                            transition: `height ${keyboard.duration || 0.1}s cubic-bezier(0.22, 1, 0.36, 1)`
                         }}
                     >
                         <div

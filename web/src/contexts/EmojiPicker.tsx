@@ -375,13 +375,13 @@ export const EmojiPickerProvider = (props: Props) => {
                                 flexDirection: 'column',
                                 height: searchBoxFocused ? 'auto' : `calc(50vh + ${keyboard.height}px)`,
                                 paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                transition: `height ${keyboard.duration}s ease-out`,
+                                transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`,
                                 zIndex: 1001
                             }}
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                            transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.15 }}
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Handle */}
@@ -670,7 +670,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 style={{
                                     flexShrink: 0,
                                     height: `${keyboard.height}px`,
-                                    transition: `height ${keyboard.duration}s ease-out`
+                                    transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`
                                 }}
                             />
                         </motion.div>
