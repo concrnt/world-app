@@ -477,7 +477,8 @@
             "createList": "リストを作成",
             "create": "作成",
             "listTitle": "タイトル",
-            "openSettings": "リスト設定"
+            "openSettings": "リスト設定",
+            "noCommunities": "コミュニティはありません"
         }
     },
     "components": {

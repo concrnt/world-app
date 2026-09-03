@@ -478,7 +478,8 @@
             "createList": "Create List",
             "create": "Create",
             "listTitle": "Title",
-            "openSettings": "List settings"
+            "openSettings": "List settings",
+            "noCommunities": "No communities"
         }
     },
     "components": {
