@@ -311,7 +311,10 @@
             "createCommunity": "Create Community",
             "create": "Create",
             "name": "Name",
-            "description": "Description"
+            "description": "Description",
+            "addToList": "Add to list",
+            "listUnavailable": "The selected list is unavailable",
+            "retryAddToList": "Retry adding to list"
         },
         "dev": {
             "developerMode": "Developer Mode",

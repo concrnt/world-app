@@ -311,7 +311,10 @@
             "createCommunity": "コミュニティを作成",
             "create": "作成",
             "name": "名前",
-            "description": "説明"
+            "description": "説明",
+            "addToList": "リストに追加",
+            "listUnavailable": "追加先のリストを利用できません",
+            "retryAddToList": "リストへの追加を再試行"
         },
         "dev": {
             "developerMode": "開発者モード",
