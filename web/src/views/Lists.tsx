@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { Reorder, useDragControls, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Text, IconButton, Button, TextField, CCImage } from '@concrnt/ui'
+import { Text, IconButton, Button, Checkbox, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
@@ -23,6 +23,7 @@ export const ListsView = () => {
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
+    const [creatorBusy, setCreatorBusy] = useState(false)
     const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
     const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -78,11 +79,20 @@ export const ListsView = () => {
                     </Suspense>
                 </motion.div>
             </View>
-            <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+            <Drawer
+                open={creatorOpen}
+                onClose={() => {
+                    if (creatorBusy) return
+                    setCreatorOpen(false)
+                }}
+            >
                 <ListCreator
+                    onBusyChange={setCreatorBusy}
+                    onCreated={() => {
+                        setUpdater((u) => u + 1)
+                    }}
                     onComplete={() => {
                         setCreatorOpen(false)
-                        setUpdater((u) => u + 1)
                     }}
                 />
             </Drawer>
@@ -277,10 +287,69 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
     )
 }
 
-const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
+const ListCreator = ({
+    onBusyChange,
+    onCreated,
+    onComplete
+}: {
+    onBusyChange: (busy: boolean) => void
+    onCreated: () => void
+    onComplete: () => void
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'views.lists' })
     const { client } = useClient()
     const [newListTitle, setNewListTitle] = useState('')
+    const [pinOnCreate, setPinOnCreate] = useState(false)
+    const [created, setCreated] = useState(false)
+    const [error, setError] = useState<'create' | 'pin' | null>(null)
+
+    const createList = async () => {
+        if (!client || created) return
+
+        setError(null)
+        onBusyChange(true)
+
+        try {
+            const key = Date.now().toString()
+            const uri = semantics.list(client.ccid, client.currentProfile, key)
+            const document: Document<ListSchema> = {
+                kind: 'record',
+                key: uri,
+                schema: Schemas.list,
+                value: {
+                    name: newListTitle
+                },
+                author: client.ccid,
+                createdAt: new Date()
+            }
+
+            try {
+                await client.api.commit(document)
+            } catch (e) {
+                console.error('Failed to create list', e)
+                setError('create')
+                return
+            }
+
+            setCreated(true)
+            onCreated()
+
+            if (pinOnCreate) {
+                try {
+                    await client.addPin(uri)
+                } catch (e) {
+                    console.error('Failed to pin newly created list', e)
+                    setError('pin')
+                    return
+                }
+            }
+
+            console.log('List created')
+            onComplete()
+        } finally {
+            onBusyChange(false)
+        }
+    }
 
     return (
         <div
@@ -300,30 +369,7 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                 }}
             >
                 <Text variant="h3">{t('createList')}</Text>
-                <Button
-                    disabled={!newListTitle}
-                    onClick={() => {
-                        if (!client) return
-
-                        const key = Date.now().toString()
-
-                        const document: Document<ListSchema> = {
-                            kind: 'record',
-                            key: semantics.list(client.ccid, client.currentProfile, key),
-                            schema: Schemas.list,
-                            value: {
-                                name: newListTitle
-                            },
-                            author: client.ccid,
-                            createdAt: new Date()
-                        }
-
-                        client.api.commit(document).then(() => {
-                            console.log('Community created')
-                            onComplete()
-                        })
-                    }}
-                >
+                <Button disabled={!newListTitle || created} busyChildren={t('creating')} onClick={createList}>
                     {t('create')}
                 </Button>
             </div>
@@ -331,6 +377,12 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                 <Text variant="h5">{t('listTitle')}</Text>
                 <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
+                <Text>{t('pinOnCreate')}</Text>
+            </label>
+            {error === 'create' && <Text style={{ color: '#ff5b5b' }}>{t('createFailed')}</Text>}
+            {error === 'pin' && <Text style={{ color: '#ff5b5b' }}>{t('pinFailed')}</Text>}
         </div>
     )
 }

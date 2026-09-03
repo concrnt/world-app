@@ -477,7 +477,11 @@
             "createList": "リストを作成",
             "create": "作成",
             "listTitle": "タイトル",
-            "openSettings": "リスト設定"
+            "openSettings": "リスト設定",
+            "pinOnCreate": "ピン留めする",
+            "creating": "作成中...",
+            "createFailed": "リストの作成に失敗しました。もう一度お試しください。",
+            "pinFailed": "リストは作成されましたが、ピン留めに失敗しました。リスト一覧から後でピン留めできます。"
         }
     },
     "components": {
