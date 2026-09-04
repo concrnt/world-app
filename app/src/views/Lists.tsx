@@ -290,13 +290,15 @@ const ListCreator = ({
     const { client } = useClient()
     const [newListTitle, setNewListTitle] = useState('')
     const [pinOnCreate, setPinOnCreate] = useState(false)
+    const [busy, setBusy] = useState(false)
     const [created, setCreated] = useState(false)
     const [error, setError] = useState<'create' | 'pin' | null>(null)
 
     const createList = async () => {
-        if (!client || created) return
+        if (!client || created || busy) return
 
         setError(null)
+        setBusy(true)
         onBusyChange(true)
 
         try {
@@ -334,9 +336,9 @@ const ListCreator = ({
                 }
             }
 
-            console.log('List created')
             onComplete()
         } finally {
+            setBusy(false)
             onBusyChange(false)
         }
     }
@@ -359,18 +361,30 @@ const ListCreator = ({
                 }}
             >
                 <Text variant="h3">{t('createList')}</Text>
-                <Button disabled={!newListTitle || created} busyChildren={t('creating')} onClick={createList}>
+                <Button disabled={!newListTitle || created || busy} busyChildren={t('creating')} onClick={createList}>
                     {t('create')}
                 </Button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">{t('listTitle')}</Text>
-                <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
-                <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
-                <Text>{t('pinOnCreate')}</Text>
-            </label>
+            <fieldset
+                disabled={busy || created}
+                style={{
+                    border: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(4)
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                    <Text variant="h5">{t('listTitle')}</Text>
+                    <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                    <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
+                    {t('pinOnCreate')}
+                </label>
+            </fieldset>
             {error && (
                 <div role="alert" aria-live="assertive">
                     <Text style={{ color: '#ff5b5b' }}>{error === 'create' ? t('createFailed') : t('pinFailed')}</Text>
