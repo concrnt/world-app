@@ -639,6 +639,7 @@ export const Composer = (props: Props) => {
                         flex: 1,
                         minHeight: '80px',
                         fontSize: '1.2rem',
+                        fontFamily: 'inherit',
                         boxSizing: 'border-box',
                         border: 'none',
                         outline: 'none',
