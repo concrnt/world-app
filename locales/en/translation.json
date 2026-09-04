@@ -478,7 +478,11 @@
             "createList": "Create List",
             "create": "Create",
             "listTitle": "Title",
-            "openSettings": "List settings"
+            "openSettings": "List settings",
+            "pinOnCreate": "Pin it",
+            "creating": "Creating...",
+            "createFailed": "Failed to create the list. Please try again.",
+            "pinFailed": "The list was created, but pinning failed. You can pin it later from the list."
         }
     },
     "components": {
