@@ -314,7 +314,9 @@
             "description": "Description",
             "addToList": "Add to list",
             "listUnavailable": "The selected list is unavailable",
-            "retryAddToList": "Retry adding to list"
+            "retryAddToList": "Retry adding to list",
+            "loading": "Loading...",
+            "retryLists": "Reload lists"
         },
         "dev": {
             "developerMode": "Developer Mode",

@@ -314,7 +314,9 @@
             "description": "説明",
             "addToList": "リストに追加",
             "listUnavailable": "追加先のリストを利用できません",
-            "retryAddToList": "リストへの追加を再試行"
+            "retryAddToList": "リストへの追加を再試行",
+            "loading": "読み込み中...",
+            "retryLists": "リストを再読み込み"
         },
         "dev": {
             "developerMode": "開発者モード",
