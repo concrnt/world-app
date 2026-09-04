@@ -381,8 +381,11 @@ const ListCreator = ({
                 <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
                 <Text>{t('pinOnCreate')}</Text>
             </label>
-            {error === 'create' && <Text style={{ color: '#ff5b5b' }}>{t('createFailed')}</Text>}
-            {error === 'pin' && <Text style={{ color: '#ff5b5b' }}>{t('pinFailed')}</Text>}
+            {error && (
+                <div role="alert" aria-live="assertive">
+                    <Text style={{ color: '#ff5b5b' }}>{error === 'create' ? t('createFailed') : t('pinFailed')}</Text>
+                </div>
+            )}
         </div>
     )
 }
