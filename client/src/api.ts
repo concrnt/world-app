@@ -832,7 +832,11 @@ export class Api {
             body: JSON.stringify(signedDoc)
         })
             .then((sd) => {
-                if (document.key) this.cache.invalidate(document.key)
+                if (document.key) {
+                    this.cache.invalidate(document.key)
+                    // ローカルcommitもClient側のメモリキャッシュへ反映させる
+                    this.notifyResourceUpdate(document.key)
+                }
                 return sd
             })
             .catch((error) => {
@@ -868,8 +872,10 @@ export class Api {
 
         await this.commit(documentObj, domain)
         // deleteドキュメントにはkeyが無いのでcommit側のinvalidateは効かない。
-        // range記法(末尾の* / /*)は素のキーに落としてから無効化する
-        this.cache.invalidate(uri.replace(/\/?\*$/, ''))
+        // range記法(末尾の* / /*)は素のキーに落としてから、KVSとClientキャッシュを無効化する
+        const invalidatedUri = uri.replace(/\/?\*$/, '')
+        this.cache.invalidate(invalidatedUri)
+        this.notifyResourceUpdate(invalidatedUri)
     }
 
     // ---

@@ -479,6 +479,7 @@
             "create": "Create",
             "listTitle": "Title",
             "openSettings": "List settings",
+            "loading": "Loading...",
             "noCommunities": "No communities",
             "communitiesLoadFailed": "Could not load communities",
             "retry": "Retry",

@@ -2,6 +2,7 @@ export class CachedPromise<T> {
     private promise: Promise<T> | null = null
     private subscriptions: Array<() => void> = []
     private settled?: { value: T }
+    private requestGeneration = 0
 
     constructor(
         private executor: (fresh?: boolean) => Promise<T>,
@@ -10,6 +11,8 @@ export class CachedPromise<T> {
 
     value(): Promise<T> {
         if (!this.promise) {
+            // 後から始まった通常取得も、進行中のrefreshより新しい要求として扱う
+            this.requestGeneration++
             const promise = this.executor()
             promise.then(
                 (value) => {
@@ -53,6 +56,8 @@ export class CachedPromise<T> {
         if (this.promise && this.settled && this.isEqual?.(this.settled.value, value)) {
             return
         }
+        // 進行中のrefreshより外部から採用された値を優先する
+        this.requestGeneration++
         const promise = Promise.resolve(value)
         // Reactのuse()はstatus付きthenableを同期的に読み取れる。
         // これが無いとsnapshot差し替えで一瞬suspendしてSuspenseフォールバックがちらつく
@@ -66,14 +71,19 @@ export class CachedPromise<T> {
 
     // executorをfresh=trueで再実行し、成功時のみpushする(キャッシュ即表示→裏で更新)
     async refresh(): Promise<void> {
+        const generation = ++this.requestGeneration
         try {
-            this.push(await this.executor(true))
+            const value = await this.executor(true)
+            // 後から始まったrefresh/reload/pushの結果を古い応答で上書きしない
+            if (generation !== this.requestGeneration) return
+            this.push(value)
         } catch {
             // オフライン等では既存値を維持する。未取得なら次のvalue()が通常経路で再試行する
         }
     }
 
     reload() {
+        this.requestGeneration++
         this.promise = null
         this.value()
         for (const callback of this.subscriptions) {
