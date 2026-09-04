@@ -41,7 +41,6 @@ import { useSubscribe } from '../hooks/useSubscribe'
 interface Props {
     uri: string
     onComplete?: () => void
-    onEntriesChanged?: () => void
 }
 
 export const ListSettings = (props: Props) => {
@@ -102,6 +101,7 @@ export const ListSettings = (props: Props) => {
             isIconTab
         })
 
+        void client.lists.refresh()
         props.onComplete?.()
     }
 
@@ -242,18 +242,14 @@ export const ListSettings = (props: Props) => {
 
             {list && (
                 <Suspense fallback={<Text>Loading...</Text>}>
-                    <ContainedTimelines
-                        list={list}
-                        onComplete={props.onComplete}
-                        onEntriesChanged={props.onEntriesChanged}
-                    />
+                    <ContainedTimelines list={list} onComplete={props.onComplete} />
                 </Suspense>
             )}
         </div>
     )
 }
 
-const ContainedTimelines = (props: { list: List; onComplete?: () => void; onEntriesChanged?: () => void }) => {
+const ContainedTimelines = (props: { list: List; onComplete?: () => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const [entries] = useSubscribe(props.list.entries)
     const [tab, setTab] = useState<'community' | 'user'>('community')
@@ -286,13 +282,7 @@ const ContainedTimelines = (props: { list: List; onComplete?: () => void; onEntr
                     <Text>{t('user')}</Text>
                 </Tab>
             </Tabs>
-            <ResolvedTimelineList
-                list={props.list}
-                entries={entries}
-                filter={tab}
-                onComplete={props.onComplete}
-                onEntriesChanged={props.onEntriesChanged}
-            />
+            <ResolvedTimelineList list={props.list} entries={entries} filter={tab} onComplete={props.onComplete} />
         </div>
     )
 }
@@ -302,7 +292,6 @@ const ResolvedTimelineList = (props: {
     entries: ListEntry[]
     filter: 'community' | 'user'
     onComplete?: () => void
-    onEntriesChanged?: () => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
     const { client } = useClient()
@@ -325,7 +314,7 @@ const ResolvedTimelineList = (props: {
                         <IconButton
                             onClick={() => {
                                 if (!client) return
-                                props.list.removeItem(client, entry.value.href).then(() => props.onEntriesChanged?.())
+                                void props.list.removeItem(client, entry.value.href)
                             }}
                         >
                             <MdPlaylistRemove size={20} />

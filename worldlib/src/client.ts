@@ -89,9 +89,12 @@ export class Client {
     sockets: Record<string, Socket> = {}
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
+    private timelineCache: Record<string, Cache<Promise<Timeline | null>>> = {}
     // rerouteメッセージのuri → targetURI。invalidateMessageのカスケード用
     // (キャッシュの中身はPromiseなのでinvalidate時に同期的にrerouteか判定できない)
     private rerouteTargets: Record<string, string> = {}
+
+    lists = new CachedPromise<List[]>(async () => this.getLists())
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
         const results = await this.api.queryAll(
@@ -284,6 +287,7 @@ export class Client {
 
         this.api.onResourceUpdated = (uri) => {
             this.invalidateMessage(uri)
+            this.invalidateTimeline(uri)
         }
 
         this.api.onHostOnlineStatusChanged = (host, online) => {
@@ -494,6 +498,7 @@ export class Client {
             refreshServer,
             this.updateProfiles(),
             this.pinnedLists.refresh(),
+            this.lists.refresh(),
             this.acknowledging.refresh(),
             this.acknowledgers.refresh(),
             this.blocks.refresh(),
@@ -635,8 +640,28 @@ export class Client {
         return User.load(this, id, hint).catch(() => null)
     }
 
-    async getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
-        return Timeline.load(this, uri, hint).catch(() => null)
+    getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
+        const cacheKey = `${uri}\0${hint ?? ''}`
+        const cached = this.timelineCache[cacheKey]
+
+        if (cached && cached.expire > Date.now()) {
+            return cached.data
+        }
+
+        const timeline = Timeline.load(this, uri, hint).catch(() => null)
+        this.timelineCache[cacheKey] = {
+            data: timeline,
+            expire: Date.now() + cacheLifetime
+        }
+        return timeline
+    }
+
+    private invalidateTimeline(uri: string): void {
+        for (const key of Object.keys(this.timelineCache)) {
+            if (key.startsWith(`${uri}\0`)) {
+                delete this.timelineCache[key]
+            }
+        }
     }
 
     async getList(uri: string, hint?: string, opts?: FetchOptions<SignedDocument>): Promise<List | null> {
@@ -729,6 +754,14 @@ export class Client {
         return Lists
     }
 
+    reloadListEntries(list: List): void {
+        const cachedList = this.lists.current?.find((cached) => cached.uri === list.uri)
+        list.entries.reload()
+        if (cachedList && cachedList !== list) {
+            cachedList.entries.reload()
+        }
+    }
+
     async deleteList(uri: string): Promise<void> {
         // 末尾*のrange削除でリスト本体と子要素(参照レコード)をまとめて消す。
         // サーバー側で全対象のpolicyが通った場合のみアトミックに削除される
@@ -743,6 +776,7 @@ export class Client {
         if (pinned.some((item) => item.uri === uri)) {
             await this.removePin(uri)
         }
+        await this.lists.refresh()
         this.knownCommunities.reload()
     }
 
