@@ -9,7 +9,7 @@ import { CssVar } from '../types/Theme'
 export interface ListCreatorProps {
     onBusyChange?: (busy: boolean) => void
     /** Called after the list document is committed, before optional pinning, so the parent can refresh its list view. */
-    onCreated?: (uri: string) => void
+    onCreated?: () => void
     onComplete?: () => void
 }
 
@@ -52,7 +52,7 @@ export const ListCreator = (props: ListCreatorProps) => {
             }
 
             setCreated(true)
-            props.onCreated?.(uri)
+            props.onCreated?.()
 
             if (pinOnCreate) {
                 try {
