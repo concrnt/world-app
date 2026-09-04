@@ -313,6 +313,7 @@
             "name": "Name",
             "description": "Description",
             "addToList": "Add to list",
+            "doNotAddToList": "Do not add to a list",
             "listUnavailable": "The selected list is unavailable",
             "retryAddToList": "Retry adding to list",
             "loading": "Loading...",

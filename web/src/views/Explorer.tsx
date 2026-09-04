@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom'
 interface CommunityDraft {
     name: string
     description: string
-    selectedListUri?: string
+    selectedListUri?: string | null
     communityUri?: string
     createdCommunityUri?: string
 }
@@ -157,16 +157,16 @@ const CommunityCreator = ({
                     })
                 )
             ).filter((list): list is AvailableList => list !== undefined)
-            if (lists.length === 0) throw new Error(t('listUnavailable'))
             if (cancelled) return
 
             setAvailableLists(lists)
             setDraft((current) => ({
                 ...current,
                 selectedListUri:
-                    current.selectedListUri && lists.some((list) => list.uri === current.selectedListUri)
+                    current.selectedListUri === null ||
+                    (current.selectedListUri && lists.some((list) => list.uri === current.selectedListUri))
                         ? current.selectedListUri
-                        : (lists.find((list) => list.defaultPostHome) ?? lists[0]).uri
+                        : (lists.find((list) => list.defaultPostHome)?.uri ?? null)
             }))
             setIsListsLoading(false)
         }
@@ -226,7 +226,7 @@ const CommunityCreator = ({
             >
                 <Text variant="h3">{t('createCommunity')}</Text>
                 <Button
-                    disabled={!draft.name || !draft.selectedListUri || isListsLoading || isSubmitting}
+                    disabled={!draft.name || isListsLoading || isSubmitting}
                     onClick={async () => {
                         setIsSubmitting(true)
                         setError(undefined)
@@ -240,9 +240,11 @@ const CommunityCreator = ({
                             if (!uri) return
                             setDraft((current) => ({ ...current, createdCommunityUri: uri }))
 
-                            const selectedList = availableLists.find((list) => list.uri === draft.selectedListUri)
-                            if (!selectedList) throw new Error(t('listUnavailable'))
-                            await selectedList.list.addItem(client, uri, Schemas.communityTimeline)
+                            if (draft.selectedListUri) {
+                                const selectedList = availableLists.find((list) => list.uri === draft.selectedListUri)
+                                if (!selectedList) throw new Error(t('listUnavailable'))
+                                await selectedList.list.addItem(client, uri, Schemas.communityTimeline)
+                            }
 
                             hapticSuccess()
                             onComplete(uri)
@@ -292,7 +294,7 @@ const CommunityCreator = ({
                         label={t('addToList')}
                         lists={availableLists}
                         selected={draft.selectedListUri}
-                        onChange={(uri) => setDraft((current) => ({ ...current, selectedListUri: uri }))}
+                        onChange={(uri) => setDraft((current) => ({ ...current, selectedListUri: uri || null }))}
                     />
                 )}
             </div>
@@ -315,9 +317,10 @@ const CommunityListSelect = ({
     disabled: boolean
     label: string
     lists: AvailableList[]
-    selected?: string
+    selected?: string | null
     onChange: (uri: string) => void
 }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
     return (
         <select
             aria-label={label}
@@ -335,6 +338,7 @@ const CommunityListSelect = ({
                 boxSizing: 'border-box'
             }}
         >
+            <option value="">{t('doNotAddToList')}</option>
             {lists.map((list) => (
                 <option key={list.uri} value={list.uri}>
                     {list.title}
