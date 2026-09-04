@@ -477,7 +477,11 @@
             "createList": "リストを作成",
             "create": "作成",
             "listTitle": "タイトル",
-            "openSettings": "リスト設定"
+            "openSettings": "リスト設定",
+            "noCommunities": "コミュニティはありません",
+            "communitiesLoadFailed": "コミュニティを読み込めませんでした",
+            "retry": "再試行",
+            "communityUnavailable": "コミュニティを取得できません"
         }
     },
     "components": {
