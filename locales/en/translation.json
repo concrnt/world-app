@@ -481,7 +481,8 @@
             "openSettings": "List settings",
             "noCommunities": "No communities",
             "communitiesLoadFailed": "Could not load communities",
-            "retry": "Retry"
+            "retry": "Retry",
+            "communityUnavailable": "Community unavailable"
         }
     },
     "components": {

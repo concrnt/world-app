@@ -3,7 +3,7 @@ import { Reorder, useDragControls, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Header } from '../ui/Header'
-import { View, Text, IconButton, Button, TextField, CCImage, Chip } from '@concrnt/ui'
+import { View, Text, IconButton, Button, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { List as ListType, ListSchema, Schemas, semantics, type Timeline } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
@@ -340,7 +340,11 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                             </Text>
                         }
                     >
-                        <ListCommunities list={list} emptyLabel={t('noCommunities')} />
+                        <ListCommunities
+                            list={list}
+                            emptyLabel={t('noCommunities')}
+                            unavailableLabel={t('communityUnavailable')}
+                        />
                     </Suspense>
                 </ErrorBoundary>
             </div>
@@ -348,7 +352,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
     )
 }
 
-const ListCommunities = (props: { list: ListType; emptyLabel: string }) => {
+const ListCommunities = (props: { list: ListType; emptyLabel: string; unavailableLabel: string }) => {
     const [entries] = useSubscribe(props.list.entries)
     const communityEntries = entries.filter((entry) => {
         const value = entry.value
@@ -375,56 +379,85 @@ const ListCommunities = (props: { list: ListType; emptyLabel: string }) => {
             }}
         >
             {communityEntries.map((entry) => (
-                <CommunityChip key={entry.key} href={entry.value.href} />
+                <CommunityChip key={entry.key} href={entry.value.href} unavailableLabel={props.unavailableLabel} />
             ))}
         </div>
     )
 }
 
-const CommunityChip = (props: { href: string }) => {
+const CommunityChip = (props: { href: string; unavailableLabel: string }) => {
     const { client } = useClient()
     const timelinePromise = useMemo(() => client.getTimeline(props.href), [client, props.href])
 
     return (
         <Suspense fallback={null}>
-            <CommunityChipInner href={props.href} timelinePromise={timelinePromise} />
+            <CommunityChipInner
+                href={props.href}
+                unavailableLabel={props.unavailableLabel}
+                timelinePromise={timelinePromise}
+            />
         </Suspense>
     )
 }
 
-const CommunityChipInner = (props: { href: string; timelinePromise: Promise<Timeline | null> }) => {
+const CommunityChipInner = (props: {
+    href: string
+    unavailableLabel: string
+    timelinePromise: Promise<Timeline | null>
+}) => {
     const timeline = use(props.timelinePromise)
 
     // 保存済みの参照先が後から別スキーマへ変わっていても、コミュニティ以外は表示しない。
-    if (!timeline || timeline.schema !== Schemas.communityTimeline) return null
+    if (!timeline) return <CommunityChipLabel label={`${props.unavailableLabel}: ${props.href}`} />
+    if (timeline.schema !== Schemas.communityTimeline) return null
 
     return <CommunityChipLabel label={timeline.shortname ?? timeline.name} />
 }
 
 const CommunityChipLabel = (props: { label: string }) => {
     return (
-        <Chip
-            headElement={<MdOutlineTag size={16} />}
+        <span
             style={{
+                flexShrink: 0,
+                color: CssVar.contentText,
+                fontSize: '16px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '16px',
+                padding: '0 4px',
+                width: 'fit-content',
                 maxWidth: '100%',
                 minWidth: 0,
-                color: CssVar.contentText,
-                cursor: 'default'
+                backgroundColor: 'rgba(0, 0, 0, 0.08)'
             }}
         >
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MdOutlineTag size={16} />
+            </span>
             <span
                 style={{
-                    display: 'block',
-                    minWidth: 0,
-                    maxWidth: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    margin: '0 8px',
+                    textAlign: 'center',
+                    flex: 1,
+                    minWidth: 0
                 }}
             >
-                {props.label}
+                <span
+                    style={{
+                        display: 'block',
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {props.label}
+                </span>
             </span>
-        </Chip>
+        </span>
     )
 }
 

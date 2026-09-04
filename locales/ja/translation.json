@@ -480,7 +480,8 @@
             "openSettings": "リスト設定",
             "noCommunities": "コミュニティはありません",
             "communitiesLoadFailed": "コミュニティを読み込めませんでした",
-            "retry": "再試行"
+            "retry": "再試行",
+            "communityUnavailable": "コミュニティを取得できません"
         }
     },
     "components": {
