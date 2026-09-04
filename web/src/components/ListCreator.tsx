@@ -8,7 +8,7 @@ import { CssVar } from '../types/Theme'
 
 export interface ListCreatorProps {
     onBusyChange?: (busy: boolean) => void
-    /** Called after commit and before optional pinning; callers own any async work it starts. */
+    /** Called after the list document is committed, before optional pinning, so the parent can refresh its list view. */
     onCreated?: (uri: string) => void
     onComplete?: () => void
 }
