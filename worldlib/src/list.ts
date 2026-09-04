@@ -116,7 +116,7 @@ export class List {
 
         await client.api.commit(document)
         this.items.reload()
-        client.reloadListEntries(this)
+        this.entries.reload()
         client.knownCommunities.reload()
     }
 
@@ -131,7 +131,7 @@ export class List {
 
         await client.api.delete(key)
         this.items.reload()
-        client.reloadListEntries(this)
+        this.entries.reload()
         client.knownCommunities.reload()
     }
 }

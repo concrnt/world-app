@@ -24,8 +24,21 @@ export const ListsView = () => {
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
-    const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+    const [settingsTarget, setSettingsTarget] = useState<{
+        uri: string
+        onEntriesChanged: () => void
+    } | null>(null)
     const [settingsOpen, setSettingsOpen] = useState(false)
+
+    const [updater, setUpdater] = useState(0)
+    const listsPromise = useMemo(() => {
+        if (!client) return Promise.resolve([])
+        const p = client.getLists()
+        p.then((lists) => {
+            console.log('Fetched lists:', lists)
+        })
+        return p
+    }, [client, updater])
 
     return (
         <>
@@ -60,8 +73,9 @@ export const ListsView = () => {
                 >
                     <Suspense fallback={<Text>Loading...</Text>}>
                         <Lists
-                            onOpenSettings={(uri) => {
-                                setSettingsTarget(uri)
+                            listsPromise={listsPromise}
+                            onOpenSettings={(uri, onEntriesChanged) => {
+                                setSettingsTarget({ uri, onEntriesChanged })
                                 setSettingsOpen(true)
                             }}
                         />
@@ -72,7 +86,7 @@ export const ListsView = () => {
                 <ListCreator
                     onComplete={() => {
                         setCreatorOpen(false)
-                        void client.lists.refresh()
+                        setUpdater((u) => u + 1)
                     }}
                 />
             </Drawer>
@@ -88,11 +102,13 @@ export const ListsView = () => {
                 <Suspense fallback={<Text>Loading...</Text>}>
                     {settingsTarget && (
                         <ListSettings
-                            key={settingsTarget}
-                            uri={settingsTarget}
+                            key={settingsTarget.uri}
+                            uri={settingsTarget.uri}
+                            onEntriesChanged={settingsTarget.onEntriesChanged}
                             onComplete={() => {
                                 setSettingsOpen(false)
                                 setSettingsTarget(null)
+                                setUpdater((u) => u + 1)
                             }}
                         />
                     )}
@@ -103,12 +119,14 @@ export const ListsView = () => {
 }
 
 interface ListsProps {
-    onOpenSettings: (uri: string) => void
+    listsPromise: Promise<ListType[]>
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const Lists = (props: ListsProps) => {
+    const lists = use(props.listsPromise)
+
     const { client } = useClient()
-    const [lists] = useSubscribe(client.lists)
 
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const [listOrder, setListOrder] = usePreference('listOrder')
@@ -178,7 +196,7 @@ interface ListRowProps {
     pinned: boolean
     onTogglePin: () => void
     onPersist: () => void
-    onOpenSettings: (uri: string) => void
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListRowProps) => {
@@ -269,7 +287,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                         title={t('openSettings')}
                         onClick={(e) => {
                             e.stopPropagation()
-                            onOpenSettings(list.uri)
+                            onOpenSettings(list.uri, () => list.entries.reload())
                         }}
                     >
                         <MdTune />
