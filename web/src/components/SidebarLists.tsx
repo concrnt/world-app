@@ -5,7 +5,9 @@ import { ErrorBoundary } from 'react-error-boundary'
 
 import { CCImage, List as ListView, ListItem, Skeleton, Text } from '@concrnt/ui'
 import { MdAlternateEmail, MdExpandMore, MdHelpOutline, MdOutlineTag } from 'react-icons/md'
+import { NotFoundError, PermissionError } from '@concrnt/client'
 import {
+    type CommunityTimelineSchema,
     type List,
     type ListEntry,
     PinnedListItemClass,
@@ -253,7 +255,36 @@ const SubItemRowInner = (props: { isUser: boolean; ccid: string; profileName: st
 
     const label = useResource<string | null>(
         `sidebar-list-label:${client.api.defaultHost}:${client.ccid}:${props.isUser ? 'user' : 'timeline'}:${props.href}`,
-        () => {
+        (fresh) => {
+            if (fresh) {
+                if (props.isUser) {
+                    return Promise.all([
+                        client.api
+                            .getDocument<ProfileSchema>(semantics.profile(props.ccid, 'main'), undefined, {
+                                cache: 'no-cache'
+                            })
+                            .catch((error) => {
+                                if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                                throw error
+                            }),
+                        client.api
+                            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName), undefined, {
+                                cache: 'no-cache'
+                            })
+                            .catch((error) => {
+                                if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                                throw error
+                            })
+                    ]).then(([main, profile]) => ({ ...main?.value, ...profile?.value }).username ?? null)
+                }
+                return client.api
+                    .getDocument<CommunityTimelineSchema>(props.href, undefined, { cache: 'no-cache' })
+                    .then((timeline) => timeline.value.shortname ?? timeline.value.name ?? null)
+                    .catch((error) => {
+                        if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                        throw error
+                    })
+            }
             if (props.isUser) {
                 return Promise.all([
                     client.getUser(props.ccid),
