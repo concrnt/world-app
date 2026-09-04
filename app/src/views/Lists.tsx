@@ -25,7 +25,10 @@ export const ListsView = () => {
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
-    const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+    const [settingsTarget, setSettingsTarget] = useState<{
+        uri: string
+        onEntriesChanged: () => void
+    } | null>(null)
     const [settingsOpen, setSettingsOpen] = useState(false)
 
     const [updater, setUpdater] = useState(0)
@@ -53,8 +56,8 @@ export const ListsView = () => {
                     <Suspense fallback={<Text>Loading...</Text>}>
                         <Lists
                             listsPromise={listsPromise}
-                            onOpenSettings={(uri) => {
-                                setSettingsTarget(uri)
+                            onOpenSettings={(uri, onEntriesChanged) => {
+                                setSettingsTarget({ uri, onEntriesChanged })
                                 setSettingsOpen(true)
                             }}
                         />
@@ -78,14 +81,22 @@ export const ListsView = () => {
             </Drawer>
             {/* 保存時のpinnedLists reloadで<Lists>のSuspenseが落ちるため、
                 行の中に置くとドロワーのportalだけが閉じられず取り残される。境界の外で開く */}
-            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+            <Drawer
+                open={settingsOpen}
+                onClose={() => {
+                    setSettingsOpen(false)
+                    setSettingsTarget(null)
+                }}
+            >
                 <Suspense fallback={<Text>Loading...</Text>}>
                     {settingsTarget && (
                         <ListSettings
-                            key={settingsTarget}
-                            uri={settingsTarget}
+                            key={settingsTarget.uri}
+                            uri={settingsTarget.uri}
+                            onEntriesChanged={settingsTarget.onEntriesChanged}
                             onComplete={() => {
                                 setSettingsOpen(false)
+                                setSettingsTarget(null)
                                 setUpdater((u) => u + 1)
                             }}
                         />
@@ -98,7 +109,7 @@ export const ListsView = () => {
 
 interface ListsProps {
     listsPromise: Promise<ListType[]>
-    onOpenSettings: (uri: string) => void
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const Lists = (props: ListsProps) => {
@@ -174,7 +185,7 @@ interface ListRowProps {
     pinned: boolean
     onTogglePin: () => void
     onPersist: () => void
-    onOpenSettings: (uri: string) => void
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListRowProps) => {
@@ -265,7 +276,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                         title={t('openSettings')}
                         onClick={(e) => {
                             e.stopPropagation()
-                            onOpenSettings(list.uri)
+                            onOpenSettings(list.uri, () => list.entries.reload())
                         }}
                     >
                         <MdTune />
@@ -295,7 +306,33 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                 </div>
             </div>
             <div style={{ width: '100%', minWidth: 0 }}>
-                <ErrorBoundary fallbackRender={() => null}>
+                <ErrorBoundary
+                    resetKeys={[list]}
+                    fallbackRender={({ resetErrorBoundary }) => (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: CssVar.space(1)
+                            }}
+                        >
+                            <Text variant="caption" style={{ margin: 0 }}>
+                                {t('communitiesLoadFailed')}
+                            </Text>
+                            <Button
+                                variant="text"
+                                onClick={() => {
+                                    list.entries.reload()
+                                    resetErrorBoundary()
+                                }}
+                                style={{ fontSize: '0.875rem', padding: 0 }}
+                            >
+                                {t('retry')}
+                            </Button>
+                        </div>
+                    )}
+                >
                     <Suspense
                         fallback={
                             <Text variant="caption" style={{ margin: 0 }}>
@@ -349,7 +386,7 @@ const CommunityChip = (props: { href: string }) => {
     const timelinePromise = useMemo(() => client.getTimeline(props.href), [client, props.href])
 
     return (
-        <Suspense fallback={<CommunityChipLabel label={props.href} />}>
+        <Suspense fallback={null}>
             <CommunityChipInner href={props.href} timelinePromise={timelinePromise} />
         </Suspense>
     )
@@ -359,9 +396,9 @@ const CommunityChipInner = (props: { href: string; timelinePromise: Promise<Time
     const timeline = use(props.timelinePromise)
 
     // 保存済みの参照先が後から別スキーマへ変わっていても、コミュニティ以外は表示しない。
-    if (timeline && timeline.schema !== Schemas.communityTimeline) return null
+    if (!timeline || timeline.schema !== Schemas.communityTimeline) return null
 
-    return <CommunityChipLabel label={timeline?.shortname ?? timeline?.name ?? props.href} />
+    return <CommunityChipLabel label={timeline.shortname ?? timeline.name} />
 }
 
 const CommunityChipLabel = (props: { label: string }) => {

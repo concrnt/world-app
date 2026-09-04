@@ -479,7 +479,9 @@
             "create": "Create",
             "listTitle": "Title",
             "openSettings": "List settings",
-            "noCommunities": "No communities"
+            "noCommunities": "No communities",
+            "communitiesLoadFailed": "Could not load communities",
+            "retry": "Retry"
         }
     },
     "components": {

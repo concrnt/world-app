@@ -478,7 +478,9 @@
             "create": "作成",
             "listTitle": "タイトル",
             "openSettings": "リスト設定",
-            "noCommunities": "コミュニティはありません"
+            "noCommunities": "コミュニティはありません",
+            "communitiesLoadFailed": "コミュニティを読み込めませんでした",
+            "retry": "再試行"
         }
     },
     "components": {
