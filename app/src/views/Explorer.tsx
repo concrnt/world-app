@@ -1,7 +1,7 @@
-import { CommunityTimelineSchema, Schemas, semantics, type List as ListType } from '@concrnt/worldlib'
+import { CommunityTimelineSchema, List, Schemas, semantics, type List as ListType } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, View, Button, TextField } from '@concrnt/ui'
-import { Document } from '@concrnt/client'
+import { Document, NotFoundError } from '@concrnt/client'
 import { useEffect, useState, useRef, useTransition, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../ui/Header'
@@ -133,13 +133,15 @@ const CommunityCreator = ({
             setListLoadError(undefined)
             await client.pinnedLists.refresh()
             const pins = client.pinnedLists.current
-            if (!pins) throw new Error(t('listUnavailable'))
+            if (!pins) throw new Error(t('listLoadFailed'))
 
             const lists = (
                 await Promise.all(
                     pins.map(async (pin) => {
-                        await pin.list.refresh()
-                        const list = pin.list.current
+                        const list = await List.load(client, pin.uri, undefined, { cache: 'no-cache' }).catch((e) => {
+                            if (e instanceof NotFoundError) return null
+                            throw e
+                        })
                         return list
                             ? {
                                   uri: pin.uri,
@@ -169,8 +171,7 @@ const CommunityCreator = ({
             if (cancelled) return
             console.error('Failed to load community lists', e)
             setAvailableLists([])
-            setDraft((current) => ({ ...current, selectedListUri: undefined }))
-            setListLoadError(t('listUnavailable'))
+            setListLoadError(t('listLoadFailed'))
             setIsListsLoading(false)
         })
         return () => {
@@ -220,7 +221,12 @@ const CommunityCreator = ({
             >
                 <Text variant="h3">{t('createCommunity')}</Text>
                 <Button
-                    disabled={!draft.name || isListsLoading || isSubmitting}
+                    disabled={
+                        !draft.name ||
+                        isListsLoading ||
+                        isSubmitting ||
+                        (!!listLoadError && draft.selectedListUri != null)
+                    }
                     onClick={async () => {
                         setIsSubmitting(true)
                         setError(undefined)
@@ -256,7 +262,7 @@ const CommunityCreator = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('name')}</Text>
                 <TextField
-                    disabled={draft.createdCommunityUri !== undefined}
+                    disabled={draft.createdCommunityUri !== undefined || isSubmitting}
                     value={draft.name}
                     onChange={(e) => setDraft((current) => ({ ...current, name: e.target.value }))}
                 />
@@ -264,7 +270,7 @@ const CommunityCreator = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('description')}</Text>
                 <TextField
-                    disabled={draft.createdCommunityUri !== undefined}
+                    disabled={draft.createdCommunityUri !== undefined || isSubmitting}
                     value={draft.description}
                     onChange={(e) => setDraft((current) => ({ ...current, description: e.target.value }))}
                 />
