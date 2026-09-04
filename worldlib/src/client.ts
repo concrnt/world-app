@@ -641,42 +641,19 @@ export class Client {
     }
 
     getTimeline(uri: string, hint?: string): Promise<Timeline | null> {
-        const now = Date.now()
-        // TTL切れのエントリは別URIへのアクセス時にも掃除し、長時間利用で膨張しないようにする
-        for (const key of Object.keys(this.timelineCache)) {
-            if (this.timelineCache[key].expire <= now) {
-                delete this.timelineCache[key]
-            }
-        }
-
         const cacheKey = `${uri}\0${hint ?? ''}`
         const cached = this.timelineCache[cacheKey]
 
-        if (cached && cached.expire > now) {
+        if (cached && cached.expire > Date.now()) {
             return cached.data
         }
 
-        const cacheEntry: Cache<Promise<Timeline | null>> = {
-            data: Promise.resolve(null),
-            expire: now + cacheLifetime
+        const timeline = Timeline.load(this, uri, hint).catch(() => null)
+        this.timelineCache[cacheKey] = {
+            data: timeline,
+            expire: Date.now() + cacheLifetime
         }
-        this.timelineCache[cacheKey] = cacheEntry
-
-        cacheEntry.data = Timeline.load(this, uri, hint).then(
-            (timeline) => {
-                if (!timeline && this.timelineCache[cacheKey] === cacheEntry) {
-                    delete this.timelineCache[cacheKey]
-                }
-                return timeline
-            },
-            () => {
-                if (this.timelineCache[cacheKey] === cacheEntry) {
-                    delete this.timelineCache[cacheKey]
-                }
-                return null
-            }
-        )
-        return cacheEntry.data
+        return timeline
     }
 
     private invalidateTimeline(uri: string): void {

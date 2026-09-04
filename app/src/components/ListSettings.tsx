@@ -314,7 +314,7 @@ const ResolvedTimelineList = (props: {
                         <IconButton
                             onClick={() => {
                                 if (!client) return
-                                props.list.removeItem(client, entry.value.href)
+                                void props.list.removeItem(client, entry.value.href)
                             }}
                         >
                             <MdPlaylistRemove size={20} />

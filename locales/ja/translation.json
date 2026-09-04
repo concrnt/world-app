@@ -478,7 +478,6 @@
             "create": "作成",
             "listTitle": "タイトル",
             "openSettings": "リスト設定",
-            "loading": "読み込み中...",
             "noCommunities": "コミュニティはありません",
             "communitiesLoadFailed": "コミュニティを読み込めませんでした",
             "retry": "再試行",

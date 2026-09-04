@@ -21,7 +21,6 @@ import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 
 export const ListsView = () => {
-    const { t } = useTranslation('', { keyPrefix: 'views.lists' })
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
@@ -59,7 +58,7 @@ export const ListsView = () => {
                         overflowY: 'auto'
                     }}
                 >
-                    <Suspense fallback={<Text>{t('loading')}</Text>}>
+                    <Suspense fallback={<Text>Loading...</Text>}>
                         <Lists
                             onOpenSettings={(uri) => {
                                 setSettingsTarget(uri)
@@ -86,7 +85,7 @@ export const ListsView = () => {
                     setSettingsTarget(null)
                 }}
             >
-                <Suspense fallback={<Text>{t('loading')}</Text>}>
+                <Suspense fallback={<Text>Loading...</Text>}>
                     {settingsTarget && (
                         <ListSettings
                             key={settingsTarget}
@@ -330,7 +329,7 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                     <Suspense
                         fallback={
                             <Text variant="caption" style={{ margin: 0 }}>
-                                {t('loading')}
+                                Loading...
                             </Text>
                         }
                     >
