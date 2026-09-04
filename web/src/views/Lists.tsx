@@ -1,16 +1,16 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { Reorder, useDragControls, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Text, IconButton, CCImage } from '@concrnt/ui'
+import { Text, IconButton, Button, Checkbox, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { List as ListType } from '@concrnt/worldlib'
+import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
+import { Document } from '@concrnt/client'
 import { MdPlaylistAdd, MdDragHandle, MdTune } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 
 import { RiPushpinFill } from 'react-icons/ri'
 import { RiPushpinLine } from 'react-icons/ri'
 import { ListSettings } from '../components/ListSettings'
-import { ListCreator } from '../components/ListCreator'
 import { Drawer } from '../components/Drawer'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -284,5 +284,122 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                 </div>
             </div>
         </Reorder.Item>
+    )
+}
+
+const ListCreator = ({
+    onBusyChange,
+    onCreated,
+    onComplete
+}: {
+    onBusyChange: (busy: boolean) => void
+    onCreated: () => void
+    onComplete: () => void
+}) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.lists' })
+    const { client } = useClient()
+    const [newListTitle, setNewListTitle] = useState('')
+    const [pinOnCreate, setPinOnCreate] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const [created, setCreated] = useState(false)
+    const [error, setError] = useState<'create' | 'pin' | null>(null)
+
+    const createList = async () => {
+        if (!client || created || busy) return
+
+        setError(null)
+        setBusy(true)
+        onBusyChange(true)
+
+        try {
+            const key = Date.now().toString()
+            const uri = semantics.list(client.ccid, client.currentProfile, key)
+            const document: Document<ListSchema> = {
+                kind: 'record',
+                key: uri,
+                schema: Schemas.list,
+                value: {
+                    name: newListTitle
+                },
+                author: client.ccid,
+                createdAt: new Date()
+            }
+
+            try {
+                await client.api.commit(document)
+            } catch (e) {
+                console.error('Failed to create list', e)
+                setError('create')
+                return
+            }
+
+            setCreated(true)
+            onCreated()
+
+            if (pinOnCreate) {
+                try {
+                    await client.addPin(uri)
+                } catch (e) {
+                    console.error('Failed to pin newly created list', e)
+                    setError('pin')
+                    return
+                }
+            }
+
+            onComplete()
+        } finally {
+            setBusy(false)
+            onBusyChange(false)
+        }
+    }
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(4),
+                width: '100%',
+                padding: CssVar.space(2)
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <Text variant="h3">{t('createList')}</Text>
+                <Button disabled={!newListTitle || created || busy} busyChildren={t('creating')} onClick={createList}>
+                    {t('create')}
+                </Button>
+            </div>
+            <fieldset
+                disabled={busy || created}
+                style={{
+                    border: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(4)
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                    <Text variant="h5">{t('listTitle')}</Text>
+                    <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                    <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
+                    {t('pinOnCreate')}
+                </label>
+            </fieldset>
+            {error && (
+                <div role="alert" aria-live="assertive">
+                    <Text style={{ color: '#ff5b5b' }}>{error === 'create' ? t('createFailed') : t('pinFailed')}</Text>
+                </div>
+            )}
+        </div>
     )
 }
