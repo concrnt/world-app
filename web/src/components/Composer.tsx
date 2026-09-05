@@ -240,6 +240,43 @@ export const Composer = (props: Props) => {
             previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
         }))
         setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
+        newMediaDrafts.forEach(({ file }) => {
+            if (!file.type.startsWith('video/')) return
+
+            const video = document.createElement('video')
+            const sourceUrl = URL.createObjectURL(file)
+            const release = () => {
+                video.onloadeddata = null
+                video.onerror = null
+                video.removeAttribute('src')
+                video.load()
+                URL.revokeObjectURL(sourceUrl)
+            }
+            video.onloadeddata = () => {
+                try {
+                    const canvas = document.createElement('canvas')
+                    canvas.width = video.videoWidth
+                    canvas.height = video.videoHeight
+                    const context = canvas.getContext('2d')
+                    if (!context || !canvas.width || !canvas.height) return
+                    context.drawImage(video, 0, 0)
+                    const previewUrl = canvas.toDataURL()
+                    // 削除・モード切替済みの添付は復活させず、変更済みのフラグも保持する。
+                    setMediaDrafts((prev) =>
+                        prev.map((media) => (media.file === file ? { ...media, previewUrl } : media))
+                    )
+                } catch (error) {
+                    console.error('Video preview error:', error)
+                } finally {
+                    release()
+                }
+            }
+            video.onerror = release
+            video.preload = 'auto'
+            video.muted = true
+            video.playsInline = true
+            video.src = sourceUrl
+        })
     }
 
     const selectEditorMode = async (next: EditorMode) => {
