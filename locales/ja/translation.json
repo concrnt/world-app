@@ -311,7 +311,14 @@
             "createCommunity": "コミュニティを作成",
             "create": "作成",
             "name": "名前",
-            "description": "説明"
+            "description": "説明",
+            "addToList": "リストに追加",
+            "doNotAddToList": "追加しない",
+            "listUnavailable": "追加先のリストを利用できません",
+            "listLoadFailed": "リストを読み込めませんでした。もう一度お試しください。",
+            "retryAddToList": "リストへの追加を再試行",
+            "loading": "読み込み中...",
+            "retryLists": "リストを再読み込み"
         },
         "dev": {
             "developerMode": "開発者モード",

@@ -311,7 +311,14 @@
             "createCommunity": "Create Community",
             "create": "Create",
             "name": "Name",
-            "description": "Description"
+            "description": "Description",
+            "addToList": "Add to list",
+            "doNotAddToList": "Do not add to a list",
+            "listUnavailable": "The selected list is unavailable",
+            "listLoadFailed": "Could not load lists. Please try again.",
+            "retryAddToList": "Retry adding to list",
+            "loading": "Loading...",
+            "retryLists": "Reload lists"
         },
         "dev": {
             "developerMode": "Developer Mode",

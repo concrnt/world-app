@@ -1,8 +1,8 @@
-import { CommunityTimelineSchema, Schemas, semantics } from '@concrnt/worldlib'
+import { CommunityTimelineSchema, List, Schemas, semantics, type List as ListType } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Text, View, Button, TextField } from '@concrnt/ui'
-import { Document } from '@concrnt/client'
-import { useState, useRef, useTransition } from 'react'
+import { Document, NotFoundError } from '@concrnt/client'
+import { useEffect, useState, useRef, useTransition, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../ui/Header'
 import { Drawer } from '../ui/Drawer'
@@ -17,8 +17,27 @@ import { invalidateResource } from '../hooks/useResource'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from './Timeline'
 
+interface CommunityDraft {
+    name: string
+    description: string
+    selectedListUri?: string | null
+    communityUri?: string
+    createdCommunityUri?: string
+}
+
+interface AvailableList {
+    uri: string
+    title: string
+    list: ListType
+    defaultPostHome: boolean
+}
+
+const emptyCommunityDraft: CommunityDraft = { name: '', description: '' }
+
 export const ExplorerView = () => {
     const [creatorOpen, setCreatorOpen] = useState(false)
+    const [communityDraft, setCommunityDraft] = useState<CommunityDraft>(emptyCommunityDraft)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const { push } = useStack()
     const { hapticLight } = useHaptics()
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -28,6 +47,10 @@ export const ExplorerView = () => {
     const [, startModeTransition] = useTransition()
     const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
     const classicMode = supportsSearchExplorer ? preferredClassicMode : true
+    const closeCreator = () => {
+        setCreatorOpen(false)
+        if (!communityDraft.communityUri) setCommunityDraft(emptyCommunityDraft)
+    }
 
     return (
         <>
@@ -69,10 +92,15 @@ export const ExplorerView = () => {
             >
                 <MdAdd size={24} />
             </FAB>
-            <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+            <Drawer open={creatorOpen} onClose={closeCreator}>
                 <CommunityCreator
+                    draft={communityDraft}
+                    setDraft={setCommunityDraft}
+                    isSubmitting={isSubmitting}
+                    setIsSubmitting={setIsSubmitting}
                     onComplete={(uri) => {
                         invalidateResource(`communities:${client.server.domain}`)
+                        setCommunityDraft(emptyCommunityDraft)
                         setCreatorOpen(false)
                         push(<TimelineView uri={uri} />)
                     }}
@@ -82,19 +110,88 @@ export const ExplorerView = () => {
     )
 }
 
-const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void }) => {
+const CommunityCreator = ({
+    draft,
+    setDraft,
+    isSubmitting,
+    setIsSubmitting,
+    onComplete
+}: {
+    draft: CommunityDraft
+    setDraft: Dispatch<SetStateAction<CommunityDraft>>
+    isSubmitting: boolean
+    setIsSubmitting: Dispatch<SetStateAction<boolean>>
+    onComplete: (uri: string) => void
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
     const { hapticSuccess } = useHaptics()
-    const [communityName, setCommunityName] = useState('')
-    const [communityDescription, setCommunityDescription] = useState('')
+    const [error, setError] = useState<string>()
+    const [availableLists, setAvailableLists] = useState<AvailableList[]>([])
+    const [isListsLoading, setIsListsLoading] = useState(true)
+    const [listLoadError, setListLoadError] = useState<string>()
+    const [listReloadKey, setListReloadKey] = useState(0)
     const { client } = useClient()
+
+    useEffect(() => {
+        let cancelled = false
+        const loadLists = async () => {
+            setIsListsLoading(true)
+            setListLoadError(undefined)
+            await client.pinnedLists.refresh()
+            const pins = client.pinnedLists.current
+            if (!pins) throw new Error(t('listLoadFailed'))
+
+            const lists = (
+                await Promise.all(
+                    pins.map(async (pin) => {
+                        const list = await List.load(client, pin.uri, undefined, { cache: 'no-cache' }).catch((e) => {
+                            if (e instanceof NotFoundError) return null
+                            throw e
+                        })
+                        return list
+                            ? {
+                                  uri: pin.uri,
+                                  title: list.title,
+                                  list,
+                                  defaultPostHome: pin.defaultPostHome
+                              }
+                            : undefined
+                    })
+                )
+            ).filter((list): list is AvailableList => list !== undefined)
+            if (cancelled) return
+
+            setAvailableLists(lists)
+            setDraft((current) => ({
+                ...current,
+                selectedListUri:
+                    current.selectedListUri === null ||
+                    (current.selectedListUri && lists.some((list) => list.uri === current.selectedListUri))
+                        ? current.selectedListUri
+                        : (lists.find((list) => list.defaultPostHome)?.uri ?? null)
+            }))
+            setIsListsLoading(false)
+        }
+
+        void loadLists().catch((e) => {
+            if (cancelled) return
+            console.error('Failed to load community lists', e)
+            setAvailableLists([])
+            setListLoadError(t('listLoadFailed'))
+            setIsListsLoading(false)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [client, listReloadKey, setDraft, t])
 
     const createCommunity = async (value: CommunityTimelineSchema) => {
         if (!client) return
-        const key = Date.now().toString()
+        const uri = draft.communityUri ?? semantics.community(client.server.domain, Date.now().toString())
+        setDraft((current) => ({ ...current, communityUri: uri }))
         const document: Document<CommunityTimelineSchema> = {
             kind: 'record',
-            key: semantics.community(client.server.domain, key),
+            key: uri,
             schema: Schemas.communityTimeline,
             value,
             author: client.ccid,
@@ -130,28 +227,129 @@ const CommunityCreator = ({ onComplete }: { onComplete: (uri: string) => void })
             >
                 <Text variant="h3">{t('createCommunity')}</Text>
                 <Button
-                    disabled={!communityName}
+                    disabled={
+                        !draft.name ||
+                        isListsLoading ||
+                        isSubmitting ||
+                        (!!listLoadError && draft.selectedListUri != null)
+                    }
                     onClick={async () => {
-                        const uri = await createCommunity({
-                            name: communityName,
-                            description: communityDescription
-                        })
-                        if (!uri) return
-                        hapticSuccess()
-                        onComplete(uri)
+                        setIsSubmitting(true)
+                        setError(undefined)
+                        try {
+                            const uri =
+                                draft.createdCommunityUri ??
+                                (await createCommunity({
+                                    name: draft.name,
+                                    description: draft.description
+                                }))
+                            if (!uri) return
+                            setDraft((current) => ({ ...current, createdCommunityUri: uri }))
+
+                            if (draft.selectedListUri) {
+                                const selectedList = availableLists.find((list) => list.uri === draft.selectedListUri)
+                                if (!selectedList) throw new Error(t('listUnavailable'))
+                                await selectedList.list.addItem(client, uri, Schemas.communityTimeline)
+                            }
+
+                            hapticSuccess()
+                            onComplete(uri)
+                        } catch (e) {
+                            console.error('Failed to create community and add it to a list', e)
+                            setError(e instanceof Error ? e.message : String(e))
+                        } finally {
+                            setIsSubmitting(false)
+                        }
                     }}
                 >
-                    {t('create')}
+                    {draft.createdCommunityUri ? t('retryAddToList') : t('create')}
                 </Button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('name')}</Text>
-                <TextField value={communityName} onChange={(e) => setCommunityName(e.target.value)} />
+                <TextField
+                    disabled={draft.createdCommunityUri !== undefined || isSubmitting}
+                    value={draft.name}
+                    onChange={(e) => setDraft((current) => ({ ...current, name: e.target.value }))}
+                />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                 <Text variant="h5">{t('description')}</Text>
-                <TextField value={communityDescription} onChange={(e) => setCommunityDescription(e.target.value)} />
+                <TextField
+                    disabled={draft.createdCommunityUri !== undefined || isSubmitting}
+                    value={draft.description}
+                    onChange={(e) => setDraft((current) => ({ ...current, description: e.target.value }))}
+                />
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                <Text variant="h5">{t('addToList')}</Text>
+                {isListsLoading ? (
+                    <Text>{t('loading')}</Text>
+                ) : listLoadError ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
+                        <div role="alert">
+                            <Text style={{ color: '#ff5b5b' }}>{listLoadError}</Text>
+                        </div>
+                        <Button variant="text" onClick={() => setListReloadKey((value) => value + 1)}>
+                            {t('retryLists')}
+                        </Button>
+                    </div>
+                ) : (
+                    <CommunityListSelect
+                        disabled={isSubmitting}
+                        label={t('addToList')}
+                        lists={availableLists}
+                        selected={draft.selectedListUri}
+                        onChange={(uri) => setDraft((current) => ({ ...current, selectedListUri: uri || null }))}
+                    />
+                )}
+            </div>
+            {error && (
+                <div role="alert">
+                    <Text style={{ color: '#ff5b5b' }}>{error}</Text>
+                </div>
+            )}
         </div>
+    )
+}
+
+const CommunityListSelect = ({
+    disabled,
+    label,
+    lists,
+    selected,
+    onChange
+}: {
+    disabled: boolean
+    label: string
+    lists: AvailableList[]
+    selected?: string | null
+    onChange: (uri: string) => void
+}) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
+    return (
+        <select
+            aria-label={label}
+            disabled={disabled}
+            value={selected ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            style={{
+                padding: '8px',
+                fontSize: '16px',
+                borderRadius: '4px',
+                borderColor: CssVar.divider,
+                backgroundColor: CssVar.contentBackground,
+                color: CssVar.contentText,
+                width: '100%',
+                boxSizing: 'border-box'
+            }}
+        >
+            <option value="">{t('doNotAddToList')}</option>
+            {lists.map((list) => (
+                <option key={list.uri} value={list.uri}>
+                    {list.title}
+                </option>
+            ))}
+        </select>
     )
 }
