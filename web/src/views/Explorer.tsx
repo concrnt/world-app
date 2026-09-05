@@ -37,6 +37,7 @@ const emptyCommunityDraft: CommunityDraft = { name: '', description: '' }
 export const ExplorerView = () => {
     const [creatorOpen, setCreatorOpen] = useState(false)
     const [communityDraft, setCommunityDraft] = useState<CommunityDraft>(emptyCommunityDraft)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const navigate = useNavigate()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
@@ -100,6 +101,8 @@ export const ExplorerView = () => {
                     <CommunityCreator
                         draft={communityDraft}
                         setDraft={setCommunityDraft}
+                        isSubmitting={isSubmitting}
+                        setIsSubmitting={setIsSubmitting}
                         onComplete={(uri) => {
                             invalidateResource(`communities:${client.server.domain}`)
                             setCommunityDraft(emptyCommunityDraft)
@@ -116,15 +119,18 @@ export const ExplorerView = () => {
 const CommunityCreator = ({
     draft,
     setDraft,
+    isSubmitting,
+    setIsSubmitting,
     onComplete
 }: {
     draft: CommunityDraft
     setDraft: Dispatch<SetStateAction<CommunityDraft>>
+    isSubmitting: boolean
+    setIsSubmitting: Dispatch<SetStateAction<boolean>>
     onComplete: (uri: string) => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.explorer' })
     const { hapticSuccess } = useHaptics()
-    const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string>()
     const [availableLists, setAvailableLists] = useState<AvailableList[]>([])
     const [isListsLoading, setIsListsLoading] = useState(true)
