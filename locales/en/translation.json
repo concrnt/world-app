@@ -495,6 +495,7 @@
             "cannotPostOffline": "You can't post while offline",
             "resetDestination": "Reset destinations to default",
             "dropToUpload": "Drop to upload",
+            "mediaEditTitle": "Media preview and settings",
             "flagTitle": "Content flag (optional)",
             "flagNone": "None",
             "flagWarn": "Content Warning",

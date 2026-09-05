@@ -494,6 +494,7 @@
             "cannotPostOffline": "オフラインのため投稿できません",
             "resetDestination": "投稿先をデフォルトに戻す",
             "dropToUpload": "ドロップしてアップロード",
+            "mediaEditTitle": "メディアのプレビューと設定",
             "flagTitle": "フラグ設定(任意)",
             "flagNone": "なし",
             "flagWarn": "注意",

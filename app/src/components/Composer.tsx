@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Button,
+    ButtonBase,
     CircularProgress,
     IconButton,
     List,
@@ -45,6 +46,7 @@ import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
 import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
+import { ComposerMediaEditor } from './ComposerMediaEditor'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
 
@@ -116,6 +118,9 @@ export const Composer = (props: Props) => {
     const setEditorMode = isShared ? sharedDraft.setEditorMode : setLocalEditorMode
     const [modeSelectOpen, setModeSelectOpen] = useState(false)
     const [flagMenuIndex, setFlagMenuIndex] = useState<number | null>(null)
+    const [mediaEditorFile, setMediaEditorFile] = useState<File | null>(null)
+    const mediaEditorIndex =
+        mediaEditorFile === null ? -1 : mediaDrafts.findIndex((media) => media.file === mediaEditorFile)
     const [localEmojiDict, setLocalEmojiDict] = useState<Record<string, { imageURL: string }>>({})
     const emojiDict = isShared ? sharedDraft.emojiDict : localEmojiDict
     const setEmojiDict = isShared ? sharedDraft.setEmojiDict : setLocalEmojiDict
@@ -124,6 +129,10 @@ export const Composer = (props: Props) => {
         emojiDict: Record<string, { imageURL: string }>
         mediaDrafts: MediaDraft[]
     } | null>(null)
+
+    useEffect(() => {
+        if (mediaEditorFile !== null && mediaEditorIndex === -1) setMediaEditorFile(null)
+    }, [mediaEditorFile, mediaEditorIndex])
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -267,6 +276,7 @@ export const Composer = (props: Props) => {
     const removeMedia = (index: number) => {
         // アップロード中は進捗表示のindexとズレるため添付の増減を禁止する
         if (uploading) return
+        if (mediaDrafts[index]?.file === mediaEditorFile) setMediaEditorFile(null)
         setMediaDrafts((prev) => {
             const removed = prev[index]
             if (removed.previewUrl) URL.revokeObjectURL(removed.previewUrl)
@@ -294,6 +304,8 @@ export const Composer = (props: Props) => {
             .filter(isNonNullOrUndefined)
             .forEach((url) => URL.revokeObjectURL(url))
         setMediaDrafts([])
+        setFlagMenuIndex(null)
+        setMediaEditorFile(null)
         setEditorMode('markdown')
     }
 
@@ -701,51 +713,61 @@ export const Composer = (props: Props) => {
                             style={{
                                 position: 'relative',
                                 width: '80px',
-                                height: '80px',
-                                cursor: 'pointer'
-                            }}
-                            onClick={() => {
-                                if (!uploading) setFlagMenuIndex(index)
+                                height: '80px'
                             }}
                         >
-                            {media.previewUrl ? (
-                                <img
-                                    src={media.previewUrl}
-                                    alt={`preview ${index}`}
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        borderRadius: CssVar.round(2)
-                                    }}
-                                />
-                            ) : (
-                                <div
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        backgroundColor: CssVar.uiBackground,
-                                        borderRadius: CssVar.round(2)
-                                    }}
-                                >
-                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
-                                    <Text
+                            <ButtonBase
+                                disabled={uploading}
+                                aria-label={`${t(media.previewUrl ? 'mediaEditTitle' : 'flagTitle')}: ${media.file.name}`}
+                                onClick={() => {
+                                    if (media.previewUrl) setMediaEditorFile(media.file)
+                                    else setFlagMenuIndex(index)
+                                }}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    padding: 0,
+                                    overflow: 'hidden',
+                                    borderRadius: CssVar.round(2)
+                                }}
+                            >
+                                {media.previewUrl ? (
+                                    <img
+                                        src={media.previewUrl}
+                                        alt={`preview ${index}`}
                                         style={{
-                                            marginLeft: '4px',
-                                            fontSize: '12px',
-                                            color: CssVar.uiText
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                ) : (
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            backgroundColor: CssVar.uiBackground
                                         }}
                                     >
-                                        {media.file.name.length > 10
-                                            ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
-                                            : media.file.name}
-                                    </Text>
-                                </div>
-                            )}
+                                        <MdOutlineUploadFile size={32} color={CssVar.uiText} />
+                                        <Text
+                                            style={{
+                                                marginLeft: '4px',
+                                                fontSize: '12px',
+                                                color: CssVar.uiText
+                                            }}
+                                        >
+                                            {media.file.name.length > 10
+                                                ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
+                                                : media.file.name}
+                                        </Text>
+                                    </div>
+                                )}
+                            </ButtonBase>
                             <IconButton
                                 onClick={(e) => {
                                     e.stopPropagation()
@@ -810,7 +832,15 @@ export const Composer = (props: Props) => {
                 </div>
             )}
 
-            {/* 添付ごとのフラグ設定メニュー(サムネイルタップで開く) */}
+            <ComposerMediaEditor
+                open={mediaEditorIndex !== -1}
+                media={mediaEditorIndex !== -1 ? mediaDrafts[mediaEditorIndex] : undefined}
+                onClose={() => setMediaEditorFile(null)}
+                onFlagChange={(flag) => {
+                    if (mediaEditorIndex !== -1) setMediaFlag(mediaEditorIndex, flag)
+                }}
+            />
+
             <Select
                 open={flagMenuIndex !== null}
                 onClose={() => setFlagMenuIndex(null)}
