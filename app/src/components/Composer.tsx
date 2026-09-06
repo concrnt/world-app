@@ -696,23 +696,32 @@ export const Composer = (props: Props) => {
                     <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
                     <div style={{ minHeight: 0, overflowY: 'auto' }}>
                         <MessageLayout
-                            left={
-                                <Avatar
-                                    ccid={client.ccid}
-                                    src={client.profiles[selectedProfile]?.value.avatar}
-                                    style={{ width: '48px', height: '48px' }}
-                                />
-                            }
+                            left={<Avatar ccid={client.ccid} src={client.profiles[selectedProfile]?.value.avatar} />}
                             headerLeft={
+                                // 実投稿のMessageAuthorと同じ見た目(ユーザー名 + @alias)
                                 <span
                                     style={{
-                                        fontWeight: 'bold',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
                                         overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap'
                                     }}
                                 >
-                                    {client.profiles[selectedProfile]?.value.username || 'Anonymous'}
+                                    <span
+                                        style={{
+                                            fontWeight: 'bold',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}
+                                    >
+                                        {client.profiles[selectedProfile]?.value.username || 'Anonymous'}
+                                    </span>
+                                    {client.entity.alias && (
+                                        <span style={{ fontSize: '0.75rem', opacity: 0.7, flexShrink: 0 }}>
+                                            @{client.entity.alias}
+                                        </span>
+                                    )}
                                 </span>
                             }
                         >
