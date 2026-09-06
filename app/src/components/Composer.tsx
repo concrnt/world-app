@@ -12,10 +12,12 @@ import {
     Select,
     Text,
     TextField,
+    Avatar,
     CfmRenderer,
     useAnchor
 } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
+import { MessageLayout } from './message/MessageLayout'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
 import { Timeline } from '@concrnt/worldlib'
@@ -688,19 +690,34 @@ export const Composer = (props: Props) => {
                 />
             )}
 
-            {/* テキストプレビュー（絵文字等のレンダリング確認用。plaintextはレンダリングされないため非表示） */}
+            {/* 投稿プレビュー（plaintextはレンダリングされないため非表示） */}
             {props.mode !== 'reroute' && displayMode !== 'plaintext' && draft.length > 0 && (
                 <>
                     <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
-                    <div
-                        style={{
-                            fontSize: '0.85rem',
-                            opacity: 0.8,
-                            maxHeight: '80px',
-                            overflowY: 'auto'
-                        }}
-                    >
-                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                    <div style={{ minHeight: 0, overflowY: 'auto' }}>
+                        <MessageLayout
+                            left={
+                                <Avatar
+                                    ccid={client.ccid}
+                                    src={client.profiles[selectedProfile]?.value.avatar}
+                                    style={{ width: '48px', height: '48px' }}
+                                />
+                            }
+                            headerLeft={
+                                <span
+                                    style={{
+                                        fontWeight: 'bold',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {client.profiles[selectedProfile]?.value.username || 'Anonymous'}
+                                </span>
+                            }
+                        >
+                            <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                        </MessageLayout>
                     </div>
                 </>
             )}
