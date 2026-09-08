@@ -54,7 +54,7 @@ const Inner = (props: InnerProps) => {
             onClick={props.onClick}
         >
             <MdOutlineTag size={16} />
-            <Text style={props.style}>{timeline.shortname ?? timeline.name ?? 'no name'}</Text>
+            <Text style={props.style}>{timeline.shortname?.trim() || (timeline.name ?? 'no name')}</Text>
         </span>
     )
 }
