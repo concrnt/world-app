@@ -2,6 +2,7 @@ import { CssVar } from '../types/Theme'
 
 interface Props {
     autofocus?: boolean
+    disabled?: boolean
     value?: string
     placeholder?: string
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -13,6 +14,7 @@ export const TextField = (props: Props) => {
         <input
             type="text"
             autoFocus={props.autofocus}
+            disabled={props.disabled}
             value={props.value}
             placeholder={props.placeholder}
             onChange={props.onChange}

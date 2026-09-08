@@ -311,7 +311,14 @@
             "createCommunity": "コミュニティを作成",
             "create": "作成",
             "name": "名前",
-            "description": "説明"
+            "description": "説明",
+            "addToList": "リストに追加",
+            "doNotAddToList": "追加しない",
+            "listUnavailable": "追加先のリストを利用できません",
+            "listLoadFailed": "リストを読み込めませんでした。もう一度お試しください。",
+            "retryAddToList": "リストへの追加を再試行",
+            "loading": "読み込み中...",
+            "retryLists": "リストを再読み込み"
         },
         "dev": {
             "developerMode": "開発者モード",
@@ -477,7 +484,15 @@
             "createList": "リストを作成",
             "create": "作成",
             "listTitle": "タイトル",
-            "openSettings": "リスト設定"
+            "openSettings": "リスト設定",
+            "noCommunities": "コミュニティはありません",
+            "communitiesLoadFailed": "コミュニティを読み込めませんでした",
+            "retry": "再試行",
+            "communityUnavailable": "コミュニティを取得できません",
+            "pinOnCreate": "ピン留めする",
+            "creating": "作成中...",
+            "createFailed": "リストの作成に失敗しました。もう一度お試しください。",
+            "pinFailed": "リストは作成されましたが、ピン留めに失敗しました。リスト一覧から後でピン留めできます。"
         }
     },
     "components": {
@@ -494,6 +509,7 @@
             "cannotPostOffline": "オフラインのため投稿できません",
             "resetDestination": "投稿先をデフォルトに戻す",
             "dropToUpload": "ドロップしてアップロード",
+            "mediaEditTitle": "メディアのプレビューと設定",
             "flagTitle": "フラグ設定(任意)",
             "flagNone": "なし",
             "flagWarn": "注意",

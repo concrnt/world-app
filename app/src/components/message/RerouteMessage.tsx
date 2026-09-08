@@ -78,34 +78,38 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     </Text>
                 </span>
                 <div style={{ flex: 1 }} />
-                <IconButton
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpen(true)
-                    }}
-                    style={{
-                        padding: 0,
-                        margin: 0,
-                        width: '15px',
-                        height: '15px'
-                    }}
-                >
-                    <MdMoreHoriz size={15} />
-                </IconButton>
-                <Select
-                    open={menuOpen}
-                    onClose={() => setMenuOpen(false)}
-                    options={[
-                        <ListItem
-                            key="delete"
-                            onClick={() => {
-                                client.api.delete(props.message.uri).then(() => hapticSuccess())
+                {props.message.author === client.ccid && (
+                    <>
+                        <IconButton
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setMenuOpen(true)
+                            }}
+                            style={{
+                                padding: 0,
+                                margin: 0,
+                                width: '15px',
+                                height: '15px'
                             }}
                         >
-                            <Text>{t('deleteReroute')}</Text>
-                        </ListItem>
-                    ]}
-                />
+                            <MdMoreHoriz size={15} />
+                        </IconButton>
+                        <Select
+                            open={menuOpen}
+                            onClose={() => setMenuOpen(false)}
+                            options={[
+                                <ListItem
+                                    key="delete"
+                                    onClick={() => {
+                                        client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                    }}
+                                >
+                                    <Text>{t('deleteReroute')}</Text>
+                                </ListItem>
+                            ]}
+                        />
+                    </>
+                )}
                 <div style={{ flexShrink: 0 }}>
                     <TimeDiff date={props.message.createdAt} />
                 </div>

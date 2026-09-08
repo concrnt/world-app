@@ -7,7 +7,7 @@ const MIN_CONTENT_HEIGHT = 120
 
 interface Props {
     height: number
-    onDismiss: () => void
+    onDismiss: () => void | boolean
     keyboardInset?: {
         height: number
         duration: number
@@ -23,6 +23,10 @@ export const BottomSheet = (props: Props) => {
     const height = props.height
     const backdropOpacity = useTransform(y, [0, height], [0.5, 0])
 
+    const restorePosition = () => {
+        animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
+    }
+
     // 想定外に大きいキーボード高さが来ても、スペーサーがシートを食い尽くして
     // スクロールコンテナが高さ0になる(中身が消える)ことがないようクランプする
     const keyboardHeight = Math.min(props.keyboardInset?.height ?? 0, Math.max(0, height - MIN_CONTENT_HEIGHT))
@@ -37,7 +41,8 @@ export const BottomSheet = (props: Props) => {
                     opacity: backdropOpacity
                 }}
                 onClick={() => {
-                    props.onDismiss()
+                    const dismissed = props.onDismiss()
+                    if (dismissed === false) restorePosition()
                 }}
             />
             <motion.div
@@ -83,9 +88,12 @@ export const BottomSheet = (props: Props) => {
                     }
 
                     if (shouldClose) {
-                        props.onDismiss()
+                        const dismissed = props.onDismiss()
+                        if (dismissed === false) {
+                            restorePosition()
+                        }
                     } else {
-                        animate(y, 0, { type: 'tween', ease: 'easeOut', duration: 0.2 })
+                        restorePosition()
                     }
                 }}
             >

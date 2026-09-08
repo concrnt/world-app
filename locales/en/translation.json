@@ -311,7 +311,14 @@
             "createCommunity": "Create Community",
             "create": "Create",
             "name": "Name",
-            "description": "Description"
+            "description": "Description",
+            "addToList": "Add to list",
+            "doNotAddToList": "Do not add to a list",
+            "listUnavailable": "The selected list is unavailable",
+            "listLoadFailed": "Could not load lists. Please try again.",
+            "retryAddToList": "Retry adding to list",
+            "loading": "Loading...",
+            "retryLists": "Reload lists"
         },
         "dev": {
             "developerMode": "Developer Mode",
@@ -478,7 +485,15 @@
             "createList": "Create List",
             "create": "Create",
             "listTitle": "Title",
-            "openSettings": "List settings"
+            "openSettings": "List settings",
+            "noCommunities": "No communities",
+            "communitiesLoadFailed": "Could not load communities",
+            "retry": "Retry",
+            "communityUnavailable": "Community unavailable",
+            "pinOnCreate": "Pin it",
+            "creating": "Creating...",
+            "createFailed": "Failed to create the list. Please try again.",
+            "pinFailed": "The list was created, but pinning failed. You can pin it later from the list."
         }
     },
     "components": {
@@ -495,6 +510,7 @@
             "cannotPostOffline": "You can't post while offline",
             "resetDestination": "Reset destinations to default",
             "dropToUpload": "Drop to upload",
+            "mediaEditTitle": "Media preview and settings",
             "flagTitle": "Content flag (optional)",
             "flagNone": "None",
             "flagWarn": "Content Warning",

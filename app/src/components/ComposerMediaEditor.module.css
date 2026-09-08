@@ -1,0 +1,28 @@
+.body {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.preview {
+    height: min(60dvh, 560px);
+    min-height: 240px;
+}
+
+@media (max-width: 767.98px) {
+    .dialog {
+        height: 100%;
+    }
+
+    .body {
+        display: grid;
+        flex: 1;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(240px, 1fr) auto;
+    }
+
+    .preview {
+        height: auto;
+    }
+}

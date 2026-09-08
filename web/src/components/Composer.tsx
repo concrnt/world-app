@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Button,
+    ButtonBase,
     CircularProgress,
     IconButton,
     List,
@@ -10,10 +11,11 @@ import {
     Popover,
     Text,
     TextField,
+    Avatar,
     CfmRenderer,
     useAnchor
 } from '@concrnt/ui'
-import { Select } from './Select'
+import { MessageLayout } from './message/MessageLayout'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
@@ -45,6 +47,8 @@ import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
 import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
+import { ComposerMediaEditor } from './ComposerMediaEditor'
+import { Select } from './Select'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
 
@@ -118,6 +122,9 @@ export const Composer = (props: Props) => {
     const setEditorMode = isShared ? sharedDraft.setEditorMode : setLocalEditorMode
     const [modeSelectOpen, setModeSelectOpen] = useState(false)
     const [flagMenuIndex, setFlagMenuIndex] = useState<number | null>(null)
+    const [mediaEditorFile, setMediaEditorFile] = useState<File | null>(null)
+    const mediaEditorIndex =
+        mediaEditorFile === null ? -1 : mediaDrafts.findIndex((media) => media.file === mediaEditorFile)
     const [localEmojiDict, setLocalEmojiDict] = useState<Record<string, { imageURL: string }>>({})
     const emojiDict = isShared ? sharedDraft.emojiDict : localEmojiDict
     const setEmojiDict = isShared ? sharedDraft.setEmojiDict : setLocalEmojiDict
@@ -127,14 +134,18 @@ export const Composer = (props: Props) => {
         mediaDrafts: MediaDraft[]
     } | null>(null)
 
+    useEffect(() => {
+        if (mediaEditorFile !== null && mediaEditorIndex === -1) setMediaEditorFile(null)
+    }, [mediaEditorFile, mediaEditorIndex])
+
     const fileInputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const emojiPicker = useEmojiPicker()
 
     // Composerは複数同時にマウントされ得るため、アンカー名をインスタンスごとに一意にする
     const modeSelectAnchor = useAnchor()
-    const flagAnchor = useAnchor()
     const emojiPickerAnchor = useAnchor()
+    const flagAnchor = useAnchor()
 
     // リプライ/リルート時はモードを外部から固定し、通常時はユーザーが選択したエディタモードを表示する
     const displayMode: EditorMode | 'reply' | 'reroute' = props.mode === 'normal' ? editorMode : props.mode
@@ -271,6 +282,7 @@ export const Composer = (props: Props) => {
     const removeMedia = (index: number) => {
         // アップロード中は進捗表示のindexとズレるため添付の増減を禁止する
         if (uploading) return
+        if (mediaDrafts[index]?.file === mediaEditorFile) setMediaEditorFile(null)
         setMediaDrafts((prev) => {
             const removed = prev[index]
             if (removed.previewUrl) URL.revokeObjectURL(removed.previewUrl)
@@ -298,6 +310,8 @@ export const Composer = (props: Props) => {
             .filter(isNonNullOrUndefined)
             .forEach((url) => URL.revokeObjectURL(url))
         setMediaDrafts([])
+        setFlagMenuIndex(null)
+        setMediaEditorFile(null)
         setEditorMode('markdown')
     }
 
@@ -642,6 +656,7 @@ export const Composer = (props: Props) => {
                         {
                             width: '100%',
                             fontSize: '1rem',
+                            fontFamily: 'inherit',
                             boxSizing: 'border-box',
                             border: 'none',
                             outline: 'none',
@@ -683,19 +698,49 @@ export const Composer = (props: Props) => {
                 />
             )}
 
-            {/* テキストプレビュー（絵文字等のレンダリング確認用。plaintextはレンダリングされないため非表示） */}
+            {/* 投稿プレビュー（plaintextはレンダリングされないため非表示） */}
             {props.mode !== 'reroute' && displayMode !== 'plaintext' && draft.length > 0 && (
                 <>
                     <div style={{ borderTop: '1px dashed', borderColor: CssVar.divider }} />
-                    <div
-                        style={{
-                            fontSize: '0.85rem',
-                            opacity: 0.8,
-                            maxHeight: '80px',
-                            overflowY: 'auto'
-                        }}
-                    >
-                        <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                    <div style={{ minHeight: 0, overflowY: 'auto' }}>
+                        <MessageLayout
+                            left={
+                                <Avatar
+                                    ccid={client.ccid}
+                                    src={client.profiles[selectedProfile]?.value.avatar}
+                                    style={{ width: '48px', height: '48px' }}
+                                />
+                            }
+                            headerLeft={
+                                // 実投稿のMessageAuthorと同じ見た目(ユーザー名 + @alias)
+                                <span
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        overflow: 'hidden',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontWeight: 'bold',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}
+                                    >
+                                        {client.profiles[selectedProfile]?.value.username || 'Anonymous'}
+                                    </span>
+                                    {client.entity.alias && (
+                                        <span style={{ fontSize: '0.75rem', opacity: 0.7, flexShrink: 0 }}>
+                                            @{client.entity.alias}
+                                        </span>
+                                    )}
+                                </span>
+                            }
+                        >
+                            <CfmRenderer messagebody={draft} emojiDict={emojiDict} />
+                        </MessageLayout>
                     </div>
                 </>
             )}
@@ -711,52 +756,62 @@ export const Composer = (props: Props) => {
                                     position: 'relative',
                                     width: '80px',
                                     height: '80px',
-                                    cursor: 'pointer',
-                                    ...(flagMenuIndex === index ? { anchorName: flagAnchor } : {})
+                                    ...(!media.previewUrl && flagMenuIndex === index ? { anchorName: flagAnchor } : {})
                                 } as CSSProperties
                             }
-                            onClick={() => {
-                                if (!uploading) setFlagMenuIndex(index)
-                            }}
                         >
-                            {media.previewUrl ? (
-                                <img
-                                    src={media.previewUrl}
-                                    alt={`preview ${index}`}
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        borderRadius: CssVar.round(2)
-                                    }}
-                                />
-                            ) : (
-                                <div
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        backgroundColor: CssVar.uiBackground,
-                                        borderRadius: CssVar.round(2)
-                                    }}
-                                >
-                                    <MdOutlineUploadFile size={32} color={CssVar.uiText} />
-                                    <Text
+                            <ButtonBase
+                                disabled={uploading}
+                                aria-label={`${t(media.previewUrl ? 'mediaEditTitle' : 'flagTitle')}: ${media.file.name}`}
+                                onClick={() => {
+                                    if (media.previewUrl) setMediaEditorFile(media.file)
+                                    else setFlagMenuIndex(index)
+                                }}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    padding: 0,
+                                    overflow: 'hidden',
+                                    borderRadius: CssVar.round(2)
+                                }}
+                            >
+                                {media.previewUrl ? (
+                                    <img
+                                        src={media.previewUrl}
+                                        alt={`preview ${index}`}
                                         style={{
-                                            marginLeft: '4px',
-                                            fontSize: '12px',
-                                            color: CssVar.uiText
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                ) : (
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            backgroundColor: CssVar.uiBackground
                                         }}
                                     >
-                                        {media.file.name.length > 10
-                                            ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
-                                            : media.file.name}
-                                    </Text>
-                                </div>
-                            )}
+                                        <MdOutlineUploadFile size={32} color={CssVar.uiText} />
+                                        <Text
+                                            style={{
+                                                marginLeft: '4px',
+                                                fontSize: '12px',
+                                                color: CssVar.uiText
+                                            }}
+                                        >
+                                            {media.file.name.length > 10
+                                                ? media.file.name.slice(0, 7) + '...' + media.file.name.split('.').pop()
+                                                : media.file.name}
+                                        </Text>
+                                    </div>
+                                )}
+                            </ButtonBase>
                             <IconButton
                                 onClick={(e) => {
                                     e.stopPropagation()
@@ -821,7 +876,15 @@ export const Composer = (props: Props) => {
                 </div>
             )}
 
-            {/* 添付ごとのフラグ設定メニュー(サムネイルクリックで開く) */}
+            <ComposerMediaEditor
+                open={mediaEditorIndex !== -1}
+                media={mediaEditorIndex !== -1 ? mediaDrafts[mediaEditorIndex] : undefined}
+                onClose={() => setMediaEditorFile(null)}
+                onFlagChange={(flag) => {
+                    if (mediaEditorIndex !== -1) setMediaFlag(mediaEditorIndex, flag)
+                }}
+            />
+
             <Select
                 open={flagMenuIndex !== null}
                 onClose={() => setFlagMenuIndex(null)}

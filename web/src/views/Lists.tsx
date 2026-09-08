@@ -1,11 +1,12 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { Reorder, useDragControls, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Text, IconButton, Button, TextField, CCImage } from '@concrnt/ui'
+import { ErrorBoundary } from 'react-error-boundary'
+import { Text, IconButton, Button, Checkbox, TextField, CCImage } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
-import { List as ListType, ListSchema, Schemas, semantics } from '@concrnt/worldlib'
+import { List as ListType, ListSchema, Schemas, semantics, type Timeline } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
-import { MdPlaylistAdd, MdDragHandle, MdTune } from 'react-icons/md'
+import { MdPlaylistAdd, MdDragHandle, MdTune, MdOutlineTag } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 
 import { RiPushpinFill } from 'react-icons/ri'
@@ -23,7 +24,11 @@ export const ListsView = () => {
     const { client } = useClient()
 
     const [creatorOpen, setCreatorOpen] = useState(false)
-    const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+    const [creatorBusy, setCreatorBusy] = useState(false)
+    const [settingsTarget, setSettingsTarget] = useState<{
+        uri: string
+        onEntriesChanged: () => void
+    } | null>(null)
     const [settingsOpen, setSettingsOpen] = useState(false)
 
     const [updater, setUpdater] = useState(0)
@@ -70,32 +75,49 @@ export const ListsView = () => {
                     <Suspense fallback={<Text>Loading...</Text>}>
                         <Lists
                             listsPromise={listsPromise}
-                            onOpenSettings={(uri) => {
-                                setSettingsTarget(uri)
+                            onOpenSettings={(uri, onEntriesChanged) => {
+                                setSettingsTarget({ uri, onEntriesChanged })
                                 setSettingsOpen(true)
                             }}
                         />
                     </Suspense>
                 </motion.div>
             </View>
-            <Drawer open={creatorOpen} onClose={() => setCreatorOpen(false)}>
+            <Drawer
+                open={creatorOpen}
+                onClose={() => {
+                    if (creatorBusy) return
+                    setCreatorOpen(false)
+                }}
+            >
                 <ListCreator
+                    onBusyChange={setCreatorBusy}
+                    onCreated={() => {
+                        setUpdater((u) => u + 1)
+                    }}
                     onComplete={() => {
                         setCreatorOpen(false)
-                        setUpdater((u) => u + 1)
                     }}
                 />
             </Drawer>
             {/* 保存時のpinnedLists reloadで<Lists>のSuspenseが落ちるため、
                 行の中に置くとドロワーのportalだけが閉じられず取り残される。境界の外で開く */}
-            <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+            <Drawer
+                open={settingsOpen}
+                onClose={() => {
+                    setSettingsOpen(false)
+                    setSettingsTarget(null)
+                }}
+            >
                 <Suspense fallback={<Text>Loading...</Text>}>
                     {settingsTarget && (
                         <ListSettings
-                            key={settingsTarget}
-                            uri={settingsTarget}
+                            key={settingsTarget.uri}
+                            uri={settingsTarget.uri}
+                            onEntriesChanged={settingsTarget.onEntriesChanged}
                             onComplete={() => {
                                 setSettingsOpen(false)
+                                setSettingsTarget(null)
                                 setUpdater((u) => u + 1)
                             }}
                         />
@@ -108,7 +130,7 @@ export const ListsView = () => {
 
 interface ListsProps {
     listsPromise: Promise<ListType[]>
-    onOpenSettings: (uri: string) => void
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const Lists = (props: ListsProps) => {
@@ -148,7 +170,16 @@ const Lists = (props: ListsProps) => {
             axis="y"
             values={ordered}
             onReorder={setOrdered}
-            style={{ listStyle: 'none', margin: 0, padding: 0, width: '100%' }}
+            style={{
+                listStyle: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(2),
+                margin: 0,
+                padding: CssVar.space(2),
+                boxSizing: 'border-box',
+                width: '100%'
+            }}
         >
             {ordered.map((list) => (
                 <ListRow
@@ -175,7 +206,7 @@ interface ListRowProps {
     pinned: boolean
     onTogglePin: () => void
     onPersist: () => void
-    onOpenSettings: (uri: string) => void
+    onOpenSettings: (uri: string, onEntriesChanged: () => void) => void
 }
 
 const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListRowProps) => {
@@ -198,89 +229,324 @@ const ListRow = ({ list, pinned, onTogglePin, onPersist, onOpenSettings }: ListR
                 listStyle: 'none',
                 position: 'relative',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                height: '2rem',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: CssVar.space(2),
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: `0 ${CssVar.space(2)}`,
+                padding: CssVar.space(2),
+                border: `1px solid ${CssVar.divider}`,
+                borderRadius: CssVar.round(1),
                 backgroundColor: dragging ? CssVar.contentBackground : 'transparent'
             }}
         >
             <div
-                onClick={() => navigate('/lists/' + encodeURIComponent(list.uri))}
-                style={{
-                    flex: 1,
-                    minWidth: 0,
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    overflow: 'hidden'
-                }}
-            >
-                {list.iconURL && (
-                    <CCImage
-                        src={list.iconURL}
-                        maxHeight={128}
-                        alt=""
-                        style={{
-                            height: '1.125rem',
-                            marginRight: CssVar.space(1),
-                            flexShrink: 0
-                        }}
-                    />
-                )}
-                <Text>{list.title}</Text>
-            </div>
-            <div
                 style={{
                     display: 'flex',
                     alignItems: 'center',
-                    flexShrink: 0,
-                    gap: CssVar.space(1)
+                    justifyContent: 'space-between',
+                    gap: CssVar.space(2),
+                    width: '100%',
+                    minWidth: 0
                 }}
             >
-                <IconButton
-                    title={t('openSettings')}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        onOpenSettings(list.uri)
-                    }}
-                >
-                    <MdTune />
-                </IconButton>
-                <IconButton
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        onTogglePin()
-                    }}
-                >
-                    {pinned ? <RiPushpinFill /> : <RiPushpinLine />}
-                </IconButton>
                 <div
-                    onPointerDown={(e) => controls.start(e)}
+                    onClick={() => navigate('/lists/' + encodeURIComponent(list.uri))}
+                    style={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {list.iconURL && (
+                        <CCImage
+                            src={list.iconURL}
+                            maxHeight={128}
+                            alt=""
+                            style={{
+                                height: '1.125rem',
+                                marginRight: CssVar.space(1),
+                                flexShrink: 0
+                            }}
+                        />
+                    )}
+                    <Text
+                        style={{
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            margin: 0
+                        }}
+                    >
+                        {list.title}
+                    </Text>
+                </div>
+                <div
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'grab',
-                        touchAction: 'none',
-                        color: CssVar.contentText,
-                        padding: CssVar.space(1)
+                        flexShrink: 0,
+                        gap: CssVar.space(1)
                     }}
                 >
-                    <MdDragHandle size={20} />
+                    <IconButton
+                        title={t('openSettings')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onOpenSettings(list.uri, () => list.entries.reload())
+                        }}
+                    >
+                        <MdTune />
+                    </IconButton>
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onTogglePin()
+                        }}
+                    >
+                        {pinned ? <RiPushpinFill /> : <RiPushpinLine />}
+                    </IconButton>
+                    <div
+                        onPointerDown={(e) => controls.start(e)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'grab',
+                            touchAction: 'none',
+                            color: CssVar.contentText,
+                            padding: CssVar.space(1)
+                        }}
+                    >
+                        <MdDragHandle size={20} />
+                    </div>
                 </div>
+            </div>
+            <div style={{ width: '100%', minWidth: 0 }}>
+                <ErrorBoundary
+                    resetKeys={[list]}
+                    fallbackRender={({ resetErrorBoundary }) => (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: CssVar.space(1)
+                            }}
+                        >
+                            <Text variant="caption" style={{ margin: 0 }}>
+                                {t('communitiesLoadFailed')}
+                            </Text>
+                            <Button
+                                variant="text"
+                                onClick={() => {
+                                    list.entries.reload()
+                                    resetErrorBoundary()
+                                }}
+                                style={{ fontSize: '0.875rem', padding: 0 }}
+                            >
+                                {t('retry')}
+                            </Button>
+                        </div>
+                    )}
+                >
+                    <Suspense
+                        fallback={
+                            <Text variant="caption" style={{ margin: 0 }}>
+                                Loading...
+                            </Text>
+                        }
+                    >
+                        <ListCommunities
+                            list={list}
+                            emptyLabel={t('noCommunities')}
+                            unavailableLabel={t('communityUnavailable')}
+                        />
+                    </Suspense>
+                </ErrorBoundary>
             </div>
         </Reorder.Item>
     )
 }
 
-const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
+const ListCommunities = (props: { list: ListType; emptyLabel: string; unavailableLabel: string }) => {
+    const [entries] = useSubscribe(props.list.entries)
+    const communityEntries = entries.filter((entry) => {
+        const value = entry.value
+        return typeof value?.href === 'string' && value.href.length > 0 && value.schema === Schemas.communityTimeline
+    })
+
+    if (communityEntries.length === 0) {
+        return (
+            <Text variant="caption" style={{ margin: 0 }}>
+                {props.emptyLabel}
+            </Text>
+        )
+    }
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: CssVar.space(1),
+                width: '100%',
+                minWidth: 0
+            }}
+        >
+            {communityEntries.map((entry) => (
+                <CommunityChip key={entry.key} href={entry.value.href} unavailableLabel={props.unavailableLabel} />
+            ))}
+        </div>
+    )
+}
+
+const CommunityChip = (props: { href: string; unavailableLabel: string }) => {
+    const { client } = useClient()
+    const timelinePromise = useMemo(() => client.getTimeline(props.href), [client, props.href])
+
+    return (
+        <Suspense fallback={null}>
+            <CommunityChipInner
+                href={props.href}
+                unavailableLabel={props.unavailableLabel}
+                timelinePromise={timelinePromise}
+            />
+        </Suspense>
+    )
+}
+
+const CommunityChipInner = (props: {
+    href: string
+    unavailableLabel: string
+    timelinePromise: Promise<Timeline | null>
+}) => {
+    const timeline = use(props.timelinePromise)
+
+    // 保存済みの参照先が後から別スキーマへ変わっていても、コミュニティ以外は表示しない。
+    if (!timeline) return <CommunityChipLabel label={`${props.unavailableLabel}: ${props.href}`} />
+    if (timeline.schema !== Schemas.communityTimeline) return null
+
+    return <CommunityChipLabel label={timeline.shortname ?? timeline.name} />
+}
+
+const CommunityChipLabel = (props: { label: string }) => {
+    return (
+        <span
+            style={{
+                flexShrink: 0,
+                color: CssVar.contentText,
+                fontSize: '16px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '16px',
+                padding: '0 4px',
+                width: 'fit-content',
+                maxWidth: '100%',
+                minWidth: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.08)'
+            }}
+        >
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MdOutlineTag size={16} />
+            </span>
+            <span
+                style={{
+                    margin: '0 8px',
+                    textAlign: 'center',
+                    flex: 1,
+                    minWidth: 0
+                }}
+            >
+                <span
+                    style={{
+                        display: 'block',
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {props.label}
+                </span>
+            </span>
+        </span>
+    )
+}
+
+const ListCreator = ({
+    onBusyChange,
+    onCreated,
+    onComplete
+}: {
+    onBusyChange: (busy: boolean) => void
+    onCreated: () => void
+    onComplete: () => void
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'views.lists' })
     const { client } = useClient()
     const [newListTitle, setNewListTitle] = useState('')
+    const [pinOnCreate, setPinOnCreate] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const [created, setCreated] = useState(false)
+    const [error, setError] = useState<'create' | 'pin' | null>(null)
+
+    const createList = async () => {
+        if (!client || created || busy) return
+
+        setError(null)
+        setBusy(true)
+        onBusyChange(true)
+
+        try {
+            const key = Date.now().toString()
+            const uri = semantics.list(client.ccid, client.currentProfile, key)
+            const document: Document<ListSchema> = {
+                kind: 'record',
+                key: uri,
+                schema: Schemas.list,
+                value: {
+                    name: newListTitle
+                },
+                author: client.ccid,
+                createdAt: new Date()
+            }
+
+            try {
+                await client.api.commit(document)
+            } catch (e) {
+                console.error('Failed to create list', e)
+                setError('create')
+                return
+            }
+
+            setCreated(true)
+            onCreated()
+
+            if (pinOnCreate) {
+                try {
+                    await client.addPin(uri)
+                } catch (e) {
+                    console.error('Failed to pin newly created list', e)
+                    setError('pin')
+                    return
+                }
+            }
+
+            onComplete()
+        } finally {
+            setBusy(false)
+            onBusyChange(false)
+        }
+    }
 
     return (
         <div
@@ -300,37 +566,35 @@ const ListCreator = ({ onComplete }: { onComplete: () => void }) => {
                 }}
             >
                 <Text variant="h3">{t('createList')}</Text>
-                <Button
-                    disabled={!newListTitle}
-                    onClick={() => {
-                        if (!client) return
-
-                        const key = Date.now().toString()
-
-                        const document: Document<ListSchema> = {
-                            kind: 'record',
-                            key: semantics.list(client.ccid, client.currentProfile, key),
-                            schema: Schemas.list,
-                            value: {
-                                name: newListTitle
-                            },
-                            author: client.ccid,
-                            createdAt: new Date()
-                        }
-
-                        client.api.commit(document).then(() => {
-                            console.log('Community created')
-                            onComplete()
-                        })
-                    }}
-                >
+                <Button disabled={!newListTitle || created || busy} busyChildren={t('creating')} onClick={createList}>
                     {t('create')}
                 </Button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-                <Text variant="h5">{t('listTitle')}</Text>
-                <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
-            </div>
+            <fieldset
+                disabled={busy || created}
+                style={{
+                    border: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(4)
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                    <Text variant="h5">{t('listTitle')}</Text>
+                    <TextField value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                    <Checkbox checked={pinOnCreate} onChange={setPinOnCreate} />
+                    {t('pinOnCreate')}
+                </label>
+            </fieldset>
+            {error && (
+                <div role="alert" aria-live="assertive">
+                    <Text style={{ color: '#ff5b5b' }}>{error === 'create' ? t('createFailed') : t('pinFailed')}</Text>
+                </div>
+            )}
         </div>
     )
 }

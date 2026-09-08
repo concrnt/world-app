@@ -4,7 +4,7 @@ import { useKeyboard } from '../contexts/Keyboard'
 
 interface Props {
     open: boolean
-    onClose: () => void
+    onClose: () => void | boolean
     children: ReactNode
 }
 
