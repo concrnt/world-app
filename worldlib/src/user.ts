@@ -22,16 +22,17 @@ export class User {
         }
     }
 
+    // 両側ともこのユーザーのサーバーが持つ(from=自分のack、to=自分宛のacked)
     stats = new CachedPromise<{ acknowledging: number; acknowledged: number }>(async () => {
         const acknowledging = await this.client.api.requestConcrntApi<Record<string, number>>(
-            this.client.server.domain,
+            this.domain,
             'net.concrnt.core.acknowledge-counts',
             {
                 from: this.ccid
             }
         )
         const acknowledged = await this.client.api.requestConcrntApi<Record<string, number>>(
-            this.client.server.domain,
+            this.domain,
             'net.concrnt.core.acknowledge-counts',
             {
                 to: this.ccid

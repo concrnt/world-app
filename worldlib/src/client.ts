@@ -676,20 +676,26 @@ export class Client {
         this.acknowledgingUsers.reload()
     }
 
-    async getAcknowledging(ccid: string): Promise<Document<Acknowledge>[]> {
+    // ack状態は片側ずつ別サーバーが持つ(CIP-10): from側はそのauthorのサーバー、
+    // to側はそのassociate ownerのサーバー。閲覧者のホームではなく対象ユーザーの
+    // ドメインに問い合わせる
+    private async domainOf(ccid: string, hint?: string): Promise<FQDN> {
+        if (ccid === this.ccid) return this.server.domain
+        const entity = await this.api.getEntity(ccid, hint)
+        return entity.value.domain
+    }
+
+    async getAcknowledging(ccid: string, hint?: string): Promise<Document<Acknowledge>[]> {
+        const domain = await this.domainOf(ccid, hint)
         const collected = new Map<string, SignedDocument>()
         let cursor: string | undefined
         while (true) {
-            const page = await this.api.requestConcrntApi<QueryResult>(
-                this.server.domain,
-                'net.concrnt.core.acknowledges',
-                {
-                    from: ccid,
-                    schema: Schemas.followAck,
-                    limit: '100',
-                    ...(cursor ? { until: cursor } : {})
-                }
-            )
+            const page = await this.api.requestConcrntApi<QueryResult>(domain, 'net.concrnt.core.acknowledges', {
+                from: ccid,
+                schema: Schemas.followAck,
+                limit: '100',
+                ...(cursor ? { until: cursor } : {})
+            })
             for (const sd of page.items) collected.set(sd.ccfs, sd)
             if (!page.next || page.next === cursor) break
             cursor = page.next
@@ -697,20 +703,17 @@ export class Client {
         return Array.from(collected.values()).map((sd) => JSON.parse(sd.document))
     }
 
-    async getAcknowledgers(ccid: string): Promise<Document<Acknowledge>[]> {
+    async getAcknowledgers(ccid: string, hint?: string): Promise<Document<Acknowledge>[]> {
+        const domain = await this.domainOf(ccid, hint)
         const collected = new Map<string, SignedDocument>()
         let cursor: string | undefined
         while (true) {
-            const page = await this.api.requestConcrntApi<QueryResult>(
-                this.server.domain,
-                'net.concrnt.core.acknowledges',
-                {
-                    to: ccid,
-                    schema: Schemas.followAck,
-                    limit: '100',
-                    ...(cursor ? { until: cursor } : {})
-                }
-            )
+            const page = await this.api.requestConcrntApi<QueryResult>(domain, 'net.concrnt.core.acknowledges', {
+                to: ccid,
+                schema: Schemas.followAck,
+                limit: '100',
+                ...(cursor ? { until: cursor } : {})
+            })
             for (const sd of page.items) collected.set(sd.ccfs, sd)
             if (!page.next || page.next === cursor) break
             cursor = page.next

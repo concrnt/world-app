@@ -12,6 +12,8 @@ import { RenderError } from './message/RenderError'
 
 interface Props {
     targetCcid: string
+    // 対象ユーザーのドメイン。ack状態はそのユーザーのサーバーが持つので解決のhintとして渡す
+    targetDomain?: string
     initialTab?: 'acknowledging' | 'acknowledgers'
     onNavigate?: () => void
 }
@@ -25,7 +27,7 @@ export const AcknowledgeList = (props: Props) => {
     // TODO: ユーザーへの変換はリスト上の個々のコンポーネントで行う
     const acknowledgingUsersPromise = useMemo(() => {
         if (!client) return Promise.resolve(null)
-        return client.getAcknowledging(props.targetCcid).then(async (acks) => {
+        return client.getAcknowledging(props.targetCcid, props.targetDomain).then(async (acks) => {
             const ccids = acks
                 .map((a) => a.associate)
                 .filter(isNonNullOrUndefined)
@@ -33,16 +35,16 @@ export const AcknowledgeList = (props: Props) => {
             const users = await Promise.all(ccids.map((ccid) => client.getUser(ccid)))
             return users.filter((u): u is User => u !== null)
         })
-    }, [client, props.targetCcid])
+    }, [client, props.targetCcid, props.targetDomain])
 
     const acknowledgersUsersPromise = useMemo(() => {
         if (!client) return Promise.resolve(null)
-        return client.getAcknowledgers(props.targetCcid).then(async (acks) => {
+        return client.getAcknowledgers(props.targetCcid, props.targetDomain).then(async (acks) => {
             const ccids = acks.map((a) => a.author)
             const users = await Promise.all(ccids.map((ccid) => client.getUser(ccid)))
             return users.filter((u): u is User => u !== null)
         })
-    }, [client, props.targetCcid])
+    }, [client, props.targetCcid, props.targetDomain])
 
     const users = tab === 'acknowledging' ? acknowledgingUsersPromise : acknowledgersUsersPromise
 
