@@ -288,7 +288,7 @@ export const PostView = (props: Props) => {
                                 <div
                                     key={reply.ccfs}
                                     style={{
-                                        backgroundColor: CssVar.backdropBackground,
+                                        backgroundColor: CssVar.contentBackground,
                                         borderRadius: CssVar.round(1),
                                         padding: CssVar.space(1)
                                     }}
