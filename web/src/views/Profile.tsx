@@ -540,6 +540,7 @@ const Body = (props: BodyProps) => {
                 {ackListTab && (
                     <AcknowledgeList
                         targetCcid={props.ccid}
+                        targetDomain={props.user.domain}
                         initialTab={ackListTab}
                         onNavigate={() => setAckListTab(null)}
                     />

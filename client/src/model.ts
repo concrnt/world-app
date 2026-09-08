@@ -16,7 +16,7 @@ export const IsCKID = (str: string): boolean => {
     return str.startsWith('cck1') && !str.includes('.') && str.length === 42
 }
 
-export type DocumentKind = 'entity' | 'record' | 'association' | 'delete' | 'ack' | 'unack'
+export type DocumentKind = 'entity' | 'record' | 'association' | 'delete' | 'ack' | 'unack' | 'acked' | 'unacked'
 
 export interface Document<T> {
     kind: DocumentKind
@@ -49,6 +49,11 @@ export interface Proof {
     type: string
     signature: string
     key?: string
+    href?: string
+    // document-direct (CIP-10 §5.2): the original signed ack/unack an
+    // acked/unacked document derives from
+    document?: string
+    proof?: Proof
 }
 
 export interface SignedDocument {
