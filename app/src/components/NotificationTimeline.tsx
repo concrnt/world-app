@@ -75,10 +75,15 @@ const ICON_COLUMN_WIDTH = '48px'
 const ICON_COLUMN_PADDING_LEFT = '5px'
 const ICON_SIZE = 32
 
+// 画面が埋まっていないときの追い読み判定の猶予(ms)。初期値から判定ごとに倍増し上限で頭打ち
+const FILL_DELAY_MIN = 100
+const FILL_DELAY_MAX = 1000
+
 export const NotificationTimeline = (props: Props) => {
     const { client } = useClient()
 
     const loadingRef = useRef(true)
+    const fillDelayRef = useRef(FILL_DELAY_MIN)
     const scrollPositionRef = useRef<number>(0)
     const [reader, update] = useRefWithUpdate<QueryTimelineReader | undefined>(undefined)
     const [loading, setLoading] = useState(true)
@@ -346,8 +351,15 @@ export const NotificationTimeline = (props: Props) => {
 
         el.addEventListener('scroll', handleScroll)
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
-        // 読み込みが落ち着いた1秒後に一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)
-        const fill = setTimeout(handleScroll, 1000)
+        // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
+        // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
+        const fill = setTimeout(() => {
+            if (loadingRef.current) return
+            handleScroll()
+            fillDelayRef.current = loadingRef.current
+                ? Math.min(fillDelayRef.current * 2, FILL_DELAY_MAX)
+                : FILL_DELAY_MIN
+        }, fillDelayRef.current)
         return () => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
