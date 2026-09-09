@@ -5,7 +5,7 @@ import './index.css'
 import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
-import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClient, useClientSetupProgress } from './contexts/Client'
@@ -83,8 +83,11 @@ const ClientLoadingScreen = () => {
 
 const ProfileRoute = () => {
     const { ccid = '', profile } = useParams()
+    // explorer等から未知の外部ユーザーを開くとき、所在ドメインを?hint=で運んで解決に使う
+    const [searchParams] = useSearchParams()
+    const hint = searchParams.get('hint') ?? undefined
     // keyでプロフィール切替時にビューごと再マウントする(タブやドロワー等のstateを持ち越さない)
-    return <ProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} />
+    return <ProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} hint={hint} />
 }
 
 const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'bskyView' }) => {
@@ -109,7 +112,9 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'b
 
 const GuestProfileRoute = () => {
     const { ccid = '', profile } = useParams()
-    return <GuestProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} />
+    const [searchParams] = useSearchParams()
+    const hint = searchParams.get('hint') ?? undefined
+    return <GuestProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} hint={hint} />
 }
 
 const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {

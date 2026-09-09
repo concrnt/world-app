@@ -75,7 +75,12 @@ export const CommandPaletteProvider = (props: Props) => {
         } else {
             const user = users[index - communities.length]
             if (!user) return
-            navigate('/profile/' + encodeURIComponent(user.ccid))
+            navigate(
+                '/profile/' +
+                    encodeURIComponent(user.ccid) +
+                    // 自ドメインが未知のユーザーでも解決できるよう、所在サーバーをhintとして運ぶ
+                    (user.sourceServer ? '?hint=' + encodeURIComponent(user.sourceServer) : '')
+            )
         }
         reset()
     }

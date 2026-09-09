@@ -18,6 +18,8 @@ import { useMediaProxy } from '../../contexts/MediaProxy'
 interface Props {
     ccid: string
     profileName?: string
+    // 未知の外部ユーザーを解決するためのFQDN(explorer等、所在が分かっている経路から渡す)
+    hint?: string
 }
 
 // views/Profile.tsx のゲスト(未ログイン)版。書き込みを伴うUI(編集・フォロー・ブロック等)を持たない
@@ -25,12 +27,12 @@ export const GuestProfileView = (props: Props) => {
     const { client } = useClient()
 
     const userPromise = useMemo(() => {
-        return client.getUser(props.ccid).catch(() => null)
-    }, [client, props.ccid])
+        return client.getUser(props.ccid, props.hint).catch(() => null)
+    }, [client, props.ccid, props.hint])
 
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
-            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
+            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'), props.hint)
             .catch((err): Document<ProfileSchema> | 'restricted' => {
                 if (err instanceof PermissionError) {
                     return 'restricted'
@@ -50,7 +52,7 @@ export const GuestProfileView = (props: Props) => {
                 }
                 return tmp
             })
-    }, [client, props.ccid, props.profileName])
+    }, [client, props.ccid, props.profileName, props.hint])
 
     return (
         <View>
