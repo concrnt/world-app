@@ -248,7 +248,14 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
                 overflow: 'hidden',
                 cursor: 'pointer'
             }}
-            onClick={() => navigate('/profile/' + encodeURIComponent(ccid))}
+            onClick={() =>
+                navigate(
+                    '/profile/' +
+                        encodeURIComponent(ccid) +
+                        // 自ドメインが未知のユーザーでも解決できるよう、所在サーバーをhintとして運ぶ
+                        (user.sourceServer ? '?hint=' + encodeURIComponent(user.sourceServer) : '')
+                )
+            }
         >
             <CCWallpaper style={{ height: '60px', width: '100%' }} src={getImageURL(user.banner)} />
             <div

@@ -41,6 +41,8 @@ import { useMediaProxy } from '../contexts/MediaProxy'
 interface Props {
     ccid: string
     profileName?: string
+    // 未知の外部ユーザーを解決するためのFQDN(explorer等、所在が分かっている経路から渡す)
+    hint?: string
 }
 
 // useSubscribeはsuspendするので単独コンポーネントに分離し、利用側で<Suspense fallback={null}>に包む
@@ -73,8 +75,8 @@ export const ProfileView = (props: Props) => {
     const { client } = useClient()
 
     const userPromise = useMemo(() => {
-        return client.getUser(props.ccid).catch(() => null)
-    }, [client, props.ccid])
+        return client.getUser(props.ccid, props.hint).catch(() => null)
+    }, [client, props.ccid, props.hint])
 
     const profileKey = semantics.profile(props.ccid, props.profileName ?? 'main')
 
@@ -91,16 +93,16 @@ export const ProfileView = (props: Props) => {
 
     useEffect(() => {
         client.api
-            .getDocument<ProfileSchema>(profileKey, undefined, { cache: 'no-cache' })
+            .getDocument<ProfileSchema>(profileKey, props.hint, { cache: 'no-cache' })
             .then((doc) => setFreshProfile(doc))
             .catch(() => {
                 // 権限エラー/404等はキャッシュ由来の表示(restricted/Anonymous)を維持する
             })
-    }, [client, profileKey, reload])
+    }, [client, profileKey, props.hint, reload])
 
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
-            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'))
+            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'), props.hint)
             .catch((err): Document<ProfileSchema> | 'restricted' => {
                 if (err instanceof PermissionError) {
                     return 'restricted'
@@ -120,7 +122,7 @@ export const ProfileView = (props: Props) => {
                 }
                 return tmp
             })
-    }, [client, props.ccid, props.profileName, reload])
+    }, [client, props.ccid, props.profileName, props.hint, reload])
 
     return (
         <View>
