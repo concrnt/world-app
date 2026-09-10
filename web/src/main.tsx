@@ -58,6 +58,7 @@ import { GuestPostView } from './views/guest/GuestPost'
 import { GuestTimelineView } from './views/guest/GuestTimeline'
 import { NavigationProvider } from './contexts/Navigation'
 import { KeyboardProvider } from './contexts/Keyboard'
+import { GA4Provider } from './contexts/GA4'
 import { CommandPaletteProvider } from './contexts/CommandPalette'
 import { CssVar, IconButton, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
@@ -131,6 +132,9 @@ const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {
 
 // v1クライアント(concrnt-world)の残留ストレージはセッション判定より先に変換・掃除する
 migrateV1Storage()
+
+// Google Analytics測定ID(v1クライアントと同一)
+const GA4_TAG = 'G-Y4V0V7XYWX'
 
 // ログインセッションの有無(モジュールロード時に1回判定)。
 // 無い場合のみゲスト閲覧ルートを登録する。ログイン/登録完了時はフルリロードされるため再評価される
@@ -433,49 +437,51 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <KeyboardProvider>
             <BrowserRouter>
-                <Routes>
-                    <Route
-                        path="/login"
-                        element={
-                            <BaseThemeProvider theme={Themes.blue}>
-                                <Login />
-                            </BaseThemeProvider>
-                        }
-                    />
-                    <Route
-                        path="/register"
-                        element={
-                            <BaseThemeProvider theme={Themes.blue}>
-                                <Register />
-                            </BaseThemeProvider>
-                        }
-                    />
-                    <Route
-                        path="/signup"
-                        element={
-                            <BaseThemeProvider theme={Themes.blue}>
-                                <Signup />
-                            </BaseThemeProvider>
-                        }
-                    />
-                    <Route path="/welcome" element={<WelcomePage />} />
-                    <Route
-                        path="/crash"
-                        element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}
-                    />
-                    {!hasSession && (
-                        <Route element={<GuestShell />}>
-                            <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
-                            <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
-                            <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
-                        </Route>
-                    )}
-                    {hasSession ? (
-                        <Route path="*" element={<AuthedRoutes />} />
-                    ) : (
-                        <Route path="*" element={<Navigate to="/welcome" replace />} />
-                    )}
-                </Routes>
+                <GA4Provider tag={GA4_TAG}>
+                    <Routes>
+                        <Route
+                            path="/login"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <Login />
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route
+                            path="/register"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <Register />
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route
+                            path="/signup"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <Signup />
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route path="/welcome" element={<WelcomePage />} />
+                        <Route
+                            path="/crash"
+                            element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}
+                        />
+                        {!hasSession && (
+                            <Route element={<GuestShell />}>
+                                <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
+                                <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
+                                <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
+                            </Route>
+                        )}
+                        {hasSession ? (
+                            <Route path="*" element={<AuthedRoutes />} />
+                        ) : (
+                            <Route path="*" element={<Navigate to="/welcome" replace />} />
+                        )}
+                    </Routes>
+                </GA4Provider>
             </BrowserRouter>
         </KeyboardProvider>
     </ErrorBoundary>
