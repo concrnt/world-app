@@ -27,3 +27,6 @@ references
 
 # wrangler pages dev cache
 web/.wrangler/
+
+.claude
+.codex
