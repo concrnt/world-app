@@ -31,9 +31,9 @@ export const Confirm = (props: Props) => {
     useEffect(() => {
         if (needsDom || !props.open) return
         let active = true
-        const description = typeof props.description === 'string' ? props.description : undefined
-        ask(description ?? props.title, {
-            title: description !== undefined ? props.title : undefined,
+        // titleを省略するとプラグインがproductNameを既定タイトルにする(iOSでは太字表示)ため常に渡す
+        ask(typeof props.description === 'string' ? props.description : '', {
+            title: props.title,
             kind: 'warning',
             okLabel: props.confirmText ?? 'Confirm',
             cancelLabel: props.cancelText ?? t('cancel')

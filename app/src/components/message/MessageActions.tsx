@@ -299,6 +299,7 @@ export const MessageActions = (props: Props) => {
                 open={deleteConfirmOpen}
                 onClose={() => setDeleteConfirmOpen(false)}
                 title={t('confirmDelete')}
+                description={t('confirmDeleteDescription')}
                 confirmText={t('delete')}
                 onConfirm={() => {
                     client?.api.delete(props.message.uri).then(() => hapticSuccess())
