@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { Button, Confirm, View, Text, TextField } from '@concrnt/ui'
+import { Button, View, Text, TextField } from '@concrnt/ui'
+import { Confirm } from '../components/Confirm'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Api, InMemoryAuthProvider, InMemoryKVS, type Document, type RepositoryImportResult } from '@concrnt/client'

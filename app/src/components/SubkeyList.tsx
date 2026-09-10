@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Confirm, Text } from '@concrnt/ui'
+import { Button, Text } from '@concrnt/ui'
+import { Confirm } from './Confirm'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import type { Document, SignedDocument } from '@concrnt/client'

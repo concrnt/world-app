@@ -1,7 +1,8 @@
 import { Document, Policy } from '@concrnt/client'
 import { Schemas, Timeline } from '@concrnt/worldlib'
 import { Text } from '@concrnt/ui'
-import { Button, CCWallpaper, Confirm, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
+import { Button, CCWallpaper, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
+import { Confirm } from './Confirm'
 import { MdMoreHoriz } from 'react-icons/md'
 import { shareText } from '../lib/share'
 

@@ -4,7 +4,6 @@ import {
     Avatar,
     Button,
     CCImage,
-    Confirm,
     IconButton,
     List as ListView,
     ListItem,
@@ -17,6 +16,7 @@ import {
     Text,
     TextField
 } from '@concrnt/ui'
+import { Confirm } from './Confirm'
 import {
     MdClose,
     MdDelete,

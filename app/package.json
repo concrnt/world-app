@@ -20,6 +20,7 @@
     "@rjsf/validator-ajv8": "^6.4.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-barcode-scanner": "^2.4.4",
+    "@tauri-apps/plugin-dialog": "^2",
     "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-opener": "^2",
     "blurhash": "^2.0.5",
