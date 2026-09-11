@@ -30,6 +30,7 @@ export interface CommunityHit {
 export interface UserHit {
     id: string // Meilisearch内部ID (base64)
     ccid: string // ユーザーCCID
+    cckv?: string // プロフィールドキュメントのキー(サブプロフィールなら末尾がmain以外)
     username?: string
     description?: string
     avatar?: string
@@ -241,6 +242,8 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
     const { getImageURL } = useMediaProxy()
     const { push } = useStack()
     const ccid = user.ccid
+    // サブプロフィールもmainと同じスキーマでインデックスされるので、キー末尾のプロフィール名を渡す
+    const profileName = user.cckv?.split('/concrnt.world/profiles/')[1]
 
     return (
         <div
@@ -251,7 +254,7 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
                 cursor: 'pointer'
             }}
             // 自ドメインが未知のユーザーでも解決できるよう、所在サーバーをhintとして渡す
-            onClick={() => push(<ProfileView ccid={ccid} hint={user.sourceServer} />)}
+            onClick={() => push(<ProfileView ccid={ccid} profileName={profileName} hint={user.sourceServer} />)}
         >
             <CCWallpaper style={{ height: '60px', width: '100%' }} src={getImageURL(user.banner)} />
             <div
