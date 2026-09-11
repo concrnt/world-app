@@ -1,11 +1,13 @@
-import { Suspense, use, useMemo } from 'react'
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 
 import { CCImage, List as ListView, ListItem, Skeleton, Text } from '@concrnt/ui'
 import { MdAlternateEmail, MdExpandMore, MdHelpOutline, MdOutlineTag } from 'react-icons/md'
+import { NotFoundError, PermissionError } from '@concrnt/client'
 import {
+    type CommunityTimelineSchema,
     type List,
     type ListEntry,
     PinnedListItemClass,
@@ -16,6 +18,7 @@ import {
 
 import { useClient } from '../contexts/Client'
 import { useSubscribe } from '../hooks/useSubscribe'
+import { useResource } from '../hooks/useResource'
 import { usePreference } from '../contexts/Preference'
 import { sortByListOrder } from '../utils/listOrder'
 import { CssVar } from '../types/Theme'
@@ -221,28 +224,11 @@ const SubItems = (props: { list: List }) => {
 }
 
 const SubItemRow = (props: { entry: ListEntry }) => {
-    const { client } = useClient()
-
     const isUser = props.entry.value.schema === Schemas.userTimeline
     const href: string = props.entry.value.href
     // cckv://<ccid>/concrnt.world/profiles/<profile>/home-timeline
     const ccid = href.split('/')[2]
     const profileName = href.split('/')[5]
-
-    const labelPromise = useMemo(() => {
-        if (isUser) {
-            return Promise.all([
-                client.getUser(ccid),
-                client.api.getDocument<ProfileSchema>(semantics.profile(ccid, profileName)).catch(() => null)
-            ])
-                .then(([user, doc]) => ({ ...user?.profile, ...doc?.value }).username ?? null)
-                .catch(() => null)
-        }
-        return client
-            .getTimeline(href)
-            .then((timeline) => (timeline ? (timeline.shortname ?? timeline.name ?? null) : null))
-            .catch(() => null)
-    }, [client, href, isUser, ccid, profileName])
 
     return (
         <Suspense
@@ -257,21 +243,64 @@ const SubItemRow = (props: { entry: ListEntry }) => {
                 </ListItem>
             }
         >
-            <SubItemRowInner isUser={isUser} ccid={ccid} href={href} labelPromise={labelPromise} />
+            <SubItemRowInner isUser={isUser} ccid={ccid} profileName={profileName} href={href} />
         </Suspense>
     )
 }
 
-const SubItemRowInner = (props: {
-    isUser: boolean
-    ccid: string
-    href: string
-    labelPromise: Promise<string | null>
-}) => {
+const SubItemRowInner = (props: { isUser: boolean; ccid: string; profileName: string; href: string }) => {
+    const { client } = useClient()
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const navigate = useNavigate()
 
-    const label = use(props.labelPromise)
+    const label = useResource<string | null>(
+        `sidebar-list-label:${client.api.defaultHost}:${client.ccid}:${props.isUser ? 'user' : 'timeline'}:${props.href}`,
+        (fresh) => {
+            if (fresh) {
+                if (props.isUser) {
+                    return Promise.all([
+                        client.api
+                            .getDocument<ProfileSchema>(semantics.profile(props.ccid, 'main'), undefined, {
+                                cache: 'no-cache'
+                            })
+                            .catch((error) => {
+                                if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                                throw error
+                            }),
+                        client.api
+                            .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName), undefined, {
+                                cache: 'no-cache'
+                            })
+                            .catch((error) => {
+                                if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                                throw error
+                            })
+                    ]).then(([main, profile]) => ({ ...main?.value, ...profile?.value }).username ?? null)
+                }
+                return client.api
+                    .getDocument<CommunityTimelineSchema>(props.href, undefined, { cache: 'no-cache' })
+                    .then((timeline) => timeline.value.shortname ?? timeline.value.name ?? null)
+                    .catch((error) => {
+                        if (error instanceof NotFoundError || error instanceof PermissionError) return null
+                        throw error
+                    })
+            }
+            if (props.isUser) {
+                return Promise.all([
+                    client.getUser(props.ccid),
+                    client.api
+                        .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName))
+                        .catch(() => null)
+                ])
+                    .then(([user, doc]) => ({ ...user?.profile, ...doc?.value }).username ?? null)
+                    .catch(() => null)
+            }
+            return client
+                .getTimeline(props.href)
+                .then((timeline) => (timeline ? (timeline.shortname ?? timeline.name ?? null) : null))
+                .catch(() => null)
+        }
+    )
 
     return (
         <ListItem

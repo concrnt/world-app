@@ -106,7 +106,7 @@ function revalidate<T>(key: string, fetcher: () => Promise<T>): void {
         })
 }
 
-export function useResource<T>(key: string, fetcher: () => Promise<T>): T {
+export function useResource<T>(key: string, fetcher: (fresh?: boolean) => Promise<T>): T {
     const fetcherRef = useRef(fetcher)
 
     const entry = useSyncExternalStore(subscribe, () => getOrCreate(key, fetcher))
@@ -116,7 +116,7 @@ export function useResource<T>(key: string, fetcher: () => Promise<T>): T {
     })
 
     useEffect(() => {
-        revalidate(key, () => fetcherRef.current())
+        revalidate(key, () => fetcherRef.current(true))
     }, [key])
 
     return use(entry.promise)
