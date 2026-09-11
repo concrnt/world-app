@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
     Avatar,
     CCWallpaper,
-    Confirm,
     IconButton,
     Select,
     Text,
@@ -15,6 +14,7 @@ import {
     useTheme,
     ListItem
 } from '@concrnt/ui'
+import { Confirm } from '../components/Confirm'
 import { useClient } from '../contexts/Client'
 
 // import { MdSearch } from 'react-icons/md'

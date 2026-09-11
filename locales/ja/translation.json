@@ -131,7 +131,7 @@
                 "desc": "取得したデータを移住先に転送します。データ量によっては時間がかかります。",
                 "stats": "{{total}}件のコミットを転送します({{resigned}}件を再署名 / {{skipped}}件はスキップ)",
                 "progress": "{{done}}/{{total}} チャンク完了({{imported}}件転送済み)",
-                "confirmTitle": "転送を開始しますか?",
+                "confirmTitle": "転送を開始",
                 "confirmDesc": "{{domain}} へデータの転送を開始します。作業中は画面を閉じないでください。",
                 "exec": "転送を開始",
                 "working": "転送中…"
@@ -169,7 +169,7 @@
                 "title": "取り込み",
                 "desc": "変換したデータを現在の鍵で署名し直し、このサーバーに取り込みます。データ量によっては時間がかかります。作業中は画面を閉じないでください。",
                 "progress": "{{done}}/{{total}} チャンク完了({{imported}}件取り込み済み)",
-                "confirmTitle": "取り込みを開始しますか?",
+                "confirmTitle": "取り込みを開始",
                 "confirmDesc": "v1のコンテンツを現在のアカウントの投稿として取り込みます。あとで取り消すには1件ずつ削除する必要があります。",
                 "exec": "取り込みを開始",
                 "working": "取り込み中…"
@@ -187,8 +187,8 @@
             "copyURL": "URLをコピー",
             "copyMarkdown": "Markdownをコピー",
             "delete": "削除",
-            "deleteConfirmTitle": "このファイルを削除しますか?",
-            "deleteConfirmDescription": "ファイルはメディアサーバーから完全に削除されます。このファイルを参照している投稿では表示されなくなります。"
+            "deleteConfirmTitle": "ファイルを削除",
+            "deleteConfirmDescription": "このファイルを削除してもよろしいですか？メディアサーバーから完全に削除され、このファイルを参照している投稿では表示されなくなります。"
         },
         "emojiSettings": {
             "title": "絵文字",
@@ -293,11 +293,11 @@
         },
         "profile": {
             "userNotFound": "ユーザーが見つかりませんでした",
-            "blockConfirmTitle": "本当にこのユーザーをブロックしますか？",
-            "blockConfirmDescription": "ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。",
+            "blockConfirmTitle": "ユーザーをブロック",
+            "blockConfirmDescription": "このユーザーをブロックしてもよろしいですか？ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。",
             "block": "ブロック",
-            "unblockConfirmTitle": "本当にこのユーザーのブロックを解除しますか？",
-            "unblockConfirmDescription": "ブロックを解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。",
+            "unblockConfirmTitle": "ブロックを解除",
+            "unblockConfirmDescription": "このユーザーのブロックを解除してもよろしいですか？解除すると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来るようになります。",
             "unblock": "ブロック解除",
             "noDescription": "説明はまだありません",
             "followsYou": "フォローされています",
@@ -373,7 +373,7 @@
                 "enactedAt": "有効化: {{date}}",
                 "validPeriod": "有効期間: {{from}} 〜 {{until}}",
                 "revoke": "失効",
-                "revokeConfirmTitle": "このサブキーを失効させますか?",
+                "revokeConfirmTitle": "サブキーを失効",
                 "revokeConfirmDescription": "このサブキーを使用しているデバイスは投稿やログインができなくなります。失効前に行われた署名は引き続き検証可能です。",
                 "revokeConfirmCurrentDescription": "これは今このデバイスが使用しているサブキーです。失効させるとこのデバイスはログアウトされます。",
                 "revokeFailed": "サブキーの失効に失敗しました",
@@ -564,7 +564,8 @@
             "loading": "読み込み中..."
         },
         "messageActions": {
-            "confirmDelete": "本当にこの投稿を削除しますか？",
+            "confirmDelete": "投稿を削除",
+            "confirmDeleteDescription": "この投稿を削除してもよろしいですか？",
             "delete": "削除",
             "deletePost": "投稿を削除",
             "report": "通報",
@@ -757,8 +758,8 @@
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
             "deleteTimeline": "コミュニティを削除",
-            "confirmDeleteTimeline": "このコミュニティを削除しますか？",
-            "confirmDeleteTimelineDescription": "この操作は取り消せません。"
+            "confirmDeleteTimeline": "コミュニティを削除",
+            "confirmDeleteTimelineDescription": "このコミュニティを削除してもよろしいですか？この操作は取り消せません。"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",
@@ -772,8 +773,8 @@
             "pin": "ピン留めする",
             "unpin": "ピン留めを解除",
             "deleteList": "リストを削除",
-            "confirmDeleteList": "このリストを削除しますか？",
-            "confirmDeleteListDescription": "リストと含まれる全ての項目が削除されます。",
+            "confirmDeleteList": "リストを削除",
+            "confirmDeleteListDescription": "このリストを削除してもよろしいですか？リストに含まれる全ての項目が削除されます。",
             "listName": "リスト名",
             "excludeSelf": "自分の投稿を含めない",
             "containedTimelines": "含まれるタイムライン",

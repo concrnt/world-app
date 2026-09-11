@@ -1,6 +1,6 @@
 import { Chip } from '@concrnt/ui'
 
-import { useMemo, useRef, useState } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { MdOutlineTag } from 'react-icons/md'
@@ -8,10 +8,11 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
 import { useClient } from '../contexts/Client'
-import { Avatar, ListItem, Popover, Select, useAnchor } from '@concrnt/ui'
+import { Avatar, ListItem, Popover, Select, Skeleton, useAnchor } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useHaptics } from '../contexts/Haptics'
 import { ProfileName } from './ProfileName'
+import { useResource } from '../hooks/useResource'
 
 interface Props {
     selected: string[]
@@ -104,7 +105,6 @@ export const TimelinePicker = (props: Props) => {
             </Chip>
             {props.selected.map((sel) => {
                 const item = props.items.find((i) => props.keyFunc(i) === sel)
-                if (!item) return null
                 return (
                     <Chip
                         key={sel}
@@ -118,7 +118,14 @@ export const TimelinePicker = (props: Props) => {
                             />
                         }
                     >
-                        {props.labelFunc(item)}
+                        {item ? (
+                            props.labelFunc(item)
+                        ) : (
+                            // リスト未登録のタイムラインを直接開いた時など、候補に無い投稿先も名前を解決してchipで見せる
+                            <Suspense fallback={<Skeleton height="1em" width="3rem" />}>
+                                <ResolvedTimelineName uri={sel} />
+                            </Suspense>
+                        )}
                     </Chip>
                 )
             })}
@@ -252,4 +259,10 @@ export const TimelinePicker = (props: Props) => {
             />
         </div>
     )
+}
+
+const ResolvedTimelineName = (props: { uri: string }) => {
+    const { client } = useClient()
+    const timeline = useResource(`timeline:${props.uri}`, () => client.getTimeline(props.uri))
+    return <>{timeline?.name ?? timeline?.shortname ?? props.uri}</>
 }

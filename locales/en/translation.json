@@ -131,7 +131,7 @@
                 "desc": "Transfers the fetched data to the destination. This may take a while.",
                 "stats": "{{total}} commits to transfer ({{resigned}} re-signed / {{skipped}} skipped)",
                 "progress": "{{done}}/{{total}} chunks done ({{imported}} commits transferred)",
-                "confirmTitle": "Start the transfer?",
+                "confirmTitle": "Start transfer",
                 "confirmDesc": "Starts transferring your data to {{domain}}. Keep this screen open while it runs.",
                 "exec": "Start transfer",
                 "working": "Transferring…"
@@ -169,7 +169,7 @@
                 "title": "Import",
                 "desc": "Re-signs the converted data with your current key and imports it into this server. This may take a while — keep this screen open.",
                 "progress": "{{done}}/{{total}} chunks done ({{imported}} commits imported)",
-                "confirmTitle": "Start the import?",
+                "confirmTitle": "Start import",
                 "confirmDesc": "The v1 content will be imported as content of your current account. Undoing this later requires deleting the items one by one.",
                 "exec": "Start import",
                 "working": "Importing…"
@@ -187,8 +187,8 @@
             "copyURL": "Copy URL",
             "copyMarkdown": "Copy Markdown",
             "delete": "Delete",
-            "deleteConfirmTitle": "Delete this file?",
-            "deleteConfirmDescription": "The file will be permanently deleted from the media server. Posts referencing it will no longer display it."
+            "deleteConfirmTitle": "Delete file",
+            "deleteConfirmDescription": "Are you sure you want to delete this file? It will be permanently deleted from the media server, and posts referencing it will no longer display it."
         },
         "emojiSettings": {
             "title": "Emoji",
@@ -293,11 +293,11 @@
         },
         "profile": {
             "userNotFound": "User not found",
-            "blockConfirmTitle": "Are you sure you want to block this user?",
-            "blockConfirmDescription": "Blocking will prevent this user from replying to you or reacting to your posts, but they will still be able to see your public posts.",
+            "blockConfirmTitle": "Block user",
+            "blockConfirmDescription": "Are you sure you want to block this user? They will no longer be able to reply to you or react to your posts, but they will still be able to see your public posts.",
             "block": "Block",
-            "unblockConfirmTitle": "Are you sure you want to unblock this user?",
-            "unblockConfirmDescription": "Unblocking will allow this user to reply to you and react to your posts again.",
+            "unblockConfirmTitle": "Unblock user",
+            "unblockConfirmDescription": "Are you sure you want to unblock this user? They will be able to reply to you and react to your posts again.",
             "unblock": "Unblock",
             "noDescription": "No description yet",
             "followsYou": "Follows you",
@@ -374,7 +374,7 @@
                 "enactedAt": "Enacted: {{date}}",
                 "validPeriod": "Was valid: {{from}} – {{until}}",
                 "revoke": "Revoke",
-                "revokeConfirmTitle": "Revoke this subkey?",
+                "revokeConfirmTitle": "Revoke subkey",
                 "revokeConfirmDescription": "Devices using this subkey will no longer be able to post or log in. Signatures made before revocation remain verifiable.",
                 "revokeConfirmCurrentDescription": "This is the subkey used by this device. Revoking it will log this device out.",
                 "revokeFailed": "Failed to revoke subkey",
@@ -565,7 +565,8 @@
             "loading": "Loading..."
         },
         "messageActions": {
-            "confirmDelete": "Really delete this post?",
+            "confirmDelete": "Delete post",
+            "confirmDeleteDescription": "Are you sure you want to delete this post?",
             "delete": "Delete",
             "deletePost": "Delete post",
             "report": "Report",
@@ -758,8 +759,8 @@
             "copyLink": "Copy link",
             "linkCopied": "Copied",
             "deleteTimeline": "Delete Community",
-            "confirmDeleteTimeline": "Really delete this community?",
-            "confirmDeleteTimelineDescription": "This action cannot be undone."
+            "confirmDeleteTimeline": "Delete community",
+            "confirmDeleteTimelineDescription": "Are you sure you want to delete this community? This action cannot be undone."
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",
@@ -773,8 +774,8 @@
             "pin": "Pin",
             "unpin": "Unpin",
             "deleteList": "Delete List",
-            "confirmDeleteList": "Really delete this list?",
-            "confirmDeleteListDescription": "The list and all its items will be deleted.",
+            "confirmDeleteList": "Delete list",
+            "confirmDeleteListDescription": "Are you sure you want to delete this list? All of its items will be deleted.",
             "listName": "List name",
             "excludeSelf": "Exclude your own posts",
             "containedTimelines": "Included timelines",

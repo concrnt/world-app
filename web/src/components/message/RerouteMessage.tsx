@@ -44,13 +44,25 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                navigate(
-                                    '/profile/' +
-                                        props.message.author +
-                                        (props.message.authorProfileName && props.message.authorProfileName !== 'main'
-                                            ? '/' + props.message.authorProfileName
-                                            : '')
-                                )
+                                const link = props.message.value?.profileOverride?.link
+                                if (link) {
+                                    // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                                    navigate(
+                                        link.startsWith('https://bsky.app/profile/')
+                                            ? '/bluesky/view/' +
+                                                  encodeURIComponent(link.slice('https://bsky.app/profile/'.length))
+                                            : '/activitypub/view/' + encodeURIComponent(link)
+                                    )
+                                } else {
+                                    navigate(
+                                        '/profile/' +
+                                            props.message.author +
+                                            (props.message.authorProfileName &&
+                                            props.message.authorProfileName !== 'main'
+                                                ? '/' + props.message.authorProfileName
+                                                : '')
+                                    )
+                                }
                             }}
                             style={{ display: 'flex', cursor: 'pointer' }}
                         >
@@ -66,13 +78,24 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                props.message.author +
-                                (props.message.authorProfileName && props.message.authorProfileName !== 'main'
-                                    ? '/' + props.message.authorProfileName
-                                    : '')
-                        )
+                        const link = props.message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            navigate(
+                                link.startsWith('https://bsky.app/profile/')
+                                    ? '/bluesky/view/' +
+                                          encodeURIComponent(link.slice('https://bsky.app/profile/'.length))
+                                    : '/activitypub/view/' + encodeURIComponent(link)
+                            )
+                        } else {
+                            navigate(
+                                '/profile/' +
+                                    props.message.author +
+                                    (props.message.authorProfileName && props.message.authorProfileName !== 'main'
+                                        ? '/' + props.message.authorProfileName
+                                        : '')
+                            )
+                        }
                     }}
                     style={{ cursor: 'pointer' }}
                 >

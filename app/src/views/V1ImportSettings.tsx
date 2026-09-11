@@ -1,4 +1,5 @@
-import { Button, Confirm, View, Text } from '@concrnt/ui'
+import { Button, View, Text } from '@concrnt/ui'
+import { Confirm } from '../components/Confirm'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type RepositoryImportResult } from '@concrnt/client'

@@ -7,7 +7,8 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, Confirm, Text, IconButton, ListItem, Select } from '@concrnt/ui'
+import { Avatar, CfmRenderer, Text, IconButton, ListItem, Select } from '@concrnt/ui'
+import { Confirm } from '../Confirm'
 
 import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
@@ -83,6 +84,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                         open={deleteConfirmOpen}
                         onClose={() => setDeleteConfirmOpen(false)}
                         title={t('components.messageActions.confirmDelete', { keyPrefix: '' })}
+                        description={t('components.messageActions.confirmDeleteDescription', { keyPrefix: '' })}
                         confirmText={t('components.messageActions.delete', { keyPrefix: '' })}
                         onConfirm={() => {
                             client.api.delete(message.uri).then(() => hapticSuccess())

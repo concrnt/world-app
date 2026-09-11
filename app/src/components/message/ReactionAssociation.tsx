@@ -5,6 +5,8 @@ import { CCImage, Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
+import { ApView } from '../../views/ApView'
+import { BskyView } from '../../views/BskyView'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
@@ -62,7 +64,17 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (reactionAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            push(
+                                link.startsWith('https://bsky.app/profile/') ? (
+                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                ) : (
+                                    <ApView uri={link} />
+                                )
+                            )
+                        } else if (reactionAuthor) {
                             push(<ProfileView ccid={reactionAuthor.ccid} />)
                         }
                     }}

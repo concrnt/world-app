@@ -1,4 +1,5 @@
-import { Button, Confirm, ListItem, Select, Text } from '@concrnt/ui'
+import { Button, ListItem, Select, Text } from '@concrnt/ui'
+import { Confirm } from '../Confirm'
 import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
@@ -298,6 +299,7 @@ export const MessageActions = (props: Props) => {
                 open={deleteConfirmOpen}
                 onClose={() => setDeleteConfirmOpen(false)}
                 title={t('confirmDelete')}
+                description={t('confirmDeleteDescription')}
                 confirmText={t('delete')}
                 onConfirm={() => {
                     client?.api.delete(props.message.uri).then(() => hapticSuccess())

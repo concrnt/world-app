@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CCImage, Confirm, IconButton, ListItem, Select, Skeleton, Text, View } from '@concrnt/ui'
+import { CCImage, IconButton, ListItem, Select, Skeleton, Text, View } from '@concrnt/ui'
+import { Confirm } from '../components/Confirm'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'

@@ -90,6 +90,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                         open={deleteConfirmOpen}
                         onClose={() => setDeleteConfirmOpen(false)}
                         title={t('components.messageActions.confirmDelete', { keyPrefix: '' })}
+                        description={t('components.messageActions.confirmDeleteDescription', { keyPrefix: '' })}
                         confirmText={t('components.messageActions.delete', { keyPrefix: '' })}
                         onConfirm={() => {
                             client.api.delete(message.uri).then(() => hapticSuccess())
