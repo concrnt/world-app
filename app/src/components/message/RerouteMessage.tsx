@@ -16,6 +16,8 @@ import { RenderError } from './RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useStack } from '../../layouts/Stack'
 import { ProfileView } from '../../views/Profile'
+import { ApView } from '../../views/ApView'
+import { BskyView } from '../../views/BskyView'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
@@ -43,12 +45,24 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(
-                                    <ProfileView
-                                        ccid={props.message.author}
-                                        profileName={props.message.authorProfileName ?? undefined}
-                                    />
-                                )
+                                const link = props.message.value?.profileOverride?.link
+                                if (link) {
+                                    // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                                    push(
+                                        link.startsWith('https://bsky.app/profile/') ? (
+                                            <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                        ) : (
+                                            <ApView uri={link} />
+                                        )
+                                    )
+                                } else {
+                                    push(
+                                        <ProfileView
+                                            ccid={props.message.author}
+                                            profileName={props.message.authorProfileName ?? undefined}
+                                        />
+                                    )
+                                }
                             }}
                             style={{ display: 'flex', cursor: 'pointer' }}
                         >
@@ -64,12 +78,24 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        push(
-                            <ProfileView
-                                ccid={props.message.author}
-                                profileName={props.message.authorProfileName ?? undefined}
-                            />
-                        )
+                        const link = props.message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            push(
+                                link.startsWith('https://bsky.app/profile/') ? (
+                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                ) : (
+                                    <ApView uri={link} />
+                                )
+                            )
+                        } else {
+                            push(
+                                <ProfileView
+                                    ccid={props.message.author}
+                                    profileName={props.message.authorProfileName ?? undefined}
+                                />
+                            )
+                        }
                     }}
                     style={{ cursor: 'pointer' }}
                 >

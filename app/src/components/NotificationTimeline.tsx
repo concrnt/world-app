@@ -33,6 +33,7 @@ import { useStack } from '../layouts/Stack'
 import { PostView } from '../views/Post'
 import { ProfileView } from '../views/Profile'
 import { BskyView } from '../views/BskyView'
+import { ApView } from '../views/ApView'
 import { PullToRefresh } from './PullToRefresh'
 
 // 通知を集約した表示単位
@@ -488,7 +489,17 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                             key={item.uri}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                if (item.authorUser) {
+                                const link = item.value?.profileOverride?.link
+                                if (link) {
+                                    // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                                    push(
+                                        link.startsWith('https://bsky.app/profile/') ? (
+                                            <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                        ) : (
+                                            <ApView uri={link} />
+                                        )
+                                    )
+                                } else if (item.authorUser) {
                                     push(<ProfileView ccid={item.authorUser.ccid} />)
                                 }
                             }}
@@ -885,7 +896,17 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                     key={item.uri}
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        if (item.authorUser) {
+                                        const link = item.value?.profileOverride?.link
+                                        if (link) {
+                                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                                            push(
+                                                link.startsWith('https://bsky.app/profile/') ? (
+                                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                                ) : (
+                                                    <ApView uri={link} />
+                                                )
+                                            )
+                                        } else if (item.authorUser) {
                                             push(<ProfileView ccid={item.authorUser.ccid} />)
                                         }
                                     }}

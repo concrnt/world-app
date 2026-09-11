@@ -48,7 +48,16 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (rerouteAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            navigate(
+                                link.startsWith('https://bsky.app/profile/')
+                                    ? '/bluesky/view/' +
+                                          encodeURIComponent(link.slice('https://bsky.app/profile/'.length))
+                                    : '/activitypub/view/' + encodeURIComponent(link)
+                            )
+                        } else if (rerouteAuthor) {
                             navigate('/profile/' + rerouteAuthor.ccid)
                         }
                     }}
@@ -64,7 +73,16 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (rerouteAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            navigate(
+                                link.startsWith('https://bsky.app/profile/')
+                                    ? '/bluesky/view/' +
+                                          encodeURIComponent(link.slice('https://bsky.app/profile/'.length))
+                                    : '/activitypub/view/' + encodeURIComponent(link)
+                            )
+                        } else if (rerouteAuthor) {
                             navigate('/profile/' + rerouteAuthor.ccid)
                         }
                     }}

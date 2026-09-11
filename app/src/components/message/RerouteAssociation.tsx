@@ -5,6 +5,8 @@ import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
+import { ApView } from '../../views/ApView'
+import { BskyView } from '../../views/BskyView'
 import { MdRepeat } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
@@ -50,7 +52,17 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (rerouteAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            push(
+                                link.startsWith('https://bsky.app/profile/') ? (
+                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                ) : (
+                                    <ApView uri={link} />
+                                )
+                            )
+                        } else if (rerouteAuthor) {
                             push(<ProfileView ccid={rerouteAuthor.ccid} />)
                         }
                     }}
@@ -66,7 +78,17 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (rerouteAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            push(
+                                link.startsWith('https://bsky.app/profile/') ? (
+                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                ) : (
+                                    <ApView uri={link} />
+                                )
+                            )
+                        } else if (rerouteAuthor) {
                             push(<ProfileView ccid={rerouteAuthor.ccid} />)
                         }
                     }}

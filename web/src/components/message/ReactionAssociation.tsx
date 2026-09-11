@@ -60,7 +60,16 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (reactionAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            navigate(
+                                link.startsWith('https://bsky.app/profile/')
+                                    ? '/bluesky/view/' +
+                                          encodeURIComponent(link.slice('https://bsky.app/profile/'.length))
+                                    : '/activitypub/view/' + encodeURIComponent(link)
+                            )
+                        } else if (reactionAuthor) {
                             navigate('/profile/' + reactionAuthor.ccid)
                         }
                     }}

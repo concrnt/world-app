@@ -5,6 +5,8 @@ import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
+import { ApView } from '../../views/ApView'
+import { BskyView } from '../../views/BskyView'
 import { MdStar } from 'react-icons/md'
 import { MessageLayout } from './MessageLayout'
 
@@ -53,7 +55,17 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                 <span
                     onClick={(e) => {
                         e.stopPropagation()
-                        if (likeAuthor) {
+                        const link = message.value?.profileOverride?.link
+                        if (link) {
+                            // ブリッジ経由(AP/Bluesky)のauthorはサービスアカウントなので、元ユーザーのプロフィールへ
+                            push(
+                                link.startsWith('https://bsky.app/profile/') ? (
+                                    <BskyView uri={link.slice('https://bsky.app/profile/'.length)} />
+                                ) : (
+                                    <ApView uri={link} />
+                                )
+                            )
+                        } else if (likeAuthor) {
                             push(<ProfileView ccid={likeAuthor.ccid} />)
                         }
                     }}
