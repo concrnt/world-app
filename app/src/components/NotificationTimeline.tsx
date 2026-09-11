@@ -887,7 +887,8 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '4px'
+                                gap: '4px',
+                                flexWrap: 'wrap'
                             }}
                         >
                             {url && <CCImage src={url} maxHeight={128} style={{ height: '32px' }} alt="" />}
