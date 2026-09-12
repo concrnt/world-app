@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { IconButton, List, ListItem, OverlaySurface, Text, TextField } from '@concrnt/ui'
@@ -20,6 +20,7 @@ export const ComposerMediaEditor = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.composer' })
     const { t: commonT } = useTranslation('', { keyPrefix: 'common' })
     const dialogRef = useRef<HTMLDivElement>(null)
+    const file = props.media?.file
     const previewUrl = props.media?.previewUrl
     const isOpen = props.open && previewUrl !== undefined
 
@@ -32,6 +33,21 @@ export const ComposerMediaEditor = (props: Props) => {
             if (previousFocus?.isConnected) previousFocus.focus()
         }
     }, [isOpen])
+
+    const setVideoRef = useCallback(
+        (video: HTMLVideoElement | null) => {
+            if (!isOpen || !file?.type.startsWith('video/') || !video) return
+            const sourceUrl = URL.createObjectURL(file)
+            video.src = sourceUrl
+            return () => {
+                video.pause()
+                video.removeAttribute('src')
+                video.load()
+                URL.revokeObjectURL(sourceUrl)
+            }
+        },
+        [isOpen, file]
+    )
 
     const flagLabels: Record<string, string> = {
         warn: t('flagWarn'),
@@ -139,7 +155,20 @@ export const ComposerMediaEditor = (props: Props) => {
                                 backgroundColor: 'black'
                             }}
                         >
-                            {previewUrl && (
+                            {file?.type.startsWith('video/') ? (
+                                <video
+                                    ref={setVideoRef}
+                                    poster={previewUrl}
+                                    controls
+                                    playsInline
+                                    tabIndex={0}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain'
+                                    }}
+                                />
+                            ) : previewUrl ? (
                                 <img
                                     src={previewUrl}
                                     alt=""
@@ -149,7 +178,7 @@ export const ComposerMediaEditor = (props: Props) => {
                                         objectFit: 'contain'
                                     }}
                                 />
-                            )}
+                            ) : null}
                         </div>
                         <div
                             style={{

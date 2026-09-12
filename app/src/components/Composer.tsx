@@ -1039,7 +1039,14 @@ export const Composer = (props: Props) => {
             </div>
 
             {/* 隠しファイル入力 */}
-            <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleFileSelect} />
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                hidden
+                onChange={handleFileSelect}
+            />
         </div>
     )
 }
