@@ -4,12 +4,12 @@ import UIKit
 import WebKit
 import os.log
 
-let logger = Logger(subsystem: "world.concrnt.app", category: "ExamplePlugin")
+let logger = Logger(subsystem: "world.concrnt.app", category: "ScrollKillerPlugin")
 
-class ExamplePlugin: Plugin {
+class ScrollKillerPlugin: Plugin {
 
     @objc public override func load(webview: WKWebView) {
-        logger.log("ExamplePlugin loaded")
+        logger.log("ScrollKillerPlugin loaded")
         webview.scrollView.isScrollEnabled = false
         webview.scrollView.contentInsetAdjustmentBehavior = .never
         webview.scrollView.automaticallyAdjustsScrollIndicatorInsets = false
@@ -56,9 +56,9 @@ class ExamplePlugin: Plugin {
 
 }
 
-@_cdecl("init_plugin_safari_scroll_killer")
+@_cdecl("init_plugin_scroll_killer")
 func initPlugin() -> Plugin {
-    return ExamplePlugin()
+    return ScrollKillerPlugin()
 }
 
 class PingArgs: Decodable {

@@ -18,7 +18,7 @@ Default permissions for the plugin
 <tr>
 <td>
 
-`safari-scroll-killer:allow-ping`
+`scroll-killer:allow-ping`
 
 </td>
 <td>
@@ -31,7 +31,7 @@ Enables the ping command without any pre-configured scope.
 <tr>
 <td>
 
-`safari-scroll-killer:deny-ping`
+`scroll-killer:deny-ping`
 
 </td>
 <td>

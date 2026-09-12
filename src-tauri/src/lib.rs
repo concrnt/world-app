@@ -11,14 +11,14 @@ pub fn run() {
 
     #[cfg(target_os = "ios")]
     {
-        builder = builder
-            .plugin(tauri_plugin_safari_scroll_killer::init())
-            .plugin(tauri_plugin_ageverify::init())
+        builder = builder.plugin(tauri_plugin_ageverify::init())
     }
 
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
-        builder = builder.plugin(tauri_plugin_keyboard::init())
+        builder = builder
+            .plugin(tauri_plugin_scroll_killer::init())
+            .plugin(tauri_plugin_keyboard::init())
     }
 
     builder

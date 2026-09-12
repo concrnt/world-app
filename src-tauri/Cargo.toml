@@ -39,7 +39,7 @@ tauri-plugin-file-saver = { version = "0.1.0", path = "../plugins/tauri-plugin-f
 tauri-plugin-share = { version = "0.1.0", path = "../plugins/tauri-plugin-share" }
 tauri-plugin-keyboard = { version = "0.1.0", path = "../plugins/tauri-plugin-keyboard" }
 tauri-plugin-push = { version = "0.1.0", path = "../plugins/tauri-plugin-push" }
+tauri-plugin-scroll-killer = { version = "0.1.0", path = "../plugins/tauri-plugin-scroll-killer" }
 
 [target.'cfg(any(target_os = "ios"))'.dependencies]
-tauri-plugin-safari-scroll-killer = { version = "0.1.0", path = "../plugins/tauri-plugin-safari-scroll-killer" }
 tauri-plugin-ageverify = { version = "0.1.0", path = "../plugins/tauri-plugin-ageverify" }
