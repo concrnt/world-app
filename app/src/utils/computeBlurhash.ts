@@ -8,7 +8,7 @@ const COMPONENT_Y = 3
  * 画像ファイルからblurhashを計算する。
  * 画像以外のファイルが渡された場合はundefinedを返す。
  */
-export const computeBlurhash = async (file: File): Promise<string | undefined> => {
+export const computeBlurhash = async (file: Blob): Promise<string | undefined> => {
     if (!file.type.startsWith('image/')) return undefined
 
     const bitmap = await createImageBitmap(file)

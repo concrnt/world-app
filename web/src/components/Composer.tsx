@@ -51,6 +51,8 @@ import { ComposerMediaEditor } from './ComposerMediaEditor'
 import { Select } from './Select'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
+// 任意のプレビュー生成で投稿を止めないための待機上限。
+const VIDEO_PREVIEW_TIMEOUT_MS = 10_000
 
 const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
     plaintext: <MdTextFields size={24} />,
@@ -239,6 +241,63 @@ export const Composer = (props: Props) => {
             file,
             previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
         }))
+        newMediaDrafts.forEach((media) => {
+            const { file } = media
+            if (!file.type.startsWith('video/')) return
+
+            // 投稿直前でも、プレビューと同じフレームのblurhash生成を待てるようにする。
+            media.blurhash = new Promise((resolve) => {
+                const video = document.createElement('video')
+                const sourceUrl = URL.createObjectURL(file)
+                let released = false
+                const release = () => {
+                    if (released) return
+                    released = true
+                    window.clearTimeout(timeout)
+                    video.onloadeddata = null
+                    video.onerror = null
+                    video.pause()
+                    video.removeAttribute('src')
+                    video.load()
+                    URL.revokeObjectURL(sourceUrl)
+                    resolve(undefined)
+                }
+                const timeout = window.setTimeout(release, VIDEO_PREVIEW_TIMEOUT_MS)
+                video.onloadeddata = async () => {
+                    if (released) return
+                    video.onloadeddata = null
+                    video.pause()
+                    try {
+                        const canvas = document.createElement('canvas')
+                        canvas.width = video.videoWidth
+                        canvas.height = video.videoHeight
+                        const context = canvas.getContext('2d')
+                        if (!context || !canvas.width || !canvas.height) return
+                        context.drawImage(video, 0, 0)
+                        const previewUrl = canvas.toDataURL()
+                        // 削除・モード切替済みの添付は復活させず、変更済みのフラグも保持する。
+                        setMediaDrafts((prev) =>
+                            prev.map((media) => (media.file === file ? { ...media, previewUrl } : media))
+                        )
+                        const frame = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve))
+                        resolve(frame ? await computeBlurhash(frame) : undefined)
+                    } catch (error) {
+                        console.error('Video preview error:', error)
+                    } finally {
+                        release()
+                    }
+                }
+                video.onerror = release
+                video.preload = 'auto'
+                video.muted = true
+                video.playsInline = true
+                video.src = sourceUrl
+                void video.play().catch(() => {
+                    // フレーム取得後のpauseでもplayはrejectされるため、生成処理は継続する。
+                    if (video.onloadeddata) release()
+                })
+            })
+        })
         setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
     }
 
@@ -454,7 +513,7 @@ export const Composer = (props: Props) => {
                                         uploadImage(client, media.file, (progress) => {
                                             setUploadProgress((prev) => ({ ...prev, [index]: progress }))
                                         }),
-                                        computeBlurhash(media.file)
+                                        media.blurhash ?? computeBlurhash(media.file)
                                     ])
                                     return {
                                         mediaURL: url,
