@@ -51,6 +51,8 @@ import { CDID } from '@concrnt/client'
 import { ComposerMediaEditor } from './ComposerMediaEditor'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
+// 任意のプレビュー生成で投稿を止めないための待機上限。
+const VIDEO_PREVIEW_TIMEOUT_MS = 10_000
 
 const modeIcons: Record<EditorMode | 'reply' | 'reroute', ReactNode> = {
     plaintext: <MdTextFields size={24} />,
@@ -243,15 +245,24 @@ export const Composer = (props: Props) => {
             media.blurhash = new Promise((resolve) => {
                 const video = document.createElement('video')
                 const sourceUrl = URL.createObjectURL(file)
+                let released = false
                 const release = () => {
+                    if (released) return
+                    released = true
+                    window.clearTimeout(timeout)
                     video.onloadeddata = null
                     video.onerror = null
+                    video.pause()
                     video.removeAttribute('src')
                     video.load()
                     URL.revokeObjectURL(sourceUrl)
                     resolve(undefined)
                 }
+                const timeout = window.setTimeout(release, VIDEO_PREVIEW_TIMEOUT_MS)
                 video.onloadeddata = async () => {
+                    if (released) return
+                    video.onloadeddata = null
+                    video.pause()
                     try {
                         const canvas = document.createElement('canvas')
                         canvas.width = video.videoWidth
@@ -277,6 +288,10 @@ export const Composer = (props: Props) => {
                 video.muted = true
                 video.playsInline = true
                 video.src = sourceUrl
+                void video.play().catch(() => {
+                    // フレーム取得後のpauseでもplayはrejectされるため、生成処理は継続する。
+                    if (video.onloadeddata) release()
+                })
             })
         })
         setMediaDrafts((prev) => [...prev, ...newMediaDrafts])
