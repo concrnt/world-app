@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Document } from '@concrnt/client'
-import { Avatar, Button, CCWallpaper, Switch, Text, TextField } from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, Switch, Text, TextArea, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
@@ -159,27 +159,7 @@ export const ProfileEditor = (props: Props) => {
             />
             <Avatar ccid={client?.ccid || ''} src={avatar} onClick={() => avatarInputRef.current?.click()} />
             <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <textarea
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                style={{
-                    padding: '8px',
-                    fontSize: '16px',
-                    borderRadius: '4px',
-                    borderColor: CssVar.divider,
-                    backgroundColor: CssVar.contentBackground,
-                    color: CssVar.contentText,
-                    width: '100%',
-                    minHeight: 120,
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                    boxShadow: 'none',
-                    outline: 'none',
-                    appearance: 'none',
-                    WebkitAppearance: 'none'
-                }}
-            />
+            <TextArea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
 
             <div
                 style={{

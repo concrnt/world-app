@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Text, migrateTheme } from '@concrnt/ui'
+import { Button, Text, TextArea, migrateTheme } from '@concrnt/ui'
 import { Theme, CssVar } from '../types/Theme'
 import { useThemeLibrary } from '../contexts/Theme'
 
@@ -118,25 +118,12 @@ export const ThemeImporter = ({ onComplete }: Props) => {
         >
             <Text variant="h3">{t('title')}</Text>
             <Text variant="caption">{t('description')}</Text>
-            <textarea
+            <TextArea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t('placeholder')}
                 rows={10}
-                style={{
-                    padding: '8px',
-                    fontSize: '16px',
-                    fontFamily: 'Source Code Pro, monospace',
-                    borderRadius: CssVar.round(1),
-                    border: `1px solid ${CssVar.divider}`,
-                    backgroundColor: CssVar.contentBackground,
-                    color: CssVar.contentText,
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                    boxShadow: 'none',
-                    outline: 'none'
-                }}
+                monospace
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
                 <Button disabled={busy || input.trim().length === 0} onClick={handleImport}>
