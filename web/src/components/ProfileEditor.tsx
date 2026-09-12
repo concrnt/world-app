@@ -159,7 +159,27 @@ export const ProfileEditor = (props: Props) => {
             />
             <Avatar ccid={client?.ccid || ''} src={avatar} onClick={() => avatarInputRef.current?.click()} />
             <TextField placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <TextField placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <textarea
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{
+                    padding: '8px',
+                    fontSize: '16px',
+                    borderRadius: '4px',
+                    borderColor: CssVar.divider,
+                    backgroundColor: CssVar.contentBackground,
+                    color: CssVar.contentText,
+                    width: '100%',
+                    minHeight: 120,
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                    boxShadow: 'none',
+                    outline: 'none',
+                    appearance: 'none',
+                    WebkitAppearance: 'none'
+                }}
+            />
 
             <div
                 style={{
