@@ -240,7 +240,7 @@ const SubItemRow = (props: { entry: ListEntry }) => {
         }
         return client
             .getTimeline(href)
-            .then((timeline) => (timeline ? (timeline.shortname ?? timeline.name ?? null) : null))
+            .then((timeline) => (timeline ? timeline.shortname?.trim() || (timeline.name ?? null) : null))
             .catch(() => null)
     }, [client, href, isUser, ccid, profileName])
 

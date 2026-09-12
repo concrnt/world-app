@@ -422,7 +422,7 @@ const CommunityChipInner = (props: {
     if (!timeline) return <CommunityChipLabel label={`${props.unavailableLabel}: ${props.href}`} />
     if (timeline.schema !== Schemas.communityTimeline) return null
 
-    return <CommunityChipLabel label={timeline.shortname ?? timeline.name} />
+    return <CommunityChipLabel label={timeline.shortname?.trim() || timeline.name} />
 }
 
 const CommunityChipLabel = (props: { label: string }) => {
