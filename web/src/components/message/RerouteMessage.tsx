@@ -16,12 +16,14 @@ import { TimeDiff } from '../TimeDiff'
 import { RenderError } from './RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate } from 'react-router-dom'
+import { useQueryTimelineContext } from '../QueryTimeline'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
     const navigate = useNavigate()
     const { hapticSuccess } = useHaptics()
+    const qt = useQueryTimelineContext()
     const menuAnchor = useAnchor()
 
     const [menuOpen, setMenuOpen] = useState(false)
@@ -130,7 +132,10 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                                 <ListItem
                                     key="delete"
                                     onClick={() => {
-                                        client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                        client.api.delete(props.message.uri).then(() => {
+                                            qt.remove?.(props.message.uri)
+                                            hapticSuccess()
+                                        })
                                         setMenuOpen(false)
                                     }}
                                 >
