@@ -16,7 +16,6 @@ export const RenderError = ({ error }: FallbackProps) => {
                 }}
             >
                 <Text variant="caption">{t('messageDeleted')}</Text>
-                <Text variant="caption">{error.uri}</Text>
             </div>
         )
     }
