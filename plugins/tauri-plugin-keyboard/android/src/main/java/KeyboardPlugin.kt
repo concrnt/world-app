@@ -19,10 +19,11 @@ class KeyboardPlugin(private val activity: Activity) : Plugin(activity) {
         val content = activity.findViewById<View>(android.R.id.content)
 
         ViewCompat.setOnApplyWindowInsetsListener(content) { _, insets ->
-            // IMEインセットはナビゲーションバー領域を含むので差し引く
-            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            val heightPx = (imeBottom - navBottom).coerceAtLeast(0)
+            // JS側の契約は「キーボードとwebview下端の重なり」(iOSはsafe area込みで送っている)。
+            // MainActivityがenableEdgeToEdge()しているためwebviewはナビゲーションバーの裏まで
+            // 画面下端いっぱいに広がっており、IMEインセット(ウィンドウ下端基準)がそのまま重なり量になる。
+            // ここからナビゲーションバー分を引くと、その分だけ入力欄がキーボードに隠れる
+            val heightPx = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom.coerceAtLeast(0)
             val visible = insets.isVisible(WindowInsetsCompat.Type.ime()) && heightPx > 0
 
             val payload = JSObject().apply {
