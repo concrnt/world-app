@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
     Avatar,
     CCWallpaper,
+    CfmRenderer,
     Confirm,
     IconButton,
     Text,
@@ -453,8 +454,12 @@ const Body = (props: BodyProps) => {
                                 <MdDns size={14} style={{ opacity: 0.7 }} />
                                 <Text variant="caption">{props.user.domain}</Text>
                             </div>
-                            <div>
-                                <Text>{profile.value.description || t('noDescription')}</Text>
+                            <div style={{ wordBreak: 'break-word' }}>
+                                {profile.value.description ? (
+                                    <CfmRenderer messagebody={profile.value.description} emojiDict={{}} />
+                                ) : (
+                                    <Text>{t('noDescription')}</Text>
+                                )}
                             </div>
                             <div
                                 style={{
