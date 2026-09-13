@@ -18,12 +18,14 @@ import { useStack } from '../../layouts/Stack'
 import { ProfileView } from '../../views/Profile'
 import { ApView } from '../../views/ApView'
 import { BskyView } from '../../views/BskyView'
+import { useQueryTimelineContext } from '../QueryTimeline'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
     const { client } = useClient()
     const { push } = useStack()
     const { hapticSuccess } = useHaptics()
+    const qt = useQueryTimelineContext()
 
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -127,7 +129,10 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                                 <ListItem
                                     key="delete"
                                     onClick={() => {
-                                        client.api.delete(props.message.uri).then(() => hapticSuccess())
+                                        client.api.delete(props.message.uri).then(() => {
+                                            qt.remove?.(props.message.uri)
+                                            hapticSuccess()
+                                        })
                                     }}
                                 >
                                     <Text>{t('deleteReroute')}</Text>

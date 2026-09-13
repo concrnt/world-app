@@ -5,6 +5,7 @@ export type EditorMode = 'plaintext' | 'markdown' | 'media'
 export interface MediaDraft {
     file: File
     previewUrl?: string
+    blurhash?: Promise<string | undefined>
     flag?: string
 }
 

@@ -302,7 +302,10 @@ export const MessageActions = (props: Props) => {
                 description={t('confirmDeleteDescription')}
                 confirmText={t('delete')}
                 onConfirm={() => {
-                    client?.api.delete(props.message.uri).then(() => hapticSuccess())
+                    client?.api.delete(props.message.uri).then(() => {
+                        qt.remove?.(props.message.uri)
+                        hapticSuccess()
+                    })
                     setMenuOpen(false)
                 }}
             />

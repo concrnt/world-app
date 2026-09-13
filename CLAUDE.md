@@ -40,7 +40,7 @@ app  →  src-tauri (Rust, via invoke)  →  plugins/ (custom Tauri plugins)
   - **Auth**: `web` keeps keys in localStorage with `InMemoryAuthProvider`. `app` never lets keys leave the OS keychain — `app/src/lib/authProvider.ts` (`TauriAuthProvider`) delegates signing to Rust via `invoke` (`get_session`, `sign_subkey`, `initialize_master`, `backup_masterkey`, …), implemented in `src-tauri/src/{commands,auth,session,backup}.rs`.
   - When changing shared behavior in one of `app`/`web`, apply the same change to the other.
 - **State management** is React Context only (no Redux/Zustand): each concern is a provider in `*/src/contexts/` (Client, Theme, Composer, Drawer, Modal, …). `ClientProvider` builds the worldlib `Client` and is the data layer; live updates come from `TimelineReader`/`Socket` subscriptions.
-- **`plugins/`** — custom Tauri plugins: `tauri-plugin-keychain` (OS keychain key storage), `tauri-plugin-file-saver`, `tauri-plugin-safari-scroll-killer` (iOS WKWebView bounce fix).
+- **`plugins/`** — custom Tauri plugins: `tauri-plugin-keychain` (OS keychain key storage), `tauri-plugin-file-saver`, `tauri-plugin-scroll-killer` (disables WebView-level scrolling on iOS/Android).
 
 The README documents the `cckv://<owner>/concrnt.world/...` KV layout used for settings, profiles, and per-profile timelines/posts/lists.
 

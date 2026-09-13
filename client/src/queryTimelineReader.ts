@@ -101,4 +101,9 @@ export class QueryTimelineReader {
             console.log('Current items:', this.body)
         }
     }
+
+    removeItem(href: string) {
+        this.body = this.body.filter((item) => item.href !== href)
+        this.onUpdate?.()
+    }
 }

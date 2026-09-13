@@ -32,10 +32,12 @@ interface Props extends ScrollViewProps {
 
 interface QueryTimelineContextState {
     update: (href: string) => void
+    remove?: (href: string) => void
 }
 
 export const QueryTimelineContext = createContext<QueryTimelineContextState>({
-    update: (_href: string) => {}
+    update: (_href: string) => {},
+    remove: (_href: string) => {}
 })
 
 export const useQueryTimelineContext = () => {
@@ -153,6 +155,14 @@ export const QueryTimeline = (props: Props) => {
         [reader]
     )
 
+    const itemRemoved = useCallback(
+        (href: string) => {
+            if (!reader.current) return
+            reader.current.removeItem(href)
+        },
+        [reader]
+    )
+
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
@@ -219,7 +229,7 @@ export const QueryTimeline = (props: Props) => {
                 ref={scrollRef}
             >
                 {props.header}
-                <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
+                <QueryTimelineContext.Provider value={{ update: itemUpdated, remove: itemRemoved }}>
                     {reader.current?.body.map((item) => (
                         <Cell
                             key={item.timestamp.getTime() ?? item.href}

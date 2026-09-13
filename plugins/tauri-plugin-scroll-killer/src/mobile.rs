@@ -7,24 +7,24 @@ use tauri::{
 use crate::models::*;
 
 #[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_safari_scroll_killer);
+tauri::ios_plugin_binding!(init_plugin_scroll_killer);
 
 // initializes the Kotlin or Swift plugin classes
 pub fn init<R: Runtime, C: DeserializeOwned>(
   _app: &AppHandle<R>,
   api: PluginApi<R, C>,
-) -> crate::Result<SafariScrollKiller<R>> {
+) -> crate::Result<ScrollKiller<R>> {
   #[cfg(target_os = "android")]
-  let handle = api.register_android_plugin("", "ExamplePlugin")?;
+  let handle = api.register_android_plugin("com.plugin.scrollkiller", "ScrollKillerPlugin")?;
   #[cfg(target_os = "ios")]
-  let handle = api.register_ios_plugin(init_plugin_safari_scroll_killer)?;
-  Ok(SafariScrollKiller(handle))
+  let handle = api.register_ios_plugin(init_plugin_scroll_killer)?;
+  Ok(ScrollKiller(handle))
 }
 
-/// Access to the safari-scroll-killer APIs.
-pub struct SafariScrollKiller<R: Runtime>(PluginHandle<R>);
+/// Access to the scroll-killer APIs.
+pub struct ScrollKiller<R: Runtime>(PluginHandle<R>);
 
-impl<R: Runtime> SafariScrollKiller<R> {
+impl<R: Runtime> ScrollKiller<R> {
   pub fn ping(&self, payload: PingRequest) -> crate::Result<PingResponse> {
     self
       .0

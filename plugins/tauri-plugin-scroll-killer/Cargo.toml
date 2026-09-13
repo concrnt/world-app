@@ -1,12 +1,12 @@
 [package]
-name = "tauri-plugin-safari-scroll-killer"
+name = "tauri-plugin-scroll-killer"
 version = "0.1.0"
 authors = [ "You" ]
 description = ""
 edition = "2021"
 rust-version = "1.77.2"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
-links = "tauri-plugin-safari-scroll-killer"
+links = "tauri-plugin-scroll-killer"
 
 [dependencies]
 tauri = { version = "2.9.5" }

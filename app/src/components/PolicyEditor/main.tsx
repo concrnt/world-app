@@ -1,5 +1,5 @@
 import { fetchWithTimeout, Policy, PolicyEntry } from '@concrnt/client'
-import { TextField, Text, IconButton, CssVar, Button, ToggleGroup } from '@concrnt/ui'
+import { TextField, TextArea, Text, IconButton, CssVar, Button, ToggleGroup } from '@concrnt/ui'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CCEditor } from '../CCEditor'
@@ -40,9 +40,10 @@ export const PolicyEditor = (props: Props) => {
             />
             {mode === 'json' ? (
                 <>
-                    <textarea
+                    <TextArea
                         value={jsonDraft}
                         rows={12}
+                        monospace
                         onChange={(e) => {
                             setJsonDraft(e.target.value)
                             if (e.target.value.trim() === '') {
@@ -56,20 +57,6 @@ export const PolicyEditor = (props: Props) => {
                             } catch {
                                 setJsonError(true)
                             }
-                        }}
-                        style={{
-                            padding: '8px',
-                            fontSize: '16px',
-                            fontFamily: 'Source Code Pro, monospace',
-                            borderRadius: CssVar.round(1),
-                            border: `1px solid ${CssVar.divider}`,
-                            backgroundColor: CssVar.contentBackground,
-                            color: CssVar.contentText,
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            resize: 'vertical',
-                            boxShadow: 'none',
-                            outline: 'none'
                         }}
                     />
                     {jsonError && <Text variant="caption">{t('invalidJson')}</Text>}

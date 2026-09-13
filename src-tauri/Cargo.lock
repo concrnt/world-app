@@ -4005,7 +4005,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-safari-scroll-killer"
+name = "tauri-plugin-scroll-killer"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -5340,7 +5340,7 @@ dependencies = [
  "tauri-plugin-keychain",
  "tauri-plugin-opener",
  "tauri-plugin-push",
- "tauri-plugin-safari-scroll-killer",
+ "tauri-plugin-scroll-killer",
  "tauri-plugin-share",
  "tauri-plugin-store",
 ]
