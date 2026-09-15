@@ -21,6 +21,8 @@ import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { useMessageTranslation } from '../../contexts/MessageTranslation'
+import { MdOpenInNew } from 'react-icons/md'
 
 interface Props {
     message: Message<any>
@@ -50,6 +52,8 @@ export const MessageActions = (props: Props) => {
     const isMobile = useIsMobile()
     const [linkCopied, setLinkCopied] = useState(false)
     const [sourceCopied, setSourceCopied] = useState(false)
+    // 翻訳ボタンをメニューにしまう設定/翻訳APIが無い環境のとき、ここに翻訳項目を出す(本文と状態を共有)
+    const messageTranslation = useMessageTranslation()
 
     // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
     const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
@@ -283,6 +287,36 @@ export const MessageActions = (props: Props) => {
                     >
                         <Text>{sourceCopied ? t('linkCopied') : t('copySource')}</Text>
                     </ListItem>,
+                    ...(messageTranslation?.mode === 'menu'
+                        ? [
+                              <ListItem
+                                  key="translate"
+                                  onClick={() => {
+                                      messageTranslation.toggle()
+                                      setMenuOpen(false)
+                                  }}
+                              >
+                                  <Text>{messageTranslation.label}</Text>
+                              </ListItem>
+                          ]
+                        : []),
+                    ...(messageTranslation?.mode === 'external'
+                        ? [
+                              // ListItem(ButtonBase)の内側にリンクを置くとクリックが届かないので、項目自体で外部ブラウザを開く
+                              <ListItem
+                                  key="translateExternal"
+                                  onClick={() => {
+                                      window.open(messageTranslation.externalUrl, '_blank', 'noopener,noreferrer')
+                                      setMenuOpen(false)
+                                  }}
+                              >
+                                  <Text style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                      {t('openGoogleTranslate')}
+                                      <MdOpenInNew size={14} />
+                                  </Text>
+                              </ListItem>
+                          ]
+                        : []),
                     ...(props.message.author === client.ccid
                         ? [
                               <ListItem

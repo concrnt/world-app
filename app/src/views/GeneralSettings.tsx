@@ -1,11 +1,12 @@
 import { View, List, ListItem, Switch } from '@concrnt/ui'
-import { MdChevronRight, MdLanguage, MdVibration } from 'react-icons/md'
+import { MdChevronRight, MdLanguage, MdTranslate, MdVibration } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 import { CssVar } from '../types/Theme'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { usePreference } from '../contexts/Preference'
 import { LanguageSettingsView } from './LanguageSettings'
+import { TranslationSettingsView } from './TranslationSettings'
 
 export const GeneralSettingsView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.generalSettings' })
@@ -33,6 +34,13 @@ export const GeneralSettingsView = () => {
                         onClick={() => stack.push(<LanguageSettingsView />)}
                     >
                         {t('language')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdTranslate size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<TranslationSettingsView />)}
+                    >
+                        {t('translation')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdVibration size={24} />}

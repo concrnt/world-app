@@ -13,6 +13,8 @@ import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
     const { push } = useStack()
@@ -38,12 +40,20 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <AutoSummary body={message.value.body ?? ''}>
-                    <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
-                </AutoSummary>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <MessageTranslationProvider text={message.value.body ?? ''}>
+                <CollapsibleBody forceExpanded={props.forceExpanded}>
+                    <AutoSummary body={message.value.body ?? ''}>
+                        <TranslatableBody
+                            renderTranslated={(text) => (
+                                <GfmRenderer messagebody={text} emojiDict={message.value.emojis} />
+                            )}
+                        >
+                            <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
+                        </TranslatableBody>
+                    </AutoSummary>
+                </CollapsibleBody>
+                <MessageFooter message={message} rerouted={props.rerouted} />
+            </MessageTranslationProvider>
         </MessageLayout>
     )
 }

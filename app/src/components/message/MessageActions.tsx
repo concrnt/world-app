@@ -23,6 +23,9 @@ import { useQueryTimelineContext } from '../QueryTimeline'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { shareText } from '../../lib/share'
+import { useMessageTranslation } from '../../contexts/MessageTranslation'
+import { MdOpenInNew } from 'react-icons/md'
+import { openUrl } from '@tauri-apps/plugin-opener'
 
 interface Props {
     message: Message<any>
@@ -49,6 +52,8 @@ export const MessageActions = (props: Props) => {
     const qt = useQueryTimelineContext()
     const { push } = useStack()
     const messageHref = props.message.key ?? props.message.uri
+    // 翻訳ボタンをメニューにしまう設定/翻訳APIが無い環境のとき、ここに翻訳項目を出す(本文と状態を共有)
+    const messageTranslation = useMessageTranslation()
 
     // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
     const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
@@ -268,6 +273,36 @@ export const MessageActions = (props: Props) => {
                     >
                         <Text>{t('copySource')}</Text>
                     </ListItem>,
+                    ...(messageTranslation?.mode === 'menu'
+                        ? [
+                              <ListItem
+                                  key="translate"
+                                  onClick={() => {
+                                      messageTranslation.toggle()
+                                      setMenuOpen(false)
+                                  }}
+                              >
+                                  <Text>{messageTranslation.label}</Text>
+                              </ListItem>
+                          ]
+                        : []),
+                    ...(messageTranslation?.mode === 'external'
+                        ? [
+                              // ListItem(ButtonBase)の内側にリンクを置くとクリックが届かないので、項目自体で外部ブラウザを開く
+                              <ListItem
+                                  key="translateExternal"
+                                  onClick={() => {
+                                      openUrl(messageTranslation.externalUrl)
+                                      setMenuOpen(false)
+                                  }}
+                              >
+                                  <Text style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                      {t('openGoogleTranslate')}
+                                      <MdOpenInNew size={14} />
+                                  </Text>
+                              </ListItem>
+                          ]
+                        : []),
                     ...(props.message.author === client.ccid
                         ? [
                               <ListItem

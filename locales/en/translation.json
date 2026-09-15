@@ -55,12 +55,14 @@
                 "buildTime": "Build Time",
                 "branch": "Branch",
                 "commit": "Commit"
-            }
+            },
+            "translation": "Translation"
         },
         "generalSettings": {
             "title": "General",
             "language": "Language",
-            "haptics": "Haptic Feedback"
+            "haptics": "Haptic Feedback",
+            "translation": "Translation"
         },
         "languageSettings": {
             "title": "Language"
@@ -494,6 +496,23 @@
             "creating": "Creating...",
             "createFailed": "Failed to create the list. Please try again.",
             "pinFailed": "The list was created, but pinning failed. You can pin it later from the list."
+        },
+        "translationSettings": {
+            "title": "Translation",
+            "statusAvailable": "On-device translation is available in this environment",
+            "statusUnavailable": "Translation is not available in this environment. You can open Google Translate from a post menu",
+            "statusDetectorNotReady": "The language detection model is not downloaded yet, so translation is only available from a post menu",
+            "downloadDetector": "Download language detection model",
+            "enabled": "Enable translation",
+            "autoTranslate": "Always translate posts that need it",
+            "autoTranslateNote": "Posts in languages other than the ones below are translated before display. Each language pair needs a one-time model download",
+            "style": "Translate button placement",
+            "styleInline": "In the post body",
+            "styleMenu": "In the post menu",
+            "skipLanguages": "Languages that need no translation",
+            "skipLanguagesNote": "Posts in these languages will not show a translate button. The system language is included by default",
+            "addLanguage": "Add a language",
+            "resetDefault": "Reset to default"
         }
     },
     "components": {
@@ -574,7 +593,9 @@
             "share": "Share",
             "copyLink": "Copy link",
             "linkCopied": "Copied",
-            "copySource": "Copy source"
+            "copySource": "Copy source",
+            "translate": "Translate",
+            "openGoogleTranslate": "Open in Google Translate"
         },
         "collapsibleBody": {
             "showMore": "Show more"
@@ -817,6 +838,20 @@
         "mnemonicInput": {
             "wordLabel": "Word {{index}}",
             "unknownWords": "Some words are not in the word list (word {{positions}}). Please check the spelling."
+        },
+        "translatableBody": {
+            "showTranslation": "Show translation",
+            "translating": "Translating...",
+            "translatedBy": "Translated from {{language}} by {{engine}}",
+            "openGoogleTranslate": "Open in Google Translate",
+            "failed": "Translation failed (retry)",
+            "unsupported": "Unsupported language",
+            "undetermined": "Could not detect the language",
+            "needsTap": "Tap again to translate",
+            "sameLanguage": "Already in your language",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple Translation",
+            "engineMlkit": "ML Kit"
         }
     },
     "contexts": {

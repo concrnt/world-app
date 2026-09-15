@@ -15,6 +15,8 @@ import { AutoSummary } from '../AutoSummary'
 import { CCUserChip } from '../CCUserChip'
 import { MdReply } from 'react-icons/md'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const navigate = useNavigate()
@@ -64,15 +66,23 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 {props.message.value.replyToMessageAuthor && (
                     <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
                 )}
-                <CollapsibleBody forceExpanded={props.forceExpanded}>
-                    <AutoSummary body={props.message.value.body ?? ''}>
-                        <CfmRenderer
-                            messagebody={props.message.value.body}
-                            emojiDict={props.message.value.emojis ?? {}}
-                        />
-                    </AutoSummary>
-                </CollapsibleBody>
-                <MessageFooter message={props.message} rerouted={props.rerouted} />
+                <MessageTranslationProvider text={props.message.value.body ?? ''}>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary body={props.message.value.body ?? ''}>
+                            <TranslatableBody
+                                renderTranslated={(text) => (
+                                    <CfmRenderer messagebody={text} emojiDict={props.message.value.emojis ?? {}} />
+                                )}
+                            >
+                                <CfmRenderer
+                                    messagebody={props.message.value.body}
+                                    emojiDict={props.message.value.emojis ?? {}}
+                                />
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={props.message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
             </MessageLayout>
         </div>
     )
