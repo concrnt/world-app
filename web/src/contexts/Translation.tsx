@@ -38,11 +38,8 @@ const fallbackService: TranslationService = {
 
 const TranslationContext = createContext<TranslationService>(fallbackService)
 
-// 既定の翻訳不要言語 = UI言語 + システム(ブラウザ)言語 の基底コード
-export const defaultSkipLanguages = (uiLanguage: string): string[] => {
-    const codes = [uiLanguage, ...(navigator.languages ?? [navigator.language])].map((l) => l.split('-')[0])
-    return [...new Set(codes)].filter((c) => c !== '')
-}
+// 既定の翻訳不要言語 = concrnt の言語設定(UI言語)の基底コード
+export const defaultSkipLanguages = (uiLanguage: string): string[] => [uiLanguage.split('-')[0]]
 
 // モデルDL後は同一の検知器を使い回す(create は user activation を要することがあるので1回で済ませる)
 let detectorPromise: Promise<LanguageDetectorInstance> | undefined

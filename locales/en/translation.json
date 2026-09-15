@@ -510,8 +510,7 @@
             "styleInline": "In the post body",
             "styleMenu": "In the post menu",
             "skipLanguages": "Languages that need no translation",
-            "skipLanguagesNote": "Posts in these languages will not show a translate button. The system language is included by default",
-            "addLanguage": "Add a language",
+            "skipLanguagesNote": "Posts in these languages will not show a translate button. The app's language setting is included by default",
             "resetDefault": "Reset to default"
         }
     },
@@ -852,6 +851,9 @@
             "engineChrome": "Chrome",
             "engineApple": "Apple Translation",
             "engineMlkit": "ML Kit"
+        },
+        "languagePicker": {
+            "addLanguage": "Add a language"
         }
     },
     "contexts": {

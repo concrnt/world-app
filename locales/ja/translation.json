@@ -509,8 +509,7 @@
             "styleInline": "本文に表示",
             "styleMenu": "メニューに格納",
             "skipLanguages": "翻訳不要な言語",
-            "skipLanguagesNote": "これらの言語の投稿には翻訳ボタンを表示しません。既定ではシステム言語が含まれます",
-            "addLanguage": "言語を追加",
+            "skipLanguagesNote": "これらの言語の投稿には翻訳ボタンを表示しません。既定ではアプリの言語設定が含まれます",
             "resetDefault": "既定に戻す"
         }
     },
@@ -851,6 +850,9 @@
             "engineChrome": "Chrome",
             "engineApple": "Apple翻訳",
             "engineMlkit": "ML Kit"
+        },
+        "languagePicker": {
+            "addLanguage": "言語を追加"
         }
     },
     "contexts": {

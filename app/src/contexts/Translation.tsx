@@ -39,11 +39,8 @@ const fallbackService: TranslationService = {
 
 const TranslationContext = createContext<TranslationService>(fallbackService)
 
-// 既定の翻訳不要言語 = UI言語 + システム(OS)言語 の基底コード
-export const defaultSkipLanguages = (uiLanguage: string): string[] => {
-    const codes = [uiLanguage, ...(navigator.languages ?? [navigator.language])].map((l) => l.split('-')[0])
-    return [...new Set(codes)].filter((c) => c !== '')
-}
+// 既定の翻訳不要言語 = concrnt の言語設定(UI言語)の基底コード
+export const defaultSkipLanguages = (uiLanguage: string): string[] => [uiLanguage.split('-')[0]]
 
 // pluginのrejectはメッセージ文字列で届くので、含まれるコードで分類する
 const codeOf = (e: unknown): TranslationErrorCode => {
