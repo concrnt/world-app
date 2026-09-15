@@ -60,9 +60,29 @@ const toDetectionText = (text: string, syntax: MessageSyntax): string => {
         .replace(/(^|\s)@[\w.@-]+/g, ' ')
         .replace(/(^|\s)#[^\s#]+/g, ' ')
         .replace(/:[\w+-]+:/g, ' ')
-        .replace(/\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D/gu, ' ')
+        .replace(/\p{Extended_Pictographic}|\p{Emoji_Modifier}|️|‍/gu, ' ')
         .replace(/\s+/g, ' ')
         .trim()
+}
+
+// 文字(\p{L})が残らない本文(絵文字だけ・URLだけ・記号だけ)は翻訳対象にしない
+const hasLanguageText = (detectionText: string): boolean => /\p{L}/u.test(detectionText)
+
+// 記法パース+言語検知は描画の外(アイドル時)で行う。タイムラインのスクロール中に投稿がまとめてマウントされても
+// コミット直後のフレームを塞がないようにする。requestIdleCallback の無い WKWebView ではマクロタスクに落とす
+const scheduleIdle = (cb: () => void): (() => void) => {
+    if (typeof requestIdleCallback === 'function') {
+        const id = requestIdleCallback(cb, { timeout: 2000 })
+        return () => cancelIdleCallback(id)
+    }
+    const id = setTimeout(cb, 0)
+    return () => clearTimeout(id)
+}
+
+// 検知結果。language が無いのは翻訳API不在/検知モデル未DLの環境で「文章はある」とだけ分かった状態
+interface Detected {
+    text: string
+    language?: string
 }
 
 // 投稿1件ぶんの翻訳状態。本文ボタン(TranslatableBody)と三点メニュー(MessageActions)が共有する
@@ -75,11 +95,12 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
     const uiLanguage = i18n.resolvedLanguage ?? 'en'
     const target = uiLanguage.split('-')[0]
     const text = props.text
-    const detectionText = useMemo(() => toDetectionText(text, props.syntax), [text, props.syntax])
-    // 文字(\p{L})が残らない本文(絵文字だけ・URLだけ・記号だけ)は翻訳対象にしない
-    const hasLanguageText = /\p{L}/u.test(detectionText)
+    const syntax = props.syntax
+    const { available, detectorReady, detect, skipLanguages } = service
 
-    const [detected, setDetected] = useState<{ text: string; language?: string }>()
+    // 翻訳対象になりうる(= mode が none から変わりうる)ときだけ載せる。
+    // UI言語と同じ投稿(大半)は state を触らず、コンテキストの value も変えない
+    const [detected, setDetected] = useState<Detected>()
     const [translated, setTranslated] = useState<TranslationResult>()
     const [showTranslated, setShowTranslated] = useState(false)
     const [working, setWorking] = useState(false)
@@ -87,28 +108,41 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
     // 自動翻訳は1テキストにつき1回だけ試みる(失敗時は静かにボタン表示に戻す)
     const autoAttempted = useRef<string>(undefined)
 
-    const canDetect = enabled && hasLanguageText && service.available && service.detectorReady
     useEffect(() => {
-        if (!canDetect) return
+        if (!enabled || text === '') return
         let cancelled = false
-        service.detect(detectionText).then((language) => {
-            if (!cancelled) setDetected({ text, language })
+        const cancelIdle = scheduleIdle(() => {
+            const detectionText = toDetectionText(text, syntax)
+            if (!hasLanguageText(detectionText)) return
+            if (!available || !detectorReady) {
+                // 検知できない環境: メニュー項目(external / DL待ちの menu)を出すために文章の有無だけ伝える
+                setDetected({ text })
+                return
+            }
+            detect(detectionText).then((language) => {
+                if (cancelled || !language) return
+                // 翻訳不要な言語(UI言語・翻訳不要リスト)ならここで終わり。state を触らなければ子は再描画されない
+                const base = language.split('-')[0]
+                if (base === target || skipLanguages.includes(base)) return
+                setDetected({ text, language })
+            })
         })
         return () => {
             cancelled = true
+            cancelIdle()
         }
-    }, [canDetect, service, text, detectionText])
+    }, [enabled, available, detectorReady, detect, skipLanguages, target, text, syntax])
 
     const mode = useMemo<TranslationMode>(() => {
-        if (!enabled || !hasLanguageText) return 'none'
+        if (!enabled || !detected || detected.text !== text) return 'none'
         if (!service.available) return 'external'
         // webで検知モデル未DLのとき: タップ(activation)内でDL→翻訳できるようメニューにだけ出す
         if (!service.detectorReady) return 'menu'
-        if (!detected || detected.text !== text || !detected.language) return 'none'
+        if (!detected.language) return 'none'
         const base = detected.language.split('-')[0]
         if (base === target || service.skipLanguages.includes(base)) return 'none'
         return style
-    }, [enabled, hasLanguageText, text, service, detected, target, style])
+    }, [enabled, text, service, detected, target, style])
 
     const runTranslate = useCallback(
         async (silent: boolean) => {
@@ -119,7 +153,7 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
                 let source = detected?.text === text ? detected.language : undefined
                 if (!source) {
                     await service.prepareDetector()
-                    source = await service.detect(detectionText)
+                    source = await service.detect(toDetectionText(text, syntax))
                 }
                 if (!source) throw new Error('undetermined')
                 const result = await service.translate(text, target, source)
@@ -137,7 +171,7 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
                 setWorking(false)
             }
         },
-        [service, text, target, detected, detectionText]
+        [service, text, syntax, target, detected]
     )
 
     const toggle = useCallback(() => {
@@ -170,7 +204,10 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
         return t('showTranslation')
     }, [mode, working, error, translated, showTranslated, t, uiLanguage])
 
-    const externalUrl = `https://translate.google.com/?sl=auto&tl=${target}&text=${encodeURIComponent(text)}`
+    const externalUrl = useMemo(
+        () => `https://translate.google.com/?sl=auto&tl=${target}&text=${encodeURIComponent(text)}`,
+        [target, text]
+    )
 
     const value = useMemo<MessageTranslationState>(
         () => ({ mode, showTranslated, translated, working, error, label, toggle, externalUrl }),

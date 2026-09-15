@@ -91,10 +91,13 @@ const collectPlainText = (node: any): string => {
     }
 }
 
+// 検知用のパーサは使い回す(呼び出しごとに unified() を組み立てるとプラグイン初期化が投稿数ぶん走る)
+const plainTextParser = unified().use(remarkParse).use(remarkGfm)
+
 export const gfmToPlainText = (body: string): string => {
     if (body === '') return ''
     try {
-        return collectPlainText(unified().use(remarkParse).use(remarkGfm).parse(body))
+        return collectPlainText(plainTextParser.parse(body))
     } catch {
         return body
     }

@@ -81,6 +81,12 @@ const Note = (props: {
 
     const note = use(props.notePromise)
     const author = use(props.authorPromise)
+    // 翻訳元テキスト: MFMがあればそれ、無ければHTML本文をタグ除去してプレーン化する(訳文はHTMLでないのでpre-wrapで出す)。
+    // DOMParser は描画のたびに回さない(note 未取得/エラー時は空)
+    const translationSource = useMemo(() => {
+        if (!note || note instanceof Error) return ''
+        return note._misskey_content ?? htmlToText(note.content ?? '')
+    }, [note])
 
     if (!note || note instanceof Error) {
         // nullはnegative cacheヒット(=404由来)。404以外のエラーは接続系として文言を分ける
@@ -127,9 +133,6 @@ const Note = (props: {
         const icon = Array.isArray(tag.icon) ? tag.icon[0] : tag.icon
         if (icon?.url) emojiDict[tag.name.replace(/:/g, '')] = { imageURL: icon.url }
     }
-
-    // 翻訳元テキスト: MFMがあればそれ、無ければHTML本文をタグ除去してプレーン化する(訳文はHTMLでないのでpre-wrapで出す)
-    const translationSource = note._misskey_content ?? htmlToText(note.content ?? '')
 
     return (
         <MessageLayout
