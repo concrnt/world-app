@@ -17,6 +17,7 @@
     "keyboard:default",
     "push:default",
     "share:default",
+    "translation:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

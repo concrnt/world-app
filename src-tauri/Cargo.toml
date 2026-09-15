@@ -40,6 +40,7 @@ tauri-plugin-share = { version = "0.1.0", path = "../plugins/tauri-plugin-share"
 tauri-plugin-keyboard = { version = "0.1.0", path = "../plugins/tauri-plugin-keyboard" }
 tauri-plugin-push = { version = "0.1.0", path = "../plugins/tauri-plugin-push" }
 tauri-plugin-scroll-killer = { version = "0.1.0", path = "../plugins/tauri-plugin-scroll-killer" }
+tauri-plugin-translation = { version = "0.1.0", path = "../plugins/tauri-plugin-translation" }
 
 [target.'cfg(any(target_os = "ios"))'.dependencies]
 tauri-plugin-ageverify = { version = "0.1.0", path = "../plugins/tauri-plugin-ageverify" }

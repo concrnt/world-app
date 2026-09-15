@@ -55,12 +55,14 @@
                 "buildTime": "ビルド日時",
                 "branch": "ブランチ",
                 "commit": "コミット"
-            }
+            },
+            "translation": "翻訳"
         },
         "generalSettings": {
             "title": "一般",
             "language": "言語",
-            "haptics": "触覚フィードバック"
+            "haptics": "触覚フィードバック",
+            "translation": "翻訳"
         },
         "languageSettings": {
             "title": "言語"
@@ -493,6 +495,22 @@
             "creating": "作成中...",
             "createFailed": "リストの作成に失敗しました。もう一度お試しください。",
             "pinFailed": "リストは作成されましたが、ピン留めに失敗しました。リスト一覧から後でピン留めできます。"
+        },
+        "translationSettings": {
+            "title": "翻訳",
+            "statusAvailable": "この環境ではオンデバイス翻訳が利用できます",
+            "statusUnavailable": "この環境では翻訳が利用できません。投稿のメニューからGoogle翻訳を開けます",
+            "statusDetectorNotReady": "言語検出モデルが未ダウンロードのため、翻訳は投稿のメニューからのみ実行できます",
+            "downloadDetector": "言語検出モデルをダウンロード",
+            "enabled": "翻訳を有効",
+            "autoTranslate": "翻訳が必要な投稿を常に翻訳",
+            "autoTranslateNote": "翻訳不要な言語以外の投稿を表示前に自動で翻訳します。初回は各言語の翻訳モデルのダウンロードが必要です",
+            "style": "翻訳ボタンの位置",
+            "styleInline": "本文に表示",
+            "styleMenu": "メニューに格納",
+            "skipLanguages": "翻訳不要な言語",
+            "skipLanguagesNote": "これらの言語の投稿には翻訳ボタンを表示しません。既定ではアプリの言語設定が含まれます",
+            "resetDefault": "既定に戻す"
         }
     },
     "components": {
@@ -573,7 +591,9 @@
             "share": "シェア",
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
-            "copySource": "ソースをコピー"
+            "copySource": "ソースをコピー",
+            "translate": "翻訳",
+            "openGoogleTranslate": "Google翻訳で開く"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
@@ -816,6 +836,23 @@
         "mnemonicInput": {
             "wordLabel": "{{index}}番目の単語",
             "unknownWords": "単語帳にない単語が入力されています({{positions}}番目)。綴りを確認してください。"
+        },
+        "translatableBody": {
+            "showTranslation": "翻訳を表示",
+            "translating": "翻訳中...",
+            "translatedBy": "{{engine}}による{{language}}からの翻訳",
+            "openGoogleTranslate": "Google翻訳で開く",
+            "failed": "翻訳に失敗しました(再試行)",
+            "unsupported": "この言語は翻訳できません",
+            "undetermined": "言語を判定できませんでした",
+            "needsTap": "もう一度タップしてください",
+            "sameLanguage": "翻訳の必要はありません",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple翻訳",
+            "engineMlkit": "ML Kit"
+        },
+        "languagePicker": {
+            "addLanguage": "言語を追加"
         }
     },
     "contexts": {

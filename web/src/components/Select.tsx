@@ -56,7 +56,8 @@ export const Select = (props: Props) => {
         )
     }
 
-    const height = props.options.length * 56 + 30 + 48 // Approximate height calculation
+    // 項目数から高さを見積もるが、画面の7割を上限にして中でスクロールさせる(候補が多いと画面外にはみ出て押せない)
+    const height = Math.min(props.options.length * 56 + 30 + 48, Math.floor(window.innerHeight * 0.7))
     return (
         <OverlaySurface open={props.open} onClose={props.onClose}>
             <BottomSheet height={height} onDismiss={props.onClose}>
@@ -71,7 +72,7 @@ export const Select = (props: Props) => {
                         <Text>{props.title}</Text>
                     </div>
                 )}
-                <List style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+                <List>
                     {props.options.map((opt, i) => (
                         <Fragment key={i}>{opt}</Fragment>
                     ))}

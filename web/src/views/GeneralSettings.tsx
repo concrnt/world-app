@@ -1,5 +1,5 @@
 import { List, ListItem } from '@concrnt/ui'
-import { MdChevronRight, MdLanguage } from 'react-icons/md'
+import { MdChevronRight, MdLanguage, MdTranslate } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { CssVar } from '../types/Theme'
@@ -30,6 +30,13 @@ export const GeneralSettingsView = () => {
                         onClick={() => navigate('/settings/language')}
                     >
                         {t('language')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdTranslate size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/translation')}
+                    >
+                        {t('translation')}
                     </ListItem>
                 </List>
             </div>

@@ -1,0 +1,3 @@
+[default]
+description = "Default permissions for the plugin"
+permissions = ["allow-is-available", "allow-detect-language", "allow-translate"]

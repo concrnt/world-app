@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import Markdown, { type Components } from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
+import remarkParse from 'remark-parse'
+import { unified } from 'unified'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import { Codeblock } from './Codeblock'
@@ -55,6 +57,49 @@ const sanitizeSchema = {
     attributes: {
         ...defaultSchema.attributes,
         emoji: ['shortcode']
+    }
+}
+
+// 本文から人が書いた文章だけを取り出す(言語検知用)。URL・画像・コード・HTMLは言語の手掛かりにならないので落とす
+const collectPlainText = (node: any): string => {
+    if (Array.isArray(node)) return node.map(collectPlainText).join('')
+    if (!node || typeof node !== 'object') return ''
+    switch (node.type) {
+        case 'text':
+            return node.value
+        case 'link': {
+            // autolink(表示テキストがURLそのもの)は落とし、[文章](url) の文章だけ残す
+            const label = collectPlainText(node.children)
+            return label === node.url ? '' : label
+        }
+        case 'image':
+        case 'code':
+        case 'inlineCode':
+        case 'html':
+        case 'definition':
+            return ''
+        case 'paragraph':
+        case 'heading':
+        case 'blockquote':
+        case 'listItem':
+        case 'tableRow':
+            return collectPlainText(node.children) + '\n'
+        case 'tableCell':
+            return collectPlainText(node.children) + ' '
+        default:
+            return collectPlainText(node.children)
+    }
+}
+
+// 検知用のパーサは使い回す(呼び出しごとに unified() を組み立てるとプラグイン初期化が投稿数ぶん走る)
+const plainTextParser = unified().use(remarkParse).use(remarkGfm)
+
+export const gfmToPlainText = (body: string): string => {
+    if (body === '') return ''
+    try {
+        return collectPlainText(plainTextParser.parse(body))
+    } catch {
+        return body
     }
 }
 

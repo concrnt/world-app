@@ -12,6 +12,15 @@ export interface Preference {
     unreadBadgeEnabled: boolean
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
+    // 投稿の翻訳機能(OFFで本文ボタン・メニュー項目とも一切出さない)
+    translationEnabled: boolean
+    // 翻訳が必要と判定した投稿を表示前に自動で翻訳する
+    translationAutoTranslate: boolean
+    // 翻訳ボタンを本文中に直接置くか、三点メニューにしまうか
+    translationStyle: 'inline' | 'menu'
+    // 翻訳不要な言語(基底コード)。undefined は既定(=システム言語)を読み取り時に解決する。
+    // 既定値を永続化するとcckv同期で別端末のシステム言語に上書きされるため保存しない
+    translationSkipLanguages?: string[]
 }
 
 export const defaultPreference: Preference = {
@@ -20,7 +29,10 @@ export const defaultPreference: Preference = {
     developerMode: false,
     hapticsEnabled: true,
     unreadBadgeEnabled: true,
-    listOrder: {}
+    listOrder: {},
+    translationEnabled: true,
+    translationAutoTranslate: false,
+    translationStyle: 'inline'
 }
 
 interface PreferenceState {

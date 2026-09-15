@@ -22,6 +22,7 @@ import TickerProvider from './contexts/Ticer'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
+import { TranslationProvider } from './contexts/Translation'
 import { MediaProxyProvider } from './contexts/MediaProxy'
 import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
@@ -79,7 +80,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                                             <AudioPlayerProvider>
                                                                                 <TickerProvider>
                                                                                     <UrlSummaryProvider>
-                                                                                        <App />
+                                                                                        <TranslationProvider>
+                                                                                            <App />
+                                                                                        </TranslationProvider>
                                                                                     </UrlSummaryProvider>
                                                                                 </TickerProvider>
                                                                             </AudioPlayerProvider>
