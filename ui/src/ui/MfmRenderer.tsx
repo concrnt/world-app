@@ -565,6 +565,38 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
     }
 }
 
+// 本文から人が書いた文章だけを取り出す(言語検知用)。URL・メンション・タグ・絵文字・コード・数式・検索は言語の手掛かりにならないので落とす
+const collectPlainText = (ast: any): string => {
+    if (Array.isArray(ast)) return ast.map(collectPlainText).join('')
+    if (!ast || typeof ast !== 'object') return ''
+    switch (ast.type) {
+        case 'text':
+            return ast.props.text
+        case 'bold':
+        case 'italic':
+        case 'strike':
+        case 'small':
+        case 'center':
+        case 'fn':
+        case 'link':
+        case 'quote':
+        case 'plain':
+            return collectPlainText(ast.children)
+        default:
+            // url / mention / hashtag / emojiCode / unicodeEmoji / blockCode / inlineCode / mathInline / mathBlock / search
+            return ''
+    }
+}
+
+export const mfmToPlainText = (body: string): string => {
+    if (body === '') return ''
+    try {
+        return collectPlainText(mfm.parse(body))
+    } catch {
+        return body
+    }
+}
+
 export interface MfmRendererProps {
     messagebody: string
     emojiDict: Record<string, EmojiLite>

@@ -6,8 +6,13 @@ import type { TranslationResult } from '../contexts/Translation'
 export const isTranslationAvailable = (): Promise<{ available: boolean }> =>
     invoke<{ available: boolean }>('plugin:translation|is_available')
 
-export const detectLanguage = (text: string): Promise<{ language: string | null }> =>
-    invoke<{ language: string | null }>('plugin:translation|detect_language', { payload: { text } })
+// confidence は 0..1(判定不能時は language=null, confidence=0)
+export const detectLanguage = (text: string): Promise<{ language: string | null; confidence: number }> =>
+    invoke<{ language: string | null; confidence: number }>('plugin:translation|detect_language', { payload: { text } })
 
-export const translateText = (text: string, targetLanguage: string): Promise<TranslationResult> =>
-    invoke<TranslationResult>('plugin:translation|translate', { payload: { text, targetLanguage } })
+export const translateText = (
+    text: string,
+    targetLanguage: string,
+    sourceLanguage: string
+): Promise<TranslationResult> =>
+    invoke<TranslationResult>('plugin:translation|translate', { payload: { text, targetLanguage, sourceLanguage } })

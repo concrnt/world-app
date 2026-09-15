@@ -47,7 +47,7 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {/* plaintextはマークダウン・絵文字のレンダリングを行わずそのまま表示する */}
-            <MessageTranslationProvider text={message.value.body ?? ''}>
+            <MessageTranslationProvider text={message.value.body ?? ''} syntax="plain">
                 <CollapsibleBody forceExpanded={props.forceExpanded}>
                     <TranslatableBody
                         renderTranslated={(text) => (

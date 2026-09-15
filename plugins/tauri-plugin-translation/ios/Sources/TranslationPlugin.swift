@@ -22,6 +22,8 @@ private struct DetectArgs: Decodable {
 private struct TranslateArgs: Decodable {
     let text: String
     let targetLanguage: String
+    /// Detected by the frontend on the cleaned body; nil falls back to on-device detection of `text`.
+    let sourceLanguage: String?
 }
 
 #if canImport(Translation)
@@ -113,8 +115,11 @@ class TranslationPlugin: Plugin {
 
     @objc public func detectLanguage(_ invoke: Invoke) throws {
         let args = try invoke.parseArgs(DetectArgs.self)
-        let language = NLLanguageRecognizer.dominantLanguage(for: args.text)?.rawValue
-        invoke.resolve(["language": language])
+        // languageHypotheses gives the probability the frontend thresholds on (dominantLanguage would not).
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(args.text)
+        let best = recognizer.languageHypotheses(withMaximum: 1).max { $0.value < $1.value }
+        invoke.resolve(["language": best?.key.rawValue, "confidence": best?.value ?? 0])
     }
 
     @objc public func translate(_ invoke: Invoke) throws {
@@ -127,9 +132,11 @@ class TranslationPlugin: Plugin {
                     return
                 }
                 let target = Locale.Language(identifier: args.targetLanguage)
-                let detected = NLLanguageRecognizer.dominantLanguage(for: args.text).map {
-                    Locale.Language(identifier: $0.rawValue)
-                }
+                // The frontend's detection ran on cleaned text, so prefer it over re-detecting the raw body.
+                let detected = args.sourceLanguage.map { Locale.Language(identifier: $0) }
+                    ?? NLLanguageRecognizer.dominantLanguage(for: args.text).map {
+                        Locale.Language(identifier: $0.rawValue)
+                    }
 
                 // Same language: the framework rejects identity pairs, so answer directly
                 // (the frontend treats source == target as "no translation needed").

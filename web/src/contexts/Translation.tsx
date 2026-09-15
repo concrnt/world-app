@@ -21,7 +21,8 @@ export interface TranslationService {
     skipLanguages: string[]
     // 生のBCP-47タグ。判定不能・検知不可は undefined
     detect: (text: string) => Promise<string | undefined>
-    translate: (text: string, targetLanguage: string) => Promise<TranslationResult>
+    // sourceLanguage は detect の結果(呼び出し側がクリーンテキストで検知済み)
+    translate: (text: string, targetLanguage: string, sourceLanguage: string) => Promise<TranslationResult>
     prepareDetector: () => Promise<void>
 }
 
@@ -37,6 +38,9 @@ const fallbackService: TranslationService = {
 }
 
 const TranslationContext = createContext<TranslationService>(fallbackService)
+
+// 検知確度がこれ未満なら「判定不能」扱い(短文・記号混じりの誤検出は翻訳不要側に倒す)。app 側の Translation.tsx と同じ値にする
+const DETECT_CONFIDENCE_THRESHOLD = 0.7
 
 // 既定の翻訳不要言語 = concrnt の言語設定(UI言語)の基底コード
 export const defaultSkipLanguages = (uiLanguage: string): string[] => [uiLanguage.split('-')[0]]
@@ -68,6 +72,7 @@ export const TranslationProvider = (props: Props): ReactNode => {
     const uiLanguage = i18n.resolvedLanguage ?? 'en'
     const skipLanguages = useMemo(() => skipPref ?? defaultSkipLanguages(uiLanguage), [skipPref, uiLanguage])
 
+    // 失敗は TranslationErrorCode を message にして投げる(モデルDLを伴う create は transient activation が必要)
     const prepareDetector = useCallback(async () => {
         if (typeof LanguageDetector === 'undefined') throw new Error('failed')
         if (!detectorPromise) {
@@ -76,7 +81,11 @@ export const TranslationProvider = (props: Props): ReactNode => {
                 detectorPromise = undefined
             })
         }
-        await detectorPromise
+        try {
+            await detectorPromise
+        } catch (e) {
+            throw new Error(codeOf(e))
+        }
         setDetectorReady(true)
     }, [])
 
@@ -98,7 +107,8 @@ export const TranslationProvider = (props: Props): ReactNode => {
             .then((d) => d.detect(text))
             .then((results) => {
                 const top = results[0]
-                if (!top || top.detectedLanguage === 'und' || top.confidence < 0.5) return undefined
+                if (!top || top.detectedLanguage === 'und' || top.confidence < DETECT_CONFIDENCE_THRESHOLD)
+                    return undefined
                 return top.detectedLanguage
             })
             .catch(() => undefined)
@@ -107,17 +117,14 @@ export const TranslationProvider = (props: Props): ReactNode => {
     }, [])
 
     const translate = useCallback(
-        async (text: string, targetLanguage: string): Promise<TranslationResult> => {
-            const key = targetLanguage + '\n' + text
+        async (text: string, targetLanguage: string, sourceLanguage: string): Promise<TranslationResult> => {
+            const key = targetLanguage + '\n' + sourceLanguage + '\n' + text
             const cached = translateCache.current.get(key)
             if (cached) return cached
             const promise = (async () => {
                 if (typeof Translator === 'undefined') throw new Error('failed')
-                // ここはタップ直後に呼ばれる想定(モデルDLを伴う create は transient activation が必要)
-                if (!detectorPromise) await prepareDetector().catch((e) => Promise.reject(new Error(codeOf(e))))
-                const sourceLanguage = await detect(text)
-                if (!sourceLanguage) throw new Error('undetermined')
                 if (sourceLanguage.split('-')[0] === targetLanguage.split('-')[0]) throw new Error('sameLanguage')
+                // ここはタップ直後に呼ばれる想定(モデルDLを伴う create は transient activation が必要)
                 const availability = await Translator.availability({ sourceLanguage, targetLanguage })
                 if (availability === 'unavailable') throw new Error('unsupported')
                 let translator: TranslatorInstance
@@ -139,7 +146,7 @@ export const TranslationProvider = (props: Props): ReactNode => {
             promise.catch(() => translateCache.current.delete(key))
             return promise
         },
-        [detect, prepareDetector]
+        []
     )
 
     const value = useMemo<TranslationService>(

@@ -64,7 +64,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 {props.message.value.replyToMessageAuthor && (
                     <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
                 )}
-                <MessageTranslationProvider text={props.message.value.body ?? ''}>
+                <MessageTranslationProvider text={props.message.value.body ?? ''} syntax="cfm">
                     <CollapsibleBody forceExpanded={props.forceExpanded}>
                         <AutoSummary body={props.message.value.body ?? ''}>
                             <TranslatableBody

@@ -2,6 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useTranslation } from 'react-i18next'
 import { usePreference } from './Preference'
 import { TranslationResult, useTranslationService } from './Translation'
+import { cfmToPlainText, gfmToPlainText, mfmToPlainText } from '@concrnt/ui'
 
 // none: 何も出さない / inline: 本文直前のボタン / menu: 三点メニューの項目 / external: メニューからGoogle翻訳を外部で開く
 export type TranslationMode = 'none' | 'inline' | 'menu' | 'external'
@@ -37,10 +38,31 @@ const languageName = (code: string, uiLanguage: string): string => {
     }
 }
 
+// 本文の記法。言語検知に渡す前に記法由来の要素(URL・メンション・絵文字等)を落とすのに使う
+export type MessageSyntax = 'cfm' | 'mfm' | 'gfm' | 'plain'
+
 interface Props {
-    // 翻訳元のプレーンテキスト
+    // 翻訳元の本文(翻訳・Google翻訳URLにはこれをそのまま渡す)
     text: string
+    syntax: MessageSyntax
     children: ReactNode
+}
+
+// 言語検知用のクリーンテキスト。記法を剥がしたあと、plain/AP由来のテキストにも残りうる
+// 生URL・@user(@host)・#tag・:shortcode:・Unicode絵文字を落として空白を畳む
+const toDetectionText = (text: string, syntax: MessageSyntax): string => {
+    let plain = text
+    if (syntax === 'cfm') plain = cfmToPlainText(text)
+    else if (syntax === 'mfm') plain = mfmToPlainText(text)
+    else if (syntax === 'gfm') plain = gfmToPlainText(text)
+    return plain
+        .replace(/https?:\/\/[^\s\u3000]+/g, ' ')
+        .replace(/(^|\s)@[\w.@-]+/g, ' ')
+        .replace(/(^|\s)#[^\s#]+/g, ' ')
+        .replace(/:[\w+-]+:/g, ' ')
+        .replace(/\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
 }
 
 // 投稿1件ぶんの翻訳状態。本文ボタン(TranslatableBody)と三点メニュー(MessageActions)が共有する
@@ -53,6 +75,9 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
     const uiLanguage = i18n.resolvedLanguage ?? 'en'
     const target = uiLanguage.split('-')[0]
     const text = props.text
+    const detectionText = useMemo(() => toDetectionText(text, props.syntax), [text, props.syntax])
+    // 文字(\p{L})が残らない本文(絵文字だけ・URLだけ・記号だけ)は翻訳対象にしない
+    const hasLanguageText = /\p{L}/u.test(detectionText)
 
     const [detected, setDetected] = useState<{ text: string; language?: string }>()
     const [translated, setTranslated] = useState<TranslationResult>()
@@ -62,20 +87,20 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
     // 自動翻訳は1テキストにつき1回だけ試みる(失敗時は静かにボタン表示に戻す)
     const autoAttempted = useRef<string>(undefined)
 
-    const canDetect = enabled && text !== '' && service.available && service.detectorReady
+    const canDetect = enabled && hasLanguageText && service.available && service.detectorReady
     useEffect(() => {
         if (!canDetect) return
         let cancelled = false
-        service.detect(text).then((language) => {
+        service.detect(detectionText).then((language) => {
             if (!cancelled) setDetected({ text, language })
         })
         return () => {
             cancelled = true
         }
-    }, [canDetect, service, text])
+    }, [canDetect, service, text, detectionText])
 
     const mode = useMemo<TranslationMode>(() => {
-        if (!enabled || text === '') return 'none'
+        if (!enabled || !hasLanguageText) return 'none'
         if (!service.available) return 'external'
         // webで検知モデル未DLのとき: タップ(activation)内でDL→翻訳できるようメニューにだけ出す
         if (!service.detectorReady) return 'menu'
@@ -83,14 +108,21 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
         const base = detected.language.split('-')[0]
         if (base === target || service.skipLanguages.includes(base)) return 'none'
         return style
-    }, [enabled, text, service, detected, target, style])
+    }, [enabled, hasLanguageText, text, service, detected, target, style])
 
     const runTranslate = useCallback(
         async (silent: boolean) => {
             setWorking(true)
             setError(undefined)
             try {
-                const result = await service.translate(text, target)
+                // 検知済みならそれを使う。未検知(webで検知モデル未DLのメニュー経路)はタップ内でDL→検知する
+                let source = detected?.text === text ? detected.language : undefined
+                if (!source) {
+                    await service.prepareDetector()
+                    source = await service.detect(detectionText)
+                }
+                if (!source) throw new Error('undetermined')
+                const result = await service.translate(text, target, source)
                 if (result.sourceLanguage.split('-')[0] === target) {
                     if (!silent) setError('sameLanguage')
                     return
@@ -105,7 +137,7 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
                 setWorking(false)
             }
         },
-        [service, text, target]
+        [service, text, target, detected, detectionText]
     )
 
     const toggle = useCallback(() => {

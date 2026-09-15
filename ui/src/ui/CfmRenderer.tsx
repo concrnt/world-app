@@ -164,6 +164,44 @@ const collectImageNodes = (ast: any, result: any[]): any[] => {
     return result
 }
 
+// 本文から人が書いた文章だけを取り出す(言語検知用)。URL・メンション・タグ・絵文字・コード・画像は言語の手掛かりにならないので落とす
+const collectPlainText = (ast: any): string => {
+    if (Array.isArray(ast)) return ast.map(collectPlainText).join('')
+    if (!ast || typeof ast !== 'object') return ''
+    switch (ast.type) {
+        case 'newline':
+            return '\n'
+        case 'Line':
+            return collectPlainText(ast.body) + '\n'
+        case 'Text':
+            return ast.body
+        case 'URL':
+            return ast.alt ?? ''
+        case 'Details':
+            return (ast.summary?.body ?? '') + '\n' + collectPlainText(ast.body)
+        case 'Marquee':
+        case 'Italic':
+        case 'Bold':
+        case 'Strike':
+        case 'Spoiler':
+        case 'Quote':
+        case 'Heading':
+            return collectPlainText(ast.body)
+        default:
+            // Timeline / Tag / Mention / Emoji / InlineCode / Image / CodeBlock / EmojiPack
+            return ''
+    }
+}
+
+export const cfmToPlainText = (body: string): string => {
+    if (body === '') return ''
+    try {
+        return collectPlainText(cfm.parse(body))
+    } catch {
+        return body
+    }
+}
+
 const Spoiler = ({ children }: { children: ReactNode }) => {
     const [open, setOpen] = useState(false)
 

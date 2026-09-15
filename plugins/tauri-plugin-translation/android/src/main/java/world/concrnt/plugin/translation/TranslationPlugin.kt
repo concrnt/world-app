@@ -7,6 +7,7 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -23,6 +24,8 @@ class DetectArgs {
 class TranslateArgs {
     var text: String? = null
     var targetLanguage: String? = null
+    // フロント側がクリーンテキストで検知した言語。無ければ text を端末側で再検知する
+    var sourceLanguage: String? = null
 }
 
 // ML Kit On-device Translation + Language ID。モデル(~30MB/言語)は初回翻訳時にアプリ領域へDLされる。
@@ -39,14 +42,19 @@ class TranslationPlugin(private val activity: Activity) : Plugin(activity) {
         val args = invoke.parseArgs(DetectArgs::class.java)
         val text = args.text?.takeIf { it.isNotBlank() }
         if (text == null) {
-            invoke.resolve(JSObject().apply { put("language", null) })
+            invoke.resolve(JSObject().apply { put("language", null); put("confidence", 0.0) })
             return
         }
+        // identifyLanguage は既定閾値0.5で und に丸めてしまうので、確度付きの候補一覧から最上位を返しフロント側で閾値判定する
         val identifier = LanguageIdentification.getClient()
-        identifier.identifyLanguage(text)
+        identifier.identifyPossibleLanguages(text)
             .addOnCompleteListener { identifier.close() }
-            .addOnSuccessListener { tag ->
-                invoke.resolve(JSObject().apply { put("language", if (tag == "und") null else tag) })
+            .addOnSuccessListener { candidates ->
+                val best = candidates.filter { it.languageTag != "und" }.maxByOrNull { it.confidence }
+                invoke.resolve(JSObject().apply {
+                    put("language", best?.languageTag)
+                    put("confidence", best?.confidence?.toDouble() ?: 0.0)
+                })
             }
             .addOnFailureListener { e ->
                 invoke.reject("failed: " + (e.message ?: "language identification failed"))
@@ -67,9 +75,15 @@ class TranslationPlugin(private val activity: Activity) : Plugin(activity) {
             return
         }
 
-        val identifier = LanguageIdentification.getClient()
-        identifier.identifyLanguage(text)
-            .addOnCompleteListener { identifier.close() }
+        // フロント側の検知結果があればそれを使う(生本文の再検知はURL・絵文字で狂う)
+        val sourceLanguage = args.sourceLanguage?.takeIf { it.isNotBlank() }
+        val identified = if (sourceLanguage != null) {
+            Tasks.forResult(sourceLanguage)
+        } else {
+            val identifier = LanguageIdentification.getClient()
+            identifier.identifyLanguage(text).addOnCompleteListener { identifier.close() }
+        }
+        identified
             .addOnFailureListener { e ->
                 invoke.reject("failed: " + (e.message ?: "language identification failed"))
             }

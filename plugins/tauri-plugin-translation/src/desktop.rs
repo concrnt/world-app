@@ -23,7 +23,10 @@ impl<R: Runtime> Translation<R> {
     }
 
     pub async fn detect_language(&self, _payload: DetectRequest) -> crate::Result<DetectResponse> {
-        Ok(DetectResponse { language: None })
+        Ok(DetectResponse {
+            language: None,
+            confidence: 0.0,
+        })
     }
 
     pub async fn translate(&self, _payload: TranslateRequest) -> crate::Result<TranslateResponse> {

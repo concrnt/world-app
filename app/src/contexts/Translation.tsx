@@ -22,7 +22,8 @@ export interface TranslationService {
     skipLanguages: string[]
     // 生のBCP-47タグ。判定不能・検知不可は undefined
     detect: (text: string) => Promise<string | undefined>
-    translate: (text: string, targetLanguage: string) => Promise<TranslationResult>
+    // sourceLanguage は detect の結果(呼び出し側がクリーンテキストで検知済み)
+    translate: (text: string, targetLanguage: string, sourceLanguage: string) => Promise<TranslationResult>
     prepareDetector: () => Promise<void>
 }
 
@@ -38,6 +39,9 @@ const fallbackService: TranslationService = {
 }
 
 const TranslationContext = createContext<TranslationService>(fallbackService)
+
+// 検知確度がこれ未満なら「判定不能」扱い(短文・記号混じりの誤検出は翻訳不要側に倒す)。web 側の Translation.tsx と同じ値にする
+const DETECT_CONFIDENCE_THRESHOLD = 0.7
 
 // 既定の翻訳不要言語 = concrnt の言語設定(UI言語)の基底コード
 export const defaultSkipLanguages = (uiLanguage: string): string[] => [uiLanguage.split('-')[0]]
@@ -76,21 +80,26 @@ export const TranslationProvider = (props: Props): ReactNode => {
         const cached = detectCache.current.get(text)
         if (cached) return cached
         const promise = detectLanguage(text)
-            .then((res) => res.language ?? undefined)
+            .then((res) => (res.language && res.confidence >= DETECT_CONFIDENCE_THRESHOLD ? res.language : undefined))
             .catch(() => undefined)
         detectCache.current.set(text, promise)
         return promise
     }, [])
 
-    const translate = useCallback(async (text: string, targetLanguage: string): Promise<TranslationResult> => {
-        const key = targetLanguage + '\n' + text
-        const cached = translateCache.current.get(key)
-        if (cached) return cached
-        const promise = translateText(text, targetLanguage).catch((e) => Promise.reject(new Error(codeOf(e))))
-        translateCache.current.set(key, promise)
-        promise.catch(() => translateCache.current.delete(key))
-        return promise
-    }, [])
+    const translate = useCallback(
+        async (text: string, targetLanguage: string, sourceLanguage: string): Promise<TranslationResult> => {
+            const key = targetLanguage + '\n' + sourceLanguage + '\n' + text
+            const cached = translateCache.current.get(key)
+            if (cached) return cached
+            const promise = translateText(text, targetLanguage, sourceLanguage).catch((e) =>
+                Promise.reject(new Error(codeOf(e)))
+            )
+            translateCache.current.set(key, promise)
+            promise.catch(() => translateCache.current.delete(key))
+            return promise
+        },
+        []
+    )
 
     const prepareDetector = useCallback(async () => {}, [])
 

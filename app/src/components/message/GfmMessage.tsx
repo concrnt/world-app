@@ -40,7 +40,7 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <MessageTranslationProvider text={message.value.body ?? ''}>
+            <MessageTranslationProvider text={message.value.body ?? ''} syntax="gfm">
                 <CollapsibleBody forceExpanded={props.forceExpanded}>
                     <AutoSummary body={message.value.body ?? ''}>
                         <TranslatableBody

@@ -208,7 +208,7 @@ const Note = (props: {
                 </span>
             }
         >
-            <MessageTranslationProvider text={translationSource}>
+            <MessageTranslationProvider text={translationSource} syntax={note._misskey_content ? 'mfm' : 'plain'}>
                 <CollapsibleBody forceExpanded={props.forceExpanded}>
                     <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
                         <TranslatableBody
