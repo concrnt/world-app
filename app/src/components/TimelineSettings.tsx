@@ -1,19 +1,43 @@
-import { Document, Policy } from '@concrnt/client'
+import { Document, parseCCURI, Policy } from '@concrnt/client'
 import { Schemas, Timeline } from '@concrnt/worldlib'
-import { Text } from '@concrnt/ui'
+import { Divider, Text } from '@concrnt/ui'
 import { Button, CCWallpaper, CssVar, IconButton, ListItem, Select, Tab, Tabs, TextField } from '@concrnt/ui'
 import { Confirm } from './Confirm'
-import { MdMoreHoriz } from 'react-icons/md'
+import { MdClear, MdMoreHoriz, MdSearch } from 'react-icons/md'
 import { shareText } from '../lib/share'
 
 import { useClient } from '../contexts/Client'
-import { Suspense, use, useEffect, useMemo, useState } from 'react'
+import { Fragment, Suspense, use, useEffect, useMemo, useState } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
+import { MessageContainer } from './message'
+import { RenderError } from './message/RenderError'
+import { MessageSkeleton } from './message/MessageSkeleton'
+import { Loading } from './message/Loading'
 import { useTranslation } from 'react-i18next'
 import { Subscription } from './Subscription'
 import { ServerChip } from './ServerChip'
 import { CCEditor } from './CCEditor'
 import { PolicyEditor } from './PolicyEditor'
 import { useMediaProxy } from '../contexts/MediaProxy'
+
+// cc-search(net.concrnt.search.timeline)のレスポンス。hitsは参照単位で、uriが投稿本体のcckv
+interface SearchHit {
+    id: string
+    uri: string
+    author: string
+    schema: string
+    createdAt: number
+}
+
+interface SearchResult {
+    hits: SearchHit[]
+    query: string
+    limit: number
+    offset: number
+    estimatedTotalHits: number
+}
+
+const SEARCH_PAGE_SIZE = 10
 
 interface Props {
     uri: string
@@ -45,6 +69,79 @@ const Inner = (props: InnerProps) => {
 
     const [tab, setTab] = useState<'subscriptions' | 'settings'>('subscriptions')
     const [menuOpen, setMenuOpen] = useState(false)
+
+    // 投稿検索(v1のTimelineInfo踏襲): タイムラインのホストが検索エンドポイントを広告している場合のみ有効。
+    // 検索はリモートのタイムラインでもそのホストの索引に問い合わせる
+    const [searchHost, setSearchHost] = useState<{ fqdn: string; available: boolean }>()
+    const [searchFocused, setSearchFocused] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchedQuery, setSearchedQuery] = useState('')
+    const [searchPage, setSearchPage] = useState(0)
+    // 完了した要求のキー(ページ+クエリ)と結果。ローディング中かどうかは現在の要求キーとの比較で導出する
+    const [searchResult, setSearchResult] = useState<{ key: string; result: SearchResult | null; error: boolean }>()
+
+    const searchKey = searchedQuery ? `${searchPage}:${searchedQuery}` : ''
+    const searchLoading = searchKey !== '' && searchResult?.key !== searchKey
+    const searchError = searchKey !== '' && searchResult?.key === searchKey && searchResult.error
+    // 次ページ取得中は前の結果を薄く残す
+    const shownResult = searchKey !== '' ? (searchResult?.result ?? null) : null
+
+    const timelineUri = timeline?.uri
+
+    useEffect(() => {
+        if (!timelineUri) return
+        let cancelled = false
+        const parsed = parseCCURI(timelineUri)
+        client.api
+            .resolveDomain(parsed.owner, parsed.hint)
+            .then(async (fqdn) => {
+                const server = await client.api.getServer(fqdn)
+                if (!cancelled) setSearchHost({ fqdn, available: !!server.endpoints['net.concrnt.search.timeline'] })
+            })
+            .catch(() => {
+                if (!cancelled) setSearchHost({ fqdn: parsed.owner, available: false })
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [client, timelineUri])
+
+    useEffect(() => {
+        if (!timelineUri || !searchHost?.available || !searchKey) return
+        let cancelled = false
+        client.api
+            .requestConcrntApi<SearchResult>(searchHost.fqdn, 'net.concrnt.search.timeline', {
+                uri: timelineUri,
+                q: searchedQuery,
+                limit: String(SEARCH_PAGE_SIZE),
+                offset: String(searchPage * SEARCH_PAGE_SIZE)
+            })
+            .then((result) => {
+                if (!cancelled) setSearchResult({ key: searchKey, result, error: false })
+            })
+            .catch((e) => {
+                if (cancelled) return
+                console.error('timeline search failed', e)
+                setSearchResult({ key: searchKey, result: null, error: true })
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [client, timelineUri, searchHost, searchKey, searchedQuery, searchPage])
+
+    const submitSearch = () => {
+        const query = searchQuery.trim()
+        setSearchPage(0)
+        setSearchedQuery(query)
+    }
+
+    const clearSearch = () => {
+        setSearchQuery('')
+        setSearchedQuery('')
+        setSearchPage(0)
+        setSearchResult(undefined)
+        setSearchFocused(false)
+    }
 
     if (!timeline) {
         return <>Timeline not found.</>
@@ -99,6 +196,39 @@ const Inner = (props: InnerProps) => {
                             <ServerChip uri={timeline.uri} />
                         </div>
                         <Text>{timeline.description}</Text>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: CssVar.space(1),
+                                marginTop: CssVar.space(2)
+                            }}
+                            onFocus={() => setSearchFocused(true)}
+                            onBlur={() => setSearchFocused(false)}
+                        >
+                            <TextField
+                                value={searchQuery}
+                                disabled={!searchHost?.available}
+                                placeholder={
+                                    searchHost && !searchHost.available
+                                        ? t('searchNotAvailable', { host: searchHost.fqdn })
+                                        : t('search')
+                                }
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    // 日本語入力の確定Enterでは検索しない
+                                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) submitSearch()
+                                }}
+                            />
+                            {searchQuery && (
+                                <IconButton onClick={clearSearch} title={t('clearSearch')}>
+                                    <MdClear size={20} />
+                                </IconButton>
+                            )}
+                            <IconButton disabled={!searchHost?.available} onClick={submitSearch} title={t('search')}>
+                                <MdSearch size={20} />
+                            </IconButton>
+                        </div>
                     </div>
                 </div>
             </CCWallpaper>
@@ -117,38 +247,115 @@ const Inner = (props: InnerProps) => {
                     </ListItem>
                 ]}
             />
-            <Tabs>
-                <Tab
-                    selected={tab === 'subscriptions'}
-                    onClick={() => setTab('subscriptions')}
-                    groupId="timeline-settings"
+            {searchFocused || searchedQuery ? (
+                <div
                     style={{
-                        color: CssVar.contentText
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(2),
+                        padding: CssVar.space(2)
                     }}
                 >
-                    <Text>Subscriptions</Text>
-                </Tab>
-                {isMe && (
-                    <Tab
-                        selected={tab === 'settings'}
-                        onClick={() => setTab('settings')}
-                        groupId="timeline-settings"
+                    {searchError ? (
+                        <Text variant="caption">{t('searchFailed')}</Text>
+                    ) : shownResult === null ? (
+                        searchLoading ? (
+                            <Loading message={t('searching')} />
+                        ) : (
+                            <Text variant="caption">{t('searchResultPlaceholder')}</Text>
+                        )
+                    ) : shownResult.hits.length === 0 ? (
+                        <Text>{t('searchResultEmpty')}</Text>
+                    ) : (
+                        <>
+                            <Text variant="h3">{t('searchResultTitle', { query: shownResult.query })}</Text>
+                            {/* QueryTimelineの行構造(gap 8px+Divider)に合わせる。次ページ取得中は前ページを薄く残す */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    opacity: searchLoading ? 0.6 : 1,
+                                    transition: 'opacity 0.2s'
+                                }}
+                            >
+                                <Divider />
+                                {shownResult.hits.map((hit) => (
+                                    <Fragment key={hit.id}>
+                                        <ErrorBoundary FallbackComponent={RenderError}>
+                                            <Suspense fallback={<MessageSkeleton />}>
+                                                <MessageContainer uri={hit.uri} hint={searchHost?.fqdn} />
+                                            </Suspense>
+                                        </ErrorBoundary>
+                                        <Divider />
+                                    </Fragment>
+                                ))}
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Button
+                                    variant="text"
+                                    disabled={searchPage === 0 || searchLoading}
+                                    onClick={() => setSearchPage((p) => p - 1)}
+                                >
+                                    {t('prev')}
+                                </Button>
+                                <Text>{searchPage + 1}</Text>
+                                <Button
+                                    variant="text"
+                                    disabled={
+                                        shownResult.offset + shownResult.hits.length >=
+                                            shownResult.estimatedTotalHits || searchLoading
+                                    }
+                                    onClick={() => setSearchPage((p) => p + 1)}
+                                >
+                                    {t('next')}
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            ) : (
+                <>
+                    <Tabs>
+                        <Tab
+                            selected={tab === 'subscriptions'}
+                            onClick={() => setTab('subscriptions')}
+                            groupId="timeline-settings"
+                            style={{
+                                color: CssVar.contentText
+                            }}
+                        >
+                            <Text>Subscriptions</Text>
+                        </Tab>
+                        {isMe && (
+                            <Tab
+                                selected={tab === 'settings'}
+                                onClick={() => setTab('settings')}
+                                groupId="timeline-settings"
+                                style={{
+                                    color: CssVar.contentText
+                                }}
+                            >
+                                <Text>Settings</Text>
+                            </Tab>
+                        )}
+                    </Tabs>
+                    <div
                         style={{
-                            color: CssVar.contentText
+                            padding: CssVar.space(2)
                         }}
                     >
-                        <Text>Settings</Text>
-                    </Tab>
-                )}
-            </Tabs>
-            <div
-                style={{
-                    padding: CssVar.space(2)
-                }}
-            >
-                {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
-                {tab === 'settings' && <TimelineEditor timeline={timeline} onDeleted={props.onDeleted} />}
-            </div>
+                        {tab === 'subscriptions' && <Subscription target={timeline.uri} />}
+                        {tab === 'settings' && <TimelineEditor timeline={timeline} onDeleted={props.onDeleted} />}
+                    </div>
+                </>
+            )}
         </div>
     )
 }

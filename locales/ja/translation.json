@@ -759,7 +759,17 @@
             "linkCopied": "コピーしました",
             "deleteTimeline": "コミュニティを削除",
             "confirmDeleteTimeline": "コミュニティを削除",
-            "confirmDeleteTimelineDescription": "このコミュニティを削除してもよろしいですか？この操作は取り消せません。"
+            "confirmDeleteTimelineDescription": "このコミュニティを削除してもよろしいですか？この操作は取り消せません。",
+            "search": "検索",
+            "searchNotAvailable": "{{host}}では検索機能が利用できません",
+            "clearSearch": "検索をクリア",
+            "searching": "検索中...",
+            "searchResultPlaceholder": "ここに検索結果が表示されます",
+            "searchResultEmpty": "見つかりませんでした",
+            "searchResultTitle": "{{query}} の検索結果",
+            "searchFailed": "検索に失敗しました",
+            "prev": "前のページ",
+            "next": "次のページ"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",

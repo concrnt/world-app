@@ -760,7 +760,17 @@
             "linkCopied": "Copied",
             "deleteTimeline": "Delete Community",
             "confirmDeleteTimeline": "Delete community",
-            "confirmDeleteTimelineDescription": "Are you sure you want to delete this community? This action cannot be undone."
+            "confirmDeleteTimelineDescription": "Are you sure you want to delete this community? This action cannot be undone.",
+            "search": "Search",
+            "searchNotAvailable": "Search is not available on {{host}}",
+            "clearSearch": "Clear search",
+            "searching": "Searching...",
+            "searchResultPlaceholder": "Search results will appear here",
+            "searchResultEmpty": "No results found",
+            "searchResultTitle": "Search results for {{query}}",
+            "searchFailed": "Search failed",
+            "prev": "Previous",
+            "next": "Next"
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",
