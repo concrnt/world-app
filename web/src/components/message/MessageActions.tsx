@@ -1,4 +1,4 @@
-import { Button, Confirm, ListItem, Text, useAnchor } from '@concrnt/ui'
+import { Button, Confirm, ListItem, Text, Tooltip, useAnchor } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
@@ -9,6 +9,7 @@ import { startTransition, useOptimistic, useState } from 'react'
 import { Select } from '../Select'
 import { Report } from '../Report'
 import { MessageInspector } from './MessageInspector'
+import { AssociationUserRow } from './AssociationUserRow'
 
 import { MdStar } from 'react-icons/md'
 import { MdStarOutline } from 'react-icons/md'
@@ -63,6 +64,19 @@ export const MessageActions = (props: Props) => {
     })
 
     const messageHref = props.message.key ?? props.message.uri
+
+    // hoverでいいねした人をtooltip表示する(MessageReactionsと同様、hoverのたびに再フェッチして上書き)
+    const [likeMembers, setLikeMembers] = useState<Array<Association<LikeAssociationSchema>> | undefined>(undefined)
+    const loadLikeMembers = async () => {
+        if (!client) return
+        const sds = await client.api
+            .getAssociationsAll(props.message.uri, { schema: Schemas.likeAssociation })
+            .catch((e) => {
+                console.error('Failed to fetch like members:', e)
+                return []
+            })
+        setLikeMembers(sds.map((sd) => Association.fromSignedDocument(sd)) as Array<Association<LikeAssociationSchema>>)
+    }
 
     // commit完了後、transitionが終わる(=useOptimisticがrevertする)前に
     // メッセージ本体を再取得してベース値をサーバー状態に揃える。
@@ -130,49 +144,69 @@ export const MessageActions = (props: Props) => {
             </Button>
 
             {/* いいねボタン */}
-            <Button
-                variant="text"
-                onClick={(e) => {
-                    e.stopPropagation()
-                    if (!client) return
-                    hapticLight()
-                    if (likeState.ownLike) {
-                        startTransition(async () => {
-                            updateLikeState((prev: LikeState): LikeState => {
-                                return {
-                                    ownLike: undefined,
-                                    count: prev.count - 1
-                                }
-                            })
-                            if (likeState.ownLike) {
-                                await likeState.ownLike.delete(client)
-                                await refreshMessage()
-                            }
-                        })
-                    } else {
-                        startTransition(async () => {
-                            updateLikeState((prev: LikeState): LikeState => {
-                                return {
-                                    ownLike: new Association('dummy', {
-                                        kind: 'association',
-                                        schema: Schemas.likeAssociation,
-                                        value: {},
-                                        author: client.ccid,
-                                        createdAt: new Date()
-                                    }),
-                                    count: prev.count + 1
-                                }
-                            })
-                            await props.message.favorite(client)
-                            await refreshMessage()
-                        })
-                    }
-                }}
-                style={{ display: 'flex', alignItems: 'center' }}
+            <Tooltip
+                disabled={likeState.count === 0}
+                onOpen={loadLikeMembers}
+                content={
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {likeMembers === undefined ? (
+                            <span style={{ fontSize: '12px' }}>...</span>
+                        ) : (
+                            likeMembers.map((member) => (
+                                <AssociationUserRow
+                                    key={member.ccfs}
+                                    author={member.author}
+                                    profileOverride={member.value.profileOverride}
+                                />
+                            ))
+                        )}
+                    </div>
+                }
             >
-                {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
-                <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
-            </Button>
+                <Button
+                    variant="text"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        if (!client) return
+                        hapticLight()
+                        if (likeState.ownLike) {
+                            startTransition(async () => {
+                                updateLikeState((prev: LikeState): LikeState => {
+                                    return {
+                                        ownLike: undefined,
+                                        count: prev.count - 1
+                                    }
+                                })
+                                if (likeState.ownLike) {
+                                    await likeState.ownLike.delete(client)
+                                    await refreshMessage()
+                                }
+                            })
+                        } else {
+                            startTransition(async () => {
+                                updateLikeState((prev: LikeState): LikeState => {
+                                    return {
+                                        ownLike: new Association('dummy', {
+                                            kind: 'association',
+                                            schema: Schemas.likeAssociation,
+                                            value: {},
+                                            author: client.ccid,
+                                            createdAt: new Date()
+                                        }),
+                                        count: prev.count + 1
+                                    }
+                                })
+                                await props.message.favorite(client)
+                                await refreshMessage()
+                            })
+                        }
+                    }}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                >
+                    {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
+                    <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
+                </Button>
+            </Tooltip>
             {/* リアクションボタン */}
             <Button
                 variant="text"
