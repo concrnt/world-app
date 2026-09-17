@@ -7,6 +7,7 @@ interface Props {
     children: ReactNode // トリガー
     onOpen?: () => void // 開いた瞬間に発火(遅延フェッチ用)
     enterDelay?: number // default 300ms
+    disabled?: boolean // trueの間はhoverしても開かない(表示する中身が無いとき用)
     style?: CSSProperties // tooltip面の上書き
 }
 
@@ -40,6 +41,7 @@ export const Tooltip = (props: Props) => {
             onMouseEnter={() => {
                 // タッチ環境ではタップのたびにチラつくので出さない
                 if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+                if (props.disabled) return
                 window.clearTimeout(timer.current)
                 timer.current = window.setTimeout(() => {
                     setOpen(true)

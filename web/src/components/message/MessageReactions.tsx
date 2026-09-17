@@ -1,12 +1,13 @@
-import { Association, Message, ReactionAssociationSchema, RerouteMessageSchema, Schemas, User } from '@concrnt/worldlib'
+import { Association, Message, ReactionAssociationSchema, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { useClient } from '../../contexts/Client'
 import { CssVar } from '../../types/Theme'
 import { useHaptics } from '../../contexts/Haptics'
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useState } from 'react'
 import { ReactionState } from './Footer'
-import { Avatar, CCImage, Divider, Tooltip } from '@concrnt/ui'
+import { CCImage, Divider, Tooltip } from '@concrnt/ui'
 import { useQueryTimelineContext } from '../QueryTimeline'
+import { AssociationUserRow } from './AssociationUserRow'
 
 // app版との意図的な差分: appはButtonBase+長押しでリアクション一覧へ遷移、
 // webは素のbutton+hoverでリアクションした人をtooltip表示する(tooltipはweb限定機能)
@@ -170,7 +171,11 @@ export const MessageReactions = (props: Props) => {
                                 </div>
                                 <Divider />
                                 {reactionMembers[imageUrl]?.map((member) => (
-                                    <ReactionUserRow key={member.ccfs} association={member} />
+                                    <AssociationUserRow
+                                        key={member.ccfs}
+                                        author={member.author}
+                                        profileOverride={member.value.profileOverride}
+                                    />
                                 ))}
                             </div>
                         }
@@ -211,29 +216,6 @@ export const MessageReactions = (props: Props) => {
                     </Tooltip>
                 )
             })}
-        </div>
-    )
-}
-
-const ReactionUserRow = (props: { association: Association<ReactionAssociationSchema> }) => {
-    const { client } = useClient()
-    const [user, setUser] = useState<User | null>(null)
-
-    useEffect(() => {
-        client?.getUser(props.association.author).then((u) => setUser(u))
-    }, [props.association.author, client])
-
-    // APブリッジ経由のリアクションはprofileOverrideに元のプロフィールが入っている
-    const override = props.association.value.profileOverride
-
-    return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Avatar
-                ccid={props.association.author}
-                src={override?.avatar ?? user?.profile.avatar}
-                style={{ width: '18px', height: '18px' }}
-            />
-            <span style={{ fontSize: '12px' }}>{override?.username ?? user?.profile.username ?? 'Anonymous'}</span>
         </div>
     )
 }

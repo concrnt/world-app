@@ -18,6 +18,8 @@ import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { AppMock } from '../components/welcome/AppMock'
 import { DummyMessage } from '../components/welcome/DummyMessage'
+import appStoreBadge from '../assets/appstore-badge.svg'
+import googlePlayBadge from '../assets/googleplay-badge.png'
 import styles from './Welcome.module.css'
 
 const WelcomeTimelineCard = (props: {
@@ -335,16 +337,57 @@ export const WelcomePage = () => {
                                     {t('wish6')}
                                 </Text>
                             </div>
-                            <Button
-                                onClick={() => navigate('/signup')}
-                                style={{
-                                    marginTop: '20px',
-                                    padding: '10px 80px',
-                                    fontSize: '16px'
-                                }}
-                            >
-                                {t('start')}
-                            </Button>
+                            {isMobile ? (
+                                <div /* モバイル幅ではweb登録ではなくストアのアプリへ誘導する */
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(2),
+                                        flexWrap: 'wrap',
+                                        marginTop: '20px'
+                                    }}
+                                >
+                                    {[
+                                        {
+                                            label: 'Download on the App Store',
+                                            badge: appStoreBadge,
+                                            url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
+                                        },
+                                        {
+                                            label: 'Get it on Google Play',
+                                            badge: googlePlayBadge,
+                                            url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
+                                        }
+                                    ].map((store) => (
+                                        <ExternalLink
+                                            key={store.label}
+                                            href={store.url}
+                                            style={{ display: 'flex', alignItems: 'center' }}
+                                        >
+                                            <img
+                                                src={store.badge}
+                                                alt={store.label}
+                                                style={{
+                                                    height: 48,
+                                                    width: 'auto'
+                                                }}
+                                            />
+                                        </ExternalLink>
+                                    ))}
+                                </div>
+                            ) : (
+                                <Button
+                                    onClick={() => navigate('/signup')}
+                                    style={{
+                                        marginTop: '20px',
+                                        padding: '10px 80px',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    {t('start')}
+                                </Button>
+                            )}
                         </div>
                     </div>
 

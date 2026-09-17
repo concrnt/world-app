@@ -11,9 +11,12 @@ interface Props {
 }
 
 export const CCWallpaper = (props: Props) => {
+    // 遅延するのは壁紙のsrcだけ。childrenまで遅延値に含めると、中に置いた制御入力が
+    // 同期レンダーで1つ前のvalueに巻き戻されてIME変換がキャンセルされる
+    const deferredSrc = useDeferredValue(props.src)
     return (
         <Suspense fallback={<WallpaperInner {...props} resolvedSrc={undefined} />}>
-            {useDeferredValue(<WallpaperResolver {...props} />)}
+            <WallpaperResolver {...props} src={deferredSrc} />
         </Suspense>
     )
 }
