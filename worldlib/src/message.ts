@@ -6,6 +6,12 @@ import { Client } from './client'
 import { Association } from './association'
 import { semantics } from './semantics'
 
+// サブプロフィールで行動している時だけprofileURIを明示する(未指定=main)
+const profileURIOf = (client: Client): string | undefined =>
+    client.currentProfile && client.currentProfile !== 'main'
+        ? semantics.profile(client.ccid, client.currentProfile)
+        : undefined
+
 export class Message<T> implements Document<T> {
     uri: string
     kind: 'record'
@@ -76,7 +82,14 @@ export class Message<T> implements Document<T> {
 
         const key = message.key
         //  `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
-        const profileName = key?.split('/')[5]
+        // associationはkeyを持たないので、行為者が明示したprofileURI(未指定=main)から拾う
+        //  `cckv://${owner}/concrnt.world/profiles/${profile}`(author本人のものだけ信用する)
+        const profileURI = (res.value as any)?.profileURI
+        const profileName =
+            key?.split('/')[5] ??
+            (typeof profileURI === 'string' && profileURI.startsWith(semantics.profiles(message.author) + '/')
+                ? profileURI.split('/')[5]
+                : undefined)
         if (profileName) {
             message.authorProfileName = profileName
             const profile = await client.api
@@ -127,7 +140,9 @@ export class Message<T> implements Document<T> {
             author: client.ccid,
             schema: Schemas.likeAssociation,
             associate: this.uri,
-            value: {},
+            value: {
+                profileURI: profileURIOf(client)
+            },
             distributes,
             createdAt: new Date()
         }
@@ -151,7 +166,8 @@ export class Message<T> implements Document<T> {
             associationVariant: imageUrl,
             value: {
                 shortcode,
-                imageUrl
+                imageUrl,
+                profileURI: profileURIOf(client)
             },
             distributes,
             createdAt: new Date()

@@ -123,11 +123,11 @@ const resolveAuthorDomain = async (homeDomain: string, author: string): Promise<
 const resolveActorProfile = async (
     homeDomain: string,
     author: string,
-    profileId: string | undefined
+    profileURI: string | undefined
 ): Promise<{ username?: string; avatar?: string } | undefined> => {
     const authorDomain = await resolveAuthorDomain(homeDomain, author)
     if (!authorDomain) return undefined
-    const uri = `cckv://${author}/concrnt.world/profiles/${profileId ?? 'main'}`
+    const uri = profileURI ?? `cckv://${author}/concrnt.world/profiles/main`
     const profileDoc = await fetchResolvedDocument(authorDomain, uri)
     if (!profileDoc) return undefined
     return {
@@ -161,9 +161,13 @@ const buildContent = async (payload: Record<string, any>): Promise<NotificationC
     const profileOverride = value.profileOverride
     const overrideUsername = nonEmpty(profileOverride?.username)
     const overrideAvatar = nonEmpty(profileOverride?.avatar)
+    // 行為者のサブプロフィール: profileURI(未指定=main)。profileOverride.profileIDはv1由来のフォールバック
     const profileId = nonEmpty(profileOverride?.profileID)
+    const profileURI =
+        nonEmpty(value.profileURI) ??
+        (profileId && author !== '' ? `cckv://${author}/concrnt.world/profiles/${profileId}` : undefined)
 
-    const actor = author === '' ? undefined : await resolveActorProfile(homeDomain, author, profileId)
+    const actor = author === '' ? undefined : await resolveActorProfile(homeDomain, author, profileURI)
     const username = overrideUsername ?? actor?.username ?? '名無し'
     const imageUrl = overrideAvatar ?? actor?.avatar
 

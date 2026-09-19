@@ -61,7 +61,13 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (likeAuthor) {
-                            navigate('/profile/' + likeAuthor.ccid)
+                            navigate(
+                                '/profile/' +
+                                    likeAuthor.ccid +
+                                    (message.authorProfileName && message.authorProfileName !== 'main'
+                                        ? '/' + message.authorProfileName
+                                        : '')
+                            )
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -77,7 +83,13 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                navigate('/profile/' + targetMessage.author)
+                                navigate(
+                                    '/profile/' +
+                                        targetMessage.author +
+                                        (targetMessage.authorProfileName && targetMessage.authorProfileName !== 'main'
+                                            ? '/' + targetMessage.authorProfileName
+                                            : '')
+                                )
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />

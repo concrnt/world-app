@@ -75,7 +75,12 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                                 )
                             )
                         } else if (reactionAuthor) {
-                            push(<ProfileView ccid={reactionAuthor.ccid} />)
+                            push(
+                                <ProfileView
+                                    ccid={reactionAuthor.ccid}
+                                    profileName={message.authorProfileName ?? undefined}
+                                />
+                            )
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -90,7 +95,12 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={targetMessage.author} />)
+                                push(
+                                    <ProfileView
+                                        ccid={targetMessage.author}
+                                        profileName={targetMessage.authorProfileName ?? undefined}
+                                    />
+                                )
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />

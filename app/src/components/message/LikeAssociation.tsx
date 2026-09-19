@@ -66,7 +66,12 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                                 )
                             )
                         } else if (likeAuthor) {
-                            push(<ProfileView ccid={likeAuthor.ccid} />)
+                            push(
+                                <ProfileView
+                                    ccid={likeAuthor.ccid}
+                                    profileName={message.authorProfileName ?? undefined}
+                                />
+                            )
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -82,7 +87,12 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={targetMessage.author} />)
+                                push(
+                                    <ProfileView
+                                        ccid={targetMessage.author}
+                                        profileName={targetMessage.authorProfileName ?? undefined}
+                                    />
+                                )
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />

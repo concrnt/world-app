@@ -8,6 +8,7 @@
 export interface ReactionAssociationSchema {
     imageUrl: string
     shortcode: string
+    profileURI?: string
     profileOverride?: {
         username?: string
         avatar?: string

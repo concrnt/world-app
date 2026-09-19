@@ -6,6 +6,7 @@
  */
 
 export interface MentionAssociationSchema {
+    profileURI?: string
     profileOverride?: {
         username?: string
         avatar?: string

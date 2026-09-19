@@ -63,7 +63,12 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                                 )
                             )
                         } else if (rerouteAuthor) {
-                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
+                            push(
+                                <ProfileView
+                                    ccid={rerouteAuthor.ccid}
+                                    profileName={message.authorProfileName ?? undefined}
+                                />
+                            )
                         }
                     }}
                     style={{ display: 'flex', cursor: 'pointer' }}
@@ -89,7 +94,12 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                                 )
                             )
                         } else if (rerouteAuthor) {
-                            push(<ProfileView ccid={rerouteAuthor.ccid} />)
+                            push(
+                                <ProfileView
+                                    ccid={rerouteAuthor.ccid}
+                                    profileName={message.authorProfileName ?? undefined}
+                                />
+                            )
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -108,7 +118,12 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                push(<ProfileView ccid={targetMessage.author} />)
+                                push(
+                                    <ProfileView
+                                        ccid={targetMessage.author}
+                                        profileName={targetMessage.authorProfileName ?? undefined}
+                                    />
+                                )
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
