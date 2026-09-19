@@ -152,13 +152,7 @@ export const MessageActions = (props: Props) => {
                         {likeMembers === undefined ? (
                             <span style={{ fontSize: '12px' }}>...</span>
                         ) : (
-                            likeMembers.map((member) => (
-                                <AssociationUserRow
-                                    key={member.ccfs}
-                                    author={member.author}
-                                    profileOverride={member.value.profileOverride}
-                                />
-                            ))
+                            likeMembers.map((member) => <AssociationUserRow key={member.ccfs} association={member} />)
                         )}
                     </div>
                 }

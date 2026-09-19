@@ -9,11 +9,11 @@ import {
     Association,
     LikeAssociationSchema,
     Message,
+    ProfileSchema,
     ReactionAssociationSchema,
     ReplyAssociationSchema,
     RerouteAssociationSchema,
-    Schemas,
-    User
+    Schemas
 } from '@concrnt/worldlib'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
@@ -315,9 +315,16 @@ export const PostView = (props: Props) => {
                             {reroutes.map((reroute) => (
                                 <AssociationUserItem
                                     key={reroute.ccfs}
-                                    ccid={reroute.author}
-                                    date={reroute.createdAt}
-                                    onClick={() => navigate('/profile/' + reroute.author)}
+                                    association={reroute}
+                                    onClick={() =>
+                                        navigate(
+                                            '/profile/' +
+                                                reroute.author +
+                                                (reroute.authorProfileName && reroute.authorProfileName !== 'main'
+                                                    ? '/' + reroute.authorProfileName
+                                                    : '')
+                                        )
+                                    }
                                 >
                                     {t('rerouted')}
                                 </AssociationUserItem>
@@ -335,9 +342,16 @@ export const PostView = (props: Props) => {
                             {favorites.map((fav) => (
                                 <AssociationUserItem
                                     key={fav.ccfs}
-                                    ccid={fav.author}
-                                    date={fav.createdAt}
-                                    onClick={() => navigate('/profile/' + fav.author)}
+                                    association={fav}
+                                    onClick={() =>
+                                        navigate(
+                                            '/profile/' +
+                                                fav.author +
+                                                (fav.authorProfileName && fav.authorProfileName !== 'main'
+                                                    ? '/' + fav.authorProfileName
+                                                    : '')
+                                        )
+                                    }
                                 >
                                     {t('favorited')}
                                 </AssociationUserItem>
@@ -443,9 +457,17 @@ export const PostView = (props: Props) => {
                                         reactionMembers.map((member) => (
                                             <AssociationUserItem
                                                 key={member.ccfs}
-                                                ccid={member.author}
-                                                date={member.createdAt}
-                                                onClick={() => navigate('/profile/' + member.author)}
+                                                association={member}
+                                                onClick={() =>
+                                                    navigate(
+                                                        '/profile/' +
+                                                            member.author +
+                                                            (member.authorProfileName &&
+                                                            member.authorProfileName !== 'main'
+                                                                ? '/' + member.authorProfileName
+                                                                : '')
+                                                    )
+                                                }
                                             />
                                         ))}
                                 </>
@@ -464,19 +486,20 @@ export const PostView = (props: Props) => {
 // --- アソシエーション著者表示コンポーネント ---
 
 interface AssociationUserItemProps {
-    ccid: string
-    date: Date
+    association: Association<any>
     children?: React.ReactNode
     onClick?: () => void
 }
 
 const AssociationUserItem = (props: AssociationUserItemProps) => {
     const { client } = useClient()
-    const [user, setUser] = useState<User | null>(null)
+    // サブプロフィール(profileURI)やprofileOverrideの解決はAssociation側に任せる
+    const [profile, setProfile] = useState<ProfileSchema | null>(null)
 
     useEffect(() => {
-        client?.getUser(props.ccid).then((u) => setUser(u))
-    }, [props.ccid, client])
+        if (!client) return
+        props.association.loadAuthorProfile(client).then((p) => setProfile(p))
+    }, [props.association, client])
 
     return (
         <div
@@ -489,12 +512,18 @@ const AssociationUserItem = (props: AssociationUserItemProps) => {
             }}
             onClick={props.onClick}
         >
-            <Avatar ccid={props.ccid} src={user?.profile.avatar} style={{ width: '32px', height: '32px' }} />
+            <Avatar ccid={props.association.author} src={profile?.avatar} style={{ width: '32px', height: '32px' }} />
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 'bold' }}>{user?.profile.username || 'Anonymous'}</span>
+                <span style={{ fontWeight: 'bold' }}>{profile?.username || 'Anonymous'}</span>
                 {props.children && <span style={{ opacity: 0.7 }}>{props.children}</span>}
             </div>
-            <TimeDiff date={props.date instanceof Date ? props.date : new Date(props.date)} />
+            <TimeDiff
+                date={
+                    props.association.createdAt instanceof Date
+                        ? props.association.createdAt
+                        : new Date(props.association.createdAt)
+                }
+            />
         </div>
     )
 }

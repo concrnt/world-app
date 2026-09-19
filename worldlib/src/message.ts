@@ -84,12 +84,8 @@ export class Message<T> implements Document<T> {
         //  `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
         // associationはkeyを持たないので、行為者が明示したprofileURI(未指定=main)から拾う
         //  `cckv://${owner}/concrnt.world/profiles/${profile}`(author本人のものだけ信用する)
-        const profileURI = (res.value as any)?.profileURI
         const profileName =
-            key?.split('/')[5] ??
-            (typeof profileURI === 'string' && profileURI.startsWith(semantics.profiles(message.author) + '/')
-                ? profileURI.split('/')[5]
-                : undefined)
+            key?.split('/')[5] ?? semantics.profileNameFromURI(message.author, (res.value as any)?.profileURI)
         if (profileName) {
             message.authorProfileName = profileName
             const profile = await client.api
