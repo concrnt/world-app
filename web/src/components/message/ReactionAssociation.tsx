@@ -70,7 +70,13 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (reactionAuthor) {
-                            navigate('/profile/' + reactionAuthor.ccid)
+                            navigate(
+                                '/profile/' +
+                                    reactionAuthor.ccid +
+                                    (message.authorProfileName && message.authorProfileName !== 'main'
+                                        ? '/' + message.authorProfileName
+                                        : '')
+                            )
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -85,7 +91,13 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                         <div
                             onClick={(e) => {
                                 e.stopPropagation()
-                                navigate('/profile/' + targetMessage.author)
+                                navigate(
+                                    '/profile/' +
+                                        targetMessage.author +
+                                        (targetMessage.authorProfileName && targetMessage.authorProfileName !== 'main'
+                                            ? '/' + targetMessage.authorProfileName
+                                            : '')
+                                )
                             }}
                         >
                             <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />

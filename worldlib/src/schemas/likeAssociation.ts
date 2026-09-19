@@ -6,6 +6,7 @@
  */
 
 export interface LikeAssociationSchema {
+    profileURI?: string
     profileOverride?: {
         username?: string
         avatar?: string

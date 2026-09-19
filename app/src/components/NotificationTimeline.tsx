@@ -500,7 +500,12 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                                         )
                                     )
                                 } else if (item.authorUser) {
-                                    push(<ProfileView ccid={item.authorUser.ccid} />)
+                                    push(
+                                        <ProfileView
+                                            ccid={item.authorUser.ccid}
+                                            profileName={item.authorProfileName ?? undefined}
+                                        />
+                                    )
                                 }
                             }}
                         >
@@ -908,7 +913,12 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                                 )
                                             )
                                         } else if (item.authorUser) {
-                                            push(<ProfileView ccid={item.authorUser.ccid} />)
+                                            push(
+                                                <ProfileView
+                                                    ccid={item.authorUser.ccid}
+                                                    profileName={item.authorProfileName ?? undefined}
+                                                />
+                                            )
                                         }
                                     }}
                                 >

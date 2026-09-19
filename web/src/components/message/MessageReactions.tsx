@@ -171,11 +171,7 @@ export const MessageReactions = (props: Props) => {
                                 </div>
                                 <Divider />
                                 {reactionMembers[imageUrl]?.map((member) => (
-                                    <AssociationUserRow
-                                        key={member.ccfs}
-                                        author={member.author}
-                                        profileOverride={member.value.profileOverride}
-                                    />
+                                    <AssociationUserRow key={member.ccfs} association={member} />
                                 ))}
                             </div>
                         }

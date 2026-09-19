@@ -305,7 +305,8 @@
             "followers": "{{n}} Followers",
             "share": "Share",
             "copyLink": "Copy link",
-            "linkCopied": "Copied"
+            "linkCopied": "Copied",
+            "mainProfile": "Main profile"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -986,7 +987,8 @@
             "followers": "{{n}} Followers",
             "privateProfile": "This profile is private",
             "loginRequired": "You need to log in to request access",
-            "login": "Login"
+            "login": "Login",
+            "mainProfile": "Main profile"
         },
         "guestTimeline": {
             "privateTimeline": "This timeline is private",

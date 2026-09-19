@@ -495,7 +495,13 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                                             : '/activitypub/view/' + encodeURIComponent(link)
                                     )
                                 } else if (item.authorUser) {
-                                    navigate('/profile/' + item.authorUser.ccid)
+                                    navigate(
+                                        '/profile/' +
+                                            item.authorUser.ccid +
+                                            (item.authorProfileName && item.authorProfileName !== 'main'
+                                                ? '/' + item.authorProfileName
+                                                : '')
+                                    )
                                 }
                             }}
                         >
@@ -904,7 +910,13 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                                     : '/activitypub/view/' + encodeURIComponent(link)
                                             )
                                         } else if (item.authorUser) {
-                                            navigate('/profile/' + item.authorUser.ccid)
+                                            navigate(
+                                                '/profile/' +
+                                                    item.authorUser.ccid +
+                                                    (item.authorProfileName && item.authorProfileName !== 'main'
+                                                        ? '/' + item.authorProfileName
+                                                        : '')
+                                            )
                                         }
                                     }}
                                 >

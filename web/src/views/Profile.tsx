@@ -2,6 +2,7 @@ import { ReactNode, startTransition, Suspense, use, useEffect, useMemo, useState
 import { useTranslation } from 'react-i18next'
 import {
     Avatar,
+    ButtonBase,
     CCWallpaper,
     CfmRenderer,
     Confirm,
@@ -13,7 +14,8 @@ import {
     Divider,
     useTheme,
     ListItem,
-    useAnchor
+    useAnchor,
+    Tooltip
 } from '@concrnt/ui'
 import { View } from '../components/View'
 import { useClient } from '../contexts/Client'
@@ -38,6 +40,7 @@ import { MdLock, MdDns } from 'react-icons/md'
 import { useMediaViewer } from '../contexts/MediaViewer'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
     ccid: string
@@ -189,6 +192,7 @@ const Body = (props: BodyProps) => {
     const theme = useTheme()
 
     const navigation = useNavigation()
+    const navigate = useNavigate()
     const menuAnchor = useAnchor()
     const mediaViewer = useMediaViewer()
 
@@ -366,23 +370,54 @@ const Body = (props: BodyProps) => {
                                     )}
                                 </div>
                             </CCWallpaper>
-                            <Avatar
-                                ccid={props.ccid}
+                            <div
                                 style={{
-                                    width: `100px`,
-                                    height: `100px`,
                                     position: 'absolute',
                                     transform: 'translateY(-50%)',
                                     left: CssVar.space(2),
-                                    cursor: profile.value.avatar ? 'pointer' : undefined
+                                    width: '100px',
+                                    height: '100px'
                                 }}
-                                src={profile.value.avatar}
-                                onClick={() => {
-                                    const avatar = profile.value.avatar
-                                    if (!avatar) return
-                                    mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
-                                }}
-                            />
+                            >
+                                <Avatar
+                                    ccid={props.ccid}
+                                    style={{
+                                        width: `100px`,
+                                        height: `100px`,
+                                        cursor: profile.value.avatar ? 'pointer' : undefined
+                                    }}
+                                    src={profile.value.avatar}
+                                    onClick={() => {
+                                        const avatar = profile.value.avatar
+                                        if (!avatar) return
+                                        mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
+                                    }}
+                                />
+                                {props.profileName !== 'main' && (
+                                    // サブプロフィール表示中はメインプロフィールのアバターを右下に重ね、クリックでメインへ遷移する
+                                    <div style={{ position: 'absolute', right: '-6px', bottom: '-6px' }}>
+                                        <Tooltip content={<Text>{t('mainProfile')}</Text>}>
+                                            <ButtonBase
+                                                aria-label={t('mainProfile')}
+                                                style={{
+                                                    padding: 0,
+                                                    borderRadius: '6px',
+                                                    border: `2px solid ${CssVar.contentBackground}`,
+                                                    backgroundColor: CssVar.contentBackground,
+                                                    display: 'block'
+                                                }}
+                                                onClick={() => navigate('/profile/' + props.ccid)}
+                                            >
+                                                <Avatar
+                                                    ccid={props.ccid}
+                                                    src={props.user.profile.avatar}
+                                                    style={{ width: '32px', height: '32px' }}
+                                                />
+                                            </ButtonBase>
+                                        </Tooltip>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div
                             style={{
@@ -564,9 +599,11 @@ interface RestrictedBodyProps {
 }
 
 const RestrictedBody = (props: RestrictedBodyProps) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const { client } = useClient()
     const theme = useTheme()
     const navigation = useNavigation()
+    const navigate = useNavigate()
 
     const isMe = client.ccid === props.ccid
 
@@ -610,16 +647,47 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                         <div style={{ flex: 1 }} />
                     </div>
                 </CCWallpaper>
-                <Avatar
-                    ccid={props.ccid}
+                <div
                     style={{
-                        width: `100px`,
-                        height: `100px`,
                         position: 'absolute',
                         transform: 'translateY(-50%)',
-                        left: CssVar.space(2)
+                        left: CssVar.space(2),
+                        width: '100px',
+                        height: '100px'
                     }}
-                />
+                >
+                    <Avatar
+                        ccid={props.ccid}
+                        style={{
+                            width: `100px`,
+                            height: `100px`
+                        }}
+                    />
+                    {props.profileName !== 'main' && (
+                        // サブプロフィール表示中はメインプロフィールのアバターを右下に重ね、クリックでメインへ遷移する
+                        <div style={{ position: 'absolute', right: '-6px', bottom: '-6px' }}>
+                            <Tooltip content={<Text>{t('mainProfile')}</Text>}>
+                                <ButtonBase
+                                    aria-label={t('mainProfile')}
+                                    style={{
+                                        padding: 0,
+                                        borderRadius: '6px',
+                                        border: `2px solid ${CssVar.contentBackground}`,
+                                        backgroundColor: CssVar.contentBackground,
+                                        display: 'block'
+                                    }}
+                                    onClick={() => navigate('/profile/' + props.ccid)}
+                                >
+                                    <Avatar
+                                        ccid={props.ccid}
+                                        src={props.user.profile.avatar}
+                                        style={{ width: '32px', height: '32px' }}
+                                    />
+                                </ButtonBase>
+                            </Tooltip>
+                        </div>
+                    )}
+                </div>
             </div>
             <div
                 style={{

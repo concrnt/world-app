@@ -434,7 +434,10 @@ export const Composer = (props: Props) => {
                         schema: Schemas.replyAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            targetURI: newPostUri
+                            targetURI: newPostUri,
+                            // サブプロフィールからの時だけ明示(未指定=main)
+                            profileURI:
+                                selectedProfile !== 'main' ? semantics.profile(client.ccid, selectedProfile) : undefined
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: timestamp
@@ -477,7 +480,10 @@ export const Composer = (props: Props) => {
                         schema: Schemas.rerouteAssociation,
                         associate: props.targetMessage.uri,
                         value: {
-                            targetURI: newPostUri
+                            targetURI: newPostUri,
+                            // サブプロフィールからの時だけ明示(未指定=main)
+                            profileURI:
+                                selectedProfile !== 'main' ? semantics.profile(client.ccid, selectedProfile) : undefined
                         },
                         distributes: [activityTimeline, notifyTimeline],
                         createdAt: timestamp

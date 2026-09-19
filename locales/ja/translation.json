@@ -305,7 +305,8 @@
             "followers": "{{n}} フォロワー",
             "share": "シェア",
             "copyLink": "リンクをコピー",
-            "linkCopied": "コピーしました"
+            "linkCopied": "コピーしました",
+            "mainProfile": "メインプロフィール"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -985,7 +986,8 @@
             "followers": "{{n}} フォロワー",
             "privateProfile": "このプロフィールはプライベートです",
             "loginRequired": "閲覧をリクエストするにはログインが必要です",
-            "login": "ログイン"
+            "login": "ログイン",
+            "mainProfile": "メインプロフィール"
         },
         "guestTimeline": {
             "privateTimeline": "このタイムラインはプライベートです",

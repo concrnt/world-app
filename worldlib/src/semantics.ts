@@ -5,6 +5,12 @@ export const semantics = {
     emojipacks: (owner: string) => `cckv://${owner}/concrnt.world/emojipacks`,
     profile: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}`,
     profiles: (owner: string) => `cckv://${owner}/concrnt.world/profiles`,
+    // profileURI(`cckv://${owner}/concrnt.world/profiles/${profile}`)からプロフィール名を取り出す。
+    // owner本人のprofiles配下でなければundefined(他人のURIは信用しない)
+    profileNameFromURI: (owner: string, uri: unknown): string | undefined =>
+        typeof uri === 'string' && uri.startsWith(`cckv://${owner}/concrnt.world/profiles/`)
+            ? uri.split('/')[5] || undefined
+            : undefined,
     lists: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists`,
     list: (owner: string, profile: string, listId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/lists/${listId}`,
