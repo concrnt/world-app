@@ -125,20 +125,24 @@ export const Activitypub = () => {
                                     e.params.entities.includes(res.serviceAccountId)
                             ) ?? false
                         )
-                        // 旧クライアントが作ったinboxはuserTimelineスキーマで名前を持てないため、
-                        // communityTimelineスキーマに上書き修復する(ポリシーは維持)
-                        if (doc.schema === Schemas.communityTimeline && doc.value?.name) {
+                        // 旧クライアントが作ったinboxはuserTimelineスキーマで名前を持てず、その後の
+                        // communityTimelineスキーマはexplorer検索(community全件index)に個人inboxが並ぶため、
+                        // apInboxTimelineスキーマに上書き修復する(名前があればvalue、ポリシーは維持)
+                        if (doc.schema === Schemas.apInboxTimeline && doc.value?.name) {
                             setInboxPolicyBroken(broken)
                             return
                         }
-                        console.log('Inbox has no metadata. repairing...')
+                        console.log('Inbox schema is outdated or has no metadata. repairing...')
                         client.api
                             .commit({
                                 kind: 'record' as const,
                                 key: inboxUri,
                                 author: client.ccid,
-                                schema: Schemas.communityTimeline,
-                                value: inboxValue,
+                                schema: Schemas.apInboxTimeline,
+                                value:
+                                    doc.schema === Schemas.communityTimeline && doc.value?.name
+                                        ? doc.value
+                                        : inboxValue,
                                 createdAt: new Date(),
                                 policy: doc.policy ?? defaultPolicy
                             })
@@ -157,7 +161,7 @@ export const Activitypub = () => {
                                 kind: 'record' as const,
                                 key: inboxUri,
                                 author: client.ccid,
-                                schema: Schemas.communityTimeline,
+                                schema: Schemas.apInboxTimeline,
                                 value: inboxValue,
                                 createdAt: new Date(),
                                 policy: defaultPolicy
@@ -202,14 +206,15 @@ export const Activitypub = () => {
             const entries = (doc?.policy?.entries ?? []).filter((e: PolicyEntry) => e.url !== allowWriters)
             entries.push({ url: allowWriters, params: { entities: [info.serviceAccountId] } })
             const value =
-                doc?.schema === Schemas.communityTimeline && doc.value?.name
+                (doc?.schema === Schemas.apInboxTimeline || doc?.schema === Schemas.communityTimeline) &&
+                doc.value?.name
                     ? doc.value
                     : { name: 'ActivityPub', shortname: 'activitypub', description: 'ActivityPub home stream' }
             await client.api.commit({
                 kind: 'record' as const,
                 key: inboxUri,
                 author: client.ccid,
-                schema: Schemas.communityTimeline,
+                schema: Schemas.apInboxTimeline,
                 value,
                 createdAt: new Date(),
                 policy: { entries }

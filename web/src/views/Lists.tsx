@@ -377,7 +377,11 @@ const ListCommunities = (props: { list: ListType; emptyLabel: string; unavailabl
     const [entries] = useSubscribe(props.list.entries)
     const communityEntries = entries.filter((entry) => {
         const value = entry.value
-        return typeof value?.href === 'string' && value.href.length > 0 && value.schema === Schemas.communityTimeline
+        return (
+            typeof value?.href === 'string' &&
+            value.href.length > 0 &&
+            (value.schema === Schemas.communityTimeline || value.schema === Schemas.apInboxTimeline)
+        )
     })
 
     if (communityEntries.length === 0) {
@@ -430,7 +434,7 @@ const CommunityChipInner = (props: {
 
     // 保存済みの参照先が後から別スキーマへ変わっていても、コミュニティ以外は表示しない。
     if (!timeline) return <CommunityChipLabel label={`${props.unavailableLabel}: ${props.href}`} />
-    if (timeline.schema !== Schemas.communityTimeline) return null
+    if (timeline.schema !== Schemas.communityTimeline && timeline.schema !== Schemas.apInboxTimeline) return null
 
     return <CommunityChipLabel label={timeline.shortname?.trim() || timeline.name} />
 }

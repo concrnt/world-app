@@ -308,8 +308,9 @@ const ResolvedTimelineList = (props: {
     const { client } = useClient()
     const { push } = useStack()
 
-    const targetSchema = props.filter === 'community' ? Schemas.communityTimeline : Schemas.userTimeline
-    const filtered = props.entries.filter((entry) => entry.value?.href && entry.value?.schema === targetSchema)
+    const targetSchemas: string[] =
+        props.filter === 'community' ? [Schemas.communityTimeline, Schemas.apInboxTimeline] : [Schemas.userTimeline]
+    const filtered = props.entries.filter((entry) => entry.value?.href && targetSchemas.includes(entry.value?.schema))
 
     if (filtered.length === 0) {
         return <Text style={{ opacity: 0.6 }}>{t('noTimelines')}</Text>
