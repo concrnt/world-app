@@ -14,6 +14,7 @@ import { ThemeSettingsView } from './ThemeSettings'
 import { GeneralSettingsView } from './GeneralSettings'
 import { NotificationSettingsView } from './NotificationSettings'
 import { MediaSettingsView } from './MediaSettings'
+import { InventoryView } from './Inventory'
 import { MigrationSettingsView } from './MigrationSettings'
 import { V1ImportSettingsView } from './V1ImportSettings'
 import { ListsView } from './Lists'
@@ -21,6 +22,7 @@ import {
     MdBadge,
     MdChevronRight,
     MdEmojiEmotions,
+    MdInventory2,
     MdList,
     MdLuggage,
     MdNotifications,
@@ -149,6 +151,13 @@ export const SettingsView = () => {
                             {t('media')}
                         </ListItem>
                     )}
+                    <ListItem
+                        startIcon={<MdInventory2 size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<InventoryView />)}
+                    >
+                        {t('inventory')}
+                    </ListItem>
                     <ListItem
                         startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}

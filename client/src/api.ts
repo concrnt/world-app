@@ -49,11 +49,21 @@ export interface ApiResponse<T> {
     prev?: string
 }
 
+// orderby=keyのqueryにだけ現れる、Documentを持たない中間キーのエントリ (CIP-5 §3.2.1)
+export interface KeyOnlyItem {
+    cckv: string
+}
+
+// orderby=keyのqueryの1行。SignedDocumentか中間キー。webのtsconfigはstrictでないため
+// `item.document === undefined` では絞り込めず、判別は `'document' in item` で行う
+export type QueryItem = SignedDocument | KeyOnlyItem
+
 // query/associations/acknowledgesエンドポイントのページング封筒 (CIP-5 §3.2)。
-// prev/nextは日時カーソル文字列。Dateを経由するとms精度に丸まって境界を
-// 取りこぼすため、文字列のまま次のsince/untilへエコーバックする。
-export interface QueryResult {
-    items: SignedDocument[]
+// prev/nextはソートキーのカーソル文字列(createdAt順なら日時、key順ならcckv)。
+// Dateを経由するとms精度に丸まって境界を取りこぼすため、文字列のまま次の
+// since/untilへエコーバックする。
+export interface QueryResult<T = SignedDocument> {
+    items: T[]
     prev: string | null
     next: string | null
 }
@@ -685,6 +695,22 @@ export class Api {
         return await this.fetchWithCredential<Record<string, number>>(fqdn, endpoint, {})
     }
 
+    // orderby=keyはparent直下をcckv順に列挙し、Documentを持たない中間キーも
+    // {cckv}だけの行として返す (CIP-5 §3.2.1)。その場合のsince/untilはcckv文字列
+    async query(
+        query: {
+            parent: string
+            prefix?: undefined
+            schema?: string
+            since?: string
+            until?: string
+            limit?: string | number
+            order?: string
+            orderby: 'key'
+        },
+        domain?: string,
+        opts?: { cache?: boolean }
+    ): Promise<QueryResult<QueryItem>>
     async query(
         query: {
             prefix?: string
@@ -694,10 +720,25 @@ export class Api {
             until?: Date | string
             limit?: string | number
             order?: string
+            orderby?: 'createdAt'
         },
         domain?: string,
         opts?: { cache?: boolean }
-    ): Promise<QueryResult> {
+    ): Promise<QueryResult>
+    async query(
+        query: {
+            prefix?: string
+            parent?: string
+            schema?: string
+            since?: Date | string
+            until?: Date | string
+            limit?: string | number
+            order?: string
+            orderby?: 'createdAt' | 'key'
+        },
+        domain?: string,
+        opts?: { cache?: boolean }
+    ): Promise<QueryResult<QueryItem>> {
         let fqdn = domain
         const key = query.prefix ?? query.parent
         if (!key) {
@@ -721,23 +762,26 @@ export class Api {
             since: query.since instanceof Date ? query.since.toISOString() : query.since,
             until: query.until instanceof Date ? query.until.toISOString() : query.until,
             limit: query.limit,
-            order: query.order
+            order: query.order,
+            orderby: query.orderby
         })
 
         // ページング付きクエリはキャッシュキーが安定しないため対象外
         if (opts?.cache && !query.since && !query.until) {
             // v2: レスポンスが封筒形式になったため旧素配列キャッシュと分離
-            const cacheKey = `query2:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}`
-            return await this.fetchWithCache<QueryResult>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
+            const cacheKey = `query2:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}:${query.orderby ?? ''}`
+            return await this.fetchWithCache<QueryResult<QueryItem>>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
         }
 
-        const resource = this.fetchWithCredential<QueryResult>(fqdn, endpoint, {})
+        const resource = this.fetchWithCredential<QueryResult<QueryItem>>(fqdn, endpoint, {})
 
         return resource
     }
 
     // 全ページを順に辿って全件取得する。2ページ目以降の失敗は取得済み分を返す
-    // (1ページ目のキャッシュフォールバックによるオフライン動作を保つため)
+    // (1ページ目のキャッシュフォールバックによるオフライン動作を保つため)。
+    // createdAt順専用: ccfsで重複排除するため、ccfsを持たない中間キー行が混ざる
+    // orderby=keyには使えない(その場合はqueryをnextで直接辿る)
     async queryAll(
         query: {
             prefix?: string

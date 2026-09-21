@@ -33,6 +33,7 @@ import { ThemeSettingsView } from './views/ThemeSettings'
 import { GeneralSettingsView } from './views/GeneralSettings'
 import { LanguageSettingsView } from './views/LanguageSettings'
 import { MediaSettingsView } from './views/MediaSettings'
+import { InventoryView } from './views/Inventory'
 import { MigrationSettingsView } from './views/MigrationSettings'
 import { V1ImportSettingsView } from './views/V1ImportSettings'
 import { EmojiSettingsView } from './views/EmojiSettings'
@@ -298,6 +299,14 @@ const AuthedRoutes = () => (
                                                                                 element={
                                                                                     <SettingsBackProvider>
                                                                                         <MediaSettingsView />
+                                                                                    </SettingsBackProvider>
+                                                                                }
+                                                                            />
+                                                                            <Route
+                                                                                path="settings/inventory"
+                                                                                element={
+                                                                                    <SettingsBackProvider>
+                                                                                        <InventoryView />
                                                                                     </SettingsBackProvider>
                                                                                 }
                                                                             />

@@ -42,6 +42,7 @@
             "emoji": "絵文字",
             "lists": "リスト",
             "media": "メディア",
+            "inventory": "インベントリ",
             "notifications": "通知",
             "migration": "引っ越し",
             "v1import": "v1からの移行",
@@ -189,6 +190,24 @@
             "delete": "削除",
             "deleteConfirmTitle": "ファイルを削除",
             "deleteConfirmDescription": "このファイルを削除してもよろしいですか？メディアサーバーから完全に削除され、このファイルを参照している投稿では表示されなくなります。"
+        },
+        "inventory": {
+            "title": "インベントリ",
+            "root": "ルート",
+            "noDocument": "このキーにはドキュメントがありません",
+            "loadFailed": "読み込みに失敗しました: {{error}}",
+            "children": "子キー",
+            "empty": "子キーはありません",
+            "loadMore": "さらに読み込む",
+            "schema": "スキーマ",
+            "kind": "種別",
+            "author": "作者",
+            "createdAt": "作成日時",
+            "openTimeline": "タイムラインを開く",
+            "openProfile": "プロフィールを開く",
+            "openPost": "投稿を開く",
+            "openList": "リストを開く",
+            "document": "ドキュメント"
         },
         "emojiSettings": {
             "title": "絵文字",

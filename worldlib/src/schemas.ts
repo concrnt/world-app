@@ -28,6 +28,7 @@ export const Schemas = {
 
     userTimeline: 'https://schema.concrnt.world/t/user.json',
     communityTimeline: 'https://schema.concrnt.world/t/community.json',
+    subprofileTimeline: 'https://schema.concrnt.world/t/subprofile.json',
 
     list: 'https://schema.concrnt.world/s/list.json',
 
