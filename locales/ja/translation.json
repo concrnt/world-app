@@ -708,12 +708,20 @@
         "searchExplorer": {
             "communities": "コミュニティ",
             "users": "ユーザー",
-            "searchCommunities": "コミュニティを検索...",
-            "searchUsers": "ユーザーを検索...",
             "loading": "読み込み中...",
             "searchServiceUnavailable": "検索サービスに接続できませんでした",
             "noCommunitiesFound": "該当するコミュニティが見つかりませんでした",
-            "noUsersFound": "該当するユーザーが見つかりませんでした"
+            "noUsersFound": "該当するユーザーが見つかりませんでした",
+            "posts": "投稿",
+            "searchPlaceholder": "投稿・ユーザー・コミュニティを検索...",
+            "newCommunities": "新着コミュニティ",
+            "activeCommunities": "アクティブなコミュニティ",
+            "newUsers": "新着ユーザー",
+            "sortRelevance": "関連度",
+            "sortNewest": "新着",
+            "sortActive": "アクティブ",
+            "noPostsFound": "該当する投稿が見つかりませんでした",
+            "loadMore": "もっと見る"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",

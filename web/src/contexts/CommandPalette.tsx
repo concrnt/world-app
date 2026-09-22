@@ -52,11 +52,13 @@ export const CommandPaletteProvider = (props: Props) => {
         if (!query) return
         let cancelled = false
         const timer = setTimeout(() => {
-            Promise.all([fetchSearch('communities', query), fetchSearch('users', query)]).then(([c, u]) => {
-                if (cancelled) return
-                setResults({ communities: c as CommunityHit[] | null, users: u as UserHit[] | null })
-                setSelectedIndex(0)
-            })
+            Promise.all([fetchSearch('communities', { q: query }), fetchSearch('users', { q: query })]).then(
+                ([c, u]) => {
+                    if (cancelled) return
+                    setResults({ communities: c?.hits ?? null, users: u?.hits ?? null })
+                    setSelectedIndex(0)
+                }
+            )
         }, 200)
         return () => {
             cancelled = true

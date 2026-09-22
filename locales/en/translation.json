@@ -709,12 +709,20 @@
         "searchExplorer": {
             "communities": "Communities",
             "users": "Users",
-            "searchCommunities": "Search communities...",
-            "searchUsers": "Search users...",
             "loading": "Loading...",
             "searchServiceUnavailable": "Could not connect to the search service",
             "noCommunitiesFound": "No matching communities found",
-            "noUsersFound": "No matching users found"
+            "noUsersFound": "No matching users found",
+            "posts": "Posts",
+            "searchPlaceholder": "Search posts, users, communities...",
+            "newCommunities": "New communities",
+            "activeCommunities": "Active communities",
+            "newUsers": "New users",
+            "sortRelevance": "Relevance",
+            "sortNewest": "Newest",
+            "sortActive": "Active",
+            "noPostsFound": "No matching posts found",
+            "loadMore": "Load more"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",
