@@ -208,7 +208,9 @@ const SubItems = (props: { list: List }) => {
     const shown = entries.filter(
         (entry) =>
             entry.value?.href &&
-            (entry.value.schema === Schemas.communityTimeline || entry.value.schema === Schemas.userTimeline)
+            (entry.value.schema === Schemas.communityTimeline ||
+                entry.value.schema === Schemas.apInboxTimeline ||
+                entry.value.schema === Schemas.userTimeline)
     )
 
     return (

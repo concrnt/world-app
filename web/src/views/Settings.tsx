@@ -10,6 +10,7 @@ import {
     MdBadge,
     MdChevronRight,
     MdEmojiEmotions,
+    MdInventory2,
     MdList,
     MdLuggage,
     MdNotifications,
@@ -137,6 +138,13 @@ export const SettingsView = () => {
                             {t('media')}
                         </ListItem>
                     )}
+                    <ListItem
+                        startIcon={<MdInventory2 size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/inventory')}
+                    >
+                        {t('inventory')}
+                    </ListItem>
                     <ListItem
                         startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}

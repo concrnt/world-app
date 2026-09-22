@@ -42,6 +42,7 @@
             "emoji": "絵文字",
             "lists": "リスト",
             "media": "メディア",
+            "inventory": "インベントリ",
             "notifications": "通知",
             "migration": "引っ越し",
             "v1import": "v1からの移行",
@@ -190,6 +191,24 @@
             "deleteConfirmTitle": "ファイルを削除",
             "deleteConfirmDescription": "このファイルを削除してもよろしいですか？メディアサーバーから完全に削除され、このファイルを参照している投稿では表示されなくなります。"
         },
+        "inventory": {
+            "title": "インベントリ",
+            "root": "ルート",
+            "noDocument": "このキーにはドキュメントがありません",
+            "loadFailed": "読み込みに失敗しました: {{error}}",
+            "children": "子キー",
+            "empty": "子キーはありません",
+            "loadMore": "さらに読み込む",
+            "schema": "スキーマ",
+            "kind": "種別",
+            "author": "作者",
+            "createdAt": "作成日時",
+            "openTimeline": "タイムラインを開く",
+            "openProfile": "プロフィールを開く",
+            "openPost": "投稿を開く",
+            "openList": "リストを開く",
+            "document": "ドキュメント"
+        },
         "emojiSettings": {
             "title": "絵文字",
             "packages": "絵文字パッケージ",
@@ -306,7 +325,9 @@
             "share": "シェア",
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
-            "mainProfile": "メインプロフィール"
+            "mainProfile": "メインプロフィール",
+            "mediaViewList": "リスト表示",
+            "mediaViewGrid": "グリッド表示"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -519,6 +540,9 @@
             "flagHard": "ハード",
             "flagCustomPlaceholder": "自由に記述できます"
         },
+        "mediaGridTimeline": {
+            "noMedia": "メディアはまだありません"
+        },
         "mediaGallery": {
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",
@@ -689,12 +713,21 @@
         "searchExplorer": {
             "communities": "コミュニティ",
             "users": "ユーザー",
-            "searchCommunities": "コミュニティを検索...",
-            "searchUsers": "ユーザーを検索...",
             "loading": "読み込み中...",
             "searchServiceUnavailable": "検索サービスに接続できませんでした",
             "noCommunitiesFound": "該当するコミュニティが見つかりませんでした",
-            "noUsersFound": "該当するユーザーが見つかりませんでした"
+            "noUsersFound": "該当するユーザーが見つかりませんでした",
+            "posts": "投稿",
+            "searchPlaceholder": "投稿・ユーザー・コミュニティを検索...",
+            "newCommunities": "新着コミュニティ",
+            "activeCommunities": "アクティブなコミュニティ",
+            "newUsers": "新着ユーザー",
+            "sortRelevance": "関連度",
+            "sortNewest": "新着",
+            "sortActive": "アクティブ",
+            "noPostsFound": "該当する投稿が見つかりませんでした",
+            "loadMore": "もっと見る",
+            "clearSearch": "検索をクリア"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",
@@ -987,7 +1020,9 @@
             "privateProfile": "このプロフィールはプライベートです",
             "loginRequired": "閲覧をリクエストするにはログインが必要です",
             "login": "ログイン",
-            "mainProfile": "メインプロフィール"
+            "mainProfile": "メインプロフィール",
+            "mediaViewList": "リスト表示",
+            "mediaViewGrid": "グリッド表示"
         },
         "guestTimeline": {
             "privateTimeline": "このタイムラインはプライベートです",

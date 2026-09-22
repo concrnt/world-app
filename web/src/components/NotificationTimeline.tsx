@@ -5,6 +5,7 @@ import {
     useEffect,
     useImperativeHandle,
     useLayoutEffect,
+    useReducer,
     useRef,
     useState
 } from 'react'
@@ -23,6 +24,7 @@ import {
     ReadAccessRequestAssociationSchema
 } from '@concrnt/worldlib'
 import { MessageContainer } from './message'
+import { QueryTimelineContext } from './QueryTimeline'
 import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
@@ -396,9 +398,7 @@ export const NotificationTimeline = (props: Props) => {
                                 {n.type === 'bsky-follow' && <BskyFollowNotification item={n.items[0]} />}
                                 {n.type === 'readaccess' && <ReadAccessRequestNotification item={n.items[0]} />}
                                 {n.type === 'normal' && n.href && (
-                                    <Suspense fallback={<MessageSkeleton />}>
-                                        <MessageContainer uri={n.href} source={n.source} />
-                                    </Suspense>
+                                    <NormalNotification href={n.href} source={n.source} />
                                 )}
                             </div>
                         </ErrorBoundary>
@@ -967,5 +967,29 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                 {!target && <div style={{ opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>}
             </div>
         </div>
+    )
+}
+
+// Reply / Mention 等の単発通知。内側の本文メッセージにFooter(fav/リアクション)が出る。
+// 通知欄はQueryTimelineの外なので、リアクション時のqt.update(メッセージキャッシュ破棄)が素通りして
+// useOptimisticのrevertで表示が巻き戻る。Post.tsxと同様にここで破棄+再レンダーを肩代わりし、
+// transition内でネストしたMessageContainerが新鮮な値を取り直せるようにする
+const NormalNotification = (props: { href: string; source?: string }) => {
+    const { client } = useClient()
+    const [, bumpRevision] = useReducer((x: number) => x + 1, 0)
+    const refreshMessageCache = useCallback(
+        (href: string) => {
+            client.invalidateMessage(href)
+            bumpRevision()
+        },
+        [client]
+    )
+
+    return (
+        <QueryTimelineContext.Provider value={{ update: refreshMessageCache }}>
+            <Suspense fallback={<MessageSkeleton />}>
+                <MessageContainer uri={props.href} source={props.source} />
+            </Suspense>
+        </QueryTimelineContext.Provider>
     )
 }

@@ -42,6 +42,7 @@
             "emoji": "Emoji",
             "lists": "Lists",
             "media": "Media",
+            "inventory": "Inventory",
             "notifications": "Notifications",
             "migration": "Migration",
             "v1import": "Import from v1",
@@ -190,6 +191,24 @@
             "deleteConfirmTitle": "Delete file",
             "deleteConfirmDescription": "Are you sure you want to delete this file? It will be permanently deleted from the media server, and posts referencing it will no longer display it."
         },
+        "inventory": {
+            "title": "Inventory",
+            "root": "Root",
+            "noDocument": "No document at this key",
+            "loadFailed": "Failed to load: {{error}}",
+            "children": "Children",
+            "empty": "No child keys",
+            "loadMore": "Load more",
+            "schema": "Schema",
+            "kind": "Kind",
+            "author": "Author",
+            "createdAt": "Created at",
+            "openTimeline": "Open timeline",
+            "openProfile": "Open profile",
+            "openPost": "Open post",
+            "openList": "Open list",
+            "document": "Document"
+        },
         "emojiSettings": {
             "title": "Emoji",
             "packages": "Emoji Packages",
@@ -306,7 +325,9 @@
             "share": "Share",
             "copyLink": "Copy link",
             "linkCopied": "Copied",
-            "mainProfile": "Main profile"
+            "mainProfile": "Main profile",
+            "mediaViewList": "List view",
+            "mediaViewGrid": "Grid view"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -520,6 +541,9 @@
             "flagHard": "Hard Violence",
             "flagCustomPlaceholder": "You can write freely"
         },
+        "mediaGridTimeline": {
+            "noMedia": "No media yet"
+        },
         "mediaGallery": {
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
@@ -690,12 +714,21 @@
         "searchExplorer": {
             "communities": "Communities",
             "users": "Users",
-            "searchCommunities": "Search communities...",
-            "searchUsers": "Search users...",
             "loading": "Loading...",
             "searchServiceUnavailable": "Could not connect to the search service",
             "noCommunitiesFound": "No matching communities found",
-            "noUsersFound": "No matching users found"
+            "noUsersFound": "No matching users found",
+            "posts": "Posts",
+            "searchPlaceholder": "Search posts, users, communities...",
+            "newCommunities": "New communities",
+            "activeCommunities": "Active communities",
+            "newUsers": "New users",
+            "sortRelevance": "Relevance",
+            "sortNewest": "Newest",
+            "sortActive": "Active",
+            "noPostsFound": "No matching posts found",
+            "loadMore": "Load more",
+            "clearSearch": "Clear search"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",
@@ -988,7 +1021,9 @@
             "privateProfile": "This profile is private",
             "loginRequired": "You need to log in to request access",
             "login": "Login",
-            "mainProfile": "Main profile"
+            "mainProfile": "Main profile",
+            "mediaViewList": "List view",
+            "mediaViewGrid": "Grid view"
         },
         "guestTimeline": {
             "privateTimeline": "This timeline is private",

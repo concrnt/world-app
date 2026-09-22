@@ -439,8 +439,9 @@ const TimelineEditor = (props: EditorProps) => {
 
             <Button onClick={handleSave}>Save</Button>
 
-            {/* homeタイムライン等を誤って消せないよう、削除はコミュニティタイムラインに限定する */}
-            {props.timeline.schema === Schemas.communityTimeline && (
+            {/* homeタイムライン等を誤って消せないよう、削除はコミュニティとActivityPub inboxのタイムラインに限定する */}
+            {(props.timeline.schema === Schemas.communityTimeline ||
+                props.timeline.schema === Schemas.apInboxTimeline) && (
                 <Button variant="outlined" onClick={() => setDeleteConfirmOpen(true)}>
                     {t('deleteTimeline')}
                 </Button>

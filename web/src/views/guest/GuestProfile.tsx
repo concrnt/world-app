@@ -11,19 +11,22 @@ import {
     Tab,
     Divider,
     useTheme,
-    Tooltip
+    Tooltip,
+    IconButton
 } from '@concrnt/ui'
 import { View } from '../../components/View'
 import { useClient } from '../../contexts/Client'
 import { useNavigate } from 'react-router-dom'
 
 import { QueryTimeline } from '../../components/QueryTimeline'
+import { MediaGridTimeline } from '../../components/MediaGridTimeline'
+import { usePersistent } from '../../hooks/usePersistent'
 import { Document, PermissionError } from '@concrnt/client'
 import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
 import { ProfileName } from '../../components/ProfileName'
-import { MdLock, MdDns } from 'react-icons/md'
+import { MdLock, MdDns, MdGridView, MdViewAgenda } from 'react-icons/md'
 import { useMediaViewer } from '../../contexts/MediaViewer'
 import { useMediaProxy } from '../../contexts/MediaProxy'
 
@@ -121,6 +124,8 @@ const Body = (props: BodyProps) => {
     const mediaViewer = useMediaViewer()
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
+    // Mediaタブの表示形式。端末ごとに記憶する
+    const [mediaView, setMediaView] = usePersistent<'list' | 'grid'>('profile-media-view', 'grid')
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -144,165 +149,195 @@ const Body = (props: BodyProps) => {
         }
     }, [props.ccid, props.profileName, tab])
 
+    // グリッド/リスト両方のタイムラインで同じヘッダーを使うため持ち上げる
+    const header = (
+        <>
+            <div
+                style={{
+                    position: 'relative'
+                }}
+            >
+                <CCWallpaper
+                    src={getImageURL(profile.value.banner)}
+                    style={{
+                        paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                        height: '150px'
+                    }}
+                />
+                <div
+                    style={{
+                        position: 'absolute',
+                        transform: 'translateY(-50%)',
+                        left: CssVar.space(2),
+                        width: '100px',
+                        height: '100px'
+                    }}
+                >
+                    <Avatar
+                        ccid={props.ccid}
+                        style={{
+                            width: `100px`,
+                            height: `100px`,
+                            cursor: profile.value.avatar ? 'pointer' : undefined
+                        }}
+                        src={profile.value.avatar}
+                        onClick={() => {
+                            const avatar = profile.value.avatar
+                            if (!avatar) return
+                            mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
+                        }}
+                    />
+                    {props.profileName !== 'main' && (
+                        // サブプロフィール表示中はメインプロフィールのアバターを右下に重ね、クリックでメインへ遷移する
+                        <div style={{ position: 'absolute', right: '-6px', bottom: '-6px' }}>
+                            <Tooltip content={<Text>{t('mainProfile')}</Text>}>
+                                <ButtonBase
+                                    aria-label={t('mainProfile')}
+                                    style={{
+                                        padding: 0,
+                                        borderRadius: '6px',
+                                        border: `2px solid ${CssVar.contentBackground}`,
+                                        backgroundColor: CssVar.contentBackground,
+                                        display: 'block'
+                                    }}
+                                    onClick={() => navigate('/profile/' + props.ccid)}
+                                >
+                                    <Avatar
+                                        ccid={props.ccid}
+                                        src={props.user.profile.avatar}
+                                        style={{ width: '32px', height: '32px' }}
+                                    />
+                                </ButtonBase>
+                            </Tooltip>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: CssVar.space(2),
+                    padding: `0 ${CssVar.space(2)}`
+                }}
+            >
+                <div
+                    style={{
+                        minHeight: `50px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end'
+                    }}
+                >
+                    <Button variant="outlined" onClick={() => navigate('/login')}>
+                        {t('loginToFollow')}
+                    </Button>
+                </div>
+                <div>
+                    <Text
+                        variant="h6"
+                        style={{
+                            fontWeight: 'bold',
+                            fontSize: '1.2rem'
+                        }}
+                    >
+                        <ProfileName document={profile} />
+                    </Text>
+                    <Text>{props.user?.alias ? props.user.alias : null}</Text>
+                </div>
+                <div>
+                    <Text variant="caption">{props.ccid}</Text>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(0.5) }}>
+                    <MdDns size={14} style={{ opacity: 0.7 }} />
+                    <Text variant="caption">{props.user.domain}</Text>
+                </div>
+                <div style={{ wordBreak: 'break-word' }}>
+                    {profile.value.description ? (
+                        <CfmRenderer messagebody={profile.value.description} emojiDict={{}} />
+                    ) : (
+                        <Text>{t('noDescription')}</Text>
+                    )}
+                </div>
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: CssVar.space(2)
+                    }}
+                >
+                    <Text>{t('following', { n: stats.acknowledging })}</Text>
+                    <Text>{t('followers', { n: stats.acknowledged })}</Text>
+                </div>
+            </div>
+            <Tabs>
+                <Tab
+                    selected={tab === 'posts'}
+                    onClick={() => setTab('posts')}
+                    groupId="profile-tabs"
+                    style={{
+                        color: CssVar.contentText
+                    }}
+                >
+                    Posts
+                </Tab>
+                <Tab
+                    selected={tab === 'media'}
+                    onClick={() => setTab('media')}
+                    groupId="profile-tabs"
+                    style={{
+                        color: CssVar.contentText
+                    }}
+                >
+                    Media
+                </Tab>
+                <Tab
+                    selected={tab === 'activity'}
+                    onClick={() => setTab('activity')}
+                    groupId="profile-tabs"
+                    style={{
+                        color: CssVar.contentText
+                    }}
+                >
+                    Activity
+                </Tab>
+            </Tabs>
+            {tab === 'media' && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: CssVar.space(1),
+                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`
+                    }}
+                >
+                    <IconButton
+                        title={t('mediaViewList')}
+                        onClick={() => setMediaView('list')}
+                        style={{ opacity: mediaView === 'list' ? 1 : 0.5 }}
+                    >
+                        <MdViewAgenda size={20} />
+                    </IconButton>
+                    <IconButton
+                        title={t('mediaViewGrid')}
+                        onClick={() => setMediaView('grid')}
+                        style={{ opacity: mediaView === 'grid' ? 1 : 0.5 }}
+                    >
+                        <MdGridView size={20} />
+                    </IconButton>
+                </div>
+            )}
+            <Divider />
+        </>
+    )
+
     return (
-        <QueryTimeline
-            prefix={target.prefix}
-            query={target.query}
-            header={
-                <>
-                    <div
-                        style={{
-                            position: 'relative'
-                        }}
-                    >
-                        <CCWallpaper
-                            src={getImageURL(profile.value.banner)}
-                            style={{
-                                paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                                height: '150px'
-                            }}
-                        />
-                        <div
-                            style={{
-                                position: 'absolute',
-                                transform: 'translateY(-50%)',
-                                left: CssVar.space(2),
-                                width: '100px',
-                                height: '100px'
-                            }}
-                        >
-                            <Avatar
-                                ccid={props.ccid}
-                                style={{
-                                    width: `100px`,
-                                    height: `100px`,
-                                    cursor: profile.value.avatar ? 'pointer' : undefined
-                                }}
-                                src={profile.value.avatar}
-                                onClick={() => {
-                                    const avatar = profile.value.avatar
-                                    if (!avatar) return
-                                    mediaViewer.open([{ mediaURL: avatar, mediaType: 'image/*' }])
-                                }}
-                            />
-                            {props.profileName !== 'main' && (
-                                // サブプロフィール表示中はメインプロフィールのアバターを右下に重ね、クリックでメインへ遷移する
-                                <div style={{ position: 'absolute', right: '-6px', bottom: '-6px' }}>
-                                    <Tooltip content={<Text>{t('mainProfile')}</Text>}>
-                                        <ButtonBase
-                                            aria-label={t('mainProfile')}
-                                            style={{
-                                                padding: 0,
-                                                borderRadius: '6px',
-                                                border: `2px solid ${CssVar.contentBackground}`,
-                                                backgroundColor: CssVar.contentBackground,
-                                                display: 'block'
-                                            }}
-                                            onClick={() => navigate('/profile/' + props.ccid)}
-                                        >
-                                            <Avatar
-                                                ccid={props.ccid}
-                                                src={props.user.profile.avatar}
-                                                style={{ width: '32px', height: '32px' }}
-                                            />
-                                        </ButtonBase>
-                                    </Tooltip>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: CssVar.space(2),
-                            padding: `0 ${CssVar.space(2)}`
-                        }}
-                    >
-                        <div
-                            style={{
-                                minHeight: `50px`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end'
-                            }}
-                        >
-                            <Button variant="outlined" onClick={() => navigate('/login')}>
-                                {t('loginToFollow')}
-                            </Button>
-                        </div>
-                        <div>
-                            <Text
-                                variant="h6"
-                                style={{
-                                    fontWeight: 'bold',
-                                    fontSize: '1.2rem'
-                                }}
-                            >
-                                <ProfileName document={profile} />
-                            </Text>
-                            <Text>{props.user?.alias ? props.user.alias : null}</Text>
-                        </div>
-                        <div>
-                            <Text variant="caption">{props.ccid}</Text>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(0.5) }}>
-                            <MdDns size={14} style={{ opacity: 0.7 }} />
-                            <Text variant="caption">{props.user.domain}</Text>
-                        </div>
-                        <div style={{ wordBreak: 'break-word' }}>
-                            {profile.value.description ? (
-                                <CfmRenderer messagebody={profile.value.description} emojiDict={{}} />
-                            ) : (
-                                <Text>{t('noDescription')}</Text>
-                            )}
-                        </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                gap: CssVar.space(2)
-                            }}
-                        >
-                            <Text>{t('following', { n: stats.acknowledging })}</Text>
-                            <Text>{t('followers', { n: stats.acknowledged })}</Text>
-                        </div>
-                    </div>
-                    <Tabs>
-                        <Tab
-                            selected={tab === 'posts'}
-                            onClick={() => setTab('posts')}
-                            groupId="profile-tabs"
-                            style={{
-                                color: CssVar.contentText
-                            }}
-                        >
-                            Posts
-                        </Tab>
-                        <Tab
-                            selected={tab === 'media'}
-                            onClick={() => setTab('media')}
-                            groupId="profile-tabs"
-                            style={{
-                                color: CssVar.contentText
-                            }}
-                        >
-                            Media
-                        </Tab>
-                        <Tab
-                            selected={tab === 'activity'}
-                            onClick={() => setTab('activity')}
-                            groupId="profile-tabs"
-                            style={{
-                                color: CssVar.contentText
-                            }}
-                        >
-                            Activity
-                        </Tab>
-                    </Tabs>
-                    <Divider />
-                </>
-            }
-        />
+        <>
+            {tab === 'media' && mediaView === 'grid' ? (
+                <MediaGridTimeline prefix={target.prefix} query={target.query} header={header} />
+            ) : (
+                <QueryTimeline prefix={target.prefix} query={target.query} header={header} />
+            )}
+        </>
     )
 }
 

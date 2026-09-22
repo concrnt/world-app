@@ -10,6 +10,7 @@ export const Schemas = {
     apNote: 'https://schema.concrnt.world/ap/note.json',
     apFollow: 'https://schema.concrnt.world/ap/follow.json',
     apSettings: 'https://schema.concrnt.world/ap/settings.json',
+    apInboxTimeline: 'https://schema.concrnt.world/ap/inbox.json',
 
     atprotoRecord: 'https://schema.concrnt.world/atproto/record.json',
     atprotoFollow: 'https://schema.concrnt.world/atproto/follow.json',
@@ -27,6 +28,7 @@ export const Schemas = {
 
     userTimeline: 'https://schema.concrnt.world/t/user.json',
     communityTimeline: 'https://schema.concrnt.world/t/community.json',
+    subprofileTimeline: 'https://schema.concrnt.world/t/subprofile.json',
 
     list: 'https://schema.concrnt.world/s/list.json',
 

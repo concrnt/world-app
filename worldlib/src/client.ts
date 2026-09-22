@@ -94,18 +94,25 @@ export class Client {
     private rerouteTargets: Record<string, string> = {}
 
     knownCommunities = new CachedPromise<Timeline[]>(async () => {
-        const results = await this.api.queryAll(
-            {
-                prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
-                schema: Schemas.communityTimeline
-            },
-            undefined,
-            { cache: true }
-        )
+        // リスト参照はcommit時点の参照先schemaでindexされる。ActivityPub inboxはcommunityTimelineから
+        // apInboxTimelineへ移行したため、移行前に登録した参照はcommunity側、移行後の参照はapInbox側にしか
+        // 一致しない。両方引いて合流させる
+        const results = (
+            await Promise.all(
+                [Schemas.communityTimeline, Schemas.apInboxTimeline].map((schema) =>
+                    this.api.queryAll(
+                        {
+                            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                            schema
+                        },
+                        undefined,
+                        { cache: true }
+                    )
+                )
+            )
+        ).flat()
 
-        const timelines = await Promise.allSettled(
-            Array.from(results.values()).map((sd) => Timeline.loadFromReferenceSD(this, sd))
-        )
+        const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
 
         const uniqueResults = new Map<string, Timeline>()
         for (const r of timelines) {
