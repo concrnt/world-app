@@ -16,6 +16,8 @@ export type Media = NonNullable<MediaMessageSchema['medias']>[number]
 
 interface Props {
     medias: Media[]
+    // メディアを含む投稿のURI。ビューアの投稿パネル/ドロワーで使う
+    messageURI?: string
 }
 
 export const MediaGallery = (props: Props) => {
@@ -33,7 +35,10 @@ export const MediaGallery = (props: Props) => {
                     key={index}
                     media={media}
                     onClick={() => {
-                        mediaViewer.open(props.medias, index)
+                        mediaViewer.open(
+                            props.medias.map((m) => ({ ...m, messageURI: props.messageURI })),
+                            index
+                        )
                     }}
                 />
             ))}

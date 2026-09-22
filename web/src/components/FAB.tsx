@@ -1,6 +1,7 @@
 import { CSSProperties, ReactNode, useState, PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
+import { useOverlayAnyOpen } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -11,9 +12,11 @@ interface Props {
 }
 
 // app/src/ui/FAB.tsx の移植。webではモバイル幅のときのみ表示する。
-// ドロワーのtransformやComposerのoverflow:hiddenの影響を受けないようbodyへportalする
+// ドロワーのtransformやComposerのoverflow:hiddenの影響を受けないようbodyへportalする。
+// bodyはoverlay-rootより後ろなので、オーバーレイ(MediaViewer等)が開いている間は隠す
 export const FAB = (props: Props) => {
     const isMobile = useIsMobile()
+    const anyOverlayOpen = useOverlayAnyOpen()
 
     const [pressed, setPressed] = useState(false)
 
@@ -26,7 +29,7 @@ export const FAB = (props: Props) => {
         setPressed(false)
     }
 
-    if (!isMobile) return null
+    if (!isMobile || anyOverlayOpen) return null
 
     return createPortal(
         <motion.button

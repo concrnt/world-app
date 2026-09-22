@@ -1,13 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { motion, useMotionValue, useTransform } from 'motion/react'
 import { animate } from 'motion'
+import { useTranslation } from 'react-i18next'
 
-import { MdClose, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
-import { CfmActionsProvider, CircularProgress, useCfmActions } from '@concrnt/ui'
+import { MdClose, MdInfoOutline, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
+import { CfmActionsProvider, CircularProgress, OverlaySurface, useCfmActions } from '@concrnt/ui'
 import styles from './MediaViewer.module.css'
 import { ModelViewer } from '../components/ModelViewer'
+import { Drawer } from '../ui/Drawer'
 import { useAudioPlayer } from './AudioPlayer'
-import { useBackHandler } from './BackHandler'
 import { useMediaProxy } from './MediaProxy'
 
 export interface MediaItem {
@@ -15,6 +17,8 @@ export interface MediaItem {
     mediaType: string
     thumbnailURL?: string
     altText?: string
+    // メディアを含む投稿のURI。あれば右上のiボタンから投稿ドロワーで投稿単体ビューを出す
+    messageURI?: string
 }
 
 // 一覧を渡さず、index → メディアの解決をコールバックに委ねるモード。
@@ -43,7 +47,9 @@ interface ViewerSource extends MediaSource {
 }
 
 interface Props {
-    children: React.ReactNode
+    children: ReactNode
+    // 投稿ドロワーの中身。ビューアは views/Post を直接importしない(循環import回避のためマウント側で注入する)
+    renderPost?: (uri: string) => ReactNode
 }
 
 const SWIPE_X_THRESHOLD = 50
@@ -105,6 +111,13 @@ export const MediaViewerProvider = (props: Props) => {
     const prevMedia = currentIndex > 0 ? (source?.getMedia(currentIndex - 1) ?? null) : null
     const nextMedia = source?.getMedia(currentIndex + 1) ?? null
     const canLoadMore = !!source?.loadMore && !exhausted
+    const { t } = useTranslation('', { keyPrefix: 'components.mediaViewer' })
+
+    // 投稿ドロワー: 開くたびに閉じた状態から
+    const [drawerOpen, setDrawerOpen] = useState(false)
+    // 画像領域。スワイプ幅・パンの上限・ズーム焦点はビューポートではなくここを基準にする(web版と同型)
+    const stageRef = useRef<HTMLDivElement>(null)
+    const hasPost = currentMedia?.messageURI !== undefined
 
     // --- motion values ---
     const mvOffsetX = useMotionValue(0)
@@ -134,8 +147,9 @@ export const MediaViewerProvider = (props: Props) => {
 
         const imgW = img.offsetWidth
         const imgH = img.offsetHeight
-        const vpW = window.innerWidth
-        const vpH = window.innerHeight
+        const stage = stageRef.current
+        const vpW = stage?.clientWidth ?? window.innerWidth
+        const vpH = stage?.clientHeight ?? window.innerHeight
 
         const maxPanX = Math.max(0, (imgW * s - vpW) / 2)
         const maxPanY = Math.max(0, (imgH * s - vpH) / 2)
@@ -175,7 +189,14 @@ export const MediaViewerProvider = (props: Props) => {
         isImage: currentMedia?.mediaType.startsWith('image/') ?? false
     }
 
-    const getPageWidth = useCallback(() => window.innerWidth + IMAGE_GAP, [])
+    const getPageWidth = useCallback(() => (stageRef.current?.clientWidth ?? window.innerWidth) + IMAGE_GAP, [])
+
+    // ステージ中央のビューポート座標(ズーム焦点の基準)
+    const getStageCenter = useCallback(() => {
+        const rect = stageRef.current?.getBoundingClientRect()
+        if (!rect) return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+    }, [])
 
     const resetMotion = useCallback(() => {
         mvOffsetX.set(0)
@@ -191,6 +212,7 @@ export const MediaViewerProvider = (props: Props) => {
             loadingMoreRef.current = false
             setLoadingMore(false)
             setExhausted(false)
+            setDrawerOpen(false)
             setSource(source)
             setCurrentIndex(startIndex ?? 0)
         },
@@ -207,14 +229,12 @@ export const MediaViewerProvider = (props: Props) => {
     const close = useCallback(() => {
         setSource(null)
         setCurrentIndex(0)
+        setDrawerOpen(false)
         resetMotion()
     }, [resetMotion])
 
-    // Androidバックボタンでビューアを閉じる
-    useBackHandler(() => {
-        close()
-        return true
-    }, isOpen)
+    // Androidバックボタン: ビューアはOverlaySurfaceなのでOverlayStackBackBridge経由で閉じる
+    // (投稿ドロワーが開いていればそちらが先に閉じる)
 
     const changeImage = useCallback(
         (newIndex: number) => {
@@ -269,17 +289,16 @@ export const MediaViewerProvider = (props: Props) => {
                 animate(mvPanX, 0, ANIM_CONFIG)
                 animate(mvPanY, 0, ANIM_CONFIG)
             } else {
-                const centerX = window.innerWidth / 2
-                const centerY = window.innerHeight / 2
-                const newPanX = (centerX - clientX) * (DOUBLE_TAP_ZOOM - 1)
-                const newPanY = (centerY - clientY) * (DOUBLE_TAP_ZOOM - 1)
+                const center = getStageCenter()
+                const newPanX = (center.x - clientX) * (DOUBLE_TAP_ZOOM - 1)
+                const newPanY = (center.y - clientY) * (DOUBLE_TAP_ZOOM - 1)
                 const clamped = clampPan(newPanX, newPanY, DOUBLE_TAP_ZOOM)
                 animate(mvScale, DOUBLE_TAP_ZOOM, ANIM_CONFIG)
                 animate(mvPanX, clamped.x, ANIM_CONFIG)
                 animate(mvPanY, clamped.y, ANIM_CONFIG)
             }
         },
-        [mvScale, mvPanX, mvPanY, clampPan]
+        [mvScale, mvPanX, mvPanY, clampPan, getStageCenter]
     )
 
     // --- タッチイベント ---
@@ -328,10 +347,9 @@ export const MediaViewerProvider = (props: Props) => {
                 const ratio = newDist / g.lastPinchDist
                 const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * ratio))
 
-                const centerX = window.innerWidth / 2
-                const centerY = window.innerHeight / 2
-                const focalX = g.pinchMidX - centerX
-                const focalY = g.pinchMidY - centerY
+                const center = getStageCenter()
+                const focalX = g.pinchMidX - center.x
+                const focalY = g.pinchMidY - center.y
                 const scaleChange = newScale / g.startScale
                 const newPanX = g.startPanX - focalX * (scaleChange - 1)
                 const newPanY = g.startPanY - focalY * (scaleChange - 1)
@@ -390,7 +408,7 @@ export const MediaViewerProvider = (props: Props) => {
                 mvOffsetY.set(dy)
             }
         },
-        [mvScale, mvPanX, mvPanY, mvOffsetX, mvOffsetY, clampPan]
+        [mvScale, mvPanX, mvPanY, mvOffsetX, mvOffsetY, clampPan, getStageCenter]
     )
 
     const handleTouchEnd = useCallback(
@@ -503,17 +521,7 @@ export const MediaViewerProvider = (props: Props) => {
         [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY, clampPan, handleDoubleTap, close, getPageWidth, goNext]
     )
 
-    // スクロール抑制
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
-        }
-        return () => {
-            document.body.style.overflow = ''
-        }
-    }, [isOpen])
+    // bodyのスクロール抑制はOverlaySurface(OverlayStackProvider)が行う
 
     useEffect(() => {
         gestureRef.current.gestureType = 'none'
@@ -541,224 +549,288 @@ export const MediaViewerProvider = (props: Props) => {
                 {props.children}
             </CfmActionsProvider>
 
-            {isOpen && currentMedia && (
-                <motion.div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100vw',
-                        height: '100dvh',
-                        backgroundColor: bgColor,
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        touchAction: 'none'
-                    }}
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) close()
-                    }}
-                >
-                    {/* カルーセル: 前・現在・次 のメディアを横並び */}
+            {/* OverlaySurfaceに載せる: 内側から開くDrawer(同じくOverlaySurface)がDOM順で上に積まれるようにする。
+                openはcurrentMediaの有無まで含める(nullの瞬間にfalseが渡るとhostが破棄されて再表示されない) */}
+            <OverlaySurface open={isOpen && currentMedia !== null} onClose={close}>
+                {source && currentMedia && (
                     <motion.div
+                        data-testid="media-viewer"
                         style={{
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundColor: bgColor,
                             display: 'flex',
                             flexDirection: 'row',
-                            alignItems: 'center',
-                            width: '100%',
-                            height: '100%',
-                            x: mvOffsetX,
-                            y: mvOffsetY,
-                            opacity: contentOpacity,
-                            gap: `${IMAGE_GAP}px`
+                            overflow: 'hidden'
                         }}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                     >
-                        {/* 前のメディア */}
+                        {/* ステージ: 画像領域 */}
                         <div
+                            ref={stageRef}
+                            data-testid="media-viewer-stage"
                             style={{
-                                flexShrink: 0,
-                                width: '100vw',
+                                flex: 1,
+                                minWidth: 0,
                                 height: '100%',
+                                position: 'relative',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                marginLeft: `calc(-100vw - ${IMAGE_GAP}px)`
+                                overflow: 'hidden',
+                                touchAction: 'none'
+                            }}
+                            onClick={(e) => {
+                                if (e.target === e.currentTarget) close()
                             }}
                         >
-                            {prevMedia && <SlidePreview media={prevMedia} />}
-                        </div>
-
-                        {/* 現在のメディア（画像はズーム・パン対応） */}
-                        <div
-                            style={{
-                                position: 'relative',
-                                flexShrink: 0,
-                                width: '100vw',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            {currentSrc !== null ? (
-                                <motion.img
-                                    src={currentSrc}
-                                    alt={currentMedia.altText ?? ''}
-                                    onLoad={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
-                                    onError={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
-                                    style={{
-                                        maxWidth: '90vw',
-                                        maxHeight: '85dvh',
-                                        objectFit: 'contain',
-                                        userSelect: 'none',
-                                        pointerEvents: 'auto',
-                                        scale: mvScale,
-                                        x: mvPanX,
-                                        y: mvPanY,
-                                        transformOrigin: 'center center'
-                                    }}
-                                    draggable={false}
-                                    ref={imgRef}
-                                />
-                            ) : currentMedia.mediaType.startsWith('video/') ? (
-                                <video
-                                    src={currentMedia.mediaURL}
-                                    controls
-                                    autoPlay
-                                    playsInline
-                                    style={{
-                                        maxWidth: '90vw',
-                                        maxHeight: '85dvh'
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ) : currentMedia.mediaType.startsWith('audio/') ? (
-                                <AudioSlide media={currentMedia} />
-                            ) : currentMedia.mediaType.startsWith('model/') ? (
+                            {/* カルーセル: 前・現在・次 のメディアを横並び */}
+                            <motion.div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    height: '100%',
+                                    x: mvOffsetX,
+                                    y: mvOffsetY,
+                                    opacity: contentOpacity,
+                                    gap: `${IMAGE_GAP}px`
+                                }}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                {/* 前のメディア */}
                                 <div
-                                    // model-viewerのカメラ操作とスワイプが競合しないよう、タッチをここで止める
-                                    onClick={(e) => e.stopPropagation()}
-                                    onTouchStart={(e) => e.stopPropagation()}
-                                    onTouchMove={(e) => e.stopPropagation()}
-                                    onTouchEnd={(e) => e.stopPropagation()}
+                                    style={{
+                                        flexShrink: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginLeft: `calc(-100% - ${IMAGE_GAP}px)`
+                                    }}
                                 >
-                                    <ModelViewer
-                                        src={currentMedia.mediaURL}
-                                        style={{
-                                            backgroundColor: '#3f3f3f',
-                                            width: '90vw',
-                                            height: '70dvh',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
+                                    {prevMedia && <SlidePreview media={prevMedia} />}
                                 </div>
-                            ) : (
-                                <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                                    Unsupported media type: {currentMedia.mediaType}
-                                </span>
+
+                                {/* 現在のメディア（画像はズーム・パン対応） */}
+                                <div
+                                    style={{
+                                        position: 'relative',
+                                        flexShrink: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {currentSrc !== null ? (
+                                        <motion.img
+                                            src={currentSrc}
+                                            alt={currentMedia.altText ?? ''}
+                                            onLoad={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
+                                            onError={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
+                                            style={{
+                                                maxWidth: '90%',
+                                                maxHeight: '85dvh',
+                                                objectFit: 'contain',
+                                                userSelect: 'none',
+                                                pointerEvents: 'auto',
+                                                scale: mvScale,
+                                                x: mvPanX,
+                                                y: mvPanY,
+                                                transformOrigin: 'center center'
+                                            }}
+                                            draggable={false}
+                                            ref={imgRef}
+                                        />
+                                    ) : currentMedia.mediaType.startsWith('video/') ? (
+                                        <video
+                                            src={currentMedia.mediaURL}
+                                            controls
+                                            autoPlay
+                                            playsInline
+                                            style={{
+                                                maxWidth: '90%',
+                                                maxHeight: '85dvh'
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    ) : currentMedia.mediaType.startsWith('audio/') ? (
+                                        <AudioSlide media={currentMedia} />
+                                    ) : currentMedia.mediaType.startsWith('model/') ? (
+                                        <div
+                                            // model-viewerのカメラ操作とスワイプが競合しないよう、タッチをここで止める
+                                            onClick={(e) => e.stopPropagation()}
+                                            onTouchStart={(e) => e.stopPropagation()}
+                                            onTouchMove={(e) => e.stopPropagation()}
+                                            onTouchEnd={(e) => e.stopPropagation()}
+                                        >
+                                            <ModelViewer
+                                                src={currentMedia.mediaURL}
+                                                style={{
+                                                    backgroundColor: '#3f3f3f',
+                                                    width: '90%',
+                                                    height: '70dvh',
+                                                    borderRadius: '8px'
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            Unsupported media type: {currentMedia.mediaType}
+                                        </span>
+                                    )}
+                                    {/* 読み込み中は前の画像(src差し替え前の表示)の上にスピナーを重ねる */}
+                                    {showSpinner && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+                                                // svgをインラインのまま置くと行送り分だけ縦に伸びて楕円になるのでflexで揃える
+                                                display: 'flex',
+                                                padding: '12px',
+                                                borderRadius: '50%',
+                                                background: 'rgba(0, 0, 0, 0.45)',
+                                                color: 'white',
+                                                pointerEvents: 'none',
+                                                animation: `${styles.spinnerFadeIn} 0.2s ease-out 150ms both`
+                                            }}
+                                        >
+                                            <CircularProgress size={40} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 次のメディア */}
+                                <div
+                                    style={{
+                                        flexShrink: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {nextMedia && <SlidePreview media={nextMedia} />}
+                                </div>
+                            </motion.div>
+
+                            {/* 閉じるボタン(左上) */}
+                            <button
+                                data-testid="media-viewer-close"
+                                title={t('close')}
+                                aria-label={t('close')}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    close()
+                                }}
+                                style={{
+                                    position: 'absolute',
+                                    top: 'max(12px, env(safe-area-inset-top))',
+                                    left: '12px',
+                                    background: 'rgba(255, 255, 255, 0.15)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '40px',
+                                    height: '40px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    color: 'white'
+                                }}
+                            >
+                                <MdClose size={24} />
+                            </button>
+
+                            {/* 右上: 投稿ドロワーを開く。投稿URIがあるときのみ */}
+                            {hasPost && (
+                                <button
+                                    data-testid="media-viewer-info"
+                                    title={t('showPost')}
+                                    aria-label={t('showPost')}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setDrawerOpen(true)
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'max(12px, env(safe-area-inset-top))',
+                                        right: '12px',
+                                        background: 'rgba(255, 255, 255, 0.15)',
+                                        border: 'none',
+                                        borderRadius: '50%',
+                                        width: '40px',
+                                        height: '40px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        color: 'white'
+                                    }}
+                                >
+                                    <MdInfoOutline size={24} />
+                                </button>
                             )}
-                            {/* 読み込み中は前の画像(src差し替え前の表示)の上にスピナーを重ねる */}
-                            {showSpinner && (
+
+                            {/* ページインジケーター(件数が分かる配列モードのみ) */}
+                            {source.length !== undefined && source.length > 1 && (
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        top: '50%',
+                                        bottom: 'max(16px, env(safe-area-inset-bottom))',
                                         left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        // svgをインラインのまま置くと行送り分だけ縦に伸びて楕円になるのでflexで揃える
+                                        transform: 'translateX(-50%)',
                                         display: 'flex',
-                                        padding: '12px',
-                                        borderRadius: '50%',
-                                        background: 'rgba(0, 0, 0, 0.45)',
-                                        color: 'white',
-                                        pointerEvents: 'none',
-                                        animation: `${styles.spinnerFadeIn} 0.2s ease-out 150ms both`
+                                        gap: '6px',
+                                        alignItems: 'center'
                                     }}
                                 >
-                                    <CircularProgress size={40} />
+                                    {Array.from({ length: source.length }, (_, index) => (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                width: index === currentIndex ? '10px' : '7px',
+                                                height: index === currentIndex ? '10px' : '7px',
+                                                borderRadius: '50%',
+                                                backgroundColor:
+                                                    index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                                                transition: 'all 0.2s ease',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                changeImage(index)
+                                            }}
+                                        />
+                                    ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* 次のメディア */}
-                        <div
-                            style={{
-                                flexShrink: 0,
-                                width: '100vw',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            {nextMedia && <SlidePreview media={nextMedia} />}
-                        </div>
+                        {/* 投稿ドロワー: 従来のDrawer(BottomSheet)でオーバーレイ表示。
+                        カルーセルの子にするとドロワー内のtouchmoveがスワイプ処理に流れるので、ステージの兄弟に置く。
+                        注意: ここはStackLayoutの外なのでドロワー内のuseStack().pushは既定のno-op
+                        (作者/リプライのタップ遷移は効かない)。返信・リアクションはProviderが上にあるので動く */}
+                        <Drawer open={drawerOpen && hasPost} onClose={() => setDrawerOpen(false)}>
+                            {currentMedia.messageURI !== undefined && (
+                                <div key={currentMedia.messageURI}>{props.renderPost?.(currentMedia.messageURI)}</div>
+                            )}
+                        </Drawer>
                     </motion.div>
-
-                    {/* 閉じるボタン */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            close()
-                        }}
-                        style={{
-                            position: 'absolute',
-                            top: 'max(12px, env(safe-area-inset-top))',
-                            right: '12px',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            color: 'white'
-                        }}
-                    >
-                        <MdClose size={24} />
-                    </button>
-
-                    {/* ページインジケーター(件数が分かる配列モードのみ) */}
-                    {source.length !== undefined && source.length > 1 && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                bottom: 'max(16px, env(safe-area-inset-bottom))',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                display: 'flex',
-                                gap: '6px',
-                                alignItems: 'center'
-                            }}
-                        >
-                            {Array.from({ length: source.length }, (_, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        width: index === currentIndex ? '10px' : '7px',
-                                        height: index === currentIndex ? '10px' : '7px',
-                                        borderRadius: '50%',
-                                        backgroundColor: index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
-                                        transition: 'all 0.2s ease',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        changeImage(index)
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </motion.div>
-            )}
+                )}
+            </OverlaySurface>
         </MediaViewerContext.Provider>
     )
 }
@@ -774,7 +846,7 @@ const SlidePreview = ({ media }: { media: MediaItem }) => {
                     src={getImageURL(media.mediaURL)}
                     alt={media.altText ?? ''}
                     style={{
-                        maxWidth: '90vw',
+                        maxWidth: '90%',
                         maxHeight: '85dvh',
                         objectFit: 'contain',
                         userSelect: 'none',
@@ -791,7 +863,7 @@ const SlidePreview = ({ media }: { media: MediaItem }) => {
                     playsInline
                     preload="metadata"
                     style={{
-                        maxWidth: '90vw',
+                        maxWidth: '90%',
                         maxHeight: '85dvh',
                         pointerEvents: 'none'
                     }}

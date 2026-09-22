@@ -543,6 +543,11 @@
         "mediaGridTimeline": {
             "noMedia": "メディアはまだありません"
         },
+        "mediaViewer": {
+            "close": "閉じる",
+            "showPost": "投稿を表示",
+            "hidePost": "投稿を隠す"
+        },
         "mediaGallery": {
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",

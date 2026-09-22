@@ -34,6 +34,8 @@ type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 
 interface Props {
     uri: string
+    // ビューアのパネル等に埋め込むとき: 自前のヘッダー/FABを出さない
+    embedded?: boolean
 }
 
 export const PostView = (props: Props) => {
@@ -192,8 +194,8 @@ export const PostView = (props: Props) => {
 
     return (
         <>
-            <View>
-                <Header>Message</Header>
+            <View style={props.embedded ? { margin: 0 } : undefined}>
+                {!props.embedded && <Header>Message</Header>}
                 <div
                     style={{
                         padding: CssVar.space(1)
@@ -476,9 +478,11 @@ export const PostView = (props: Props) => {
                     )}
                 </div>
             </View>
-            <FAB onClick={handleReply}>
-                <MdReply size={24} />
-            </FAB>
+            {!props.embedded && (
+                <FAB onClick={handleReply}>
+                    <MdReply size={24} />
+                </FAB>
+            )}
         </>
     )
 }

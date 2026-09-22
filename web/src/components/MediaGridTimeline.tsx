@@ -311,7 +311,10 @@ export const MediaGridTimeline = (props: Props) => {
                                         // 読み込み済み末尾に達したら追い読みして続きを表示できる
                                         mediaViewer.openSource(
                                             {
-                                                getMedia: (i) => itemsRef.current[i]?.media ?? null,
+                                                getMedia: (i) => {
+                                                    const item = itemsRef.current[i]
+                                                    return item ? { ...item.media, messageURI: item.messageURI } : null
+                                                },
                                                 loadMore
                                             },
                                             index

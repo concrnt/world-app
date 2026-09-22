@@ -21,6 +21,7 @@ import { ImageCropperProvider } from './contexts/ImageCropper'
 import TickerProvider from './contexts/Ticer'
 import { EmojiPickerProvider } from './contexts/EmojiPicker'
 import { WelcomeView } from './views/Welcome'
+import { PostView } from './views/Post'
 import { UrlSummaryProvider } from './contexts/UrlSummary'
 import { MediaProxyProvider } from './contexts/MediaProxy'
 import { KeyboardProvider } from './contexts/Keyboard'
@@ -75,7 +76,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                             <ComposerProvider>
                                                                 <ScannerProvider>
                                                                     <OverlayProvider>
-                                                                        <MediaViewerProvider>
+                                                                        <MediaViewerProvider
+                                                                            renderPost={(uri) => (
+                                                                                <PostView uri={uri} embedded />
+                                                                            )}
+                                                                        >
                                                                             <AudioPlayerProvider>
                                                                                 <TickerProvider>
                                                                                     <UrlSummaryProvider>

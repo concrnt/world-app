@@ -208,7 +208,7 @@ const Note = (props: {
                     )}
                 </AutoSummary>
             </CollapsibleBody>
-            {medias.length > 0 && <MediaGallery medias={medias} />}
+            {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
             {props.detail && (
                 <ExternalLink
                     href={note.url ?? note.id}

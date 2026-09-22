@@ -16,6 +16,7 @@ import { LoadingFull } from '../../components/LoadingFull'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { CCUserChip } from '../../components/CCUserChip'
 import { TimelineChip } from '../../components/TimelineChip'
+import { GuestPostView } from './GuestPost'
 
 // 未ログイン閲覧用のシェル。鍵を持たないゲストクライアントを生成し、
 // 閲覧に必要な最小限のプロバイダのみをマウントする(書き込みを伴うプロバイダは置かない)
@@ -111,7 +112,7 @@ export const GuestShell = () => {
                     }}
                 >
                     <OverlayStackProvider>
-                        <MediaViewerProvider>
+                        <MediaViewerProvider renderPost={(uri) => <GuestPostView uri={uri} embedded />}>
                             <AudioPlayerProvider>
                                 <TickerProvider>
                                     <UrlSummaryProvider>

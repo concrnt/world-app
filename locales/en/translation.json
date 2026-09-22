@@ -544,6 +544,11 @@
         "mediaGridTimeline": {
             "noMedia": "No media yet"
         },
+        "mediaViewer": {
+            "close": "Close",
+            "showPost": "Show post",
+            "hidePost": "Hide post"
+        },
         "mediaGallery": {
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
