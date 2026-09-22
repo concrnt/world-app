@@ -79,6 +79,10 @@ interface GestureRef {
     prevMoveTime: number
     velocityX: number
     velocityY: number
+    // マウス/ペンのドラッグパン中か(タッチのpanと区別する)
+    pointerPanning: boolean
+    // ドラッグ直後のclickで閉じないよう、実際に動かしたら立てて次のclickで消費する
+    suppressClick: boolean
 }
 
 const getDistance = (t1: React.Touch, t2: React.Touch) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
@@ -122,6 +126,8 @@ export const MediaViewerProvider = (props: Props) => {
         return `rgba(0, 0, 0, ${opacity})`
     })
 
+    // 拡大中はドラッグでパンできるのでカーソルで示す
+    const imgCursor = useTransform(mvScale, (s) => (s > 1 ? 'grab' : 'auto'))
     const contentOpacity = useTransform(mvOffsetY, (oy) => {
         const progress = Math.min(Math.abs(oy) / (SWIPE_Y_THRESHOLD * 1.5), 1)
         return 1 - progress * 0.3
@@ -164,7 +170,9 @@ export const MediaViewerProvider = (props: Props) => {
         prevMoveY: 0,
         prevMoveTime: 0,
         velocityX: 0,
-        velocityY: 0
+        velocityY: 0,
+        pointerPanning: false,
+        suppressClick: false
     })
 
     const stateRef = useRef({ currentIndex: 0, hasPrev: false, hasNext: false, canLoadMore: false, isImage: false })
@@ -543,6 +551,89 @@ export const MediaViewerProvider = (props: Props) => {
         [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY, clampPan, handleDoubleTap, close, getPageWidth, goNext]
     )
 
+    // --- マウス/ペンのドラッグパン(デスクトップ向け) ---
+    // 拡大中のみ。移動と離した時の処理はwindow側で拾い、画像の外までドラッグしても追従させる
+    const handlePointerDown = useCallback(
+        (e: React.PointerEvent) => {
+            if (e.pointerType === 'touch') return
+            if (e.button !== 0) return
+            if (!stateRef.current.isImage) return
+            if (mvScale.get() <= 1) return
+            const g = gestureRef.current
+            g.pointerPanning = true
+            g.suppressClick = false
+            g.gestureType = 'pan'
+            g.startX = e.clientX
+            g.startY = e.clientY
+            g.startPanX = mvPanX.get()
+            g.startPanY = mvPanY.get()
+            g.prevMoveX = e.clientX
+            g.prevMoveY = e.clientY
+            g.prevMoveTime = performance.now()
+            g.velocityX = 0
+            g.velocityY = 0
+            e.preventDefault()
+        },
+        [mvScale, mvPanX, mvPanY]
+    )
+
+    useEffect(() => {
+        if (!isOpen) return
+        const onPointerMove = (e: PointerEvent): void => {
+            const g = gestureRef.current
+            if (!g.pointerPanning) return
+            const dx = e.clientX - g.startX
+            const dy = e.clientY - g.startY
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) g.suppressClick = true
+            const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, mvScale.get())
+            mvPanX.set(clamped.x)
+            mvPanY.set(clamped.y)
+
+            const now = performance.now()
+            const dt = now - g.prevMoveTime
+            if (dt > 0) {
+                g.velocityX = (e.clientX - g.prevMoveX) / dt
+                g.velocityY = (e.clientY - g.prevMoveY) / dt
+            }
+            g.prevMoveX = e.clientX
+            g.prevMoveY = e.clientY
+            g.prevMoveTime = now
+        }
+        const onPointerUp = (): void => {
+            const g = gestureRef.current
+            if (!g.pointerPanning) return
+            g.pointerPanning = false
+            // パン終了 — 慣性アニメーション(タッチ側と同じ)
+            const currentScale = mvScale.get()
+            const vx = g.velocityX * 1000 // px/ms → px/s
+            const vy = g.velocityY * 1000
+
+            const targetX = mvPanX.get() + vx * INERTIA_MULTIPLIER
+            const targetY = mvPanY.get() + vy * INERTIA_MULTIPLIER
+            const clamped = clampPan(targetX, targetY, currentScale)
+
+            animate(mvPanX, clamped.x, {
+                type: 'tween',
+                ease: INERTIA_EASE,
+                duration: INERTIA_DURATION
+            })
+            animate(mvPanY, clamped.y, {
+                type: 'tween',
+                ease: INERTIA_EASE,
+                duration: INERTIA_DURATION
+            })
+            g.gestureType = 'none'
+        }
+        window.addEventListener('pointermove', onPointerMove)
+        window.addEventListener('pointerup', onPointerUp)
+        window.addEventListener('pointercancel', onPointerUp)
+        return () => {
+            window.removeEventListener('pointermove', onPointerMove)
+            window.removeEventListener('pointerup', onPointerUp)
+            window.removeEventListener('pointercancel', onPointerUp)
+        }
+    }, [isOpen, mvScale, mvPanX, mvPanY, clampPan])
+
     // スクロール抑制
     useEffect(() => {
         if (isOpen) {
@@ -598,6 +689,10 @@ export const MediaViewerProvider = (props: Props) => {
                         touchAction: 'none'
                     }}
                     onClick={(e) => {
+                        if (gestureRef.current.suppressClick) {
+                            gestureRef.current.suppressClick = false
+                            return
+                        }
                         if (e.target === e.currentTarget) close()
                     }}
                 >
@@ -617,6 +712,7 @@ export const MediaViewerProvider = (props: Props) => {
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
+                        onPointerDown={handlePointerDown}
                     >
                         {/* 前のメディア */}
                         <div
@@ -646,6 +742,11 @@ export const MediaViewerProvider = (props: Props) => {
                             }}
                             // このラッパーがbackdrop全面を覆うため、余白クリックでの閉じるはここで拾う
                             onClick={(e) => {
+                                // ドラッグパンの離した位置が余白でもclickは飛んでくるので、その分は無視する
+                                if (gestureRef.current.suppressClick) {
+                                    gestureRef.current.suppressClick = false
+                                    return
+                                }
                                 if (e.target === e.currentTarget) close()
                             }}
                         >
@@ -661,6 +762,7 @@ export const MediaViewerProvider = (props: Props) => {
                                         objectFit: 'contain',
                                         userSelect: 'none',
                                         pointerEvents: 'auto',
+                                        cursor: imgCursor,
                                         scale: mvScale,
                                         x: mvPanX,
                                         y: mvPanY,
