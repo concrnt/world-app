@@ -728,7 +728,10 @@
             "sortActive": "Active",
             "noPostsFound": "No matching posts found",
             "loadMore": "Load more",
-            "clearSearch": "Clear search"
+            "clearSearch": "Clear search",
+            "prevPage": "Previous page",
+            "nextPage": "Next page",
+            "pageIndicator": "Page {{page}}"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

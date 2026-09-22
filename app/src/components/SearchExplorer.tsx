@@ -18,7 +18,7 @@ import {
 import { CssVar } from '../types/Theme'
 import { Drawer } from '../ui/Drawer'
 import { Subscription } from './Subscription'
-import { MdArrowDropDown, MdCheck, MdClear, MdPlaylistAdd } from 'react-icons/md'
+import { MdArrowDropDown, MdCheck, MdChevronLeft, MdChevronRight, MdClear, MdPlaylistAdd } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
@@ -37,7 +37,7 @@ const CRAWLER_URL = 'https://crawler.concrnt.net'
 // 検索結果の1ページ分。「もっと見る」でこの分ずつlimitを増やす(crawlerの上限は100)
 const PAGE_SIZE = 20
 const MAX_LIMIT = 100
-// 検索語が空のときに並べる新着/アクティブの件数
+// 検索語が空のときに並べる新着/アクティブの1ページあたりの件数(前/次で offset を送る)
 const LANDING_SIZE = 6
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -229,13 +229,20 @@ export const SearchExplorer = () => {
                         />
                     </div>
                     <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                        <CommunityResults query="" sort={`${deferredLandingSort}:desc`} limit={LANDING_SIZE} />
+                        {/* keyで並び順切替時にページ位置をリセットする。Suspense自体をkeyにすると新境界扱いで旧内容が残らない */}
+                        <CommunityResults
+                            key={deferredLandingSort}
+                            query=""
+                            sort={`${deferredLandingSort}:desc`}
+                            limit={LANDING_SIZE}
+                            paged
+                        />
                     </Suspense>
                     <Text variant="h3" style={headingStyle}>
                         {t('newUsers')}
                     </Text>
                     <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                        <UserResults query="" sort="createdAt:desc" limit={LANDING_SIZE} />
+                        <UserResults query="" sort="createdAt:desc" limit={LANDING_SIZE} paged />
                     </Suspense>
                 </div>
             ) : (
@@ -354,24 +361,65 @@ interface ResultsProps {
     query: string
     sort?: string
     limit?: number
-    loadMore?: boolean
+    loadMore?: boolean // 「もっと見る」でlimitを伸ばす(検索結果向け)
+    paged?: boolean // 前/次でoffsetをlimit刻みに送る(空クエリの新着/アクティブ向け)
 }
 
-// limitを伸ばす方式のページング。offset分割より単純で、useResourceのキーにlimitを含めるだけで済む
+// 検索結果はlimitを伸ばす方式。offset分割より単純で、useResourceのキーにlimitを含めるだけで済む
+// 空クエリの一覧は2セクションが縦に並ぶので、追い読みで下のセクションを押し下げないようページ送り(offset)にする
 const useSearchResults = <T extends SearchTab>(tab: T, props: ResultsProps) => {
     const [limit, setLimit] = useState(props.limit ?? PAGE_SIZE)
+    const [page, setPage] = useState(0)
     const [isPending, startTransition] = useTransition()
-    const result = useResource(`crawler-search:${tab}:${props.query}:${props.sort ?? ''}:${limit}`, () =>
-        fetchSearch(tab, { q: props.query, sort: props.sort, limit })
+    const offset = page * limit
+    const result = useResource(`crawler-search:${tab}:${props.query}:${props.sort ?? ''}:${limit}:${offset}`, () =>
+        fetchSearch(tab, { q: props.query, sort: props.sort, limit, offset })
     )
-    const hasMore =
-        !!props.loadMore && result !== null && result.hits.length < result.estimatedTotalHits && limit < MAX_LIMIT
+    const remaining = result === null ? 0 : result.estimatedTotalHits - offset - result.hits.length
+    const hasMore = !!props.loadMore && remaining > 0 && limit < MAX_LIMIT
     const loadMore = () => {
         startTransition(() => {
             setLimit((l) => Math.min(MAX_LIMIT, l + PAGE_SIZE))
         })
     }
-    return { result, hasMore, isPending, loadMore }
+    // estimatedTotalHitsは概算なので、次ページが空だった場合も戻れるよう2ページ目以降はページャーを出し続ける
+    const hasNext = remaining > 0
+    const pager = props.paged && (page > 0 || hasNext) ? { page, hasNext } : undefined
+    const goPage = (delta: number) => {
+        startTransition(() => {
+            setPage((p) => Math.max(0, p + delta))
+        })
+    }
+    return { result, hasMore, isPending, loadMore, pager, goPage }
+}
+
+// 前/次ボタンと現在ページ。ページャーが不要(1ページに収まる)なら描画しない
+const Pager = (props: {
+    pager?: { page: number; hasNext: boolean }
+    disabled: boolean
+    onChange: (delta: number) => void
+}) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
+    if (!props.pager) return null
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: CssVar.space(1) }}>
+            <IconButton
+                disabled={props.disabled || props.pager.page === 0}
+                title={t('prevPage')}
+                onClick={() => props.onChange(-1)}
+            >
+                <MdChevronLeft size={24} />
+            </IconButton>
+            <Text variant="caption">{t('pageIndicator', { page: props.pager.page + 1 })}</Text>
+            <IconButton
+                disabled={props.disabled || !props.pager.hasNext}
+                title={t('nextPage')}
+                onClick={() => props.onChange(1)}
+            >
+                <MdChevronRight size={24} />
+            </IconButton>
+        </div>
+    )
 }
 
 const LoadMoreButton = (props: { visible: boolean; disabled: boolean; onClick: () => void }) => {
@@ -435,7 +483,7 @@ const PostResults = (props: ResultsProps) => {
 
 const CommunityResults = (props: ResultsProps) => {
     const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
-    const { result, hasMore, isPending, loadMore } = useSearchResults('communities', props)
+    const { result, hasMore, isPending, loadMore, pager, goPage } = useSearchResults('communities', props)
 
     if (result === null) {
         return (
@@ -444,13 +492,12 @@ const CommunityResults = (props: ResultsProps) => {
             </Text>
         )
     }
-    if (result.hits.length === 0) {
-        return (
-            <Text variant="caption" style={{ opacity: 0.5 }}>
-                {t('noCommunitiesFound')}
-            </Text>
-        )
-    }
+    const empty = (
+        <Text variant="caption" style={{ opacity: 0.5 }}>
+            {t('noCommunitiesFound')}
+        </Text>
+    )
+    if (result.hits.length === 0 && !pager) return empty
     return (
         <div
             style={{
@@ -461,17 +508,18 @@ const CommunityResults = (props: ResultsProps) => {
                 transition: 'opacity 0.2s'
             }}
         >
-            {result.hits.map((c) => (
-                <CommunityResultCard key={c.id} community={c} />
-            ))}
+            {result.hits.length === 0
+                ? empty
+                : result.hits.map((c) => <CommunityResultCard key={c.id} community={c} />)}
             <LoadMoreButton visible={hasMore} disabled={isPending} onClick={loadMore} />
+            <Pager pager={pager} disabled={isPending} onChange={goPage} />
         </div>
     )
 }
 
 const UserResults = (props: ResultsProps) => {
     const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
-    const { result, hasMore, isPending, loadMore } = useSearchResults('users', props)
+    const { result, hasMore, isPending, loadMore, pager, goPage } = useSearchResults('users', props)
 
     if (result === null) {
         return (
@@ -480,13 +528,12 @@ const UserResults = (props: ResultsProps) => {
             </Text>
         )
     }
-    if (result.hits.length === 0) {
-        return (
-            <Text variant="caption" style={{ opacity: 0.5 }}>
-                {t('noUsersFound')}
-            </Text>
-        )
-    }
+    const empty = (
+        <Text variant="caption" style={{ opacity: 0.5 }}>
+            {t('noUsersFound')}
+        </Text>
+    )
+    if (result.hits.length === 0 && !pager) return empty
     return (
         <div
             style={{
@@ -497,10 +544,9 @@ const UserResults = (props: ResultsProps) => {
                 transition: 'opacity 0.2s'
             }}
         >
-            {result.hits.map((u) => (
-                <UserResultCard key={u.id} user={u} />
-            ))}
+            {result.hits.length === 0 ? empty : result.hits.map((u) => <UserResultCard key={u.id} user={u} />)}
             <LoadMoreButton visible={hasMore} disabled={isPending} onClick={loadMore} />
+            <Pager pager={pager} disabled={isPending} onChange={goPage} />
         </div>
     )
 }
