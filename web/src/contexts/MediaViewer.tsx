@@ -33,11 +33,14 @@ export interface MediaItem {
     altText?: string
     // メディアを含む投稿のURI。あれば投稿パネル(デスクトップ)/ドロワー(モバイル)で投稿単体ビューを出す
     messageURI?: string
+    // 元投稿の medias 内での位置と件数。コールバックモードでも投稿内のページインジケーターを出すために使う
+    postMediaIndex?: number
+    postMediaCount?: number
 }
 
 // 一覧を渡さず、index → メディアの解決をコールバックに委ねるモード。
-// 件数が未知なのでページインジケーターは出さず、読み込み済みの末尾で「次へ」が押されたら
-// loadMore で追加読み込みをキックし、解決後に自動で次へ進む
+// 全体の件数は未知なのでページインジケーターは投稿内の位置(postMediaIndex/postMediaCount)がある場合のみ
+// その範囲で出す。読み込み済みの末尾で「次へ」が押されたら loadMore で追加読み込みをキックし、解決後に自動で次へ進む
 export interface MediaSource {
     // index 番目のメディア。範囲外(未読み込み含む)は null
     getMedia: (index: number) => MediaItem | null
@@ -721,6 +724,23 @@ export const MediaViewerProvider = (props: Props) => {
     // 画像の取得待ち、または末尾での追加読み込み待ち
     const showSpinner = imageLoading || loadingMore
 
+    // ページインジケーター: 配列モードは全体、コールバックモードは元投稿内(複数メディアのときのみ)。
+    // 同じ投稿のメディアはグリッド上で連続して並ぶので、ドットの飛び先は現在indexからの相対で求まる
+    const postMediaIndex = currentMedia?.postMediaIndex
+    const postMediaCount = currentMedia?.postMediaCount
+    const dots =
+        source && source.length !== undefined
+            ? source.length > 1
+                ? { length: source.length, active: currentIndex, jump: changeImage }
+                : null
+            : postMediaCount !== undefined && postMediaCount > 1 && postMediaIndex !== undefined
+              ? {
+                    length: postMediaCount,
+                    active: postMediaIndex,
+                    jump: (i: number) => changeImage(currentIndex - postMediaIndex + i)
+                }
+              : null
+
     return (
         <MediaViewerContext.Provider value={value}>
             <CfmActionsProvider
@@ -1069,8 +1089,8 @@ export const MediaViewerProvider = (props: Props) => {
                                 </button>
                             )}
 
-                            {/* ページインジケーター(件数が分かる配列モードのみ) */}
-                            {source.length !== undefined && source.length > 1 && (
+                            {/* ページインジケーター(配列モードは全体、グリッドは元投稿内) */}
+                            {dots && (
                                 <div
                                     style={{
                                         position: 'absolute',
@@ -1082,21 +1102,21 @@ export const MediaViewerProvider = (props: Props) => {
                                         alignItems: 'center'
                                     }}
                                 >
-                                    {Array.from({ length: source.length }, (_, index) => (
+                                    {Array.from({ length: dots.length }, (_, index) => (
                                         <div
                                             key={index}
                                             style={{
-                                                width: index === currentIndex ? '10px' : '7px',
-                                                height: index === currentIndex ? '10px' : '7px',
+                                                width: index === dots.active ? '10px' : '7px',
+                                                height: index === dots.active ? '10px' : '7px',
                                                 borderRadius: '50%',
                                                 backgroundColor:
-                                                    index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                                                    index === dots.active ? 'white' : 'rgba(255, 255, 255, 0.4)',
                                                 transition: 'all 0.2s ease',
                                                 cursor: 'pointer'
                                             }}
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                changeImage(index)
+                                                dots.jump(index)
                                             }}
                                         />
                                     ))}

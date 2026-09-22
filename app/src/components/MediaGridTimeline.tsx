@@ -20,6 +20,9 @@ interface GridItem {
     key: string
     media: Media
     messageURI: string
+    // 元投稿内での位置と件数(ビューアの投稿内インジケーター用)
+    postMediaIndex: number
+    postMediaCount: number
 }
 
 interface Props extends ScrollViewProps {
@@ -86,7 +89,13 @@ export const MediaGridTimeline = (props: Props) => {
             // schemaで絞り込み済みだが、壊れたdocumentは表示から落とす
             if (!Array.isArray(medias)) continue
             medias.forEach((media, index) => {
-                result.push({ key: msg.uri + '#' + index, media, messageURI: msg.uri })
+                result.push({
+                    key: msg.uri + '#' + index,
+                    media,
+                    messageURI: msg.uri,
+                    postMediaIndex: index,
+                    postMediaCount: medias.length
+                })
             })
         }
         return result
@@ -315,7 +324,14 @@ export const MediaGridTimeline = (props: Props) => {
                                             {
                                                 getMedia: (i) => {
                                                     const item = itemsRef.current[i]
-                                                    return item ? { ...item.media, messageURI: item.messageURI } : null
+                                                    return item
+                                                        ? {
+                                                              ...item.media,
+                                                              messageURI: item.messageURI,
+                                                              postMediaIndex: item.postMediaIndex,
+                                                              postMediaCount: item.postMediaCount
+                                                          }
+                                                        : null
                                                 },
                                                 loadMore
                                             },
