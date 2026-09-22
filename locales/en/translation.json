@@ -727,7 +727,8 @@
             "sortNewest": "Newest",
             "sortActive": "Active",
             "noPostsFound": "No matching posts found",
-            "loadMore": "Load more"
+            "loadMore": "Load more",
+            "clearSearch": "Clear search"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

@@ -18,7 +18,7 @@ import {
 import { CssVar } from '../types/Theme'
 import { Drawer } from '../ui/Drawer'
 import { Subscription } from './Subscription'
-import { MdArrowDropDown, MdCheck, MdPlaylistAdd } from 'react-icons/md'
+import { MdArrowDropDown, MdCheck, MdClear, MdPlaylistAdd } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
@@ -145,6 +145,15 @@ export const SearchExplorer = () => {
     const [query, setQuery] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    // 見出し「アクティブなコミュニティ」と並び順「アクティブ」が1行に収まらず折り返すため、両方を詰める
+    const headingStyle = { fontSize: '1em' }
+    const sortStyle = { fontSize: '0.9rem' }
+
+    const clearSearch = () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        setQuery('')
+        setSearchQuery('')
+    }
 
     // タブと入力欄は即時反応させ、結果リストだけ遅れて追従させる
     const deferredTab = useDeferredValue(tab)
@@ -161,18 +170,32 @@ export const SearchExplorer = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            <TextField
-                value={query}
-                placeholder={t('searchPlaceholder')}
-                onChange={(e) => {
-                    const value = e.target.value
-                    setQuery(value)
-                    if (debounceRef.current) clearTimeout(debounceRef.current)
-                    debounceRef.current = setTimeout(() => {
-                        setSearchQuery(value)
-                    }, 300)
-                }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                <TextField
+                    value={query}
+                    placeholder={t('searchPlaceholder')}
+                    onChange={(e) => {
+                        const value = e.target.value
+                        setQuery(value)
+                        if (debounceRef.current) clearTimeout(debounceRef.current)
+                        debounceRef.current = setTimeout(() => {
+                            setSearchQuery(value)
+                        }, 300)
+                    }}
+                    onKeyDown={(e) => {
+                        // Enterで検索を確定してフォーカスを外す(モバイルではキーボードが閉じる)。日本語入力の確定Enterは除外
+                        if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+                        if (debounceRef.current) clearTimeout(debounceRef.current)
+                        setSearchQuery(query)
+                        e.currentTarget.blur()
+                    }}
+                />
+                {query && (
+                    <IconButton onClick={clearSearch} title={t('clearSearch')}>
+                        <MdClear size={20} />
+                    </IconButton>
+                )}
+            </div>
 
             {deferredQuery === '' ? (
                 <div
@@ -192,7 +215,7 @@ export const SearchExplorer = () => {
                             gap: CssVar.space(2)
                         }}
                     >
-                        <Text variant="h3">
+                        <Text variant="h3" style={headingStyle}>
                             {landingSort === 'activityScore' ? t('activeCommunities') : t('newCommunities')}
                         </Text>
                         <SortSelect<LandingSort>
@@ -202,12 +225,15 @@ export const SearchExplorer = () => {
                             ]}
                             value={landingSort}
                             onChange={setLandingSort}
+                            style={sortStyle}
                         />
                     </div>
                     <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
                         <CommunityResults query="" sort={`${deferredLandingSort}:desc`} limit={LANDING_SIZE} />
                     </Suspense>
-                    <Text variant="h3">{t('newUsers')}</Text>
+                    <Text variant="h3" style={headingStyle}>
+                        {t('newUsers')}
+                    </Text>
                     <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
                         <UserResults query="" sort="createdAt:desc" limit={LANDING_SIZE} />
                     </Suspense>
@@ -251,6 +277,7 @@ export const SearchExplorer = () => {
                                 ]}
                                 value={communitySort}
                                 onChange={setCommunitySort}
+                                style={sortStyle}
                             />
                         </div>
                     )}
@@ -282,6 +309,7 @@ interface SortSelectProps<T extends string> {
     options: Array<{ value: T; label: string }>
     value: T
     onChange: (value: T) => void
+    style?: React.CSSProperties
 }
 
 // 現在の並び順を示すボタンから選択肢を開くドロップダウン
@@ -291,7 +319,13 @@ const SortSelect = <T extends string>(props: SortSelectProps<T>) => {
 
     return (
         <>
-            <Button variant="text" endIcon={<MdArrowDropDown size={20} />} onClick={() => setOpen(true)}>
+            <Button
+                variant="text"
+                endIcon={<MdArrowDropDown size={20} />}
+                // 折り返して崩れないよう1行固定。見出し側を縮めて収める
+                style={{ flexShrink: 0, whiteSpace: 'nowrap', ...props.style }}
+                onClick={() => setOpen(true)}
+            >
                 {current?.label}
             </Button>
             <Select
