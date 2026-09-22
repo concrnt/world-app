@@ -544,6 +544,11 @@
         "mediaGridTimeline": {
             "noMedia": "No media yet"
         },
+        "mediaViewer": {
+            "close": "Close",
+            "showPost": "Show post",
+            "hidePost": "Hide post"
+        },
         "mediaGallery": {
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
@@ -728,7 +733,10 @@
             "sortActive": "Active",
             "noPostsFound": "No matching posts found",
             "loadMore": "Load more",
-            "clearSearch": "Clear search"
+            "clearSearch": "Clear search",
+            "prevPage": "Previous page",
+            "nextPage": "Next page",
+            "pageIndicator": "Page {{page}}"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

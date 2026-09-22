@@ -543,6 +543,11 @@
         "mediaGridTimeline": {
             "noMedia": "メディアはまだありません"
         },
+        "mediaViewer": {
+            "close": "閉じる",
+            "showPost": "投稿を表示",
+            "hidePost": "投稿を隠す"
+        },
         "mediaGallery": {
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",
@@ -727,7 +732,10 @@
             "sortActive": "アクティブ",
             "noPostsFound": "該当する投稿が見つかりませんでした",
             "loadMore": "もっと見る",
-            "clearSearch": "検索をクリア"
+            "clearSearch": "検索をクリア",
+            "prevPage": "前のページ",
+            "nextPage": "次のページ",
+            "pageIndicator": "{{page}}ページ目"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",

@@ -26,6 +26,8 @@ type PostTab = 'replies' | 'reroutes' | 'favorites' | 'reactions'
 
 interface Props {
     uri: string
+    // ビューアのパネル等に埋め込むとき: 自前のヘッダーを出さない
+    embedded?: boolean
 }
 
 // views/Post.tsx のゲスト(未ログイン)版。返信Composerとリアクション追加を持たない
@@ -120,8 +122,8 @@ export const GuestPostView = (props: Props) => {
 
     return (
         <>
-            <View>
-                <Header>Message</Header>
+            <View style={props.embedded ? { margin: 0 } : undefined}>
+                {!props.embedded && <Header>Message</Header>}
                 <div
                     style={{
                         padding: CssVar.space(1)

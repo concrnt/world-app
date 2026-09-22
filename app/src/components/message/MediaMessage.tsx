@@ -47,7 +47,7 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                 </CollapsibleBody>
             )}
 
-            <MediaGallery medias={message.value.medias ?? []} />
+            <MediaGallery medias={message.value.medias ?? []} messageURI={message.uri} />
             <MessageFooter message={message} rerouted={props.rerouted} />
         </MessageLayout>
     )

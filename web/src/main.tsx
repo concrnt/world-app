@@ -198,7 +198,9 @@ const AuthedRoutes = () => (
                                     <EmojiPickerProvider>
                                         <ComposerDraftProvider>
                                             <ComposerProvider>
-                                                <MediaViewerProvider>
+                                                <MediaViewerProvider
+                                                    renderPost={(uri) => <PostView uri={uri} embedded />}
+                                                >
                                                     <AudioPlayerProvider>
                                                         <TickerProvider>
                                                             <UrlSummaryProvider>
