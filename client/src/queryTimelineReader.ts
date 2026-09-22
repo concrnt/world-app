@@ -69,8 +69,14 @@ export class QueryTimelineReader {
         const items = res.items.map((item) => {
             const doc: Document<any> = JSON.parse(item.document)
 
+            // init と同じく、配送用の reference レコードは参照先の href に展開する
+            let href = item.cckv
+            if (doc.schema === 'https://schema.concrnt.net/reference.json') {
+                href = doc.value.href
+            }
+
             return {
-                href: item.cckv,
+                href: href,
                 timestamp: new Date(doc.createdAt),
                 source: this.prefix!
             }

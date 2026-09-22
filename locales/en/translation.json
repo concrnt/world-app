@@ -325,7 +325,9 @@
             "share": "Share",
             "copyLink": "Copy link",
             "linkCopied": "Copied",
-            "mainProfile": "Main profile"
+            "mainProfile": "Main profile",
+            "mediaViewList": "List view",
+            "mediaViewGrid": "Grid view"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -538,6 +540,9 @@
             "flagPorn": "Pornography",
             "flagHard": "Hard Violence",
             "flagCustomPlaceholder": "You can write freely"
+        },
+        "mediaGridTimeline": {
+            "noMedia": "No media yet"
         },
         "mediaGallery": {
             "clickToReveal": "Click to reveal",
@@ -1015,7 +1020,9 @@
             "privateProfile": "This profile is private",
             "loginRequired": "You need to log in to request access",
             "login": "Login",
-            "mainProfile": "Main profile"
+            "mainProfile": "Main profile",
+            "mediaViewList": "List view",
+            "mediaViewGrid": "Grid view"
         },
         "guestTimeline": {
             "privateTimeline": "This timeline is private",

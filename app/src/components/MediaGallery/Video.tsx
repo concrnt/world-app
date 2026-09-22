@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Media } from './main'
 import { MdPlayCircle } from 'react-icons/md'
 
-export const GalleryVideo = ({ media }: { media: Media }) => {
+export const GalleryVideo = ({ media, objectFit }: { media: Media; objectFit?: 'contain' | 'cover' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
@@ -57,7 +57,7 @@ export const GalleryVideo = ({ media }: { media: Media }) => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'contain',
+                        objectFit: objectFit ?? 'contain',
                         pointerEvents: 'none'
                     }}
                 />
@@ -69,7 +69,7 @@ export const GalleryVideo = ({ media }: { media: Media }) => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'contain',
+                        objectFit: objectFit ?? 'contain',
                         pointerEvents: 'none'
                     }}
                 />

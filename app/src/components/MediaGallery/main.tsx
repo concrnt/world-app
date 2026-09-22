@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CssVar } from '../../types/Theme'
 import { HorizontalLayout, IconButton, Text } from '@concrnt/ui'
@@ -28,7 +29,7 @@ export const MediaGallery = (props: Props) => {
             }}
         >
             {props.medias.map((media, index) => (
-                <Media
+                <MediaTile
                     key={index}
                     media={media}
                     onClick={() => {
@@ -40,7 +41,12 @@ export const MediaGallery = (props: Props) => {
     )
 }
 
-const Media = (props: { media: Media; onClick?: () => void }) => {
+export const MediaTile = (props: {
+    media: Media
+    onClick?: () => void
+    style?: CSSProperties
+    objectFit?: 'contain' | 'cover'
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'components.mediaGallery' })
     // 解除状態はURL単位でセッション内共有する(v1と同じ。画面遷移でアンマウントされても再ブラーしない)
     const [revealed, setRevealed] = useState(() => sessionStorage.getItem('reveal:' + props.media.mediaURL) === 'true')
@@ -62,7 +68,8 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
                 aspectRatio: '4/3',
                 flexShrink: 0,
                 position: 'relative',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                ...props.style
             }}
             onClick={(e) => {
                 e.stopPropagation()
@@ -106,7 +113,7 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
                         height: '100%'
                     }}
                 >
-                    <MediaBody media={props.media} />
+                    <MediaBody media={props.media} objectFit={props.objectFit} />
                 </div>
             )}
             {hidden && (
@@ -154,13 +161,13 @@ const Media = (props: { media: Media; onClick?: () => void }) => {
     )
 }
 
-const MediaBody = (props: { media: Media }) => {
+const MediaBody = (props: { media: Media; objectFit?: 'contain' | 'cover' }) => {
     const kind = props.media.mediaType.split('/')[0]
     switch (kind) {
         case 'image':
-            return <GalleryImage media={props.media} />
+            return <GalleryImage media={props.media} objectFit={props.objectFit} />
         case 'video':
-            return <GalleryVideo media={props.media} />
+            return <GalleryVideo media={props.media} objectFit={props.objectFit} />
         case 'audio':
             return <GalleryAudio media={props.media} />
         case 'model':

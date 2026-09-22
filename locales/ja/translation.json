@@ -325,7 +325,9 @@
             "share": "シェア",
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
-            "mainProfile": "メインプロフィール"
+            "mainProfile": "メインプロフィール",
+            "mediaViewList": "リスト表示",
+            "mediaViewGrid": "グリッド表示"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -537,6 +539,9 @@
             "flagPorn": "ポルノ",
             "flagHard": "ハード",
             "flagCustomPlaceholder": "自由に記述できます"
+        },
+        "mediaGridTimeline": {
+            "noMedia": "メディアはまだありません"
         },
         "mediaGallery": {
             "clickToReveal": "タップして表示",
@@ -1014,7 +1019,9 @@
             "privateProfile": "このプロフィールはプライベートです",
             "loginRequired": "閲覧をリクエストするにはログインが必要です",
             "login": "ログイン",
-            "mainProfile": "メインプロフィール"
+            "mainProfile": "メインプロフィール",
+            "mediaViewList": "リスト表示",
+            "mediaViewGrid": "グリッド表示"
         },
         "guestTimeline": {
             "privateTimeline": "このタイムラインはプライベートです",
