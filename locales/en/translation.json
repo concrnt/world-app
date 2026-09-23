@@ -726,7 +726,6 @@
             "posts": "Posts",
             "searchPlaceholder": "Search posts, users, communities...",
             "newCommunities": "New communities",
-            "activeCommunities": "Active communities",
             "newUsers": "New users",
             "sortRelevance": "Relevance",
             "sortNewest": "Newest",
@@ -737,11 +736,13 @@
             "prevPage": "Previous page",
             "nextPage": "Next page",
             "pageIndicator": "Page {{page}}",
-            "followeeActiveUsers": "Active among people you follow",
-            "followeeActiveCommunities": "Communities where people you follow are active",
-            "activeUsers": "Active users",
-            "noFolloweeUsers": "No recent activity among people you follow",
-            "noFolloweeCommunities": "No communities where people you follow are active"
+            "noFolloweeCommunities": "No communities where people you follow are active",
+            "postsHint": "Type a search term to search posts",
+            "sortFollowee": "Following",
+            "sortGlobal": "Global",
+            "followeeActiveCommunities": "Communities active among people you follow",
+            "globalActiveCommunities": "Globally active communities",
+            "globalActiveUsers": "Globally active users"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

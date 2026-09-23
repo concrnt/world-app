@@ -1,4 +1,4 @@
-import { Fragment, Suspense, useDeferredValue, useRef, useState, useTransition } from 'react'
+import { Fragment, Suspense, useDeferredValue, useMemo, useRef, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Text,
@@ -12,6 +12,7 @@ import {
     Divider,
     ListItem,
     Sparkline,
+    ToggleGroup,
     Select,
     useTheme
 } from '@concrnt/ui'
@@ -147,7 +148,9 @@ export const fetchSearch = async <T extends SearchTab>(
 }
 
 type CommunitySort = 'relevance' | 'createdAt' | 'activityScore'
-type LandingSort = 'createdAt' | 'activityScore'
+// 空クエリ一覧の並び。followee はフォロー中の人の活動(viewer付き)、activityScore はグローバルな活動量
+type LandingSort = 'createdAt' | 'followee' | 'activityScore'
+type UserLandingSort = 'createdAt' | 'activityScore'
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -161,17 +164,18 @@ export const SearchExplorer = () => {
         fontWeight: selected ? ('bold' as const) : ('normal' as const)
     })
 
-    const [tab, setTab] = useState<SearchTab>('posts')
+    // 検索語が無くても一覧が出るコミュニティタブから始める
+    const [tab, setTab] = useState<SearchTab>('communities')
     const [communitySort, setCommunitySort] = useState<CommunitySort>('relevance')
     const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')
-    const [userSort, setUserSort] = usePersistent<LandingSort>('explorer-landing-user-sort', 'createdAt')
+    const [userSort, setUserSort] = usePersistent<UserLandingSort>('explorer-landing-user-sort', 'createdAt')
     const { client } = useClient()
-    // ゲスト(ccid空)にはフォロー先が無いので、フォロー中セクションは出さない
+    // ゲスト(ccid空)にはフォロー先が無いので、フォロー中の人が活発な一覧は出さない
     const viewer = client.ccid !== '' ? client.ccid : undefined
     const [query, setQuery] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    // 見出し「アクティブなコミュニティ」と並び順「アクティブ」が1行に収まらず折り返すため、両方を詰める
+    // 見出しと並び順ボタンが1行に収まらず折り返すため、両方を詰める
     const headingStyle = { fontSize: '1em' }
     const sortStyle = { fontSize: '0.9rem' }
 
@@ -195,6 +199,9 @@ export const SearchExplorer = () => {
         deferredUserSort !== userSort
 
     const resultSort = deferredCommunitySort === 'relevance' ? undefined : `${deferredCommunitySort}:desc`
+    // ゲストはフォロー先が無いので、保存値が followee でも新着として扱う
+    const effectiveLandingSort =
+        viewer === undefined && deferredLandingSort === 'followee' ? 'createdAt' : deferredLandingSort
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -206,8 +213,19 @@ export const SearchExplorer = () => {
                         const value = e.target.value
                         setQuery(value)
                         if (debounceRef.current) clearTimeout(debounceRef.current)
+                        // 入力中に文字を全部消しても直前の結果を出したままにする(一覧へ戻るのはblur時)。
+                        // 打ち直しのたびに一覧と結果が入れ替わってチラつくのを避ける
+                        if (value === '') return
                         debounceRef.current = setTimeout(() => {
                             setSearchQuery(value)
+                        }, 300)
+                    }}
+                    onBlur={() => {
+                        if (query !== '') return
+                        if (debounceRef.current) clearTimeout(debounceRef.current)
+                        // 即時に戻すと、結果カードをタップした際の blur で差し替わりタップ先が消えるので少し待つ
+                        debounceRef.current = setTimeout(() => {
+                            setSearchQuery('')
                         }, 300)
                     }}
                     onKeyDown={(e) => {
@@ -225,6 +243,33 @@ export const SearchExplorer = () => {
                 )}
             </div>
 
+            <Tabs>
+                <Tab
+                    selected={tab === 'communities'}
+                    groupId="search-explorer"
+                    style={tabStyle(tab === 'communities')}
+                    onClick={() => setTab('communities')}
+                >
+                    <Text>{t('communities')}</Text>
+                </Tab>
+                <Tab
+                    selected={tab === 'users'}
+                    groupId="search-explorer"
+                    style={tabStyle(tab === 'users')}
+                    onClick={() => setTab('users')}
+                >
+                    <Text>{t('users')}</Text>
+                </Tab>
+                <Tab
+                    selected={tab === 'posts'}
+                    groupId="search-explorer"
+                    style={tabStyle(tab === 'posts')}
+                    onClick={() => setTab('posts')}
+                >
+                    <Text>{t('posts')}</Text>
+                </Tab>
+            </Tabs>
+
             {deferredQuery === '' ? (
                 <div
                     style={{
@@ -235,125 +280,78 @@ export const SearchExplorer = () => {
                         transition: 'opacity 0.2s'
                     }}
                 >
-                    {viewer && (
+                    {deferredTab === 'posts' ? (
+                        <Text variant="caption" style={{ opacity: 0.5 }}>
+                            {t('postsHint')}
+                        </Text>
+                    ) : deferredTab === 'users' ? (
                         <>
                             <Text variant="h3" style={headingStyle}>
-                                {t('followeeActiveUsers')}
+                                {userSort === 'activityScore' ? t('globalActiveUsers') : t('newUsers')}
                             </Text>
+                            <ToggleGroup<UserLandingSort>
+                                options={[
+                                    { value: 'createdAt', label: t('sortNewest') },
+                                    { value: 'activityScore', label: t('sortGlobal') }
+                                ]}
+                                value={userSort}
+                                onChange={setUserSort}
+                            />
                             <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
                                 <UserResults
+                                    key={deferredUserSort}
                                     query=""
-                                    viewer={viewer}
+                                    sort={`${deferredUserSort}:desc`}
                                     limit={LANDING_SIZE}
                                     paged
-                                    emptyText={t('noFolloweeUsers')}
-                                />
-                            </Suspense>
-                            <Text variant="h3" style={headingStyle}>
-                                {t('followeeActiveCommunities')}
-                            </Text>
-                            <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                                <CommunityResults
-                                    query=""
-                                    viewer={viewer}
-                                    limit={LANDING_SIZE}
-                                    paged
-                                    emptyText={t('noFolloweeCommunities')}
                                 />
                             </Suspense>
                         </>
+                    ) : (
+                        <>
+                            {/* ボタンは短い語にして見出しを選択に連動させる(3択の長いラベルはモバイル幅で省略される) */}
+                            <Text variant="h3" style={headingStyle}>
+                                {landingSort === 'followee' && viewer
+                                    ? t('followeeActiveCommunities')
+                                    : landingSort === 'activityScore'
+                                      ? t('globalActiveCommunities')
+                                      : t('newCommunities')}
+                            </Text>
+                            <ToggleGroup<LandingSort>
+                                options={[
+                                    { value: 'createdAt', label: t('sortNewest') },
+                                    ...(viewer ? [{ value: 'followee' as const, label: t('sortFollowee') }] : []),
+                                    { value: 'activityScore', label: t('sortGlobal') }
+                                ]}
+                                value={viewer === undefined && landingSort === 'followee' ? 'createdAt' : landingSort}
+                                onChange={setLandingSort}
+                            />
+                            <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
+                                {/* keyで並び順切替時にページ位置をリセットする。Suspense自体をkeyにすると新境界扱いで旧内容が残らない */}
+                                {effectiveLandingSort === 'followee' ? (
+                                    <CommunityResults
+                                        key="followee"
+                                        query=""
+                                        viewer={viewer}
+                                        limit={LANDING_SIZE}
+                                        paged
+                                        emptyText={t('noFolloweeCommunities')}
+                                    />
+                                ) : (
+                                    <CommunityResults
+                                        key={effectiveLandingSort}
+                                        query=""
+                                        sort={`${effectiveLandingSort}:desc`}
+                                        limit={LANDING_SIZE}
+                                        paged
+                                    />
+                                )}
+                            </Suspense>
+                        </>
                     )}
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: CssVar.space(2)
-                        }}
-                    >
-                        <Text variant="h3" style={headingStyle}>
-                            {landingSort === 'activityScore' ? t('activeCommunities') : t('newCommunities')}
-                        </Text>
-                        <SortSelect<LandingSort>
-                            options={[
-                                { value: 'createdAt', label: t('sortNewest') },
-                                { value: 'activityScore', label: t('sortActive') }
-                            ]}
-                            value={landingSort}
-                            onChange={setLandingSort}
-                            style={sortStyle}
-                        />
-                    </div>
-                    <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                        {/* keyで並び順切替時にページ位置をリセットする。Suspense自体をkeyにすると新境界扱いで旧内容が残らない */}
-                        <CommunityResults
-                            key={deferredLandingSort}
-                            query=""
-                            sort={`${deferredLandingSort}:desc`}
-                            limit={LANDING_SIZE}
-                            paged
-                        />
-                    </Suspense>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: CssVar.space(2)
-                        }}
-                    >
-                        <Text variant="h3" style={headingStyle}>
-                            {userSort === 'activityScore' ? t('activeUsers') : t('newUsers')}
-                        </Text>
-                        <SortSelect<LandingSort>
-                            options={[
-                                { value: 'createdAt', label: t('sortNewest') },
-                                { value: 'activityScore', label: t('sortActive') }
-                            ]}
-                            value={userSort}
-                            onChange={setUserSort}
-                            style={sortStyle}
-                        />
-                    </div>
-                    <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                        <UserResults
-                            key={deferredUserSort}
-                            query=""
-                            sort={`${deferredUserSort}:desc`}
-                            limit={LANDING_SIZE}
-                            paged
-                        />
-                    </Suspense>
                 </div>
             ) : (
                 <>
-                    <Tabs>
-                        <Tab
-                            selected={tab === 'posts'}
-                            groupId="search-explorer"
-                            style={tabStyle(tab === 'posts')}
-                            onClick={() => setTab('posts')}
-                        >
-                            <Text>{t('posts')}</Text>
-                        </Tab>
-                        <Tab
-                            selected={tab === 'users'}
-                            groupId="search-explorer"
-                            style={tabStyle(tab === 'users')}
-                            onClick={() => setTab('users')}
-                        >
-                            <Text>{t('users')}</Text>
-                        </Tab>
-                        <Tab
-                            selected={tab === 'communities'}
-                            groupId="search-explorer"
-                            style={tabStyle(tab === 'communities')}
-                            onClick={() => setTab('communities')}
-                        >
-                            <Text>{t('communities')}</Text>
-                        </Tab>
-                    </Tabs>
-
                     {tab === 'communities' && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <SortSelect<CommunitySort>
@@ -642,7 +640,6 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
     const { push } = useStack()
     const [subscriptionOpen, setSubscriptionOpen] = useState(false)
     const graphColor = theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.contentLink
-    const { client } = useClient()
 
     return (
         <div
@@ -723,11 +720,7 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                                         flexShrink: 0
                                     }}
                                 >
-                                    <Avatar
-                                        ccid={ccid}
-                                        src={client.getUser(ccid).then((user) => user?.profile.avatar)}
-                                        style={{ width: '22px', height: '22px', borderRadius: '50%' }}
-                                    />
+                                    <TopAuthorAvatar ccid={ccid} />
                                 </div>
                             ))}
                         </div>
@@ -748,6 +741,13 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
             </div>
         </div>
     )
+}
+
+// 並び順切替の遅延レンダー中に毎レンダー新しいPromiseを渡すとAvatarが解決→再サスペンドを繰り返して切替が確定しないので、CCIDごとにPromiseを固定する
+const TopAuthorAvatar = ({ ccid }: { ccid: string }) => {
+    const { client } = useClient()
+    const src = useMemo(() => client.getUser(ccid).then((user) => user?.profile.avatar), [client, ccid])
+    return <Avatar ccid={ccid} src={src} style={{ width: '22px', height: '22px', borderRadius: '50%' }} />
 }
 
 // ─── User card ────────────────────────────────────────────────────────────────
