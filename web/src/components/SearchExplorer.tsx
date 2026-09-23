@@ -290,7 +290,9 @@ export const SearchExplorer = () => {
                             <Text variant="h3" style={headingStyle}>
                                 {userSort === 'activityScore' ? t('globalActiveUsers') : t('newUsers')}
                             </Text>
+                            {/* コミュニティ側と同じ位置に同じ型の要素が並ぶので、keyを付けないとReactが同一インスタンスとして使い回し、選択ピルが前のタブの位置から滑ってくる */}
                             <ToggleGroup<UserLandingSort>
+                                key="users"
                                 options={[
                                     { value: 'createdAt', label: t('sortNewest') },
                                     { value: 'activityScore', label: t('sortGlobal') }
@@ -319,6 +321,7 @@ export const SearchExplorer = () => {
                                       : t('newCommunities')}
                             </Text>
                             <ToggleGroup<LandingSort>
+                                key="communities"
                                 options={[
                                     { value: 'createdAt', label: t('sortNewest') },
                                     ...(viewer ? [{ value: 'followee' as const, label: t('sortFollowee') }] : []),
