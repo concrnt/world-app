@@ -53,7 +53,7 @@ const Demo = () => {
                 <Text>モーダルの内容</Text>
             </Modal>
             <OverlaySurface open={bottomSheetOpen} onClose={() => setBottomSheetOpen(false)}>
-                <BottomSheet height={window.innerHeight * 0.9} onDismiss={() => setBottomSheetOpen(false)}>
+                <BottomSheet height={window.innerHeight * 0.8} onDismiss={() => setBottomSheetOpen(false)}>
                     <Text>ボトムシートの内容</Text>
                 </BottomSheet>
             </OverlaySurface>

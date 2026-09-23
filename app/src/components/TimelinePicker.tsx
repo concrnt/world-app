@@ -11,6 +11,7 @@ import { useClient } from '../contexts/Client'
 import { Avatar, ListItem, Popover, Select, Skeleton, useAnchor } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useHaptics } from '../contexts/Haptics'
+import { useKeyboard } from '../contexts/Keyboard'
 import { ProfileName } from './ProfileName'
 import { useResource } from '../hooks/useResource'
 
@@ -31,6 +32,7 @@ export const TimelinePicker = (props: Props) => {
     const { client } = useClient()
     const { hapticSelection } = useHaptics()
     const dropdownAnchor = useAnchor()
+    const keyboard = useKeyboard()
 
     const [profileSelectOpen, setProfileSelectOpen] = useState(false)
 
@@ -202,7 +204,10 @@ export const TimelinePicker = (props: Props) => {
                     // 候補が多くても投稿欄からはみ出さないように内部スクロールにする
                     maxHeight: 'min(40vh, 300px)',
                     overflowY: 'auto',
-                    overscrollBehavior: 'contain'
+                    overscrollBehavior: 'contain',
+                    // ネイティブpopoverはソフトキーボードを知らないので、表示中に下へ開くと
+                    // キーボードの裏に入る。入力欄の上側に開き、上に収まらなければflip-blockで下へ戻る
+                    ...(keyboard.visible ? { top: 'auto', bottom: `calc(anchor(top) + ${CssVar.space(1)})` } : {})
                 }}
             >
                 {options.map((opt) => (

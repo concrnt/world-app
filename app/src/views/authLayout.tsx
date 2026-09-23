@@ -32,20 +32,26 @@ export const authStyles = {
     } satisfies CSSProperties
 }
 
-export const AuthScreen = (props: { children: ReactNode; align?: 'center' | 'top' }) => {
+// embedded: ドロワー(BottomSheet)内に置く場合。シート側がスクロールコンテナを持つので
+// 自前の100dvh+overflowで二重スクロールにせず、シートの中身として高さは内容に任せる
+// (minHeight:100%でfixedBottomの下端寄せは維持)。safe-area-topもシート内では不要
+export const AuthScreen = (props: { children: ReactNode; align?: 'center' | 'top'; embedded?: boolean }) => {
     return (
         <div
             style={{
-                height: '100dvh',
-                width: '100dvw',
-                padding: `calc(env(safe-area-inset-top) + ${CssVar.space(8)}) ${CssVar.space(5)} calc(env(safe-area-inset-bottom) + ${CssVar.space(5)})`,
+                height: props.embedded ? 'auto' : '100dvh',
+                minHeight: props.embedded ? '100%' : undefined,
+                width: props.embedded ? '100%' : '100dvw',
+                padding: props.embedded
+                    ? `${CssVar.space(4)} ${CssVar.space(5)} calc(env(safe-area-inset-bottom) + ${CssVar.space(5)})`
+                    : `calc(env(safe-area-inset-top) + ${CssVar.space(8)}) ${CssVar.space(5)} calc(env(safe-area-inset-bottom) + ${CssVar.space(5)})`,
                 color: CssVar.uiText,
                 backgroundColor: CssVar.uiBackground,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: props.align === 'top' ? 'flex-start' : 'center',
-                overflowY: 'auto'
+                overflowY: props.embedded ? 'visible' : 'auto'
             }}
         >
             <div

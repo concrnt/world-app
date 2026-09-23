@@ -16,6 +16,9 @@ const trackStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'stretch',
     width: '100%',
+    // TextField と同じ高さに揃える
+    minHeight: '40px',
+    boxSizing: 'border-box',
     padding: CssVar.space(1),
     gap: CssVar.space(1),
     borderRadius: CssVar.round(2),
@@ -26,7 +29,7 @@ const itemStyle: CSSProperties = {
     position: 'relative',
     flex: 1,
     minWidth: 0,
-    padding: `${CssVar.space(2)} ${CssVar.space(2)}`,
+    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Document } from '@concrnt/client'
 import { Avatar, Button, CCWallpaper, Switch, Text, TextArea, TextField } from '@concrnt/ui'
@@ -212,7 +212,11 @@ export const ProfileEditor = (props: Props) => {
                     <>
                         <Text>{t('selectViewers')}</Text>
                         <Text variant="caption">{t('selectViewersNote')}</Text>
-                        <UserPicker selected={members} setSelected={setMembers} />
+                        {/* UserPickerのuseSubscribeはsuspendする。外側(Profileビュー等)のSuspenseまで
+                            巻き上がるとドロワーごとunmountされて編集状態が消えるので、ここで境界を切る */}
+                        <Suspense fallback={null}>
+                            <UserPicker selected={members} setSelected={setMembers} />
+                        </Suspense>
                     </>
                 )}
             </div>

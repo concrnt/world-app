@@ -1,4 +1,5 @@
 import { CssVar } from '../types/Theme'
+import styles from './TextArea.module.css'
 
 interface Props {
     autofocus?: boolean
@@ -15,6 +16,7 @@ interface Props {
 export const TextArea = (props: Props) => {
     return (
         <textarea
+            className={styles.frame}
             autoFocus={props.autofocus}
             disabled={props.disabled}
             value={props.value}
@@ -26,8 +28,7 @@ export const TextArea = (props: Props) => {
                 padding: '8px',
                 fontSize: '16px',
                 fontFamily: props.monospace ? 'Source Code Pro, monospace' : 'inherit',
-                borderRadius: '4px',
-                border: `1px solid ${CssVar.divider}`,
+                borderRadius: CssVar.round(1),
                 backgroundColor: CssVar.contentBackground,
                 color: CssVar.contentText,
                 width: '100%',

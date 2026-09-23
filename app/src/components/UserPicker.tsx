@@ -1,4 +1,4 @@
-import { Chip } from '@concrnt/ui'
+import { Chip, Popover, useAnchor } from '@concrnt/ui'
 
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { IoMdAdd } from 'react-icons/io'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { useHaptics } from '../contexts/Haptics'
+import { useKeyboard } from '../contexts/Keyboard'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { CCUserChip } from './CCUserChip'
 
@@ -20,6 +21,8 @@ export const UserPicker = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.userPicker' })
     const { client } = useClient()
     const { hapticSelection } = useHaptics()
+    const keyboard = useKeyboard()
+    const dropdownAnchor = useAnchor()
 
     const [focused, setFocused] = useState(false)
     const [focusedIdx, setFocusedIdx] = useState<number>(0)
@@ -38,13 +41,16 @@ export const UserPicker = (props: Props) => {
 
     return (
         <div
-            style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                position: 'relative',
-                alignItems: 'center'
-            }}
+            style={
+                {
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    position: 'relative',
+                    alignItems: 'center',
+                    anchorName: dropdownAnchor
+                } as React.CSSProperties
+            }
         >
             {props.selected.map((sel) => {
                 return (
@@ -116,38 +122,43 @@ export const UserPicker = (props: Props) => {
                     {t('addUser')}
                 </Chip>
             )}
-            {focused && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        width: '100%',
-                        top: '100%',
-                        left: 0,
-                        borderRadius: '4px',
-                        marginTop: '4px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                        zIndex: 1000,
-                        backgroundColor: CssVar.contentBackground
-                    }}
-                >
-                    {options.map((opt) => (
-                        <div
-                            key={opt.ccid}
-                            style={{
-                                padding: '8px',
-                                cursor: 'pointer',
-                                borderBottom: `1px solid ${CssVar.divider}`,
-                                backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
-                            }}
-                            onMouseDown={() => {
-                                props.setSelected([...props.selected, opt.ccid])
-                            }}
-                        >
-                            {opt.profile.username}
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* ドロワー等のスクロール領域にクリップされないよう、候補一覧はtop layerに出す(TimelinePickerと同じ)。
+                開閉はinputのfocus/blurが真実の源泉なのでlight dismissのないmanualにする(onCloseは発火しない) */}
+            <Popover
+                open={focused && options.length > 0}
+                onClose={() => {}}
+                mode="manual"
+                anchor={dropdownAnchor}
+                style={{
+                    width: 'anchor-size(width)',
+                    padding: 0,
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    maxHeight: 'min(40vh, 300px)',
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain',
+                    // ネイティブpopoverはソフトキーボードを知らないので、表示中に下へ開くと
+                    // キーボードの裏に入る。入力欄の上側に開き、上に収まらなければflip-blockで下へ戻る
+                    ...(keyboard.visible ? { top: 'auto', bottom: `calc(anchor(top) + ${CssVar.space(1)})` } : {})
+                }}
+            >
+                {options.map((opt) => (
+                    <div
+                        key={opt.ccid}
+                        style={{
+                            padding: '8px',
+                            cursor: 'pointer',
+                            borderBottom: `1px solid ${CssVar.divider}`,
+                            backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
+                        }}
+                        onMouseDown={() => {
+                            props.setSelected([...props.selected, opt.ccid])
+                        }}
+                    >
+                        {opt.profile.username}
+                    </div>
+                ))}
+            </Popover>
         </div>
     )
 }

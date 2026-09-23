@@ -34,11 +34,11 @@ export const AddAccountDrawer = (props: Props) => {
     }
 
     if (mode === 'create') {
-        return <AccountSetup entrypoint={resolveEntrypoint()} onBack={cancel} onComplete={finish} />
+        return <AccountSetup entrypoint={resolveEntrypoint()} onBack={cancel} onComplete={finish} embedded />
     }
 
     if (mode === 'import') {
-        return <AccountImport onBack={cancel} onImported={finish} />
+        return <AccountImport onBack={cancel} onImported={finish} embedded />
     }
 
     return (

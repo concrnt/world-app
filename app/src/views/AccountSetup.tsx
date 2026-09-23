@@ -17,6 +17,7 @@ interface Props {
     entrypoint: string
     onBack?: () => void
     onComplete?: () => void
+    embedded?: boolean
 }
 
 export const AccountSetup = (props: Props) => {
@@ -107,7 +108,7 @@ export const AccountSetup = (props: Props) => {
     const state = accountCreated ? 'done' : 'initial'
 
     return (
-        <AuthScreen align="top">
+        <AuthScreen align="top" embedded={props.embedded}>
             {state === 'initial' && (
                 <>
                     <AuthHeader title={t('title')} description={t('chooseServerDescription')} />

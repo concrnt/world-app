@@ -13,7 +13,7 @@ export const Drawer = (props: Props) => {
 
     return (
         <OverlaySurface open={props.open} onClose={props.onClose}>
-            <BottomSheet height={window.innerHeight * 0.9} keyboardInset={keyboard} onDismiss={props.onClose}>
+            <BottomSheet height={window.innerHeight * 0.8} keyboardInset={keyboard} onDismiss={props.onClose}>
                 {props.children}
             </BottomSheet>
         </OverlaySurface>
