@@ -26,6 +26,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { useResource } from '../hooks/useResource'
 import { usePersistent } from '../hooks/usePersistent'
 import { useMediaProxy } from '../contexts/MediaProxy'
+import { useClient } from '../contexts/Client'
 import { MessageContainer } from './message'
 import { RenderError } from './message/RenderError'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -63,6 +64,16 @@ export interface CommunityHit {
     activeAuthors7d?: number
     lastPostAt?: string
     activityHistory?: ActivityDay[] // 30日分・古い順・0埋め・末尾が当日
+    // viewer指定時のみ: 閲覧者のフォロー先に絞った集計
+    followeeScore?: number
+    followeePostCount30d?: number
+    topAuthors?: string[] // このコミュニティに多く投稿したフォロー先のCCID(投稿数順・最大5人)
+}
+
+// ユーザーの日別活動量。1人の著者なので投稿数だけ
+export interface UserActivityDay {
+    date: string // YYYY-MM-DD (UTC)
+    posts: number
 }
 
 export interface UserHit {
@@ -75,6 +86,15 @@ export interface UserHit {
     banner?: string
     owner?: string
     sourceServer?: string
+    // 活動集計(グローバル。crawlerの集計tickが未到達のdocでは欠落する)
+    activityScore?: number
+    postCount7d?: number
+    postCount30d?: number
+    lastPostAt?: string
+    activityHistory?: UserActivityDay[]
+    // viewer指定時のみ
+    followeeScore?: number
+    followeePostCount30d?: number
 }
 
 export interface PostHit {
@@ -105,6 +125,7 @@ export interface SearchParams {
     sort?: string // 未指定は関連度順(空クエリではcrawler既定のcreatedAt:desc)
     limit?: number
     offset?: number
+    viewer?: string // 閲覧者CCID。指定するとフォロー先の活動で順位付けした一覧になる(q/sortは送れない)
 }
 
 // エラーは呼び出し側で表示するためrejectさせずnullをresolveする
@@ -116,6 +137,7 @@ export const fetchSearch = async <T extends SearchTab>(
         const search = new URLSearchParams({ q: params.q, limit: String(params.limit ?? PAGE_SIZE) })
         if (params.offset) search.set('offset', String(params.offset))
         if (params.sort) search.set('sort', params.sort)
+        if (params.viewer) search.set('viewer', params.viewer)
         const res = await fetch(`${CRAWLER_URL}/api/v1/search/${tab}?${search}`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return await res.json()
@@ -142,6 +164,10 @@ export const SearchExplorer = () => {
     const [tab, setTab] = useState<SearchTab>('posts')
     const [communitySort, setCommunitySort] = useState<CommunitySort>('relevance')
     const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')
+    const [userSort, setUserSort] = usePersistent<LandingSort>('explorer-landing-user-sort', 'createdAt')
+    const { client } = useClient()
+    // ゲスト(ccid空)にはフォロー先が無いので、フォロー中セクションは出さない
+    const viewer = client.ccid !== '' ? client.ccid : undefined
     const [query, setQuery] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -160,11 +186,13 @@ export const SearchExplorer = () => {
     const deferredQuery = useDeferredValue(searchQuery)
     const deferredCommunitySort = useDeferredValue(communitySort)
     const deferredLandingSort = useDeferredValue(landingSort)
+    const deferredUserSort = useDeferredValue(userSort)
     const isStale =
         deferredTab !== tab ||
         deferredQuery !== searchQuery ||
         deferredCommunitySort !== communitySort ||
-        deferredLandingSort !== landingSort
+        deferredLandingSort !== landingSort ||
+        deferredUserSort !== userSort
 
     const resultSort = deferredCommunitySort === 'relevance' ? undefined : `${deferredCommunitySort}:desc`
 
@@ -207,6 +235,34 @@ export const SearchExplorer = () => {
                         transition: 'opacity 0.2s'
                     }}
                 >
+                    {viewer && (
+                        <>
+                            <Text variant="h3" style={headingStyle}>
+                                {t('followeeActiveUsers')}
+                            </Text>
+                            <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
+                                <UserResults
+                                    query=""
+                                    viewer={viewer}
+                                    limit={LANDING_SIZE}
+                                    paged
+                                    emptyText={t('noFolloweeUsers')}
+                                />
+                            </Suspense>
+                            <Text variant="h3" style={headingStyle}>
+                                {t('followeeActiveCommunities')}
+                            </Text>
+                            <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
+                                <CommunityResults
+                                    query=""
+                                    viewer={viewer}
+                                    limit={LANDING_SIZE}
+                                    paged
+                                    emptyText={t('noFolloweeCommunities')}
+                                />
+                            </Suspense>
+                        </>
+                    )}
                     <div
                         style={{
                             display: 'flex',
@@ -238,11 +294,35 @@ export const SearchExplorer = () => {
                             paged
                         />
                     </Suspense>
-                    <Text variant="h3" style={headingStyle}>
-                        {t('newUsers')}
-                    </Text>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: CssVar.space(2)
+                        }}
+                    >
+                        <Text variant="h3" style={headingStyle}>
+                            {userSort === 'activityScore' ? t('activeUsers') : t('newUsers')}
+                        </Text>
+                        <SortSelect<LandingSort>
+                            options={[
+                                { value: 'createdAt', label: t('sortNewest') },
+                                { value: 'activityScore', label: t('sortActive') }
+                            ]}
+                            value={userSort}
+                            onChange={setUserSort}
+                            style={sortStyle}
+                        />
+                    </div>
                     <Suspense fallback={<Text variant="caption">{t('loading')}</Text>}>
-                        <UserResults query="" sort="createdAt:desc" limit={LANDING_SIZE} paged />
+                        <UserResults
+                            key={deferredUserSort}
+                            query=""
+                            sort={`${deferredUserSort}:desc`}
+                            limit={LANDING_SIZE}
+                            paged
+                        />
                     </Suspense>
                 </div>
             ) : (
@@ -363,6 +443,8 @@ interface ResultsProps {
     limit?: number
     loadMore?: boolean // 「もっと見る」でlimitを伸ばす(検索結果向け)
     paged?: boolean // 前/次でoffsetをlimit刻みに送る(空クエリの新着/アクティブ向け)
+    viewer?: string // 閲覧者CCID(フォロー中でアクティブ)
+    emptyText?: string // 0件時の文言(既定は「該当なし」)
 }
 
 // 検索結果はlimitを伸ばす方式。offset分割より単純で、useResourceのキーにlimitを含めるだけで済む
@@ -372,8 +454,9 @@ const useSearchResults = <T extends SearchTab>(tab: T, props: ResultsProps) => {
     const [page, setPage] = useState(0)
     const [isPending, startTransition] = useTransition()
     const offset = page * limit
-    const result = useResource(`crawler-search:${tab}:${props.query}:${props.sort ?? ''}:${limit}:${offset}`, () =>
-        fetchSearch(tab, { q: props.query, sort: props.sort, limit, offset })
+    const result = useResource(
+        `crawler-search:${tab}:${props.query}:${props.sort ?? ''}:${props.viewer ?? ''}:${limit}:${offset}`,
+        () => fetchSearch(tab, { q: props.query, sort: props.sort, viewer: props.viewer, limit, offset })
     )
     const remaining = result === null ? 0 : result.estimatedTotalHits - offset - result.hits.length
     const hasMore = !!props.loadMore && remaining > 0 && limit < MAX_LIMIT
@@ -494,7 +577,7 @@ const CommunityResults = (props: ResultsProps) => {
     }
     const empty = (
         <Text variant="caption" style={{ opacity: 0.5 }}>
-            {t('noCommunitiesFound')}
+            {props.emptyText ?? t('noCommunitiesFound')}
         </Text>
     )
     if (result.hits.length === 0 && !pager) return empty
@@ -530,7 +613,7 @@ const UserResults = (props: ResultsProps) => {
     }
     const empty = (
         <Text variant="caption" style={{ opacity: 0.5 }}>
-            {t('noUsersFound')}
+            {props.emptyText ?? t('noUsersFound')}
         </Text>
     )
     if (result.hits.length === 0 && !pager) return empty
@@ -559,6 +642,7 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
     const { push } = useStack()
     const [subscriptionOpen, setSubscriptionOpen] = useState(false)
     const graphColor = theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.contentLink
+    const { client } = useClient()
 
     return (
         <div
@@ -622,8 +706,34 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                         {community.sourceServer}
                     </Text>
                 )}
-                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                    {/* フォロー中でアクティブ: このコミュニティに投稿している人を重ねたアバターで示す */}
+                    {community.topAuthors && community.topAuthors.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {community.topAuthors.map((ccid, i) => (
+                                <div
+                                    key={ccid}
+                                    style={{
+                                        marginLeft: i > 0 ? '-6px' : '0',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: `1.5px solid ${CssVar.contentBackground}`,
+                                        width: '22px',
+                                        height: '22px',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    <Avatar
+                                        ccid={ccid}
+                                        src={client.getUser(ccid).then((user) => user?.profile.avatar)}
+                                        style={{ width: '22px', height: '22px', borderRadius: '50%' }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <IconButton
+                        style={{ marginLeft: 'auto' }}
                         onClick={(e) => {
                             e.stopPropagation()
                             setSubscriptionOpen(true)
@@ -644,6 +754,8 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
 
 const UserResultCard = ({ user }: { user: UserHit }) => {
     const { getImageURL } = useMediaProxy()
+    const theme = useTheme()
+    const graphColor = theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.contentLink
     const { push } = useStack()
     const ccid = user.ccid
     // サブプロフィールもmainと同じスキーマでインデックスされるので、キー末尾のプロフィール名を渡す
@@ -663,18 +775,41 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
             <CCWallpaper style={{ height: '60px', width: '100%' }} src={getImageURL(user.banner)} />
             <div
                 style={{
+                    position: 'relative',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: CssVar.space(2),
                     padding: CssVar.space(2)
                 }}
             >
+                {/* コミュニティカードと同じく、直近30日の日別投稿数を右側の背景に敷く */}
+                {user.activityHistory && (
+                    <div
+                        aria-hidden
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '55%',
+                            pointerEvents: 'none',
+                            opacity: 0.25,
+                            color: graphColor,
+                            maskImage: 'linear-gradient(to right, transparent, black 65%)',
+                            WebkitMaskImage: 'linear-gradient(to right, transparent, black 65%)'
+                        }}
+                    >
+                        <Sparkline values={user.activityHistory.map((d) => d.posts)} />
+                    </div>
+                )}
                 <Avatar
                     ccid={ccid}
                     src={user.avatar}
-                    style={{ width: '48px', height: '48px', borderRadius: '4px', flexShrink: 0 }}
+                    style={{ width: '48px', height: '48px', borderRadius: '4px', flexShrink: 0, position: 'relative' }}
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flexGrow: 1 }}>
+                <div
+                    style={{ position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0, flexGrow: 1 }}
+                >
                     <Text variant="h4" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {user.username ?? 'Anonymous'}
                     </Text>

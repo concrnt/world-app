@@ -736,7 +736,12 @@
             "clearSearch": "Clear search",
             "prevPage": "Previous page",
             "nextPage": "Next page",
-            "pageIndicator": "Page {{page}}"
+            "pageIndicator": "Page {{page}}",
+            "followeeActiveUsers": "Active among people you follow",
+            "followeeActiveCommunities": "Communities where people you follow are active",
+            "activeUsers": "Active users",
+            "noFolloweeUsers": "No recent activity among people you follow",
+            "noFolloweeCommunities": "No communities where people you follow are active"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

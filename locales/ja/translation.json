@@ -735,7 +735,12 @@
             "clearSearch": "検索をクリア",
             "prevPage": "前のページ",
             "nextPage": "次のページ",
-            "pageIndicator": "{{page}}ページ目"
+            "pageIndicator": "{{page}}ページ目",
+            "followeeActiveUsers": "フォロー中でアクティブなユーザー",
+            "followeeActiveCommunities": "フォロー中の人が活発なコミュニティ",
+            "activeUsers": "アクティブなユーザー",
+            "noFolloweeUsers": "フォロー中のユーザーに最近の活動はありません",
+            "noFolloweeCommunities": "フォロー中のユーザーが活動しているコミュニティはありません"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",
