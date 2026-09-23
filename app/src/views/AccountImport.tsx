@@ -8,6 +8,7 @@ import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
 interface Props {
     onBack?: () => void
     onImported?: () => void
+    embedded?: boolean
 }
 
 export const AccountImport = (props: Props) => {
@@ -35,7 +36,7 @@ export const AccountImport = (props: Props) => {
     const valid = successed && mnemonic !== ''
 
     return (
-        <AuthScreen align="top">
+        <AuthScreen align="top" embedded={props.embedded}>
             <AuthHeader title={t('title')} description={t('descriptionDevice')} />
             <div style={authStyles.section}>
                 <div style={authStyles.inputGroup}>

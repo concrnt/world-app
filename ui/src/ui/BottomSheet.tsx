@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { animate, motion, useDragControls, useMotionValue, useTransform } from 'motion/react'
 import { CssVar } from '../types/Theme'
 
@@ -30,6 +30,52 @@ export const BottomSheet = (props: Props) => {
     // 想定外に大きいキーボード高さが来ても、スペーサーがシートを食い尽くして
     // スクロールコンテナが高さ0になる(中身が消える)ことがないようクランプする
     const keyboardHeight = Math.min(props.keyboardInset?.height ?? 0, Math.max(0, height - MIN_CONTENT_HEIGHT))
+    const keyboardDuration = props.keyboardInset?.duration ?? 0
+
+    const contentRef = useRef<HTMLDivElement | null>(null)
+
+    // フォーカス時のブラウザ標準スクロールはスペーサーが伸びる前に走るため、
+    // 伸び切った後に入力欄がキーボードの裏へ残る。スペーサーの遷移が終わったタイミングで
+    // フォーカス中の入力欄をスクロールコンテナ内に収め直す。
+    // scrollIntoViewはwindow側まで動かしうるので、入力欄からコンテナまでのスクロール可能な祖先を
+    // 個別にscrollTopで調整する(AuthScreen等の内側スクロールもこれで拾える)
+    useEffect(() => {
+        if (keyboardHeight <= 0) return
+        const timer = setTimeout(
+            () => {
+                const container = contentRef.current
+                const active = document.activeElement
+                if (!container || !(active instanceof HTMLElement) || !container.contains(active)) return
+                const isEditable =
+                    active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable
+                if (!isEditable) return
+
+                const margin = 8
+                let node: HTMLElement | null = active.parentElement
+                while (node) {
+                    const style = getComputedStyle(node)
+                    const scrollable =
+                        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                        node.scrollHeight > node.clientHeight
+                    if (scrollable) {
+                        const nodeRect = node.getBoundingClientRect()
+                        const activeRect = active.getBoundingClientRect()
+                        let delta = 0
+                        if (activeRect.bottom + margin > nodeRect.bottom) {
+                            delta = activeRect.bottom + margin - nodeRect.bottom
+                        } else if (activeRect.top - margin < nodeRect.top) {
+                            delta = activeRect.top - margin - nodeRect.top
+                        }
+                        if (delta !== 0) node.scrollBy({ top: delta, behavior: 'smooth' })
+                    }
+                    if (node === container) break
+                    node = node.parentElement
+                }
+            },
+            keyboardDuration * 1000 + 50
+        )
+        return () => clearTimeout(timer)
+    }, [keyboardHeight, keyboardDuration])
 
     return (
         <>
@@ -131,6 +177,7 @@ export const BottomSheet = (props: Props) => {
                     </div>
                 )}
                 <div
+                    ref={contentRef}
                     style={{
                         overflow: 'auto',
                         flex: 1,
