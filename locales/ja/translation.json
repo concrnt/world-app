@@ -728,7 +728,6 @@
             "newUsers": "新着ユーザー",
             "sortRelevance": "関連度",
             "sortNewest": "新着",
-            "sortActive": "アクティブ",
             "noPostsFound": "該当する投稿が見つかりませんでした",
             "loadMore": "もっと見る",
             "clearSearch": "検索をクリア",
@@ -741,7 +740,9 @@
             "sortGlobal": "グローバル",
             "followeeActiveCommunities": "フォロー中で活発なコミュニティ",
             "globalActiveCommunities": "グローバルで活発なコミュニティ",
-            "globalActiveUsers": "グローバルで活発なユーザー"
+            "globalActiveUsers": "グローバルで活発なユーザー",
+            "sortFolloweeActive": "アクティブ(フォロー中)",
+            "sortGlobalActive": "アクティブ(グローバル)"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",

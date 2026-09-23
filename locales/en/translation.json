@@ -729,7 +729,6 @@
             "newUsers": "New users",
             "sortRelevance": "Relevance",
             "sortNewest": "Newest",
-            "sortActive": "Active",
             "noPostsFound": "No matching posts found",
             "loadMore": "Load more",
             "clearSearch": "Clear search",
@@ -742,7 +741,9 @@
             "sortGlobal": "Global",
             "followeeActiveCommunities": "Communities active among people you follow",
             "globalActiveCommunities": "Globally active communities",
-            "globalActiveUsers": "Globally active users"
+            "globalActiveUsers": "Globally active users",
+            "sortFolloweeActive": "Active (following)",
+            "sortGlobalActive": "Active (global)"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

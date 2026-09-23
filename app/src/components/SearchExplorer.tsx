@@ -147,7 +147,8 @@ export const fetchSearch = async <T extends SearchTab>(
     }
 }
 
-type CommunitySort = 'relevance' | 'createdAt' | 'activityScore'
+// 検索結果の並び。followee はフォロー中の人の活動順(viewer付き・crawlerが一致分を先頭に並べ残りは関連度順で続ける)
+type CommunitySort = 'relevance' | 'createdAt' | 'followee' | 'activityScore'
 // 空クエリ一覧の並び。followee はフォロー中の人の活動(viewer付き)、activityScore はグローバルな活動量
 type LandingSort = 'createdAt' | 'followee' | 'activityScore'
 type UserLandingSort = 'createdAt' | 'activityScore'
@@ -166,12 +167,13 @@ export const SearchExplorer = () => {
 
     // 検索語が無くても一覧が出るコミュニティタブから始める
     const [tab, setTab] = useState<SearchTab>('communities')
-    const [communitySort, setCommunitySort] = useState<CommunitySort>('relevance')
-    const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')
-    const [userSort, setUserSort] = usePersistent<UserLandingSort>('explorer-landing-user-sort', 'createdAt')
     const { client } = useClient()
     // ゲスト(ccid空)にはフォロー先が無いので、フォロー中の人が活発な一覧は出さない
     const viewer = client.ccid !== '' ? client.ccid : undefined
+    // 検索結果はフォロー中の人が活発な順を既定にする(ゲストはグローバルな活動順)
+    const [communitySort, setCommunitySort] = useState<CommunitySort>(viewer ? 'followee' : 'activityScore')
+    const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')
+    const [userSort, setUserSort] = usePersistent<UserLandingSort>('explorer-landing-user-sort', 'createdAt')
     const [query, setQuery] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -198,7 +200,10 @@ export const SearchExplorer = () => {
         deferredLandingSort !== landingSort ||
         deferredUserSort !== userSort
 
-    const resultSort = deferredCommunitySort === 'relevance' ? undefined : `${deferredCommunitySort}:desc`
+    const resultSort =
+        deferredCommunitySort === 'relevance' || deferredCommunitySort === 'followee'
+            ? undefined
+            : `${deferredCommunitySort}:desc`
     // ゲストはフォロー先が無いので、保存値が followee でも新着として扱う
     const effectiveLandingSort =
         viewer === undefined && deferredLandingSort === 'followee' ? 'createdAt' : deferredLandingSort
@@ -361,7 +366,8 @@ export const SearchExplorer = () => {
                                 options={[
                                     { value: 'relevance', label: t('sortRelevance') },
                                     { value: 'createdAt', label: t('sortNewest') },
-                                    { value: 'activityScore', label: t('sortActive') }
+                                    ...(viewer ? [{ value: 'followee' as const, label: t('sortFolloweeActive') }] : []),
+                                    { value: 'activityScore', label: t('sortGlobalActive') }
                                 ]}
                                 value={communitySort}
                                 onChange={setCommunitySort}
@@ -373,7 +379,7 @@ export const SearchExplorer = () => {
                     <div style={{ opacity: isStale ? 0.6 : 1, transition: 'opacity 0.2s' }}>
                         {/* keyで結果コンポーネントを作り直し、「もっと見る」で伸ばしたlimitを条件ごとにリセットする */}
                         <Suspense
-                            key={`${deferredTab}:${deferredQuery}:${resultSort ?? ''}`}
+                            key={`${deferredTab}:${deferredQuery}:${deferredCommunitySort}`}
                             fallback={<Text variant="caption">{t('loading')}</Text>}
                         >
                             {deferredTab === 'posts' ? (
@@ -381,7 +387,12 @@ export const SearchExplorer = () => {
                             ) : deferredTab === 'users' ? (
                                 <UserResults query={deferredQuery} loadMore />
                             ) : (
-                                <CommunityResults query={deferredQuery} sort={resultSort} loadMore />
+                                <CommunityResults
+                                    query={deferredQuery}
+                                    sort={resultSort}
+                                    viewer={deferredCommunitySort === 'followee' ? viewer : undefined}
+                                    loadMore
+                                />
                             )}
                         </Suspense>
                     </div>
