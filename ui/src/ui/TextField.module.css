@@ -1,0 +1,9 @@
+/* フォーカス中は枠線をuiカラーにして、どの欄に入力中か分かるようにする */
+.frame {
+    border: 2px solid var(--divider);
+}
+
+.frame:focus-within,
+.frame:focus {
+    border-color: var(--ui-background);
+}

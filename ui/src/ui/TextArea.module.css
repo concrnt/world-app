@@ -1,0 +1,8 @@
+/* TextField と同じ枠線。フォーカス中はuiカラー */
+.frame {
+    border: 2px solid var(--divider);
+}
+
+.frame:focus {
+    border-color: var(--ui-background);
+}

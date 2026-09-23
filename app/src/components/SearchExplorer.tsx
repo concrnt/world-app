@@ -19,7 +19,15 @@ import {
 import { CssVar } from '../types/Theme'
 import { Drawer } from '../ui/Drawer'
 import { Subscription } from './Subscription'
-import { MdArrowDropDown, MdCheck, MdChevronLeft, MdChevronRight, MdClear, MdPlaylistAdd } from 'react-icons/md'
+import {
+    MdArrowDropDown,
+    MdCheck,
+    MdChevronLeft,
+    MdChevronRight,
+    MdClear,
+    MdPlaylistAdd,
+    MdSearch
+} from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
@@ -210,43 +218,44 @@ export const SearchExplorer = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
-                <TextField
-                    value={query}
-                    placeholder={t('searchPlaceholder')}
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setQuery(value)
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        // 入力中に文字を全部消しても直前の結果を出したままにする(一覧へ戻るのはblur時)。
-                        // 打ち直しのたびに一覧と結果が入れ替わってチラつくのを避ける
-                        if (value === '') return
-                        debounceRef.current = setTimeout(() => {
-                            setSearchQuery(value)
-                        }, 300)
-                    }}
-                    onBlur={() => {
-                        if (query !== '') return
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        // 即時に戻すと、結果カードをタップした際の blur で差し替わりタップ先が消えるので少し待つ
-                        debounceRef.current = setTimeout(() => {
-                            setSearchQuery('')
-                        }, 300)
-                    }}
-                    onKeyDown={(e) => {
-                        // Enterで検索を確定してフォーカスを外す(モバイルではキーボードが閉じる)。日本語入力の確定Enterは除外
-                        if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        setSearchQuery(query)
-                        e.currentTarget.blur()
-                    }}
-                />
-                {query && (
-                    <IconButton onClick={clearSearch} title={t('clearSearch')}>
-                        <MdClear size={20} />
-                    </IconButton>
-                )}
-            </div>
+            <TextField
+                value={query}
+                placeholder={t('searchPlaceholder')}
+                startAdornment={<MdSearch size={20} style={{ opacity: 0.5, flexShrink: 0 }} />}
+                endAdornment={
+                    query ? (
+                        <IconButton onClick={clearSearch} title={t('clearSearch')}>
+                            <MdClear size={20} />
+                        </IconButton>
+                    ) : undefined
+                }
+                onChange={(e) => {
+                    const value = e.target.value
+                    setQuery(value)
+                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                    // 入力中に文字を全部消しても直前の結果を出したままにする(一覧へ戻るのはblur時)。
+                    // 打ち直しのたびに一覧と結果が入れ替わってチラつくのを避ける
+                    if (value === '') return
+                    debounceRef.current = setTimeout(() => {
+                        setSearchQuery(value)
+                    }, 300)
+                }}
+                onBlur={() => {
+                    if (query !== '') return
+                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                    // 即時に戻すと、結果カードをタップした際の blur で差し替わりタップ先が消えるので少し待つ
+                    debounceRef.current = setTimeout(() => {
+                        setSearchQuery('')
+                    }, 300)
+                }}
+                onKeyDown={(e) => {
+                    // Enterで検索を確定してフォーカスを外す(モバイルではキーボードが閉じる)。日本語入力の確定Enterは除外
+                    if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                    setSearchQuery(query)
+                    e.currentTarget.blur()
+                }}
+            />
 
             <Tabs>
                 <Tab
