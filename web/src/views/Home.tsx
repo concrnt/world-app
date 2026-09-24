@@ -13,7 +13,7 @@ import { View } from '../components/View'
 
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
-import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { TimelineSkeleton } from '../components/TimelineSkeleton'
 
 import { MdTune } from 'react-icons/md'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
@@ -148,10 +148,21 @@ const HomeMain = ({
 
     const order = listOrder?.[client.currentProfile] ?? []
     const sortedPins = sortByListOrder(pinnedLists, order)
+    const isMobile = useIsMobile()
 
     // ハッシュ無し・ピン解除済み等で該当しないときは先頭のピンにフォールバックする
     const effectiveTabUri = sortedPins.some((pin) => pin.uri === hashTabUri) ? hashTabUri : (sortedPins[0]?.uri ?? '')
     const pin = sortedPins.find((pin) => pin.uri === effectiveTabUri)
+
+    // インラインエディタの投稿先。リストのデフォルトを初期値にしつつ、その場で編集できるようにする。
+    // 読み込み中のフォールバックにも同じComposerを出すので、Suspense境界の外(ここ)で持つ
+    const [destinations, setDestinations] = useState<string[]>(pin?.defaultPostTimelines ?? [])
+    // タブでリストを切り替えたらそのリストのデフォルト投稿先に戻す
+    const [prevPinUri, setPrevPinUri] = useState(pin?.uri ?? '')
+    if (prevPinUri !== (pin?.uri ?? '')) {
+        setPrevPinUri(pin?.uri ?? '')
+        setDestinations(pin?.defaultPostTimelines ?? [])
+    }
 
     return (
         <>
@@ -189,62 +200,91 @@ const HomeMain = ({
                 </Tabs>
             )}
             {pin && (
-                <Suspense key={pin.uri} fallback={<MessageSkeleton />}>
-                    <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
-                        <TimelineWrap ref={ref} pin={pin} />
-                    </PostContextProvider>
-                </Suspense>
+                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                    {/*
+                      フォールバックはTimelineWrapが描く構造(Composer + タイムライン)と同じ形にしてレイアウトシフトを防ぐ。
+                      Composerはリストの読み込みを待たなくても出せる(draft等はComposerDraftContextで共有されるので
+                      本物に置き換わっても入力は引き継がれる)。knownCommunitiesだけ未取得なので候補は空で出す
+                    */}
+                    <Suspense
+                        key={pin.uri}
+                        fallback={
+                            <TimelineSkeleton
+                                headElement={
+                                    isMobile ? undefined : (
+                                        <>
+                                            <div style={{ padding: CssVar.space(2) }}>
+                                                <Composer
+                                                    mode="normal"
+                                                    autoGrow
+                                                    destinations={destinations}
+                                                    setDestinations={setDestinations}
+                                                    defaultDestinations={pin.defaultPostTimelines}
+                                                    options={[]}
+                                                    initialProfile={pin.defaultProfile}
+                                                />
+                                            </div>
+                                            <Divider />
+                                        </>
+                                    )
+                                }
+                            />
+                        }
+                    >
+                        <TimelineWrap
+                            ref={ref}
+                            pin={pin}
+                            destinations={destinations}
+                            setDestinations={setDestinations}
+                        />
+                    </Suspense>
+                    {/* Suspense境界の内側に置くとタブ切替(境界の付け替え)のたびに再マウントされて出現アニメーションが走るので外に出す */}
+                    <ComposeFAB />
+                </PostContextProvider>
             )}
         </>
     )
 }
 
-const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
+const TimelineWrap = (props: {
+    pin: PinnedListItemClass
+    ref?: ScrollViewRef
+    destinations: string[]
+    setDestinations: (destinations: string[]) => void
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
     const [knownCommunities] = useSubscribe(client.knownCommunities)
     const isMobile = useIsMobile()
 
-    // インラインエディタの投稿先。リストのデフォルトを初期値にしつつ、その場で編集できるようにする
-    const [destinations, setDestinations] = useState<string[]>(props.pin.defaultPostTimelines)
-    // タブでリストを切り替えたらそのリストのデフォルト投稿先に戻す
-    const [prevPinUri, setPrevPinUri] = useState(props.pin.uri)
-    if (prevPinUri !== props.pin.uri) {
-        setPrevPinUri(props.pin.uri)
-        setDestinations(props.pin.defaultPostTimelines)
-    }
-
     if (!list) return <Text>{t('listNotFound')}</Text>
 
     return (
-        <>
-            <Timeline
-                ref={props.ref}
-                list={list}
-                excludeSelf={props.pin.excludeSelf}
-                headElement={
-                    // モバイルではインラインエディタは出さず、FABからモーダルで投稿する(app版と同じ体験)
-                    isMobile ? undefined : (
-                        <>
-                            <div style={{ padding: CssVar.space(2) }}>
-                                <Composer
-                                    mode="normal"
-                                    autoGrow
-                                    destinations={destinations}
-                                    setDestinations={setDestinations}
-                                    defaultDestinations={props.pin.defaultPostTimelines}
-                                    options={knownCommunities}
-                                    initialProfile={props.pin.defaultProfile}
-                                />
-                            </div>
-                            <Divider />
-                        </>
-                    )
-                }
-            />
-            <ComposeFAB />
-        </>
+        <Timeline
+            ref={props.ref}
+            list={list}
+            excludeSelf={props.pin.excludeSelf}
+            headElement={
+                // モバイルではインラインエディタは出さず、FABからモーダルで投稿する(app版と同じ体験)
+                isMobile ? undefined : (
+                    <>
+                        <div style={{ padding: CssVar.space(2) }}>
+                            <Composer
+                                mode="normal"
+                                autoGrow
+                                destinations={props.destinations}
+                                setDestinations={props.setDestinations}
+                                defaultDestinations={props.pin.defaultPostTimelines}
+                                options={knownCommunities}
+                                initialProfile={props.pin.defaultProfile}
+                            />
+                        </div>
+                        <Divider />
+                    </>
+                )
+            }
+        />
     )
 }
 

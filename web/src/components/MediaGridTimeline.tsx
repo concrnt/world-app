@@ -287,6 +287,8 @@ export const MediaGridTimeline = (props: Props) => {
                     gap: '8px',
                     overflowX: 'hidden',
                     overflowY: 'auto',
+                    // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
+                    scrollbarGutter: 'stable',
                     // iOS の慣性スクロール跳ね返りを抑制して PullToRefresh との干渉を防ぐ
                     overscrollBehaviorY: 'none'
                 }}
