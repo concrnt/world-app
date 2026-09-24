@@ -526,31 +526,33 @@ const Body = (props: BodyProps) => {
                 </Tab>
             </Tabs>
             {tab === 'media' && (
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: CssVar.space(1),
-                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`
-                    }}
-                >
-                    <IconButton
-                        title={t('mediaViewList')}
-                        onClick={() => setMediaView('list')}
-                        style={{ opacity: mediaView === 'list' ? 1 : 0.5 }}
+                <>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: CssVar.space(1),
+                            padding: `${CssVar.space(1)} ${CssVar.space(2)}`
+                        }}
                     >
-                        <MdViewAgenda size={20} />
-                    </IconButton>
-                    <IconButton
-                        title={t('mediaViewGrid')}
-                        onClick={() => setMediaView('grid')}
-                        style={{ opacity: mediaView === 'grid' ? 1 : 0.5 }}
-                    >
-                        <MdGridView size={20} />
-                    </IconButton>
-                </div>
+                        <IconButton
+                            title={t('mediaViewList')}
+                            onClick={() => setMediaView('list')}
+                            style={{ opacity: mediaView === 'list' ? 1 : 0.5 }}
+                        >
+                            <MdViewAgenda size={20} />
+                        </IconButton>
+                        <IconButton
+                            title={t('mediaViewGrid')}
+                            onClick={() => setMediaView('grid')}
+                            style={{ opacity: mediaView === 'grid' ? 1 : 0.5 }}
+                        >
+                            <MdGridView size={20} />
+                        </IconButton>
+                    </div>
+                    <Divider />
+                </>
             )}
-            <Divider />
         </>
     )
 

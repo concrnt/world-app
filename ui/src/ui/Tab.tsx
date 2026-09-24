@@ -17,7 +17,7 @@ const pressedStyle: CSSProperties = {
 
 const indicatorInlineInset = `calc(${CssVar.space(1)} / 2)`
 const indicatorHeight = '4px'
-const indicatorGap = CssVar.space(1)
+const tabPadding = '0.5rem'
 
 export const Tab = (props: Props) => {
     return (
@@ -26,7 +26,8 @@ export const Tab = (props: Props) => {
                 flex: 1,
                 width: '100%',
                 minHeight: '48px',
-                padding: '0.5rem',
+                // 下paddingは持たせず、インジケーターをボタン下端(=Tabsの下線)に密着させる
+                padding: `${tabPadding} ${tabPadding} 0`,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -45,8 +46,11 @@ export const Tab = (props: Props) => {
                     display: 'inline-flex',
                     justifyContent: 'center',
                     alignItems: 'center',
+                    // ボタンの下端まで伸ばし、インジケーターの位置をボタン下端に揃える
+                    alignSelf: 'stretch',
                     paddingInline: indicatorInlineInset,
-                    paddingBottom: `calc(${indicatorGap} + ${indicatorHeight})`
+                    // 上paddingと同量ぶん下を空け、ラベルをボタンの中央に保つ
+                    paddingBottom: tabPadding
                 }}
             >
                 {props.children}

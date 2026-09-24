@@ -163,7 +163,6 @@ export const ApNote = (props: Props) => {
                     </Tab>
                 </Tabs>
             </div>
-            <Divider />
             <div
                 style={{
                     display: 'flex',

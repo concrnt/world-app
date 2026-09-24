@@ -244,7 +244,6 @@ export const PostView = (props: Props) => {
                         Reactions
                     </Tab>
                 </Tabs>
-                <Divider />
 
                 <div
                     style={{
