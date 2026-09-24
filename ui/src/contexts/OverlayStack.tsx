@@ -162,6 +162,19 @@ export const OverlaySurface = (props: OverlaySurfaceProps) => {
         }
     }, [])
 
+    // 祖先のSuspense境界がsuspendすると配下のlayout effectだけが破棄され、復帰時に再実行される。
+    // 隠れている間にopen=falseになった場合、復帰時にmotionが再マウント扱いでenterを再生する一方で
+    // AnimatePresenceのexitは完了せず(onExitCompleteが来ない)、hostが取り残されて閉じられなくなる。
+    // 復帰時点で閉じ状態ならアニメーション無しで即時破棄する(初回マウント時はhostが無いので何もしない)
+    const openRef = useRef(props.open)
+    openRef.current = props.open
+    useLayoutEffect(() => {
+        if (openRef.current || !hostRef.current) return
+        hostRef.current.remove()
+        hostRef.current = null
+        setMounted(false)
+    }, [])
+
     // back/Esc対象への登録。onCloseはrefで参照するので再レンダーで再登録されず、
     // スタック上の位置(LIFO順)はopenの変化時にのみ動く
     useEffect(() => {
