@@ -391,7 +391,8 @@ export const NotificationTimeline = (props: Props) => {
                             <div
                                 style={{
                                     padding: `0 ${CssVar.space(2)}`,
-                                    contentVisibility: 'auto'
+                                    contentVisibility: 'auto',
+                                    containIntrinsicSize: 'auto 80px'
                                 }}
                             >
                                 {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}

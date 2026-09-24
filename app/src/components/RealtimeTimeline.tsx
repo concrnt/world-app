@@ -486,7 +486,8 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                 <div
                     style={{
                         padding: `0 ${CssVar.space(2)}`,
-                        contentVisibility: 'auto'
+                        contentVisibility: 'auto',
+                        containIntrinsicSize: 'auto 120px'
                     }}
                 >
                     <Suspense key={item.href} fallback={<MessageSkeleton />}>
