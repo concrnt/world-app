@@ -20,7 +20,8 @@ interface Props {
 export const MessageLayout = (props: Props) => {
     const timestampNav = !props.detail && props.onClick !== undefined && Boolean(props.headerRight)
     const message = props.message
-    const origin = window.location.origin
+    // どのドメインで配信されても同じ投稿なので、canonicalと構造化データのURLはconcrnt.worldに統一する
+    const origin = 'https://concrnt.world'
     const authorPath = message
         ? '/profile/' +
           message.author +

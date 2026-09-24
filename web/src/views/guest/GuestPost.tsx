@@ -350,7 +350,8 @@ const PostHead = (props: { uri: string }) => {
     const message = use(client.getMessage<any>(props.uri))
     if (!message) return <meta name="robots" content="noindex" />
 
-    const origin = window.location.origin
+    // どのドメインで配信されても同じ投稿なので、canonicalと構造化データのURLはconcrnt.worldに統一する
+    const origin = 'https://concrnt.world'
     const url = origin + '/post/' + encodeURIComponent(props.uri)
     const username: string = message.authorProfile?.username || 'Anonymous'
     const authorURL =

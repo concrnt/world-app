@@ -48,7 +48,8 @@ export const GuestTimelineView = (props: Props) => {
     const restricted = timeline ? timeline.isRestrictedFor(client.ccid) : false
 
     // --- クローラー向け: title/description/canonical ---
-    const timelineURL = window.location.origin + '/timeline/' + encodeURIComponent(props.uri)
+    // どのドメインで配信されても同じタイムラインなので、canonicalのURLはconcrnt.worldに統一する
+    const timelineURL = 'https://concrnt.world/timeline/' + encodeURIComponent(props.uri)
     let description = (timeline?.description ?? '').trim()
     if (description.length > 300) description = description.slice(0, 300) + '…'
 

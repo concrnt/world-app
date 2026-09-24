@@ -126,8 +126,9 @@ const Body = (props: BodyProps) => {
     const profile = props.profile
 
     // --- クローラー向け: title/description/canonical と ProfilePage JSON-LD ---
+    // どのドメインで配信されても同じプロフィールなので、canonicalと構造化データのURLはconcrnt.worldに統一する
     const profileURL =
-        window.location.origin +
+        'https://concrnt.world' +
         '/profile/' +
         props.ccid +
         (props.profileName !== 'main' ? '/' + props.profileName : '')
