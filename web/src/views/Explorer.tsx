@@ -77,19 +77,24 @@ export const ExplorerView = () => {
                 >
                     {classicMode ? 'Explorer (Classic)' : 'Explorer'}
                 </Header>
-                <div
-                    ref={scrollRef}
-                    style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: CssVar.space(2),
-                        padding: CssVar.space(2),
-                        overflowY: 'auto'
-                    }}
-                >
-                    {classicMode ? <ClassicExplorer /> : <SearchExplorer />}
-                </div>
+                {classicMode ? (
+                    <div
+                        ref={scrollRef}
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(2),
+                            padding: CssVar.space(2),
+                            overflowY: 'auto'
+                        }}
+                    >
+                        <ClassicExplorer />
+                    </div>
+                ) : (
+                    // 検索バーを常に見せるため、スクロール領域は SearchExplorer 内の結果リストに持たせる
+                    <SearchExplorer />
+                )}
                 <FAB
                     onClick={() => {
                         setCreatorOpen(true)

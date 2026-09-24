@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { ComposeFAB } from '../components/ComposeFAB'
+import { MessageSkeleton } from '../components/message/MessageSkeleton'
 import { PostContextProvider } from '../contexts/PostContext'
 
 import { MdTune } from 'react-icons/md'
@@ -131,7 +132,11 @@ const HomeMain = ({
     const order = listOrder?.[client.currentProfile] ?? []
     const sortedPins = sortByListOrder(pinnedLists, order)
 
-    const pin = sortedPins.find((pin) => pin.uri === selectedTabUri)
+    // ピン解除済み等で該当しないときは先頭のピンにフォールバックする
+    const effectiveTabUri = sortedPins.some((pin) => pin.uri === selectedTabUri)
+        ? selectedTabUri
+        : (sortedPins[0]?.uri ?? '')
+    const pin = sortedPins.find((pin) => pin.uri === effectiveTabUri)
 
     // 下部タブのホーム再タップ: 先頭以外のリストを完全にトップで見ているときだけ先頭リストへ戻す。
     // それ以外(スクロール中/先頭リスト/ピン1つ)は従来どおりスクロールトップ
@@ -142,7 +147,7 @@ const HomeMain = ({
             scrollToTop: () => timelineRef.current?.scrollToTop(),
             reselect: () => {
                 const first = sortedPins[0]
-                if (first && first.uri !== selectedTabUri && timelineRef.current?.isAtTop?.()) {
+                if (first && first.uri !== effectiveTabUri && timelineRef.current?.isAtTop?.()) {
                     startTransition(() => {
                         setSelectedTabUri(first.uri)
                     })
@@ -151,7 +156,7 @@ const HomeMain = ({
                 }
             }
         }),
-        [sortedPins, selectedTabUri, setSelectedTabUri]
+        [sortedPins, effectiveTabUri, setSelectedTabUri]
     )
 
     useEffect(() => {
@@ -172,7 +177,7 @@ const HomeMain = ({
                     {sortedPins.map((tab) => (
                         <Tab
                             key={tab.uri}
-                            selected={selectedTabUri === tab.uri}
+                            selected={effectiveTabUri === tab.uri}
                             onClick={() =>
                                 startTransition(() => {
                                     setSelectedTabUri(tab.uri)
@@ -193,9 +198,14 @@ const HomeMain = ({
                 </Tabs>
             )}
             {pin && (
-                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
-                    <TimelineWrap ref={timelineRef} pin={pin} />
-                </PostContextProvider>
+                // タブ切替はstartTransition内で行うため、切替先リストのitems取得でsuspendすると
+                // 既存のSuspense境界(表示中)では旧画面が保持され、タブ選択表示も動かず「押しても切り替わらない」ように見える。
+                // pinごとに新しい境界をマウントすることで、遷移中でも即座にfallbackへ切り替わる(web版と同じ構成)
+                <Suspense key={pin.uri} fallback={<MessageSkeleton />}>
+                    <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                        <TimelineWrap ref={timelineRef} pin={pin} />
+                    </PostContextProvider>
+                </Suspense>
             )}
         </>
     )

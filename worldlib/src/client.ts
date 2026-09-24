@@ -774,7 +774,9 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists.reload()
+        // reload()は購読側をsuspendさせる。リスト設定ドロワー等、Suspense境界内で開いたオーバーレイが
+        // 境界ごと隠れて閉じられなくなるため、既存値を保ったまま裏で差し替えるrefresh()で反映する
+        await this.pinnedLists.refresh()
     }
 
     async addPin(
@@ -812,7 +814,8 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists.reload()
+        // removePinと同じ理由でreload()ではなくrefresh()
+        await this.pinnedLists.refresh()
     }
 
     async updatePinnedList(
@@ -854,6 +857,7 @@ export class Client {
         }
 
         await this.api.commit(newDocument)
-        this.pinnedLists.reload()
+        // removePinと同じ理由でreload()ではなくrefresh()。呼び出し元がonComplete等で閉じる前に反映を終える
+        await this.pinnedLists.refresh()
     }
 }
