@@ -81,6 +81,9 @@ export const WelcomePage = () => {
     useEffect(() => {
         document.title = t('pageTitle')
         let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null
+        // index.htmlには静的なdescriptionを置いていない(ゲストビューがReact 19のhoistingで出す)ので
+        // 自前で作った場合は離脱時に消し、ゲストルートへ遷移した時に重複させない
+        const created = meta === null
         const originalDescription = meta?.content
         if (!meta) {
             meta = document.createElement('meta')
@@ -88,9 +91,11 @@ export const WelcomePage = () => {
             document.head.appendChild(meta)
         }
         meta.content = t('metaDescription')
+        const el = meta
         return () => {
             document.title = 'Concrnt'
-            if (meta) meta.content = originalDescription ?? ''
+            if (created) el.remove()
+            else el.content = originalDescription ?? ''
         }
     }, [t])
 

@@ -47,9 +47,23 @@ export const GuestTimelineView = (props: Props) => {
 
     const restricted = timeline ? timeline.isRestrictedFor(client.ccid) : false
 
+    // --- クローラー向け: title/description/canonical ---
+    const timelineURL = window.location.origin + '/timeline/' + encodeURIComponent(props.uri)
+    let description = (timeline?.description ?? '').trim()
+    if (description.length > 300) description = description.slice(0, 300) + '…'
+
     return (
         <>
             <View>
+                {timeline === null && <meta name="robots" content="noindex" />}
+                {timeline && <title>{timeline.name || 'Concrnt'}</title>}
+                {timeline && restricted && <meta name="robots" content="noindex" />}
+                {timeline && !restricted && (
+                    <>
+                        {description !== '' && <meta name="description" content={description} />}
+                        <link rel="canonical" href={timelineURL} />
+                    </>
+                )}
                 <Header onTitleTap={() => scrollRef.current?.scrollToTop()}>
                     <TimelineTag uri={props.uri} />
                 </Header>

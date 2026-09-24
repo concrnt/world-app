@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { Message } from '@concrnt/worldlib'
 import { Timestamp } from './Timestamp'
 
 interface Props {
@@ -8,6 +9,9 @@ interface Props {
     headerLeft: ReactNode
     headerRight?: ReactNode
     children?: ReactNode
+    // web専用(app版と意図的な差分): クローラー向けに schema.org/SocialMediaPosting のmicrodataを出す。
+    // 投稿本体(markdown/gfm/mfm/plaintext/media/reply)だけが渡し、カード型(FollowAck等)は渡さない
+    message?: Message<any>
 }
 
 // app版との意図的な差分(web): テキストの部分選択コピーを妨げないよう、メッセージ全体クリックでは
@@ -15,8 +19,17 @@ interface Props {
 // headerRightが無いカード型の利用(FollowAck / RerouteAssociation等)は従来どおり全体クリック。
 export const MessageLayout = (props: Props) => {
     const timestampNav = !props.detail && props.onClick !== undefined && Boolean(props.headerRight)
+    const message = props.message
+    const origin = window.location.origin
+    const authorPath = message
+        ? '/profile/' +
+          message.author +
+          (message.authorProfileName && message.authorProfileName !== 'main' ? '/' + message.authorProfileName : '')
+        : ''
     return (
         <div
+            itemScope={message ? true : undefined}
+            itemType={message ? 'https://schema.org/SocialMediaPosting' : undefined}
             style={{
                 display: 'flex',
                 flexDirection: 'row',
@@ -30,6 +43,28 @@ export const MessageLayout = (props: Props) => {
                 if (!props.detail && !timestampNav) props.onClick?.()
             }}
         >
+            {message && (
+                <>
+                    {/* itemProp付きの<meta>はReact 19でもheadにhoistされず、このitemScope内に留まる */}
+                    <meta itemProp="identifier" content={message.uri} />
+                    <meta itemProp="url" content={origin + '/post/' + encodeURIComponent(message.uri)} />
+                    <meta itemProp="datePublished" content={new Date(message.createdAt).toISOString()} />
+                    {typeof message.value?.body === 'string' && message.value.body !== '' && (
+                        <meta itemProp="text" content={message.value.body} />
+                    )}
+                    {/* display:noneにしないと空のflexアイテムになりgap分だけアバターがずれる */}
+                    <span itemProp="author" itemScope itemType="https://schema.org/Person" style={{ display: 'none' }}>
+                        <meta itemProp="identifier" content={message.author} />
+                        <meta itemProp="url" content={origin + authorPath} />
+                        {message.authorProfile?.username && (
+                            <meta itemProp="name" content={message.authorProfile.username} />
+                        )}
+                        {message.authorUser?.alias && (
+                            <meta itemProp="alternateName" content={message.authorUser.alias} />
+                        )}
+                    </span>
+                </>
+            )}
             <div style={{ flexShrink: 0, marginTop: '5px' }}>{props.left}</div>
             <div
                 style={{
