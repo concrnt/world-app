@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { ListSettings } from '../components/ListSettings'
 import { RealtimeTimeline } from '../components/RealtimeTimeline'
 import { ComposeFAB } from '../components/ComposeFAB'
-import { MessageSkeleton } from '../components/message/MessageSkeleton'
+import { TimelineSkeleton } from '../components/TimelineSkeleton'
 import { PostContextProvider } from '../contexts/PostContext'
 
 import { MdTune } from 'react-icons/md'
@@ -198,14 +198,19 @@ const HomeMain = ({
                 </Tabs>
             )}
             {pin && (
-                // タブ切替はstartTransition内で行うため、切替先リストのitems取得でsuspendすると
-                // 既存のSuspense境界(表示中)では旧画面が保持され、タブ選択表示も動かず「押しても切り替わらない」ように見える。
-                // pinごとに新しい境界をマウントすることで、遷移中でも即座にfallbackへ切り替わる(web版と同じ構成)
-                <Suspense key={pin.uri} fallback={<MessageSkeleton />}>
-                    <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                <PostContextProvider destinations={pin.defaultPostTimelines} profile={pin.defaultProfile}>
+                    {/*
+                      タブ切替はstartTransition内で行うため、切替先リストのitems取得でsuspendすると
+                      既存のSuspense境界(表示中)では旧画面が保持され、タブ選択表示も動かず「押しても切り替わらない」ように見える。
+                      pinごとに新しい境界をマウントすることで、遷移中でも即座にfallbackへ切り替わる(web版と同じ構成)。
+                      フォールバックはRealtimeTimelineと同じ構造で組み、置き換わったときのレイアウトシフトを防ぐ
+                    */}
+                    <Suspense key={pin.uri} fallback={<TimelineSkeleton />}>
                         <TimelineWrap ref={timelineRef} pin={pin} />
-                    </PostContextProvider>
-                </Suspense>
+                    </Suspense>
+                    {/* Suspense境界の内側に置くとタブ切替(境界の付け替え)のたびに再マウントされて出現アニメーションが走るので外に出す */}
+                    <ComposeFAB />
+                </PostContextProvider>
             )}
         </>
     )
@@ -217,12 +222,7 @@ const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) 
 
     if (!list) return <Text>{t('listNotFound')}</Text>
 
-    return (
-        <>
-            <Timeline ref={props.ref} list={list} excludeSelf={props.pin.excludeSelf} />
-            <ComposeFAB />
-        </>
-    )
+    return <Timeline ref={props.ref} list={list} excludeSelf={props.pin.excludeSelf} />
 }
 
 const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRef }) => {

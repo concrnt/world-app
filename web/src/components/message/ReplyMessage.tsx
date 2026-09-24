@@ -34,6 +34,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 />
             </ErrorBoundary>
             <MessageLayout
+                message={props.message}
                 detail={props.detail}
                 onClick={() => {
                     navigate('/post/' + encodeURIComponent(props.message.uri))

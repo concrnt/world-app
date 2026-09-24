@@ -1,4 +1,5 @@
 import {
+    Fragment,
     memo,
     startTransition,
     Suspense,
@@ -428,16 +429,22 @@ export const RealtimeTimeline = (props: Props) => {
                         padding: '8px 0',
                         overflowX: 'hidden',
                         overflowY: 'auto',
+                        // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
+                        scrollbarGutter: 'stable',
                         overscrollBehaviorY: 'none',
                         touchAction: 'pan-y'
                     }}
                     ref={scrollRef}
                 >
+                    {/* 実際のCellと同じくDividerを挟み、読み込み完了時にレイアウトが動かないようにする */}
                     {!initialLoaded &&
                         Array.from({ length: 10 }).map((_, i) => (
-                            <div key={i} style={{ padding: `0 ${CssVar.space(2)}` }}>
-                                <MessageSkeleton />
-                            </div>
+                            <Fragment key={i}>
+                                <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                                    <MessageSkeleton />
+                                </div>
+                                <Divider />
+                            </Fragment>
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
                         {reader.current?.body.map((item) => (
@@ -479,7 +486,8 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                 <div
                     style={{
                         padding: `0 ${CssVar.space(2)}`,
-                        contentVisibility: 'auto'
+                        contentVisibility: 'auto',
+                        containIntrinsicSize: 'auto 120px'
                     }}
                 >
                     <Suspense key={item.href} fallback={<MessageSkeleton />}>

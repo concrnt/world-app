@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom'
 import { QueryTimeline } from '../../components/QueryTimeline'
 import { MediaGridTimeline } from '../../components/MediaGridTimeline'
 import { usePersistent } from '../../hooks/usePersistent'
-import { Document, PermissionError } from '@concrnt/client'
+import { Document, PermissionError, renderUriTemplate } from '@concrnt/client'
 import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
@@ -96,7 +96,12 @@ const Inner = (props: InnerProps) => {
     const profile = use(props.profilePromise)
 
     if (user === null) {
-        return <Text>{t('userNotFound')}</Text>
+        return (
+            <>
+                <meta name="robots" content="noindex" />
+                <Text>{t('userNotFound')}</Text>
+            </>
+        )
     }
 
     if (profile === 'restricted') {
@@ -114,10 +119,59 @@ interface BodyProps {
 }
 
 const Body = (props: BodyProps) => {
+    const { client } = useClient()
     const { getImageURL } = useMediaProxy()
     const { t } = useTranslation('', { keyPrefix: 'web.guestProfile' })
     const [stats] = useSubscribe(props.user.stats)
     const profile = props.profile
+
+    // --- クローラー向け: title/description/canonical と ProfilePage JSON-LD ---
+    // どのドメインで配信されても同じプロフィールなので、canonicalと構造化データのURLはconcrnt.worldに統一する
+    const profileURL =
+        'https://concrnt.world' +
+        '/profile/' +
+        props.ccid +
+        (props.profileName !== 'main' ? '/' + props.profileName : '')
+    // ccfs://はクローラーが取得できないのでresolveエンドポイント(303でファイルへ)に変換する
+    const resolveURL = (src?: string): string | undefined => {
+        if (!src) return undefined
+        if (!src.startsWith('ccfs://')) return src
+        if (client.server && 'net.concrnt.core.resolve' in client.server.endpoints) {
+            return `https://${client.api.defaultHost}${renderUriTemplate(client.server, 'net.concrnt.core.resolve', { uri: src })}`
+        }
+        return `https://${client.api.defaultHost}/api/v2/resolve?uri=${encodeURIComponent(src)}`
+    }
+    const username = profile.value.username ?? 'Anonymous'
+    let description = (profile.value.description ?? '').replace(/!\[[^\]]*\]\(([^)]*)\)/g, '').trim()
+    if (description.length > 300) description = description.slice(0, 300) + '…'
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        dateCreated: new Date(profile.createdAt).toISOString(),
+        mainEntity: {
+            '@type': 'Person',
+            identifier: props.ccid,
+            name: username,
+            alternateName: props.user.alias,
+            description: profile.value.description,
+            image: resolveURL(profile.value.avatar),
+            url: profileURL,
+            interactionStatistic: [
+                {
+                    '@type': 'InteractionCounter',
+                    interactionType: 'https://schema.org/FollowAction',
+                    userInteractionCount: stats.acknowledged
+                }
+            ],
+            agentInteractionStatistic: [
+                {
+                    '@type': 'InteractionCounter',
+                    interactionType: 'https://schema.org/FollowAction',
+                    userInteractionCount: stats.acknowledging
+                }
+            ]
+        }
+    }
 
     const theme = useTheme()
     const navigate = useNavigate()
@@ -334,6 +388,10 @@ const Body = (props: BodyProps) => {
 
     return (
         <>
+            <title>{`${username} on Concrnt`}</title>
+            {description !== '' && <meta name="description" content={description} />}
+            <link rel="canonical" href={profileURL} />
+            <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
             {tab === 'media' && mediaView === 'grid' ? (
                 <MediaGridTimeline prefix={target.prefix} query={target.query} header={header} />
             ) : (
@@ -361,6 +419,8 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                 flexDirection: 'column'
             }}
         >
+            <title>{`${props.user.alias ?? props.ccid} on Concrnt`}</title>
+            <meta name="robots" content="noindex" />
             <div
                 style={{
                     position: 'relative'

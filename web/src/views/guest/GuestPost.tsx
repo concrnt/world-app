@@ -1,6 +1,7 @@
 import { MessageContainer } from '../../components/message'
 import { CCImage, Avatar, Divider, Tabs, Tab, Text, Button } from '@concrnt/ui'
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { Suspense, use, useCallback, useEffect, useState } from 'react'
+import { renderUriTemplate } from '@concrnt/client'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import {
@@ -131,6 +132,7 @@ export const GuestPostView = (props: Props) => {
                 >
                     <ErrorBoundary FallbackComponent={RestrictedFallback}>
                         <Suspense fallback={<MessageSkeleton />}>
+                            {!props.embedded && <PostHead uri={props.uri} />}
                             <MessageContainer uri={props.uri} forceExpanded detail />
                         </Suspense>
                     </ErrorBoundary>
@@ -332,6 +334,112 @@ export const GuestPostView = (props: Props) => {
     )
 }
 
+// クローラー向けのhead要素(title/description/canonical)とJSON-LD。
+// MessageContainerと同じ client.getMessage(uri) を使う(worldlibがキャッシュするので追加フェッチは無い)
+const jsonLdSchemas: string[] = [
+    Schemas.markdownMessage,
+    Schemas.gfmMessage,
+    Schemas.mfmMessage,
+    Schemas.plaintextMessage,
+    Schemas.mediaMessage,
+    Schemas.replyMessage
+]
+
+const PostHead = (props: { uri: string }) => {
+    const { client } = useClient()
+    const message = use(client.getMessage<any>(props.uri))
+    if (!message) return <meta name="robots" content="noindex" />
+
+    // どのドメインで配信されても同じ投稿なので、canonicalと構造化データのURLはconcrnt.worldに統一する
+    const origin = 'https://concrnt.world'
+    const url = origin + '/post/' + encodeURIComponent(props.uri)
+    const username: string = message.authorProfile?.username || 'Anonymous'
+    const authorURL =
+        origin +
+        '/profile/' +
+        message.author +
+        (message.authorProfileName && message.authorProfileName !== 'main' ? '/' + message.authorProfileName : '')
+
+    // ccfs://はクローラーが取得できないのでresolveエンドポイント(303でファイルへ)に変換する
+    const resolveURL = (src?: string): string | undefined => {
+        if (!src) return undefined
+        if (!src.startsWith('ccfs://')) return src
+        if (client.server && 'net.concrnt.core.resolve' in client.server.endpoints) {
+            return `https://${client.api.defaultHost}${renderUriTemplate(client.server, 'net.concrnt.core.resolve', { uri: src })}`
+        }
+        return `https://${client.api.defaultHost}/api/v2/resolve?uri=${encodeURIComponent(src)}`
+    }
+
+    const rawBody: string = typeof message.value?.body === 'string' ? message.value.body : ''
+    const imageRegex = /!\[[^\]]*\]\(([^)]*)\)/g
+    const images = Array.from(rawBody.matchAll(imageRegex), (m) => resolveURL(m[1])).filter(
+        (s): s is string => s !== undefined
+    )
+    const videos: string[] = []
+    for (const media of Array.isArray(message.value?.medias) ? message.value.medias : []) {
+        if (media.flag) continue
+        const src = resolveURL(media.mediaURL)
+        if (!src) continue
+        if (media.mediaType?.startsWith('image')) images.push(src)
+        else if (media.mediaType?.startsWith('video')) videos.push(src)
+    }
+    let description = rawBody.replace(imageRegex, '').trim()
+    if (description.length > 300) description = description.slice(0, 300) + '…'
+
+    const datePublished = new Date(message.createdAt).toISOString()
+    const counts: Record<string, number> = message.associationCounts ?? {}
+    // JSON.stringifyがundefinedのプロパティを落とすので、無い項目はundefinedのままでよい
+    const jsonLd = jsonLdSchemas.includes(message.schema)
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'SocialMediaPosting',
+              identifier: props.uri,
+              url,
+              datePublished,
+              text: rawBody || undefined,
+              image: images.length > 0 ? images : undefined,
+              video:
+                  videos.length > 0
+                      ? videos.map((v) => ({ '@type': 'VideoObject', contentUrl: v, uploadDate: datePublished }))
+                      : undefined,
+              author: {
+                  '@type': 'Person',
+                  identifier: message.author,
+                  name: username,
+                  alternateName: message.authorUser?.alias,
+                  url: authorURL,
+                  image: resolveURL(message.authorProfile?.avatar)
+              },
+              interactionStatistic: [
+                  {
+                      '@type': 'InteractionCounter',
+                      interactionType: 'https://schema.org/LikeAction',
+                      userInteractionCount: counts[Schemas.likeAssociation] ?? 0
+                  },
+                  {
+                      '@type': 'InteractionCounter',
+                      interactionType: 'https://schema.org/CommentAction',
+                      userInteractionCount: counts[Schemas.replyAssociation] ?? 0
+                  },
+                  {
+                      '@type': 'InteractionCounter',
+                      interactionType: 'https://schema.org/ShareAction',
+                      userInteractionCount: counts[Schemas.rerouteAssociation] ?? 0
+                  }
+              ]
+          }
+        : undefined
+
+    return (
+        <>
+            <title>{`${username} on Concrnt`}</title>
+            {description !== '' && <meta name="description" content={description} />}
+            <link rel="canonical" href={url} />
+            {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
+        </>
+    )
+}
+
 // 制限付き・取得失敗時のフォールバック(ゲストは閲覧リクエストを送れないためログインを促す)
 const RestrictedFallback = () => {
     const { t } = useTranslation('', { keyPrefix: 'web.guestPost' })
@@ -346,6 +454,7 @@ const RestrictedFallback = () => {
                 padding: CssVar.space(4)
             }}
         >
+            <meta name="robots" content="noindex" />
             <MdLock size={48} style={{ opacity: 0.5 }} />
             <Text>{t('restrictedTitle')}</Text>
             <Text variant="caption">{t('restrictedDescription')}</Text>
