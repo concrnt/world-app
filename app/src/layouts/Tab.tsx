@@ -14,7 +14,6 @@ interface Props {
     tabStyle?: CSSProperties
     style?: CSSProperties
     placement?: 'upper' | 'lower'
-    divider?: boolean
 }
 
 export const TabLayout = (props: Props) => {
@@ -46,7 +45,6 @@ export const TabLayout = (props: Props) => {
                             </Tab>
                         ))}
                     </Tabs>
-                    {props.divider && <div style={{ height: '1px', backgroundColor: '#ccc', width: '100%' }} />}
                 </>
             )}
 
@@ -58,7 +56,6 @@ export const TabLayout = (props: Props) => {
 
             {props.placement !== 'upper' && (
                 <>
-                    {props.divider && <div style={{ height: '1px', backgroundColor: '#ccc', width: '100%' }} />}
                     <Tabs style={props.style}>
                         {Object.entries(props.tabs).map(([key, tab]) => (
                             <Tab

@@ -170,7 +170,6 @@ export const GuestPostView = (props: Props) => {
                         Reactions
                     </Tab>
                 </Tabs>
-                <Divider />
 
                 <div
                     style={{

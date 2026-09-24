@@ -198,7 +198,8 @@ const MobileShell = () => {
                         <Tabs
                             style={{
                                 paddingBottom: 'env(safe-area-inset-bottom)',
-                                borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined
+                                borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined,
+                                borderBottom: 'none'
                             }}
                         >
                             {TABS.map((tab) => (
@@ -208,7 +209,8 @@ const MobileShell = () => {
                                     selected={location.pathname === tab.path}
                                     onClick={() => navigate(tab.path)}
                                     style={{
-                                        color: CssVar.backdropText
+                                        color: CssVar.backdropText,
+                                        padding: '0.5rem'
                                     }}
                                 >
                                     {tab.path === '/notifications' ? (
