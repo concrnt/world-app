@@ -9,6 +9,15 @@ edition = "2021"
 members = [".", "crates/concrnt"]
 resolver = "2"
 
+# Xcode 27's SwiftPM internalizes non-public @_cdecl symbols; swift-rs 1.0.8
+# re-globalizes its own package's symbols but misses the ones exported by its
+# SwiftRs Swift dependency (retain_object etc.), so iOS release links fail.
+# The fork carries a one-line fix in src-rs/build.rs. Drop this patch once
+# upstream ships a release that links on Xcode 27 (Brendonovich/swift-rs).
+# Building also requires rustup's llvm-tools component (llvm-objcopy).
+[patch.crates-io]
+swift-rs = { git = "https://github.com/totegamma/swift-rs", branch = "fix/xcode27-swiftrs-cdecl" }
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
