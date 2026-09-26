@@ -1,14 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useAnimate } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { FaEthereum } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
-import { Button, CCImage, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { Button, CCImage, CircularProgress, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { Aurora } from '../components/Aurora'
+import { SpeedLines } from '../components/SpeedLines'
 import styles from './EmojiPicker.module.css'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
@@ -139,6 +140,10 @@ export const EmojiPickerProvider = (props: Props) => {
     const holdFrame = useRef<number | undefined>(undefined)
     const holdStartedAt = useRef<number | null>(null)
     const holdSent = useRef(false)
+    const txTimer = useRef<number | undefined>(undefined)
+    const [txActive, setTxActive] = useState(false)
+    const [iconScope, animateIcon] = useAnimate()
+    const [settleScope, animateSettle] = useAnimate()
     const superDraftRef = useRef(superDraft)
     const superAmountRef = useRef(superAmount)
     superDraftRef.current = superDraft
@@ -389,8 +394,17 @@ export const EmojiPickerProvider = (props: Props) => {
         const amount = superAmountRef.current
         if (!draft || amount === null) return
         holdSent.current = true
-        selectEmoji(draft.emoji)
-        close()
+        window.clearTimeout(txTimer.current)
+        setTxActive(true)
+        const txMs = Math.min(30000, Math.max(10000, 20000 + (Math.random() + Math.random() + Math.random() - 1.5) * 12000))
+        txTimer.current = window.setTimeout(() => {
+            txTimer.current = undefined
+            const current = superDraftRef.current
+            const amount = superAmountRef.current
+            if (!current || amount === null) return
+            selectEmoji(current.emoji)
+            close()
+        }, txMs)
     }
 
     const tickHold = (): void => {
@@ -408,6 +422,7 @@ export const EmojiPickerProvider = (props: Props) => {
     useEffect(() => {
         return () => {
             if (holdFrame.current !== undefined) cancelAnimationFrame(holdFrame.current)
+            window.clearTimeout(txTimer.current)
         }
     }, [])
 
@@ -417,8 +432,63 @@ export const EmojiPickerProvider = (props: Props) => {
         holdFrame.current = undefined
         holdStartedAt.current = null
         holdSent.current = false
+        window.clearTimeout(txTimer.current)
+        txTimer.current = undefined
+        setTxActive(false)
         setHoldProgress(0)
     }, [superDraft])
+
+    useEffect(() => {
+        const icon = iconScope.current
+        const settle = settleScope.current
+        if (!icon || !settle || !superDraft) return
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+        const playbacks: { stop: () => void }[] = []
+        if (!txActive) {
+            playbacks.push(
+                animateIcon(
+                    icon,
+                    {
+                        x: [0, 12, -14, 8, 0],
+                        y: [0, -14, 6, 12, 0],
+                        rotate: [-6, 5, 8, -4, -6]
+                    },
+                    { duration: 9, ease: 'easeInOut', repeat: Infinity }
+                )
+            )
+            return () => {
+                for (const playback of playbacks) playback.stop()
+            }
+        }
+
+        const raw = getComputedStyle(icon).transform
+        const flat = raw.match(/^matrix\(([^)]+)\)$/)
+        const deep = raw.match(/^matrix3d\(([^)]+)\)$/)
+        const parts = (flat?.[1] ?? deep?.[1])?.split(',').map((part) => Number(part))
+        const x = parts ? (flat ? parts[4] : parts[12]) : 0
+        const y = parts ? (flat ? parts[5] : parts[13]) : 0
+        const rotate = parts ? (Math.atan2(parts[1], parts[0]) * 180) / Math.PI : 0
+        playbacks.push(
+            animateSettle(
+                settle,
+                { x: [x, 0], y: [y, 0], rotate: [rotate, 0] },
+                { duration: 0.2, ease: [0.15, 0.9, 0.25, 1.2] }
+            ),
+            animateIcon(
+                icon,
+                {
+                    x: [0, -4, 4, -2, 0],
+                    y: [0, 2, -2, -3, 0],
+                    rotate: [0, -1.4, 1.2, -0.7, 0]
+                },
+                { duration: 0.08, ease: 'linear', repeat: Infinity }
+            )
+        )
+        return () => {
+            for (const playback of playbacks) playback.stop()
+        }
+    }, [txActive, superDraft, animateIcon, animateSettle, iconScope, settleScope])
 
     // ---- Display data ----
 
@@ -698,6 +768,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             <AnimatePresence>
                                 {superReactionEnabled && (
                                     <motion.div
+                                        key="aurora"
                                         style={{
                                             position: 'absolute',
                                             inset: 0,
@@ -712,6 +783,25 @@ export const EmojiPickerProvider = (props: Props) => {
                                         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                                     >
                                         <Aurora />
+                                    </motion.div>
+                                )}
+                                {txActive && (
+                                    <motion.div
+                                        key="speed"
+                                        style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            zIndex: -1,
+                                            pointerEvents: 'none',
+                                            overflow: 'hidden',
+                                            borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`
+                                        }}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 0.08 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <SpeedLines />
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -731,10 +821,12 @@ export const EmojiPickerProvider = (props: Props) => {
                                             flex: 1,
                                             minHeight: 0,
                                             display: 'flex',
+                                            flexDirection: 'column',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}
                                     >
+                                        {!txActive && (
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -744,6 +836,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 holdFrame.current = undefined
                                                 holdStartedAt.current = null
                                                 holdSent.current = false
+                                                window.clearTimeout(txTimer.current)
+                                                txTimer.current = undefined
+                                                setTxActive(false)
                                                 setHoldProgress(0)
                                                 setSuperDraft(null)
                                                 setSuperAmount(null)
@@ -765,44 +860,76 @@ export const EmojiPickerProvider = (props: Props) => {
                                         >
                                             キャンセル
                                         </button>
-                                        <motion.div
-                                            initial={{
-                                                x: superDraft.fromX,
-                                                y: superDraft.fromY,
-                                                scale: 0.35,
-                                                opacity: 0.4
-                                            }}
-                                            animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-                                            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                                        >
-                                            <div
-                                                className={styles.drift}
-                                                style={{
-                                                    width: '50vw',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
+                                        )}
+                                        <div style={{ position: 'relative' }}>
+                                            <motion.div
+                                                initial={{
+                                                    x: superDraft.fromX,
+                                                    y: superDraft.fromY,
+                                                    scale: 0.35,
+                                                    opacity: 0.4
                                                 }}
+                                                animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+                                                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                                             >
-                                                <CCImage
-                                                    src={superDraft.emoji.imageURL}
-                                                    maxHeight={1024}
-                                                    alt={superDraft.emoji.shortcode}
+                                                <div ref={settleScope}>
+                                                    <div
+                                                        ref={iconScope}
                                                     style={{
                                                         width: '50vw',
-                                                        height: 'auto',
-                                                        maxHeight: '50vw'
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
                                                     }}
-                                                />
-                                            </div>
-                                        </motion.div>
+                                                >
+                                                    <CCImage
+                                                        src={superDraft.emoji.imageURL}
+                                                        maxHeight={1024}
+                                                        alt={superDraft.emoji.shortcode}
+                                                        style={{
+                                                            width: '50vw',
+                                                            height: 'auto',
+                                                            maxHeight: '50vw'
+                                                        }}
+                                                    />
+                                                </div>
+                                                </div>
+                                            </motion.div>
+                                            {txActive && (
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        marginTop: 16,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: CssVar.space(2),
+                                                        fontSize: '15px',
+                                                        lineHeight: '22px',
+                                                        fontWeight: 700,
+                                                        color: CssVar.contentText,
+                                                        whiteSpace: 'nowrap',
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                >
+                                                    <CircularProgress size={18} />
+                                                    トランザクションが進行中...
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                                        style={{ flexShrink: 0 }}
-                                    >
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                            style={{
+                                                flexShrink: 0,
+                                                visibility: txActive ? 'hidden' : 'visible',
+                                                pointerEvents: txActive ? 'none' : 'auto'
+                                            }}
+                                        >
                                         <div
                                             style={{
                                                 fontSize: '13px',
@@ -937,7 +1064,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             />
                                             <span style={{ position: 'relative' }}>{holdLabel}</span>
                                         </button>
-                                    </motion.div>
+                                        </motion.div>
                                 </div>
                             )}
                             {/* Handle */}
