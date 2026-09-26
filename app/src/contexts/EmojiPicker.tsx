@@ -586,6 +586,23 @@ export const EmojiPickerProvider = (props: Props) => {
                                 dismissKeyboard(e)
                             }}
                         >
+                            {superReactionEnabled && (
+                                <div
+                                    style={{
+                                        pointerEvents: 'none',
+                                        position: 'absolute',
+                                        inset: 0,
+                                        borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
+                                        background: [
+                                            `linear-gradient(to bottom, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
+                                            `linear-gradient(to top, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
+                                            `linear-gradient(to right, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
+                                            `linear-gradient(to left, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`
+                                        ].join(', '),
+                                        zIndex: 2
+                                    }}
+                                />
+                            )}
                             {/* Handle */}
                             <div
                                 onPointerDown={onHandlePointerDown}
