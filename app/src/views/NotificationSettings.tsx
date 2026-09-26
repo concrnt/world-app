@@ -24,6 +24,7 @@ const schemaOptions: { labelKey: string; schema: string }[] = [
     { labelKey: 'reroute', schema: Schemas.rerouteAssociation },
     { labelKey: 'fav', schema: Schemas.likeAssociation },
     { labelKey: 'reaction', schema: Schemas.reactionAssociation },
+    { labelKey: 'superReaction', schema: Schemas.superreactionAssociation },
     { labelKey: 'readRequest', schema: Schemas.readAccessRequestAssociation },
     { labelKey: 'follow', schema: Schemas.followAck }
 ]

@@ -89,6 +89,7 @@
                 "reroute": "リルート",
                 "fav": "お気に入り",
                 "reaction": "リアクション",
+                "superReaction": "スーパーリアクション",
                 "readRequest": "閲覧リクエスト",
                 "follow": "フォロー"
             },
@@ -643,6 +644,11 @@
         "onelineMessage": {
             "deletePost": "投稿を削除"
         },
+        "superReaction": {
+            "verifying": "検証中...",
+            "verified": "検証済み",
+            "failed": "検証できませんでした"
+        },
         "reactionAssociation": {
             "userReacted": "{{name}} がリアクションしました",
             "loading": "読み込み中..."
@@ -891,6 +897,7 @@
             "reroute": "リルート",
             "fav": "お気に入り",
             "reaction": "リアクション",
+            "superReaction": "スーパーリアクション",
             "readRequest": "閲覧リクエスト"
         },
         "mnemonicInput": {

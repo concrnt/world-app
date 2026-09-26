@@ -109,6 +109,7 @@ export const MessageContainer = (props: Props): ReactNode | null => {
         case Schemas.likeAssociation:
             return <LikeAssociation message={message} />
         case Schemas.reactionAssociation:
+        case Schemas.superreactionAssociation:
             return <ReactionAssociation message={message} />
         case Schemas.replyAssociation:
             return <ReplyAssociation message={message} />

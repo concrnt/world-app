@@ -89,6 +89,7 @@
                 "reroute": "Reroute",
                 "fav": "Favorite",
                 "reaction": "Reaction",
+                "superReaction": "Super Reaction",
                 "readRequest": "Read Request",
                 "follow": "Follow"
             },
@@ -644,6 +645,11 @@
         "onelineMessage": {
             "deletePost": "Delete post"
         },
+        "superReaction": {
+            "verifying": "Verifying...",
+            "verified": "Verified",
+            "failed": "Could not verify"
+        },
         "reactionAssociation": {
             "userReacted": "{{name}} reacted",
             "loading": "Loading..."
@@ -892,6 +898,7 @@
             "reroute": "Reroute",
             "fav": "Favorite",
             "reaction": "Reaction",
+            "superReaction": "Super Reaction",
             "readRequest": "Read Request"
         },
         "mnemonicInput": {

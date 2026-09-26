@@ -23,6 +23,7 @@ export const DEFAULT_PUSH_SCHEMAS = [
     Schemas.rerouteAssociation,
     Schemas.likeAssociation,
     Schemas.reactionAssociation,
+    Schemas.superreactionAssociation,
     Schemas.readAccessRequestAssociation,
     Schemas.followAck
 ]

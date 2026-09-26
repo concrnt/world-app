@@ -1,4 +1,15 @@
-import { createPublicClient, getAddress, http, isAddress, parseAbi, type Address, type PublicClient } from 'viem'
+import {
+    createPublicClient,
+    decodeFunctionData,
+    formatEther,
+    getAddress,
+    http,
+    isAddress,
+    isAddressEqual,
+    parseAbi,
+    type Address,
+    type PublicClient
+} from 'viem'
 import { sepolia } from 'viem/chains'
 import { CDID, NotFoundError, type Document } from '@concrnt/client'
 import {
@@ -130,4 +141,60 @@ export const buildSuperreaction = (
     }
     const cdid = CDID.newFromString(JSON.stringify(doc), doc.createdAt).toString()
     return { doc, ccfs: `ccfs://${message.author}/concrnt/${cdid}` }
+}
+
+export type SuperReactionVerification =
+    | { status: 'verified'; amountEth: string; txhash: string }
+    | { status: 'failed'; reason: string; txhash: string }
+
+// superreaction と upgrade の組を、送受信者の tipjar 文書・受信者ホストの取り分・チェーン上の tx で検証する。
+// 送信側(sendSuperReaction)と同じ規則で期待値を組み立て、calldata と突き合わせる。throw せず、結果に BigInt を含めない
+export const verifySuperReaction = async (
+    client: Client,
+    superreaction: { ccfs: string; author: string; associate: string },
+    upgrade: { txhash: string },
+    receiverDomain?: string
+): Promise<SuperReactionVerification> => {
+    const txhash = upgrade.txhash
+    const failed = (reason: string): SuperReactionVerification => ({ status: 'failed', reason, txhash })
+    if (!TIP_SPLITTER_ADDRESS || !RPC_URL) return failed('not-configured')
+    if (!/^0x[0-9a-fA-F]{64}$/.test(txhash)) return failed('bad-txhash')
+    const receiverCcid = new URL(superreaction.associate).host
+    const [sender, receiver, share] = await Promise.all([
+        getTipjar(client, superreaction.author),
+        getTipjar(client, receiverCcid, receiverDomain),
+        resolveHost(receiverDomain)
+    ])
+    if (!sender) return failed('no-sender-tipjar')
+    if (!receiver) return failed('no-receiver-tipjar')
+
+    const publicClient = getPublicClient()
+    let tx: Awaited<ReturnType<PublicClient['getTransaction']>>
+    let receipt: Awaited<ReturnType<PublicClient['getTransactionReceipt']>>
+    try {
+        ;[tx, receipt] = await Promise.all([
+            publicClient.getTransaction({ hash: txhash as `0x${string}` }),
+            publicClient.getTransactionReceipt({ hash: txhash as `0x${string}` })
+        ])
+    } catch (e) {
+        console.error('failed to fetch tip transaction:', e)
+        return failed('tx-not-found')
+    }
+    if (receipt.status !== 'success') return failed('tx-failed')
+    if (!tx.to || !isAddressEqual(tx.to, TIP_SPLITTER_ADDRESS)) return failed('wrong-contract')
+    if (!isAddressEqual(tx.from, sender)) return failed('wrong-sender')
+    let decoded: ReturnType<typeof decodeFunctionData<typeof tipSplitterAbi>>
+    try {
+        decoded = decodeFunctionData({ abi: tipSplitterAbi, data: tx.input })
+    } catch {
+        return failed('wrong-function')
+    }
+    if (decoded.functionName !== 'tip') return failed('wrong-function')
+    const [targetURI, txReceiver, txHost, ratioBps] = decoded.args
+    if (targetURI !== superreaction.ccfs) return failed('wrong-target')
+    if (!isAddressEqual(txReceiver, receiver)) return failed('wrong-receiver')
+    if (!isAddressEqual(txHost, share.host)) return failed('wrong-host')
+    if (ratioBps !== share.ratioBps) return failed('wrong-ratio')
+    if (tx.value <= 0n) return failed('zero-value')
+    return { status: 'verified', amountEth: formatEther(tx.value), txhash }
 }

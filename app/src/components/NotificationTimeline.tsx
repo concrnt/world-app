@@ -129,6 +129,7 @@ export const NotificationTimeline = (props: Props) => {
                     key = (msg.associationTarget?.uri ?? msg.uri) + KEY_SUFFIX_LIKE
                     break
                 case Schemas.reactionAssociation:
+                case Schemas.superreactionAssociation:
                     key = (msg.associationTarget?.uri ?? msg.uri) + KEY_SUFFIX_REACTION
                     break
                 case Schemas.followAck:

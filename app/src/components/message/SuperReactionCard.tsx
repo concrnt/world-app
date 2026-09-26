@@ -1,6 +1,11 @@
-import { Avatar, CCImage } from '@concrnt/ui'
+import { Avatar, CCImage, CircularProgress } from '@concrnt/ui'
 import { CssVar } from '../../types/Theme'
 import { FaEthereum } from 'react-icons/fa6'
+import { MdErrorOutline, MdVerified } from 'react-icons/md'
+import { useTranslation } from 'react-i18next'
+import { openUrl } from '@tauri-apps/plugin-opener'
+import { usePreference } from '../../contexts/Preference'
+import { explorerTxUrl } from '../../lib/tipjar'
 import styles from './SuperReactionCard.module.css'
 
 interface Props {
@@ -10,9 +15,15 @@ interface Props {
     eth: string
     imageUrl: string
     message?: string
+    // 省略時はチェーン検証を伴わない表示(ウォレット画面の履歴など)
+    status?: 'pending' | 'verified' | 'failed'
+    reason?: string
+    txhash?: string
 }
 
 export const SuperReactionCard = (props: Props) => {
+    const { t } = useTranslation('', { keyPrefix: 'components.superReaction' })
+    const [devmode] = usePreference('developerMode')
     return (
         <div
             className={styles.card}
@@ -22,6 +33,7 @@ export const SuperReactionCard = (props: Props) => {
                 width: '100%',
                 borderRadius: '4px',
                 overflow: 'hidden',
+                opacity: props.status === 'failed' ? 0.55 : 1,
                 backgroundColor: `rgb(from ${CssVar.uiBackground} r g b / 0.1)`
             }}
         >
@@ -102,6 +114,14 @@ export const SuperReactionCard = (props: Props) => {
                 ) : null}
             </div>
             <div
+                role={props.txhash ? 'link' : undefined}
+                onClick={(e) => {
+                    if (!props.txhash) return
+                    e.stopPropagation()
+                    openUrl(explorerTxUrl(props.txhash)).catch((err) => {
+                        console.error('failed to open explorer:', err)
+                    })
+                }}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -113,11 +133,40 @@ export const SuperReactionCard = (props: Props) => {
                     color: CssVar.uiText,
                     fontSize: '14px',
                     lineHeight: '18px',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    cursor: props.txhash ? 'pointer' : undefined
                 }}
             >
                 <FaEthereum size={14} />
-                <span>{props.eth} ETH</span>
+                <span
+                    style={{
+                        textDecoration: props.status === 'failed' ? 'line-through' : undefined,
+                        opacity: props.status === 'pending' ? 0.6 : 1
+                    }}
+                >
+                    {props.eth} ETH
+                </span>
+                {props.status === 'pending' && (
+                    <>
+                        <CircularProgress size={14} />
+                        <span style={{ fontWeight: 400, opacity: 0.8 }}>{t('verifying')}</span>
+                    </>
+                )}
+                {props.status === 'verified' && (
+                    <>
+                        <MdVerified size={16} />
+                        <span style={{ fontWeight: 400, opacity: 0.8 }}>{t('verified')}</span>
+                    </>
+                )}
+                {props.status === 'failed' && (
+                    <>
+                        <MdErrorOutline size={16} />
+                        <span style={{ fontWeight: 400, opacity: 0.8 }}>
+                            {t('failed')}
+                            {devmode && props.reason ? ` (${props.reason})` : ''}
+                        </span>
+                    </>
+                )}
             </div>
         </div>
     )

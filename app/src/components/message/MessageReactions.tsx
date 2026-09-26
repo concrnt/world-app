@@ -9,8 +9,8 @@ import { ButtonBase, CCImage } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { useQueryTimelineContext } from '../QueryTimeline'
-import { SuperReactionCard } from './SuperReactionCard'
-import { useSuperReactions } from './superReactionMock'
+import { Suspense } from 'react'
+import { SuperReactionList } from './SuperReactionList'
 
 // web版との意図的な差分: appはButtonBase+長押しでリアクション一覧へ遷移、
 // webは素のbutton+hoverでリアクションした人をtooltip表示する(tooltipはweb限定機能)
@@ -30,7 +30,10 @@ export const MessageReactions = (props: Props) => {
     const messageHref = props.message.key ?? props.message.uri
 
     const { reactionCounts, ownReactions } = props.reactionState
-    const superReactions = useSuperReactions(props.message.uri)
+    // スーパーリアクション(チップ付き)は superreaction と upgrade(tx hash)の両方が付いている時だけ表示する
+    const counts = props.message.associationCounts ?? {}
+    const hasSuper =
+        (counts[Schemas.superreactionAssociation] ?? 0) > 0 && (counts[Schemas.upgradeAssociation] ?? 0) > 0
 
     // commit完了後、transitionが終わる(=useOptimisticがrevertする)前に
     // メッセージ本体を再取得してベース値をサーバー状態に揃える。
@@ -126,7 +129,7 @@ export const MessageReactions = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: superReactions.length > 0 ? '8px' : undefined
+                gap: hasSuper ? '8px' : undefined
             }}
         >
             <div
@@ -185,17 +188,11 @@ export const MessageReactions = (props: Props) => {
                     )
                 })}
             </div>
-            {superReactions.map((reaction) => (
-                <SuperReactionCard
-                    key={reaction.id}
-                    author={reaction.author}
-                    username={reaction.username}
-                    avatar={reaction.avatar}
-                    eth={reaction.eth}
-                    imageUrl={reaction.imageUrl}
-                    message={reaction.message}
-                />
-            ))}
+            {hasSuper && (
+                <Suspense fallback={null}>
+                    <SuperReactionList message={props.message} />
+                </Suspense>
+            )}
         </div>
     )
 }
