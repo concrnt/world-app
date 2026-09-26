@@ -43,6 +43,7 @@ import { TimelineView } from './views/Timeline'
 import { ListsView } from './views/Lists'
 import { ListView } from './views/List'
 import { QueryView } from './views/Query'
+import { WalletView } from './views/Wallet'
 import { DevView } from './views/Dev'
 import { IDView } from './views/ID'
 import { Activitypub } from './views/Activitypub'
@@ -359,6 +360,10 @@ const AuthedRoutes = () => (
                                                                             <Route
                                                                                 path="query"
                                                                                 element={<QueryView />}
+                                                                            />
+                                                                            <Route
+                                                                                path="wallet"
+                                                                                element={<WalletView />}
                                                                             />
                                                                             <Route
                                                                                 path="dev"

@@ -499,6 +499,9 @@
             "title": "照会",
             "submit": "照会"
         },
+        "wallet": {
+            "title": "ウォレット"
+        },
         "list": {
             "listNotFound": "リストが見つかりませんでした"
         },
@@ -649,6 +652,7 @@
             "contacts": "コンタクト",
             "explore": "探索",
             "profile": "プロフィール",
+            "wallet": "ウォレット",
             "lists": "リスト",
             "query": "照会",
             "settings": "設定",

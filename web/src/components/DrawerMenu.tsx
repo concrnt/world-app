@@ -7,6 +7,7 @@ import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
+import { MdAccountBalanceWallet } from 'react-icons/md'
 
 import { CssVar } from '../types/Theme'
 
@@ -93,6 +94,9 @@ export const DrawerMenu = (props: Props) => {
                             onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
                         >
                             {t('profile')}
+                        </ListItem>
+                        <ListItem icon={<MdAccountBalanceWallet size={24} />} onClick={() => go('/wallet')}>
+                            {t('wallet')}
                         </ListItem>
                         <ListItem icon={<MdList size={24} />} onClick={() => go('/lists')}>
                             {t('lists')}

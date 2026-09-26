@@ -500,6 +500,9 @@
             "title": "Inquiry",
             "submit": "Inquiry"
         },
+        "wallet": {
+            "title": "Wallet"
+        },
         "list": {
             "listNotFound": "List not found"
         },
@@ -650,6 +653,7 @@
             "contacts": "Contacts",
             "explore": "Explore",
             "profile": "Profile",
+            "wallet": "Wallet",
             "lists": "Lists",
             "query": "Query",
             "settings": "Settings",

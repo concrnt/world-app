@@ -10,11 +10,13 @@ import { SettingsView } from '../views/Settings'
 import { ProfileView } from '../views/Profile'
 import { QueryView } from '../views/Query'
 import { ListsView } from '../views/Lists'
+import { WalletView } from '../views/Wallet'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
+import { MdAccountBalanceWallet } from 'react-icons/md'
 
 import { CssVar } from '../types/Theme'
 
@@ -108,6 +110,12 @@ export const Sidebar = (props: Props) => {
                             }
                         >
                             {t('profile')}
+                        </ListItem>
+                        <ListItem
+                            icon={<MdAccountBalanceWallet size={24} />}
+                            onClick={() => props.onPush?.(<WalletView />)}
+                        >
+                            {t('wallet')}
                         </ListItem>
                         <ListItem icon={<MdList size={24} />} onClick={() => props.onPush?.(<ListsView />)}>
                             {t('lists')}

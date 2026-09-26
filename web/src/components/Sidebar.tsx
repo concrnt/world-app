@@ -11,6 +11,7 @@ import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
+import { MdAccountBalanceWallet } from 'react-icons/md'
 
 import { CssVar } from '../types/Theme'
 
@@ -119,6 +120,9 @@ export const Sidebar = () => {
                     </ListItem>
                     <ListItem icon={<MdTravelExplore size={24} />} onClick={() => go('/query')}>
                         {t('query')}
+                    </ListItem>
+                    <ListItem icon={<MdAccountBalanceWallet size={24} />} onClick={() => go('/wallet')}>
+                        {t('wallet')}
                     </ListItem>
                     <ListItem icon={<MdSettings size={24} />} onClick={() => go('/settings')}>
                         {t('settings')}
