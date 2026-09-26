@@ -53,10 +53,10 @@ export interface EmojiPackage extends RawEmojiPackage {
 const COLS = 10
 
 const SUPER_TIP_AMOUNTS = [
-    { eth: '0.00024', yen: '100円' },
-    { eth: '0.0024', yen: '1,000円' },
-    { eth: '0.012', yen: '5,000円' },
-    { eth: '0.024', yen: '10,000円' }
+    { eth: '0.00024', yen: 100 },
+    { eth: '0.0024', yen: 1000 },
+    { eth: '0.012', yen: 5000 },
+    { eth: '0.024', yen: 10000 }
 ]
 
 // ほぼ正方形はそのまま1マス。横長は縦横比を四捨五入した列数を取る。
@@ -120,7 +120,7 @@ interface Props {
 }
 
 export const EmojiPickerProvider = (props: Props) => {
-    const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
+    const { t, i18n } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
     const onSelectedRef = useRef<((emoji: Emoji, superEth?: string, superMessage?: string) => void) | null>(null)
@@ -736,12 +736,12 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const holdLabel =
         holdProgress <= 0
-            ? 'ホールドで送信'
+            ? t('holdToSend')
             : holdProgress < 1 / 3
-              ? 'そのまま...'
+              ? t('holdKeep')
               : holdProgress < 2 / 3
-                ? 'もう少し...'
-                : 'あとちょっと...!'
+                ? t('holdMore')
+                : t('holdAlmost')
     const holdShake = holdProgress < 2 / 3 ? 0 : (holdProgress - 2 / 3) / (1 / 3)
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let holdShift: string | undefined
@@ -917,7 +917,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                     WebkitTapHighlightColor: 'transparent'
                                                 }}
                                             >
-                                                キャンセル
+                                                {t('cancel')}
                                             </button>
                                         )}
                                         <div style={{ position: 'relative' }}>
@@ -1000,7 +1000,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         fontWeight: 700
                                                     }}
                                                 >
-                                                    トランザクションが進行中
+                                                    {t('transactionInProgress')}
                                                 </div>
                                                 <div
                                                     style={{
@@ -1056,13 +1056,13 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 marginBottom: CssVar.space(2)
                                             }}
                                         >
-                                            メッセージ
+                                            {t('message')}
                                         </div>
                                         <textarea
                                             ref={messageInputRef}
                                             className={styles.superMessage}
                                             value={superMessage}
-                                            placeholder="タップしてメッセージを追加"
+                                            placeholder={t('messagePlaceholder')}
                                             onClick={(event) => event.stopPropagation()}
                                             onFocus={() => setMessageSheetLift(true)}
                                             onChange={(event) => setSuperMessage(event.target.value)}
@@ -1093,7 +1093,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 marginBottom: CssVar.space(2)
                                             }}
                                         >
-                                            チップ額を選択
+                                            {t('selectTipAmount')}
                                         </div>
                                         <div
                                             style={{
@@ -1161,7 +1161,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                                                 whiteSpace: 'nowrap'
                                                             }}
                                                         >
-                                                            {amount.yen}
+                                                            {t('yenAmount', {
+                                                                amount: amount.yen.toLocaleString(i18n.language)
+                                                            })}
                                                         </span>
                                                     </button>
                                                 )

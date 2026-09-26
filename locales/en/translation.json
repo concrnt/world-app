@@ -507,17 +507,8 @@
             "hideBalance": "Hide balance",
             "addMoney": "Add Money",
             "sendMoney": "Send Money",
-            "transactionLog": "Transaction log",
-            "receive": "Receive",
-            "send": "Send",
-            "from": "from {{who}}",
-            "to": "to {{who}}",
-            "showDetails": "Show details",
-            "hideDetails": "Hide details",
-            "status": "Status",
-            "confirmed": "Confirmed",
-            "fee": "Fee",
-            "hash": "Hash"
+            "reactionLog": "Reaction log",
+            "noReactions": "No reactions yet"
         },
         "list": {
             "listNotFound": "List not found"
@@ -917,7 +908,17 @@
             "noEmojis": "No emojis",
             "noRecentEmojis": "No emojis used yet",
             "addEmojis": "Add emojis",
-            "enableSuperReaction": "Enable super reaction"
+            "enableSuperReaction": "Enable super reaction",
+            "cancel": "Cancel",
+            "transactionInProgress": "Transaction in progress",
+            "message": "Message",
+            "messagePlaceholder": "Tap to add a message",
+            "selectTipAmount": "Select tip amount",
+            "yenAmount": "¥{{amount}}",
+            "holdToSend": "Hold to send",
+            "holdKeep": "Keep holding...",
+            "holdMore": "A little more...",
+            "holdAlmost": "Almost there...!"
         },
         "client": {
             "checkingSession": "Checking session...",

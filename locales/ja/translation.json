@@ -506,17 +506,8 @@
             "hideBalance": "残高を隠す",
             "addMoney": "お金を追加",
             "sendMoney": "送金",
-            "transactionLog": "取引履歴",
-            "receive": "受取",
-            "send": "送金",
-            "from": "{{who}} から",
-            "to": "{{who}} へ",
-            "showDetails": "詳細を表示",
-            "hideDetails": "詳細を隠す",
-            "status": "状態",
-            "confirmed": "確定",
-            "fee": "手数料",
-            "hash": "ハッシュ"
+            "reactionLog": "リアクション履歴",
+            "noReactions": "リアクションはまだありません"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"
@@ -916,7 +907,17 @@
             "noEmojis": "絵文字がありません",
             "noRecentEmojis": "まだ使った絵文字がありません",
             "addEmojis": "絵文字を追加",
-            "enableSuperReaction": "スーパーリアクションを有効化"
+            "enableSuperReaction": "スーパーリアクションを有効化",
+            "cancel": "キャンセル",
+            "transactionInProgress": "トランザクションが進行中",
+            "message": "メッセージ",
+            "messagePlaceholder": "タップしてメッセージを追加",
+            "selectTipAmount": "チップ額を選択",
+            "yenAmount": "{{amount}}円",
+            "holdToSend": "ホールドで送信",
+            "holdKeep": "そのまま...",
+            "holdMore": "もう少し...",
+            "holdAlmost": "あとちょっと...!"
         },
         "client": {
             "checkingSession": "セッションを確認しています...",

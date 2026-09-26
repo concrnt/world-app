@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton, View } from '@concrnt/ui'
-import { HiMiniArrowDownLeft } from 'react-icons/hi2'
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
-import { RiArrowDownSLine } from 'react-icons/ri'
 import { Header } from '../ui/Header'
+import { SuperReactionCard } from '../components/message/SuperReactionCard'
+import { useSuperReactionLog, type SuperReactionMock } from '../components/message/superReactionMock'
 import { CssVar } from '../types/Theme'
 
 const BanknoteArrowDown = () => (
@@ -54,29 +54,40 @@ const JPY_BALANCE = '0'
 const ETH_HIDDEN = '---,---'
 const HIDDEN = '-'
 
-const TRANSACTIONS = [
+const SAMPLE_REACTIONS: SuperReactionMock[] = [
     {
-        type: 'receive' as const,
-        amount: '0 ETH',
-        counterparty: '0x12ab…ef34',
-        date: '2026-09-26',
-        fee: '0 ETH',
-        hash: '0xab12…9c4e'
+        id: 'sample-1',
+        messageUri: 'sample',
+        author: 'con1sampleauthor00000000000000000001',
+        username: 'だぶ',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f389.svg',
+        eth: '0.00024',
+        message: 'ありがとう'
     },
     {
-        type: 'send' as const,
-        amount: '0 JPY',
-        counterparty: '0x98cd…ab12',
-        date: '2026-09-25',
-        fee: '0 JPY',
-        hash: '0xcd56…1a78'
+        id: 'sample-2',
+        messageUri: 'sample',
+        author: 'con1sampleauthor00000000000000000002',
+        username: 'kurotori',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f496.svg',
+        eth: '0.0024',
+        message: 'うれしい'
+    },
+    {
+        id: 'sample-3',
+        messageUri: 'sample',
+        author: 'con1sampleauthor00000000000000000003',
+        username: 'fluffy',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f44d.svg',
+        eth: '0.012'
     }
 ]
 
 export const WalletView = () => {
-    const { t, i18n } = useTranslation('', { keyPrefix: 'views.wallet' })
+    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
     const [balanceVisible, setBalanceVisible] = useState(true)
-    const [openTxIds, setOpenTxIds] = useState<string[]>([])
+    const liveReactions = useSuperReactionLog()
+    const reactions = liveReactions.length > 0 ? liveReactions : SAMPLE_REACTIONS
 
     return (
         <View>
@@ -243,224 +254,26 @@ export const WalletView = () => {
                             fontWeight: 650
                         }}
                     >
-                        {t('transactionLog')}
+                        {t('reactionLog')}
                     </span>
                     <div
                         style={{
-                            borderRadius: '20px',
-                            backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`,
-                            overflow: 'hidden'
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(2)
                         }}
                     >
-                        {TRANSACTIONS.map((tx, index) => {
-                            const txId = `${tx.type}-${tx.counterparty}`
-                            const open = openTxIds.includes(txId)
-
-                            return (
-                                <div
-                                    key={txId}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        borderTop: index === 0 ? 'none' : `1px solid ${CssVar.divider}`
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'stretch',
-                                            gap: CssVar.space(3),
-                                            padding: CssVar.space(4),
-                                            paddingLeft: CssVar.space(2)
-                                        }}
-                                    >
-                                        <div
-                                            aria-label={t(tx.type)}
-                                            style={{
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '50%',
-                                                flexShrink: 0,
-                                                alignSelf: 'center',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.1)`
-                                            }}
-                                        >
-                                            <HiMiniArrowDownLeft
-                                                size={22}
-                                                style={{
-                                                    transform: tx.type === 'send' ? 'rotate(180deg)' : undefined
-                                                }}
-                                            />
-                                        </div>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                gap: '6px',
-                                                minWidth: 0,
-                                                flex: 1
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    fontSize: '0.95rem',
-                                                    fontWeight: 700,
-                                                    fontVariantNumeric: 'tabular-nums'
-                                                }}
-                                            >
-                                                {balanceVisible ? tx.amount : HIDDEN}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    fontSize: '0.75rem',
-                                                    opacity: 0.55
-                                                }}
-                                            >
-                                                {t(tx.type === 'receive' ? 'from' : 'to', { who: tx.counterparty })}
-                                            </span>
-                                        </div>
-                                        <div
-                                            style={{
-                                                alignSelf: 'stretch',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'flex-end',
-                                                justifyContent: 'space-between',
-                                                flexShrink: 0
-                                            }}
-                                        >
-                                            <IconButton
-                                                title={open ? t('hideDetails') : t('showDetails')}
-                                                onClick={() =>
-                                                    setOpenTxIds((ids) =>
-                                                        ids.includes(txId) ? ids.filter((id) => id !== txId) : [...ids, txId]
-                                                    )
-                                                }
-                                                style={{
-                                                    width: '28px',
-                                                    height: '28px'
-                                                }}
-                                            >
-                                                <RiArrowDownSLine
-                                                    size={20}
-                                                    style={{
-                                                        transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-                                                        transition: 'transform 0.15s ease'
-                                                    }}
-                                                />
-                                            </IconButton>
-                                            <span
-                                                style={{
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 600,
-                                                    opacity: 0.55,
-                                                    fontVariantNumeric: 'tabular-nums'
-                                                }}
-                                            >
-                                                {new Date(tx.date).toLocaleDateString(i18n.language, {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                })}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {open && (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                gap: CssVar.space(2),
-                                                marginLeft: 'calc(48px + var(--space) * 5)',
-                                                marginRight: CssVar.space(4),
-                                                paddingBottom: CssVar.space(4),
-                                                borderTop: `1px solid ${CssVar.divider}`,
-                                                paddingTop: CssVar.space(3)
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    gap: CssVar.space(3)
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        opacity: 0.55
-                                                    }}
-                                                >
-                                                    {t('status')}
-                                                </span>
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 600
-                                                    }}
-                                                >
-                                                    {t('confirmed')}
-                                                </span>
-                                            </div>
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    gap: CssVar.space(3)
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        opacity: 0.55
-                                                    }}
-                                                >
-                                                    {t('fee')}
-                                                </span>
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 600,
-                                                        fontVariantNumeric: 'tabular-nums'
-                                                    }}
-                                                >
-                                                    {balanceVisible ? tx.fee : HIDDEN}
-                                                </span>
-                                            </div>
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    gap: CssVar.space(3)
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        opacity: 0.55
-                                                    }}
-                                                >
-                                                    {t('hash')}
-                                                </span>
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 600,
-                                                        fontVariantNumeric: 'tabular-nums'
-                                                    }}
-                                                >
-                                                    {tx.hash}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
+                        {reactions.map((reaction) => (
+                            <SuperReactionCard
+                                key={reaction.id}
+                                author={reaction.author}
+                                username={reaction.username}
+                                avatar={reaction.avatar}
+                                eth={balanceVisible ? reaction.eth : HIDDEN}
+                                imageUrl={reaction.imageUrl}
+                                message={reaction.message}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

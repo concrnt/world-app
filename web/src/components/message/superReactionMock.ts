@@ -19,8 +19,8 @@ export const addSuperReaction = (reaction: SuperReactionMock): void => {
     for (const listener of listeners) listener()
 }
 
-export const useSuperReactions = (messageUri: string): SuperReactionMock[] => {
-    const all = useSyncExternalStore(
+const useSuperReactionStore = (): SuperReactionMock[] => {
+    return useSyncExternalStore(
         (listener) => {
             listeners.add(listener)
             return () => {
@@ -29,5 +29,12 @@ export const useSuperReactions = (messageUri: string): SuperReactionMock[] => {
         },
         () => reactions
     )
-    return all.filter((reaction) => reaction.messageUri === messageUri)
+}
+
+export const useSuperReactions = (messageUri: string): SuperReactionMock[] => {
+    return useSuperReactionStore().filter((reaction) => reaction.messageUri === messageUri)
+}
+
+export const useSuperReactionLog = (): SuperReactionMock[] => {
+    return useSuperReactionStore().slice().reverse()
 }
