@@ -8,6 +8,7 @@ import { FaEthereum } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
 import { Button, CCImage, CircularProgress, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
+import { useHaptics } from './Haptics'
 import { Aurora } from '../components/Aurora'
 import { SpeedLines } from '../components/SpeedLines'
 import styles from './EmojiPicker.module.css'
@@ -137,8 +138,12 @@ export const EmojiPickerProvider = (props: Props) => {
     const [superDraft, setSuperDraft] = useState<{ emoji: Emoji; fromX: number; fromY: number } | null>(null)
     const [superAmount, setSuperAmount] = useState<string | null>(null)
     const [holdProgress, setHoldProgress] = useState(0)
+    const { hapticHeavy } = useHaptics()
+    const hapticHeavyRef = useRef(hapticHeavy)
+    hapticHeavyRef.current = hapticHeavy
     const holdFrame = useRef<number | undefined>(undefined)
     const holdStartedAt = useRef<number | null>(null)
+    const holdLastHaptic = useRef(0)
     const holdSent = useRef(false)
     const txTimer = useRef<number | undefined>(undefined)
     const [txActive, setTxActive] = useState(false)
@@ -410,7 +415,16 @@ export const EmojiPickerProvider = (props: Props) => {
     const tickHold = (): void => {
         const started = holdStartedAt.current
         if (started === null) return
-        const progress = Math.min(1, (performance.now() - started) / 5000)
+        const now = performance.now()
+        const progress = Math.min(1, (now - started) / 5000)
+        if (progress >= 2 / 3 && progress < 1) {
+            const shake = (progress - 2 / 3) / (1 / 3)
+            const gap = 110 - shake * 65
+            if (now - holdLastHaptic.current >= gap) {
+                holdLastHaptic.current = now
+                hapticHeavyRef.current()
+            }
+        }
         setHoldProgress(progress)
         if (progress >= 1) {
             endHold(true)
@@ -895,29 +909,6 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 </div>
                                                 </div>
                                             </motion.div>
-                                            {txActive && (
-                                                <div
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: '100%',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                        marginTop: 16,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: CssVar.space(2),
-                                                        fontSize: '15px',
-                                                        lineHeight: '22px',
-                                                        fontWeight: 700,
-                                                        color: CssVar.contentText,
-                                                        whiteSpace: 'nowrap',
-                                                        pointerEvents: 'none'
-                                                    }}
-                                                >
-                                                    <CircularProgress size={18} />
-                                                    トランザクションが進行中...
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                         <motion.div
@@ -925,11 +916,69 @@ export const EmojiPickerProvider = (props: Props) => {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                                             style={{
+                                                position: 'relative',
                                                 flexShrink: 0,
                                                 visibility: txActive ? 'hidden' : 'visible',
                                                 pointerEvents: txActive ? 'none' : 'auto'
                                             }}
                                         >
+                                            {txActive && (
+                                                <div
+                                                    style={{
+                                                        visibility: 'visible',
+                                                        position: 'absolute',
+                                                        zIndex: 1,
+                                                        top: 0,
+                                                        right: `calc(${CssVar.space(3)} * -1)`,
+                                                        bottom: keyboard.visible
+                                                            ? `calc(${CssVar.space(4)} * -1)`
+                                                            : `calc(${CssVar.space(4)} * -1 - env(safe-area-inset-bottom))`,
+                                                        left: `calc(${CssVar.space(3)} * -1)`,
+                                                        paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                                                        backgroundColor: CssVar.contentBackground,
+                                                        color: CssVar.contentText,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: CssVar.space(4),
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            fontSize: '15px',
+                                                            lineHeight: '22px',
+                                                            fontWeight: 700
+                                                        }}
+                                                    >
+                                                        トランザクションが進行中
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            position: 'relative',
+                                                            width: 72,
+                                                            height: 72,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        <CircularProgress size={72} />
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                inset: 0,
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}
+                                                        >
+                                                            <FaEthereum size={28} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         <div
                                             style={{
                                                 fontSize: '13px',
@@ -1011,6 +1060,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                     cancelAnimationFrame(holdFrame.current)
                                                 }
                                                 holdSent.current = false
+                                                holdLastHaptic.current = 0
                                                 holdStartedAt.current = performance.now()
                                                 setHoldProgress(0.001)
                                                 holdFrame.current = requestAnimationFrame(tickHold)

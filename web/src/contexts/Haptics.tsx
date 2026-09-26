@@ -5,12 +5,14 @@ interface HapticsState {
     hapticLight: () => void
     hapticSuccess: () => void
     hapticSelection: () => void
+    hapticHeavy: () => void
 }
 
 const HapticsContext = createContext<HapticsState>({
     hapticLight: () => {},
     hapticSuccess: () => {},
-    hapticSelection: () => {}
+    hapticSelection: () => {},
+    hapticHeavy: () => {}
 })
 
 interface HapticsProviderProps {

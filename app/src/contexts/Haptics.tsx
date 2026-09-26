@@ -9,12 +9,15 @@ interface HapticsState {
     hapticSuccess: () => void
     /** セレクションフィードバック（PTR の閾値超えなど） */
     hapticSelection: () => void
+    /** 強めの振動（ホールド送信の終盤など） */
+    hapticHeavy: () => void
 }
 
 const HapticsContext = createContext<HapticsState>({
     hapticLight: () => {},
     hapticSuccess: () => {},
-    hapticSelection: () => {}
+    hapticSelection: () => {},
+    hapticHeavy: () => {}
 })
 
 interface HapticsProviderProps {
@@ -37,6 +40,10 @@ export const HapticsProvider = (props: HapticsProviderProps): ReactNode => {
             hapticSelection: () => {
                 if (!enabled) return
                 selectionFeedback().catch(() => {})
+            },
+            hapticHeavy: () => {
+                if (!enabled) return
+                impactFeedback('heavy').catch(() => {})
             }
         }),
         [enabled]
