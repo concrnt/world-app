@@ -944,26 +944,46 @@ export const EmojiPickerProvider = (props: Props) => {
                                                     </div>
                                                     <div
                                                         style={{
-                                                            position: 'relative',
-                                                            width: 72,
-                                                            height: 72,
                                                             display: 'flex',
+                                                            flexDirection: 'column',
                                                             alignItems: 'center',
-                                                            justifyContent: 'center'
+                                                            gap: CssVar.space(2)
                                                         }}
                                                     >
-                                                        <CircularProgress size={72} />
                                                         <div
                                                             style={{
-                                                                position: 'absolute',
-                                                                inset: 0,
+                                                                position: 'relative',
+                                                                width: 72,
+                                                                height: 72,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center'
                                                             }}
                                                         >
-                                                            <FaEthereum size={28} />
+                                                            <CircularProgress size={72} />
+                                                            <div
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    inset: 0,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}
+                                                            >
+                                                                <FaEthereum size={28} />
+                                                            </div>
                                                         </div>
+                                                        {superAmount !== null && (
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '16px',
+                                                                    lineHeight: '22px',
+                                                                    fontWeight: 700
+                                                                }}
+                                                            >
+                                                                {superAmount} ETH
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
