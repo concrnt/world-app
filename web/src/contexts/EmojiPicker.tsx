@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
+import { FaEthereum } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
 import { Button, CCImage, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
@@ -39,6 +40,13 @@ export interface EmojiPackage extends RawEmojiPackage {
 // デスクトップの中央ダイアログ(380px)は8列、モバイルのボトムシートはapp版と同じ10列
 const COLS_DESKTOP = 8
 const COLS_MOBILE = 10
+
+const SUPER_TIP_AMOUNTS = [
+    { eth: '0.00024', yen: '100円' },
+    { eth: '0.0024', yen: '1,000円' },
+    { eth: '0.012', yen: '5,000円' },
+    { eth: '0.024', yen: '10,000円' }
+]
 
 // ほぼ正方形はそのまま1マス。横長は縦横比を四捨五入した列数を取る。
 const columnSpan = (ratio: number | undefined, cols: number): number => {
@@ -125,6 +133,16 @@ export const EmojiPickerProvider = (props: Props) => {
     const superReactionAnchor = useAnchor()
     const superReactionTipTimer = useRef<number | undefined>(undefined)
     const superReactionTipVisible = useRef(false)
+    const [superDraft, setSuperDraft] = useState<{ emoji: Emoji; fromX: number; fromY: number } | null>(null)
+    const [superAmount, setSuperAmount] = useState<string | null>(null)
+    const [holdProgress, setHoldProgress] = useState(0)
+    const holdFrame = useRef<number | undefined>(undefined)
+    const holdStartedAt = useRef<number | null>(null)
+    const holdSent = useRef(false)
+    const superDraftRef = useRef(superDraft)
+    const superAmountRef = useRef(superAmount)
+    superDraftRef.current = superDraft
+    superAmountRef.current = superAmount
     const sheetRef = useRef<HTMLDivElement>(null)
     const sheetDrag = useRef<{
         pointerId: number
@@ -268,6 +286,8 @@ export const EmojiPickerProvider = (props: Props) => {
             setSheetDragHeight(null)
             setSuperReactionEnabled(false)
             setSuperReactionTipOpen(false)
+            setSuperDraft(null)
+            setSuperAmount(null)
             superReactionTipVisible.current = false
             window.clearTimeout(superReactionTipTimer.current)
             setAnchorName(anchor ?? null)
@@ -288,6 +308,8 @@ export const EmojiPickerProvider = (props: Props) => {
         setSheetDragHeight(null)
         setSuperReactionEnabled(false)
         setSuperReactionTipOpen(false)
+        setSuperDraft(null)
+        setSuperAmount(null)
         superReactionTipVisible.current = false
         window.clearTimeout(superReactionTipTimer.current)
         setHoveredEmoji(null)
@@ -344,6 +366,59 @@ export const EmojiPickerProvider = (props: Props) => {
         },
         [frequentEmojis, setFrequentEmojis]
     )
+
+    const beginSuperDraft = (emoji: Emoji, origin: HTMLElement | null): void => {
+        const from = origin?.getBoundingClientRect()
+        const sheet = sheetRef.current?.getBoundingClientRect()
+        const fromX = from && sheet ? from.left + from.width / 2 - (sheet.left + sheet.width / 2) : 0
+        const fromY = from && sheet ? from.top + from.height / 2 - (sheet.top + sheet.height * 0.34) : 0
+        setSuperDraft({ emoji, fromX, fromY })
+        setSuperAmount(null)
+        setSheetExpanded(true)
+        setSheetDragHeight(null)
+        searchInputRef.current?.blur()
+    }
+
+    const endHold = (send: boolean): void => {
+        if (holdFrame.current !== undefined) cancelAnimationFrame(holdFrame.current)
+        holdFrame.current = undefined
+        holdStartedAt.current = null
+        setHoldProgress(0)
+        if (!send || holdSent.current) return
+        const draft = superDraftRef.current
+        const amount = superAmountRef.current
+        if (!draft || amount === null) return
+        holdSent.current = true
+        selectEmoji(draft.emoji)
+        close()
+    }
+
+    const tickHold = (): void => {
+        const started = holdStartedAt.current
+        if (started === null) return
+        const progress = Math.min(1, (performance.now() - started) / 5000)
+        setHoldProgress(progress)
+        if (progress >= 1) {
+            endHold(true)
+            return
+        }
+        holdFrame.current = requestAnimationFrame(tickHold)
+    }
+
+    useEffect(() => {
+        return () => {
+            if (holdFrame.current !== undefined) cancelAnimationFrame(holdFrame.current)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (superDraft) return
+        if (holdFrame.current !== undefined) cancelAnimationFrame(holdFrame.current)
+        holdFrame.current = undefined
+        holdStartedAt.current = null
+        holdSent.current = false
+        setHoldProgress(0)
+    }, [superDraft])
 
     // ---- Display data ----
 
@@ -533,6 +608,26 @@ export const EmojiPickerProvider = (props: Props) => {
         input.blur()
     }
 
+    const holdLabel =
+        holdProgress <= 0
+            ? 'ホールドで送信'
+            : holdProgress < 1 / 3
+              ? 'そのまま...'
+              : holdProgress < 2 / 3
+                ? 'もう少し...'
+                : 'あとちょっと...!'
+    const holdShake = holdProgress < 2 / 3 ? 0 : (holdProgress - 2 / 3) / (1 / 3)
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let holdShift: string | undefined
+    if (holdShake > 0 && !reduceMotion) {
+        const now = performance.now()
+        const amp = 0.8 + holdShake * 3.4
+        const freq = 0.045 + holdShake * 0.112
+        const x = Math.sin(now * freq) * amp
+        const y = Math.cos(now * freq * 1.37) * amp * 0.45
+        holdShift = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`
+    }
+
     const sheetHeight =
         sheetDragHeight !== null
             ? `${sheetDragHeight}px`
@@ -620,6 +715,231 @@ export const EmojiPickerProvider = (props: Props) => {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
+                            {superDraft && (
+                                <div
+                                    style={{
+                                        flex: 1,
+                                        minHeight: 0,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        padding: `${CssVar.space(2)} ${CssVar.space(3)} ${CssVar.space(4)}`
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            position: 'relative',
+                                            flex: 1,
+                                            minHeight: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (holdFrame.current !== undefined) {
+                                                    cancelAnimationFrame(holdFrame.current)
+                                                }
+                                                holdFrame.current = undefined
+                                                holdStartedAt.current = null
+                                                holdSent.current = false
+                                                setHoldProgress(0)
+                                                setSuperDraft(null)
+                                                setSuperAmount(null)
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                zIndex: 1,
+                                                border: 'none',
+                                                background: 'transparent',
+                                                color: CssVar.contentText,
+                                                fontSize: '16px',
+                                                lineHeight: '24px',
+                                                padding: `${CssVar.space(1)} 0`,
+                                                cursor: 'pointer',
+                                                WebkitTapHighlightColor: 'transparent'
+                                            }}
+                                        >
+                                            キャンセル
+                                        </button>
+                                        <motion.div
+                                            initial={{
+                                                x: superDraft.fromX,
+                                                y: superDraft.fromY,
+                                                scale: 0.35,
+                                                opacity: 0.4
+                                            }}
+                                            animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+                                            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                                        >
+                                            <div
+                                                className={styles.drift}
+                                                style={{
+                                                    width: '50vw',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <CCImage
+                                                    src={superDraft.emoji.imageURL}
+                                                    maxHeight={1024}
+                                                    alt={superDraft.emoji.shortcode}
+                                                    style={{
+                                                        width: '50vw',
+                                                        height: 'auto',
+                                                        maxHeight: '50vw'
+                                                    }}
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                        style={{ flexShrink: 0 }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontSize: '13px',
+                                                lineHeight: '18px',
+                                                fontWeight: 700,
+                                                opacity: 0.6,
+                                                marginBottom: CssVar.space(2)
+                                            }}
+                                        >
+                                            チップ額を選択
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: CssVar.space(2)
+                                            }}
+                                        >
+                                            {SUPER_TIP_AMOUNTS.map((amount) => {
+                                                const selected = superAmount === amount.eth
+                                                return (
+                                                    <button
+                                                        key={amount.eth}
+                                                        type="button"
+                                                        aria-pressed={selected}
+                                                        onClick={() => setSuperAmount(amount.eth)}
+                                                        style={
+                                                            {
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: CssVar.space(2),
+                                                                width: '100%',
+                                                                minHeight: '48px',
+                                                                padding: `0 ${CssVar.space(3)}`,
+                                                                border: 'none',
+                                                                borderRadius: CssVar.round(0.5),
+                                                                cursor: 'pointer',
+                                                                backgroundColor: selected
+                                                                    ? CssVar.uiBackground
+                                                                    : `rgb(from ${CssVar.contentText} r g b / 0.06)`,
+                                                                color: selected ? CssVar.uiText : CssVar.contentText,
+                                                                WebkitTapHighlightColor: 'transparent'
+                                                            } as React.CSSProperties
+                                                        }
+                                                    >
+                                                        <FaEthereum size={18} />
+                                                        <span
+                                                            style={{
+                                                                flex: 1,
+                                                                textAlign: 'left',
+                                                                fontSize: '16px',
+                                                                fontWeight: 700
+                                                            }}
+                                                        >
+                                                            {amount.eth}
+                                                        </span>
+                                                        <span
+                                                            style={{
+                                                                fontSize: '14px',
+                                                                opacity: selected ? 0.85 : 0.55
+                                                            }}
+                                                        >
+                                                            {amount.yen}
+                                                        </span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            disabled={superAmount === null}
+                                            onContextMenu={(event) => {
+                                                event.preventDefault()
+                                            }}
+                                            onPointerDown={(event) => {
+                                                if (event.button !== 0 || superAmount === null) return
+                                                event.currentTarget.setPointerCapture(event.pointerId)
+                                                if (holdFrame.current !== undefined) {
+                                                    cancelAnimationFrame(holdFrame.current)
+                                                }
+                                                holdSent.current = false
+                                                holdStartedAt.current = performance.now()
+                                                setHoldProgress(0.001)
+                                                holdFrame.current = requestAnimationFrame(tickHold)
+                                            }}
+                                            onPointerUp={() => {
+                                                if (holdStartedAt.current === null) return
+                                                const progress = Math.min(
+                                                    1,
+                                                    (performance.now() - holdStartedAt.current) / 5000
+                                                )
+                                                endHold(progress >= 1)
+                                            }}
+                                            onPointerCancel={() => {
+                                                endHold(false)
+                                            }}
+                                            style={{
+                                                position: 'relative',
+                                                overflow: 'hidden',
+                                                width: '100%',
+                                                minHeight: '48px',
+                                                marginTop: CssVar.space(3),
+                                                padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                                border: 'none',
+                                                borderRadius: CssVar.round(1),
+                                                backgroundColor: CssVar.uiBackground,
+                                                color: CssVar.uiText,
+                                                fontSize: '1.2rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: superAmount === null ? 'default' : 'pointer',
+                                                opacity: superAmount === null ? 0.45 : 1,
+                                                touchAction: 'none',
+                                                userSelect: 'none',
+                                                WebkitTouchCallout: 'none',
+                                                WebkitTapHighlightColor: 'transparent',
+                                                textShadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
+                                                transform: holdShift
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    width: `${Math.min(holdProgress, 1) * 100}%`,
+                                                    backgroundColor: `color-mix(in srgb, white 46%, ${CssVar.uiBackground})`,
+                                                    pointerEvents: 'none'
+                                                }}
+                                            />
+                                            <span style={{ position: 'relative' }}>{holdLabel}</span>
+                                        </button>
+                                    </motion.div>
+                                </div>
+                            )}
                             {/* Handle */}
                             <div
                                 onPointerDown={onHandlePointerDown}
@@ -627,7 +947,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 onPointerUp={onHandlePointerUp}
                                 onPointerCancel={onHandlePointerUp}
                                 style={{
-                                    display: 'flex',
+                                    display: superDraft ? 'none' : 'flex',
                                     justifyContent: 'center',
                                     padding: `${CssVar.space(3)} 0 ${CssVar.space(2)}`,
                                     touchAction: 'none',
@@ -652,7 +972,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 onPointerUp={onSearchPointerUp}
                                 onPointerCancel={onSearchPointerUp}
                                 style={{
-                                    display: 'flex',
+                                    display: superDraft ? 'none' : 'flex',
                                     alignItems: 'center',
                                     gap: CssVar.space(2),
                                     padding: searchBoxFocused
@@ -694,6 +1014,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && displayEmojis.length > 0) {
                                                 e.preventDefault()
+                                                if (superReactionEnabled) {
+                                                    beginSuperDraft(displayEmojis[0], null)
+                                                    return
+                                                }
                                                 selectEmoji(displayEmojis[0])
                                                 close()
                                             }
@@ -831,7 +1155,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* One-line emoji strip (キーボード表示中) */}
                             <HorizontalLayout
                                 style={{
-                                    display: searchBoxFocused ? 'flex' : 'none',
+                                    display: superDraft ? 'none' : searchBoxFocused ? 'flex' : 'none',
                                     alignItems: 'center',
                                     overflowY: 'hidden',
                                     boxSizing: 'border-box',
@@ -896,7 +1220,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* Tabs */}
                             <HorizontalLayout
                                 style={{
-                                    display: searchBoxFocused ? 'none' : 'flex',
+                                    display: superDraft || searchBoxFocused ? 'none' : 'flex',
                                     gap: CssVar.space(1),
                                     padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
                                     flexShrink: 0
@@ -942,6 +1266,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* Divider */}
                             <div
                                 style={{
+                                    display: superDraft ? 'none' : 'block',
                                     height: '1px',
                                     backgroundColor: CssVar.divider,
                                     margin: `${CssVar.space(2)} 0`
@@ -952,7 +1277,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             <div
                                 ref={gridRef}
                                 style={{
-                                    display: searchBoxFocused ? 'none' : 'block',
+                                    display: superDraft ? 'none' : searchBoxFocused ? 'none' : 'block',
                                     flex: 1,
                                     overflowY: 'auto',
                                     overflowX: 'hidden',
@@ -1015,6 +1340,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                                             const [x, y] = start.split(',').map(Number)
                                                             if (Math.hypot(e.clientX - x, e.clientY - y) > 10) return
                                                         }
+                                                        if (superReactionEnabled) {
+                                                            beginSuperDraft(emoji, e.currentTarget)
+                                                            return
+                                                        }
                                                         selectEmoji(emoji)
                                                         searchInputRef.current?.blur()
                                                     }}
@@ -1058,6 +1387,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             {/* キーボードの裏まで背景を敷くスペーサ */}
                             <div
                                 style={{
+                                    display: superDraft ? 'none' : 'block',
                                     flexShrink: 0,
                                     height: `${keyboard.height}px`,
                                     transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`
