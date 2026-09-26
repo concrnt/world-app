@@ -501,7 +501,23 @@
             "submit": "Inquiry"
         },
         "wallet": {
-            "title": "Wallet"
+            "title": "Wallet",
+            "accountBalance": "Total Asset",
+            "showBalance": "Show balance",
+            "hideBalance": "Hide balance",
+            "addMoney": "Add Money",
+            "sendMoney": "Send Money",
+            "transactionLog": "Transaction log",
+            "receive": "Receive",
+            "send": "Send",
+            "from": "from {{who}}",
+            "to": "to {{who}}",
+            "showDetails": "Show details",
+            "hideDetails": "Hide details",
+            "status": "Status",
+            "confirmed": "Confirmed",
+            "fee": "Fee",
+            "hash": "Hash"
         },
         "list": {
             "listNotFound": "List not found"
