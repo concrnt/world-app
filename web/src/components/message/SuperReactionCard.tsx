@@ -78,8 +78,8 @@ export const SuperReactionCard = (props: Props) => {
                             display: 'block',
                             width: 'auto',
                             height: 'auto',
-                            maxWidth: '100%',
-                            maxHeight: '100%',
+                            maxWidth: '70%',
+                            maxHeight: '70%',
                             objectFit: 'contain'
                         }}
                     />
