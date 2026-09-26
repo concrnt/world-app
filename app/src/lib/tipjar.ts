@@ -61,15 +61,33 @@ export const getPublicClient = (): PublicClient => {
     return publicClient
 }
 
-// アドレスの残高を ETH 小数文字列で返す(BigInt を返さない: useResource が JSON 比較するため)。丸めは表示側で行う。
+export interface WalletBalance {
+    // EOA 残高 + TipSplitter に積まれた未引き出し分
+    total: string
+    // TipSplitter.balances(address) の未引き出し分(pull 方式なので withdraw するまで EOA に入らない)
+    pooled: string
+}
+
+// 残高を ETH 小数文字列で返す(BigInt を返さない: useResource が JSON 比較するため)。丸めは表示側で行う。
 // RPC 未設定/不通は null(throw すると useResource が reject を evict して再フェッチの無限ループになる)
-export const getEthBalance = async (address: Address): Promise<string | null> => {
+export const getWalletBalance = async (address: Address): Promise<WalletBalance | null> => {
     if (!RPC_URL) return null
     try {
-        const wei = await getPublicClient().getBalance({ address })
-        return formatEther(wei)
+        const publicClient = getPublicClient()
+        const [eoa, pooled] = await Promise.all([
+            publicClient.getBalance({ address }),
+            TIP_SPLITTER_ADDRESS
+                ? publicClient.readContract({
+                      address: TIP_SPLITTER_ADDRESS,
+                      abi: tipSplitterAbi,
+                      functionName: 'balances',
+                      args: [address]
+                  })
+                : Promise.resolve(0n)
+        ])
+        return { total: formatEther(eoa + pooled), pooled: formatEther(pooled) }
     } catch (e) {
-        console.error('failed to fetch eth balance:', e)
+        console.error('failed to fetch wallet balance:', e)
         return null
     }
 }

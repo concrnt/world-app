@@ -522,7 +522,11 @@
             "noReactions": "No reactions yet",
             "received": "Received",
             "sent": "Sent to {{name}}",
-            "balanceUnavailable": "Balance unavailable (RPC not configured)"
+            "balanceUnavailable": "Balance unavailable (RPC not configured)",
+            "unclaimed": "{{amount}} ETH of this is held in the tip jar",
+            "claim": "Claim",
+            "claiming": "Claiming...",
+            "claimFailed": "Failed to claim"
         },
         "list": {
             "listNotFound": "List not found"

@@ -106,3 +106,28 @@ export const sendSuperReaction = async (params: {
     }
     return { ccfs, txhash }
 }
+
+// TipSplitter に積まれた自分宛てのチップ(balances[address])を EOA へ引き出す。
+// 生体認証は writeContract 内で発火。receipt まで待ち、reverted なら throw
+export const withdrawTips = async (client: Client): Promise<`0x${string}`> => {
+    if (!RPC_URL || !TIP_SPLITTER_ADDRESS)
+        throw new SuperReactionError('not-configured', 'tip router is not configured')
+    const account = await createTauriAccount(client.ccid)
+    const publicClient = getPublicClient()
+    const { request } = await publicClient.simulateContract({
+        address: TIP_SPLITTER_ADDRESS,
+        abi: tipSplitterAbi,
+        functionName: 'withdraw',
+        account
+    })
+    const wallet = createWalletClient({ account, chain, transport: http(RPC_URL) })
+    const txhash = await wallet.writeContract(request)
+    const receipt = await publicClient.waitForTransactionReceipt({
+        hash: txhash,
+        pollingInterval: 4000,
+        timeout: 180_000
+    })
+    if (receipt.status !== 'success')
+        throw new SuperReactionError('tx-reverted', `transaction ${txhash} reverted`, txhash)
+    return txhash
+}

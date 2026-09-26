@@ -521,7 +521,11 @@
             "noReactions": "リアクションはまだありません",
             "received": "受け取り",
             "sent": "{{name}} さんへ送信",
-            "balanceUnavailable": "残高を取得できません(RPC未設定)"
+            "balanceUnavailable": "残高を取得できません(RPC未設定)",
+            "unclaimed": "うち、{{amount}} ETH は預け入れになっています",
+            "claim": "受け取る",
+            "claiming": "受け取り中...",
+            "claimFailed": "受け取りに失敗しました"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"

@@ -8,10 +8,12 @@ import { Header } from '../ui/Header'
 import { SuperReactionItem, type SuperReactionPair } from '../components/message/SuperReactionItem'
 import { TimeDiff } from '../components/TimeDiff'
 import { useClient } from '../contexts/Client'
-import { useResource } from '../hooks/useResource'
 import { useStack } from '../layouts/Stack'
+import { useHaptics } from '../contexts/Haptics'
 import { getEthAddress } from '../lib/eth'
-import { getEthBalance } from '../lib/tipjar'
+import { invalidateResource, useResource } from '../hooks/useResource'
+import { getWalletBalance } from '../lib/tipjar'
+import { withdrawTips } from '../lib/superReaction'
 import { CssVar } from '../types/Theme'
 import { PostView } from './Post'
 
@@ -71,19 +73,24 @@ const trimEth = (eth: string): string => {
     return frac ? `${m[1]}.${frac}` : m[1]
 }
 
-// Suspense 配下: ETH アドレス → 残高(SWR キャッシュ。送信後は MessageActions が invalidate する)。
-// 取得失敗は null で受けて '--' を出す(fetcher を reject させると useResource が再フェッチをループする)
-const Balance = (props: { visible: boolean }) => {
-    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
+// 残高(EOA + TipSplitter 未引き出し分)。SWR キャッシュで、送信/引き出し後に invalidate する。
+// 取得失敗は null で受ける(fetcher を reject させると useResource が再フェッチをループする)
+const useWalletBalance = () => {
     const { client } = useClient()
-    const balance = useResource(`ethbalance:${client.ccid}`, () =>
+    return useResource(`ethbalance:${client.ccid}`, () =>
         getEthAddress(client.ccid)
-            .then((address) => getEthBalance(address))
+            .then((address) => getWalletBalance(address))
             .catch((e) => {
                 console.error('failed to get eth address:', e)
                 return null
             })
     )
+}
+
+// Suspense 配下: 総資産の数字
+const Balance = (props: { visible: boolean }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
+    const balance = useWalletBalance()
     if (balance === null) {
         return (
             <>
@@ -102,7 +109,83 @@ const Balance = (props: { visible: boolean }) => {
             </>
         )
     }
-    return <>{props.visible ? trimEth(balance) : ETH_HIDDEN}</>
+    return <>{props.visible ? trimEth(balance.total) : ETH_HIDDEN}</>
+}
+
+// Suspense 配下: 未受け取り(TipSplitter にプールされた)分の案内と引き出しボタン。0 なら何も出さない
+const Unclaimed = (props: { visible: boolean }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
+    const { client } = useClient()
+    const { hapticLight } = useHaptics()
+    const balance = useWalletBalance()
+    const [busy, setBusy] = useState(false)
+    const [error, setError] = useState<string | undefined>(undefined)
+    if (!balance || Number(balance.pooled) === 0) return null
+
+    const claim = () => {
+        if (busy) return
+        setBusy(true)
+        setError(undefined)
+        withdrawTips(client)
+            .then(() => {
+                hapticLight()
+                invalidateResource('ethbalance:')
+            })
+            .catch((e) => {
+                console.error('failed to withdraw tips:', e)
+                setError(t('claimFailed'))
+            })
+            .finally(() => {
+                setBusy(false)
+            })
+    }
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px'
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: CssVar.space(2),
+                    fontSize: '0.8rem',
+                    minWidth: 0
+                }}
+            >
+                <span style={{ flex: 1, minWidth: 0, opacity: 0.7 }}>
+                    {t('unclaimed', { amount: props.visible ? trimEth(balance.pooled) : HIDDEN })}
+                </span>
+                <Button
+                    variant="text"
+                    disabled={busy}
+                    onClick={claim}
+                    style={{
+                        flexShrink: 0,
+                        minHeight: '32px',
+                        padding: `0 ${CssVar.space(2)}`,
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
+                >
+                    {busy && <CircularProgress size={14} />}
+                    {busy ? t('claiming') : t('claim')}
+                </Button>
+            </div>
+            {error && (
+                <Text variant="caption" style={{ color: 'red' }}>
+                    {error}
+                </Text>
+            )}
+        </div>
+    )
 }
 
 interface WalletReaction {
@@ -351,6 +434,9 @@ export const WalletView = () => {
                             JPY
                         </span>
                     </div>
+                    <Suspense fallback={null}>
+                        <Unclaimed visible={balanceVisible} />
+                    </Suspense>
                 </div>
 
                 <div
