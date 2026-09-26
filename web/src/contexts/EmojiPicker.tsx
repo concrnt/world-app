@@ -138,6 +138,8 @@ export const EmojiPickerProvider = (props: Props) => {
     const [superDraft, setSuperDraft] = useState<{ emoji: Emoji; fromX: number; fromY: number } | null>(null)
     const [superAmount, setSuperAmount] = useState<string | null>(null)
     const [superMessage, setSuperMessage] = useState('')
+    const [messageSheetLift, setMessageSheetLift] = useState(false)
+    const messageInputRef = useRef<HTMLTextAreaElement>(null)
     const [holdProgress, setHoldProgress] = useState(0)
     const { hapticHeavy } = useHaptics()
     const hapticHeavyRef = useRef(hapticHeavy)
@@ -458,7 +460,29 @@ export const EmojiPickerProvider = (props: Props) => {
         setTxActive(false)
         setHoldProgress(0)
         setSuperMessage('')
+        setMessageSheetLift(false)
     }, [superDraft])
+
+    useEffect(() => {
+        if (!keyboard.visible) setMessageSheetLift(false)
+    }, [keyboard.visible])
+
+    useEffect(() => {
+        if (!messageSheetLift) return
+        const pin = (): void => {
+            if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0)
+        }
+        pin()
+        const timers = [0, 50, 100, 300, 500].map((ms) => window.setTimeout(pin, ms))
+        window.addEventListener('scroll', pin)
+        const viewport = window.visualViewport
+        viewport?.addEventListener('scroll', pin)
+        return () => {
+            for (const timer of timers) window.clearTimeout(timer)
+            window.removeEventListener('scroll', pin)
+            viewport?.removeEventListener('scroll', pin)
+        }
+    }, [messageSheetLift])
 
     useEffect(() => {
         const icon = iconScope.current
@@ -694,10 +718,16 @@ export const EmojiPickerProvider = (props: Props) => {
 
     const dismissKeyboard = (event: { target: EventTarget | null }): void => {
         const input = searchInputRef.current
-        if (!input || document.activeElement !== input) return
-        const box = input.parentElement
-        if (box && event.target instanceof Node && box.contains(event.target)) return
-        input.blur()
+        if (input && document.activeElement === input) {
+            const box = input.parentElement
+            if (box && event.target instanceof Node && box.contains(event.target)) return
+            input.blur()
+            return
+        }
+        const message = messageInputRef.current
+        if (!message || document.activeElement !== message) return
+        if (event.target instanceof Node && message.contains(event.target)) return
+        message.blur()
     }
 
     const holdLabel =
@@ -762,7 +792,7 @@ export const EmojiPickerProvider = (props: Props) => {
                             ref={sheetRef}
                             style={{
                                 position: 'fixed',
-                                bottom: 0,
+                                bottom: messageSheetLift ? keyboard.height : 0,
                                 left: 0,
                                 right: 0,
                                 backgroundColor: CssVar.contentBackground,
@@ -772,10 +802,11 @@ export const EmojiPickerProvider = (props: Props) => {
                                 flexDirection: 'column',
                                 height: sheetHeight,
                                 paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                                // メッセージ欄のフォーカスでは高さは変えず、シートごと上げる
                                 transition:
                                     sheetDragHeight !== null
                                         ? 'none'
-                                        : `height ${keyboard.duration > 0 ? keyboard.duration : 0.32}s cubic-bezier(0.22, 1, 0.36, 1)`,
+                                        : `height ${keyboard.duration > 0 ? keyboard.duration : 0.32}s cubic-bezier(0.22, 1, 0.36, 1), bottom ${keyboard.duration > 0 ? keyboard.duration : 0.32}s cubic-bezier(0.22, 1, 0.36, 1)`,
                                 zIndex: 1001
                             }}
                             initial={{ y: '100%' }}
@@ -1023,10 +1054,12 @@ export const EmojiPickerProvider = (props: Props) => {
                                             メッセージ
                                         </div>
                                         <textarea
+                                            ref={messageInputRef}
                                             className={styles.superMessage}
                                             value={superMessage}
                                             placeholder="タップしてメッセージを追加"
                                             onClick={(event) => event.stopPropagation()}
+                                            onFocus={() => setMessageSheetLift(true)}
                                             onChange={(event) => setSuperMessage(event.target.value)}
                                             style={{
                                                 flex: 1,
@@ -1040,7 +1073,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 padding: '10px 12px',
                                                 backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`,
                                                 color: CssVar.contentText,
-                                                fontSize: '15px',
+                                                fontSize: '16px',
                                                 lineHeight: '22px',
                                                 fontFamily: 'inherit',
                                                 outline: 'none'
