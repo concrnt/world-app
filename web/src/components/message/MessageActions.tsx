@@ -208,54 +208,90 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!client) return
-                    emojiPicker.open((emoji, superEth, superMessage) => {
-                        hapticLight()
-                        if (superEth) {
-                            addSuperReaction({
-                                id: `${props.message.uri}:${Date.now()}`,
-                                messageUri: props.message.uri,
-                                imageUrl: emoji.imageURL,
-                                eth: superEth,
-                                author: client.ccid,
-                                username: client.profile.username || 'Anonymous',
-                                avatar: client.profile.avatar,
-                                message: superMessage
+                    const receiverRatioBps = (async (): Promise<number> => {
+                        const full = 10000
+                        try {
+                            const domain =
+                                props.message.authorUser?.domain ??
+                                (await client.api
+                                    .getEntity(props.message.author, props.message.hint)
+                                    .then((entity) => entity?.value.domain))
+                            if (!domain) return full
+                            const res = await fetch(`https://${domain}/.well-known/tip-router`, {
+                                cache: 'no-store',
+                                signal: AbortSignal.timeout(5000)
                             })
+                            if (!res.ok) return full
+                            const json = (await res.json()) as {
+                                version?: unknown
+                                feeBps?: unknown
+                                tipjars?: Record<string, unknown>
+                            }
+                            if (json.version !== 1) return full
+                            const raw = json.tipjars?.ethereum
+                            if (typeof raw !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(raw)) return full
+                            if (raw.toLowerCase() === '0x0000000000000000000000000000000000000000') return full
+                            const feeBps = json.feeBps
+                            if (typeof feeBps !== 'number' || !Number.isInteger(feeBps) || feeBps < 0 || feeBps > full)
+                                return full
+                            return full - feeBps
+                        } catch (e) {
+                            console.error('failed to resolve tip share:', e)
+                            return full
                         }
+                    })()
+                    emojiPicker.open(
+                        (emoji, superEth, superMessage) => {
+                            hapticLight()
+                            if (superEth) {
+                                addSuperReaction({
+                                    id: `${props.message.uri}:${Date.now()}`,
+                                    messageUri: props.message.uri,
+                                    imageUrl: emoji.imageURL,
+                                    eth: superEth,
+                                    author: client.ccid,
+                                    username: client.profile.username || 'Anonymous',
+                                    avatar: client.profile.avatar,
+                                    message: superMessage
+                                })
+                            }
 
-                        startTransition(async () => {
-                            props.updateReactionState((prev: ReactionState): ReactionState => {
-                                const imageUrl = emoji.imageURL
-                                const shortcode = emoji.shortcode
-                                return {
-                                    reactionCounts: {
-                                        ...prev.reactionCounts,
-                                        [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
-                                    },
-                                    ownReactions: {
-                                        ...prev.ownReactions,
-                                        [imageUrl]: new Association('dummy', {
-                                            kind: 'association',
-                                            author: client.ccid,
-                                            schema: Schemas.reactionAssociation,
-                                            value: {
-                                                imageUrl,
-                                                shortcode
-                                            },
-                                            createdAt: new Date()
-                                        })
+                            startTransition(async () => {
+                                props.updateReactionState((prev: ReactionState): ReactionState => {
+                                    const imageUrl = emoji.imageURL
+                                    const shortcode = emoji.shortcode
+                                    return {
+                                        reactionCounts: {
+                                            ...prev.reactionCounts,
+                                            [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
+                                        },
+                                        ownReactions: {
+                                            ...prev.ownReactions,
+                                            [imageUrl]: new Association('dummy', {
+                                                kind: 'association',
+                                                author: client.ccid,
+                                                schema: Schemas.reactionAssociation,
+                                                value: {
+                                                    imageUrl,
+                                                    shortcode
+                                                },
+                                                createdAt: new Date()
+                                            })
+                                        }
                                     }
-                                }
+                                })
+
+                                await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
+                                    console.error('Failed to add reaction:', err)
+                                })
+                                await refreshMessage()
                             })
 
-                            await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
-                                console.error('Failed to add reaction:', err)
-                            })
-                            await refreshMessage()
-                        })
-
-                        emojiPicker.close()
-                    }, reactionAnchor)
+                            emojiPicker.close()
+                        },
+                        reactionAnchor,
+                        { receiverRatioBps }
+                    )
                 }}
                 style={{ display: 'flex', alignItems: 'center', anchorName: reactionAnchor } as React.CSSProperties}
             >

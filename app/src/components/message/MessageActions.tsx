@@ -20,7 +20,7 @@ import { Drawer } from '../../ui/Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { invalidateResource } from '../../hooks/useResource'
-import { getTipjar } from '../../lib/tipjar'
+import { getTipjar, resolveHost } from '../../lib/tipjar'
 import { sendSuperReaction } from '../../lib/superReaction'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useStack } from '../../layouts/Stack'
@@ -238,6 +238,20 @@ export const MessageActions = (props: Props) => {
                                 ]).then(([sender, receiver]) =>
                                     !sender ? 'no-sender-tipjar' : !receiver ? 'no-receiver-tipjar' : 'ok'
                                 ),
+                                // チップ画面を開く前に受信者へ届く割合を取り始める。送信(sendSuperReaction)と同じ resolveHost
+                                receiverRatioBps: (async () => {
+                                    try {
+                                        const domain =
+                                            props.message.authorUser?.domain ??
+                                            (await client.api
+                                                .getEntity(props.message.author, props.message.hint)
+                                                .then((entity) => entity?.value.domain))
+                                        return (await resolveHost(domain)).ratioBps
+                                    } catch (e) {
+                                        console.error('failed to resolve tip share:', e)
+                                        return 10000
+                                    }
+                                })(),
                                 send: async (emoji, amountEth, message) => {
                                     await sendSuperReaction({
                                         client,

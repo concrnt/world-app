@@ -6,6 +6,7 @@ import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { FaEthereum } from 'react-icons/fa6'
 import {
+    Button,
     CCImage,
     CircularProgress,
     HorizontalLayout,
@@ -59,6 +60,31 @@ const SUPER_TIP_AMOUNTS = [
     { eth: '0.024', yen: 10000 }
 ]
 
+const TIP_BPS = 10000
+
+const formatReceivePercent = (ratioBps: number): string => {
+    const whole = Math.floor(ratioBps / 100)
+    const frac = ratioBps % 100
+    if (frac === 0) return `${whole}%`
+    return `${whole}.${String(frac).padStart(2, '0').replace(/0$/, '')}%`
+}
+
+// amountEth のうち ratioBps/10000 を、浮動小数を使わず小数文字列にする
+const applyRatio = (amountEth: string, ratioBps: number): string => {
+    const [whole, frac = ''] = amountEth.split('.')
+    const digits = `${whole}${frac}`.replace(/^0+/, '') || '0'
+    const denom = 10n ** BigInt(frac.length) * BigInt(TIP_BPS)
+    const value = BigInt(digits) * BigInt(ratioBps)
+    const quotient = value / denom
+    const remainder = value % denom
+    if (remainder === 0n) return quotient.toString()
+    const fraction = remainder
+        .toString()
+        .padStart(denom.toString().length - 1, '0')
+        .replace(/0+$/, '')
+    return `${quotient}.${fraction}`
+}
+
 // ほぼ正方形はそのまま1マス。横長は縦横比を四捨五入した列数を取る。
 const columnSpan = (ratio: number | undefined, cols: number): number => {
     if (ratio === undefined || !Number.isFinite(ratio) || ratio < 1.35) return 1
@@ -106,6 +132,8 @@ const packEmojiRows = (emojis: Emoji[], cols: number): { emoji: Emoji; span: num
 export type SuperReactionAvailability = 'ok' | 'no-sender-tipjar' | 'no-receiver-tipjar'
 export interface SuperReactionOptions {
     availability: Promise<SuperReactionAvailability>
+    // ピッカーを開いた時点で解決を始める。受信者に届く割合(10000 = 100%)。送信時の resolveHost と同じ値
+    receiverRatioBps: Promise<number>
     send: (emoji: Emoji, amountEth: string, message?: string) => Promise<void>
 }
 
@@ -154,6 +182,9 @@ export const EmojiPickerProvider = (props: Props) => {
     const superReactionTipVisible = useRef(false)
     const [superDraft, setSuperDraft] = useState<{ emoji: Emoji; fromX: number; fromY: number } | null>(null)
     const [superAmount, setSuperAmount] = useState<string | null>(null)
+    const [tipConfirmed, setTipConfirmed] = useState(false)
+    // null はホスト取り分の解決待ち。10000 は受信者 100%
+    const [receiverRatioBps, setReceiverRatioBps] = useState<number | null>(null)
     const [superMessage, setSuperMessage] = useState('')
     const [messageSheetLift, setMessageSheetLift] = useState(false)
     const messageInputRef = useRef<HTMLTextAreaElement>(null)
@@ -335,9 +366,24 @@ export const EmojiPickerProvider = (props: Props) => {
             setSuperReactionTipOpen(false)
             setSuperDraft(null)
             setSuperAmount(null)
+            setTipConfirmed(false)
             setSuperMessage('')
             superReactionTipVisible.current = false
             window.clearTimeout(superReactionTipTimer.current)
+            const ratio = opts?.superReaction?.receiverRatioBps
+            if (ratio) {
+                setReceiverRatioBps(null)
+                ratio
+                    .then((bps) => {
+                        if (openSeq.current === seq) setReceiverRatioBps(bps)
+                    })
+                    .catch((err) => {
+                        console.error('failed to resolve tip share:', err)
+                        if (openSeq.current === seq) setReceiverRatioBps(TIP_BPS)
+                    })
+            } else {
+                setReceiverRatioBps(TIP_BPS)
+            }
             setIsOpen(true)
         },
         [frequentEmojis.length]
@@ -359,6 +405,8 @@ export const EmojiPickerProvider = (props: Props) => {
         setSuperReactionTipOpen(false)
         setSuperDraft(null)
         setSuperAmount(null)
+        setTipConfirmed(false)
+        setReceiverRatioBps(null)
         setSuperMessage('')
         superReactionTipVisible.current = false
         window.clearTimeout(superReactionTipTimer.current)
@@ -424,6 +472,7 @@ export const EmojiPickerProvider = (props: Props) => {
         const fromY = from && sheet ? from.top + from.height / 2 - (sheet.top + sheet.height * 0.34) : 0
         setSuperDraft({ emoji, fromX, fromY })
         setSuperAmount(null)
+        setTipConfirmed(false)
         setSuperMessage('')
         setTxError(null)
         setSheetExpanded(true)
@@ -524,6 +573,7 @@ export const EmojiPickerProvider = (props: Props) => {
         holdSent.current = false
         setTxActive(false)
         setHoldProgress(0)
+        setTipConfirmed(false)
         setSuperMessage('')
         setMessageSheetLift(false)
     }, [superDraft])
@@ -1165,82 +1215,178 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 marginBottom: CssVar.space(2)
                                             }}
                                         >
-                                            {t('selectTipAmount')}
+                                            {tipConfirmed ? t('transactionDetails') : t('selectTipAmount')}
                                         </div>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                gap: CssVar.space(2)
-                                            }}
-                                        >
-                                            {SUPER_TIP_AMOUNTS.map((amount) => {
-                                                const selected = superAmount === amount.eth
-                                                return (
-                                                    <button
-                                                        key={amount.eth}
-                                                        type="button"
-                                                        aria-pressed={selected}
-                                                        onClick={() => setSuperAmount(amount.eth)}
-                                                        style={
-                                                            {
-                                                                flex: 1,
-                                                                minWidth: 0,
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                gap: '2px',
-                                                                minHeight: '48px',
-                                                                padding: '4px',
-                                                                border: 'none',
-                                                                borderRadius: CssVar.round(0.5),
-                                                                cursor: 'pointer',
-                                                                backgroundColor: selected
-                                                                    ? CssVar.uiBackground
-                                                                    : `rgb(from ${CssVar.contentText} r g b / 0.06)`,
-                                                                color: selected ? CssVar.uiText : CssVar.contentText,
-                                                                WebkitTapHighlightColor: 'transparent'
-                                                            } as React.CSSProperties
-                                                        }
-                                                    >
-                                                        <span
-                                                            style={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '2px',
-                                                                maxWidth: '100%',
-                                                                fontSize: '12px',
-                                                                fontWeight: 700,
-                                                                lineHeight: '16px'
-                                                            }}
+                                        {!tipConfirmed ? (
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    gap: CssVar.space(2)
+                                                }}
+                                            >
+                                                {SUPER_TIP_AMOUNTS.map((amount) => {
+                                                    const selected = superAmount === amount.eth
+                                                    return (
+                                                        <button
+                                                            key={amount.eth}
+                                                            type="button"
+                                                            aria-pressed={selected}
+                                                            onClick={() => setSuperAmount(amount.eth)}
+                                                            style={
+                                                                {
+                                                                    flex: 1,
+                                                                    minWidth: 0,
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '2px',
+                                                                    minHeight: '60px',
+                                                                    padding: '4px',
+                                                                    border: 'none',
+                                                                    borderRadius: CssVar.round(0.5),
+                                                                    cursor: 'pointer',
+                                                                    backgroundColor: selected
+                                                                        ? CssVar.uiBackground
+                                                                        : `rgb(from ${CssVar.contentText} r g b / 0.06)`,
+                                                                    color: selected
+                                                                        ? CssVar.uiText
+                                                                        : CssVar.contentText,
+                                                                    WebkitTapHighlightColor: 'transparent'
+                                                                } as React.CSSProperties
+                                                            }
                                                         >
-                                                            <FaEthereum size={12} />
                                                             <span
                                                                 style={{
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px',
+                                                                    maxWidth: '100%',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: 700,
+                                                                    lineHeight: '16px'
+                                                                }}
+                                                            >
+                                                                <FaEthereum size={12} />
+                                                                <span
+                                                                    style={{
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        whiteSpace: 'nowrap'
+                                                                    }}
+                                                                >
+                                                                    {amount.eth}
+                                                                </span>
+                                                            </span>
+                                                            <span
+                                                                style={{
+                                                                    fontSize: '11px',
+                                                                    lineHeight: '14px',
+                                                                    opacity: selected ? 0.85 : 0.55,
                                                                     whiteSpace: 'nowrap'
                                                                 }}
                                                             >
-                                                                {amount.eth}
+                                                                {t('yenAmount', {
+                                                                    amount: amount.yen.toLocaleString(i18n.language)
+                                                                })}
                                                             </span>
-                                                        </span>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    gap: CssVar.space(2),
+                                                    minHeight: '60px',
+                                                    borderRadius: CssVar.round(0.5),
+                                                    backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`,
+                                                    color: CssVar.contentText
+                                                }}
+                                            >
+                                                {(
+                                                    [
+                                                        {
+                                                            key: 'sent',
+                                                            label: t('sentEth'),
+                                                            text: superAmount,
+                                                            icon: true
+                                                        },
+                                                        {
+                                                            key: 'percent',
+                                                            label: t('receivePercent'),
+                                                            text:
+                                                                receiverRatioBps === null
+                                                                    ? null
+                                                                    : formatReceivePercent(receiverRatioBps),
+                                                            icon: false
+                                                        },
+                                                        {
+                                                            key: 'actual',
+                                                            label: t('receivedEth'),
+                                                            text:
+                                                                superAmount !== null && receiverRatioBps !== null
+                                                                    ? applyRatio(superAmount, receiverRatioBps)
+                                                                    : null,
+                                                            icon: true
+                                                        }
+                                                    ] as const
+                                                ).map((cell) => (
+                                                    <div
+                                                        key={cell.key}
+                                                        style={{
+                                                            flex: 1,
+                                                            minWidth: 0,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: '2px',
+                                                            minHeight: '60px',
+                                                            padding: '4px'
+                                                        }}
+                                                    >
                                                         <span
                                                             style={{
                                                                 fontSize: '11px',
                                                                 lineHeight: '14px',
-                                                                opacity: selected ? 0.85 : 0.55,
+                                                                opacity: 0.55,
                                                                 whiteSpace: 'nowrap'
                                                             }}
                                                         >
-                                                            {t('yenAmount', {
-                                                                amount: amount.yen.toLocaleString(i18n.language)
-                                                            })}
+                                                            {cell.label}
                                                         </span>
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
+                                                        {cell.text === null ? (
+                                                            <CircularProgress size={14} />
+                                                        ) : (
+                                                            <span
+                                                                style={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px',
+                                                                    maxWidth: '100%',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: 700,
+                                                                    lineHeight: '16px'
+                                                                }}
+                                                            >
+                                                                {cell.icon && <FaEthereum size={12} />}
+                                                                <span
+                                                                    style={{
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        whiteSpace: 'nowrap'
+                                                                    }}
+                                                                >
+                                                                    {cell.text}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                         {txError && (
                                             <div
                                                 role="alert"
@@ -1256,72 +1402,95 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 {txError}
                                             </div>
                                         )}
-                                        <button
-                                            type="button"
-                                            disabled={superAmount === null}
-                                            onContextMenu={(event) => {
-                                                event.preventDefault()
-                                            }}
-                                            onPointerDown={(event) => {
-                                                if (event.button !== 0 || superAmount === null) return
-                                                event.currentTarget.setPointerCapture(event.pointerId)
-                                                if (holdFrame.current !== undefined) {
-                                                    cancelAnimationFrame(holdFrame.current)
-                                                }
-                                                holdSent.current = false
-                                                holdLastHaptic.current = 0
-                                                holdStartedAt.current = performance.now()
-                                                setHoldProgress(0.001)
-                                                holdFrame.current = requestAnimationFrame(tickHold)
-                                            }}
-                                            onPointerUp={() => {
-                                                if (holdStartedAt.current === null) return
-                                                const progress = Math.min(
-                                                    1,
-                                                    (performance.now() - holdStartedAt.current) / 5000
-                                                )
-                                                endHold(progress >= 1)
-                                            }}
-                                            onPointerCancel={() => {
-                                                endHold(false)
-                                            }}
-                                            style={{
-                                                position: 'relative',
-                                                overflow: 'hidden',
-                                                width: '100%',
-                                                minHeight: '48px',
-                                                marginTop: CssVar.space(3),
-                                                padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                                border: 'none',
-                                                borderRadius: CssVar.round(1),
-                                                backgroundColor: CssVar.uiBackground,
-                                                color: CssVar.uiText,
-                                                fontSize: '1.2rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: superAmount === null ? 'default' : 'pointer',
-                                                opacity: superAmount === null ? 0.45 : 1,
-                                                touchAction: 'none',
-                                                userSelect: 'none',
-                                                WebkitTouchCallout: 'none',
-                                                WebkitTapHighlightColor: 'transparent',
-                                                transform: holdShift
-                                            }}
-                                        >
-                                            <span
+                                        {!tipConfirmed ? (
+                                            <Button
+                                                disabled={superAmount === null}
+                                                onClick={() => setTipConfirmed(true)}
                                                 style={{
-                                                    position: 'absolute',
-                                                    left: 0,
-                                                    top: 0,
-                                                    bottom: 0,
-                                                    width: `${Math.min(holdProgress, 1) * 100}%`,
-                                                    backgroundColor: `color-mix(in srgb, white 46%, ${CssVar.uiBackground})`,
-                                                    pointerEvents: 'none'
+                                                    width: '100%',
+                                                    minHeight: '48px',
+                                                    marginTop: CssVar.space(3)
                                                 }}
-                                            />
-                                            <span style={{ position: 'relative' }}>{holdLabel}</span>
-                                        </button>
+                                            >
+                                                {t('confirm')}
+                                            </Button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                disabled={superAmount === null || receiverRatioBps === null}
+                                                onContextMenu={(event) => {
+                                                    event.preventDefault()
+                                                }}
+                                                onPointerDown={(event) => {
+                                                    if (
+                                                        event.button !== 0 ||
+                                                        superAmount === null ||
+                                                        receiverRatioBps === null
+                                                    )
+                                                        return
+                                                    event.currentTarget.setPointerCapture(event.pointerId)
+                                                    if (holdFrame.current !== undefined) {
+                                                        cancelAnimationFrame(holdFrame.current)
+                                                    }
+                                                    holdSent.current = false
+                                                    holdLastHaptic.current = 0
+                                                    holdStartedAt.current = performance.now()
+                                                    setHoldProgress(0.001)
+                                                    holdFrame.current = requestAnimationFrame(tickHold)
+                                                }}
+                                                onPointerUp={() => {
+                                                    if (holdStartedAt.current === null) return
+                                                    const progress = Math.min(
+                                                        1,
+                                                        (performance.now() - holdStartedAt.current) / 5000
+                                                    )
+                                                    endHold(progress >= 1)
+                                                }}
+                                                onPointerCancel={() => {
+                                                    endHold(false)
+                                                }}
+                                                style={{
+                                                    position: 'relative',
+                                                    overflow: 'hidden',
+                                                    width: '100%',
+                                                    minHeight: '48px',
+                                                    marginTop: CssVar.space(3),
+                                                    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
+                                                    border: 'none',
+                                                    borderRadius: CssVar.round(1),
+                                                    backgroundColor: CssVar.uiBackground,
+                                                    color: CssVar.uiText,
+                                                    fontSize: '1.2rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor:
+                                                        superAmount === null || receiverRatioBps === null
+                                                            ? 'default'
+                                                            : 'pointer',
+                                                    opacity:
+                                                        superAmount === null || receiverRatioBps === null ? 0.45 : 1,
+                                                    touchAction: 'none',
+                                                    userSelect: 'none',
+                                                    WebkitTouchCallout: 'none',
+                                                    WebkitTapHighlightColor: 'transparent',
+                                                    transform: holdShift
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        position: 'absolute',
+                                                        left: 0,
+                                                        top: 0,
+                                                        bottom: 0,
+                                                        width: `${Math.min(holdProgress, 1) * 100}%`,
+                                                        backgroundColor: `color-mix(in srgb, white 46%, ${CssVar.uiBackground})`,
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                />
+                                                <span style={{ position: 'relative' }}>{holdLabel}</span>
+                                            </button>
+                                        )}
                                     </motion.div>
                                 </div>
                             )}
