@@ -8,6 +8,8 @@ import { ReactionState } from './Footer'
 import { CCImage, Divider, Tooltip } from '@concrnt/ui'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { AssociationUserRow } from './AssociationUserRow'
+import { SuperReactionCard } from './SuperReactionCard'
+import { useSuperReactions } from './superReactionMock'
 
 // app版との意図的な差分: appはButtonBase+長押しでリアクション一覧へ遷移、
 // webは素のbutton+hoverでリアクションした人をtooltip表示する(tooltipはweb限定機能)
@@ -26,6 +28,7 @@ export const MessageReactions = (props: Props) => {
     const messageHref = props.message.key ?? props.message.uri
 
     const { reactionCounts, ownReactions } = props.reactionState
+    const superReactions = useSuperReactions(props.message.uri)
 
     const [reactionMembers, setReactionMembers] = useState<
         Record<string, Array<Association<ReactionAssociationSchema>>>
@@ -144,6 +147,13 @@ export const MessageReactions = (props: Props) => {
         <div
             style={{
                 display: 'flex',
+                flexDirection: 'column',
+                gap: superReactions.length > 0 ? '8px' : undefined
+            }}
+        >
+        <div
+            style={{
+                display: 'flex',
                 flexWrap: 'wrap',
                 gap: '8px'
             }}
@@ -212,6 +222,17 @@ export const MessageReactions = (props: Props) => {
                     </Tooltip>
                 )
             })}
+        </div>
+            {superReactions.map((reaction) => (
+                <SuperReactionCard
+                    key={reaction.id}
+                    author={reaction.author}
+                    username={reaction.username}
+                    avatar={reaction.avatar}
+                    eth={reaction.eth}
+                    imageUrl={reaction.imageUrl}
+                />
+            ))}
         </div>
     )
 }

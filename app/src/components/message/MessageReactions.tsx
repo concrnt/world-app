@@ -9,6 +9,8 @@ import { ButtonBase, CCImage } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { useQueryTimelineContext } from '../QueryTimeline'
+import { SuperReactionCard } from './SuperReactionCard'
+import { useSuperReactions } from './superReactionMock'
 
 // web版との意図的な差分: appはButtonBase+長押しでリアクション一覧へ遷移、
 // webは素のbutton+hoverでリアクションした人をtooltip表示する(tooltipはweb限定機能)
@@ -28,6 +30,7 @@ export const MessageReactions = (props: Props) => {
     const messageHref = props.message.key ?? props.message.uri
 
     const { reactionCounts, ownReactions } = props.reactionState
+    const superReactions = useSuperReactions(props.message.uri)
 
     // commit完了後、transitionが終わる(=useOptimisticがrevertする)前に
     // メッセージ本体を再取得してベース値をサーバー状態に揃える。
@@ -122,6 +125,13 @@ export const MessageReactions = (props: Props) => {
         <div
             style={{
                 display: 'flex',
+                flexDirection: 'column',
+                gap: superReactions.length > 0 ? '8px' : undefined
+            }}
+        >
+        <div
+            style={{
+                display: 'flex',
                 flexWrap: 'wrap',
                 gap: '8px'
             }}
@@ -168,6 +178,17 @@ export const MessageReactions = (props: Props) => {
                     </ButtonBase>
                 )
             })}
+        </div>
+            {superReactions.map((reaction) => (
+                <SuperReactionCard
+                    key={reaction.id}
+                    author={reaction.author}
+                    username={reaction.username}
+                    avatar={reaction.avatar}
+                    eth={reaction.eth}
+                    imageUrl={reaction.imageUrl}
+                />
+            ))}
         </div>
     )
 }

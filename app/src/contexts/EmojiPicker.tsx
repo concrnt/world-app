@@ -89,7 +89,7 @@ const packEmojiRows = (emojis: Emoji[], cols: number): { emoji: Emoji; span: num
 // ---- Context ----
 
 export interface EmojiPickerState {
-    open: (onSelected: (emoji: Emoji) => void) => void
+    open: (onSelected: (emoji: Emoji, superEth?: string) => void) => void
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
@@ -110,7 +110,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
-    const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
+    const onSelectedRef = useRef<((emoji: Emoji, superEth?: string) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const [frequentEmojis, setFrequentEmojis] = usePersistent<Emoji[]>('emojiPicker:frequent', [])
@@ -352,13 +352,13 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const selectEmoji = useCallback(
-        (emoji: Emoji) => {
+        (emoji: Emoji, superEth?: string) => {
             // よく使う絵文字を更新
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
             updated.unshift(emoji)
             setFrequentEmojis(updated.slice(0, 60))
 
-            onSelectedRef.current?.(emoji)
+            onSelectedRef.current?.(emoji, superEth)
         },
         [frequentEmojis, setFrequentEmojis]
     )
@@ -393,7 +393,7 @@ export const EmojiPickerProvider = (props: Props) => {
             const current = superDraftRef.current
             const amount = superAmountRef.current
             if (!current || amount === null) return
-            selectEmoji(current.emoji)
+            selectEmoji(current.emoji, amount)
             close()
         }, txMs)
     }

@@ -93,7 +93,7 @@ const packEmojiRows = (emojis: Emoji[], cols: number): { emoji: Emoji; span: num
 
 export interface EmojiPickerState {
     // anchor: 開いたボタン側が useAnchor() で宣言したアンカー名(デスクトップでボタンの右下に出す。省略時は画面中央)
-    open: (onSelected: (emoji: Emoji) => void, anchor?: string) => void
+    open: (onSelected: (emoji: Emoji, superEth?: string) => void, anchor?: string) => void
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
@@ -114,7 +114,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
-    const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
+    const onSelectedRef = useRef<((emoji: Emoji, superEth?: string) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const keyboard = useKeyboard()
@@ -367,12 +367,12 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const selectEmoji = useCallback(
-        (emoji: Emoji) => {
+        (emoji: Emoji, superEth?: string) => {
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
             updated.unshift(emoji)
             setFrequentEmojis(updated.slice(0, 60))
 
-            onSelectedRef.current?.(emoji)
+            onSelectedRef.current?.(emoji, superEth)
         },
         [frequentEmojis, setFrequentEmojis]
     )
@@ -407,7 +407,7 @@ export const EmojiPickerProvider = (props: Props) => {
             const current = superDraftRef.current
             const amount = superAmountRef.current
             if (!current || amount === null) return
-            selectEmoji(current.emoji)
+            selectEmoji(current.emoji, amount)
             close()
         }, txMs)
     }
@@ -1490,10 +1490,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                         lineHeight: '18px',
                                         fontWeight: 700,
                                         opacity: 0.6
-                                    }}
-                                >
-                                    {title}
-                                </div>
+                                }}
+                            >
+                                {title}
+                            </div>
                                 {rows.length === 0 ? (
                                     <div
                                         style={{

@@ -20,6 +20,7 @@ import { MdAddReaction } from 'react-icons/md'
 import { Drawer } from '../Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
+import { addSuperReaction } from './superReactionMock'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
@@ -207,8 +208,19 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!client) return
-                    emojiPicker.open((emoji) => {
+                    emojiPicker.open((emoji, superEth) => {
                         hapticLight()
+                        if (superEth) {
+                            addSuperReaction({
+                                id: `${props.message.uri}:${Date.now()}`,
+                                messageUri: props.message.uri,
+                                imageUrl: emoji.imageURL,
+                                eth: superEth,
+                                author: client.ccid,
+                                username: client.profile.username || 'Anonymous',
+                                avatar: client.profile.avatar
+                            })
+                        }
 
                         startTransition(async () => {
                             props.updateReactionState((prev: ReactionState): ReactionState => {
