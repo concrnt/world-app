@@ -425,6 +425,8 @@ const RecoveryView = (props: {
         return () => {
             clearTimeout(timer)
         }
+        // 入力中の domain だけで照会する。props は親の再描画ごとに新しい関数を含む
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [domain])
 
     return (

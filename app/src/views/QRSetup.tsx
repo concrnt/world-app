@@ -89,6 +89,8 @@ export const QRSetup = (props: Props) => {
             sender?.dispose()
             setSender(null)
         }
+        // 初期化フラグで一度だけスキャンする。sender を依存に入れるとクリーンアップが直後に破棄する
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scan])
 
     return (

@@ -37,6 +37,8 @@ export const BskyPerson = ({ person }: Props) => {
 
     useEffect(() => {
         updateFollowed()
+        // DID が変わったときだけ取り直す
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [person.did])
 
     return (

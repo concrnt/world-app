@@ -5,7 +5,18 @@ import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { FaEthereum } from 'react-icons/fa6'
-import { CCImage, CircularProgress, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions, Popover, Text, Tooltip, useAnchor } from '@concrnt/ui'
+import {
+    CCImage,
+    CircularProgress,
+    HorizontalLayout,
+    IconButton,
+    CfmActionsProvider,
+    useCfmActions,
+    Popover,
+    Text,
+    Tooltip,
+    useAnchor
+} from '@concrnt/ui'
 import { useClient } from './Client'
 import { useHaptics } from './Haptics'
 import { useKeyboard } from './Keyboard'
@@ -13,6 +24,8 @@ import { useMediaProxy } from './MediaProxy'
 import { Aurora } from '../components/Aurora'
 import { SpeedLines } from '../components/SpeedLines'
 import styles from './EmojiPicker.module.css'
+
+const readNow = (): number => performance.now()
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
 
@@ -395,7 +408,10 @@ export const EmojiPickerProvider = (props: Props) => {
         holdSent.current = true
         window.clearTimeout(txTimer.current)
         setTxActive(true)
-        const txMs = Math.min(30000, Math.max(10000, 20000 + (Math.random() + Math.random() + Math.random() - 1.5) * 12000))
+        const txMs = Math.min(
+            30000,
+            Math.max(10000, 20000 + (Math.random() + Math.random() + Math.random() - 1.5) * 12000)
+        )
         txTimer.current = window.setTimeout(() => {
             txTimer.current = undefined
             const current = superDraftRef.current
@@ -410,7 +426,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const tickHold = (): void => {
         const started = holdStartedAt.current
         if (started === null) return
-        const now = performance.now()
+        const now = readNow()
         const progress = Math.min(1, (now - started) / 5000)
         if (progress >= 2 / 3 && progress < 1) {
             const shake = (progress - 2 / 3) / (1 / 3)
@@ -586,8 +602,9 @@ export const EmojiPickerProvider = (props: Props) => {
     // ---- Rows for content-visibility ----
 
     const rows = useMemo(() => {
-        return packEmojiRows(displayEmojis, COLS)
         // aspectTick はキャッシュ更新の再計算用
+        void aspectTick
+        return packEmojiRows(displayEmojis, COLS)
     }, [displayEmojis, aspectTick])
 
     // ---- Context value ----
@@ -729,7 +746,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let holdShift: string | undefined
     if (holdShake > 0 && !reduceMotion) {
-        const now = performance.now()
+        const now = readNow()
         const amp = 0.8 + holdShake * 3.4
         const freq = 0.045 + holdShake * 0.112
         const x = Math.sin(now * freq) * amp
@@ -868,40 +885,40 @@ export const EmojiPickerProvider = (props: Props) => {
                                         }}
                                     >
                                         {!txActive && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (holdFrame.current !== undefined) {
-                                                    cancelAnimationFrame(holdFrame.current)
-                                                }
-                                                holdFrame.current = undefined
-                                                holdStartedAt.current = null
-                                                holdSent.current = false
-                                                window.clearTimeout(txTimer.current)
-                                                txTimer.current = undefined
-                                                setTxActive(false)
-                                                setHoldProgress(0)
-                                                setSuperDraft(null)
-                                                setSuperAmount(null)
-                                                setSuperMessage('')
-                                            }}
-                                            style={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                zIndex: 1,
-                                                border: 'none',
-                                                background: 'transparent',
-                                                color: CssVar.contentText,
-                                                fontSize: '16px',
-                                                lineHeight: '24px',
-                                                padding: `${CssVar.space(1)} 0`,
-                                                cursor: 'pointer',
-                                                WebkitTapHighlightColor: 'transparent'
-                                            }}
-                                        >
-                                            キャンセル
-                                        </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (holdFrame.current !== undefined) {
+                                                        cancelAnimationFrame(holdFrame.current)
+                                                    }
+                                                    holdFrame.current = undefined
+                                                    holdStartedAt.current = null
+                                                    holdSent.current = false
+                                                    window.clearTimeout(txTimer.current)
+                                                    txTimer.current = undefined
+                                                    setTxActive(false)
+                                                    setHoldProgress(0)
+                                                    setSuperDraft(null)
+                                                    setSuperAmount(null)
+                                                    setSuperMessage('')
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    zIndex: 1,
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    color: CssVar.contentText,
+                                                    fontSize: '16px',
+                                                    lineHeight: '24px',
+                                                    padding: `${CssVar.space(1)} 0`,
+                                                    cursor: 'pointer',
+                                                    WebkitTapHighlightColor: 'transparent'
+                                                }}
+                                            >
+                                                キャンセル
+                                            </button>
                                         )}
                                         <div style={{ position: 'relative' }}>
                                             <motion.div
@@ -917,119 +934,119 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 <div ref={settleScope}>
                                                     <div
                                                         ref={iconScope}
-                                                    style={{
-                                                        width: '50vw',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    <CCImage
-                                                        src={superDraft.emoji.imageURL}
-                                                        maxHeight={1024}
-                                                        alt={superDraft.emoji.shortcode}
                                                         style={{
                                                             width: '50vw',
-                                                            height: 'auto',
-                                                            maxHeight: '50vw'
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
                                                         }}
-                                                    />
-                                                </div>
+                                                    >
+                                                        <CCImage
+                                                            src={superDraft.emoji.imageURL}
+                                                            maxHeight={1024}
+                                                            alt={superDraft.emoji.shortcode}
+                                                            style={{
+                                                                width: '50vw',
+                                                                height: 'auto',
+                                                                maxHeight: '50vw'
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </motion.div>
                                         </div>
                                     </div>
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                                            style={{
-                                                position: 'relative',
-                                                flexShrink: 0,
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                minHeight: `calc(18px + ${CssVar.space(2)} + 48px * 4 + ${CssVar.space(2)} * 3 + 48px + ${CssVar.space(3)})`,
-                                                visibility: txActive ? 'hidden' : 'visible',
-                                                pointerEvents: txActive ? 'none' : 'auto'
-                                            }}
-                                        >
-                                            {txActive && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.25, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                        style={{
+                                            position: 'relative',
+                                            flexShrink: 0,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            minHeight: `calc(18px + ${CssVar.space(2)} + 48px * 4 + ${CssVar.space(2)} * 3 + 48px + ${CssVar.space(3)})`,
+                                            visibility: txActive ? 'hidden' : 'visible',
+                                            pointerEvents: txActive ? 'none' : 'auto'
+                                        }}
+                                    >
+                                        {txActive && (
+                                            <div
+                                                style={{
+                                                    visibility: 'visible',
+                                                    position: 'absolute',
+                                                    zIndex: 1,
+                                                    top: 0,
+                                                    right: `calc(${CssVar.space(3)} * -1)`,
+                                                    bottom: keyboard.visible
+                                                        ? `calc(${CssVar.space(4)} * -1)`
+                                                        : `calc(${CssVar.space(4)} * -1 - env(safe-area-inset-bottom))`,
+                                                    left: `calc(${CssVar.space(3)} * -1)`,
+                                                    paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                                                    backgroundColor: CssVar.contentBackground,
+                                                    color: CssVar.contentText,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: CssVar.space(4),
+                                                    pointerEvents: 'none'
+                                                }}
+                                            >
                                                 <div
                                                     style={{
-                                                        visibility: 'visible',
-                                                        position: 'absolute',
-                                                        zIndex: 1,
-                                                        top: 0,
-                                                        right: `calc(${CssVar.space(3)} * -1)`,
-                                                        bottom: keyboard.visible
-                                                            ? `calc(${CssVar.space(4)} * -1)`
-                                                            : `calc(${CssVar.space(4)} * -1 - env(safe-area-inset-bottom))`,
-                                                        left: `calc(${CssVar.space(3)} * -1)`,
-                                                        paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                                        backgroundColor: CssVar.contentBackground,
-                                                        color: CssVar.contentText,
+                                                        fontSize: '15px',
+                                                        lineHeight: '22px',
+                                                        fontWeight: 700
+                                                    }}
+                                                >
+                                                    トランザクションが進行中
+                                                </div>
+                                                <div
+                                                    style={{
                                                         display: 'flex',
                                                         flexDirection: 'column',
                                                         alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        gap: CssVar.space(4),
-                                                        pointerEvents: 'none'
+                                                        gap: CssVar.space(2)
                                                     }}
                                                 >
                                                     <div
                                                         style={{
-                                                            fontSize: '15px',
-                                                            lineHeight: '22px',
-                                                            fontWeight: 700
-                                                        }}
-                                                    >
-                                                        トランザクションが進行中
-                                                    </div>
-                                                    <div
-                                                        style={{
+                                                            position: 'relative',
+                                                            width: 72,
+                                                            height: 72,
                                                             display: 'flex',
-                                                            flexDirection: 'column',
                                                             alignItems: 'center',
-                                                            gap: CssVar.space(2)
+                                                            justifyContent: 'center'
                                                         }}
                                                     >
+                                                        <CircularProgress size={72} />
                                                         <div
                                                             style={{
-                                                                position: 'relative',
-                                                                width: 72,
-                                                                height: 72,
+                                                                position: 'absolute',
+                                                                inset: 0,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center'
                                                             }}
                                                         >
-                                                            <CircularProgress size={72} />
-                                                            <div
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    inset: 0,
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center'
-                                                                }}
-                                                            >
-                                                                <FaEthereum size={28} />
-                                                            </div>
+                                                            <FaEthereum size={28} />
                                                         </div>
-                                                        {superAmount !== null && (
-                                                            <div
-                                                                style={{
-                                                                    fontSize: '16px',
-                                                                    lineHeight: '22px',
-                                                                    fontWeight: 700
-                                                                }}
-                                                            >
-                                                                {superAmount} ETH
-                                                            </div>
-                                                        )}
                                                     </div>
+                                                    {superAmount !== null && (
+                                                        <div
+                                                            style={{
+                                                                fontSize: '16px',
+                                                                lineHeight: '22px',
+                                                                fontWeight: 700
+                                                            }}
+                                                        >
+                                                            {superAmount} ETH
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
+                                            </div>
+                                        )}
                                         <div
                                             style={{
                                                 fontSize: '13px',
@@ -1216,7 +1233,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                             />
                                             <span style={{ position: 'relative' }}>{holdLabel}</span>
                                         </button>
-                                        </motion.div>
+                                    </motion.div>
                                 </div>
                             )}
                             {/* Handle */}
@@ -1573,10 +1590,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                         lineHeight: '18px',
                                         fontWeight: 700,
                                         opacity: 0.6
-                                }}
-                            >
-                                {title}
-                            </div>
+                                    }}
+                                >
+                                    {title}
+                                </div>
                                 {rows.length === 0 ? (
                                     <div
                                         style={{

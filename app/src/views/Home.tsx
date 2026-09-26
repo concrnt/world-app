@@ -163,7 +163,7 @@ const HomeMain = ({
         if (selectedTabUri === '' && sortedPins.length > 0) {
             setSelectedTabUri(sortedPins[0].uri)
         }
-    }, [selectedTabUri])
+    }, [selectedTabUri, setSelectedTabUri, sortedPins])
 
     return (
         <>

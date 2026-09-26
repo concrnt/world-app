@@ -109,6 +109,8 @@ export const Bluesky = () => {
 
     useEffect(() => {
         updateInfo()
+        // マウント時に一度だけ取得する
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const active = info?.entity?.status === 'active'
@@ -170,6 +172,8 @@ export const Bluesky = () => {
                     client.api.commit(document)
                 }
             })
+        // 接続が有効になったときだけ inbox を確認する
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active])
 
     return (

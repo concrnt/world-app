@@ -68,7 +68,7 @@ export const Activitypub = () => {
         )
             .then((arr) => setInboxListed(arr.some((items) => items.includes(inboxUri))))
             .catch(() => {})
-    }, [pinnedLists, subscriptionOpen])
+    }, [inboxUri, pinnedLists, subscriptionOpen])
 
     useEffect(() => {
         client.api
@@ -173,6 +173,8 @@ export const Activitypub = () => {
             .catch((err) => {
                 console.log(err)
             })
+        // マウント時に一度だけ inbox を確認・作成する
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const repairInboxPolicy = async (): Promise<void> => {

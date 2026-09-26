@@ -61,7 +61,7 @@ export const ComposerProvider = (props: Props) => {
             setProfile(profile)
             setShowComposer(true)
         },
-        [client, knownCommunities]
+        [knownCommunities]
     )
 
     const close = useCallback(() => {

@@ -49,7 +49,7 @@ export const EmojiSettingsView = () => {
         return () => {
             window.clearTimeout(timer)
         }
-    }, [addingPackageURL])
+    }, [addingPackageURL, t])
 
     return (
         <View>

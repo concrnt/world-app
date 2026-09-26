@@ -367,6 +367,8 @@ export const NotificationTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
+        // summariseNotifications は毎レンダー新しい関数になる。スクロール購読は reader 側の更新で張り直す
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scrollRef, reader, hasMoreData, loading])
 
     return (

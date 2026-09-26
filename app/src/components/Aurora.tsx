@@ -192,8 +192,6 @@ export const Aurora = (props: AuroraProps) => {
         gl.canvas.style.display = 'block'
         gl.canvas.style.pointerEvents = 'none'
 
-        let program: Program | undefined
-
         const safeProbe = document.createElement('div')
         safeProbe.style.paddingTop = 'env(safe-area-inset-top)'
         document.body.appendChild(safeProbe)
@@ -212,7 +210,7 @@ export const Aurora = (props: AuroraProps) => {
         const initialStops = propsRef.current.colorStops ?? theme.stops
         const initialLight = propsRef.current.lightMode ?? theme.light
 
-        program = new Program(gl, {
+        const program = new Program(gl, {
             vertex: VERT,
             fragment: FRAG,
             uniforms: {
