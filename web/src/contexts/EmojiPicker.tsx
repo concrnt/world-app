@@ -7,6 +7,7 @@ import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { Button, CCImage, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
+import { Aurora } from '../components/Aurora'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
 import { useKeyboard } from './Keyboard'
@@ -598,23 +599,26 @@ export const EmojiPickerProvider = (props: Props) => {
                                 dismissKeyboard(e)
                             }}
                         >
-                            {superReactionEnabled && (
-                                <div
-                                    style={{
-                                        pointerEvents: 'none',
-                                        position: 'absolute',
-                                        inset: 0,
-                                        borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
-                                        background: [
-                                            `linear-gradient(to bottom, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
-                                            `linear-gradient(to top, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
-                                            `linear-gradient(to right, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`,
-                                            `linear-gradient(to left, ${CssVar.uiBackground}, rgb(from ${CssVar.uiBackground} r g b / 0) 48px)`
-                                        ].join(', '),
-                                        zIndex: 2
-                                    }}
-                                />
-                            )}
+                            <AnimatePresence>
+                                {superReactionEnabled && (
+                                    <motion.div
+                                        style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            zIndex: -1,
+                                            pointerEvents: 'none',
+                                            overflow: 'hidden',
+                                            borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`
+                                        }}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 0.4 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <Aurora />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                             {/* Handle */}
                             <div
                                 onPointerDown={onHandlePointerDown}
