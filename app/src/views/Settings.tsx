@@ -18,6 +18,7 @@ import { InventoryView } from './Inventory'
 import { MigrationSettingsView } from './MigrationSettings'
 import { V1ImportSettingsView } from './V1ImportSettings'
 import { ListsView } from './Lists'
+import { TipjarSettingsView } from './TipjarSettings'
 import {
     MdBadge,
     MdChevronRight,
@@ -33,6 +34,7 @@ import {
     MdTune
 } from 'react-icons/md'
 import { SiActivitypub, SiBluesky } from 'react-icons/si'
+import { FaEthereum } from 'react-icons/fa6'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import buildTime from '~build/time'
@@ -121,6 +123,13 @@ export const SettingsView = () => {
                             {t('bluesky')}
                         </ListItem>
                     )}
+                    <ListItem
+                        startIcon={<FaEthereum size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<TipjarSettingsView />)}
+                    >
+                        {t('tipjar')}
+                    </ListItem>
                     <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}

@@ -23,6 +23,8 @@ export const Schemas = {
     rerouteAssociation: 'https://schema.concrnt.world/a/reroute.json',
     reactionAssociation: 'https://schema.concrnt.world/a/reaction.json',
     readAccessRequestAssociation: 'https://schema.concrnt.world/a/readaccessrequest.json',
+    superreactionAssociation: 'https://schema.concrnt.world/a/superreaction.json',
+    upgradeAssociation: 'https://schema.concrnt.world/a/upgrade.json',
 
     profile: 'https://schema.concrnt.world/p/main.json',
 
@@ -33,6 +35,8 @@ export const Schemas = {
     list: 'https://schema.concrnt.world/s/list.json',
 
     pinnedLists: 'https://schema.concrnt.world/utils/pinnedLists.json',
+
+    tipjar: 'https://schema.concrnt.world/tipjar.json',
 
     empty: 'https://schema.concrnt.world/empty.json',
 

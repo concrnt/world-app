@@ -1,6 +1,8 @@
 export const semantics = {
     user: (ccid: string) => `cckv://${ccid}`,
     settings: (owner: string) => `cckv://${owner}/concrnt.world/settings`,
+    // TipRouter(チップ受け取り先)の公開文書。アプリ非依存のプロトコル項目なのでowner直下
+    tipjar: (owner: string) => `cckv://${owner}/tipjar`,
     themes: (owner: string) => `cckv://${owner}/concrnt.world/themes`,
     emojipacks: (owner: string) => `cckv://${owner}/concrnt.world/emojipacks`,
     profile: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}`,

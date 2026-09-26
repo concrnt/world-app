@@ -38,6 +38,7 @@
             "theme": "Theme",
             "activitypub": "ActivityPub",
             "bluesky": "Bluesky",
+            "tipjar": "Tip Jar",
             "id": "ID Management",
             "emoji": "Emoji",
             "lists": "Lists",
@@ -428,6 +429,15 @@
             "repairFailed": "Repair failed. Please try again later.",
             "update": "Update",
             "inquiry": "Inquiry"
+        },
+        "tipjarSettings": {
+            "title": "Tip Jar",
+            "description": "When enabled, your receiving Ethereum address is published alongside your profile so other users can send you super reactions with a tip. The address is derived from the same secret as this account's master key (Sepolia testnet).",
+            "enable": "Accept tips",
+            "address": "Receiving address",
+            "enabled": "Tips are enabled.",
+            "disabled": "Tips are disabled.",
+            "error": "Failed to update. Please try again later."
         },
         "apNote": {
             "notImported": "This post has not been fetched to this server yet.",

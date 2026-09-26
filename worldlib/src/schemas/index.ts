@@ -19,6 +19,8 @@ export * from './replyAssociation'
 export * from './rerouteAssociation'
 export * from './reactionAssociation'
 export * from './readAccessRequestAssociation'
+export * from './superreactionAssociation'
+export * from './upgradeAssociation'
 
 export * from './profile'
 
@@ -27,6 +29,8 @@ export * from './communityTimeline'
 export * from './list'
 
 export * from './pinnedLists'
+
+export * from './tipjar'
 
 export * from './followAck'
 
