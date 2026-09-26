@@ -9,6 +9,7 @@ interface Props {
     avatar?: string
     eth: string
     imageUrl: string
+    message?: string
 }
 
 export const SuperReactionCard = (props: Props) => {
@@ -27,9 +28,15 @@ export const SuperReactionCard = (props: Props) => {
             <div
                 style={{
                     display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+            <div
+                style={{
+                    display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    padding: '8px 10px 8px 12px'
+                    padding: props.message ? '8px 10px 4px 12px' : '8px 10px 8px 12px'
                 }}
             >
                 <Avatar
@@ -57,6 +64,7 @@ export const SuperReactionCard = (props: Props) => {
                     style={{
                         flex: 1,
                         minWidth: 0,
+                        aspectRatio: '15 / 4',
                         display: 'flex',
                         justifyContent: 'flex-end',
                         alignItems: 'center'
@@ -71,11 +79,27 @@ export const SuperReactionCard = (props: Props) => {
                             width: 'auto',
                             height: 'auto',
                             maxWidth: '100%',
-                            maxHeight: '200px',
+                            maxHeight: '100%',
                             objectFit: 'contain'
                         }}
                     />
                 </div>
+            </div>
+            {props.message ? (
+                <div
+                    style={{
+                        padding: '0 12px 10px 12px',
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        fontWeight: 400,
+                        color: CssVar.contentText,
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'anywhere'
+                    }}
+                >
+                    {props.message}
+                </div>
+            ) : null}
             </div>
             <div
                 style={{

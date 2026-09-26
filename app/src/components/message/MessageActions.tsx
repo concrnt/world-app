@@ -189,7 +189,7 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!client) return
-                    emojiPicker.open((emoji, superEth) => {
+                    emojiPicker.open((emoji, superEth, superMessage) => {
                         hapticLight()
                         if (superEth) {
                             addSuperReaction({
@@ -199,7 +199,8 @@ export const MessageActions = (props: Props) => {
                                 eth: superEth,
                                 author: client.ccid,
                                 username: client.profile.username || 'Anonymous',
-                                avatar: client.profile.avatar
+                                avatar: client.profile.avatar,
+                                message: superMessage
                             })
                         }
 

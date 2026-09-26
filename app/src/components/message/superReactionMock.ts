@@ -8,6 +8,7 @@ export interface SuperReactionMock {
     author: string
     username: string
     avatar?: string
+    message?: string
 }
 
 let reactions: SuperReactionMock[] = []

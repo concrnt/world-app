@@ -93,7 +93,7 @@ const packEmojiRows = (emojis: Emoji[], cols: number): { emoji: Emoji; span: num
 
 export interface EmojiPickerState {
     // anchor: 開いたボタン側が useAnchor() で宣言したアンカー名(デスクトップでボタンの右下に出す。省略時は画面中央)
-    open: (onSelected: (emoji: Emoji, superEth?: string) => void, anchor?: string) => void
+    open: (onSelected: (emoji: Emoji, superEth?: string, superMessage?: string) => void, anchor?: string) => void
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
@@ -114,7 +114,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
-    const onSelectedRef = useRef<((emoji: Emoji, superEth?: string) => void) | null>(null)
+    const onSelectedRef = useRef<((emoji: Emoji, superEth?: string, superMessage?: string) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const keyboard = useKeyboard()
@@ -137,6 +137,7 @@ export const EmojiPickerProvider = (props: Props) => {
     const superReactionTipVisible = useRef(false)
     const [superDraft, setSuperDraft] = useState<{ emoji: Emoji; fromX: number; fromY: number } | null>(null)
     const [superAmount, setSuperAmount] = useState<string | null>(null)
+    const [superMessage, setSuperMessage] = useState('')
     const [holdProgress, setHoldProgress] = useState(0)
     const { hapticHeavy } = useHaptics()
     const hapticHeavyRef = useRef(hapticHeavy)
@@ -151,8 +152,10 @@ export const EmojiPickerProvider = (props: Props) => {
     const [settleScope, animateSettle] = useAnimate()
     const superDraftRef = useRef(superDraft)
     const superAmountRef = useRef(superAmount)
+    const superMessageRef = useRef(superMessage)
     superDraftRef.current = superDraft
     superAmountRef.current = superAmount
+    superMessageRef.current = superMessage
     const sheetRef = useRef<HTMLDivElement>(null)
     const sheetDrag = useRef<{
         pointerId: number
@@ -298,6 +301,7 @@ export const EmojiPickerProvider = (props: Props) => {
             setSuperReactionTipOpen(false)
             setSuperDraft(null)
             setSuperAmount(null)
+            setSuperMessage('')
             superReactionTipVisible.current = false
             window.clearTimeout(superReactionTipTimer.current)
             setAnchorName(anchor ?? null)
@@ -320,6 +324,7 @@ export const EmojiPickerProvider = (props: Props) => {
         setSuperReactionTipOpen(false)
         setSuperDraft(null)
         setSuperAmount(null)
+        setSuperMessage('')
         superReactionTipVisible.current = false
         window.clearTimeout(superReactionTipTimer.current)
         setHoveredEmoji(null)
@@ -367,12 +372,12 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const selectEmoji = useCallback(
-        (emoji: Emoji, superEth?: string) => {
+        (emoji: Emoji, superEth?: string, superMessage?: string) => {
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
             updated.unshift(emoji)
             setFrequentEmojis(updated.slice(0, 60))
 
-            onSelectedRef.current?.(emoji, superEth)
+            onSelectedRef.current?.(emoji, superEth, superMessage)
         },
         [frequentEmojis, setFrequentEmojis]
     )
@@ -384,6 +389,7 @@ export const EmojiPickerProvider = (props: Props) => {
         const fromY = from && sheet ? from.top + from.height / 2 - (sheet.top + sheet.height * 0.34) : 0
         setSuperDraft({ emoji, fromX, fromY })
         setSuperAmount(null)
+        setSuperMessage('')
         setSheetExpanded(true)
         setSheetDragHeight(null)
         searchInputRef.current?.blur()
@@ -406,8 +412,9 @@ export const EmojiPickerProvider = (props: Props) => {
             txTimer.current = undefined
             const current = superDraftRef.current
             const amount = superAmountRef.current
+            const message = superMessageRef.current.trim()
             if (!current || amount === null) return
-            selectEmoji(current.emoji, amount)
+            selectEmoji(current.emoji, amount, message || undefined)
             close()
         }, txMs)
     }
@@ -450,6 +457,7 @@ export const EmojiPickerProvider = (props: Props) => {
         txTimer.current = undefined
         setTxActive(false)
         setHoldProgress(0)
+        setSuperMessage('')
     }, [superDraft])
 
     useEffect(() => {
@@ -856,6 +864,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 setHoldProgress(0)
                                                 setSuperDraft(null)
                                                 setSuperAmount(null)
+                                                setSuperMessage('')
                                             }}
                                             style={{
                                                 position: 'absolute',
@@ -918,6 +927,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                             style={{
                                                 position: 'relative',
                                                 flexShrink: 0,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                minHeight: `calc(18px + ${CssVar.space(2)} + 48px * 4 + ${CssVar.space(2)} * 3 + 48px + ${CssVar.space(3)})`,
                                                 visibility: txActive ? 'hidden' : 'visible',
                                                 pointerEvents: txActive ? 'none' : 'auto'
                                             }}
@@ -1008,12 +1020,46 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 marginBottom: CssVar.space(2)
                                             }}
                                         >
+                                            メッセージ
+                                        </div>
+                                        <textarea
+                                            className={styles.superMessage}
+                                            value={superMessage}
+                                            placeholder="タップしてメッセージを追加"
+                                            onClick={(event) => event.stopPropagation()}
+                                            onChange={(event) => setSuperMessage(event.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                minHeight: 0,
+                                                width: '100%',
+                                                marginBottom: CssVar.space(2),
+                                                boxSizing: 'border-box',
+                                                resize: 'none',
+                                                border: 'none',
+                                                borderRadius: CssVar.round(0.5),
+                                                padding: '10px 12px',
+                                                backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`,
+                                                color: CssVar.contentText,
+                                                fontSize: '15px',
+                                                lineHeight: '22px',
+                                                fontFamily: 'inherit',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                        <div
+                                            style={{
+                                                fontSize: '13px',
+                                                lineHeight: '18px',
+                                                fontWeight: 700,
+                                                opacity: 0.6,
+                                                marginBottom: CssVar.space(2)
+                                            }}
+                                        >
                                             チップ額を選択
                                         </div>
                                         <div
                                             style={{
                                                 display: 'flex',
-                                                flexDirection: 'column',
                                                 gap: CssVar.space(2)
                                             }}
                                         >
@@ -1027,12 +1073,15 @@ export const EmojiPickerProvider = (props: Props) => {
                                                         onClick={() => setSuperAmount(amount.eth)}
                                                         style={
                                                             {
+                                                                flex: 1,
+                                                                minWidth: 0,
                                                                 display: 'flex',
+                                                                flexDirection: 'column',
                                                                 alignItems: 'center',
-                                                                gap: CssVar.space(2),
-                                                                width: '100%',
+                                                                justifyContent: 'center',
+                                                                gap: '2px',
                                                                 minHeight: '48px',
-                                                                padding: `0 ${CssVar.space(3)}`,
+                                                                padding: '4px',
                                                                 border: 'none',
                                                                 borderRadius: CssVar.round(0.5),
                                                                 cursor: 'pointer',
@@ -1044,21 +1093,34 @@ export const EmojiPickerProvider = (props: Props) => {
                                                             } as React.CSSProperties
                                                         }
                                                     >
-                                                        <FaEthereum size={18} />
                                                         <span
                                                             style={{
-                                                                flex: 1,
-                                                                textAlign: 'left',
-                                                                fontSize: '16px',
-                                                                fontWeight: 700
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '2px',
+                                                                maxWidth: '100%',
+                                                                fontSize: '12px',
+                                                                fontWeight: 700,
+                                                                lineHeight: '16px'
                                                             }}
                                                         >
-                                                            {amount.eth}
+                                                            <FaEthereum size={12} />
+                                                            <span
+                                                                style={{
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}
+                                                            >
+                                                                {amount.eth}
+                                                            </span>
                                                         </span>
                                                         <span
                                                             style={{
-                                                                fontSize: '14px',
-                                                                opacity: selected ? 0.85 : 0.55
+                                                                fontSize: '11px',
+                                                                lineHeight: '14px',
+                                                                opacity: selected ? 0.85 : 0.55,
+                                                                whiteSpace: 'nowrap'
                                                             }}
                                                         >
                                                             {amount.yen}
@@ -1117,7 +1179,6 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 userSelect: 'none',
                                                 WebkitTouchCallout: 'none',
                                                 WebkitTapHighlightColor: 'transparent',
-                                                textShadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
                                                 transform: holdShift
                                             }}
                                         >

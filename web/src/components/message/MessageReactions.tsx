@@ -231,6 +231,7 @@ export const MessageReactions = (props: Props) => {
                     avatar={reaction.avatar}
                     eth={reaction.eth}
                     imageUrl={reaction.imageUrl}
+                    message={reaction.message}
                 />
             ))}
         </div>
