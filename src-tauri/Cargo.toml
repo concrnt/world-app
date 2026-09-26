@@ -17,6 +17,12 @@ resolver = "2"
 # Building also requires rustup's llvm-tools component (llvm-objcopy).
 [patch.crates-io]
 swift-rs = { git = "https://github.com/totegamma/swift-rs", branch = "fix/xcode27-swiftrs-cdecl" }
+# The iOS 27 SDK requires UIScene adoption (UIApplicationSceneManifest in
+# Info.plist), but tao 0.35.3 has a use-after-free of UISceneConfiguration
+# that crashes release builds at launch. Fixed upstream in tao 0.37.0, which
+# tauri-runtime-wry (tao ^0.35) cannot reach; fork backports the one-liner.
+# Drop once a tao 0.35.4 backport ships (tauri-apps/tao#1340).
+tao = { git = "https://github.com/totegamma/tao", branch = "fix/ios27-scene-config-uaf" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

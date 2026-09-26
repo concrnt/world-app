@@ -30,6 +30,11 @@
 	<string>FaceID はマスターキーを保護するために使用されます。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>画像を写真ライブラリに保存するために使用されます。</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
