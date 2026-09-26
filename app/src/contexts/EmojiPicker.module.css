@@ -1,0 +1,4 @@
+.searchInput::placeholder {
+    color: var(--content-text);
+    opacity: 1;
+}

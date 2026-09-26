@@ -9,6 +9,7 @@ import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { useMediaProxy } from './MediaProxy'
 import { Aurora } from '../components/Aurora'
+import styles from './EmojiPicker.module.css'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
 
@@ -685,6 +686,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 close()
                                             }
                                         }}
+                                        className={superReactionEnabled ? styles.searchInput : undefined}
                                         style={{
                                             flex: 1,
                                             border: 'none',

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, CCImage, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { Aurora } from '../components/Aurora'
+import styles from './EmojiPicker.module.css'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
 import { useKeyboard } from './Keyboard'
@@ -697,6 +698,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 close()
                                             }
                                         }}
+                                        className={superReactionEnabled ? styles.searchInput : undefined}
                                         style={{
                                             flex: 1,
                                             border: 'none',
