@@ -101,8 +101,16 @@ const packEmojiRows = (emojis: Emoji[], cols: number): { emoji: Emoji; span: num
 
 // ---- Context ----
 
+// スーパーリアクション(チップ付き)の可否と送信処理。open() の呼び出し側(MessageActions)が
+// 送信者/受信者の tipjar 確認と実送信(app/src/lib/superReaction.ts)を渡す
+export type SuperReactionAvailability = 'ok' | 'no-sender-tipjar' | 'no-receiver-tipjar'
+export interface SuperReactionOptions {
+    availability: Promise<SuperReactionAvailability>
+    send: (emoji: Emoji, amountEth: string, message?: string) => Promise<void>
+}
+
 export interface EmojiPickerState {
-    open: (onSelected: (emoji: Emoji, superEth?: string, superMessage?: string) => void) => void
+    open: (onSelected: (emoji: Emoji) => void, opts?: { superReaction?: SuperReactionOptions }) => void
     close: () => void
     search: (input: string, limit?: number) => Emoji[]
     packages: EmojiPackage[]
@@ -123,7 +131,14 @@ export const EmojiPickerProvider = (props: Props) => {
     const { t, i18n } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
     const parentCfmActions = useCfmActions()
-    const onSelectedRef = useRef<((emoji: Emoji, superEth?: string, superMessage?: string) => void) | null>(null)
+    const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
+    const superReactionRef = useRef<SuperReactionOptions | null>(null)
+    // open() ごとに進めるシーケンス。非同期の可否判定/送信完了が古い open に紐づいていたら無視する
+    const openSeq = useRef(0)
+    const [superAvailability, setSuperAvailability] = useState<SuperReactionAvailability | 'unavailable' | 'loading'>(
+        'unavailable'
+    )
+    const [txError, setTxError] = useState<string | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const [frequentEmojis, setFrequentEmojis] = usePersistent<Emoji[]>('emojiPicker:frequent', [])
@@ -150,8 +165,9 @@ export const EmojiPickerProvider = (props: Props) => {
     const holdStartedAt = useRef<number | null>(null)
     const holdLastHaptic = useRef(0)
     const holdSent = useRef(false)
-    const txTimer = useRef<number | undefined>(undefined)
     const [txActive, setTxActive] = useState(false)
+    const txActiveRef = useRef(false)
+    txActiveRef.current = txActive
     const [iconScope, animateIcon] = useAnimate()
     const [settleScope, animateSettle] = useAnimate()
     const superDraftRef = useRef(superDraft)
@@ -297,8 +313,20 @@ export const EmojiPickerProvider = (props: Props) => {
     // ---- Actions ----
 
     const open = useCallback(
-        (onSelected: (emoji: Emoji) => void) => {
+        (onSelected: (emoji: Emoji) => void, opts?: { superReaction?: SuperReactionOptions }) => {
             onSelectedRef.current = onSelected
+            superReactionRef.current = opts?.superReaction ?? null
+            const seq = ++openSeq.current
+            setTxError(null)
+            setSuperAvailability(opts?.superReaction ? 'loading' : 'unavailable')
+            opts?.superReaction?.availability
+                .then((availability) => {
+                    if (openSeq.current === seq) setSuperAvailability(availability)
+                })
+                .catch((err) => {
+                    console.error('failed to check super reaction availability:', err)
+                    if (openSeq.current === seq) setSuperAvailability('unavailable')
+                })
             setActiveTab(frequentEmojis.length > 0 ? 0 : 1)
             setQuery('')
             setSheetExpanded(false)
@@ -316,6 +344,12 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const close = useCallback(() => {
+        // tx 送信中(端末認証〜receipt待ち)はシートを閉じない。閉じると送信結果を扱う先が無くなる
+        if (txActiveRef.current) return
+        openSeq.current++
+        superReactionRef.current = null
+        setSuperAvailability('unavailable')
+        setTxError(null)
         setIsOpen(false)
         setQuery('')
         setSearchBoxFocused(false)
@@ -372,13 +406,13 @@ export const EmojiPickerProvider = (props: Props) => {
     )
 
     const selectEmoji = useCallback(
-        (emoji: Emoji, superEth?: string, superMessage?: string) => {
+        (emoji: Emoji) => {
             // よく使う絵文字を更新
             const updated = frequentEmojis.filter((e) => e.shortcode !== emoji.shortcode)
             updated.unshift(emoji)
             setFrequentEmojis(updated.slice(0, 60))
 
-            onSelectedRef.current?.(emoji, superEth, superMessage)
+            onSelectedRef.current?.(emoji)
         },
         [frequentEmojis, setFrequentEmojis]
     )
@@ -391,6 +425,7 @@ export const EmojiPickerProvider = (props: Props) => {
         setSuperDraft({ emoji, fromX, fromY })
         setSuperAmount(null)
         setSuperMessage('')
+        setTxError(null)
         setSheetExpanded(true)
         setSheetDragHeight(null)
         searchInputRef.current?.blur()
@@ -405,22 +440,53 @@ export const EmojiPickerProvider = (props: Props) => {
         const draft = superDraftRef.current
         const amount = superAmountRef.current
         if (!draft || amount === null) return
+        const superReaction = superReactionRef.current
+        if (!superReaction) return
         holdSent.current = true
-        window.clearTimeout(txTimer.current)
         setTxActive(true)
-        const txMs = Math.min(
-            30000,
-            Math.max(10000, 20000 + (Math.random() + Math.random() + Math.random() - 1.5) * 12000)
-        )
-        txTimer.current = window.setTimeout(() => {
-            txTimer.current = undefined
-            const current = superDraftRef.current
-            const amount = superAmountRef.current
-            const message = superMessageRef.current.trim()
-            if (!current || amount === null) return
-            selectEmoji(current.emoji, amount, message || undefined)
-            close()
-        }, txMs)
+        txActiveRef.current = true
+        setTxError(null)
+        const message = superMessageRef.current.trim()
+        const seq = openSeq.current
+        superReaction
+            .send(draft.emoji, amount, message || undefined)
+            .then(() => {
+                if (openSeq.current !== seq) return
+                // よく使う絵文字を更新(通常選択と同じ扱い)
+                const updated = frequentEmojis.filter((e) => e.shortcode !== draft.emoji.shortcode)
+                updated.unshift(draft.emoji)
+                setFrequentEmojis(updated.slice(0, 60))
+                setTxActive(false)
+                txActiveRef.current = false
+                close()
+            })
+            .catch((err) => {
+                console.error('super reaction failed:', err)
+                if (openSeq.current !== seq) return
+                holdSent.current = false
+                setTxActive(false)
+                txActiveRef.current = false
+                const code = typeof err?.code === 'string' ? err.code : undefined
+                const known = [
+                    'not-configured',
+                    'no-sender-tipjar',
+                    'no-receiver-tipjar',
+                    'tipjar-mismatch',
+                    'tx-reverted',
+                    'commit-failed'
+                ]
+                setTxError(
+                    code && known.includes(code)
+                        ? t(`error.${code}`, { txhash: err.txhash ?? '' })
+                        : t('error.unknown', {
+                              // viem のエラーは message が数十行になるので要約(shortMessage)を優先する
+                              detail: (typeof err?.shortMessage === 'string'
+                                  ? err.shortMessage
+                                  : String(err?.message ?? err)
+                              ).slice(0, 200)
+                          })
+                )
+            })
     }
 
     const tickHold = (): void => {
@@ -447,7 +513,6 @@ export const EmojiPickerProvider = (props: Props) => {
     useEffect(() => {
         return () => {
             if (holdFrame.current !== undefined) cancelAnimationFrame(holdFrame.current)
-            window.clearTimeout(txTimer.current)
         }
     }, [])
 
@@ -457,8 +522,6 @@ export const EmojiPickerProvider = (props: Props) => {
         holdFrame.current = undefined
         holdStartedAt.current = null
         holdSent.current = false
-        window.clearTimeout(txTimer.current)
-        txTimer.current = undefined
         setTxActive(false)
         setHoldProgress(0)
         setSuperMessage('')
@@ -734,6 +797,17 @@ export const EmojiPickerProvider = (props: Props) => {
         message.blur()
     }
 
+    const superReactionHint =
+        superAvailability === 'ok'
+            ? t('enableSuperReaction')
+            : superAvailability === 'loading'
+              ? t('superReactionLoading')
+              : superAvailability === 'no-sender-tipjar'
+                ? t('noSenderTipjar')
+                : superAvailability === 'no-receiver-tipjar'
+                  ? t('noReceiverTipjar')
+                  : t('superReactionUnavailable')
+
     const holdLabel =
         holdProgress <= 0
             ? t('holdToSend')
@@ -894,8 +968,6 @@ export const EmojiPickerProvider = (props: Props) => {
                                                     holdFrame.current = undefined
                                                     holdStartedAt.current = null
                                                     holdSent.current = false
-                                                    window.clearTimeout(txTimer.current)
-                                                    txTimer.current = undefined
                                                     setTxActive(false)
                                                     setHoldProgress(0)
                                                     setSuperDraft(null)
@@ -1169,6 +1241,21 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 )
                                             })}
                                         </div>
+                                        {txError && (
+                                            <div
+                                                role="alert"
+                                                style={{
+                                                    marginTop: CssVar.space(2),
+                                                    fontSize: '13px',
+                                                    lineHeight: '18px',
+                                                    color: CssVar.contentText,
+                                                    textAlign: 'center',
+                                                    overflowWrap: 'anywhere'
+                                                }}
+                                            >
+                                                {txError}
+                                            </div>
+                                        )}
                                         <button
                                             type="button"
                                             disabled={superAmount === null}
@@ -1347,7 +1434,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                 <Tooltip
                                     content={
                                         <Text style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all' }}>
-                                            {t('enableSuperReaction')}
+                                            {superReactionHint}
                                         </Text>
                                     }
                                     style={{
@@ -1360,7 +1447,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                     <button
                                         type="button"
                                         aria-pressed={superReactionEnabled}
-                                        aria-label={t('enableSuperReaction')}
+                                        aria-label={superReactionHint}
+                                        disabled={superAvailability !== 'ok'}
                                         onPointerDown={(e) => {
                                             e.stopPropagation()
                                             if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
@@ -1383,7 +1471,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                             superReactionTipVisible.current = false
                                             setSuperReactionTipOpen(false)
                                         }}
-                                        onClick={() => setSuperReactionEnabled((enabled) => !enabled)}
+                                        onClick={() => {
+                                            if (superAvailability !== 'ok') return
+                                            setSuperReactionEnabled((enabled) => !enabled)
+                                        }}
                                         style={
                                             {
                                                 width: '44px',
@@ -1395,7 +1486,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                                 border: 'none',
                                                 borderRadius: CssVar.round(0.5),
                                                 padding: 0,
-                                                cursor: 'pointer',
+                                                cursor: superAvailability === 'ok' ? 'pointer' : 'default',
+                                                opacity: superAvailability === 'ok' ? 1 : 0.4,
                                                 anchorName: superReactionAnchor,
                                                 color: superReactionEnabled ? CssVar.uiText : CssVar.contentText,
                                                 backgroundColor: superReactionEnabled
@@ -1445,7 +1537,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                     }}
                                 >
                                     <Text style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all' }}>
-                                        {t('enableSuperReaction')}
+                                        {superReactionHint}
                                     </Text>
                                 </Popover>
                             </div>

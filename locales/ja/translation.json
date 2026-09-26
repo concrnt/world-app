@@ -927,7 +927,20 @@
             "holdToSend": "ホールドで送信",
             "holdKeep": "そのまま...",
             "holdMore": "もう少し...",
-            "holdAlmost": "あとちょっと...!"
+            "holdAlmost": "あとちょっと...!",
+            "superReactionLoading": "チップの利用可否を確認中...",
+            "superReactionUnavailable": "ここではスーパーリアクションを送れません",
+            "noSenderTipjar": "設定の「チップ受け取り設定」を有効にすると送れます",
+            "noReceiverTipjar": "この投稿者はチップを受け取っていません",
+            "error": {
+                "not-configured": "チップ送信の設定がされていません",
+                "no-sender-tipjar": "自分のチップ受け取り設定が無効です",
+                "no-receiver-tipjar": "投稿者がチップを受け取っていません",
+                "tipjar-mismatch": "公開中の受け取りアドレスがこの端末の鍵と一致しません",
+                "tx-reverted": "トランザクションが失敗しました({{txhash}})",
+                "commit-failed": "チップは送信されましたが投稿への反映に失敗しました({{txhash}})",
+                "unknown": "送信に失敗しました: {{detail}}"
+            }
         },
         "client": {
             "checkingSession": "セッションを確認しています...",

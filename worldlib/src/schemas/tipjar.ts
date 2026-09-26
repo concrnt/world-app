@@ -8,6 +8,5 @@
 export interface TipjarSchema {
     tipjars: {
         ethereum?: string
-        [k: string]: string | undefined
     }
 }

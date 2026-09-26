@@ -928,7 +928,20 @@
             "holdToSend": "Hold to send",
             "holdKeep": "Keep holding...",
             "holdMore": "A little more...",
-            "holdAlmost": "Almost there...!"
+            "holdAlmost": "Almost there...!",
+            "superReactionLoading": "Checking tip availability...",
+            "superReactionUnavailable": "Super reactions are not available here",
+            "noSenderTipjar": "Enable \"Tip Jar\" in settings to send tips",
+            "noReceiverTipjar": "This author does not accept tips",
+            "error": {
+                "not-configured": "Tip sending is not configured",
+                "no-sender-tipjar": "Your tip jar is disabled",
+                "no-receiver-tipjar": "The author does not accept tips",
+                "tipjar-mismatch": "Your published tip jar does not match this device key",
+                "tx-reverted": "The transaction failed ({{txhash}})",
+                "commit-failed": "The tip was sent but attaching it to the post failed ({{txhash}})",
+                "unknown": "Failed to send: {{detail}}"
+            }
         },
         "client": {
             "checkingSession": "Checking session...",

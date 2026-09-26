@@ -20,6 +20,8 @@ import { Drawer } from '../../ui/Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { addSuperReaction } from './superReactionMock'
+import { getTipjar } from '../../lib/tipjar'
+import { sendSuperReaction } from '../../lib/superReaction'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
@@ -189,54 +191,78 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!client) return
-                    emojiPicker.open((emoji, superEth, superMessage) => {
-                        hapticLight()
-                        if (superEth) {
-                            addSuperReaction({
-                                id: `${props.message.uri}:${Date.now()}`,
-                                messageUri: props.message.uri,
-                                imageUrl: emoji.imageURL,
-                                eth: superEth,
-                                author: client.ccid,
-                                username: client.profile.username || 'Anonymous',
-                                avatar: client.profile.avatar,
-                                message: superMessage
-                            })
-                        }
+                    emojiPicker.open(
+                        (emoji) => {
+                            hapticLight()
 
-                        startTransition(async () => {
-                            props.updateReactionState((prev: ReactionState): ReactionState => {
-                                const imageUrl = emoji.imageURL
-                                const shortcode = emoji.shortcode
-                                return {
-                                    reactionCounts: {
-                                        ...prev.reactionCounts,
-                                        [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
-                                    },
-                                    ownReactions: {
-                                        ...prev.ownReactions,
-                                        [imageUrl]: new Association('dummy', {
-                                            kind: 'association',
-                                            author: client.ccid,
-                                            schema: Schemas.reactionAssociation,
-                                            value: {
-                                                imageUrl,
-                                                shortcode
-                                            },
-                                            createdAt: new Date()
-                                        })
+                            startTransition(async () => {
+                                props.updateReactionState((prev: ReactionState): ReactionState => {
+                                    const imageUrl = emoji.imageURL
+                                    const shortcode = emoji.shortcode
+                                    return {
+                                        reactionCounts: {
+                                            ...prev.reactionCounts,
+                                            [imageUrl]: (prev.reactionCounts[imageUrl] || 0) + 1
+                                        },
+                                        ownReactions: {
+                                            ...prev.ownReactions,
+                                            [imageUrl]: new Association('dummy', {
+                                                kind: 'association',
+                                                author: client.ccid,
+                                                schema: Schemas.reactionAssociation,
+                                                value: {
+                                                    imageUrl,
+                                                    shortcode
+                                                },
+                                                createdAt: new Date()
+                                            })
+                                        }
                                     }
+                                })
+
+                                await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
+                                    console.error('Failed to add reaction:', err)
+                                })
+                                await refreshMessage()
+                            })
+
+                            emojiPicker.close()
+                        },
+                        {
+                            // スーパーリアクション: 送信者(自分)と受信者(投稿者)の両方が tipjar を公開している時だけ有効。
+                            // 送信は Sepolia の TipSplitter へ tx → superreaction/upgrade association の commit(lib/superReaction.ts)
+                            superReaction: {
+                                availability: Promise.all([
+                                    getTipjar(client, client.ccid),
+                                    getTipjar(client, props.message.author, props.message.authorUser?.domain)
+                                ]).then(([sender, receiver]) =>
+                                    !sender ? 'no-sender-tipjar' : !receiver ? 'no-receiver-tipjar' : 'ok'
+                                ),
+                                send: async (emoji, amountEth, message) => {
+                                    await sendSuperReaction({
+                                        client,
+                                        message: props.message,
+                                        emoji,
+                                        amountEth,
+                                        text: message
+                                    })
+                                    hapticLight()
+                                    // ウォレット画面の履歴(端末内モック)にも載せる
+                                    addSuperReaction({
+                                        id: `${props.message.uri}:${Date.now()}`,
+                                        messageUri: props.message.uri,
+                                        imageUrl: emoji.imageURL,
+                                        eth: amountEth,
+                                        author: client.ccid,
+                                        username: client.profile.username || 'Anonymous',
+                                        avatar: client.profile.avatar,
+                                        message
+                                    })
+                                    await refreshMessage()
                                 }
-                            })
-
-                            await props.message.reaction(client, emoji.shortcode, emoji.imageURL).catch((err) => {
-                                console.error('Failed to add reaction:', err)
-                            })
-                            await refreshMessage()
-                        })
-
-                        emojiPicker.close()
-                    })
+                            }
+                        }
+                    )
                 }}
                 onLongPress={() => {
                     hapticLight()
