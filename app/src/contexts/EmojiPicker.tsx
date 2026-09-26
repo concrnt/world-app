@@ -1573,10 +1573,10 @@ export const EmojiPickerProvider = (props: Props) => {
                                         lineHeight: '18px',
                                         fontWeight: 700,
                                         opacity: 0.6
-                                    }}
-                                >
-                                    {title}
-                                </div>
+                                }}
+                            >
+                                {title}
+                            </div>
                                 {rows.length === 0 ? (
                                     <div
                                         style={{
