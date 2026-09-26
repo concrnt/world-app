@@ -1,8 +1,10 @@
+mod eth;
 mod identity;
 mod ids;
 mod mnemonic;
 mod signing;
 
+pub use eth::{derive_eth_identity, eth_message_hash, eth_sign_hash, eth_sign_message, EthIdentity};
 pub use identity::{derive_keypair, generate_identity, load_identity, Identity};
 pub use ids::{compute_ccid, compute_ckid};
 pub use mnemonic::{mnemonic_en2ja, mnemonic_ja2en, normalize_nfkd};

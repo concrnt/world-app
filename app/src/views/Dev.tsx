@@ -9,6 +9,7 @@ import { useStack } from '../layouts/Stack'
 import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './StoreMocks'
 import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
 import { usePreference } from '../contexts/Preference'
+import { getEthAddress, signEthMessage } from '../lib/eth'
 
 export const DevView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.dev' })
@@ -20,6 +21,10 @@ export const DevView = () => {
     const [result, setResult] = useState<string>('')
 
     const [selected, setSelected] = useState<string[]>([])
+
+    const [ethAddress, setEthAddress] = useState<string>('')
+    const [ethMessage, setEthMessage] = useState('hello concrnt')
+    const [ethSignature, setEthSignature] = useState<string>('')
 
     return (
         <View>
@@ -67,6 +72,35 @@ export const DevView = () => {
                 >
                     Reload
                 </Button>
+
+                <Divider />
+
+                <Text variant="h3">Ethereum</Text>
+                <Button
+                    onClick={() => {
+                        getEthAddress(client.ccid)
+                            .then(setEthAddress)
+                            .catch((e) => setEthAddress(`error: ${e}`))
+                    }}
+                >
+                    Get ETH Address
+                </Button>
+                <Text style={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>{ethAddress}</Text>
+                <TextField
+                    value={ethMessage}
+                    onChange={(e) => setEthMessage(e.target.value)}
+                    placeholder="message to sign (EIP-191)"
+                />
+                <Button
+                    onClick={() => {
+                        signEthMessage(ethMessage, client.ccid)
+                            .then(setEthSignature)
+                            .catch((e) => setEthSignature(`error: ${e}`))
+                    }}
+                >
+                    Sign Message (auth required)
+                </Button>
+                <Text style={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>{ethSignature}</Text>
 
                 <Divider />
 

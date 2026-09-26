@@ -2,6 +2,7 @@ mod accounts;
 mod auth;
 mod backup;
 mod commands;
+mod eth;
 
 pub(crate) type Error = concrnt::Error;
 
@@ -48,6 +49,9 @@ pub fn run() {
             commands::clear_session,
             commands::set_domain,
             commands::load_identity,
+            eth::get_eth_address,
+            eth::sign_eth_hash,
+            eth::sign_eth_message,
             backup::backup_masterkey,
             backup::save_backup_file,
         ])
