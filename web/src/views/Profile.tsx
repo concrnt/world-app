@@ -107,6 +107,7 @@ export const ProfileView = (props: Props) => {
     }, [client, profileKey, props.hint, reload])
 
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
+        void reload
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'), props.hint)
             .catch((err): Document<ProfileSchema> | 'restricted' => {

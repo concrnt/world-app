@@ -71,7 +71,7 @@ export const ProfileEditor = (props: Props) => {
             .finally(() => {
                 setLoading(false)
             })
-    }, [client, props.targetURI])
+    }, [client, props.noLoading, props.targetURI])
 
     if (loading) {
         return <div>{t('loadingProfile')}</div>

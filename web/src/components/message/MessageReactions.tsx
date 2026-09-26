@@ -151,78 +151,80 @@ export const MessageReactions = (props: Props) => {
                 gap: superReactions.length > 0 ? '8px' : undefined
             }}
         >
-        <div
-            style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px'
-            }}
-        >
-            {Object.entries(reactionCounts).map(([imageUrl, count]) => {
-                const isOwn = !!ownReactions[imageUrl]
-                return (
-                    <Tooltip
-                        key={imageUrl}
-                        onOpen={() => loadReactionMembers(imageUrl)}
-                        content={
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <CCImage
-                                        src={imageUrl}
-                                        maxHeight={128}
-                                        alt=""
-                                        style={{
-                                            height: '20px'
-                                        }}
-                                    />
-                                    <span style={{ fontSize: '12px' }}>
-                                        {reactionMembers[imageUrl]?.[0]?.value.shortcode ?? '...'}
-                                    </span>
+            <div
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px'
+                }}
+            >
+                {Object.entries(reactionCounts).map(([imageUrl, count]) => {
+                    const isOwn = !!ownReactions[imageUrl]
+                    return (
+                        <Tooltip
+                            key={imageUrl}
+                            onOpen={() => loadReactionMembers(imageUrl)}
+                            content={
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <CCImage
+                                            src={imageUrl}
+                                            maxHeight={128}
+                                            alt=""
+                                            style={{
+                                                height: '20px'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '12px' }}>
+                                            {reactionMembers[imageUrl]?.[0]?.value.shortcode ?? '...'}
+                                        </span>
+                                    </div>
+                                    <Divider />
+                                    {reactionMembers[imageUrl]?.map((member) => (
+                                        <AssociationUserRow key={member.ccfs} association={member} />
+                                    ))}
                                 </div>
-                                <Divider />
-                                {reactionMembers[imageUrl]?.map((member) => (
-                                    <AssociationUserRow key={member.ccfs} association={member} />
-                                ))}
-                            </div>
-                        }
-                    >
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                handleReactionClick(imageUrl)
-                            }}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                padding: '0 8px',
-                                minWidth: '64px',
-                                minHeight: '26px',
-                                borderRadius: CssVar.round(1),
-                                border: isOwn ? `1.5px solid ${CssVar.contentLink}` : `1px solid ${CssVar.divider}`,
-                                backgroundColor: isOwn ? `rgb(from ${CssVar.contentLink} r g b / 0.15)` : 'transparent',
-                                cursor: 'pointer',
-                                color: CssVar.contentText,
-                                fontSize: '1rem',
-                                WebkitTapHighlightColor: 'transparent'
-                            }}
+                            }
                         >
-                            <CCImage
-                                src={imageUrl}
-                                maxHeight={128}
-                                alt=""
-                                style={{
-                                    // width指定なし=アスペクト比維持(横長絵文字は潰さずそのまま伸ばす)
-                                    height: '20px'
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleReactionClick(imageUrl)
                                 }}
-                            />
-                            <span>{count}</span>
-                        </button>
-                    </Tooltip>
-                )
-            })}
-        </div>
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    padding: '0 8px',
+                                    minWidth: '64px',
+                                    minHeight: '26px',
+                                    borderRadius: CssVar.round(1),
+                                    border: isOwn ? `1.5px solid ${CssVar.contentLink}` : `1px solid ${CssVar.divider}`,
+                                    backgroundColor: isOwn
+                                        ? `rgb(from ${CssVar.contentLink} r g b / 0.15)`
+                                        : 'transparent',
+                                    cursor: 'pointer',
+                                    color: CssVar.contentText,
+                                    fontSize: '1rem',
+                                    WebkitTapHighlightColor: 'transparent'
+                                }}
+                            >
+                                <CCImage
+                                    src={imageUrl}
+                                    maxHeight={128}
+                                    alt=""
+                                    style={{
+                                        // width指定なし=アスペクト比維持(横長絵文字は潰さずそのまま伸ばす)
+                                        height: '20px'
+                                    }}
+                                />
+                                <span>{count}</span>
+                            </button>
+                        </Tooltip>
+                    )
+                })}
+            </div>
             {superReactions.map((reaction) => (
                 <SuperReactionCard
                     key={reaction.id}

@@ -41,6 +41,7 @@ export const WelcomeView = () => {
     const subKey = readStoredString('SubKey')
 
     const authProvider = useMemo(() => {
+        void updater
         if (!masterKey && !subKey) return null
         return new InMemoryAuthProvider(masterKey, subKey)
     }, [updater, masterKey, subKey])
@@ -89,7 +90,7 @@ export const WelcomeView = () => {
         load().catch((e) => {
             console.error('Unexpected error while preparing account view', e)
         })
-    }, [updater, resolver, existingCCID, authProvider])
+    }, [authProvider, existingCCID, masterKey, resolver, subKey, updater])
 
     const reload = () => {
         setUpdater((prev) => prev + 1)
@@ -261,6 +262,8 @@ const RecoveryView = (props: {
         return () => {
             clearTimeout(timer)
         }
+        // 入力中の domain だけで照会する。props は親の再描画ごとに新しい関数を含む
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [domain])
 
     return (

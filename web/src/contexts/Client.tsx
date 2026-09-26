@@ -462,6 +462,9 @@ export const ClientProvider = (props: Props): ReactNode => {
     }, [])
 
     const value = useMemo(() => {
+        // プロフィールとサーバーの更新通知でコンテキスト値を作り直す
+        void profilesVersion
+        void serverVersion
         return {
             client,
             reload,

@@ -68,6 +68,8 @@ export const CCEditor = (props: Props) => {
             .catch(() => {
                 setSchema(undefined)
             })
+        // schemaURL が変わったときだけ取り直す
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.schemaURL])
 
     return (

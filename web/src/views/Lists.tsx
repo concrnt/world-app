@@ -33,6 +33,7 @@ export const ListsView = () => {
 
     const [updater, setUpdater] = useState(0)
     const listsPromise = useMemo(() => {
+        void updater
         if (!client) return Promise.resolve([])
         const p = client.getLists()
         p.then((lists) => {

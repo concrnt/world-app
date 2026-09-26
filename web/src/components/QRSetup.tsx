@@ -153,7 +153,7 @@ export const QRSetup = () => {
             }
         }
 
-        const receiver = new SignalLoginReceiver(signalURL, keyGenerationCallback, (keyURI: string) => {
+        const receiver = new SignalLoginReceiver(signalURL, keyGenerationCallback, (_keyURI: string) => {
             // 前セッションの別アカウントのマスターキーが残ったままだと、subkeyのccidと不一致のまま
             // マスターキー署名が使われてしまう。削除はせずEvacuatedKeys:<旧ccid>へ退避して
             // ID画面から回収できるようにする(同一アカウントならそのまま残す)
@@ -194,7 +194,7 @@ export const QRSetup = () => {
         return () => {
             receiver.dispose()
         }
-    }, [signalURL])
+    }, [setPersistentDomain, setPersistentSubkey, signalURL, t])
 
     return (
         <div

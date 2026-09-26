@@ -147,6 +147,8 @@ export const ApPerson = ({ person }: Props) => {
         } else {
             setOutboxState('done')
         }
+        // 人物が変わったときだけ取り直す。関数は毎レンダー新しいものになる
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [person.id])
 
     // 投稿は折りたたまれるため1ページでコンテナが埋まらないことがあり、
@@ -157,6 +159,8 @@ export const ApPerson = ({ person }: Props) => {
         if (el.scrollHeight - el.clientHeight < 500) {
             loadPosts(next, false)
         }
+        // 次ページの有無と表示件数で追い読みする
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [items, next])
 
     const emojiDict: Record<string, EmojiLite> = {}

@@ -31,75 +31,75 @@ export const SuperReactionCard = (props: Props) => {
                     flexDirection: 'column'
                 }}
             >
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: props.message ? '8px 10px 4px 12px' : '8px 10px 8px 12px'
-                }}
-            >
-                <Avatar
-                    ccid={props.author}
-                    src={props.avatar}
-                    style={{ width: '32px', height: '32px', flexShrink: 0 }}
-                />
                 <div
                     style={{
-                        flex: '0 1 auto',
-                        minWidth: 0,
-                        maxWidth: '42%',
-                        fontSize: '14px',
-                        lineHeight: '18px',
-                        fontWeight: 700,
-                        color: CssVar.contentText,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {props.username}
-                </div>
-                <div
-                    style={{
-                        flex: 1,
-                        minWidth: 0,
-                        aspectRatio: '15 / 4',
                         display: 'flex',
-                        justifyContent: 'flex-end',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: props.message ? '8px 10px 4px 12px' : '8px 10px 8px 12px'
                     }}
                 >
-                    <CCImage
-                        src={props.imageUrl}
-                        maxHeight={1024}
-                        alt=""
-                        style={{
-                            display: 'block',
-                            width: 'auto',
-                            height: 'auto',
-                            maxWidth: '70%',
-                            maxHeight: '70%',
-                            objectFit: 'contain'
-                        }}
+                    <Avatar
+                        ccid={props.author}
+                        src={props.avatar}
+                        style={{ width: '32px', height: '32px', flexShrink: 0 }}
                     />
+                    <div
+                        style={{
+                            flex: '0 1 auto',
+                            minWidth: 0,
+                            maxWidth: '42%',
+                            fontSize: '14px',
+                            lineHeight: '18px',
+                            fontWeight: 700,
+                            color: CssVar.contentText,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {props.username}
+                    </div>
+                    <div
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            aspectRatio: '15 / 4',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <CCImage
+                            src={props.imageUrl}
+                            maxHeight={1024}
+                            alt=""
+                            style={{
+                                display: 'block',
+                                width: 'auto',
+                                height: 'auto',
+                                maxWidth: '70%',
+                                maxHeight: '70%',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-            {props.message ? (
-                <div
-                    style={{
-                        padding: '0 12px 10px 12px',
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        fontWeight: 400,
-                        color: CssVar.contentText,
-                        whiteSpace: 'pre-wrap',
-                        overflowWrap: 'anywhere'
-                    }}
-                >
-                    {props.message}
-                </div>
-            ) : null}
+                {props.message ? (
+                    <div
+                        style={{
+                            padding: '0 12px 10px 12px',
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            fontWeight: 400,
+                            color: CssVar.contentText,
+                            whiteSpace: 'pre-wrap',
+                            overflowWrap: 'anywhere'
+                        }}
+                    >
+                        {props.message}
+                    </div>
+                ) : null}
             </div>
             <div
                 style={{

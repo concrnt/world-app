@@ -432,7 +432,7 @@ const TimelineEditor = (props: EditorProps) => {
                 setSchemaDraft(undefined)
                 setPolicyDraft(undefined)
             })
-    }, [props.timeline])
+    }, [client.api, props.timeline])
 
     const handleSave = () => {
         if (!key || !schemaDraft) return
