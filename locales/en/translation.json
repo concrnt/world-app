@@ -896,7 +896,8 @@
             "noMatchingEmojis": "No matching emojis",
             "noEmojis": "No emojis",
             "noRecentEmojis": "No emojis used yet",
-            "addEmojis": "Add emojis"
+            "addEmojis": "Add emojis",
+            "enableSuperReaction": "Enable super reaction"
         },
         "client": {
             "checkingSession": "Checking session...",

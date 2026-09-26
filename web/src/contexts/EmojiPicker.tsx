@@ -5,7 +5,7 @@ import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-import { Button, CCImage, HorizontalLayout, IconButton, Popover, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { Button, CCImage, HorizontalLayout, IconButton, Popover, Text, Tooltip, useAnchor, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
@@ -118,6 +118,11 @@ export const EmojiPickerProvider = (props: Props) => {
     const [searchBoxFocused, setSearchBoxFocused] = useState(false)
     const [sheetExpanded, setSheetExpanded] = useState(false)
     const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null)
+    const [superReactionEnabled, setSuperReactionEnabled] = useState(false)
+    const [superReactionTipOpen, setSuperReactionTipOpen] = useState(false)
+    const superReactionAnchor = useAnchor()
+    const superReactionTipTimer = useRef<number | undefined>(undefined)
+    const superReactionTipVisible = useRef(false)
     const sheetRef = useRef<HTMLDivElement>(null)
     const sheetDrag = useRef<{
         pointerId: number
@@ -259,6 +264,10 @@ export const EmojiPickerProvider = (props: Props) => {
             setQuery('')
             setSheetExpanded(false)
             setSheetDragHeight(null)
+            setSuperReactionEnabled(false)
+            setSuperReactionTipOpen(false)
+            superReactionTipVisible.current = false
+            window.clearTimeout(superReactionTipTimer.current)
             setAnchorName(anchor ?? null)
             setIsOpen(true)
             // モバイルでは検索欄を自動フォーカスしない。キーボードはユーザーのタップで出す
@@ -275,6 +284,10 @@ export const EmojiPickerProvider = (props: Props) => {
         setSearchBoxFocused(false)
         setSheetExpanded(false)
         setSheetDragHeight(null)
+        setSuperReactionEnabled(false)
+        setSuperReactionTipOpen(false)
+        superReactionTipVisible.current = false
+        window.clearTimeout(superReactionTipTimer.current)
         setHoveredEmoji(null)
         onSelectedRef.current = null
     }, [])
@@ -617,6 +630,9 @@ export const EmojiPickerProvider = (props: Props) => {
                                 onPointerUp={onSearchPointerUp}
                                 onPointerCancel={onSearchPointerUp}
                                 style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
                                     padding: searchBoxFocused
                                         ? `${CssVar.space(3)} ${CssVar.space(3)} 0`
                                         : `${CssVar.space(1)} ${CssVar.space(3)} ${CssVar.space(3)}`,
@@ -630,6 +646,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: CssVar.space(2),
+                                        flex: 1,
+                                        minWidth: 0,
                                         minHeight: '44px',
                                         padding: `0 ${CssVar.space(3)}`,
                                         borderRadius: CssVar.round(0.5),
@@ -681,6 +699,110 @@ export const EmojiPickerProvider = (props: Props) => {
                                         </span>
                                     )}
                                 </div>
+                                <Tooltip
+                                    content={
+                                        <Text style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all' }}>
+                                            {t('enableSuperReaction')}
+                                        </Text>
+                                    }
+                                    style={{
+                                        whiteSpace: 'nowrap',
+                                        width: 'max-content',
+                                        maxWidth: 'none',
+                                        justifySelf: 'start'
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        aria-pressed={superReactionEnabled}
+                                        aria-label={t('enableSuperReaction')}
+                                        onPointerDown={(e) => {
+                                            e.stopPropagation()
+                                            if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+                                            window.clearTimeout(superReactionTipTimer.current)
+                                            superReactionTipVisible.current = true
+                                            setSuperReactionTipOpen(true)
+                                        }}
+                                        onPointerUp={(e) => {
+                                            e.stopPropagation()
+                                            if (!superReactionTipVisible.current) return
+                                            window.clearTimeout(superReactionTipTimer.current)
+                                            superReactionTipTimer.current = window.setTimeout(() => {
+                                                superReactionTipVisible.current = false
+                                                setSuperReactionTipOpen(false)
+                                            }, 1200)
+                                        }}
+                                        onPointerCancel={(e) => {
+                                            e.stopPropagation()
+                                            window.clearTimeout(superReactionTipTimer.current)
+                                            superReactionTipVisible.current = false
+                                            setSuperReactionTipOpen(false)
+                                        }}
+                                        onClick={() => setSuperReactionEnabled((enabled) => !enabled)}
+                                        style={
+                                            {
+                                                width: '44px',
+                                                height: '44px',
+                                                flexShrink: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                border: 'none',
+                                                borderRadius: CssVar.round(0.5),
+                                                padding: 0,
+                                                cursor: 'pointer',
+                                                anchorName: superReactionAnchor,
+                                                color: superReactionEnabled ? CssVar.uiText : CssVar.contentText,
+                                                backgroundColor: superReactionEnabled
+                                                    ? CssVar.uiBackground
+                                                    : `rgb(from ${CssVar.contentText} r g b / 0.06)`,
+                                                WebkitTapHighlightColor: 'transparent'
+                                            } as React.CSSProperties
+                                        }
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="24"
+                                            height="24"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            aria-hidden
+                                        >
+                                            <path d="M13.267 2.08a10 10 0 1 0 8.653 8.653" />
+                                            <path d="M15 10V9" />
+                                            <path d="M16 5h6" />
+                                            <path d="M16.472 15a6 6 0 0 1 -8.943 0" />
+                                            <path d="M19 2v6" />
+                                            <path d="M9 10V9" />
+                                        </svg>
+                                    </button>
+                                </Tooltip>
+                                <Popover
+                                    open={superReactionTipOpen}
+                                    onClose={() => {
+                                        superReactionTipVisible.current = false
+                                        setSuperReactionTipOpen(false)
+                                    }}
+                                    anchor={superReactionAnchor}
+                                    mode="manual"
+                                    style={{
+                                        top: 'auto',
+                                        bottom: `calc(anchor(top) + ${CssVar.space(1)})`,
+                                        pointerEvents: 'none',
+                                        whiteSpace: 'nowrap',
+                                        width: 'max-content',
+                                        maxWidth: 'none',
+                                        justifySelf: 'start'
+                                    }}
+                                >
+                                    <Text style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all' }}>
+                                        {t('enableSuperReaction')}
+                                    </Text>
+                                </Popover>
                             </div>
 
                             {/* One-line emoji strip (キーボード表示中) */}
