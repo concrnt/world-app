@@ -519,7 +519,10 @@
             "addMoney": "Add Money",
             "sendMoney": "Send Money",
             "reactionLog": "Reaction log",
-            "noReactions": "No reactions yet"
+            "noReactions": "No reactions yet",
+            "received": "Received",
+            "sent": "Sent to {{name}}",
+            "balanceUnavailable": "Balance unavailable (RPC not configured)"
         },
         "list": {
             "listNotFound": "List not found"

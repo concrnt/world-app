@@ -61,6 +61,19 @@ export const getPublicClient = (): PublicClient => {
     return publicClient
 }
 
+// アドレスの残高を ETH 小数文字列で返す(BigInt を返さない: useResource が JSON 比較するため)。丸めは表示側で行う。
+// RPC 未設定/不通は null(throw すると useResource が reject を evict して再フェッチの無限ループになる)
+export const getEthBalance = async (address: Address): Promise<string | null> => {
+    if (!RPC_URL) return null
+    try {
+        const wei = await getPublicClient().getBalance({ address })
+        return formatEther(wei)
+    } catch (e) {
+        console.error('failed to fetch eth balance:', e)
+        return null
+    }
+}
+
 // ユーザーの tipjar 文書から受け取りアドレスを取り出す。未公開/不正なら null
 export const getTipjar = async (client: Client, ccid: string, hint?: string): Promise<Address | null> => {
     try {

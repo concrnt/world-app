@@ -19,7 +19,7 @@ import { MdAddReaction } from 'react-icons/md'
 import { Drawer } from '../../ui/Drawer'
 import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
-import { addSuperReaction } from './superReactionMock'
+import { invalidateResource } from '../../hooks/useResource'
 import { getTipjar } from '../../lib/tipjar'
 import { sendSuperReaction } from '../../lib/superReaction'
 import { useQueryTimelineContext } from '../QueryTimeline'
@@ -247,17 +247,9 @@ export const MessageActions = (props: Props) => {
                                         text: message
                                     })
                                     hapticLight()
-                                    // ウォレット画面の履歴(端末内モック)にも載せる
-                                    addSuperReaction({
-                                        id: `${props.message.uri}:${Date.now()}`,
-                                        messageUri: props.message.uri,
-                                        imageUrl: emoji.imageURL,
-                                        eth: amountEth,
-                                        author: client.ccid,
-                                        username: client.profile.username || 'Anonymous',
-                                        avatar: client.profile.avatar,
-                                        message
-                                    })
+                                    // ウォレット画面の残高・履歴キャッシュを次回表示時に再取得させる
+                                    invalidateResource('ethbalance:')
+                                    invalidateResource('wallet-superreactions:')
                                     await refreshMessage()
                                 }
                             }

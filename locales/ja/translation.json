@@ -518,7 +518,10 @@
             "addMoney": "お金を追加",
             "sendMoney": "送金",
             "reactionLog": "リアクション履歴",
-            "noReactions": "リアクションはまだありません"
+            "noReactions": "リアクションはまだありません",
+            "received": "受け取り",
+            "sent": "{{name}} さんへ送信",
+            "balanceUnavailable": "残高を取得できません(RPC未設定)"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"

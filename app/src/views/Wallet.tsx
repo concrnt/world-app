@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, IconButton, View } from '@concrnt/ui'
-import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
+import { Button, CircularProgress, IconButton, Text, View } from '@concrnt/ui'
+import { MdCallMade, MdCallReceived, MdVisibility, MdVisibilityOff } from 'react-icons/md'
+import { Association, Schemas, semantics, type Client, type SuperreactionAssociationSchema } from '@concrnt/worldlib'
+import type { Document } from '@concrnt/client'
 import { Header } from '../ui/Header'
-import { SuperReactionCard } from '../components/message/SuperReactionCard'
-import { useSuperReactionLog, type SuperReactionMock } from '../components/message/superReactionMock'
+import { SuperReactionItem, type SuperReactionPair } from '../components/message/SuperReactionItem'
+import { TimeDiff } from '../components/TimeDiff'
+import { useClient } from '../contexts/Client'
+import { useResource } from '../hooks/useResource'
+import { useStack } from '../layouts/Stack'
+import { getEthAddress } from '../lib/eth'
+import { getEthBalance } from '../lib/tipjar'
 import { CssVar } from '../types/Theme'
+import { PostView } from './Post'
 
 const BanknoteArrowDown = () => (
     <svg
@@ -49,45 +57,195 @@ const BanknoteArrowUp = () => (
     </svg>
 )
 
-const ETH_BALANCE = '0'
 const JPY_BALANCE = '0'
 const ETH_HIDDEN = '---,---'
 const HIDDEN = '-'
+const HISTORY_PAGE = 30
+const REFERENCE_SCHEMA = 'https://schema.concrnt.net/reference.json'
 
-const SAMPLE_REACTIONS: SuperReactionMock[] = [
-    {
-        id: 'sample-1',
-        messageUri: 'sample',
-        author: 'con1sampleauthor00000000000000000001',
-        username: 'だぶ',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f389.svg',
-        eth: '0.00024',
-        message: 'ありがとう'
-    },
-    {
-        id: 'sample-2',
-        messageUri: 'sample',
-        author: 'con1sampleauthor00000000000000000002',
-        username: 'kurotori',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f496.svg',
-        eth: '0.0024',
-        message: 'うれしい'
-    },
-    {
-        id: 'sample-3',
-        messageUri: 'sample',
-        author: 'con1sampleauthor00000000000000000003',
-        username: 'fluffy',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f44d.svg',
-        eth: '0.012'
+// formatEther の文字列を表示用に小数6桁までへ切り詰め、末尾の 0 と '.' を落とす
+const trimEth = (eth: string): string => {
+    const m = /^(\d+)(?:\.(\d{0,6}))?/.exec(eth)
+    if (!m) return eth
+    const frac = (m[2] ?? '').replace(/0+$/, '')
+    return frac ? `${m[1]}.${frac}` : m[1]
+}
+
+// Suspense 配下: ETH アドレス → 残高(SWR キャッシュ。送信後は MessageActions が invalidate する)。
+// 取得失敗は null で受けて '--' を出す(fetcher を reject させると useResource が再フェッチをループする)
+const Balance = (props: { visible: boolean }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
+    const { client } = useClient()
+    const balance = useResource(`ethbalance:${client.ccid}`, () =>
+        getEthAddress(client.ccid)
+            .then((address) => getEthBalance(address))
+            .catch((e) => {
+                console.error('failed to get eth address:', e)
+                return null
+            })
+    )
+    if (balance === null) {
+        return (
+            <>
+                --
+                <span
+                    style={{
+                        marginLeft: '0.5rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 400,
+                        letterSpacing: 'normal',
+                        opacity: 0.7
+                    }}
+                >
+                    {t('balanceUnavailable')}
+                </span>
+            </>
+        )
     }
-]
+    return <>{props.visible ? trimEth(balance) : ETH_HIDDEN}</>
+}
+
+interface WalletReaction {
+    pair: SuperReactionPair
+    direction: 'received' | 'sent'
+    // sent: 対象投稿の作者、received: 反応した人
+    counterpart: { ccid: string; username: string }
+    targetUri: string
+    receiverDomain?: string
+}
+
+// 受信(通知タイムライン)と送信(アクティビティタイムライン)の superreaction を1本にまとめ、
+// 対応する upgrade(tx hash)がある組だけを時刻降順で返す。plain object のみ(useResource が JSON 比較する)
+const fetchWalletReactions = async (client: Client): Promise<WalletReaction[]> => {
+    const prefixes = [
+        semantics.notificationTimeline(client.ccid, client.currentProfile) + '/',
+        semantics.activityTimeline(client.ccid, client.currentProfile) + '/'
+    ]
+    const pages = await Promise.all(
+        prefixes.map((prefix) =>
+            client.api.query({ prefix, schema: Schemas.superreactionAssociation, limit: HISTORY_PAGE }).catch((e) => {
+                console.error('failed to query superreactions:', e)
+                return { items: [] }
+            })
+        )
+    )
+    // 自分の投稿に自分でスーパーリアクションすると両タイムラインに載るので ccfs で重複排除
+    const hrefs = new Set<string>()
+    for (const page of pages) {
+        for (const item of page.items) {
+            const doc: Document<any> = JSON.parse(item.document)
+            hrefs.add(doc.schema === REFERENCE_SCHEMA ? doc.value.href : item.ccfs)
+        }
+    }
+    const result = await Promise.all(
+        [...hrefs].map(async (href): Promise<WalletReaction | null> => {
+            const msg = await client.getMessage<SuperreactionAssociationSchema>(href).catch(() => null)
+            if (!msg?.associate) return null
+            const target = msg.associationTarget ?? undefined
+            const receiverDomain = target?.authorUser?.domain
+            // upgrade は同じ人が同じ superreaction を指しているものだけ採用(SuperReactionList と同じ基準)
+            const upgrades = await client.api
+                .getAssociationsAll(
+                    msg.associate,
+                    { schema: Schemas.upgradeAssociation, author: msg.author },
+                    receiverDomain
+                )
+                .catch(() => [])
+            const up = upgrades.map((sd) => Association.fromSignedDocument(sd)).find((u) => u.value.target === msg.uri)
+            if (!up) return null
+            const sent = msg.author === client.ccid
+            return {
+                pair: {
+                    ccfs: msg.uri,
+                    author: msg.author,
+                    associate: msg.associate,
+                    txhash: up.value.txhash,
+                    username: msg.authorProfile.username || 'Anonymous',
+                    avatar: msg.authorProfile.avatar,
+                    imageUrl: msg.value.imageUrl,
+                    message: msg.value.message,
+                    declaredAmount: msg.value.amount,
+                    createdAt: msg.createdAt.getTime()
+                },
+                direction: sent ? 'sent' : 'received',
+                counterpart: sent
+                    ? { ccid: target?.author ?? '', username: target?.authorProfile.username || 'Anonymous' }
+                    : { ccid: msg.author, username: msg.authorProfile.username || 'Anonymous' },
+                targetUri: msg.associate,
+                receiverDomain
+            }
+        })
+    )
+    return result.filter((r): r is WalletReaction => r !== null).sort((a, b) => b.pair.createdAt - a.pair.createdAt)
+}
+
+// Suspense 配下: 履歴一覧
+const ReactionHistory = () => {
+    const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
+    const { client } = useClient()
+    const { push } = useStack()
+    // 失敗は空扱い(reject させると useResource が再フェッチをループする)
+    const reactions = useResource(`wallet-superreactions:${client.ccid}:${client.currentProfile}`, () =>
+        fetchWalletReactions(client).catch((e) => {
+            console.error('failed to load wallet reactions:', e)
+            return []
+        })
+    )
+    if (reactions.length === 0) {
+        return (
+            <Text variant="caption" style={{ opacity: 0.7 }}>
+                {t('noReactions')}
+            </Text>
+        )
+    }
+    return (
+        <>
+            {reactions.map((r) => (
+                <div
+                    key={r.pair.ccfs}
+                    onClick={() => push(<PostView uri={r.targetUri} />)}
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '0 4px',
+                            fontSize: '0.8rem',
+                            opacity: 0.7,
+                            minWidth: 0
+                        }}
+                    >
+                        {r.direction === 'received' ? <MdCallReceived size={16} /> : <MdCallMade size={16} />}
+                        <span
+                            style={{
+                                flex: 1,
+                                minWidth: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {r.direction === 'received' ? t('received') : t('sent', { name: r.counterpart.username })}
+                        </span>
+                        <TimeDiff date={new Date(r.pair.createdAt)} />
+                    </div>
+                    <SuperReactionItem pair={r.pair} receiverDomain={r.receiverDomain} />
+                </div>
+            ))}
+        </>
+    )
+}
 
 export const WalletView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.wallet' })
     const [balanceVisible, setBalanceVisible] = useState(true)
-    const liveReactions = useSuperReactionLog()
-    const reactions = liveReactions.length > 0 ? liveReactions : SAMPLE_REACTIONS
 
     return (
         <View>
@@ -141,7 +299,9 @@ export const WalletView = () => {
                                     fontVariantNumeric: 'tabular-nums'
                                 }}
                             >
-                                {balanceVisible ? ETH_BALANCE : ETH_HIDDEN}
+                                <Suspense fallback={<>…</>}>
+                                    <Balance visible={balanceVisible} />
+                                </Suspense>
                             </span>
                             <span
                                 style={{
@@ -263,17 +423,15 @@ export const WalletView = () => {
                             gap: CssVar.space(2)
                         }}
                     >
-                        {reactions.map((reaction) => (
-                            <SuperReactionCard
-                                key={reaction.id}
-                                author={reaction.author}
-                                username={reaction.username}
-                                avatar={reaction.avatar}
-                                eth={balanceVisible ? reaction.eth : HIDDEN}
-                                imageUrl={reaction.imageUrl}
-                                message={reaction.message}
-                            />
-                        ))}
+                        <Suspense
+                            fallback={
+                                <div style={{ display: 'flex', justifyContent: 'center', padding: CssVar.space(2) }}>
+                                    <CircularProgress size={24} />
+                                </div>
+                            }
+                        >
+                            <ReactionHistory />
+                        </Suspense>
                     </div>
                 </div>
             </div>
