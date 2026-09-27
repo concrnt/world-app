@@ -35,8 +35,8 @@ const variantStyles = {
     },
     outlined: {
         backgroundColor: 'transparent',
-        border: `1px solid ${CssVar.uiBackground}`,
-        color: CssVar.uiBackground
+        border: `1px solid ${CssVar.contentText}`,
+        color: CssVar.contentText
     },
     text: {
         backgroundColor: 'transparent',
