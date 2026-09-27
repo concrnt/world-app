@@ -1,0 +1,17 @@
+.packTabs {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--content-text) 40%, transparent) transparent;
+}
+
+.packTabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.packTabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.packTabs::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: color-mix(in srgb, var(--content-text) 40%, transparent);
+}
