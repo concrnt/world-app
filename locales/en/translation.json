@@ -631,7 +631,8 @@
         "renderError": {
             "messageDeleted": "This message has been deleted",
             "serverOffline": "The server hosting this message is offline",
-            "cannotDisplay": "This message cannot be displayed"
+            "cannotDisplay": "This message cannot be displayed",
+            "unsupportedSchema": "Unsupported message format"
         },
         "replyAssociation": {
             "loading": "Loading..."
