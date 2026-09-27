@@ -492,9 +492,21 @@ export const EmojiPickerProvider = (props: Props) => {
         onHandlePointerMove(event)
     }
 
+    const expandSheetForSearch = (): void => {
+        setSheetDragHeight(null)
+        setSheetExpanded(true)
+        // キーボード表示に伴うページのスクロールずれを補正
+        setTimeout(() => {
+            window.scrollTo(0, 0)
+        }, 100)
+    }
+
     const onSearchPointerUp = (event: React.PointerEvent<HTMLDivElement>): void => {
+        const wasTap = searchDragPending.current?.pointerId === event.pointerId && !sheetDrag.current
         searchDragPending.current = null
         onHandlePointerUp(event)
+        // タップ中に広げると、指の下へ絵文字が動いて離した瞬間に選択される
+        if (wasTap && document.activeElement === searchInputRef.current) expandSheetForSearch()
     }
 
     const dismissKeyboard = (event: { target: EventTarget | null }): void => {
@@ -632,12 +644,8 @@ export const EmojiPickerProvider = (props: Props) => {
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         onFocus={() => {
-                                            setSheetDragHeight(null)
-                                            setSheetExpanded(true)
-                                            // キーボード表示に伴うページのスクロールずれを補正
-                                            setTimeout(() => {
-                                                window.scrollTo(0, 0)
-                                            }, 100)
+                                            if (searchDragPending.current) return
+                                            expandSheetForSearch()
                                         }}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && displayEmojis.length > 0) {
@@ -849,18 +857,23 @@ export const EmojiPickerProvider = (props: Props) => {
                                             {row.map(({ emoji, span }) => (
                                                 <button
                                                     key={emoji.shortcode}
+                                                    onPointerDown={(e) => {
+                                                        if (e.button !== 0) return
+                                                        e.currentTarget.dataset.press = `${e.pointerId},${e.clientX},${e.clientY}`
+                                                    }}
                                                     onPointerUp={(e) => {
                                                         if (e.button !== 0) return
                                                         const start = e.currentTarget.dataset.press
-                                                        if (start) {
-                                                            const [x, y] = start.split(',').map(Number)
-                                                            if (Math.hypot(e.clientX - x, e.clientY - y) > 10) return
-                                                        }
+                                                        delete e.currentTarget.dataset.press
+                                                        if (!start) return
+                                                        const [pointerId, x, y] = start.split(',').map(Number)
+                                                        if (pointerId !== e.pointerId) return
+                                                        if (Math.hypot(e.clientX - x, e.clientY - y) > 10) return
                                                         selectEmoji(emoji)
                                                         searchInputRef.current?.blur()
                                                     }}
-                                                    onPointerDown={(e) => {
-                                                        e.currentTarget.dataset.press = `${e.clientX},${e.clientY}`
+                                                    onPointerCancel={(e) => {
+                                                        delete e.currentTarget.dataset.press
                                                     }}
                                                     onClick={(e) => {
                                                         // pointerupで既に選んでいる。clickの二重挿入を防ぐ
