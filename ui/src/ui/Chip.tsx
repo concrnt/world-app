@@ -14,7 +14,7 @@ interface Props {
 
 const baseStyle: CSSProperties = {
     flexShrink: 0,
-    color: 'rgb(41, 46, 36)',
+    color: CssVar.contentText,
     fontSize: '16px',
     height: '24px',
     display: 'flex',
@@ -27,7 +27,7 @@ const baseStyle: CSSProperties = {
 
 const variantStyles = {
     contained: {
-        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.1)`,
         border: '1px solid transparent'
     },
     outlined: {
@@ -36,7 +36,7 @@ const variantStyles = {
 } satisfies Record<NonNullable<Props['variant']>, CSSProperties>
 
 const pressedStyle: CSSProperties = {
-    filter: 'brightness(0.92)'
+    backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.2)`
 }
 
 export const Chip = (props: Props) => {
