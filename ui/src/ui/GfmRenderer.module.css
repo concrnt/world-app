@@ -16,17 +16,17 @@
 .body blockquote {
     margin: 0;
     padding-left: 1rem;
-    border-left: 4px solid #ccc;
+    border-left: 4px solid var(--divider);
 }
 
 .body table {
-    border: 1px solid #ccc;
+    border: 1px solid var(--divider);
     border-collapse: collapse;
 }
 
 .body th,
 .body td {
-    border: 1px solid #ccc;
+    border: 1px solid var(--divider);
     padding: 0.5rem;
 }
 

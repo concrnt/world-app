@@ -12,6 +12,7 @@ import { useCfmActions } from '../contexts/CfmActions'
 import { CCImage } from '../contexts/CCImage'
 import type { EmojiLite } from './CfmRenderer'
 import styles from './GfmRenderer.module.css'
+import { CssVar } from '../types/Theme'
 
 export interface GfmRendererProps {
     messagebody: string
@@ -108,9 +109,9 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
                                 <span
                                     style={{
                                         fontFamily: 'Source Code Pro, monospace',
-                                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.08)`,
                                         borderRadius: 1,
-                                        border: '0.5px solid #ddd',
+                                        border: `0.5px solid ${CssVar.divider}`,
                                         padding: '0 0.5rem',
                                         margin: '0 0.2rem'
                                     }}
