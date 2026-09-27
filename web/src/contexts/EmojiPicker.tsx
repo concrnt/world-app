@@ -12,6 +12,7 @@ import type { List, ListEntry } from '@concrnt/worldlib'
 import { useKeyboard } from './Keyboard'
 import { useMediaProxy } from './MediaProxy'
 import { useIsMobile } from '../hooks/useIsMobile'
+import styles from './EmojiPicker.module.css'
 
 // ---- Types ----
 
@@ -757,9 +758,14 @@ export const EmojiPickerProvider = (props: Props) => {
                             </HorizontalLayout>
 
                             {/* Tabs */}
-                            <HorizontalLayout
+                            <div
+                                className={styles.packTabs}
+                                onPointerDownCapture={(e) => {
+                                    if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) e.stopPropagation()
+                                }}
                                 style={{
                                     display: searchBoxFocused ? 'none' : 'flex',
+                                    overflowX: 'auto',
                                     gap: CssVar.space(1),
                                     padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
                                     flexShrink: 0
@@ -800,7 +806,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                         />
                                     </TabButton>
                                 ))}
-                            </HorizontalLayout>
+                            </div>
 
                             {/* Divider */}
                             <div
@@ -963,11 +969,76 @@ export const EmojiPickerProvider = (props: Props) => {
                                 overflow: 'hidden'
                             }}
                         >
-                            {/* Tabs */}
-                            <HorizontalLayout
+                            {/* Search: カテゴリアイコン列の上 */}
+                            <div
                                 style={{
+                                    padding: `${CssVar.space(2)} ${CssVar.space(3)} ${CssVar.space(1)}`,
+                                    flexShrink: 0
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: CssVar.space(1),
+                                        minHeight: '36px',
+                                        padding: `0 ${CssVar.space(2)}`,
+                                        borderRadius: CssVar.round(0.5),
+                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
+                                    }}
+                                >
+                                    <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="text"
+                                        placeholder={t('searchPlaceholder')}
+                                        value={query}
+                                        onChange={(e) => {
+                                            setQuery(e.target.value)
+                                            setHoveredEmoji(null)
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && displayEmojis.length > 0) {
+                                                e.preventDefault()
+                                                selectEmoji(displayEmojis[0])
+                                                close()
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            border: 'none',
+                                            outline: 'none',
+                                            background: 'transparent',
+                                            color: CssVar.contentText,
+                                            fontSize: '14px',
+                                            lineHeight: '20px',
+                                            cursor: 'text'
+                                        }}
+                                    />
+                                    {query.length > 0 && (
+                                        <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                                            <IconButton
+                                                onClick={() => {
+                                                    setQuery('')
+                                                    setHoveredEmoji(null)
+                                                }}
+                                                style={{ width: '24px', height: '24px', padding: 0 }}
+                                            >
+                                                <MdClose size={16} />
+                                            </IconButton>
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tabs */}
+                            <div
+                                className={styles.packTabs}
+                                style={{
+                                    display: 'flex',
+                                    overflowX: 'auto',
                                     gap: CssVar.space(1),
-                                    padding: `${CssVar.space(2)} ${CssVar.space(2)} 0`,
+                                    padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
                                     flexShrink: 0
                                 }}
                             >
@@ -980,11 +1051,11 @@ export const EmojiPickerProvider = (props: Props) => {
                                             gridRef.current?.scrollTo(0, 0)
                                         }}
                                     >
-                                        <MdAccessTime size={20} />
+                                        <MdAccessTime size={22} />
                                     </TabButton>
                                 ) : (
                                     <TabButton selected>
-                                        <MdSearch size={20} />
+                                        <MdSearch size={22} />
                                     </TabButton>
                                 )}
 
@@ -1003,88 +1074,44 @@ export const EmojiPickerProvider = (props: Props) => {
                                             src={pkg.iconURL}
                                             maxHeight={128}
                                             alt={pkg.name}
-                                            style={{ width: '20px', height: '20px' }}
+                                            style={{ width: '22px', height: '22px' }}
                                         />
                                     </TabButton>
                                 ))}
-                            </HorizontalLayout>
+                            </div>
 
                             {/* Divider */}
                             <div
                                 style={{
                                     height: '1px',
                                     backgroundColor: CssVar.divider,
-                                    margin: `${CssVar.space(1)} 0`
+                                    margin: `${CssVar.space(2)} 0`
                                 }}
                             />
 
-                            {/* Search */}
-                            <div
-                                style={{
-                                    padding: `0 ${CssVar.space(2)}`,
-                                    flexShrink: 0
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: CssVar.space(1),
-                                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
-                                    }}
-                                >
-                                    <MdSearch size={18} style={{ opacity: 0.5, flexShrink: 0 }} />
-                                    <input
-                                        ref={searchInputRef}
-                                        type="text"
-                                        placeholder={t('searchPlaceholder')}
-                                        value={query}
-                                        onChange={(e) => {
-                                            setQuery(e.target.value)
-                                            setHoveredEmoji(null)
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            border: 'none',
-                                            outline: 'none',
-                                            background: 'transparent',
-                                            color: CssVar.contentText,
-                                            fontSize: '14px'
-                                        }}
-                                    />
-                                    {query.length > 0 && (
-                                        <IconButton onClick={() => setQuery('')} style={{ padding: '2px' }}>
-                                            <MdClose size={16} />
-                                        </IconButton>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Title */}
-                            <div
-                                style={{
-                                    padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
-                                    fontSize: '12px',
-                                    opacity: 0.6,
-                                    flexShrink: 0
-                                }}
-                            >
-                                {title}
-                            </div>
-
-                            {/* Emoji grid */}
+                            {/* Emoji grid。見出しはリストの先頭に置き、スクロールで一緒に流す */}
                             <div
                                 ref={gridRef}
                                 style={{
                                     flex: 1,
                                     overflowY: 'auto',
                                     overflowX: 'hidden',
-                                    padding: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
+                                    padding: `0 ${CssVar.space(3)} ${CssVar.space(3)}`,
                                     minHeight: 0
                                 }}
                             >
+                                <div
+                                    style={{
+                                        // タブアイコンの左端(行の space(3) + ボタンの space(1))に揃える
+                                        padding: `${CssVar.space(1)} 0 ${CssVar.space(2)} ${CssVar.space(1)}`,
+                                        fontSize: '13px',
+                                        lineHeight: '18px',
+                                        fontWeight: 700,
+                                        opacity: 0.6
+                                    }}
+                                >
+                                    {title}
+                                </div>
                                 {rows.length === 0 ? (
                                     <div
                                         style={{

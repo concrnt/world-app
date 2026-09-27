@@ -10,6 +10,7 @@ import { useKeyboard } from './Keyboard'
 import { useMediaProxy } from './MediaProxy'
 import { EMOJI_PACKAGE_SCHEMA, ensureEmojiPackageList } from '../utils/emojiPackages'
 import type { List, ListEntry } from '@concrnt/worldlib'
+import styles from './EmojiPicker.module.css'
 
 // ---- Types ----
 
@@ -745,9 +746,14 @@ export const EmojiPickerProvider = (props: Props) => {
                             </HorizontalLayout>
 
                             {/* Tabs */}
-                            <HorizontalLayout
+                            <div
+                                className={styles.packTabs}
+                                onPointerDownCapture={(e) => {
+                                    if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) e.stopPropagation()
+                                }}
                                 style={{
                                     display: searchBoxFocused ? 'none' : 'flex',
+                                    overflowX: 'auto',
                                     gap: CssVar.space(1),
                                     padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
                                     flexShrink: 0
@@ -789,7 +795,7 @@ export const EmojiPickerProvider = (props: Props) => {
                                         />
                                     </TabButton>
                                 ))}
-                            </HorizontalLayout>
+                            </div>
 
                             {/* Divider */}
                             <div
