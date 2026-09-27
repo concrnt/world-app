@@ -181,9 +181,6 @@ export const TimelinePicker = (props: Props) => {
                         hapticSelection()
                         setFocused(true)
                     }}
-                    style={{
-                        color: CssVar.divider
-                    }}
                     tailElement={<IoMdAdd size={16} />}
                 >
                     {t('addDestination')}

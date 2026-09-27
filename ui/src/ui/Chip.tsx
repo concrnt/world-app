@@ -31,7 +31,7 @@ const variantStyles = {
         border: '1px solid transparent'
     },
     outlined: {
-        border: `1px solid ${CssVar.divider}`
+        border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`
     }
 } satisfies Record<NonNullable<Props['variant']>, CSSProperties>
 
@@ -72,9 +72,6 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
-                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
-                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
-                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
                         onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',
@@ -118,9 +115,6 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
-                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
-                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
-                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
                         onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',
