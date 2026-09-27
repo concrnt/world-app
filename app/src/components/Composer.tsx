@@ -632,7 +632,7 @@ export const Composer = (props: Props) => {
                     <Text style={{ margin: 0, color: CssVar.contentLink }}>{t('dropToUpload')}</Text>
                 </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: CssVar.space(1) }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
                 {/* モードセレクタ。リプライ/リルート時は状態表示のみで切り替え不可 */}
                 <IconButton
                     onClick={props.mode === 'normal' ? () => setModeSelectOpen(true) : undefined}

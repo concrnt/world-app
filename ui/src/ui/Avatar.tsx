@@ -1,6 +1,7 @@
 import BoringAvatar from 'boring-avatars'
 import { Suspense, use, useDeferredValue } from 'react'
 import { CCImage } from '../contexts/CCImage'
+import { Skeleton } from './Skeleton'
 
 interface Props {
     ccid: string
@@ -16,13 +17,12 @@ export const Avatar = (props: Props) => {
     const body = (
         <Suspense
             fallback={
-                <div
+                <Skeleton
+                    width="40px"
+                    height="40px"
                     style={{
                         display: 'block',
-                        width: '40px',
-                        height: '40px',
                         borderRadius: '4px',
-                        backgroundColor: '#e0e0e0',
                         ...props.style
                     }}
                 />

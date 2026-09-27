@@ -177,6 +177,7 @@ const ComposerOverlay = (props: {
                         <div
                             style={{
                                 backgroundColor: CssVar.contentBackground,
+                                color: CssVar.contentText,
                                 flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',

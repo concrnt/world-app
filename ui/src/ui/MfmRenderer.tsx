@@ -6,6 +6,7 @@ import { type EmojiLite } from './CfmRenderer'
 import { CCImage } from '../contexts/CCImage'
 import { useCfmActions } from '../contexts/CfmActions'
 import styles from './MfmRenderer.module.css'
+import { CssVar } from '../types/Theme'
 
 // mfm-renderer-reactはMUI/emotion/React18に依存しておりこのmonorepoでは使えないため、
 // パーサ(mfm-js)だけ借りてレンダラは自前実装している。
@@ -139,7 +140,7 @@ const Search = ({ query }: { query: string }): ReactNode => {
                     width: '100%',
                     height: '40px',
                     fontSize: '16px',
-                    border: 'solid 1px #ddd',
+                    border: `solid 1px ${CssVar.divider}`,
                     borderRadius: '4px 0 0 4px',
                     boxSizing: 'border-box',
                     overflow: 'hidden',
@@ -165,7 +166,7 @@ const Search = ({ query }: { query: string }): ReactNode => {
                     flexShrink: 0,
                     margin: 0,
                     padding: '0 16px',
-                    border: 'solid 1px #ddd',
+                    border: `solid 1px ${CssVar.divider}`,
                     borderLeft: 'none',
                     borderRadius: '0 4px 4px 0',
                     background: 'none',
@@ -506,9 +507,9 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
                 <span
                     style={{
                         fontFamily: 'Source Code Pro, monospace',
-                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.08)`,
                         borderRadius: 1,
-                        border: '0.5px solid #ddd',
+                        border: `0.5px solid ${CssVar.divider}`,
                         padding: '0 0.5rem',
                         margin: '0 0.2rem'
                     }}
@@ -530,7 +531,7 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
             return <Codeblock language="">{ast.props.formula}</Codeblock>
         case 'quote':
             return (
-                <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: '4px solid #ccc' }}>
+                <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: `4px solid ${CssVar.divider}` }}>
                     <RenderMfm ast={ast.children} emojis={emojis} />
                 </blockquote>
             )

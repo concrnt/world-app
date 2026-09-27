@@ -251,7 +251,7 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                 )
             }
             return (
-                <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: '4px solid #ccc' }}>
+                <blockquote style={{ margin: 0, paddingLeft: '1rem', borderLeft: `4px solid ${CssVar.divider}` }}>
                     <RenderAst ast={ast.body} emojis={emojis} imageNodes={imageNodes} oneline={oneline} />
                 </blockquote>
             )
@@ -268,7 +268,7 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                                 display: 'inline-block',
                                 marginLeft: '0.25em',
                                 borderRadius: '0.2em',
-                                border: '1px solid rgba(0, 0, 0, 0.1)',
+                                border: `1px solid ${CssVar.divider}`,
                                 verticalAlign: '-0.1em',
                                 cursor: 'pointer'
                             }}
@@ -323,9 +323,9 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                 <span
                     style={{
                         fontFamily: 'Source Code Pro, monospace',
-                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.08)`,
                         borderRadius: 1,
-                        border: '0.5px solid #ddd',
+                        border: `0.5px solid ${CssVar.divider}`,
                         padding: '0 0.5rem',
                         margin: '0 0.2rem'
                     }}

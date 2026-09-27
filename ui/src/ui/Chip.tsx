@@ -14,7 +14,7 @@ interface Props {
 
 const baseStyle: CSSProperties = {
     flexShrink: 0,
-    color: 'rgb(41, 46, 36)',
+    color: CssVar.contentText,
     fontSize: '16px',
     height: '24px',
     display: 'flex',
@@ -27,16 +27,16 @@ const baseStyle: CSSProperties = {
 
 const variantStyles = {
     contained: {
-        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.1)`,
         border: '1px solid transparent'
     },
     outlined: {
-        border: `1px solid ${CssVar.divider}`
+        border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`
     }
 } satisfies Record<NonNullable<Props['variant']>, CSSProperties>
 
 const pressedStyle: CSSProperties = {
-    filter: 'brightness(0.92)'
+    backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.2)`
 }
 
 export const Chip = (props: Props) => {
@@ -72,9 +72,6 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
-                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
-                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
-                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
                         onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',
@@ -118,9 +115,6 @@ export const Chip = (props: Props) => {
                         {props.children}
                     </div>
                     <div
-                        // ButtonBaseはpointerdownでsetPointerCaptureするため、そのままだと後続のclickが
-                        // button側に再ターゲットされ、tailElement自身のonClickが永久に発火しない。
-                        // tail上で始まった押下はチップの押下ではないので、ここでpointerdownを止める。
                         onPointerDown={(e) => e.stopPropagation()}
                         style={{
                             display: 'flex',

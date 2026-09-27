@@ -75,6 +75,16 @@ targets:
         NSFaceIDUsageDescription: FaceID はマスターキーを保護するために使用されます。
         NSCameraUsageDescription: カメラは、ログイン QR を読み込むために使用されます。
         NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。
+        # iOS 27 SDK requires UIScene adoption: without a static
+        # UIApplicationSceneManifest the app aborts at launch. tao 0.35 only
+        # activates its scene support (TaoSceneDelegate registration, windows
+        # attached to the scene) when UIApplicationSupportsMultipleScenes is
+        # true — with false it stays on the classic UIWindow path and the app
+        # dies under the scene lifecycle. Side effect of true: iPadOS offers
+        # a second window from the app icon.
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UISceneDelegateClassName: TaoSceneDelegate
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:

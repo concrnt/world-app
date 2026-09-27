@@ -181,6 +181,7 @@ const ComposerOverlayMobile = (props: ComposerOverlayProps) => {
                         <div
                             style={{
                                 backgroundColor: CssVar.contentBackground,
+                                color: CssVar.contentText,
                                 flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -270,6 +271,7 @@ const ComposerOverlayDesktop = (props: ComposerOverlayProps) => {
                             width: 'min(700px, 90vw)',
                             maxHeight: '75vh',
                             backgroundColor: CssVar.contentBackground,
+                            color: CssVar.contentText,
                             borderRadius: theme.variant === 'classic' ? undefined : CssVar.round(1),
                             padding: CssVar.space(2),
                             display: 'flex',
