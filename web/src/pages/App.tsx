@@ -21,13 +21,19 @@ export const AppShell = () => {
 }
 
 const DesktopShell = () => {
+    const location = useLocation()
+    // ルートが変わったら、伸びたページのスクロール位置を先頭に戻す
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [location.pathname, location.hash])
+
     return (
         <div
             style={{
                 display: 'flex',
                 flexDirection: 'column',
                 width: '100vw',
-                height: '100dvh',
+                minHeight: '100dvh',
                 boxSizing: 'border-box',
                 backgroundColor: CssVar.backdropBackground,
                 alignItems: 'center'
@@ -38,11 +44,11 @@ const DesktopShell = () => {
             <div
                 style={{
                     display: 'flex',
-                    flex: 1,
-                    minHeight: 0,
+                    flex: '1 0 auto',
                     maxWidth: '1280px',
                     width: '100%',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    alignItems: 'stretch'
                 }}
             >
                 <aside
@@ -51,24 +57,35 @@ const DesktopShell = () => {
                         margin: CssVar.space(2)
                     }}
                 >
-                    <Sidebar />
+                    <div
+                        style={{
+                            position: 'sticky',
+                            top: CssVar.space(2),
+                            height: `calc(100dvh - ${CssVar.space(2)} * 2)`,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        <Sidebar />
+                    </div>
                 </aside>
                 <main
                     style={{
                         display: 'flex',
-                        flex: 1,
+                        // basisをautoにすると幅が中身のmax-contentに追従し、読み込み後に横へ広がる
+                        flex: '1 1 0',
                         maxWidth: '720px',
-                        overflow: 'hidden'
+                        minWidth: 0
                     }}
                 >
                     <div
                         style={{
                             flexGrow: '1',
+                            minWidth: 0,
                             margin: CssVar.space(2),
                             display: 'flex',
                             flexFlow: 'column',
                             borderRadius: CssVar.round(2),
-                            overflow: 'hidden',
                             background: 'none'
                         }}
                     >

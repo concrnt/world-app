@@ -85,9 +85,10 @@ export const ComposerProvider = (props: Props) => {
             <div
                 style={{
                     width: '100%',
-                    height: '100%',
                     position: 'relative',
-                    overflow: 'hidden'
+                    ...(isMobile
+                        ? { height: '100%', overflow: 'hidden' }
+                        : { minHeight: '100dvh', overflow: 'visible' })
                 }}
             >
                 {props.children}
@@ -251,7 +252,7 @@ const ComposerOverlayDesktop = (props: ComposerOverlayProps) => {
             {!willClose && (
                 <motion.div
                     style={{
-                        position: 'absolute',
+                        position: 'fixed',
                         inset: 0,
                         backgroundColor: 'rgba(0, 0, 0, 0.5)',
                         display: 'flex',

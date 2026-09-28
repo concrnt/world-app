@@ -30,6 +30,7 @@ import { QueryTimelineContext } from './QueryTimeline'
 import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { RenderError } from './message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
 import { MdStar, MdEmojiEmotions, MdPersonAdd, MdLock } from 'react-icons/md'
@@ -88,6 +89,7 @@ const FILL_DELAY_MAX = 1000
 
 export const NotificationTimeline = (props: Props) => {
     const { client, isDomainOffline } = useClient()
+    const isMobile = useIsMobile()
 
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
     // 表示中はpull-to-refresh実行中の見た目にし、末尾のLoading・End表示は出さない
@@ -353,8 +355,12 @@ export const NotificationTimeline = (props: Props) => {
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
-            if (scrollRef.current) {
-                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            const el = scrollRef.current
+            if (!el) return
+            if (el.scrollHeight <= el.clientHeight + 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else {
+                el.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -402,10 +408,15 @@ export const NotificationTimeline = (props: Props) => {
         if (!el) return
 
         const handleScroll = () => {
-            // PullToRefresh用にスクロール位置を記録
-            scrollPositionRef.current = el.scrollTop
+            // デスクトップはページ全体が伸びてスクロールする。カラム内に余白が無いときだけ window を見る
+            const pageScroll = el.scrollHeight <= el.clientHeight + 1
+            const scrollTop = pageScroll ? window.scrollY : el.scrollTop
+            scrollPositionRef.current = scrollTop
 
-            if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
+            const distanceToEnd = pageScroll
+                ? el.getBoundingClientRect().bottom - window.innerHeight
+                : el.scrollHeight - scrollTop - el.clientHeight
+            if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
                 if (!reader.current) return
@@ -439,6 +450,7 @@ export const NotificationTimeline = (props: Props) => {
         }
 
         el.addEventListener('scroll', handleScroll)
+        window.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
@@ -451,6 +463,7 @@ export const NotificationTimeline = (props: Props) => {
         }, fillDelayRef.current)
         return () => {
             el.removeEventListener('scroll', handleScroll)
+            window.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
     }, [scrollRef, reader, hasMoreData, loading])
@@ -464,8 +477,10 @@ export const NotificationTimeline = (props: Props) => {
                     gap: '8px',
                     // ヘッダー（Notifications タイトルバー）と最初の通知の間に 5px の余白を設ける
                     paddingTop: '5px',
-                    overflowX: 'hidden',
-                    overflowY: 'auto',
+                    // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
+                    // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
+                    overflowX: isMobile ? 'hidden' : 'clip',
+                    overflowY: isMobile ? 'auto' : 'visible',
                     // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
                     scrollbarGutter: 'stable',
                     touchAction: 'pan-y',

@@ -11,6 +11,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { PullToRefresh } from './PullToRefresh'
 import { Media, MediaTile } from './MediaGallery/main'
 import { useMediaViewer } from '../contexts/MediaViewer'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 // メディア投稿のクエリ結果をクライアント側で展開し、1メディア=1タイルの平坦な一覧として描画する。
 // NotificationTimelineと同じく reader.body を iter カーソルで差分処理して積み上げる
@@ -45,6 +46,7 @@ const FILL_DELAY_MAX = 1000
 
 export const MediaGridTimeline = (props: Props) => {
     const { client } = useClient()
+    const isMobile = useIsMobile()
     const { t } = useTranslation('', { keyPrefix: 'components.mediaGridTimeline' })
     const mediaViewer = useMediaViewer()
 
@@ -183,8 +185,12 @@ export const MediaGridTimeline = (props: Props) => {
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
-            if (scrollRef.current) {
-                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            const el = scrollRef.current
+            if (!el) return
+            if (el.scrollHeight <= el.clientHeight + 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else {
+                el.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -251,10 +257,15 @@ export const MediaGridTimeline = (props: Props) => {
         if (!el) return
 
         const handleScroll = () => {
-            // PullToRefresh用にスクロール位置を記録
-            scrollPositionRef.current = el.scrollTop
+            // デスクトップはページ全体が伸びてスクロールする。カラム内に余白が無いときだけ window を見る
+            const pageScroll = el.scrollHeight <= el.clientHeight + 1
+            const scrollTop = pageScroll ? window.scrollY : el.scrollTop
+            scrollPositionRef.current = scrollTop
 
-            if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
+            const distanceToEnd = pageScroll
+                ? el.getBoundingClientRect().bottom - window.innerHeight
+                : el.scrollHeight - scrollTop - el.clientHeight
+            if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
                 void loadMore()
@@ -262,6 +273,7 @@ export const MediaGridTimeline = (props: Props) => {
         }
 
         el.addEventListener('scroll', handleScroll)
+        window.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
@@ -274,6 +286,7 @@ export const MediaGridTimeline = (props: Props) => {
         }, fillDelayRef.current)
         return () => {
             el.removeEventListener('scroll', handleScroll)
+            window.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
     }, [scrollRef, reader, hasMoreData, loading, loadMore])
@@ -285,8 +298,10 @@ export const MediaGridTimeline = (props: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    overflowX: 'hidden',
-                    overflowY: 'auto',
+                    // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
+                    // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
+                    overflowX: isMobile ? 'hidden' : 'clip',
+                    overflowY: isMobile ? 'auto' : 'visible',
                     // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
                     scrollbarGutter: 'stable',
                     // iOS の慣性スクロール跳ね返りを抑制して PullToRefresh との干渉を防ぐ

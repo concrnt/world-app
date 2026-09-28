@@ -25,6 +25,7 @@ import { PullToRefresh } from './PullToRefresh'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { RenderError } from './message/RenderError'
 import { Loading } from './message/Loading'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { MdArrowUpward } from 'react-icons/md'
 
 interface NewArrivalIcon {
@@ -53,6 +54,7 @@ const FILL_DELAY_MAX = 1000
 
 export const RealtimeTimeline = (props: Props) => {
     const { client, isDomainOffline } = useClient()
+    const isMobile = useIsMobile()
 
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
     // 表示中はpull-to-refresh実行中の見た目にし、スケルトン・末尾表示は出さない
@@ -305,8 +307,12 @@ export const RealtimeTimeline = (props: Props) => {
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
-            if (scrollRef.current) {
-                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+            const el = scrollRef.current
+            if (!el) return
+            if (el.scrollHeight <= el.clientHeight + 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else {
+                el.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -354,8 +360,13 @@ export const RealtimeTimeline = (props: Props) => {
     /** 新着バッジクリック時の処理 */
     const handleNewArrivalClick = useCallback(() => {
         setNewArrivals([])
-        if (scrollRef.current) {
-            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+        const el = scrollRef.current
+        if (el) {
+            if (el.scrollHeight <= el.clientHeight + 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else {
+                el.scrollTo({ top: 0, behavior: 'smooth' })
+            }
         }
         onRefresh()
     }, [onRefresh])
@@ -366,15 +377,20 @@ export const RealtimeTimeline = (props: Props) => {
         if (!initialLoaded) return
 
         const handleScroll = () => {
-            // PullToRefresh用にスクロール位置を記録
-            scrollPositionRef.current = el.scrollTop
+            // デスクトップはページ全体が伸びてスクロールする。カラム内に余白が無いときだけ window を見る
+            const pageScroll = el.scrollHeight <= el.clientHeight + 1
+            const scrollTop = pageScroll ? window.scrollY : el.scrollTop
+            scrollPositionRef.current = scrollTop
 
             // haltUpdate制御：スクロールが閾値を超えたら自動更新を停止
             if (reader.current) {
-                reader.current.haltUpdate = el.scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
+                reader.current.haltUpdate = scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
             }
 
-            if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
+            const distanceToEnd = pageScroll
+                ? el.getBoundingClientRect().bottom - window.innerHeight
+                : el.scrollHeight - scrollTop - el.clientHeight
+            if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
                 if (!reader.current) return
@@ -401,6 +417,7 @@ export const RealtimeTimeline = (props: Props) => {
         }
 
         el.addEventListener('scroll', handleScroll)
+        window.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
@@ -413,6 +430,7 @@ export const RealtimeTimeline = (props: Props) => {
         }, fillDelayRef.current)
         return () => {
             el.removeEventListener('scroll', handleScroll)
+            window.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
     }, [scrollRef, reader, hasMoreData, initialLoaded, loading])
@@ -522,8 +540,10 @@ export const RealtimeTimeline = (props: Props) => {
                         flexDirection: 'column',
                         gap: '8px',
                         padding: '8px 0',
-                        overflowX: 'hidden',
-                        overflowY: 'auto',
+                        // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
+                        // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
+                        overflowX: isMobile ? 'hidden' : 'clip',
+                        overflowY: isMobile ? 'auto' : 'visible',
                         // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
                         scrollbarGutter: 'stable',
                         overscrollBehaviorY: 'none'

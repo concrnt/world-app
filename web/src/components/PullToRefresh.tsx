@@ -2,6 +2,7 @@ import { RefObject, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ReactNode } from 'react'
 import { MdArrowDownward, MdSync } from 'react-icons/md'
 import styles from './PullToRefresh.module.css'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const PTR_HEIGHT = 60
 
@@ -13,6 +14,7 @@ export interface Props {
 }
 
 export const PullToRefresh = (props: Props): ReactNode => {
+    const isMobile = useIsMobile()
     const scrollParentRef = useRef<HTMLDivElement>(null)
 
     const [touchPosition, setTouchPosition] = useState<number>(0)
@@ -108,8 +110,8 @@ export const PullToRefresh = (props: Props): ReactNode => {
                 ref={scrollParentRef}
                 style={{
                     display: 'flex',
-                    flex: 1,
-                    overflow: 'hidden',
+                    flex: isMobile ? 1 : undefined,
+                    overflow: isMobile ? 'hidden' : 'visible',
                     flexDirection: 'column'
                 }}
             >

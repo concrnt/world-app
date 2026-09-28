@@ -20,7 +20,7 @@ export const View = (props: Props) => {
                 data-testid="view-classic"
                 style={{
                     width: '100%',
-                    height: '100%',
+                    height: isMobile ? '100%' : undefined,
                     display: 'flex',
                     flexDirection: 'column',
                     color: CssVar.contentText,
@@ -41,8 +41,8 @@ export const View = (props: Props) => {
                     color: CssVar.contentText,
                     backgroundColor: CssVar.contentBackground,
                     borderRadius: CssVar.round(1),
-                    overflow: 'hidden',
-                    flex: 1,
+                    overflow: isMobile ? 'hidden' : 'visible',
+                    flex: isMobile ? 1 : undefined,
                     // モバイル幅ではデスクトップのカードラッパーが無いので、
                     // ui版View(=app版の見た目)と同じマージンをここで持つ
                     ...(isMobile && {
