@@ -615,7 +615,8 @@
             "signatureVerification": "Signature verification",
             "verificationKey": "Verification key ({{type}})",
             "verificationError": "Verification error: {{error}}",
-            "keyMismatch": "The key recovered from the signature does not match the verification key"
+            "keyMismatch": "The key recovered from the signature does not match the verification key",
+            "associationsLoadFailed": "Failed to load associations: {{error}}"
         },
         "mentionAssociation": {
             "userMentioned": "{{name}} mentioned you",
@@ -627,6 +628,10 @@
         "reactionAssociation": {
             "userReacted": "{{name}} reacted",
             "loading": "Loading..."
+        },
+        "errorNotice": {
+            "title": "Error details",
+            "showDetails": "Show details"
         },
         "renderError": {
             "messageDeleted": "This message has been deleted",

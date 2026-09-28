@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+ の system splash(windowSplashScreenAnimatedIcon)用。
+    システムは直径 2/3 の円でマスクするため、ロゴを内側に寄せている。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/splash_logo"
+    android:inset="20%" />

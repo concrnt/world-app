@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Activity の windowBackground。WebView が最初のフレームを描くまでの間に表示される。
+    app/src/components/LoadingFull.tsx(既定 blue テーマ色+中央100dpロゴ)を鏡写しにしている。
+    iOS の LaunchScreen.storyboard、tauri.conf.json の backgroundColor と同じ色。
+    ドローアブルには文字を置けないため「Concrnt」の文字は無し。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+    <item
+        android:width="100dp"
+        android:height="100dp"
+        android:gravity="center"
+        android:drawable="@drawable/splash_logo" />
+</layer-list>

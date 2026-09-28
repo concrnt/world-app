@@ -2,8 +2,6 @@ import { ReactNode, use } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useClient } from '../../contexts/Client'
-import { usePreference } from '../../contexts/Preference'
-import { HorizontalLayout, Text } from '@concrnt/ui'
 import { ApNoteSchema, AtprotoRecordSchema, Message, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { GfmMessage } from './GfmMessage'
@@ -23,6 +21,7 @@ import { OnelineMessage } from './OnelineMessage'
 import { ActivitypubNote } from './ActivitypubNote'
 import { ActivitypubNoteOneline } from './ActivitypubNoteOneline'
 import { BlueskyRecord } from './BlueskyRecord'
+import { ErrorNotice } from './ErrorNotice'
 
 interface Props {
     uri?: string
@@ -38,7 +37,6 @@ interface Props {
 export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
     const { t } = useTranslation('', { keyPrefix: 'components.renderError' })
-    const [devmode] = usePreference('developerMode')
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
     const hint = props.hint ?? sourceDomain
@@ -149,28 +147,17 @@ export const MessageContainer = (props: Props): ReactNode | null => {
         case 'https://raw.githubusercontent.com/totegamma/concurrent-schemas/master/messages/note/0.0.1.json':
             return <LegacyNoteMessage message={message} forceExpanded={props.forceExpanded} detail={props.detail} />
         default:
-            // 未対応スキーマの生JSONは開発者向け情報なので、devmode以外はRenderErrorと同じ1行表示に揃える
-            if (!devmode) {
-                return (
-                    <div
-                        style={{
-                            padding: '0 8px'
-                        }}
-                    >
-                        <Text variant="caption">{t('unsupportedSchema')}</Text>
-                    </div>
-                )
-            }
+            // 未対応スキーマの生JSONは開発者向け情報なので、1行表示+iボタンのドロワーで確認できるようにする
             return (
                 <div
                     style={{
-                        overflow: 'hidden'
+                        padding: '0 8px'
                     }}
                 >
-                    <Text>Unsupported message schema: {message.schema}</Text>
-                    <HorizontalLayout>
-                        <pre>{JSON.stringify(message, null, 2)}</pre>
-                    </HorizontalLayout>
+                    <ErrorNotice
+                        message={t('unsupportedSchema')}
+                        detail={`Unsupported message schema: ${message.schema}\n` + JSON.stringify(message, null, 2)}
+                    />
                 </div>
             )
     }

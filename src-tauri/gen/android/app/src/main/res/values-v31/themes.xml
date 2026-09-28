@@ -1,0 +1,12 @@
+<resources>
+    <!--
+        Android 12+ はコールド起動時に必ず system splash を出す。文字は置けないため
+        背景色と白ロゴのみを LoadingFull に合わせる。system splash の後は
+        values/themes.xml と同じ windowBackground(色+ロゴ)が WebView 描画まで表示される。
+    -->
+    <style name="Theme.world_app.Splash">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+</resources>
