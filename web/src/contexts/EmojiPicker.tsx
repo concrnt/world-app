@@ -438,7 +438,7 @@ export const EmojiPickerProvider = (props: Props) => {
         const sheet = sheetRef.current
         if (!sheet) return
         const startHeight = sheet.getBoundingClientRect().height
-        const maxHeight = window.innerHeight - readSafeTop()
+        const maxHeight = window.innerHeight - readSafeTop() - 56
         event.currentTarget.setPointerCapture(event.pointerId)
         sheetDrag.current = {
             pointerId: event.pointerId,
@@ -490,7 +490,7 @@ export const EmojiPickerProvider = (props: Props) => {
             const sheet = sheetRef.current
             if (!sheet) return
             const startHeight = sheet.getBoundingClientRect().height
-            const maxHeight = window.innerHeight - readSafeTop()
+            const maxHeight = window.innerHeight - readSafeTop() - 56
             event.currentTarget.setPointerCapture(event.pointerId)
             sheetDrag.current = {
                 pointerId: event.pointerId,
@@ -535,7 +535,7 @@ export const EmojiPickerProvider = (props: Props) => {
         sheetDragHeight !== null
             ? `${sheetDragHeight}px`
             : sheetExpanded
-              ? 'calc(100vh - env(safe-area-inset-top))'
+              ? 'calc(100vh - env(safe-area-inset-top) - 56px)'
               : '50vh'
 
     return (
@@ -1273,20 +1273,34 @@ const TabButton = (props: { selected?: boolean; onClick?: () => void; children: 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                position: 'relative',
                 minWidth: '36px',
                 minHeight: '36px',
                 padding: `${CssVar.space(1)}`,
                 border: 'none',
-                background: props.selected ? `rgb(from ${CssVar.contentText} r g b / 0.1)` : 'transparent',
+                background: props.selected ? `rgb(from ${CssVar.contentText} r g b / 0.12)` : 'transparent',
                 borderRadius: CssVar.round(0.5),
                 cursor: 'pointer',
                 color: CssVar.contentText,
-                opacity: props.selected ? 1 : 0.5,
                 flexShrink: 0,
                 WebkitTapHighlightColor: 'transparent'
             }}
         >
             {props.children}
+            {props.selected && (
+                <span
+                    style={{
+                        position: 'absolute',
+                        left: '25%',
+                        right: '25%',
+                        bottom: '2px',
+                        height: '3px',
+                        borderRadius: '2px',
+                        background: CssVar.uiBackground,
+                        pointerEvents: 'none'
+                    }}
+                />
+            )}
         </button>
     )
 }
