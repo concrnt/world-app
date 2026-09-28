@@ -16,7 +16,6 @@ export interface ClientContextState {
     reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
     isDomainOffline: boolean
-    domainRecovered: boolean
     isSubkeyInvalid: boolean
     isSwitching: boolean
     switchError: string | null
@@ -34,7 +33,6 @@ const ClientContext = createContext<ClientContextState>({
     reload: async () => {},
     logout: async () => {},
     isDomainOffline: false,
-    domainRecovered: false,
     isSubkeyInvalid: false,
     isSwitching: false,
     switchError: null,
@@ -54,16 +52,16 @@ interface SessionState {
 export const ClientProvider = (props: Props): ReactNode => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.client' })
     const [client, setClient] = useState<Client | null | undefined>(undefined)
-    const [isOffline, setIsOffline] = useState(false)
     const [isDomainOffline, setIsDomainOffline] = useState(false)
-    const [domainRecovered, setDomainRecovered] = useState(false)
     const [subkeyInvalid, setSubkeyInvalid] = useState(false)
     const [progress, setProgress] = useState('')
     const [setupError, setSetupError] = useState<string | null>(null)
     // サーバーのリセットや他ドメインへの移行で、自分の登録(entity)がこのサーバーに存在しないケース
     const [notFoundOn, setNotFoundOn] = useState<string | null>(null)
     const clientRef = useRef<Client | null>(null)
-    const bootedOfflineRef = useRef(false)
+    // 生きたサーバーに対して登録の実在を確認できたか。キャッシュ起動やオフライン起動ではfalseのまま
+    // 表示を始め、オンライン遷移時に裏検証をやり直す
+    const verifiedRef = useRef(false)
     const [isSwitching, setIsSwitching] = useState(false)
     const [switchError, setSwitchError] = useState<string | null>(null)
     // client.profilesはミューテートされるだけなので、更新通知でcontext valueを再生成して
@@ -72,6 +70,64 @@ export const ClientProvider = (props: Props): ReactNode => {
     // client.server(well-known)も同様。復帰時リフレッシュでサービス広告が変わったら
     // client.server.endpoints直読みのコンポーネント(Settings等)へ反映する
     const [serverVersion, setServerVersion] = useState(0)
+
+    // キャッシュから起動した後の裏検証。表示を止めずに、サーバーが「登録なし」「subkey失効」を
+    // 明言した時だけ既存の画面/ドロワーへ遷移する。ネットワーク由来の失敗はfail-open。
+    // 検証が通ったらデフォルトタイムラインの作成・旧設定の移行も裏で済ませる
+    const verifyInBackground = useCallback(async (client: Client): Promise<void> => {
+        const isCurrent = () => clientRef.current === client
+        const domain = client.api.defaultHost
+        const authProvider = client.api.authProvider
+        // entityの取り直しは本体のKVSを通さない: fetchWithCacheは404で負キャッシュを書くため、
+        // 一過性の404(CDN/経路の障害)が表示中の自分所有リソースの解決まで巻き込んでしまう。
+        // well-knownは構築済みの値を流用して余計な取得を避ける
+        const probe = new Api(domain, authProvider, new InMemoryKVS())
+        // 縮退起動の仮well-known(endpoints空)は流用せず、プローブに取り直させる
+        if (Object.keys(client.server.endpoints ?? {}).length > 0) {
+            await probe.cache.set(`domain:${domain}`, client.server)
+        }
+        const [entityResult, subkeyResult] = await Promise.allSettled([
+            probe.getEntity(client.ccid, undefined, { cache: 'no-cache' }),
+            client.checkSubkeyStatus()
+        ])
+        if (!isCurrent()) return
+
+        let verified = false
+        if (entityResult.status === 'fulfilled') {
+            client.entity = entityResult.value.value
+            verified = true
+        } else if (entityResult.reason instanceof ServerOfflineError) {
+            // オフライン: バナーは既に出ている。オンライン遷移時に再検証する
+            return
+        } else if (entityResult.reason instanceof NotFoundError) {
+            // NotFoundErrorはキャプティブポータルやデプロイ中CDNの404でも届く。「登録が無い」と断定できるのは、
+            // 認証付きGET /registerがregistration-not-foundコードを返した時だけ(コールド起動時と同じ判定)
+            try {
+                await probe.getRegistration(domain, { useMasterkey: !authProvider.canSignSub() })
+                // 登録は健在 = 別の404が原因。表示は続ける
+            } catch (e2) {
+                if (!isCurrent()) return
+                if (e2 instanceof NotFoundError && e2.code === ErrorCodeRegistrationNotFound) {
+                    setNotFoundOn(domain)
+                    return
+                }
+            }
+        } else {
+            console.error('Background entity verification failed', entityResult.reason)
+        }
+
+        const subkeyIsInvalid = subkeyResult.status === 'fulfilled' && subkeyResult.value === 'invalid'
+        if (subkeyIsInvalid) setSubkeyInvalid(true)
+        if (verified) verifiedRef.current = true
+
+        if (verified && !subkeyIsInvalid) {
+            await setupDefaultTimelines(client).catch((err) => {
+                console.error('Failed to set up default timelines', err)
+            })
+            if (!isCurrent()) return
+            await migrateLegacyProfilePolicies(client).catch(console.error)
+        }
+    }, [])
 
     const reload = useCallback(
         async (name?: string) => {
@@ -84,7 +140,7 @@ export const ClientProvider = (props: Props): ReactNode => {
             setNotFoundOn(null)
             if (isLiveSwitch) setIsSwitching(true)
             try {
-                setProgress(t('checkingSession'))
+                // セッション確認は一瞬なので進捗文言は出さない(キャッシュ起動ではロード画面自体が数msで消える)
                 const session = await invoke<SessionState | undefined>('get_session')
                 console.log('session', session)
                 if (!session) {
@@ -108,7 +164,8 @@ export const ClientProvider = (props: Props): ReactNode => {
                 const profileKey = `selectedProfile:${ccid}`
                 const profileName = name ?? localStorage.getItem(profileKey) ?? undefined
 
-                const authProvider = await TauriAuthProvider.create()
+                // get_sessionは上で取得済みなので、create()経由で二度呼ばない
+                const authProvider = new TauriAuthProvider(ccid, ckid)
                 const kvs = getResourceCache(ccid)
 
                 // profiles / デフォルトタイムライン / pinned listsの初期化。
@@ -137,7 +194,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                 try {
                     let client: Client
-                    let subkeyIsInvalid = false
+                    let verifyAfterPaint = false
 
                     const current = clientRef.current
                     const canFastPath = current && current.ccid === ccid && current.api.defaultHost === domain
@@ -153,17 +210,14 @@ export const ClientProvider = (props: Props): ReactNode => {
                             await runProfileSetup(client, false)
                         }
                     } else {
-                        setProgress(t('connectingToServer'))
+                        // 起動: ログイン時に保存済みの自分のwell-known/entityから組み立てて、ネットワークを待たずに表示する
+                        // (キャッシュ欠落時のネットワーク取得、到達不能時の縮退はcreate内で完結する)。
+                        // 登録の実在・subkey失効の確認、デフォルトタイムライン作成はsetClient後の裏検証で行う
                         client = await Client.create(domain, authProvider, kvs, profileName)
-
-                        // サーバーリセットや他デバイスからのrevokeで、自分のsubkeyが失効していないか確認する
-                        // (オフライン起動時はどのみち書き込みができないため確認しない)
-                        if (client.ccid !== '' && client.isOnline) {
-                            setProgress(t('checkingKeyStatus'))
-                            subkeyIsInvalid = (await client.checkSubkeyStatus()) === 'invalid'
-                        }
-
-                        await runProfileSetup(client, subkeyIsInvalid)
+                        // どちらもキャッシュ即返し(IDB読み)。setClient前に済ませてHomeのスケルトンちらつきを防ぐ
+                        await client.updateProfiles().catch(() => {})
+                        await client.pinnedLists.value().catch(() => {})
+                        verifyAfterPaint = true
                     }
 
                     // 保存されていたプロフィールが削除済みの場合はmainへフォールバックする
@@ -178,7 +232,13 @@ export const ClientProvider = (props: Props): ReactNode => {
                         const stale = client
                         client = stale.withProfile('main')
                         stale.dispose()
-                        await runProfileSetup(client, subkeyIsInvalid)
+                        if (verifyAfterPaint) {
+                            // 起動時はネットワークを待たない(デフォルトタイムライン作成等は裏検証が行う)
+                            await client.updateProfiles().catch(() => {})
+                            await client.pinnedLists.value().catch(() => {})
+                        } else {
+                            await runProfileSetup(client, false)
+                        }
                     }
 
                     if (name !== undefined) {
@@ -188,11 +248,13 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('Client created successfully. online:', client.isOnline)
                     clientRef.current?.dispose()
                     clientRef.current = client
-                    bootedOfflineRef.current = !client.isOnline
                     setIsDomainOffline(!client.isOnline)
-                    setDomainRecovered(false)
-                    setSubkeyInvalid(subkeyIsInvalid)
+                    // subkey失効は表示後の裏検証で検知する(fast pathはアカウント単位で検証済み)
+                    setSubkeyInvalid(false)
                     setClient(client)
+                    if (verifyAfterPaint) {
+                        verifyInBackground(client)
+                    }
                 } catch (err) {
                     console.error('Failed to create client', err)
                     if (isLiveSwitch && clientRef.current) {
@@ -201,9 +263,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                         setSwitchError(err instanceof Error ? err.message : String(err))
                         return
                     }
-                    if (err instanceof ServerOfflineError) {
-                        setIsOffline(true)
-                    } else if (err instanceof NotFoundError) {
+                    if (err instanceof NotFoundError) {
                         // NotFoundErrorはwell-knownの404、セットアップ中のcommitの404、キャプティブポータルや
                         // デプロイ中CDNの404でも届く。「登録が無い」と断定できるのは、認証付きGET /registerが
                         // registration-not-foundコードを返した時だけ。それ以外(403=認証不成立/entityなし、
@@ -216,8 +276,6 @@ export const ClientProvider = (props: Props): ReactNode => {
                         } catch (e2) {
                             if (e2 instanceof NotFoundError && e2.code === ErrorCodeRegistrationNotFound) {
                                 setNotFoundOn(domain)
-                            } else if (e2 instanceof ServerOfflineError) {
-                                setIsOffline(true)
                             } else {
                                 setSetupError(err.message)
                             }
@@ -240,7 +298,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                 setIsSwitching(false)
             }
         },
-        [t]
+        [t, verifyInBackground]
     )
 
     useEffect(() => {
@@ -250,22 +308,35 @@ export const ClientProvider = (props: Props): ReactNode => {
     useEffect(() => {
         if (!client) return
         const onStatusChanged = (online: boolean) => {
-            if (online) {
-                if (bootedOfflineRef.current) {
-                    // 読み取り専用起動だった場合は再初期化が必要なので、バナーに再接続ボタンを出す
-                    setDomainRecovered(true)
-                } else {
-                    setIsDomainOffline(false)
-                }
-            } else {
+            if (!online) {
                 setIsDomainOffline(true)
-                setDomainRecovered(false)
+                return
             }
+            // 復帰: 裏検証(オフライン中に起動していた場合)と鮮度重視リソースの取り直しを済ませてから
+            // バナーを消す。先に消すと、失敗promiseを保持したままのHome等のErrorBoundaryが
+            // resetKeysで再試行しても同じ失敗を引いてまた落ちる(復帰時は30秒抑制が解除されている)
+            const tasks = [client.refreshFreshResources()]
+            if (!verifiedRef.current) {
+                tasks.push(verifyInBackground(client))
+            }
+            Promise.allSettled(tasks).then(() => {
+                if (clientRef.current !== client) return
+                setIsDomainOffline(!client.isOnline)
+            })
         }
         client.subscribeOnlineStatus(onStatusChanged)
+        // 購読前(setClient直後の裏検証の失敗など)に遷移していた分を取り込む
+        setIsDomainOffline(!client.isOnline)
 
         const onProfilesUpdated = () => {
             setProfilesVersion((v) => v + 1)
+            // キャッシュ起動では保存されていたプロフィールがサーバー側で削除済みでも一旦表示される。
+            // 裏更新で消えていたと分かった時点でmainへ戻す(明示的な切替はSidebarの一覧から選ばれるため対象外)
+            if (client.currentProfile !== 'main' && !(client.currentProfile in client.profiles)) {
+                console.log(`Profile ${client.currentProfile} no longer exists. Falling back to main`)
+                localStorage.removeItem(`selectedProfile:${client.ccid}`)
+                reload()
+            }
         }
         client.subscribeProfilesUpdated(onProfilesUpdated)
 
@@ -301,7 +372,7 @@ export const ClientProvider = (props: Props): ReactNode => {
             window.removeEventListener('offline', onBrowserNetworkChange)
             document.removeEventListener('visibilitychange', onVisibilityChange)
         }
-    }, [client])
+    }, [client, reload, verifyInBackground])
 
     const logout = useCallback(async () => {
         const ccid = clientRef.current?.ccid
@@ -326,7 +397,6 @@ export const ClientProvider = (props: Props): ReactNode => {
             reload,
             logout,
             isDomainOffline,
-            domainRecovered,
             isSubkeyInvalid: subkeyInvalid,
             isSwitching,
             switchError,
@@ -337,7 +407,6 @@ export const ClientProvider = (props: Props): ReactNode => {
         reload,
         logout,
         isDomainOffline,
-        domainRecovered,
         subkeyInvalid,
         isSwitching,
         switchError,
@@ -345,40 +414,6 @@ export const ClientProvider = (props: Props): ReactNode => {
         profilesVersion,
         serverVersion
     ])
-
-    if (isOffline) {
-        return (
-            <div
-                style={{
-                    width: '100vw',
-                    height: '100dvh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '1rem'
-                }}
-            >
-                {t('serverOffline')}
-                <Button
-                    onClick={() => {
-                        setIsOffline(false)
-                        reload()
-                    }}
-                >
-                    {t('retry')}
-                </Button>
-                <Button
-                    onClick={async () => {
-                        await logout()
-                        window.location.reload()
-                    }}
-                >
-                    {t('logout')}
-                </Button>
-            </div>
-        )
-    }
 
     if (notFoundOn) {
         return (

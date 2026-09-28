@@ -9,6 +9,8 @@ export class Socket {
     api: Api
     ws: any
     subscriptions: Map<string, Set<(event: RealtimeEvent) => void>> = new Map()
+    // open(初回接続・再接続)のたびに呼ぶ。TimelineReaderが接続の隙間をcatch-upするために使う
+    private openListeners: Set<() => void> = new Set()
 
     failcount = 0
     reconnecting = false
@@ -98,7 +100,22 @@ export class Socket {
         this.ws.onopen = (event: any) => {
             console.info('socket open', event)
             this.ws.send(JSON.stringify({ type: 'listen', prefixes: Array.from(this.subscriptions.keys()) }))
+            for (const listener of Array.from(this.openListeners)) {
+                listener()
+            }
         }
+    }
+
+    get isOpen(): boolean {
+        return this.ws?.readyState === WS.OPEN
+    }
+
+    addOpenListener(listener: () => void) {
+        this.openListeners.add(listener)
+    }
+
+    removeOpenListener(listener: () => void) {
+        this.openListeners.delete(listener)
     }
 
     heartbeat() {

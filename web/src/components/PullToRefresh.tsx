@@ -65,7 +65,8 @@ export const PullToRefresh = (props: Props): ReactNode => {
         <>
             <div
                 style={{
-                    height: `${ptrEnabled ? PTR_HEIGHT : loaderSize}px`,
+                    // ジェスチャ無しで親がisFetchingにした場合(起動時スナップショット表示中・新着バッジ)もスピナーを見せる
+                    height: `${ptrEnabled || props.isFetching ? PTR_HEIGHT : loaderSize}px`,
                     width: '100%',
                     position: 'relative',
                     color: 'text.secondary',

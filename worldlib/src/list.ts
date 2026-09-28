@@ -1,4 +1,4 @@
-import { CDID, Document, FetchOptions, SignedDocument } from '@concrnt/client'
+import { CDID, Document, FetchOptions, ServerOfflineError, SignedDocument } from '@concrnt/client'
 import { Client } from './client'
 import { ListSchema } from './schemas/list'
 import { CachedPromise } from './cachedPromise'
@@ -23,19 +23,32 @@ export class List {
         }
     }
 
-    items = new CachedPromise<string[]>(async () => {
-        const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
-        const items = await this.client.api.queryAll(
-            {
-                prefix
-            },
-            undefined,
-            { cache: true }
-        )
+    // ホームの描画経路なのでキャッシュ即返し(裏で再取得)。fresh=trueは変更直後や復帰時の取り直し用。
+    // isEqualは必須: 内容が同じ新配列をpushすると利用側のtimelines memoが変わってreaderが作り直される
+    items = new CachedPromise<string[]>(
+        async (fresh) => {
+            const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
+            // オフラインでキャッシュも無い初回取得は空で確定させ、ホーム(自分のhome-timelineだけ)は表示できるようにする。
+            // 復帰時のrefresh()で実際の中身に置き換わる。refresh(fresh)の失敗はrejectさせて既存値を維持する
+            // (空をpushするとタイムライン構成が変わってreaderが作り直される)
+            const items = await this.client.api
+                .queryAll(
+                    {
+                        prefix
+                    },
+                    undefined,
+                    { cache: fresh ? 'no-cache' : 'swr' }
+                )
+                .catch((err) => {
+                    if (!fresh && err instanceof ServerOfflineError) return [] as SignedDocument[]
+                    throw err
+                })
 
-        const documents = items.map((i) => JSON.parse(i.document))
-        return documents.map((d) => d.value.href)
-    })
+            const documents = items.map((i) => JSON.parse(i.document))
+            return documents.map((d) => d.value.href)
+        },
+        (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    )
 
     entries = new CachedPromise<ListEntry[]>(async () => {
         const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
@@ -115,9 +128,10 @@ export class List {
         }
 
         await client.api.commit(document)
-        this.items.reload()
+        // itemsはキャッシュ即返しなのでreload()だと古い一覧を先に返す。ネットワークから取り直してpushする
+        await this.items.refresh()
         this.entries.reload()
-        client.knownCommunities.reload()
+        client.knownCommunities.refresh()
     }
 
     async removeItem(client: Client, item: string): Promise<void> {
@@ -130,8 +144,8 @@ export class List {
         key += hash
 
         await client.api.delete(key)
-        this.items.reload()
+        await this.items.refresh()
         this.entries.reload()
-        client.knownCommunities.reload()
+        client.knownCommunities.refresh()
     }
 }

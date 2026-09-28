@@ -13,6 +13,9 @@ export class CachedPromise<T> {
             const promise = this.executor()
             promise.then(
                 (value) => {
+                    // 解決後はReactのuse()が同期的に読めるようstatus/valueを付ける(push()と同じ)。
+                    // これが無いと、解決済みでも初めてuse()する度に一度サスペンドして描画パスがやり直しになる
+                    Object.assign(promise, { status: 'fulfilled', value })
                     if (this.promise === promise) {
                         this.settled = { value }
                         // current で非サスペンド読みしている購読者へ解決を知らせる。

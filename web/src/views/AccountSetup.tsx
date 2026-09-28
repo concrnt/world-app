@@ -15,7 +15,9 @@ import {
     type Identity
 } from '@concrnt/client'
 import { useReloadClient } from '../contexts/Client'
-import { semantics } from '@concrnt/worldlib'
+import { resourceCache } from '../lib/cache'
+import { setupDefaultTimelines } from '../utils/clientSetup'
+import { Client, semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
@@ -162,13 +164,19 @@ export const AccountSetup = (props: Props) => {
 
             await api.commit(subkeyDoc, domain, { useMasterkey: true })
 
-            storeWebSession(
+            const subkeyStr = `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
+            storeWebSession(domain, identity.CCID, identity.privateKey, identity.mnemonic, subkeyStr)
+
+            // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存し
+            // (Client.createのネットワーク経路が書く)、ホーム/通知/アクティビティタイムラインも
+            // ここで作っておく(起動後はこれらの存在を前提に描画し、検証は裏で行う)
+            const client = await Client.create(
                 domain,
-                identity.CCID,
-                identity.privateKey,
-                identity.mnemonic,
-                `concrnt-subkey ${subIdentity.privateKey} ${identity.CCID}@${domain} -`
+                new InMemoryAuthProvider(identity.privateKey, subkeyStr),
+                resourceCache
             )
+            await setupDefaultTimelines(client)
+            client.dispose()
             reset()
             await reload()
             // ClientProviderの外(/signupルート)ではreloadはno-opなので、フルリロードで確実にログイン状態へ遷移する

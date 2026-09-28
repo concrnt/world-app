@@ -1,4 +1,13 @@
-import { startTransition, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import {
+    startTransition,
+    Suspense,
+    useEffect,
+    useCallback,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState
+} from 'react'
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
@@ -17,6 +26,8 @@ import { PostContextProvider } from '../contexts/PostContext'
 
 import { MdTune } from 'react-icons/md'
 import { PinnedListItemClass, semantics, List } from '@concrnt/worldlib'
+import { ChunklineItem } from '@concrnt/client'
+import { loadTimelineSnapshot, saveTimelineSnapshot, TimelineSnapshot } from '../lib/timelineSnapshot'
 import { CssVar } from '../types/Theme'
 import { ListName } from '../components/ListName'
 import { ProfileEditor } from '../components/ProfileEditor'
@@ -36,6 +47,37 @@ export const HomeView = (props: ScrollViewProps) => {
 
     const [selectedTabUri, setSelectedTabUri] = useState<string>('')
     const [listSettingsOpen, setListSettingsOpen] = useState(false)
+    // 起動時スナップショット(前回表示の投稿列)。HomeMainをマウントする前にKVSから読み終えておく。
+    // HomeMainの中でサスペンドさせると、外側Suspenseの再試行中は入れ子のフォールバックがcommitされず
+    // 投稿が数百ms遅れて出るため、サスペンドではなくstateで待つ。スナップショットがあるときは
+    // 各リストのlist/itemsも(KVSにあるはずなので)先に読んで、TimelineSkeletonのちらつきを無くす。
+    // 初回以降は値を保持するので、プロフィール切替でHomeMainは再マウントしない
+    const [timelineSnapshot, setTimelineSnapshot] = useState<TimelineSnapshot | null | undefined>(undefined)
+    useEffect(() => {
+        let isCancelled = false
+        loadTimelineSnapshot(client)
+            .then(async (snapshot) => {
+                if (snapshot) {
+                    const pins = await client.pinnedLists.value().catch(() => [])
+                    await Promise.all(
+                        pins.map((pin) =>
+                            pin.list
+                                .value()
+                                .then((list) => list?.items.value())
+                                .catch(() => {})
+                        )
+                    )
+                }
+                return snapshot
+            })
+            .catch(() => null)
+            .then((snapshot) => {
+                if (!isCancelled) setTimelineSnapshot(snapshot)
+            })
+        return () => {
+            isCancelled = true
+        }
+    }, [client])
 
     // fix default settings
     // 一度閉じたらeffect再実行(言語ロード等)で再表示しないためのガード
@@ -87,6 +129,8 @@ export const HomeView = (props: ScrollViewProps) => {
                     />
                 </Drawer>
                 <ErrorBoundary
+                    // オフライン起動で失敗していた場合、復帰(バナー消灯)時に自動で再試行する
+                    resetKeys={[isDomainOffline]}
                     fallbackRender={({ resetErrorBoundary }) => (
                         <div
                             style={{
@@ -102,13 +146,16 @@ export const HomeView = (props: ScrollViewProps) => {
                         </div>
                     )}
                 >
-                    <Suspense>
-                        <HomeMain
-                            ref={scrollRef}
-                            selectedTabUri={selectedTabUri}
-                            setSelectedTabUri={setSelectedTabUri}
-                        />
-                    </Suspense>
+                    {timelineSnapshot !== undefined && (
+                        <Suspense>
+                            <HomeMain
+                                ref={scrollRef}
+                                selectedTabUri={selectedTabUri}
+                                setSelectedTabUri={setSelectedTabUri}
+                                timelineSnapshot={timelineSnapshot}
+                            />
+                        </Suspense>
+                    )}
                 </ErrorBoundary>
             </View>
         </>
@@ -118,11 +165,13 @@ export const HomeView = (props: ScrollViewProps) => {
 const HomeMain = ({
     ref,
     selectedTabUri,
-    setSelectedTabUri
+    setSelectedTabUri,
+    timelineSnapshot
 }: {
     ref?: ScrollViewRef
     selectedTabUri: string
     setSelectedTabUri: (uri: string) => void
+    timelineSnapshot: TimelineSnapshot | null
 }) => {
     const { client } = useClient()
 
@@ -137,6 +186,24 @@ const HomeMain = ({
         ? selectedTabUri
         : (sortedPins[0]?.uri ?? '')
     const pin = sortedPins.find((pin) => pin.uri === effectiveTabUri)
+    // 起動時スナップショット(前回表示の投稿列)の保存は先頭リストだけ。
+    // 注入はさらに「起動時に最初に選ばれたタブからまだ遷移していない」間だけ行う。タブを移って戻ってきたときの
+    // 再マウント(Suspense key=pin.uri)は起動ではないので、通常どおりスケルトン→ネットワークにする
+    const isFirstList = pin !== undefined && pin.uri === sortedPins[0]?.uri
+    const [initialTabUri] = useState(effectiveTabUri)
+    const [tabChanged, setTabChanged] = useState(false)
+    if (!tabChanged && effectiveTabUri !== initialTabUri) {
+        setTabChanged(true)
+    }
+    const initialTimeline = isFirstList && !tabChanged ? (timelineSnapshot ?? undefined) : undefined
+    const onHeadChange = useCallback(
+        (timelines: string[], items: ChunklineItem[]) => {
+            saveTimelineSnapshot(client, timelines, items).catch((e) => {
+                console.error('Failed to save timeline snapshot:', e)
+            })
+        },
+        [client]
+    )
 
     // 下部タブのホーム再タップ: 先頭以外のリストを完全にトップで見ているときだけ先頭リストへ戻す。
     // それ以外(スクロール中/先頭リスト/ピン1つ)は従来どおりスクロールトップ
@@ -206,7 +273,12 @@ const HomeMain = ({
                       フォールバックはRealtimeTimelineと同じ構造で組み、置き換わったときのレイアウトシフトを防ぐ
                     */}
                     <Suspense key={pin.uri} fallback={<TimelineSkeleton />}>
-                        <TimelineWrap ref={timelineRef} pin={pin} />
+                        <TimelineWrap
+                            ref={timelineRef}
+                            pin={pin}
+                            initialTimeline={initialTimeline}
+                            onHeadChange={isFirstList ? onHeadChange : undefined}
+                        />
                     </Suspense>
                     {/* Suspense境界の内側に置くとタブ切替(境界の付け替え)のたびに再マウントされて出現アニメーションが走るので外に出す */}
                     <ComposeFAB />
@@ -216,16 +288,35 @@ const HomeMain = ({
     )
 }
 
-const TimelineWrap = (props: { pin: PinnedListItemClass; ref?: ScrollViewRef }) => {
+const TimelineWrap = (props: {
+    pin: PinnedListItemClass
+    initialTimeline?: TimelineSnapshot
+    onHeadChange?: (timelines: string[], items: ChunklineItem[]) => void
+    ref?: ScrollViewRef
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
     const [list] = useSubscribe(props.pin.list)
 
     if (!list) return <Text>{t('listNotFound')}</Text>
 
-    return <Timeline ref={props.ref} list={list} excludeSelf={props.pin.excludeSelf} />
+    return (
+        <Timeline
+            ref={props.ref}
+            list={list}
+            excludeSelf={props.pin.excludeSelf}
+            initialTimeline={props.initialTimeline}
+            onHeadChange={props.onHeadChange}
+        />
+    )
 }
 
-const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRef }) => {
+const Timeline = (props: {
+    list: List
+    excludeSelf?: boolean
+    initialTimeline?: TimelineSnapshot
+    onHeadChange?: (timelines: string[], items: ChunklineItem[]) => void
+    ref?: ScrollViewRef
+}) => {
     const { client } = useClient()
 
     const [items] = useSubscribe(props.list.items)
@@ -236,5 +327,12 @@ const Timeline = (props: { list: List; excludeSelf?: boolean; ref?: ScrollViewRe
         [self, items, props.excludeSelf]
     )
 
-    return <RealtimeTimeline ref={props.ref} timelines={timelines} />
+    return (
+        <RealtimeTimeline
+            ref={props.ref}
+            timelines={timelines}
+            initialTimeline={props.initialTimeline}
+            onHeadChange={props.onHeadChange}
+        />
+    )
 }
