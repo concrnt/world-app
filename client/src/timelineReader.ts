@@ -17,6 +17,9 @@ export class TimelineReader {
     api: Api
     timelines: string[] = []
     haltUpdate: boolean = false
+    // 先頭ページをサーバーから取得できたか(listen/reload成功でtrue)。
+    // 呼び出し側がbodyをスナップショットでseedしている場合に、本物へ差し替えてよいかの判定に使う
+    headLoaded: boolean = false
 
     hostOverride?: string
 
@@ -113,15 +116,15 @@ export class TimelineReader {
                 const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
                 this.body = [...itemsWithUpdate]
                 this.chunkedBody = [[...itemsWithUpdate]]
+                this.headLoaded = true
                 if (items.length < 16) {
                     hasMore = false
                 }
             })
             .catch((err) => {
                 console.error('Failed to load timeline:', err)
-                hasMore = false
-                this.body = []
-                this.chunkedBody = []
+                // 呼び出し側がスナップショットをseed済みの場合はオフラインでもそれを残す(通常は空のまま)
+                hasMore = this.body.length >= 16
             })
 
         const pending = this.pendingEvents
@@ -199,6 +202,7 @@ export class TimelineReader {
         const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         this.body = itemsWithUpdate
         this.chunkedBody = [itemsWithUpdate]
+        this.headLoaded = true
         if (items.length < 16) {
             hasMore = false
         }
