@@ -165,7 +165,12 @@ export const MigrationSettingsView = () => {
 
     const switchSession = async () => {
         await invoke('set_domain', { domain: destination, ccid: client.ccid })
-        await getResourceCache(client.ccid).clear()
+        const kvs = getResourceCache(client.ccid)
+        await kvs.clear()
+        // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+        await new Api(destination, new InMemoryAuthProvider(), kvs)
+            .getEntity(client.ccid, undefined, { cache: 'no-cache' })
+            .catch(console.error)
         window.location.reload()
     }
 

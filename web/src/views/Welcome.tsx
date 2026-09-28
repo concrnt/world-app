@@ -7,6 +7,7 @@ import { Navigate } from 'react-router-dom'
 import { Api, InMemoryAuthProvider, InMemoryKVS, Document, Entity, NotFoundError } from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
+import { resourceCache } from '../lib/cache'
 import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { ResetSessionButton } from '../components/ResetSessionButton'
@@ -194,8 +195,14 @@ export const WelcomeView = () => {
                     </div>
                     <AuthActions fixedBottom>
                         <AuthButton
-                            onClick={() => {
-                                if (user?.entity?.value.domain) localStorage.setItem('Domain', user.entity.value.domain)
+                            onClick={async () => {
+                                if (user?.entity?.value.domain) {
+                                    localStorage.setItem('Domain', user.entity.value.domain)
+                                    // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+                                    await new Api(user.entity.value.domain, new InMemoryAuthProvider(), resourceCache)
+                                        .getEntity(user.ccid, undefined, { cache: 'no-cache' })
+                                        .catch(console.error)
+                                }
                                 reset()
                                 window.location.reload()
                             }}

@@ -903,13 +903,11 @@
             "addEmojis": "Add emojis"
         },
         "client": {
-            "connectingToServer": "Connecting to server...",
             "checkingKeyStatus": "Checking key status...",
             "loadingProfiles": "Loading profiles...",
             "checkingTimelines": "Checking timelines...",
             "loadingLists": "Loading lists...",
             "loadingFromCache": "Loading from cache...",
-            "serverOffline": "The server is offline",
             "retry": "Retry",
             "logout": "Logout",
             "registrationNotFound": "Your registration was not found on server {{domain}}",

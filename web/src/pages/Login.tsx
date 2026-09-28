@@ -26,6 +26,7 @@ import {
     type SubKey
 } from '@concrnt/client'
 import { semantics } from '@concrnt/worldlib'
+import { resourceCache } from '../lib/cache'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from '../views/authLayout'
 import { useResetPreference } from '../contexts/Preference'
 import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
@@ -61,13 +62,13 @@ const loadRecoveryIdentity = (value: string): Identity | null => {
     }
 }
 
-const storeWebSession = (
+const storeWebSession = async (
     domain: string,
     ccid: string,
     masterKey: string | undefined,
     mnemonic: string | undefined,
     subKey: string
-) => {
+): Promise<void> => {
     // ログインし直しで既存のマスターキーが黙って消える事故を防ぐ。同一アカウントなら
     // 既存のPrivateKey/Mnemonicをそのまま残し(パスキー/サブキーで入り直してもバックアップDL可能なまま)、
     // 別アカウントなら削除せずEvacuatedKeys:<旧ccid>へ退避してID画面から回収できるようにする
@@ -107,6 +108,11 @@ const storeWebSession = (
         localStorage.setItem('Mnemonic', mnemonic)
     }
     localStorage.setItem('SubKey', subKey)
+
+    // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+    await new Api(domain, new InMemoryAuthProvider(), resourceCache)
+        .getEntity(ccid, undefined, { cache: 'no-cache' })
+        .catch(console.error)
 }
 
 const resolveEntity = async (ccid: string, resolver: string, hint?: string): Promise<Document<Entity> | null> => {
@@ -265,7 +271,7 @@ export const Login = () => {
             const identity = DeriveIdentity(new Uint8Array(prfRes.first))
             const subkeyStr = `concrnt-subkey ${identity.privateKey} ${ccid}@${domain} -`
 
-            storeWebSession(domain, ccid, undefined, undefined, subkeyStr)
+            await storeWebSession(domain, ccid, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -300,7 +306,7 @@ export const Login = () => {
                 return
             }
 
-            storeWebSession(subkey.domain, subkey.ccid, undefined, undefined, subkeyStr)
+            await storeWebSession(subkey.domain, subkey.ccid, undefined, undefined, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)
@@ -344,7 +350,7 @@ export const Login = () => {
                 console.error('Failed to migrate entity proof type', err)
             })
 
-            storeWebSession(domain, identity.CCID, identity.privateKey, identity.mnemonic, subkeyStr)
+            await storeWebSession(domain, identity.CCID, identity.privateKey, identity.mnemonic, subkeyStr)
             continueWithSession()
         } catch (error) {
             console.error(error)

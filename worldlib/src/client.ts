@@ -16,7 +16,8 @@ import {
     Acknowledge,
     Entity,
     InMemoryAuthProvider,
-    InMemoryKVS
+    InMemoryKVS,
+    ServerOfflineError
 } from '@concrnt/client'
 import {
     ListSchema,
@@ -107,6 +108,9 @@ export class Client {
             // リスト参照はcommit時点の参照先schemaでindexされる。ActivityPub inboxはcommunityTimelineから
             // apInboxTimelineへ移行したため、移行前に登録した参照はcommunity側、移行後の参照はapInbox側にしか
             // 一致しない。両方引いて合流させる
+            // オフラインでキャッシュも無い初回取得は空で確定させる(rejectすると購読元のComposerProviderごと
+            // 最上位のErrorBoundaryに落ちてアプリ全体がクラッシュ画面になる)。復帰時のrefresh()で埋まる。
+            // refresh(fresh)の失敗はrejectさせて既存値を維持する(空をpushすると表示が消える)
             const results = (
                 await Promise.all(
                     [Schemas.communityTimeline, Schemas.apInboxTimeline].map((schema) =>
@@ -119,7 +123,10 @@ export class Client {
                             { cache: fresh ? 'no-cache' : 'swr' }
                         )
                     )
-                )
+                ).catch((err) => {
+                    if (!fresh && err instanceof ServerOfflineError) return [] as SignedDocument[][]
+                    throw err
+                })
             ).flat()
 
             const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
@@ -414,6 +421,13 @@ export class Client {
         return client
     }
 
+    // ログイン時に保存済みの自分のwell-known(`domain:<host>`)とentity(`cckv://<ccid>`)をKVSから直接読んで構築する。
+    // TTL切れでも使う(登録の実在・subkey失効の検証はアプリ側が表示後に裏で行う)ため、
+    // 期限切れでthrowするfetchWithCache(force-cache)ではなくKVSを直接読む。プローブもしない。
+    // 欠落(初回起動・キャッシュ削除)なら欠けている分だけネットワークから取得してKVSに保存し、
+    // 到達不能なら仮の値(endpoints空)をメモリだけで使って縮退起動する(KVSには書かない。
+    // 復帰時にno-cacheで取り直されて置き換わる)。
+    // isOnlineは楽観的にtrueのまま。オフラインなら最初の失敗リクエストがonHostOnlineStatusChangedで知らせる
     static async create(
         host: FQDN,
         authProvider: AuthProvider,
@@ -421,58 +435,42 @@ export class Client {
         profile: string = 'main'
     ): Promise<Client> {
         const api = new Api(host, authProvider, cacheEngine)
-
-        // 自ドメインへ直接プローブ。オフラインでも以降はキャッシュから構築を試みる
-        const online = await api.getServerOnlineStatus(host)
-        if (!online) {
-            console.error(`server ${host} is offline. attempting to boot from cache...`)
-        }
-
-        // オフライン時はキャッシュがあればそこから返る。なければServerOfflineErrorが伝播する
-        const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
-        // オンライン時はキャッシュを介さず登録の実在をサーバーに確認する。サーバーリセットや移行で
-        // 登録が消えている場合、キャッシュから起動してしまうと後段のsubkeyチェックだけが失敗して
-        // 「subkey無効」と誤検知するため、ここでNotFoundErrorを投げて「登録なし」としてアプリ側に伝える
-        const entity = await api.getEntity(ccid, undefined, online ? { cache: 'no-cache' } : undefined)
+        const [serverEntry, entityEntry] = await Promise.all([
+            cacheEngine.get<Server>(`domain:${host}`).catch(() => null),
+            cacheEngine.get<SignedDocument>(`cckv://${ccid}`).catch(() => null)
+        ])
+        let server: Server | null = serverEntry?.data ?? null
+        let entity: Entity | null = null
+        if (entityEntry?.data) {
+            const document: Document<Entity> = JSON.parse(entityEntry.data.document)
+            entity = document.value
+        }
+
+        let online = true
+        if (!server || !entity) {
+            try {
+                server ??= await api.getServer(host, { timeoutms: 5000 })
+                entity ??= (await api.getEntity(ccid, undefined, { cache: 'no-cache', timeoutms: 5000 })).value
+            } catch (err) {
+                if (!(err instanceof ServerOfflineError)) throw err
+                console.error(`server ${host} is offline. booting with placeholders...`)
+                online = false
+                server ??= { version: '2.0', domain: host, csid: '', layer: '', endpoints: {} }
+                entity ??= { domain: host, alias: '', alias_proof_type: '' }
+            }
+        }
 
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
-        const client = new Client(api, ccid, entity.value, server, profile)
+        const client = new Client(api, ccid, entity, server, profile)
         if (!online) {
+            // 到達不能は失敗したfetchがApi側に記録済み。復帰検知はrecoveryPoll/online eventのプローブ→
+            // markHostOnlineの遷移通知で行われる
             client.isOnline = false
             client.startRecoveryPoll()
         }
         return client
-    }
-
-    // ネットワークを待たずにKVSのキャッシュだけからClientを構築する(2回目以降の起動用)。
-    // 必要なのは自ドメインのwell-known(`domain:<host>`)と自分のentity(`cckv://<ccid>`)の2件。
-    // どちらかが無い/負キャッシュならnull(呼び出し側がcreate()のコールド経路へ進む)。
-    // TTL切れでも構わず使う(登録の実在・subkey失効の検証は呼び出し側が表示後に裏で行う)ため、
-    // 期限切れでthrowするfetchWithCache(force-cache)ではなくKVSを直接読む。
-    // isOnlineは楽観的にtrueのまま。オフラインなら最初の失敗リクエストがonHostOnlineStatusChangedで知らせる
-    static async createFromCache(
-        host: FQDN,
-        authProvider: AuthProvider,
-        cacheEngine: KVS,
-        profile: string = 'main'
-    ): Promise<Client | null> {
-        const api = new Api(host, authProvider, cacheEngine)
-        const ccid = authProvider.getCCID()
-
-        const [serverEntry, entityEntry] = await Promise.all([
-            cacheEngine.get<Server>(`domain:${host}`),
-            cacheEngine.get<SignedDocument>(`cckv://${ccid}`)
-        ])
-        if (!serverEntry?.data || !entityEntry?.data) {
-            return null
-        }
-
-        const document: Document<Entity> = JSON.parse(entityEntry.data.document)
-        if (!document.kind) document.kind = 'entity'
-
-        return new Client(api, ccid, document.value, serverEntry.data, profile)
     }
 
     // 鍵を持たないゲスト(未ログイン)用クライアント。公開リソースの閲覧のみ可能で、署名を伴う操作は行えない

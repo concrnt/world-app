@@ -1,4 +1,4 @@
-import { CDID, Document, FetchOptions, SignedDocument } from '@concrnt/client'
+import { CDID, Document, FetchOptions, ServerOfflineError, SignedDocument } from '@concrnt/client'
 import { Client } from './client'
 import { ListSchema } from './schemas/list'
 import { CachedPromise } from './cachedPromise'
@@ -28,13 +28,21 @@ export class List {
     items = new CachedPromise<string[]>(
         async (fresh) => {
             const prefix = this.uri.endsWith('/') ? this.uri : this.uri + '/'
-            const items = await this.client.api.queryAll(
-                {
-                    prefix
-                },
-                undefined,
-                { cache: fresh ? 'no-cache' : 'swr' }
-            )
+            // オフラインでキャッシュも無い初回取得は空で確定させ、ホーム(自分のhome-timelineだけ)は表示できるようにする。
+            // 復帰時のrefresh()で実際の中身に置き換わる。refresh(fresh)の失敗はrejectさせて既存値を維持する
+            // (空をpushするとタイムライン構成が変わってreaderが作り直される)
+            const items = await this.client.api
+                .queryAll(
+                    {
+                        prefix
+                    },
+                    undefined,
+                    { cache: fresh ? 'no-cache' : 'swr' }
+                )
+                .catch((err) => {
+                    if (!fresh && err instanceof ServerOfflineError) return [] as SignedDocument[]
+                    throw err
+                })
 
             const documents = items.map((i) => JSON.parse(i.document))
             return documents.map((d) => d.value.href)

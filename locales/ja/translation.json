@@ -902,13 +902,11 @@
             "addEmojis": "絵文字を追加"
         },
         "client": {
-            "connectingToServer": "サーバーに接続しています...",
             "checkingKeyStatus": "鍵の状態を確認しています...",
             "loadingProfiles": "プロフィールを読み込んでいます...",
             "checkingTimelines": "タイムラインを確認しています...",
             "loadingLists": "リストを読み込んでいます...",
             "loadingFromCache": "キャッシュから読み込んでいます...",
-            "serverOffline": "サーバーはオフラインです",
             "retry": "再試行",
             "logout": "ログアウト",
             "registrationNotFound": "サーバー {{domain}} にあなたの登録が見つかりませんでした",

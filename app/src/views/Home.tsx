@@ -87,6 +87,8 @@ export const HomeView = (props: ScrollViewProps) => {
                     />
                 </Drawer>
                 <ErrorBoundary
+                    // オフライン起動で失敗していた場合、復帰(バナー消灯)時に自動で再試行する
+                    resetKeys={[isDomainOffline]}
                     fallbackRender={({ resetErrorBoundary }) => (
                         <div
                             style={{
