@@ -41,7 +41,8 @@ const DesktopShell = () => {
                     flex: 1,
                     minHeight: 0,
                     maxWidth: '1280px',
-                    width: '100%'
+                    width: '100%',
+                    justifyContent: 'center'
                 }}
             >
                 <aside
@@ -56,6 +57,7 @@ const DesktopShell = () => {
                     style={{
                         display: 'flex',
                         flex: 1,
+                        maxWidth: '720px',
                         overflow: 'hidden'
                     }}
                 >
@@ -67,9 +69,7 @@ const DesktopShell = () => {
                             flexFlow: 'column',
                             borderRadius: CssVar.round(2),
                             overflow: 'hidden',
-                            background: 'none',
-                            boxShadow:
-                                '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
+                            background: 'none'
                         }}
                     >
                         <Outlet />
