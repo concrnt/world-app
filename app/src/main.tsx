@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom/client'
+
 import App from './App'
 import '@concrnt/ui/style.css'
 import './index.css'

@@ -568,8 +568,6 @@
             "requestAccess": "閲覧をリクエスト"
         },
         "domainOfflineBanner": {
-            "recovered": "サーバーが復旧しました",
-            "reconnect": "再接続",
             "offline": "あなたのドメイン{{domain}}は現在オフラインのため、読み取り専用モードです。復旧までしばらくお待ちください。"
         },
         "accountSwitchingBanner": {
@@ -904,14 +902,11 @@
             "addEmojis": "絵文字を追加"
         },
         "client": {
-            "checkingSession": "セッションを確認しています...",
-            "connectingToServer": "サーバーに接続しています...",
             "checkingKeyStatus": "鍵の状態を確認しています...",
             "loadingProfiles": "プロフィールを読み込んでいます...",
             "checkingTimelines": "タイムラインを確認しています...",
             "loadingLists": "リストを読み込んでいます...",
             "loadingFromCache": "キャッシュから読み込んでいます...",
-            "serverOffline": "サーバーはオフラインです",
             "retry": "再試行",
             "logout": "ログアウト",
             "registrationNotFound": "サーバー {{domain}} にあなたの登録が見つかりませんでした",

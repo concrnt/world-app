@@ -17,6 +17,7 @@ import {
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
+import { getResourceCache } from '../lib/cache'
 import { AccountSummary, listAccounts, performAccountSwitch } from '../lib/accounts'
 import { AccountListItem } from '../components/AccountListItem'
 import { useResetPreference } from '../contexts/Preference'
@@ -353,6 +354,15 @@ export const WelcomeView = () => {
                                     }
 
                                     await invoke('set_domain', { domain: user.entity.value.domain, ccid: user.ccid })
+
+                                    // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+                                    await new Api(
+                                        user.entity.value.domain,
+                                        new InMemoryAuthProvider(),
+                                        getResourceCache(user.ccid)
+                                    )
+                                        .getEntity(user.ccid, undefined, { cache: 'no-cache' })
+                                        .catch(console.error)
 
                                     reset()
                                     window.location.reload()

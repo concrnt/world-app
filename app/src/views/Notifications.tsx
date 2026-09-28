@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from '@concrnt/ui'
 import { Header } from '../ui/Header'
-import { NotificationTimeline } from '../components/NotificationTimeline'
+import { NotificationTimeline, WrappedNotification } from '../components/NotificationTimeline'
+import { loadNotificationSnapshot, NotificationSnapshot, saveNotificationSnapshot } from '../lib/timelineSnapshot'
 import { NotificationFilter } from '../components/NotificationFilter'
 import { useClient } from '../contexts/Client'
 import { semantics } from '@concrnt/worldlib'
@@ -15,6 +16,35 @@ export const NotificationsView = () => {
     const scrollRef = useRef<ScrollViewHandle>(null)
 
     const [selected, setSelected] = useState<string | undefined>(undefined)
+
+    // 起動時スナップショット(前回表示の通知の行)。Homeと同じく、タイムラインをマウントする前にKVSから読み終えておく。
+    // 保存はフィルタ無しの表示だけ、注入は起動時のフィルタ(無し)からまだ変えていない間だけ行う
+    const [notificationSnapshot, setNotificationSnapshot] = useState<NotificationSnapshot | null | undefined>(undefined)
+    useEffect(() => {
+        if (!client) return
+        let isCancelled = false
+        loadNotificationSnapshot(client)
+            .catch(() => null)
+            .then((snapshot) => {
+                if (!isCancelled) setNotificationSnapshot(snapshot)
+            })
+        return () => {
+            isCancelled = true
+        }
+    }, [client])
+    const [filterChanged, setFilterChanged] = useState(false)
+    if (!filterChanged && selected !== undefined) {
+        setFilterChanged(true)
+    }
+    const onHeadChange = useCallback(
+        (prefix: string, query: any, rows: WrappedNotification[]) => {
+            if (!client) return
+            saveNotificationSnapshot(client, prefix, query, rows).catch((e) => {
+                console.error('Failed to save notification snapshot:', e)
+            })
+        },
+        [client]
+    )
 
     // 通知画面が見えた=全部見たとみなして未読を0に戻す(タブ選択・pushディープリンク・
     // 表示中のアプリ復帰すべてここで拾う)。OSのアイコンバッジも同時に消す
@@ -50,11 +80,15 @@ export const NotificationsView = () => {
         <View>
             <Header onTitleTap={() => scrollRef.current?.scrollToTop()}>Notifications</Header>
             <NotificationFilter selected={selected} setSelected={setSelected} />
-            <NotificationTimeline
-                ref={scrollRef}
-                prefix={semantics.notificationTimeline(client.ccid, client.currentProfile) + '/'}
-                query={query}
-            />
+            {notificationSnapshot !== undefined && (
+                <NotificationTimeline
+                    ref={scrollRef}
+                    prefix={semantics.notificationTimeline(client.ccid, client.currentProfile) + '/'}
+                    query={query}
+                    initialTimeline={filterChanged ? undefined : (notificationSnapshot ?? undefined)}
+                    onHeadChange={selected === undefined ? onHeadChange : undefined}
+                />
+            )}
         </View>
     )
 }

@@ -68,6 +68,10 @@ export interface QueryResult<T = SignedDocument> {
     next: string | null
 }
 
+// query系のキャッシュ指定。true=ネットワーク優先で失敗時のみキャッシュ(オフラインフォールバック)、
+// 'swr'=キャッシュがあれば即返して裏で再取得(起動経路向け)、'no-cache'=常にネットワーク(取得結果はKVSへ書く)
+export type QueryCacheOption = boolean | 'swr' | 'no-cache'
+
 export interface FetchOptions<T> {
     // fallback: ネットワーク優先で、失敗時のみキャッシュを返す(オフラインフォールバック用)
     cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback'
@@ -186,12 +190,22 @@ export class Api {
         return token
     }
 
+    // 起動直後は同一ホストへのリクエストが一斉に走るため、トークン生成(署名IPC/キーチェーン)を
+    // single-flightにして1回にまとめる
+    private tokenPromises: Record<string, Promise<string>> = {}
+
     async getAuthToken(remote: string, opts?: { useMasterkey?: boolean }): Promise<string> {
-        let token = this.tokens[opts?.useMasterkey ? `${remote}#master` : remote]
-        if (!token || !CheckJwtIsValid(token)) {
-            token = await this.generateApiToken(remote, opts)
+        const tokenKey = opts?.useMasterkey ? `${remote}#master` : remote
+        const token = this.tokens[tokenKey]
+        if (token && CheckJwtIsValid(token)) {
+            return token
         }
-        return token
+        if (!this.tokenPromises[tokenKey]) {
+            this.tokenPromises[tokenKey] = this.generateApiToken(remote, opts).finally(() => {
+                delete this.tokenPromises[tokenKey]
+            })
+        }
+        return await this.tokenPromises[tokenKey]
     }
 
     async getHeaders(domain: string, opts?: { useMasterkey?: boolean }) {
@@ -709,7 +723,7 @@ export class Api {
             orderby: 'key'
         },
         domain?: string,
-        opts?: { cache?: boolean }
+        opts?: { cache?: QueryCacheOption }
     ): Promise<QueryResult<QueryItem>>
     async query(
         query: {
@@ -723,7 +737,7 @@ export class Api {
             orderby?: 'createdAt'
         },
         domain?: string,
-        opts?: { cache?: boolean }
+        opts?: { cache?: QueryCacheOption }
     ): Promise<QueryResult>
     async query(
         query: {
@@ -737,7 +751,7 @@ export class Api {
             orderby?: 'createdAt' | 'key'
         },
         domain?: string,
-        opts?: { cache?: boolean }
+        opts?: { cache?: QueryCacheOption }
     ): Promise<QueryResult<QueryItem>> {
         let fqdn = domain
         const key = query.prefix ?? query.parent
@@ -770,7 +784,8 @@ export class Api {
         if (opts?.cache && !query.since && !query.until) {
             // v2: レスポンスが封筒形式になったため旧素配列キャッシュと分離
             const cacheKey = `query2:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}:${query.orderby ?? ''}`
-            return await this.fetchWithCache<QueryResult<QueryItem>>(fqdn, endpoint, cacheKey, { cache: 'fallback' })
+            const mode = opts.cache === true ? 'fallback' : opts.cache === 'swr' ? undefined : 'no-cache'
+            return await this.fetchWithCache<QueryResult<QueryItem>>(fqdn, endpoint, cacheKey, { cache: mode })
         }
 
         const resource = this.fetchWithCredential<QueryResult<QueryItem>>(fqdn, endpoint, {})
@@ -790,7 +805,7 @@ export class Api {
             order?: string
         },
         domain?: string,
-        opts?: { cache?: boolean }
+        opts?: { cache?: QueryCacheOption }
     ): Promise<SignedDocument[]> {
         const collected = new Map<string, SignedDocument>()
         let cursor: string | undefined

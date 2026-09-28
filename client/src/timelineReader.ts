@@ -17,20 +17,34 @@ export class TimelineReader {
     api: Api
     timelines: string[] = []
     haltUpdate: boolean = false
+    // 先頭ページをサーバーから取得できたか(listen/reload成功でtrue)。
+    // 呼び出し側がbodyをスナップショットでseedしている場合に、本物へ差し替えてよいかの判定に使う
+    headLoaded: boolean = false
 
     hostOverride?: string
 
     // listen/unlistenで同一のコールバックidentityを渡すために保持する
     private readonly boundProcessEvent: (event: RealtimeEvent) => void
+    private readonly boundCatchUp: () => void
+
+    // 先頭取得中に届いたsocketイベントの一時置き場(取得完了後に再生する)。nullなら通常配送
+    private pendingEvents: RealtimeEvent[] | null = null
+    // 先頭取得の時点でsocketが未接続だった=接続完了までの新着を取りこぼしている可能性がある
+    private needsCatchUp = false
 
     constructor(api: Api, socket?: Socket, hostOverride?: string) {
         this.api = api
         this.socket = socket
         this.hostOverride = hostOverride
         this.boundProcessEvent = this.processEvent.bind(this)
+        this.boundCatchUp = this.catchUp.bind(this)
     }
 
     processEvent(event: RealtimeEvent) {
+        if (this.pendingEvents) {
+            this.pendingEvents.push(event)
+            return
+        }
         switch (event.type) {
             case 'created': {
                 let href = event.uri
@@ -88,28 +102,76 @@ export class TimelineReader {
 
         let hasMore = true
 
+        // 先頭取得より前に購読しておき、取得中のイベントはバッファして取得後に再生する
+        // (取得後に購読すると、その間の新着が落ちる)。socketがまだ開いていなければ
+        // open時にcatch-upで埋める
+        this.pendingEvents = []
+        this.socket?.listen(timelines, this.boundProcessEvent)
+        this.socket?.addOpenListener(this.boundCatchUp)
+        this.needsCatchUp = !(this.socket?.isOpen ?? true)
+
         await this.api
             .getTimelineRecent(timelines, this.hostOverride)
             .then((items: ChunklineItem[]) => {
                 const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
                 this.body = [...itemsWithUpdate]
                 this.chunkedBody = [[...itemsWithUpdate]]
+                this.headLoaded = true
                 if (items.length < 16) {
                     hasMore = false
                 }
-                this.onUpdate?.()
             })
             .catch((err) => {
                 console.error('Failed to load timeline:', err)
-                hasMore = false
-                this.body = []
-                this.chunkedBody = []
-                this.onUpdate?.()
+                // 呼び出し側がスナップショットをseed済みの場合はオフラインでもそれを残す(通常は空のまま)
+                hasMore = this.body.length >= 16
             })
 
-        this.socket?.listen(timelines, this.boundProcessEvent)
+        const pending = this.pendingEvents
+        this.pendingEvents = null
+        for (const event of pending) {
+            this.processEvent(event)
+        }
+        this.onUpdate?.()
 
         return hasMore
+    }
+
+    // socketのopen時(初回・再接続)に先頭ページを取り直し、まだ持っていない新着だけを先頭に足す。
+    // (timeline.recentはsinceを受け付けないため先頭ページ丸ごと取り直してhrefで差分を取る。
+    // 隙間が1ページを超える大量の新着は取りこぼすが、pull-to-refreshと同じ範囲)
+    // 初回openで先頭取得時点から購読済みだった(needsCatchUpがfalse)なら隙間はない。
+    // 再接続時は切断中のイベントを取りこぼしているので毎回行う
+    private catchUpDone = false
+    async catchUp(): Promise<void> {
+        if (this.body.length === 0) return
+        if (!this.catchUpDone && !this.needsCatchUp) {
+            this.catchUpDone = true
+            return
+        }
+        this.catchUpDone = true
+        this.needsCatchUp = false
+
+        const items = await this.api
+            .getTimelineRecent(this.timelines, this.hostOverride)
+            .catch((err): ChunklineItem[] => {
+                console.error('Failed to catch up timeline:', err)
+                return []
+            })
+        const newdata = items
+            .filter((item) => !this.body.find((i) => i.href === item.href))
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        if (newdata.length === 0) return
+
+        // 古い順にonNewItemへ渡し、created eventと同じ経路で扱う(haltUpdate中はバッジのみ)
+        for (const item of [...newdata].reverse()) {
+            this.onNewItem?.(item)
+        }
+        if (this.haltUpdate) return
+        const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
+        this.body = [...newdataWithUpdate, ...this.body]
+        this.chunkedBody.unshift(newdataWithUpdate)
+        this.onUpdate?.()
     }
 
     async readMore(limit: number = 4): Promise<boolean> {
@@ -140,6 +202,7 @@ export class TimelineReader {
         const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
         this.body = itemsWithUpdate
         this.chunkedBody = [itemsWithUpdate]
+        this.headLoaded = true
         if (items.length < 16) {
             hasMore = false
         }
@@ -161,10 +224,16 @@ export class TimelineReader {
     // onUpdate/onNewItemを再設定してから呼べば既存インスタンスをそのまま使い続けられる
     resume() {
         this.socket?.listen(this.timelines, this.boundProcessEvent)
+        this.socket?.addOpenListener(this.boundCatchUp)
+        // 非表示中(購読解除中)の新着は取りこぼしているので、接続済みなら今すぐ取り直す
+        if (this.socket?.isOpen) {
+            this.catchUp()
+        }
     }
 
     dispose() {
         this.socket?.unlisten(this.timelines, this.boundProcessEvent)
+        this.socket?.removeOpenListener(this.boundCatchUp)
         this.onUpdate = undefined
         this.onNewItem = undefined
     }

@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
 import { useTranslation } from 'react-i18next'
 import { MdCheckCircle } from 'react-icons/md'
 import { Message, semantics } from '@concrnt/worldlib'
@@ -20,7 +21,7 @@ const FollowingBadge = (props: { ccid: string }) => {
 }
 
 export const MessageAuthor = (props: Props) => {
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const message = props.message
     return (
         <span
@@ -42,9 +43,13 @@ export const MessageAuthor = (props: Props) => {
                 {message.authorProfile?.username || 'Anonymous'}
             </span>
             {client.ccid && client.ccid !== message.author && (
-                <Suspense fallback={null}>
-                    <FollowingBadge ccid={message.author} />
-                </Suspense>
+                // フォロー一覧の取得失敗(オフライン等)は装飾バッジだけの問題なので、投稿全体のErrorBoundaryまで
+                // 投げずにここで握りつぶし、自ドメイン復帰時に描き直す
+                <ErrorBoundary fallback={null} resetKeys={[isDomainOffline]}>
+                    <Suspense fallback={null}>
+                        <FollowingBadge ccid={message.author} />
+                    </Suspense>
+                </ErrorBoundary>
             )}
             {message.authorUser?.alias && (
                 <span style={{ fontSize: '0.75rem', opacity: 0.7, flexShrink: 0 }}>@{message.authorUser.alias}</span>

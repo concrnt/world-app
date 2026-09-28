@@ -16,7 +16,8 @@ import {
     Acknowledge,
     Entity,
     InMemoryAuthProvider,
-    InMemoryKVS
+    InMemoryKVS,
+    ServerOfflineError
 } from '@concrnt/client'
 import {
     ListSchema,
@@ -53,11 +54,18 @@ export class PinnedListItemClass implements PinnedListItem {
 
     list = new CachedPromise<List | null>(
         async (fresh) => {
-            const list = await this.client.getList(this.uri, undefined, fresh ? { cache: 'no-cache' } : undefined)
-            if (!list) {
-                return null
-            }
-            return list
+            // getList()は失敗を全てnullに畳むため、オフライン中のrefresh()が「リストなし」をpushして
+            // 表示中のタイムラインを消してしまう。存在しない場合だけnullにし、ネットワーク失敗は
+            // rejectさせてrefresh()に既存値を維持させる。所有者のentity解決の404(一過性)も
+            // 「リストなし」ではないので、ドメイン解決を先に済ませてそのままrejectさせる
+            const owner = URL.parse(this.uri)?.host
+            if (owner) await this.client.api.resolveDomain(owner)
+            return await List.load(this.client, this.uri, undefined, fresh ? { cache: 'no-cache' } : undefined).catch(
+                (err) => {
+                    if (err instanceof NotFoundError) return null
+                    throw err
+                }
+            )
         },
         (a, b) => JSON.stringify(a?.toJSON()) === JSON.stringify(b?.toJSON())
     )
@@ -93,36 +101,47 @@ export class Client {
     // (キャッシュの中身はPromiseなのでinvalidate時に同期的にrerouteか判定できない)
     private rerouteTargets: Record<string, string> = {}
 
-    knownCommunities = new CachedPromise<Timeline[]>(async () => {
-        // リスト参照はcommit時点の参照先schemaでindexされる。ActivityPub inboxはcommunityTimelineから
-        // apInboxTimelineへ移行したため、移行前に登録した参照はcommunity側、移行後の参照はapInbox側にしか
-        // 一致しない。両方引いて合流させる
-        const results = (
-            await Promise.all(
-                [Schemas.communityTimeline, Schemas.apInboxTimeline].map((schema) =>
-                    this.api.queryAll(
-                        {
-                            prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
-                            schema
-                        },
-                        undefined,
-                        { cache: true }
+    // ComposerProvider(起動時のプロバイダーツリー)が購読するため、キャッシュ即返し(裏で再取得)にする。
+    // ネットワーク優先だと起動直後の全画面がこれのサスペンドで止まる
+    knownCommunities = new CachedPromise<Timeline[]>(
+        async (fresh) => {
+            // リスト参照はcommit時点の参照先schemaでindexされる。ActivityPub inboxはcommunityTimelineから
+            // apInboxTimelineへ移行したため、移行前に登録した参照はcommunity側、移行後の参照はapInbox側にしか
+            // 一致しない。両方引いて合流させる
+            // オフラインでキャッシュも無い初回取得は空で確定させる(rejectすると購読元のComposerProviderごと
+            // 最上位のErrorBoundaryに落ちてアプリ全体がクラッシュ画面になる)。復帰時のrefresh()で埋まる。
+            // refresh(fresh)の失敗はrejectさせて既存値を維持する(空をpushすると表示が消える)
+            const results = (
+                await Promise.all(
+                    [Schemas.communityTimeline, Schemas.apInboxTimeline].map((schema) =>
+                        this.api.queryAll(
+                            {
+                                prefix: semantics.lists(this.ccid, this.currentProfile) + '/',
+                                schema
+                            },
+                            undefined,
+                            { cache: fresh ? 'no-cache' : 'swr' }
+                        )
                     )
-                )
-            )
-        ).flat()
+                ).catch((err) => {
+                    if (!fresh && err instanceof ServerOfflineError) return [] as SignedDocument[][]
+                    throw err
+                })
+            ).flat()
 
-        const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
+            const timelines = await Promise.allSettled(results.map((sd) => Timeline.loadFromReferenceSD(this, sd)))
 
-        const uniqueResults = new Map<string, Timeline>()
-        for (const r of timelines) {
-            if (r.status === 'fulfilled' && r.value) {
-                uniqueResults.set(r.value.uri, r.value)
+            const uniqueResults = new Map<string, Timeline>()
+            for (const r of timelines) {
+                if (r.status === 'fulfilled' && r.value) {
+                    uniqueResults.set(r.value.uri, r.value)
+                }
             }
-        }
 
-        return Array.from(uniqueResults.values())
-    })
+            return Array.from(uniqueResults.values())
+        },
+        (a, b) => JSON.stringify(a.map((t) => t.toJSON())) === JSON.stringify(b.map((t) => t.toJSON()))
+    )
 
     acknowledging = new CachedPromise<Document<Acknowledge>[]>(
         async () => {
@@ -173,6 +192,10 @@ export class Client {
     pinnedLists = new CachedPromise<PinnedListItemClass[]>(
         async (fresh) => {
             const uri = semantics.lists(this.ccid, this.currentProfile)
+            // 下のNotFoundError分岐は「listsドキュメントが無い」時だけ既定リストを作るためのもの。
+            // 自分のentity解決の404(一過性のCDN 404等)まで同じ分岐に流れてリストを作り直さないよう、
+            // ドメイン解決だけ先に済ませて失敗はそのままrejectさせる
+            await this.api.resolveDomain(this.ccid)
             const item = await this.api
                 .getDocument<PinnedListsSchema>(uri, undefined, fresh ? { cache: 'no-cache' } : undefined)
                 .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
@@ -306,6 +329,8 @@ export class Client {
         this.isOnline = online
         if (online) {
             this.stopRecoveryPoll()
+            // 復帰直後のrefreshFreshResourcesが30秒抑制に引っかからないようにする
+            this.lastFreshResourcesRefresh = 0
         } else {
             this.startRecoveryPoll()
         }
@@ -396,6 +421,13 @@ export class Client {
         return client
     }
 
+    // ログイン時に保存済みの自分のwell-known(`domain:<host>`)とentity(`cckv://<ccid>`)をKVSから直接読んで構築する。
+    // TTL切れでも使う(登録の実在・subkey失効の検証はアプリ側が表示後に裏で行う)ため、
+    // 期限切れでthrowするfetchWithCache(force-cache)ではなくKVSを直接読む。プローブもしない。
+    // 欠落(初回起動・キャッシュ削除)なら欠けている分だけネットワークから取得してKVSに保存し、
+    // 到達不能なら仮の値(endpoints空)をメモリだけで使って縮退起動する(KVSには書かない。
+    // 復帰時にno-cacheで取り直されて置き換わる)。
+    // isOnlineは楽観的にtrueのまま。オフラインなら最初の失敗リクエストがonHostOnlineStatusChangedで知らせる
     static async create(
         host: FQDN,
         authProvider: AuthProvider,
@@ -403,25 +435,38 @@ export class Client {
         profile: string = 'main'
     ): Promise<Client> {
         const api = new Api(host, authProvider, cacheEngine)
-
-        // 自ドメインへ直接プローブ。オフラインでも以降はキャッシュから構築を試みる
-        const online = await api.getServerOnlineStatus(host)
-        if (!online) {
-            console.error(`server ${host} is offline. attempting to boot from cache...`)
-        }
-
-        // オフライン時はキャッシュがあればそこから返る。なければServerOfflineErrorが伝播する
-        const server = await api.getServer(host)
         const ccid = authProvider.getCCID()
 
-        // オンライン時はキャッシュを介さず登録の実在をサーバーに確認する。サーバーリセットや移行で
-        // 登録が消えている場合、キャッシュから起動してしまうと後段のsubkeyチェックだけが失敗して
-        // 「subkey無効」と誤検知するため、ここでNotFoundErrorを投げて「登録なし」としてアプリ側に伝える
-        const entity = await api.getEntity(ccid, undefined, online ? { cache: 'no-cache' } : undefined)
+        const [serverEntry, entityEntry] = await Promise.all([
+            cacheEngine.get<Server>(`domain:${host}`).catch(() => null),
+            cacheEngine.get<SignedDocument>(`cckv://${ccid}`).catch(() => null)
+        ])
+        let server: Server | null = serverEntry?.data ?? null
+        let entity: Entity | null = null
+        if (entityEntry?.data) {
+            const document: Document<Entity> = JSON.parse(entityEntry.data.document)
+            entity = document.value
+        }
+
+        let online = true
+        if (!server || !entity) {
+            try {
+                server ??= await api.getServer(host, { timeoutms: 5000 })
+                entity ??= (await api.getEntity(ccid, undefined, { cache: 'no-cache', timeoutms: 5000 })).value
+            } catch (err) {
+                if (!(err instanceof ServerOfflineError)) throw err
+                console.error(`server ${host} is offline. booting with placeholders...`)
+                online = false
+                server ??= { version: '2.0', domain: host, csid: '', layer: '', endpoints: {} }
+                entity ??= { domain: host, alias: '', alias_proof_type: '' }
+            }
+        }
 
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
-        const client = new Client(api, ccid, entity.value, server, profile)
+        const client = new Client(api, ccid, entity, server, profile)
         if (!online) {
+            // 到達不能は失敗したfetchがApi側に記録済み。復帰検知はrecoveryPoll/online eventのプローブ→
+            // markHostOnlineの遷移通知で行われる
             client.isOnline = false
             client.startRecoveryPoll()
         }
@@ -446,7 +491,8 @@ export class Client {
         return client
     }
 
-    async updateProfiles(): Promise<void> {
+    // 既定はキャッシュ即返し(裏で再取得)。fresh=trueで必ずネットワークから取り直す(復帰時リフレッシュ用)
+    async updateProfiles(fresh: boolean = false): Promise<void> {
         const before = JSON.stringify(this.profiles)
         await this.api
             .queryAll(
@@ -455,7 +501,7 @@ export class Client {
                     order: 'asc'
                 },
                 undefined,
-                { cache: true }
+                { cache: fresh ? 'no-cache' : 'swr' }
             )
             .then((res) => {
                 const prefixLength = semantics.profiles(this.ccid).length + 1
@@ -499,8 +545,9 @@ export class Client {
 
         await Promise.allSettled([
             refreshServer,
-            this.updateProfiles(),
+            this.updateProfiles(true),
             this.pinnedLists.refresh(),
+            this.knownCommunities.refresh(),
             this.acknowledging.refresh(),
             this.acknowledgers.refresh(),
             this.blocks.refresh(),
@@ -508,6 +555,9 @@ export class Client {
         ])
         const pins = await this.pinnedLists.value().catch((): PinnedListItemClass[] => [])
         await Promise.allSettled(pins.map((pin) => pin.list.refresh()))
+        // リストの中身(items)はキャッシュ即表示なので、ここで裏更新する。
+        // 解決済みのlistだけ対象(未解決ならvalue()時に通常経路で取得される)
+        await Promise.allSettled(pins.map((pin) => pin.list.current?.items.refresh()))
     }
 
     // 通知画面を開いた=全部見たとみなして未読を0にする(既読位置は追跡しない)
@@ -597,8 +647,14 @@ export class Client {
         if (opts?.withoutSocket) {
             return new TimelineReader(this.api, undefined, opts?.hostOverride)
         }
-        const socket = await this.newSocket(opts?.hostOverride)
-        return new TimelineReader(this.api, socket, opts?.hostOverride)
+        // socketのopenを待たない。購読はopen時にSocket側が再送し、先頭取得はHTTPなので
+        // 接続待ち(最低200msのポーリング)で先頭表示を遅らせる理由がない。
+        // 接続前後の取りこぼしはTimelineReaderがopen時にcatch-upする
+        const targetHost = opts?.hostOverride ?? this.server.domain
+        if (!this.sockets[targetHost]) {
+            this.sockets[targetHost] = new Socket(this.api, opts?.hostOverride)
+        }
+        return new TimelineReader(this.api, this.sockets[targetHost], opts?.hostOverride)
     }
 
     async newQueryTimelineReader(): Promise<QueryTimelineReader> {
@@ -753,7 +809,7 @@ export class Client {
         if (pinned.some((item) => item.uri === uri)) {
             await this.removePin(uri)
         }
-        this.knownCommunities.reload()
+        this.knownCommunities.refresh()
     }
 
     async removePin(uri: string): Promise<void> {

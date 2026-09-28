@@ -194,6 +194,10 @@ export const MigrationSettingsView = () => {
         }
         localStorage.setItem('Domain', destination)
         await resourceCache.clear()
+        // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+        await new Api(destination, new InMemoryAuthProvider(), resourceCache)
+            .getEntity(client.ccid, undefined, { cache: 'no-cache' })
+            .catch(console.error)
         window.location.href = '/'
     }
 

@@ -454,7 +454,7 @@ const TimelineEditor = (props: EditorProps) => {
                 confirmText={t('deleteTimeline')}
                 onConfirm={() => {
                     client.api.delete(props.timeline.uri).then(() => {
-                        client.knownCommunities.reload()
+                        client.knownCommunities.refresh()
                         props.onDeleted?.()
                     })
                 }}

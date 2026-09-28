@@ -1,4 +1,4 @@
-import { ReactNode, use } from 'react'
+import { createContext, ReactNode, use, useContext } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useClient } from '../../contexts/Client'
@@ -34,13 +34,21 @@ interface Props {
     rerouted?: Message<RerouteMessageSchema>
 }
 
+// 起動直後のロード中表示専用のスナップショット(uri → 復元済みMessage)。RealtimeTimelineが
+// initialTimelineを描いている間だけ提供し、該当uriがあれば通常経路(getMessage)を使わずにそれを描く。
+// ネストしたMessageContainer(リプライ/リルート先)も同じContextを見るので、同梱分は0往復で描ける
+export const MessageSnapshotContext = createContext<Map<string, Message<any>> | undefined>(undefined)
+
 export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
     const { t } = useTranslation('', { keyPrefix: 'components.renderError' })
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
     const hint = props.hint ?? sourceDomain
-    const message = props.content ? JSON.parse(props.content) : use(client!.getMessage<any>(props.uri!, hint))
+    const snapshot = useContext(MessageSnapshotContext)?.get(props.uri ?? '')
+    const message = props.content
+        ? JSON.parse(props.content)
+        : (snapshot ?? use(client!.getMessage<any>(props.uri!, hint)))
 
     if (!message) return <div>Message not found</div>
 

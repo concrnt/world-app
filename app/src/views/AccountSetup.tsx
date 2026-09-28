@@ -6,8 +6,10 @@ import { useResetPreference } from '../contexts/Preference'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/client'
 import { useReloadClient } from '../contexts/Client'
+import { getResourceCache } from '../lib/cache'
+import { setupDefaultTimelines } from '../utils/clientSetup'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { semantics } from '@concrnt/worldlib'
+import { Client, semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
 import { Passport } from '@concrnt/ui'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
@@ -263,6 +265,17 @@ export const AccountSetup = (props: Props) => {
                                     console.log('Subkey document committed')
                                     await invoke('set_domain', { domain, ccid })
                                     console.log('Domain set in backend')
+
+                                    // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存し
+                                    // (Client.createのネットワーク経路が書く)、ホーム/通知/アクティビティタイムラインも
+                                    // ここで作っておく(起動後はこれらの存在を前提に描画し、検証は裏で行う)
+                                    const client = await Client.create(
+                                        domain,
+                                        new TauriAuthProvider(ccid, ckid),
+                                        getResourceCache(ccid)
+                                    )
+                                    await setupDefaultTimelines(client)
+                                    client.dispose()
 
                                     reset()
                                     console.log('Preferences reset')

@@ -12,6 +12,7 @@ import {
 } from '@concrnt/client'
 import { Button, CssVar, Passport, Text } from '@concrnt/ui'
 import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from '@concrnt/worldlib'
+import { resourceCache } from '../lib/cache'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCode } from 'react-qrcode-logo'
@@ -188,7 +189,13 @@ export const QRSetup = () => {
             setPersistentDomain(d)
             setPersistentSubkey(subkey)
 
-            window.location.href = '/'
+            // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+            new Api(d, new InMemoryAuthProvider(), resourceCache)
+                .getEntity(c, undefined, { cache: 'no-cache' })
+                .catch(console.error)
+                .then(() => {
+                    window.location.href = '/'
+                })
         })
 
         return () => {

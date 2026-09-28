@@ -7,14 +7,16 @@ import {
     useEffect,
     useImperativeHandle,
     useLayoutEffect,
+    useMemo,
     useRef,
     useState
 } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
-import { MessageContainer } from './message'
+import { ChunklineItem, TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
+import { TimelineSnapshot } from '../lib/timelineSnapshot'
+import { MessageContainer, MessageSnapshotContext } from './message'
 import { QueryTimelineContext } from './QueryTimeline'
 import { Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -32,6 +34,12 @@ interface NewArrivalIcon {
 
 interface Props extends ScrollViewProps {
     timelines: string[]
+    // 起動時に前回表示していた投稿列を先に描くためのスナップショット(マウント時に1回だけ取り込む)。
+    // タイムライン構成(timelines)が一致するときだけ使い、本物の先頭ページが届くまで
+    // pull-to-refresh中の見た目(先頭スピナー)で表示する
+    initialTimeline?: TimelineSnapshot
+    // 表示中の先頭16件が変わったときに呼ばれる(スナップショットの保存用)
+    onHeadChange?: (timelines: string[], items: ChunklineItem[]) => void
 }
 
 const SCROLL_HALT_THRESHOLD = 100
@@ -43,18 +51,45 @@ const FILL_DELAY_MAX = 1000
 export const RealtimeTimeline = (props: Props) => {
     const { client, isDomainOffline } = useClient()
 
+    // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
+    // 表示中はpull-to-refresh実行中の見た目にし、スケルトン・末尾表示は出さない
+    const [snapshot, setSnapshot] = useState(() =>
+        props.initialTimeline && props.initialTimeline.timelines.join('|') === props.timelines.join('|')
+            ? props.initialTimeline
+            : undefined
+    )
+    const snapshotRef = useRef(snapshot)
+    const seededItems = useMemo(() => snapshot?.items.map((item) => ({ ...item, lastUpdate: new Date() })), [snapshot])
+    // スナップショット表示のまま先頭取得に失敗した(オフライン)。自ドメイン復帰時に取り直す
+    const listenFailedRef = useRef(false)
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const onHeadChangeRef = useRef(props.onHeadChange)
+    useEffect(() => {
+        onHeadChangeRef.current = props.onHeadChange
+    }, [props.onHeadChange])
+
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(snapshot === undefined)
     const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
 
-    const [isFetching, setIsFetching] = useState(false)
+    const [isFetching, setIsFetching] = useState(snapshot !== undefined)
 
     /** スクロール位置の追跡。PullToRefreshが先頭判定に使う */
     const scrollPositionRef = useRef<number>(0)
 
-    const [hasMoreData, setHasMoreData] = useState<boolean>(false)
-    const [initialLoaded, setInitialLoaded] = useState(false)
+    const [hasMoreData, setHasMoreData] = useState<boolean>(snapshot !== undefined)
+    const [initialLoaded, setInitialLoaded] = useState(snapshot !== undefined)
+
+    // 表示中の先頭16件をデバウンスして保存させる(先頭リストのみonHeadChangeが渡される)。
+    // スナップショット表示中は本物がまだ無いので保存しない
+    const scheduleSave = useCallback((t: TimelineReader) => {
+        if (!onHeadChangeRef.current || snapshotRef.current || t.body.length === 0) return
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = setTimeout(() => {
+            onHeadChangeRef.current?.(t.timelines, t.body.slice(0, 16))
+        }, 1000)
+    }, [])
 
     /** 新着バッジ用ステート */
     const [newArrivals, setNewArrivals] = useState<NewArrivalIcon[]>([])
@@ -64,6 +99,30 @@ export const RealtimeTimeline = (props: Props) => {
     useEffect(() => {
         newArrivalsRef.current = newArrivals
     }, [newArrivals])
+
+    // スナップショット表示から本物の先頭ページへ差し替える。各投稿を先読みしてからtransition内で
+    // 切り替えるので、Cell(key=href)がスナップショットからuse()に切り替わってもスケルトンには戻らず、
+    // ネスト先(リプライ/リルート元)が未解決でも解決まで旧表示が保持される
+    const swapToLive = useCallback(
+        async (t: TimelineReader) => {
+            if (!client) return
+            await Promise.allSettled(
+                t.body.map((item) =>
+                    item.href
+                        ? client.getMessage(item.href, item.source ? new URL(item.source).hostname : undefined)
+                        : undefined
+                )
+            )
+            snapshotRef.current = undefined
+            startTransition(() => {
+                setSnapshot(undefined)
+                setIsFetching(false)
+                update()
+            })
+            scheduleSave(t)
+        },
+        [client, update, scheduleSave]
+    )
 
     // 呼び出し側が毎レンダー新規配列を渡しても、内容が同じならreaderを作り直さないための内容キー
     const timelinesKey = props.timelines.join('|')
@@ -109,6 +168,7 @@ export const RealtimeTimeline = (props: Props) => {
             existing.body.length > 0
         ) {
             existing.onUpdate = () => {
+                scheduleSave(existing)
                 startTransition(() => {
                     update()
                 })
@@ -135,7 +195,8 @@ export const RealtimeTimeline = (props: Props) => {
 
         console.log('Initializing timeline reader for timelines:', props.timelines)
         let isCancelled = false
-        setInitialLoaded(false)
+        const seeded = seededItems
+        if (!seeded) setInitialLoaded(false)
         setNewArrivals([])
         const request = async () => {
             if (!client) return
@@ -147,6 +208,7 @@ export const RealtimeTimeline = (props: Props) => {
                     if (isCancelled) return
                     t.haltUpdate = false
                     t.onUpdate = () => {
+                        scheduleSave(t)
                         startTransition(() => {
                             update()
                         })
@@ -172,9 +234,23 @@ export const RealtimeTimeline = (props: Props) => {
                     }
 
                     reader.current = t
+                    if (seeded) {
+                        // 起動時スナップショット: 先頭ページが届くまでbodyに前回の投稿列を置いておく
+                        // (listen失敗時もbodyは消えないので、オフラインならそのまま残る)
+                        t.body = [...seeded]
+                        t.chunkedBody = [[...seeded]]
+                        setIsFetching(true)
+                    }
                     t.listen(props.timelines)
                         .then((hasMoreData) => {
                             setHasMoreData(hasMoreData)
+                            if (!snapshotRef.current) return
+                            if (t.headLoaded) {
+                                swapToLive(t)
+                            } else {
+                                listenFailedRef.current = true
+                                setIsFetching(false)
+                            }
                         })
                         .finally(() => {
                             loadingRef.current = false
@@ -240,11 +316,27 @@ export const RealtimeTimeline = (props: Props) => {
         setIsFetching(true)
         try {
             await reader.current.reload()
+            if (snapshotRef.current && reader.current.headLoaded) {
+                await swapToLive(reader.current)
+                return
+            }
             await new Promise((resolve) => setTimeout(resolve, 500))
         } finally {
             setIsFetching(false)
         }
-    }, [reader])
+    }, [reader, swapToLive])
+
+    // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
+    // (投稿は既に見えているので、コールド起動のような再試行導線は出さない)
+    useEffect(() => {
+        if (isDomainOffline) return
+        if (!snapshotRef.current || !listenFailedRef.current) return
+        listenFailedRef.current = false
+        // まだ届かなければスナップショット表示のまま(次の復帰で再試行)。reloadのrejectをunhandledにしない
+        onRefresh().catch(() => {
+            listenFailedRef.current = true
+        })
+    }, [isDomainOffline, onRefresh])
 
     // リアクション等のcommit後に、そのアイテムだけ再取得させる。
     // socketのassociatedイベント任せだとcommit応答より遅れて届いたときに
@@ -447,9 +539,11 @@ export const RealtimeTimeline = (props: Props) => {
                             </Fragment>
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
-                        {reader.current?.body.map((item) => (
-                            <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
-                        ))}
+                        <MessageSnapshotContext.Provider value={snapshot?.messages}>
+                            {(seededItems ?? reader.current?.body ?? []).map((item) => (
+                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
+                            ))}
+                        </MessageSnapshotContext.Provider>
                     </QueryTimelineContext.Provider>
                     {loading && <Loading message={'Loading...'} />}
                     {!hasMoreData && (

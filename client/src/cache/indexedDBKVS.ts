@@ -12,8 +12,13 @@ export class IndexedDBKVS implements KVS {
         this.storeName = storeName
     }
 
-    private async initDB(): Promise<IDBDatabase> {
-        return new Promise((resolve, reject) => {
+    // 接続は使い回す(get/setのたびにopenすると起動時の多数のキャッシュ読みが各々openを払う)。
+    // deleteDatabase(ログアウト)は保持中の接続にブロックされるので、versionchangeで手放す
+    private dbPromise: Promise<IDBDatabase> | null = null
+
+    private initDB(): Promise<IDBDatabase> {
+        if (this.dbPromise) return this.dbPromise
+        const opening = new Promise<IDBDatabase>((resolve, reject) => {
             const request = indexedDB.open(this.dbName, 1)
 
             request.onupgradeneeded = (event) => {
@@ -24,13 +29,24 @@ export class IndexedDBKVS implements KVS {
             }
 
             request.onsuccess = (event) => {
-                resolve((event.target as IDBOpenDBRequest).result)
+                const db = (event.target as IDBOpenDBRequest).result
+                db.onversionchange = () => {
+                    db.close()
+                    if (this.dbPromise === opening) this.dbPromise = null
+                }
+                db.onclose = () => {
+                    if (this.dbPromise === opening) this.dbPromise = null
+                }
+                resolve(db)
             }
 
             request.onerror = (event) => {
+                if (this.dbPromise === opening) this.dbPromise = null
                 reject((event.target as IDBOpenDBRequest).error)
             }
         })
+        this.dbPromise = opening
+        return opening
     }
 
     async set<T>(key: string, value: T): Promise<void> {
