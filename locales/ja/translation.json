@@ -628,6 +628,10 @@
             "userReacted": "{{name}} がリアクションしました",
             "loading": "読み込み中..."
         },
+        "errorNotice": {
+            "title": "エラーの詳細",
+            "showDetails": "詳細を表示"
+        },
         "renderError": {
             "messageDeleted": "このメッセージは削除されました",
             "serverOffline": "メッセージの取得先サーバーはオフラインです",

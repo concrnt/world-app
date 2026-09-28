@@ -10,6 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { ErrorNotice } from './ErrorNotice'
 import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
 import { usePreference } from '../../contexts/Preference'
@@ -87,7 +88,14 @@ const Note = (props: {
                     padding: CssVar.space(2)
                 }}
             >
-                <Text style={{ opacity: 0.7 }}>{unreachable ? t('fetchFailed') : t('unavailable')}</Text>
+                <ErrorNotice
+                    message={unreachable ? t('fetchFailed') : t('unavailable')}
+                    detail={
+                        props.noteURL +
+                        '\n' +
+                        (note instanceof Error ? (note.stack ?? note.message) : 'negative cache hit')
+                    }
+                />
                 <ExternalLink
                     href={props.noteURL}
                     style={{
@@ -102,10 +110,6 @@ const Note = (props: {
                     <MdOpenInNew size={14} />
                     {t('openRemote')}
                 </ExternalLink>
-                {devmode && <Text variant="caption">{props.noteURL}</Text>}
-                {devmode && (
-                    <Text variant="caption">{note instanceof Error ? note.message : 'negative cache hit'}</Text>
-                )}
             </div>
         )
     }

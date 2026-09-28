@@ -629,6 +629,10 @@
             "userReacted": "{{name}} reacted",
             "loading": "Loading..."
         },
+        "errorNotice": {
+            "title": "Error details",
+            "showDetails": "Show details"
+        },
         "renderError": {
             "messageDeleted": "This message has been deleted",
             "serverOffline": "The server hosting this message is offline",

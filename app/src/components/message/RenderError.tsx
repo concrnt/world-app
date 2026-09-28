@@ -1,12 +1,11 @@
 import { NotFoundError, ServerOfflineError } from '@concrnt/client'
-import { HorizontalLayout, Text } from '@concrnt/ui'
+import { Text } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 import { FallbackProps } from 'react-error-boundary'
-import { usePreference } from '../../contexts/Preference'
+import { ErrorNotice } from './ErrorNotice'
 
 export const RenderError = ({ error }: FallbackProps) => {
     const { t } = useTranslation('', { keyPrefix: 'components.renderError' })
-    const [devmode] = usePreference('developerMode')
 
     if (error instanceof NotFoundError) {
         return (
@@ -21,6 +20,8 @@ export const RenderError = ({ error }: FallbackProps) => {
     }
 
     const message = error instanceof Error ? error.message : String(error)
+    // エラー内容はiボタンのドロワーで常に確認できるようにする(開発者モードでの出し分けはしない)
+    const detail = (error as any)?.stack ? String((error as any).stack) : message
     const offlineServer =
         error instanceof ServerOfflineError
             ? message.match(/^server (.+) is offline$/)?.[1]
@@ -42,20 +43,8 @@ export const RenderError = ({ error }: FallbackProps) => {
                     padding: '0 8px'
                 }}
             >
-                <Text variant="caption">{t('serverOffline')}</Text>
+                <ErrorNotice message={t('serverOffline')} detail={detail} />
                 <Text variant="caption">{offlineServer}</Text>
-            </div>
-        )
-    }
-
-    if (!devmode) {
-        return (
-            <div
-                style={{
-                    padding: '0 8px'
-                }}
-            >
-                <Text variant="caption">{t('cannotDisplay')}</Text>
             </div>
         )
     }
@@ -63,19 +52,10 @@ export const RenderError = ({ error }: FallbackProps) => {
     return (
         <div
             style={{
-                overflow: 'hidden'
+                padding: '0 8px'
             }}
         >
-            {message}
-            <HorizontalLayout>
-                <pre
-                    style={{
-                        fontSize: '12px'
-                    }}
-                >
-                    {(error as any)?.stack}
-                </pre>
-            </HorizontalLayout>
+            <ErrorNotice message={t('cannotDisplay')} detail={detail} />
         </div>
     )
 }

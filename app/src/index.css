@@ -15,7 +15,9 @@ html {
     overflow: hidden;
     top: 0;
     left: 0;
-    background-color: 'transparent';
+    /* JSバンドル実行前(React初回描画前)の背景。LaunchScreen/WebView背景(tauri.conf.json)と同じ
+       既定テーマ色にそろえ、起動直後に白い画面が出ないようにする */
+    background-color: var(--ui-background);
 }
 
 body {
