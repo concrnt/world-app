@@ -281,7 +281,7 @@ export const EmojiPickerProvider = (props: Props) => {
         async (key: string) => {
             const list = emojiPackageList ?? (await ensureEmojiPackageList(client))
             await client.api.delete(key)
-            list.items.reload()
+            await list.items.refresh()
             list.entries.reload()
             await reloadEmojiPackageURLs()
         },

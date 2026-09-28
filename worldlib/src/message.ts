@@ -88,13 +88,29 @@ export class Message<T> implements Document<T> {
             key?.split('/')[5] ?? semantics.profileNameFromURI(message.author, (res.value as any)?.profileURI)
         if (profileName) {
             message.authorProfileName = profileName
-            const profile = await client.api
-                .getDocument<ProfileSchema>(semantics.profile(message.author, profileName), authorHint)
-                .then((res) => res.value)
-                .catch(() => undefined)
-            if (profile) {
-                message.authorProfile = profile
-            }
+        }
+
+        // authorHintが決まった後の取得は互いに独立なので並列に発行する
+        // (association/countsはキャッシュされない常時ネットワークなので、直列だと投稿1件に3往復かかる)
+        const [profile, ownAssociations, associationCounts, reactionCounts, associationTarget] = await Promise.all([
+            profileName
+                ? client.api
+                      .getDocument<ProfileSchema>(semantics.profile(message.author, profileName), authorHint)
+                      .then((res) => res.value)
+                      .catch(() => undefined)
+                : undefined,
+            client.ccid
+                ? client.api
+                      .getAssociationsAll(uri, { author: client.ccid }, authorHint)
+                      .then((sds) => sds.map((sd) => Association.fromSignedDocument(sd)))
+                : [],
+            client.api.getAssociationCounts(uri, undefined, authorHint),
+            client.api.getAssociationCounts(uri, Schemas.reactionAssociation, authorHint),
+            res.associate ? Message.load<any>(client, res.associate, hint).catch(() => undefined) : undefined
+        ])
+
+        if (profile) {
+            message.authorProfile = profile
         }
         if ((res.value as any).profileOverride) {
             const override = (res.value as any).profileOverride
@@ -106,17 +122,11 @@ export class Message<T> implements Document<T> {
             }
         }
 
-        message.ownAssociations = client.ccid
-            ? (await client.api.getAssociationsAll(uri, { author: client.ccid }, authorHint)).map((sd) =>
-                  Association.fromSignedDocument(sd)
-              )
-            : []
-
-        message.associationCounts = await client.api.getAssociationCounts(uri, undefined, authorHint)
-        message.reactionCounts = await client.api.getAssociationCounts(uri, Schemas.reactionAssociation, authorHint)
-
+        message.ownAssociations = ownAssociations
+        message.associationCounts = associationCounts
+        message.reactionCounts = reactionCounts
         if (res.associate) {
-            message.associationTarget = await Message.load<any>(client, res.associate, hint).catch(() => undefined)
+            message.associationTarget = associationTarget
         }
 
         return message

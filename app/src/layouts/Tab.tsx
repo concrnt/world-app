@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useId } from 'react'
+import { CSSProperties, ReactNode, useEffect, useId, useState } from 'react'
 import { Tabs, Tab } from '@concrnt/ui'
 import { ActivityProvider } from '../contexts/Activity'
 
@@ -18,6 +18,24 @@ interface Props {
 
 export const TabLayout = (props: Props) => {
     const tabId = useId()
+
+    // 起動時は選択中のタブだけ中身をマウントし、残りは少し遅らせて温める。
+    // 非表示タブ(Explorer/Contacts等)はActivity hidden中でもrender-phaseのフェッチを発行し、
+    // ホームの先頭取得と同一オリジンの接続を取り合うため。ActivityProvider自体は全タブ分マウントしたまま
+    // (Notificationsはバッジ消去にuseActivity()を使う)。requestIdleCallbackは起動直後でも
+    // すぐ発火してしまうので固定の猶予にする
+    const [mountedTabs, setMountedTabs] = useState<Set<string>>(() => new Set([props.selectedTab]))
+    useEffect(() => {
+        setMountedTabs((prev) => {
+            if (prev.has(props.selectedTab)) return prev
+            return new Set([...prev, props.selectedTab])
+        })
+    }, [props.selectedTab])
+    useEffect(() => {
+        const timer = setTimeout(() => setMountedTabs(new Set(Object.keys(props.tabs))), 2000)
+        return () => clearTimeout(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
         <div
@@ -50,7 +68,7 @@ export const TabLayout = (props: Props) => {
 
             {Object.entries(props.tabs).map(([key, tab]) => (
                 <ActivityProvider mode={key === props.selectedTab ? 'visible' : 'hidden'} key={key}>
-                    {tab.body}
+                    {mountedTabs.has(key) ? tab.body : null}
                 </ActivityProvider>
             ))}
 

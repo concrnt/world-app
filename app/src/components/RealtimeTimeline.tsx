@@ -36,6 +36,15 @@ interface Props extends ScrollViewProps {
 
 const SCROLL_HALT_THRESHOLD = 100
 
+// 起動計測: 最初のタイムラインの先頭ページが表示可能になった時刻を1回だけ記録する
+let bootTimelineHeadMarked = false
+const markBootTimelineHead = () => {
+    if (bootTimelineHeadMarked) return
+    bootTimelineHeadMarked = true
+    performance.mark('boot:timeline-head')
+    console.info('[boot] timeline-head', Math.round(performance.now()), 'ms')
+}
+
 // 画面が埋まっていないときの追い読み判定の猶予(ms)。初期値から判定ごとに倍増し上限で頭打ち
 const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
@@ -180,6 +189,7 @@ export const RealtimeTimeline = (props: Props) => {
                             loadingRef.current = false
                             setLoading(false)
                             setInitialLoaded(true)
+                            markBootTimelineHead()
                         })
                     return t
                 })

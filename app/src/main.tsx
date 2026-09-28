@@ -1,4 +1,8 @@
 import ReactDOM from 'react-dom/client'
+
+// 起動計測の起点。performance.now()はナビゲーション開始からの経過なのでバンドル読込込みで比較できる
+performance.mark('boot:js-start')
+console.info('[boot] js-start', Math.round(performance.now()), 'ms')
 import App from './App'
 import '@concrnt/ui/style.css'
 import './index.css'
