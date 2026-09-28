@@ -191,7 +191,8 @@ export const ApPerson = ({ person }: Props) => {
                         src={getImageURL(person.getImages()[0]?.url)}
                         style={{
                             paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                            height: '150px'
+                            aspectRatio: '3 / 1',
+                            boxSizing: 'border-box'
                         }}
                     >
                         <div

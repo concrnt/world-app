@@ -215,7 +215,8 @@ const Body = (props: BodyProps) => {
                     src={getImageURL(profile.value.banner)}
                     style={{
                         paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                        height: '150px'
+                        aspectRatio: '3 / 1',
+                        boxSizing: 'border-box'
                     }}
                 />
                 <div
@@ -429,7 +430,8 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                 <CCWallpaper
                     style={{
                         paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
-                        height: '150px'
+                        aspectRatio: '3 / 1',
+                        boxSizing: 'border-box'
                     }}
                 />
                 <div

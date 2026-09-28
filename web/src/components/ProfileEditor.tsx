@@ -153,7 +153,8 @@ export const ProfileEditor = (props: Props) => {
             <CCWallpaper
                 src={getImageURL(banner)}
                 style={{
-                    height: `150px`
+                    aspectRatio: '3 / 1',
+                    boxSizing: 'border-box'
                 }}
                 onClick={() => bannerInputRef.current?.click()}
             />

@@ -157,7 +157,11 @@ export const ImageCropperProvider = (props: Props) => {
                                 position: 'relative',
                                 ...(isMobile
                                     ? { flex: 1, marginTop: 'env(safe-area-inset-top)' }
-                                    : { height: 'min(60vh, 480px)' })
+                                    : {
+                                          width: '100%',
+                                          aspectRatio: options.aspect ?? 1,
+                                          maxHeight: '60vh'
+                                      })
                             }}
                         >
                             <Cropper
