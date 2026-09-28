@@ -614,7 +614,8 @@
             "signatureVerification": "署名検証",
             "verificationKey": "検証キー ({{type}})",
             "verificationError": "検証エラー: {{error}}",
-            "keyMismatch": "署名から復元したキーが検証キーと一致しません"
+            "keyMismatch": "署名から復元したキーが検証キーと一致しません",
+            "associationsLoadFailed": "associationの読み込みに失敗しました: {{error}}"
         },
         "mentionAssociation": {
             "userMentioned": "{{name}} がメンションしました",

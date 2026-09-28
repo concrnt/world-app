@@ -14,6 +14,8 @@ export const MessageInspector = (props: Props) => {
     const { client } = useClient()
     const [signedDocument, setSignedDocument] = useState<SignedDocument | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [associations, setAssociations] = useState<SignedDocument[] | null>(null)
+    const [associationsError, setAssociationsError] = useState<string | null>(null)
 
     useEffect(() => {
         let cancelled = false
@@ -31,6 +33,26 @@ export const MessageInspector = (props: Props) => {
             cancelled = true
         }
     }, [client, props.message.uri, props.message.hint])
+
+    // Message.associationsはロード時に埋められないので、インスペクターを開いた時にだけ全件取得する。
+    // associationは投稿者のホームドメインが持っているので、そのドメインをhintに優先する。
+    const associationHint = props.message.authorUser?.domain ?? props.message.hint
+    useEffect(() => {
+        let cancelled = false
+        setAssociations(null)
+        setAssociationsError(null)
+        client.api
+            .getAssociationsAll(props.message.uri, {}, associationHint)
+            .then((sds) => {
+                if (!cancelled) setAssociations(sds)
+            })
+            .catch((e) => {
+                if (!cancelled) setAssociationsError(String(e))
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [client, props.message.uri, associationHint])
 
     const signatureInfo = useMemo(() => {
         if (!signedDocument) return null
@@ -108,8 +130,22 @@ export const MessageInspector = (props: Props) => {
 
                     {/* Associations */}
                     <div>
-                        <Text variant="h5">Associations</Text>
-                        <Codeblock language="json">{JSON.stringify(props.message.associations, null, 2)}</Codeblock>
+                        <Text variant="h5">Associations{associations ? ` (${associations.length})` : ''}</Text>
+                        {associationsError && (
+                            <Text style={{ color: 'red' }}>
+                                {t('associationsLoadFailed', { error: associationsError })}
+                            </Text>
+                        )}
+                        {!associations && !associationsError && <Text>Loading...</Text>}
+                        {associations && (
+                            <Codeblock language="json">
+                                {JSON.stringify(
+                                    associations.map((sd) => ({ ...sd, document: JSON.parse(sd.document) })),
+                                    null,
+                                    2
+                                )}
+                            </Codeblock>
+                        )}
                     </div>
                 </>
             )}
