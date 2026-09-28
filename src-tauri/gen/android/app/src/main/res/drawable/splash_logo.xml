@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ui/src/ui/ConcrntLogo.tsx の SVG をそのまま白塗りにしたもの(起動画面用)。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M422.58,256.38c0,91.95-74.8,166.75-166.75,166.75s-166.75-74.8-166.75-166.75S163.89,89.63,255.83,89.63V19.63c-63.24,0-122.69,24.63-167.41,69.34S19.09,193.14,19.09,256.38s24.63,122.69,69.34,167.41,104.17,69.34,167.41,69.34,122.69-24.63,167.41-69.34,69.34-104.17,69.34-167.41h-70Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M367.75,144.49L218.44,226.55L236.14,276.1L280.01,407.71Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M104.53,232.23L236.14,276.1L367.75,144.49Z" />
+</vector>

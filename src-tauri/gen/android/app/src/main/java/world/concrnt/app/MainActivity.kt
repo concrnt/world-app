@@ -1,5 +1,6 @@
 package world.concrnt.app
 
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.activity.OnBackPressedCallback
@@ -33,5 +34,8 @@ class MainActivity : TauriActivity() {
   override fun onWebViewCreate(webView: WebView) {
     super.onWebViewCreate(webView)
     this.webView = webView
+    // 起動テーマ(Theme.world_app.Splash)のロゴ入り windowBackground は WebView が覆った後は
+    // 見えないので、毎フレームのロゴ描画を避けるため同色の単色に差し替える
+    window.setBackgroundDrawable(ColorDrawable(getColor(R.color.splash_background)))
   }
 }

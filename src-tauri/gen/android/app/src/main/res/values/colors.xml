@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- 既定 blue テーマの ui.background(ui/src/data/Themes.ts)。起動画面の背景色 -->
+    <color name="splash_background">#FF0476D9</color>
 </resources>

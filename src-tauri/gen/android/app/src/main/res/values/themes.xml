@@ -3,4 +3,13 @@
     <style name="Theme.world_app" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
     </style>
+
+    <!--
+        MainActivity の起動テーマ。WebView が描画するまで LoadingFull 相当の背景(色+ロゴ)を出す。
+        Android 12+ の system splash 用の項目は values-v31/themes.xml 側にある。
+        WebView 生成後は MainActivity.onWebViewCreate で単色に差し替える(ロゴの overdraw 回避)。
+    -->
+    <style name="Theme.world_app.Splash">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
 </resources>
