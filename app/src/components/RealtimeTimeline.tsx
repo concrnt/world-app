@@ -44,23 +44,6 @@ interface Props extends ScrollViewProps {
 
 const SCROLL_HALT_THRESHOLD = 100
 
-// 起動計測: 最初のタイムラインの先頭ページが表示可能になった時刻を1回だけ記録する
-let bootTimelineHeadMarked = false
-const markBootTimelineHead = (label?: string) => {
-    if (bootTimelineHeadMarked) return
-    bootTimelineHeadMarked = true
-    performance.mark('boot:timeline-head')
-    console.info(`[boot] timeline-head${label ? ` (${label})` : ''}`, Math.round(performance.now()), 'ms')
-}
-// スナップショット起動のとき、本物の先頭ページに差し替わった時刻を1回だけ記録する
-let bootTimelineFreshMarked = false
-const markBootTimelineFresh = () => {
-    if (bootTimelineFreshMarked) return
-    bootTimelineFreshMarked = true
-    performance.mark('boot:timeline-fresh')
-    console.info('[boot] timeline-fresh', Math.round(performance.now()), 'ms')
-}
-
 // 画面が埋まっていないときの追い読み判定の猶予(ms)。初期値から判定ごとに倍増し上限で頭打ち
 const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
@@ -136,7 +119,6 @@ export const RealtimeTimeline = (props: Props) => {
                 setIsFetching(false)
                 update()
             })
-            markBootTimelineFresh()
             scheduleSave(t)
         },
         [client, update, scheduleSave]
@@ -258,7 +240,6 @@ export const RealtimeTimeline = (props: Props) => {
                         t.body = [...seeded]
                         t.chunkedBody = [[...seeded]]
                         setIsFetching(true)
-                        markBootTimelineHead('snapshot')
                     }
                     t.listen(props.timelines)
                         .then((hasMoreData) => {
@@ -275,7 +256,6 @@ export const RealtimeTimeline = (props: Props) => {
                             loadingRef.current = false
                             setLoading(false)
                             setInitialLoaded(true)
-                            markBootTimelineHead()
                         })
                     return t
                 })

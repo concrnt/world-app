@@ -276,7 +276,6 @@ export const AccountSetup = (props: Props) => {
                                     )
                                     await setupDefaultTimelines(client)
                                     client.dispose()
-                                    console.log('Default timelines set up')
 
                                     reset()
                                     console.log('Preferences reset')

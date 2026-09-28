@@ -403,16 +403,6 @@ export const ClientProvider = (props: Props): ReactNode => {
                     }
 
                     console.log('Client created successfully. online:', client.isOnline)
-                    if (!isLiveSwitch) {
-                        performance.mark('boot:client-ready')
-                        console.info(
-                            '[boot] client-ready',
-                            Math.round(performance.now()),
-                            'ms',
-                            'online:',
-                            client.isOnline
-                        )
-                    }
                     clientRef.current?.dispose()
                     clientRef.current = client
                     setIsDomainOffline(!client.isOnline)
