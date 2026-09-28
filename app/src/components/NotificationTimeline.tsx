@@ -1,5 +1,6 @@
 import {
     Fragment,
+    startTransition,
     Suspense,
     useCallback,
     useEffect,
@@ -23,7 +24,8 @@ import {
     AtprotoFollowNotifySchema,
     ReadAccessRequestAssociationSchema
 } from '@concrnt/worldlib'
-import { MessageContainer } from './message'
+import { MessageContainer, MessageSnapshotContext } from './message'
+import { NotificationSnapshot } from '../lib/timelineSnapshot'
 import { QueryTimelineContext } from './QueryTimeline'
 import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
 import { MessageSkeleton } from './message/MessageSkeleton'
@@ -45,7 +47,7 @@ import { PullToRefresh } from './PullToRefresh'
 // - bsky-follow: Blueskyユーザーからのフォロー通知（集約せず 1 件ずつ）
 // - readaccess: 閲覧リクエスト通知（集約せず 1 件ずつ、承認/無視ボタン付き）
 // - normal: Reply / Reroute / Mention など、集約しない単発通知
-interface WrappedNotification {
+export interface WrappedNotification {
     key: string
     type: 'summarised-like' | 'summarised-reaction' | 'follow' | 'bsky-follow' | 'readaccess' | 'normal'
     items: Message<any>[]
@@ -59,6 +61,12 @@ interface Props extends ScrollViewProps {
     query?: any
     batchSize?: number
     header?: React.ReactNode
+    // 起動時に前回表示していた通知の行を先に描くためのスナップショット(マウント時に1回だけ取り込む)。
+    // 対象(prefix/query)が一致するときだけ使い、本物の先頭ページが届くまで
+    // pull-to-refresh中の見た目(先頭スピナー)で表示する
+    initialTimeline?: NotificationSnapshot
+    // 表示中の行が変わったときに呼ばれる(スナップショットの保存用)
+    onHeadChange?: (prefix: string, query: any, rows: WrappedNotification[]) => void
 }
 
 // 集約キーのサフィックス（'$' を含むキーは集約対象として識別する）
@@ -83,17 +91,58 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const NotificationTimeline = (props: Props) => {
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
+
+    // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
+    // 表示中はpull-to-refresh実行中の見た目にし、末尾のLoading・End表示は出さない
+    const [snapshot, setSnapshot] = useState(() =>
+        props.initialTimeline &&
+        props.initialTimeline.prefix === props.prefix &&
+        JSON.stringify(props.initialTimeline.query) === JSON.stringify(props.query ?? {})
+            ? props.initialTimeline
+            : undefined
+    )
+    const snapshotRef = useRef(snapshot)
+    // スナップショット表示のまま先頭取得に失敗した(オフライン)。自ドメイン復帰時に取り直す
+    const initFailedRef = useRef(false)
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const onHeadChangeRef = useRef(props.onHeadChange)
+    useEffect(() => {
+        onHeadChangeRef.current = props.onHeadChange
+    }, [props.onHeadChange])
 
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
     const scrollPositionRef = useRef<number>(0)
     const [reader, update] = useRefWithUpdate<QueryTimelineReader | undefined>(undefined)
-    const [loading, setLoading] = useState(true)
-    const [hasMoreData, setHasMoreData] = useState<boolean>(false)
-    const [notifications, setNotifications] = useState<WrappedNotification[]>([])
+    const [loading, setLoading] = useState(snapshot === undefined)
+    const [hasMoreData, setHasMoreData] = useState<boolean>(snapshot !== undefined)
+    const [notifications, setNotifications] = useState<WrappedNotification[]>(snapshot?.rows ?? [])
     // PullToRefresh のインジケータ表示制御用（reload 中は spinner アイコンになる）
-    const [isFetching, setIsFetching] = useState(false)
+    const [isFetching, setIsFetching] = useState(snapshot !== undefined)
+
+    // 表示中の行をデバウンスして保存させる(フィルタ無しのときだけonHeadChangeが渡される)。
+    // スナップショット表示中は本物がまだ無いので保存しない
+    useEffect(() => {
+        if (!onHeadChangeRef.current || snapshot || notifications.length === 0) return
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = setTimeout(() => {
+            onHeadChangeRef.current?.(props.prefix, props.query ?? {}, notifications)
+        }, 1000)
+        return () => clearTimeout(saveTimerRef.current)
+    }, [notifications, snapshot, props.prefix, props.query])
+
+    // スナップショット表示から本物の先頭ページへ差し替える。集約済みの行はMessageを解決済みで持つので、
+    // transition内で切り替えればnormal行のネスト先(リプライ元)が未解決でも解決まで旧表示が保持される
+    const swapToLive = useCallback((hasMore: boolean, newNotifications: WrappedNotification[]) => {
+        snapshotRef.current = undefined
+        startTransition(() => {
+            setSnapshot(undefined)
+            setIsFetching(false)
+            setHasMoreData(hasMore)
+            setNotifications(newNotifications)
+        })
+    }, [])
 
     // reader.body のうちどこまで集約済みかを保持するカーソル
     // init/reload で 0 リセット、readMore で積み上げる
@@ -224,11 +273,23 @@ export const NotificationTimeline = (props: Props) => {
             return
         }
 
+        // 起動時スナップショット: 対象が同じ間は行を消さず、先頭ページが届いたら差し替える。
+        // フィルタ変更等で対象が変わったら以後は使わない
+        const seeded =
+            snapshotRef.current !== undefined &&
+            snapshotRef.current.prefix === props.prefix &&
+            JSON.stringify(snapshotRef.current.query) === JSON.stringify(props.query ?? {})
+        if (!seeded && snapshotRef.current) {
+            snapshotRef.current = undefined
+            setSnapshot(undefined)
+            setIsFetching(false)
+        }
+
         // 初期化: カーソルと表示をリセットしてから Reader を作る
-        setNotifications([])
+        if (!seeded) setNotifications([])
         iter.current = 0
         loadingRef.current = true
-        setLoading(true)
+        setLoading(!seeded)
 
         client.newQueryTimelineReader().then((t) => {
             if (isCancelled) return
@@ -238,14 +299,25 @@ export const NotificationTimeline = (props: Props) => {
             reader.current = t
 
             t.init(props.prefix, props.query, props.batchSize ?? 16)
-                .then((hasMore) => {
+                .then(async (hasMore) => {
                     if (isCancelled) return
+                    const newNotifications = await summariseNotifications()
+                    if (isCancelled) return
+                    if (snapshotRef.current) {
+                        swapToLive(hasMore, newNotifications)
+                        return
+                    }
                     setHasMoreData(hasMore)
-                    return summariseNotifications()
-                })
-                .then((newNotifications) => {
-                    if (isCancelled || !newNotifications) return
                     setNotifications(newNotifications)
+                })
+                .catch((e) => {
+                    if (isCancelled) return
+                    console.error('Failed to initialize notification timeline:', e)
+                    // スナップショット表示中なら(オフラインでも)そのまま残し、自ドメイン復帰時に取り直す
+                    if (snapshotRef.current) {
+                        initFailedRef.current = true
+                        setIsFetching(false)
+                    }
                 })
                 .finally(() => {
                     if (isCancelled) return
@@ -299,11 +371,16 @@ export const NotificationTimeline = (props: Props) => {
         try {
             // reload() は init と同等の挙動（body を巻き戻して再取得）
             // それに合わせて iter と表示側の集約済みをリセットする必要がある
+            // (スナップショット表示中は行を消さず、届いてから差し替える)
             iter.current = 0
-            setNotifications([])
+            if (!snapshotRef.current) setNotifications([])
             const hasMore = await reader.current.reload()
-            setHasMoreData(hasMore)
             const newNotifications = await summariseNotifications()
+            if (snapshotRef.current) {
+                swapToLive(hasMore, newNotifications)
+                return
+            }
+            setHasMoreData(hasMore)
             setNotifications(newNotifications)
             // ユーザーにリフレッシュのフィードバックを見せるための短い待機
             await new Promise((resolve) => setTimeout(resolve, 500))
@@ -311,7 +388,18 @@ export const NotificationTimeline = (props: Props) => {
             setIsFetching(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reader])
+    }, [reader, swapToLive])
+
+    // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
+    useEffect(() => {
+        if (isDomainOffline) return
+        if (!snapshotRef.current || !initFailedRef.current) return
+        initFailedRef.current = false
+        // まだ届かなければスナップショット表示のまま(次の復帰で再試行)。reloadのrejectをunhandledにしない
+        onRefresh().catch(() => {
+            initFailedRef.current = true
+        })
+    }, [isDomainOffline, onRefresh])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -325,6 +413,8 @@ export const NotificationTimeline = (props: Props) => {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
                 if (!reader.current) return
+                // スナップショット表示中はreaderに本物の先頭ページが無い(先頭取得に失敗していれば空)ので追い読みしない
+                if (snapshotRef.current) return
 
                 console.log('Reading more...')
 
@@ -387,29 +477,31 @@ export const NotificationTimeline = (props: Props) => {
                 ref={scrollRef}
             >
                 {props.header}
-                {notifications.map((n) => (
-                    <Fragment key={n.key}>
-                        <ErrorBoundary FallbackComponent={RenderError}>
-                            <div
-                                style={{
-                                    padding: `0 ${CssVar.space(2)}`,
-                                    contentVisibility: 'auto',
-                                    containIntrinsicSize: 'auto 80px'
-                                }}
-                            >
-                                {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}
-                                {n.type === 'summarised-reaction' && <SummarisedReaction items={n.items} />}
-                                {n.type === 'follow' && <FollowNotification item={n.items[0]} />}
-                                {n.type === 'bsky-follow' && <BskyFollowNotification item={n.items[0]} />}
-                                {n.type === 'readaccess' && <ReadAccessRequestNotification item={n.items[0]} />}
-                                {n.type === 'normal' && n.href && (
-                                    <NormalNotification href={n.href} source={n.source} />
-                                )}
-                            </div>
-                        </ErrorBoundary>
-                        <Divider />
-                    </Fragment>
-                ))}
+                <MessageSnapshotContext.Provider value={snapshot?.messages}>
+                    {notifications.map((n) => (
+                        <Fragment key={n.key}>
+                            <ErrorBoundary FallbackComponent={RenderError}>
+                                <div
+                                    style={{
+                                        padding: `0 ${CssVar.space(2)}`,
+                                        contentVisibility: 'auto',
+                                        containIntrinsicSize: 'auto 80px'
+                                    }}
+                                >
+                                    {n.type === 'summarised-like' && <SummarisedLike items={n.items} />}
+                                    {n.type === 'summarised-reaction' && <SummarisedReaction items={n.items} />}
+                                    {n.type === 'follow' && <FollowNotification item={n.items[0]} />}
+                                    {n.type === 'bsky-follow' && <BskyFollowNotification item={n.items[0]} />}
+                                    {n.type === 'readaccess' && <ReadAccessRequestNotification item={n.items[0]} />}
+                                    {n.type === 'normal' && n.href && (
+                                        <NormalNotification href={n.href} source={n.source} />
+                                    )}
+                                </div>
+                            </ErrorBoundary>
+                            <Divider />
+                        </Fragment>
+                    ))}
+                </MessageSnapshotContext.Provider>
                 {loading && <Loading message={'Loading...'} />}
                 {!hasMoreData && (
                     <div
