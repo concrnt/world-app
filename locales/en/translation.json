@@ -568,8 +568,10 @@
             "requested": "Request sent",
             "requestAccess": "Request access"
         },
-        "domainOfflineBanner": {
-            "offline": "Your domain {{domain}} is currently in read-only mode due to being offline. Please wait until it is restored."
+        "connectionStatus": {
+            "disconnected": "Disconnected.",
+            "retryIn": "Retrying connection in {{seconds}}s.",
+            "retrying": "Reconnecting..."
         },
         "accountSwitchingBanner": {
             "switching": "Switching profile...",

@@ -15,6 +15,7 @@ import { MdCreate } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
+import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 import { SidebarLists } from './SidebarLists'
 import { useNavigate } from 'react-router-dom'
@@ -25,7 +26,7 @@ import { currentPostContext } from '../contexts/PostContext'
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const unreadCount = useNotificationCounter(client)
     const navigate = useNavigate()
     const composer = useComposer()
@@ -78,6 +79,11 @@ export const Sidebar = () => {
                     </div>
                     <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                 </div>
+                {isDomainOffline && (
+                    <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                        <ConnectionStatus />
+                    </div>
+                )}
                 <Divider
                     style={{
                         borderColor: CssVar.backdropText

@@ -19,6 +19,7 @@ import { MdList } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
+import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 
 interface Props {
@@ -28,7 +29,7 @@ interface Props {
 export const Sidebar = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
 
     return (
         <>
@@ -86,6 +87,11 @@ export const Sidebar = (props: Props) => {
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
+                    {isDomainOffline && (
+                        <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                            <ConnectionStatus />
+                        </div>
+                    )}
                     <Divider
                         style={{
                             marginTop: CssVar.space(2),

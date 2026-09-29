@@ -298,8 +298,14 @@ export class Client {
 
     // 自ドメインのオンライン状態。falseの間は読み取り専用モード相当
     isOnline: boolean = true
+    // 次回の自動再接続プローブ予定時刻(epoch ms)。オフラインでプローブ待機中のみ非null(プローブ実行中はnull)。
+    // UIはこれを1秒ごとに読んでカウントダウンを表示する
+    nextRetryAt: number | null = null
     private onlineSubscriptions: Array<(online: boolean) => void> = []
-    private recoveryTimer: ReturnType<typeof setInterval> | null = null
+    private recoveryTimer: ReturnType<typeof setTimeout> | null = null
+    private recoveryAttempt = 0
+    // 再接続プローブのbackoff。末尾を上限として繰り返す
+    private static readonly recoveryDelays = [500, 3000, 10000, 30000]
 
     private profilesSubscriptions: Array<() => void> = []
     private serverSubscriptions: Array<() => void> = []
@@ -391,16 +397,31 @@ export class Client {
 
     startRecoveryPoll() {
         if (this.recoveryTimer) return
-        this.recoveryTimer = setInterval(() => {
-            this.probeDomainStatus()
-        }, 30 * 1000)
+        this.scheduleRecoveryProbe()
+    }
+
+    // setIntervalではなくsetTimeoutの連鎖にして、UIが次回予定時刻(nextRetryAt)を読めるようにする。
+    // プローブ成功時はmarkHostOnline→setOnlineStatus(true)→stopRecoveryPollが走るので、再スケジュールは失敗時のみ
+    private scheduleRecoveryProbe() {
+        const delays = Client.recoveryDelays
+        const delay = delays[Math.min(this.recoveryAttempt, delays.length - 1)]
+        this.nextRetryAt = Date.now() + delay
+        this.recoveryTimer = setTimeout(async () => {
+            this.recoveryTimer = null
+            this.nextRetryAt = null
+            this.recoveryAttempt++
+            await this.probeDomainStatus()
+            if (!this.isOnline && !this.recoveryTimer) this.scheduleRecoveryProbe()
+        }, delay)
     }
 
     private stopRecoveryPoll() {
         if (this.recoveryTimer) {
-            clearInterval(this.recoveryTimer)
+            clearTimeout(this.recoveryTimer)
             this.recoveryTimer = null
         }
+        this.nextRetryAt = null
+        this.recoveryAttempt = 0
     }
 
     dispose() {

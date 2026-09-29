@@ -11,6 +11,7 @@ import { MdList } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
+import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 import { useNavigate } from 'react-router-dom'
 
@@ -23,7 +24,7 @@ interface Props {
 export const DrawerMenu = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const navigate = useNavigate()
 
     const go = (path: string) => {
@@ -80,6 +81,11 @@ export const DrawerMenu = (props: Props) => {
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
+                    {isDomainOffline && (
+                        <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                            <ConnectionStatus />
+                        </div>
+                    )}
                     <Divider />
                     <List
                         dense
