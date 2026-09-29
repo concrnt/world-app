@@ -97,6 +97,8 @@ export class Client {
     sockets: Record<string, Socket> = {}
 
     messageCache: Record<string, Cache<Promise<Message<any> | null>>> = {}
+    // オフライン等で失敗したgetMessageのエントリ。復帰時に破棄してErrorBoundaryのresetKeys再試行で取り直させる
+    private failedMessages = new Map<string, Promise<Message<any> | null>>()
     // rerouteメッセージのuri → targetURI。invalidateMessageのカスケード用
     // (キャッシュの中身はPromiseなのでinvalidate時に同期的にrerouteか判定できない)
     private rerouteTargets: Record<string, string> = {}
@@ -304,8 +306,13 @@ export class Client {
     private onlineSubscriptions: Array<(online: boolean) => void> = []
     private recoveryTimer: ReturnType<typeof setTimeout> | null = null
     private recoveryAttempt = 0
+    // 直近でオンラインに遷移した時刻。復帰直後にまた落ちる(サーバーの部分障害等)場合にbackoffを引き継ぐ判定に使う
+    private onlineSince = 0
     // 再接続プローブのbackoff。末尾を上限として繰り返す
     private static readonly recoveryDelays = [500, 3000, 10000, 30000]
+    // これより長くオンラインが続いていれば、次のオフラインはbackoffを最初からやり直す
+    // (部分障害の振動は復帰→再試行→失敗の数秒以内に起きる。それより長い間隔の再断は別の障害として扱う)
+    private static readonly stableOnlineMs = 10_000
 
     private profilesSubscriptions: Array<() => void> = []
     private serverSubscriptions: Array<() => void> = []
@@ -334,10 +341,19 @@ export class Client {
         if (this.isOnline === online) return
         this.isOnline = online
         if (online) {
+            this.onlineSince = Date.now()
             this.stopRecoveryPoll()
             // 復帰直後のrefreshFreshResourcesが30秒抑制に引っかからないようにする
             this.lastFreshResourcesRefresh = 0
+            // オフライン中に失敗した投稿は次の描画で取り直す(invalidate後に成功で差し替わった分は残す)
+            for (const [key, promise] of this.failedMessages) {
+                if (this.messageCache[key]?.data === promise) delete this.messageCache[key]
+            }
+            this.failedMessages.clear()
         } else {
+            // プローブは通るのにAPIが落ちている部分障害では、復帰→再試行→失敗→オフラインが繰り返される。
+            // 直前のオンラインが短命ならbackoffを引き継いで振動の周期を伸ばす
+            if (Date.now() - this.onlineSince > Client.stableOnlineMs) this.recoveryAttempt = 0
             this.startRecoveryPoll()
         }
         for (const callback of this.onlineSubscriptions) {
@@ -415,13 +431,13 @@ export class Client {
         }, delay)
     }
 
+    // recoveryAttemptはここでは戻さない(短命なオンラインの後の再オフラインで引き継ぐ。setOnlineStatus参照)
     private stopRecoveryPoll() {
         if (this.recoveryTimer) {
             clearTimeout(this.recoveryTimer)
             this.recoveryTimer = null
         }
         this.nextRetryAt = null
-        this.recoveryAttempt = 0
     }
 
     dispose() {
@@ -701,6 +717,13 @@ export class Client {
             data: msg,
             expire: Date.now() + cacheLifetime
         }
+        // 失敗(オフライン等)は控えておき、自ドメインのオンライン復帰時にまとめて破棄する(setOnlineStatus参照)。
+        // reject直後に消すとuse()が再レンダーのたびに新しいpromiseを受け取り無限サスペンドになるため、
+        // 失敗自体はキャッシュしたままにする。404(NotFoundError)は削除済みなので破棄対象にしない
+        msg.catch((err) => {
+            if (err instanceof NotFoundError) return
+            if (this.messageCache[cacheKey]?.data === msg) this.failedMessages.set(cacheKey, msg)
+        })
         return msg
     }
 
