@@ -87,6 +87,8 @@ export const RealtimeTimeline = (props: Props) => {
     const hasMoreDataRef = useRef(hasMoreData)
     hasMoreDataRef.current = hasMoreData
     const [initialLoaded, setInitialLoaded] = useState(snapshot !== undefined)
+    // listenがbodyを先頭ページで置き換える前に、スクロールで足した投稿を覚えておく
+    const readAheadRef = useRef<TimelineItemWithUpdate[]>([])
 
     // 表示中の先頭16件をデバウンスして保存させる(先頭リストのみonHeadChangeが渡される)。
     // スナップショット表示中は本物がまだ無いので保存しない
@@ -251,7 +253,21 @@ export const RealtimeTimeline = (props: Props) => {
                     }
                     t.listen(props.timelines)
                         .then((hasMoreData) => {
-                            setHasMoreData(hasMoreData)
+                            // 先頭取得はbodyを置き換える。それより前に追い読みした古い投稿を戻す
+                            const fetched = new Set(t.body.map((item) => item.href))
+                            const oldest = t.body.reduce(
+                                (min, item) => Math.min(min, item.timestamp.getTime()),
+                                Infinity
+                            )
+                            const older = readAheadRef.current.filter(
+                                (item) => !fetched.has(item.href) && item.timestamp.getTime() < oldest
+                            )
+                            if (older.length > 0) {
+                                t.body = [...t.body, ...older]
+                                t.chunkedBody.push(older)
+                                update()
+                            }
+                            setHasMoreData(older.length > 0 || hasMoreData)
                             if (!snapshotRef.current) return
                             if (t.headLoaded) {
                                 swapToLive(t)
@@ -309,22 +325,10 @@ export const RealtimeTimeline = (props: Props) => {
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
-            const el = scrollRef.current
-            if (!el) return
-            let port: HTMLElement | null = el
-            while (port) {
-                if (port === document.body || port === document.documentElement) {
-                    port = null
-                    break
-                }
-                const overflowY = getComputedStyle(port).overflowY
-                if (overflowY === 'auto' || overflowY === 'scroll') break
-                port = port.parentElement
-            }
-            if (!port) {
-                window.scrollTo({ top: 0, behavior: 'smooth' })
+            if (isMobile) {
+                scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
             } else {
-                port.scrollTo({ top: 0, behavior: 'smooth' })
+                window.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -372,44 +376,37 @@ export const RealtimeTimeline = (props: Props) => {
     /** 新着バッジクリック時の処理 */
     const handleNewArrivalClick = useCallback(() => {
         setNewArrivals([])
-        const el = scrollRef.current
-        if (el) {
-            let port: HTMLElement | null = el
-            while (port) {
-                if (port === document.body || port === document.documentElement) {
-                    port = null
-                    break
-                }
-                const overflowY = getComputedStyle(port).overflowY
-                if (overflowY === 'auto' || overflowY === 'scroll') break
-                port = port.parentElement
-            }
-            if (!port) {
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-            } else {
-                port.scrollTo({ top: 0, behavior: 'smooth' })
-            }
+        if (isMobile) {
+            scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
         }
         onRefresh()
-    }, [onRefresh])
+    }, [isMobile, onRefresh])
 
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
         if (!initialLoaded) return
 
-        let port: HTMLElement | null = el
-        while (port && port !== document.body && port !== document.documentElement) {
-            const overflowY = getComputedStyle(port).overflowY
-            if (overflowY === 'auto' || overflowY === 'scroll') break
-            port = port.parentElement
+        // モバイルはタイムライン自身、デスクトップはウィンドウがスクロールする
+        const onWindow = !isMobile
+        const readMetrics = () => {
+            if (onWindow) {
+                const scrollTop = window.scrollY
+                return {
+                    scrollTop,
+                    distanceToEnd: document.documentElement.scrollHeight - scrollTop - window.innerHeight
+                }
+            }
+            return {
+                scrollTop: el.scrollTop,
+                distanceToEnd: el.scrollHeight - el.scrollTop - el.clientHeight
+            }
         }
-        if (port === document.body || port === document.documentElement) port = null
-        const selfScroll = port === el
 
         const handleScroll = () => {
-            // 自分か、デスクトップではページカラムがスクロールする。どちらでもなければ window
-            const scrollTop = selfScroll ? el.scrollTop : port ? port.scrollTop : window.scrollY
+            const { scrollTop, distanceToEnd } = readMetrics()
             scrollPositionRef.current = scrollTop
 
             // haltUpdate制御：スクロールが閾値を超えたら自動更新を停止
@@ -417,11 +414,6 @@ export const RealtimeTimeline = (props: Props) => {
                 reader.current.haltUpdate = scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
             }
 
-            const distanceToEnd = selfScroll
-                ? el.scrollHeight - scrollTop - el.clientHeight
-                : port
-                  ? el.getBoundingClientRect().bottom - port.getBoundingClientRect().bottom
-                  : el.getBoundingClientRect().bottom - window.innerHeight
             if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreDataRef.current) return
@@ -434,6 +426,7 @@ export const RealtimeTimeline = (props: Props) => {
                 reader.current
                     ?.readMore(8)
                     .then((hasMore) => {
+                        readAheadRef.current = reader.current?.body.slice() ?? []
                         setHasMoreData(hasMore)
                     })
                     .catch((e) => {
@@ -448,7 +441,7 @@ export const RealtimeTimeline = (props: Props) => {
             }
         }
 
-        const target: HTMLElement | Window = port ?? window
+        const target: HTMLElement | Window = onWindow ? window : el
         target.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
@@ -464,7 +457,7 @@ export const RealtimeTimeline = (props: Props) => {
             target.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, initialLoaded])
+    }, [isMobile, scrollRef, reader, initialLoaded, loading])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
@@ -476,9 +469,11 @@ export const RealtimeTimeline = (props: Props) => {
                 style={{
                     position: 'relative',
                     display: 'flex',
-                    flex: 1,
                     flexDirection: 'column',
-                    overflow: 'hidden'
+                    // デスクトップは中身の高さでページが伸びる。flex基準0やoverflow:hiddenだと追記が画面の外にクリップされる
+                    ...(isMobile
+                        ? { flex: 1, minHeight: 0, overflow: 'hidden' as const }
+                        : { overflow: 'visible' as const })
                 }}
             >
                 {/* 新着バッジ */}
@@ -569,6 +564,8 @@ export const RealtimeTimeline = (props: Props) => {
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
+                        flex: isMobile ? 1 : '0 0 auto',
+                        minHeight: isMobile ? 0 : undefined,
                         gap: '8px',
                         padding: '8px 0',
                         // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
@@ -597,7 +594,7 @@ export const RealtimeTimeline = (props: Props) => {
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
                         <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(seededItems ?? reader.current?.body ?? []).map((item) => (
+                            {(reader.current?.body.length ? reader.current.body : (seededItems ?? [])).map((item) => (
                                 <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
                             ))}
                         </MessageSnapshotContext.Provider>

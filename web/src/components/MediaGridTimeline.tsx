@@ -185,22 +185,10 @@ export const MediaGridTimeline = (props: Props) => {
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
-            const el = scrollRef.current
-            if (!el) return
-            let port: HTMLElement | null = el
-            while (port) {
-                if (port === document.body || port === document.documentElement) {
-                    port = null
-                    break
-                }
-                const overflowY = getComputedStyle(port).overflowY
-                if (overflowY === 'auto' || overflowY === 'scroll') break
-                port = port.parentElement
-            }
-            if (!port) {
-                window.scrollTo({ top: 0, behavior: 'smooth' })
+            if (isMobile) {
+                scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
             } else {
-                port.scrollTo({ top: 0, behavior: 'smooth' })
+                window.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -266,25 +254,26 @@ export const MediaGridTimeline = (props: Props) => {
         const el = scrollRef.current
         if (!el) return
 
-        let port: HTMLElement | null = el
-        while (port && port !== document.body && port !== document.documentElement) {
-            const overflowY = getComputedStyle(port).overflowY
-            if (overflowY === 'auto' || overflowY === 'scroll') break
-            port = port.parentElement
+        // モバイルはタイムライン自身、デスクトップはウィンドウがスクロールする
+        const onWindow = !isMobile
+        const readMetrics = () => {
+            if (onWindow) {
+                const scrollTop = window.scrollY
+                return {
+                    scrollTop,
+                    distanceToEnd: document.documentElement.scrollHeight - scrollTop - window.innerHeight
+                }
+            }
+            return {
+                scrollTop: el.scrollTop,
+                distanceToEnd: el.scrollHeight - el.scrollTop - el.clientHeight
+            }
         }
-        if (port === document.body || port === document.documentElement) port = null
-        const selfScroll = port === el
 
         const handleScroll = () => {
-            // 自分か、デスクトップではページカラムがスクロールする。どちらでもなければ window
-            const scrollTop = selfScroll ? el.scrollTop : port ? port.scrollTop : window.scrollY
+            const { scrollTop, distanceToEnd } = readMetrics()
             scrollPositionRef.current = scrollTop
 
-            const distanceToEnd = selfScroll
-                ? el.scrollHeight - scrollTop - el.clientHeight
-                : port
-                  ? el.getBoundingClientRect().bottom - port.getBoundingClientRect().bottom
-                  : el.getBoundingClientRect().bottom - window.innerHeight
             if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
@@ -292,7 +281,7 @@ export const MediaGridTimeline = (props: Props) => {
             }
         }
 
-        const target: HTMLElement | Window = port ?? window
+        const target: HTMLElement | Window = onWindow ? window : el
         target.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
@@ -308,7 +297,7 @@ export const MediaGridTimeline = (props: Props) => {
             target.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, loading, loadMore])
+    }, [isMobile, scrollRef, reader, hasMoreData, loading, loadMore])
 
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
