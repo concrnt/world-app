@@ -65,47 +65,50 @@ export const PullToRefresh = (props: Props): ReactNode => {
 
     return (
         <>
-            <div
-                style={{
-                    // ジェスチャ無しで親がisFetchingにした場合(起動時スナップショット表示中・新着バッジ)もスピナーを見せる
-                    height: `${ptrEnabled || props.isFetching ? PTR_HEIGHT : loaderSize}px`,
-                    width: '100%',
-                    position: 'relative',
-                    color: 'text.secondary',
-                    display: 'flex',
-                    transition: 'height 0.2s ease-in-out',
-                    overflow: 'hidden'
-                }}
-            >
+            {/* デスクトップでは更新中のスピナーを出さない。モバイルのプル操作だけ見せる */}
+            {isMobile && (
                 <div
                     style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: `${PTR_HEIGHT}px`,
-                        position: 'absolute',
+                        // ジェスチャ無しで親がisFetchingにした場合(起動時スナップショット表示中・新着バッジ)もスピナーを見せる
+                        height: `${ptrEnabled || props.isFetching ? PTR_HEIGHT : loaderSize}px`,
                         width: '100%',
-                        bottom: 0,
-                        left: 0
+                        position: 'relative',
+                        color: 'text.secondary',
+                        display: 'flex',
+                        transition: 'height 0.2s ease-in-out',
+                        overflow: 'hidden'
                     }}
                 >
-                    {props.isFetching ? (
-                        <MdSync
-                            size={24}
-                            style={{
-                                animation: `${styles['ptr-spin']} 1s linear infinite`
-                            }}
-                        />
-                    ) : (
-                        <MdArrowDownward
-                            style={{
-                                transform: `rotate(${ptrEnabled ? 0 : 180}deg)`,
-                                transition: 'transform 0.2s ease-in-out'
-                            }}
-                        />
-                    )}
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: `${PTR_HEIGHT}px`,
+                            position: 'absolute',
+                            width: '100%',
+                            bottom: 0,
+                            left: 0
+                        }}
+                    >
+                        {props.isFetching ? (
+                            <MdSync
+                                size={24}
+                                style={{
+                                    animation: `${styles['ptr-spin']} 1s linear infinite`
+                                }}
+                            />
+                        ) : (
+                            <MdArrowDownward
+                                style={{
+                                    transform: `rotate(${ptrEnabled ? 0 : 180}deg)`,
+                                    transition: 'transform 0.2s ease-in-out'
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
             <div
                 ref={scrollParentRef}
                 style={{
