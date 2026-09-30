@@ -279,15 +279,6 @@ const SubItemRowInner = (props: {
         <ListItem
             dense
             disabled={label === null}
-            icon={
-                label === null ? (
-                    <MdHelpOutline size={18} />
-                ) : props.isUser ? (
-                    <MdAlternateEmail size={18} />
-                ) : (
-                    <MdOutlineTag size={18} />
-                )
-            }
             style={{
                 paddingLeft: CssVar.space(3),
                 opacity: label === null ? 0.6 : 1
@@ -296,16 +287,33 @@ const SubItemRowInner = (props: {
                 navigate(props.isUser ? '/profile/' + props.ccid : '/timeline/' + encodeURIComponent(props.href))
             }
         >
-            <Text
+            <span
                 style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'block'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    minWidth: 0
                 }}
             >
-                {label ?? t('notFound')}
-            </Text>
+                {label === null ? (
+                    <MdHelpOutline size={18} style={{ flexShrink: 0 }} />
+                ) : props.isUser ? (
+                    <MdAlternateEmail size={18} style={{ flexShrink: 0 }} />
+                ) : (
+                    <MdOutlineTag size={18} style={{ flexShrink: 0 }} />
+                )}
+                <Text
+                    style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'block',
+                        minWidth: 0
+                    }}
+                >
+                    {label ?? t('notFound')}
+                </Text>
+            </span>
         </ListItem>
     )
 }

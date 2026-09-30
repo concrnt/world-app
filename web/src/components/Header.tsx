@@ -61,7 +61,9 @@ export const Header = (props: Props) => {
                     flexGrow: 1,
                     textAlign: 'center',
                     fontWeight: 'bold',
-                    cursor: props.onTitleTap ? 'pointer' : undefined
+                    cursor: props.onTitleTap ? 'pointer' : undefined,
+                    // デスクトップのヘッダーは上下が非対称なので、タイトルを少し下げる
+                    ...(isMobile ? {} : { transform: 'translateY(4px)' })
                 }}
                 onClick={props.onTitleTap}
             >
@@ -102,7 +104,8 @@ export const Header = (props: Props) => {
             <div
                 style={{
                     height: '40px',
-                    width: '40px'
+                    width: '40px',
+                    ...(isMobile ? {} : { transform: 'translateY(4px)' })
                 }}
             >
                 {props.right}

@@ -3,13 +3,13 @@ import { useClient } from '../contexts/Client'
 
 import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
 
-import { MdHome } from 'react-icons/md'
+import { GoHomeFill } from 'react-icons/go'
+import { HiBell } from 'react-icons/hi'
+import { BsPeopleFill } from 'react-icons/bs'
+import { FaListUl } from 'react-icons/fa6'
 import { MdExplore } from 'react-icons/md'
-import { MdNotifications } from 'react-icons/md'
-import { MdContacts } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
-import { MdList } from 'react-icons/md'
 import { MdCreate } from 'react-icons/md'
 
 import { CssVar } from '../types/Theme'
@@ -24,11 +24,11 @@ import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { currentPostContext } from '../contexts/PostContext'
 
 const NAV = [
-    { path: '/', key: 'home', icon: <MdHome size={22} /> },
-    { path: '/notifications', key: 'notifications', icon: <MdNotifications size={22} /> },
-    { path: '/contacts', key: 'contacts', icon: <MdContacts size={22} /> },
+    { path: '/', key: 'home', icon: <GoHomeFill size={22} /> },
+    { path: '/notifications', key: 'notifications', icon: <HiBell size={22} /> },
+    { path: '/contacts', key: 'contacts', icon: <BsPeopleFill size={22} /> },
     { path: '/explorer', key: 'explore', icon: <MdExplore size={22} /> },
-    { path: '/lists', key: 'lists', icon: <MdList size={22} /> },
+    { path: '/lists', key: 'lists', icon: <FaListUl size={22} /> },
     { path: '/query', key: 'query', icon: <MdTravelExplore size={22} /> },
     { path: '/settings', key: 'settings', icon: <MdSettings size={22} /> }
 ] as const

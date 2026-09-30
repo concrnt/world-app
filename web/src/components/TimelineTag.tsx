@@ -49,7 +49,7 @@ const Inner = (props: InnerProps) => {
             style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem'
+                gap: 0
             }}
             onClick={props.onClick}
         >

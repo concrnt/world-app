@@ -83,7 +83,8 @@ export const TimelinePicker = (props: Props) => {
                         src={profileAvatar}
                         style={{
                             width: 20,
-                            height: 20
+                            height: 20,
+                            borderRadius: '50%'
                         }}
                     />
                 }
@@ -104,7 +105,9 @@ export const TimelinePicker = (props: Props) => {
                     {
                         textDecoration: props.postHome === false ? 'line-through' : 'none',
                         opacity: props.postHome === false ? 0.5 : 1,
-                        anchorName: profileAnchor
+                        anchorName: profileAnchor,
+                        height: 'auto',
+                        padding: '4px 8px'
                     } as React.CSSProperties
                 }
             >
@@ -124,6 +127,10 @@ export const TimelinePicker = (props: Props) => {
                                 }}
                             />
                         }
+                        style={{
+                            height: 'auto',
+                            padding: '4px 8px'
+                        }}
                     >
                         {item ? (
                             props.labelFunc(item)
@@ -187,6 +194,11 @@ export const TimelinePicker = (props: Props) => {
                         setFocused(true)
                     }}
                     tailElement={<IoMdAdd size={16} />}
+                    style={{
+                        height: 'auto',
+                        padding: '4px 8px',
+                        lineHeight: 1.5
+                    }}
                 >
                     {t('addDestination')}
                 </Chip>
