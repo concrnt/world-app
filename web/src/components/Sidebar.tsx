@@ -83,12 +83,13 @@ export const Sidebar = () => {
                             minWidth: 0,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '2px'
+                            gap: 0
                         }}
                     >
                         <Text
                             style={{
                                 fontWeight: 700,
+                                lineHeight: 1.2,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'
@@ -100,6 +101,7 @@ export const Sidebar = () => {
                             variant="caption"
                             style={{
                                 fontSize: '0.75rem',
+                                lineHeight: 1.2,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'

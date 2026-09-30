@@ -5,6 +5,7 @@ import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { IconButton, Popover, useAnchor, useTheme } from '@concrnt/ui'
 import { ConnectionStatus } from './ConnectionStatus'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 interface Props {
     children?: ReactNode
@@ -15,6 +16,7 @@ interface Props {
 
 export const Header = (props: Props) => {
     const theme = useTheme()
+    const isMobile = useIsMobile()
 
     const nav = useNavigation()
 
@@ -33,7 +35,17 @@ export const Header = (props: Props) => {
                 color: theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
                 backgroundColor: theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.uiBackground,
                 paddingTop: theme.variant === 'classic' ? 'env(safe-area-inset-top)' : CssVar.space(1),
-                borderBottom: `1px solid ${CssVar.divider}`
+                borderBottom: `1px solid ${CssVar.divider}`,
+                // ページ全体のスクロールに貼り付く。背景があるので本文は下に潜る
+                ...(isMobile
+                    ? {}
+                    : {
+                          position: 'sticky' as const,
+                          top: 0,
+                          zIndex: 2,
+                          flexShrink: 0,
+                          minHeight: '53px'
+                      })
             }}
         >
             <div

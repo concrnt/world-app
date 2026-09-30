@@ -11,18 +11,18 @@ html {
     overscroll-behavior-y: none;
 }
 
-body {
-    overflow-x: hidden;
-    background-color: var(--backdrop-background);
-}
-
-/* デスクトップはページ全体がスクロールする。::-webkit-scrollbar で幅を指定すると
-   バーが出たときだけレイアウト幅が減る。scrollbar-gutter はオーバーレイスクロールバーでは
-   効かないので、常にバー枠を出して幅を固定する */
+/* デスクトップはブラウザのスクロールバーでページ全体を動かす。
+   バーの幅を指定しているので、出ていないときに幅が広がらないよう枠は常に出す。 */
 @media (min-width: 768px) {
     html {
         overflow-y: scroll;
     }
+}
+
+body {
+    /* hiddenだとposition:stickyが無効になる */
+    overflow-x: clip;
+    background-color: var(--backdrop-background);
 }
 
 ::-webkit-scrollbar {

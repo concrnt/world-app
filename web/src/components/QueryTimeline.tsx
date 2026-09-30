@@ -130,10 +130,20 @@ export const QueryTimeline = (props: Props) => {
         scrollToTop: () => {
             const el = scrollRef.current
             if (!el) return
-            if (el.scrollHeight <= el.clientHeight + 1) {
+            let port: HTMLElement | null = el
+            while (port) {
+                if (port === document.body || port === document.documentElement) {
+                    port = null
+                    break
+                }
+                const overflowY = getComputedStyle(port).overflowY
+                if (overflowY === 'auto' || overflowY === 'scroll') break
+                port = port.parentElement
+            }
+            if (!port) {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
             } else {
-                el.scrollTo({ top: 0, behavior: 'smooth' })
+                port.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -173,15 +183,25 @@ export const QueryTimeline = (props: Props) => {
         const el = scrollRef.current
         if (!el) return
 
+        let port: HTMLElement | null = el
+        while (port && port !== document.body && port !== document.documentElement) {
+            const overflowY = getComputedStyle(port).overflowY
+            if (overflowY === 'auto' || overflowY === 'scroll') break
+            port = port.parentElement
+        }
+        if (port === document.body || port === document.documentElement) port = null
+        const selfScroll = port === el
+
         const handleScroll = () => {
-            // デスクトップはページ全体が伸びてスクロールする。カラム内に余白が無いときだけ window を見る
-            const pageScroll = el.scrollHeight <= el.clientHeight + 1
-            const scrollTop = pageScroll ? window.scrollY : el.scrollTop
+            // 自分か、デスクトップではページカラムがスクロールする。どちらでもなければ window
+            const scrollTop = selfScroll ? el.scrollTop : port ? port.scrollTop : window.scrollY
             scrollPositionRef.current = scrollTop
 
-            const distanceToEnd = pageScroll
-                ? el.getBoundingClientRect().bottom - window.innerHeight
-                : el.scrollHeight - scrollTop - el.clientHeight
+            const distanceToEnd = selfScroll
+                ? el.scrollHeight - scrollTop - el.clientHeight
+                : port
+                  ? el.getBoundingClientRect().bottom - port.getBoundingClientRect().bottom
+                  : el.getBoundingClientRect().bottom - window.innerHeight
             if (distanceToEnd < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
@@ -208,8 +228,8 @@ export const QueryTimeline = (props: Props) => {
             }
         }
 
-        el.addEventListener('scroll', handleScroll)
-        window.addEventListener('scroll', handleScroll, { passive: true })
+        const target: HTMLElement | Window = port ?? window
+        target.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
@@ -221,8 +241,7 @@ export const QueryTimeline = (props: Props) => {
                 : FILL_DELAY_MIN
         }, fillDelayRef.current)
         return () => {
-            el.removeEventListener('scroll', handleScroll)
-            window.removeEventListener('scroll', handleScroll)
+            target.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
     }, [scrollRef, reader, hasMoreData, loading])

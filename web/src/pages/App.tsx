@@ -62,8 +62,11 @@ const DesktopShell = () => {
                 >
                     <div
                         style={{
-                            position: 'sticky',
+                            // bodyのoverflow-x:hiddenがstickyを無効にするので、画面に固定する。
+                            // leftはautoのままで、横位置はカラムの静的位置を使う
+                            position: 'fixed',
                             top: CssVar.space(2),
+                            width: '240px',
                             boxSizing: 'border-box',
                             padding: `${CssVar.space(4)} 0`,
                             height: `calc(100dvh - ${CssVar.space(2)} * 2)`,
@@ -87,9 +90,9 @@ const DesktopShell = () => {
                 >
                     <div
                         style={{
-                            flex: '1 1 0',
+                            flexGrow: 1,
                             minWidth: 0,
-                            margin: CssVar.space(2),
+                            margin: `0 ${CssVar.space(2)} ${CssVar.space(2)}`,
                             display: 'flex',
                             flexFlow: 'column',
                             borderRadius: CssVar.round(2),

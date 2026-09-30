@@ -84,6 +84,8 @@ export const RealtimeTimeline = (props: Props) => {
     const scrollPositionRef = useRef<number>(0)
 
     const [hasMoreData, setHasMoreData] = useState<boolean>(snapshot !== undefined)
+    const hasMoreDataRef = useRef(hasMoreData)
+    hasMoreDataRef.current = hasMoreData
     const [initialLoaded, setInitialLoaded] = useState(snapshot !== undefined)
 
     // 表示中の先頭16件をデバウンスして保存させる(先頭リストのみonHeadChangeが渡される)。
@@ -309,10 +311,20 @@ export const RealtimeTimeline = (props: Props) => {
         scrollToTop: () => {
             const el = scrollRef.current
             if (!el) return
-            if (el.scrollHeight <= el.clientHeight + 1) {
+            let port: HTMLElement | null = el
+            while (port) {
+                if (port === document.body || port === document.documentElement) {
+                    port = null
+                    break
+                }
+                const overflowY = getComputedStyle(port).overflowY
+                if (overflowY === 'auto' || overflowY === 'scroll') break
+                port = port.parentElement
+            }
+            if (!port) {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
             } else {
-                el.scrollTo({ top: 0, behavior: 'smooth' })
+                port.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
     }))
@@ -362,10 +374,20 @@ export const RealtimeTimeline = (props: Props) => {
         setNewArrivals([])
         const el = scrollRef.current
         if (el) {
-            if (el.scrollHeight <= el.clientHeight + 1) {
+            let port: HTMLElement | null = el
+            while (port) {
+                if (port === document.body || port === document.documentElement) {
+                    port = null
+                    break
+                }
+                const overflowY = getComputedStyle(port).overflowY
+                if (overflowY === 'auto' || overflowY === 'scroll') break
+                port = port.parentElement
+            }
+            if (!port) {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
             } else {
-                el.scrollTo({ top: 0, behavior: 'smooth' })
+                port.scrollTo({ top: 0, behavior: 'smooth' })
             }
         }
         onRefresh()
@@ -376,10 +398,18 @@ export const RealtimeTimeline = (props: Props) => {
         if (!el) return
         if (!initialLoaded) return
 
+        let port: HTMLElement | null = el
+        while (port && port !== document.body && port !== document.documentElement) {
+            const overflowY = getComputedStyle(port).overflowY
+            if (overflowY === 'auto' || overflowY === 'scroll') break
+            port = port.parentElement
+        }
+        if (port === document.body || port === document.documentElement) port = null
+        const selfScroll = port === el
+
         const handleScroll = () => {
-            // デスクトップはページ全体が伸びてスクロールする。カラム内に余白が無いときだけ window を見る
-            const pageScroll = el.scrollHeight <= el.clientHeight + 1
-            const scrollTop = pageScroll ? window.scrollY : el.scrollTop
+            // 自分か、デスクトップではページカラムがスクロールする。どちらでもなければ window
+            const scrollTop = selfScroll ? el.scrollTop : port ? port.scrollTop : window.scrollY
             scrollPositionRef.current = scrollTop
 
             // haltUpdate制御：スクロールが閾値を超えたら自動更新を停止
@@ -387,12 +417,14 @@ export const RealtimeTimeline = (props: Props) => {
                 reader.current.haltUpdate = scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
             }
 
-            const distanceToEnd = pageScroll
-                ? el.getBoundingClientRect().bottom - window.innerHeight
-                : el.scrollHeight - scrollTop - el.clientHeight
+            const distanceToEnd = selfScroll
+                ? el.scrollHeight - scrollTop - el.clientHeight
+                : port
+                  ? el.getBoundingClientRect().bottom - port.getBoundingClientRect().bottom
+                  : el.getBoundingClientRect().bottom - window.innerHeight
             if (distanceToEnd < 500) {
                 if (loadingRef.current) return
-                if (!hasMoreData) return
+                if (!hasMoreDataRef.current) return
                 if (!reader.current) return
 
                 console.log('Reading more...')
@@ -416,8 +448,8 @@ export const RealtimeTimeline = (props: Props) => {
             }
         }
 
-        el.addEventListener('scroll', handleScroll)
-        window.addEventListener('scroll', handleScroll, { passive: true })
+        const target: HTMLElement | Window = port ?? window
+        target.addEventListener('scroll', handleScroll, { passive: true })
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
@@ -429,11 +461,10 @@ export const RealtimeTimeline = (props: Props) => {
                 : FILL_DELAY_MIN
         }, fillDelayRef.current)
         return () => {
-            el.removeEventListener('scroll', handleScroll)
-            window.removeEventListener('scroll', handleScroll)
+            target.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, initialLoaded, loading])
+    }, [scrollRef, reader, initialLoaded])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
@@ -545,8 +576,10 @@ export const RealtimeTimeline = (props: Props) => {
                         overflowX: isMobile ? 'hidden' : 'clip',
                         overflowY: isMobile ? 'auto' : 'visible',
                         // モバイルはカラム内スクロールなので、バーが出ても内容幅が変わらないよう先に確保する。
-                        // デスクトップはwindowがスクロールし、ここへ付けると遷移のたびに幅が揺れる
+                        // デスクトップは親のViewがスクロールする。ここをスクロールコンテナにするとホイールが窓まで届かない
                         scrollbarGutter: isMobile ? 'stable' : undefined,
+                        // 末尾への追記でブラウザがスクロール位置を補正し、表示が小刻みに震えるのを止める
+                        overflowAnchor: 'none',
                         overscrollBehaviorY: 'none'
                     }}
                     ref={scrollRef}
@@ -604,8 +637,9 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                 <div
                     style={{
                         padding: `0 ${CssVar.space(2)}`,
-                        contentVisibility: 'auto',
-                        containIntrinsicSize: 'auto 120px'
+                        // content-visibilityは画面外の高さを仮の値に潰し、追い読みのたびに
+                        // スクロール位置が引き戻されて小刻みに震える
+                        overflowAnchor: 'none'
                     }}
                 >
                     <Suspense key={item.href} fallback={<MessageSkeleton />}>

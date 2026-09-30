@@ -25,6 +25,8 @@ export const View = (props: Props) => {
                     flexDirection: 'column',
                     color: CssVar.contentText,
                     backgroundColor: CssVar.contentBackground,
+                    // 末尾の読み込みでブラウザがスクロール位置を補正して震えるのを止める
+                    overflowAnchor: isMobile ? undefined : 'none',
                     ...props.style
                 }}
             >
@@ -43,6 +45,7 @@ export const View = (props: Props) => {
                     borderRadius: CssVar.round(1),
                     overflow: isMobile ? 'hidden' : 'visible',
                     flex: isMobile ? 1 : undefined,
+                    overflowAnchor: isMobile ? undefined : 'none',
                     // モバイル幅ではデスクトップのカードラッパーが無いので、
                     // ui版View(=app版の見た目)と同じマージンをここで持つ
                     ...(isMobile && {
