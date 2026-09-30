@@ -54,6 +54,8 @@ const DesktopShell = () => {
                 <aside
                     style={{
                         width: '240px',
+                        minWidth: '240px',
+                        maxWidth: '240px',
                         flexShrink: 0,
                         margin: `${CssVar.space(2)} ${CssVar.space(4)}`
                     }}
@@ -75,15 +77,17 @@ const DesktopShell = () => {
                 <main
                     style={{
                         display: 'flex',
-                        // basisをautoにすると幅が中身のmax-contentに追従し、読み込み後に横へ広がる
+                        // basisをautoにすると幅が中身のmax-contentに追従し、読み込み後に横へ広がる。
+                        // inline-sizeの封じ込めは、遷移の一瞬だけ中身が空になっても幅を外から決めるため
                         flex: '1 1 0',
                         maxWidth: '720px',
-                        minWidth: 0
+                        minWidth: 0,
+                        contain: 'inline-size'
                     }}
                 >
                     <div
                         style={{
-                            flexGrow: '1',
+                            flex: '1 1 0',
                             minWidth: 0,
                             margin: CssVar.space(2),
                             display: 'flex',

@@ -16,6 +16,15 @@ body {
     background-color: var(--backdrop-background);
 }
 
+/* デスクトップはページ全体がスクロールする。::-webkit-scrollbar で幅を指定すると
+   バーが出たときだけレイアウト幅が減る。scrollbar-gutter はオーバーレイスクロールバーでは
+   効かないので、常にバー枠を出して幅を固定する */
+@media (min-width: 768px) {
+    html {
+        overflow-y: scroll;
+    }
+}
+
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;

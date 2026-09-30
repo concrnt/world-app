@@ -481,8 +481,9 @@ export const NotificationTimeline = (props: Props) => {
                     // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
                     overflowX: isMobile ? 'hidden' : 'clip',
                     overflowY: isMobile ? 'auto' : 'visible',
-                    // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
-                    scrollbarGutter: 'stable',
+                    // モバイルはカラム内スクロールなので、バーが出ても内容幅が変わらないよう先に確保する。
+                    // デスクトップはwindowがスクロールし、ここへ付けると遷移のたびに幅が揺れる
+                    scrollbarGutter: isMobile ? 'stable' : undefined,
                     touchAction: 'pan-y',
                     // iOS の慣性スクロール跨ね返りを抑制して PullToRefresh との干渉を防ぐ
                     overscrollBehaviorY: 'none'
