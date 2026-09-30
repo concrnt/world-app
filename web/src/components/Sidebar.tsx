@@ -18,10 +18,20 @@ import { SwitchAccountButton } from './SwitchAccountButton'
 import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 import { SidebarLists } from './SidebarLists'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { currentPostContext } from '../contexts/PostContext'
+
+const NAV = [
+    { path: '/', key: 'home', icon: <MdHome size={22} /> },
+    { path: '/notifications', key: 'notifications', icon: <MdNotifications size={22} /> },
+    { path: '/contacts', key: 'contacts', icon: <MdContacts size={22} /> },
+    { path: '/explorer', key: 'explore', icon: <MdExplore size={22} /> },
+    { path: '/lists', key: 'lists', icon: <MdList size={22} /> },
+    { path: '/query', key: 'query', icon: <MdTravelExplore size={22} /> },
+    { path: '/settings', key: 'settings', icon: <MdSettings size={22} /> }
+] as const
 
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
@@ -29,11 +39,14 @@ export const Sidebar = () => {
     const { client, isDomainOffline } = useClient()
     const unreadCount = useNotificationCounter(client)
     const navigate = useNavigate()
+    const location = useLocation()
     const composer = useComposer()
 
     const go = (path: string) => {
         navigate(path)
     }
+
+    const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path))
 
     return (
         <>
@@ -41,158 +54,193 @@ export const Sidebar = () => {
                 style={{
                     width: '100%',
                     height: '100%',
+                    boxSizing: 'border-box',
                     paddingTop: 'env(safe-area-inset-top)',
                     paddingBottom: 'env(safe-area-inset-bottom)',
                     backgroundColor: theme.variant === 'classic' ? CssVar.backdropBackground : 'transparent',
                     color: CssVar.backdropText,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: CssVar.space(1)
+                    gap: CssVar.space(6)
                 }}
             >
                 <div
                     style={{
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        gap: CssVar.space(1),
-                        padding: `${CssVar.space(1)} ${CssVar.space(2)}`
+                        alignItems: 'center',
+                        gap: CssVar.space(3),
+                        padding: CssVar.space(3),
+                        borderRadius: CssVar.round(3),
+                        backgroundColor: `rgb(from ${CssVar.backdropText} r g b / 0.06)`,
+                        cursor: 'pointer'
                     }}
                     onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
                 >
+                    <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
                     <div
                         style={{
+                            flex: 1,
+                            minWidth: 0,
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: CssVar.space(2)
+                            flexDirection: 'column',
+                            gap: '2px'
                         }}
                     >
-                        <Avatar ccid={client?.ccid || ''} src={client?.profile.avatar} />
                         <Text
                             style={{
-                                flex: 1
+                                fontWeight: 700,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
                             }}
                         >
                             <ProfileName document={client?.profileDocument} />
                         </Text>
-                        <SwitchAccountButton />
+                        <Text
+                            variant="caption"
+                            style={{
+                                fontSize: '0.75rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {client?.server.domain || 'Unknown Server'}
+                        </Text>
                     </div>
-                    <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
+                    <SwitchAccountButton />
                 </div>
                 {isDomainOffline && (
                     <div style={{ padding: `0 ${CssVar.space(2)}` }}>
                         <ConnectionStatus />
                     </div>
                 )}
-                <Divider
-                    style={{
-                        borderColor: CssVar.backdropText
-                    }}
-                />
                 <List
-                    dense
                     disablePadding
                     style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
                         color: CssVar.backdropText
                     }}
                 >
-                    <ListItem icon={<MdHome size={24} />} onClick={() => go('/')}>
-                        {t('home')}
-                    </ListItem>
-                    <ListItem
-                        icon={<MdNotifications size={24} />}
-                        endIcon={
-                            <Badge
+                    {NAV.map((item) => {
+                        const active = isActive(item.path)
+                        return (
+                            <ListItem
+                                key={item.path}
+                                icon={item.icon}
+                                endIcon={
+                                    item.path === '/notifications' ? (
+                                        <Badge
+                                            style={{
+                                                color: CssVar.backdropBackground,
+                                                backgroundColor: CssVar.backdropText
+                                            }}
+                                            count={unreadCount}
+                                        />
+                                    ) : undefined
+                                }
+                                onClick={() => go(item.path)}
                                 style={{
-                                    color: CssVar.backdropBackground,
-                                    backgroundColor: CssVar.backdropText
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    borderRadius: CssVar.round(2),
+                                    backgroundColor: active
+                                        ? `rgb(from ${CssVar.backdropText} r g b / 0.08)`
+                                        : 'transparent',
+                                    fontWeight: active ? 700 : 400,
+                                    transition: 'background-color 0.15s'
                                 }}
-                                count={unreadCount}
-                            />
-                        }
-                        onClick={() => go('/notifications')}
-                    >
-                        {t('notifications')}
-                    </ListItem>
-                    <ListItem icon={<MdContacts size={24} />} onClick={() => go('/contacts')}>
-                        {t('contacts')}
-                    </ListItem>
-                    <ListItem icon={<MdExplore size={24} />} onClick={() => go('/explorer')}>
-                        {t('explore')}
-                    </ListItem>
-                    <ListItem icon={<MdList size={24} />} onClick={() => go('/lists')}>
-                        {t('lists')}
-                    </ListItem>
-                    <ListItem icon={<MdTravelExplore size={24} />} onClick={() => go('/query')}>
-                        {t('query')}
-                    </ListItem>
-                    <ListItem icon={<MdSettings size={24} />} onClick={() => go('/settings')}>
-                        {t('settings')}
-                    </ListItem>
+                            >
+                                <span style={{ paddingLeft: CssVar.space(1) }}>{t(item.key)}</span>
+                            </ListItem>
+                        )
+                    })}
                 </List>
-                <Divider
-                    style={{
-                        borderColor: CssVar.backdropText
-                    }}
-                />
-                <SidebarLists />
-                <Button
-                    onClick={() => {
-                        // 最前面のビューが提供するデフォルト投稿先で開く。文脈のないページではホームのみ
-                        const postCtx = currentPostContext()
-                        composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
-                    }}
-                    style={{ width: '100%' }}
-                >
-                    <MdCreate size={20} />
-                    {t('post')}
-                </Button>
-
-                <Divider
-                    style={{
-                        marginTop: CssVar.space(2),
-                        borderColor: CssVar.backdropText
-                    }}
-                />
-
                 <div
                     style={{
-                        fontSize: '0.6rem',
-                        padding: CssVar.space(1),
-                        textAlign: 'center'
+                        flex: 1,
+                        minHeight: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(2)
                     }}
                 >
-                    Concrnt World App
-                    <br />
-                    <ExternalLink
+                    <Divider
                         style={{
-                            color: CssVar.backdropText,
-                            textDecoration: 'none'
+                            margin: `0 ${CssVar.space(2)}`,
+                            borderColor: `rgb(from ${CssVar.backdropText} r g b / 0.12)`
                         }}
-                        href="https://square.concrnt.net/"
-                    >
-                        {t('documentation')}
-                    </ExternalLink>
-                    {' / '}
-                    <ExternalLink
+                    />
+                    <SidebarLists />
+                </div>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(4)
+                    }}
+                >
+                    <Button
+                        onClick={() => {
+                            // 最前面のビューが提供するデフォルト投稿先で開く。文脈のないページではホームのみ
+                            const postCtx = currentPostContext()
+                            composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
+                        }}
                         style={{
-                            color: CssVar.backdropText,
-                            textDecoration: 'none'
+                            width: '100%',
+                            minHeight: '48px',
+                            borderRadius: CssVar.round(3),
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            gap: CssVar.space(2)
                         }}
-                        href="https://github.com/orgs/concrnt/discussions"
                     >
-                        {t('forum')}
-                    </ExternalLink>
-                    {' / '}
-                    <ExternalLink
+                        <MdCreate size={20} />
+                        {t('post')}
+                    </Button>
+
+                    <div
                         style={{
-                            color: CssVar.backdropText,
-                            textDecoration: 'none'
+                            fontSize: '0.7rem',
+                            lineHeight: 1.8,
+                            opacity: 0.6,
+                            textAlign: 'center'
                         }}
-                        href="https://github.com/totegamma/concurrent-world"
                     >
-                        GitHub
-                    </ExternalLink>
+                        Concrnt World App
+                        <br />
+                        <ExternalLink
+                            style={{
+                                color: CssVar.backdropText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://square.concrnt.net/"
+                        >
+                            {t('documentation')}
+                        </ExternalLink>
+                        {' · '}
+                        <ExternalLink
+                            style={{
+                                color: CssVar.backdropText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://github.com/orgs/concrnt/discussions"
+                        >
+                            {t('forum')}
+                        </ExternalLink>
+                        {' · '}
+                        <ExternalLink
+                            style={{
+                                color: CssVar.backdropText,
+                                textDecoration: 'none'
+                            }}
+                            href="https://github.com/totegamma/concurrent-world"
+                        >
+                            GitHub
+                        </ExternalLink>
+                    </div>
                 </div>
             </div>
         </>

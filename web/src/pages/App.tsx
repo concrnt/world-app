@@ -32,7 +32,7 @@ const DesktopShell = () => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                width: '100vw',
+                width: '100%',
                 minHeight: '100dvh',
                 boxSizing: 'border-box',
                 backgroundColor: CssVar.backdropBackground,
@@ -53,14 +53,17 @@ const DesktopShell = () => {
             >
                 <aside
                     style={{
-                        width: '200px',
-                        margin: CssVar.space(2)
+                        width: '240px',
+                        flexShrink: 0,
+                        margin: `${CssVar.space(2)} ${CssVar.space(4)}`
                     }}
                 >
                     <div
                         style={{
                             position: 'sticky',
                             top: CssVar.space(2),
+                            boxSizing: 'border-box',
+                            padding: `${CssVar.space(4)} 0`,
                             height: `calc(100dvh - ${CssVar.space(2)} * 2)`,
                             display: 'flex',
                             flexDirection: 'column'
