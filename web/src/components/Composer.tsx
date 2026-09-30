@@ -41,7 +41,7 @@ import { FaMarkdown } from 'react-icons/fa'
 import { uploadImage } from '../utils/uploadImage'
 import { computeBlurhash } from '../utils/computeBlurhash'
 import { useHaptics } from '../contexts/Haptics'
-import { MdSend } from 'react-icons/md'
+import { MdCreate } from 'react-icons/md'
 import { MdEmojiEmotions } from 'react-icons/md'
 import { useEmojiPicker, Emoji } from '../contexts/EmojiPicker'
 import { EmojiSuggestion } from './EmojiSuggestion'
@@ -1068,11 +1068,16 @@ export const Composer = (props: Props) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={cannotSubmit}
-                        endIcon={<MdSend />}
                         style={{
-                            minWidth: '100px'
+                            width: '120px',
+                            minHeight: '40px',
+                            borderRadius: CssVar.round(3),
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            gap: CssVar.space(2)
                         }}
                     >
+                        <MdCreate size={20} />
                         {getSubmitLabel()}
                     </Button>
                 </div>
