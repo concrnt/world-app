@@ -133,6 +133,15 @@ export class Socket {
         }
     }
 
+    // ホストのオンライン復帰時に呼ぶ。独自バックオフ(最大約220秒)の待機を打ち切って即再接続する
+    reconnectNow() {
+        if (this.disposed || this.isOpen) return
+        if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout)
+        this.failcount = 0
+        this.reconnecting = true
+        this.reconnect()
+    }
+
     reconnect() {
         if (this.disposed) return
         if (this.ws?.readyState === WS.OPEN) {
