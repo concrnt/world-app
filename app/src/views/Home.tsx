@@ -11,6 +11,7 @@ import {
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { Drawer } from '../ui/Drawer'
 
 import { Header } from '../ui/Header'
@@ -37,7 +38,9 @@ import { sortByListOrder } from '../utils/listOrder'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // プロフィール・ピン留めリストは自ドメインのリソース
+    const homeStatus = useDomainStatus()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
     useImperativeHandle(props.ref, () => ({
@@ -86,14 +89,22 @@ export const HomeView = (props: ScrollViewProps) => {
     useEffect(() => {
         if (!client) return
         // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
-        // そもそもcommitもできないので表示しない
-        if (isDomainOffline) return
+        // そもそもcommitもできないので表示しない。復帰直後も同様なので、取り直し(refreshFreshResources)の
+        // 完了を待ってから判定する
+        if (!homeStatus.online) return
         if (profileSetupOpened.current) return
-        if (!(client.currentProfile in client.profiles)) {
-            profileSetupOpened.current = true
-            setProfileSetupOpen(true)
+        let isCancelled = false
+        client.refreshFreshResources().then(() => {
+            if (isCancelled || profileSetupOpened.current) return
+            if (!(client.currentProfile in client.profiles)) {
+                profileSetupOpened.current = true
+                setProfileSetupOpen(true)
+            }
+        })
+        return () => {
+            isCancelled = true
         }
-    }, [client, isDomainOffline])
+    }, [client, homeStatus.online, homeStatus.onlineSince])
 
     return (
         <>
@@ -129,21 +140,8 @@ export const HomeView = (props: ScrollViewProps) => {
                     />
                 </Drawer>
                 <ErrorBoundary
-                    // オフライン起動で失敗していた場合、復帰(バナー消灯)時に自動で再試行する
-                    resetKeys={[isDomainOffline]}
                     fallbackRender={({ resetErrorBoundary }) => (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: CssVar.space(2),
-                                padding: CssVar.space(4)
-                            }}
-                        >
-                            <Text variant="caption">{t('loadFailed')}</Text>
-                            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
-                        </div>
+                        <HomeLoadError resetErrorBoundary={resetErrorBoundary} />
                     )}
                 >
                     {timelineSnapshot !== undefined && (
@@ -159,6 +157,31 @@ export const HomeView = (props: ScrollViewProps) => {
                 </ErrorBoundary>
             </View>
         </>
+    )
+}
+
+// 読み込み失敗の表示。オフライン起動で失敗していた場合、自ドメインの復帰時に自動で再試行する
+// (worldlibが復帰通知の前に失敗したCachedPromiseを破棄しているので、resetは新しい取得になる)
+const HomeLoadError = ({ resetErrorBoundary }: { resetErrorBoundary: () => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
+    const homeStatus = useDomainStatus()
+    const [errorAt] = useState(() => Date.now())
+    useEffect(() => {
+        if (homeStatus.online && homeStatus.onlineSince > errorAt) resetErrorBoundary()
+    }, [homeStatus.online, homeStatus.onlineSince, errorAt, resetErrorBoundary])
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: CssVar.space(2),
+                padding: CssVar.space(4)
+            }}
+        >
+            <Text variant="caption">{t('loadFailed')}</Text>
+            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
+        </div>
     )
 }
 

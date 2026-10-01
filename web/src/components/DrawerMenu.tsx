@@ -1,4 +1,5 @@
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useTranslation } from 'react-i18next'
 
 import { ListItem, Divider, Text, useTheme, List, Avatar, ExternalLink } from '@concrnt/ui'
@@ -24,7 +25,8 @@ interface Props {
 export const DrawerMenu = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    const homeStatus = useDomainStatus()
     const navigate = useNavigate()
 
     const go = (path: string) => {
@@ -81,7 +83,7 @@ export const DrawerMenu = (props: Props) => {
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
-                    {isDomainOffline && (
+                    {!homeStatus.online && (
                         <div style={{ padding: `0 ${CssVar.space(2)}` }}>
                             <ConnectionStatus />
                         </div>

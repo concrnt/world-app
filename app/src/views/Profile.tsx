@@ -29,7 +29,10 @@ import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { MediaGridTimeline } from '../components/MediaGridTimeline'
 import { usePersistent } from '../hooks/usePersistent'
-import { Document, PermissionError } from '@concrnt/client'
+import { Document, NotFoundError, PermissionError } from '@concrnt/client'
+import { ErrorBoundary } from 'react-error-boundary'
+import { RenderError } from '../components/message/RenderError'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
@@ -76,12 +79,28 @@ const FollowedBadge = (props: { ccid: string }) => {
     )
 }
 
+// useSubscribeはsuspend/throwするので単独コンポーネントに分離し、利用側でSuspense+ErrorBoundaryに包む
+// (ユーザーのドメインがオフラインでもプロフィール全体を落とさない)
+const FollowCount = (props: { user: User; field: 'acknowledging' | 'acknowledged' }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.profile' })
+    const [stats] = useSubscribe(props.user.stats)
+    return <Text>{t(props.field === 'acknowledging' ? 'following' : 'followers', { n: stats[props.field] })}</Text>
+}
+
 export const ProfileView = (props: Props) => {
     const { client } = useClient()
 
+    const [reload, setReload] = useState(0)
+
+    // 存在しないユーザーはnull、オフライン等の失敗はそのままthrowしてErrorBoundaryに届ける
+    // (RenderErrorが失敗したホストの復帰を購読してresetし、onResetでpromiseを作り直す)
     const userPromise = useMemo(() => {
-        return client.getUser(props.ccid, props.hint).catch(() => null)
-    }, [client, props.ccid, props.hint])
+        return User.load(client, props.ccid, props.hint).catch((err): User | null => {
+            if (err instanceof NotFoundError) return null
+            throw err
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client, props.ccid, props.hint, reload])
 
     const profileKey = semantics.profile(props.ccid, props.profileName ?? 'main')
 
@@ -93,8 +112,6 @@ export const ProfileView = (props: Props) => {
         setPrevProfileKey(profileKey)
         setFreshProfile(null)
     }
-
-    const [reload, setReload] = useState(0)
 
     useEffect(() => {
         client.api
@@ -131,18 +148,20 @@ export const ProfileView = (props: Props) => {
 
     return (
         <View>
-            <Suspense>
-                <Inner
-                    ccid={props.ccid}
-                    userPromise={userPromise}
-                    profilePromise={profilePromise}
-                    freshProfile={freshProfile}
-                    profileName={props.profileName ?? 'main'}
-                    reload={() => {
-                        setReload((prev) => prev + 1)
-                    }}
-                />
-            </Suspense>
+            <ErrorBoundary FallbackComponent={RenderError} onReset={() => setReload((prev) => prev + 1)}>
+                <Suspense>
+                    <Inner
+                        ccid={props.ccid}
+                        userPromise={userPromise}
+                        profilePromise={profilePromise}
+                        freshProfile={freshProfile}
+                        profileName={props.profileName ?? 'main'}
+                        reload={() => {
+                            setReload((prev) => prev + 1)
+                        }}
+                    />
+                </Suspense>
+            </ErrorBoundary>
         </View>
     )
 }
@@ -186,11 +205,13 @@ interface BodyProps {
 const Body = (props: BodyProps) => {
     const { getImageURL } = useMediaProxy()
     const { t } = useTranslation('', { keyPrefix: 'views.profile' })
-    const [stats, reloadStats] = useSubscribe(props.user.stats)
     const profile = props.profile
 
     const { client } = useClient()
     const theme = useTheme()
+    // フォロー数はユーザーのドメインから、フォローされているバッジは自ドメインから取る
+    const userStatus = useDomainStatus(props.user.domain)
+    const homeStatus = useDomainStatus()
 
     const navigation = useNavigation()
     const mediaViewer = useMediaViewer()
@@ -409,7 +430,7 @@ const Body = (props: BodyProps) => {
                             watchTarget={semantics.homeTimeline(props.ccid, props.profileName ?? 'main')}
                             onChange={() => {
                                 startTransition(() => {
-                                    reloadStats()
+                                    props.user.stats.reload()
                                 })
                             }}
                         />
@@ -436,9 +457,16 @@ const Body = (props: BodyProps) => {
                     >
                         {props.user?.alias ? '@' + props.user.alias : null}
                         {client.ccid && !isMe && (
-                            <Suspense fallback={null}>
-                                <FollowedBadge ccid={props.ccid} />
-                            </Suspense>
+                            // 自ドメインのacknowledgersの取得失敗は装飾だけの問題なのでここで握りつぶし、復帰時に取り直す
+                            <ErrorBoundary
+                                fallback={null}
+                                resetKeys={[homeStatus.onlineSince]}
+                                onReset={() => client.acknowledgers.reload()}
+                            >
+                                <Suspense fallback={null}>
+                                    <FollowedBadge ccid={props.ccid} />
+                                </Suspense>
+                            </ErrorBoundary>
                         )}
                     </Text>
                 </div>
@@ -475,7 +503,15 @@ const Body = (props: BodyProps) => {
                             )
                         }
                     >
-                        <Text>{t('following', { n: stats.acknowledging })}</Text>
+                        <ErrorBoundary
+                            fallback={null}
+                            resetKeys={[userStatus.onlineSince]}
+                            onReset={() => props.user.stats.reload()}
+                        >
+                            <Suspense fallback={null}>
+                                <FollowCount user={props.user} field="acknowledging" />
+                            </Suspense>
+                        </ErrorBoundary>
                     </div>
                     <div
                         style={{ cursor: 'pointer' }}
@@ -490,7 +526,15 @@ const Body = (props: BodyProps) => {
                             )
                         }
                     >
-                        <Text>{t('followers', { n: stats.acknowledged })}</Text>
+                        <ErrorBoundary
+                            fallback={null}
+                            resetKeys={[userStatus.onlineSince]}
+                            onReset={() => props.user.stats.reload()}
+                        >
+                            <Suspense fallback={null}>
+                                <FollowCount user={props.user} field="acknowledged" />
+                            </Suspense>
+                        </ErrorBoundary>
                     </div>
                 </div>
             </div>
@@ -609,6 +653,7 @@ interface RestrictedBodyProps {
 const RestrictedBody = (props: RestrictedBodyProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.profile' })
     const { client } = useClient()
+    const homeStatus = useDomainStatus()
     const theme = useTheme()
     const navigation = useNavigation()
     const stack = useStack()
@@ -735,9 +780,16 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                         {props.user.alias ?? props.ccid}
                         <MdLock />
                         {client.ccid && !isMe && (
-                            <Suspense fallback={null}>
-                                <FollowedBadge ccid={props.ccid} />
-                            </Suspense>
+                            // 自ドメインのacknowledgersの取得失敗は装飾だけの問題なのでここで握りつぶし、復帰時に取り直す
+                            <ErrorBoundary
+                                fallback={null}
+                                resetKeys={[homeStatus.onlineSince]}
+                                onReset={() => client.acknowledgers.reload()}
+                            >
+                                <Suspense fallback={null}>
+                                    <FollowedBadge ccid={props.ccid} />
+                                </Suspense>
+                            </ErrorBoundary>
                         )}
                     </Text>
                 </div>

@@ -13,8 +13,9 @@ import {
 } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
-import { ChunklineItem, QueryTimelineReader } from '@concrnt/client'
+import { ChunklineItem, QueryTimelineReader, ServerOfflineError } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -59,6 +60,9 @@ export const QueryTimeline = (props: Props) => {
     const [hasMoreData, setHasMoreData] = useState<boolean>(false)
     // PullToRefresh のインジケータ表示制御用
     const [isFetching, setIsFetching] = useState(false)
+    // 初期取得がオフラインで失敗したホスト。そのホストの復帰(onlineSince更新)で取り直す
+    const [failedHost, setFailedHost] = useState<string | undefined>(undefined)
+    const failedStatus = useDomainStatus(failedHost)
 
     useEffect(() => {
         let isCancelled = false
@@ -89,6 +93,12 @@ export const QueryTimeline = (props: Props) => {
             t.init(props.prefix, props.query, props.batchSize ?? 16)
                 .then((hasMoreData) => {
                     setHasMoreData(hasMoreData)
+                    setFailedHost(undefined)
+                })
+                .catch((err) => {
+                    console.error('Failed to initialize query timeline:', err)
+                    if (isCancelled) return
+                    if (err instanceof ServerOfflineError) setFailedHost(err.host)
                 })
                 .finally(() => {
                     loadingRef.current = false
@@ -99,7 +109,8 @@ export const QueryTimeline = (props: Props) => {
         return () => {
             isCancelled = true
         }
-    }, [client, reader, props.prefix, update, props.batchSize, props.query])
+        // failedStatus.onlineSinceは失敗ホストの復帰で再初期化するための依存
+    }, [client, reader, props.prefix, update, props.batchSize, props.query, failedStatus.onlineSince])
 
     const scrollRef = useRef<HTMLDivElement>(null)
 

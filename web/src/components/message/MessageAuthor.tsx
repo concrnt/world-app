@@ -6,6 +6,7 @@ import { Message, semantics } from '@concrnt/worldlib'
 import { CssVar } from '@concrnt/ui'
 import { useClient } from '../../contexts/Client'
 import { useSubscribe } from '../../hooks/useSubscribe'
+import { useDomainStatus } from '../../hooks/useDomainStatus'
 
 interface Props {
     message: Message<any>
@@ -21,7 +22,9 @@ const FollowingBadge = (props: { ccid: string }) => {
 }
 
 export const MessageAuthor = (props: Props) => {
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // acknowledgingは自ドメインのリソース。復帰(onlineSince更新)時にバッジを取り直す
+    const homeStatus = useDomainStatus()
     const message = props.message
     return (
         <span
@@ -45,7 +48,7 @@ export const MessageAuthor = (props: Props) => {
             {client.ccid && client.ccid !== message.author && (
                 // フォロー一覧の取得失敗(オフライン等)は装飾バッジだけの問題なので、投稿全体のErrorBoundaryまで
                 // 投げずにここで握りつぶし、自ドメイン復帰時に描き直す
-                <ErrorBoundary fallback={null} resetKeys={[isDomainOffline]}>
+                <ErrorBoundary fallback={null} resetKeys={[homeStatus.onlineSince]}>
                     <Suspense fallback={null}>
                         <FollowingBadge ccid={message.author} />
                     </Suspense>

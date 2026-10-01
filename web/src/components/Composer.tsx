@@ -48,6 +48,7 @@ import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
 import { ComposerMediaEditor } from './ComposerMediaEditor'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { Select } from './Select'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
@@ -85,7 +86,9 @@ interface Props {
 
 export const Composer = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.composer' })
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // 投稿(commit)は自ドメイン必須
+    const homeStatus = useDomainStatus()
     const { hapticSuccess } = useHaptics()
     // 通常投稿はアプリ全体で共有される下書き(ComposerDraftProvider)を直接読み書きし、
     // タブ切替・モーダル開閉・画面遷移をまたいで内容を保持する。リプライ/リルートはこのインスタンス限り
@@ -376,7 +379,7 @@ export const Composer = (props: Props) => {
 
     const cannotSubmit =
         uploading ||
-        isDomainOffline ||
+        !homeStatus.online ||
         (displayMode !== 'media' && displayMode !== 'reroute' && draft.trim() === '') ||
         (displayMode === 'media' && mediaDrafts.length === 0)
 
@@ -1060,7 +1063,7 @@ export const Composer = (props: Props) => {
                     )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {isDomainOffline && (
+                    {!homeStatus.online && (
                         <Text variant="caption" style={{ margin: 0 }}>
                             {t('cannotPostOffline')}
                         </Text>

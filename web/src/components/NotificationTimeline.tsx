@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
 import {
@@ -88,7 +89,9 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const NotificationTimeline = (props: Props) => {
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // 通知タイムラインは自分のリソースなので取得先は自ドメイン
+    const homeStatus = useDomainStatus()
     const isMobile = useIsMobile()
 
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
@@ -392,14 +395,14 @@ export const NotificationTimeline = (props: Props) => {
 
     // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
     useEffect(() => {
-        if (isDomainOffline) return
+        if (!homeStatus.online) return
         if (!snapshotRef.current || !initFailedRef.current) return
         initFailedRef.current = false
         // まだ届かなければスナップショット表示のまま(次の復帰で再試行)。reloadのrejectをunhandledにしない
         onRefresh().catch(() => {
             initFailedRef.current = true
         })
-    }, [isDomainOffline, onRefresh])
+    }, [homeStatus.online, homeStatus.onlineSince, onRefresh])
 
     useEffect(() => {
         const el = scrollRef.current

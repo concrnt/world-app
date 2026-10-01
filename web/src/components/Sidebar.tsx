@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 
 import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
 
@@ -36,7 +37,8 @@ const NAV = [
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    const homeStatus = useDomainStatus()
     const unreadCount = useNotificationCounter(client)
     const navigate = useNavigate()
     const location = useLocation()
@@ -112,7 +114,7 @@ export const Sidebar = () => {
                     </div>
                     <SwitchAccountButton />
                 </div>
-                {isDomainOffline && (
+                {!homeStatus.online && (
                     <div style={{ padding: `0 ${CssVar.space(2)}` }}>
                         <ConnectionStatus />
                     </div>
