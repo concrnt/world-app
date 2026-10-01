@@ -481,7 +481,7 @@ export const NotificationTimeline = (props: Props) => {
                 <MessageSnapshotContext.Provider value={snapshot?.messages}>
                     {notifications.map((n) => (
                         <Fragment key={n.key}>
-                            <ErrorBoundary FallbackComponent={RenderError}>
+                            <ErrorBoundary FallbackComponent={RenderError} resetKeys={[isDomainOffline]}>
                                 <div
                                     style={{
                                         padding: `0 ${CssVar.space(2)}`,

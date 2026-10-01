@@ -1,4 +1,5 @@
 import { MessageProps } from './types'
+import { useClient } from '../../contexts/Client'
 import { ReplyMessageSchema } from '@concrnt/worldlib'
 
 import { Avatar, CfmRenderer } from '@concrnt/ui'
@@ -17,6 +18,8 @@ import { MdReply } from 'react-icons/md'
 import { CollapsibleBody } from './CollapsibleBody'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
+    // 返信元の取得がオフラインで失敗していた場合、自ドメイン復帰時に取り直す
+    const { isDomainOffline } = useClient()
     const navigate = useNavigate()
 
     return (
@@ -26,7 +29,7 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 flexDirection: 'column'
             }}
         >
-            <ErrorBoundary FallbackComponent={RenderError}>
+            <ErrorBoundary FallbackComponent={RenderError} resetKeys={[isDomainOffline]}>
                 <MessageContainer
                     oneline
                     uri={props.message.value.targetURI}

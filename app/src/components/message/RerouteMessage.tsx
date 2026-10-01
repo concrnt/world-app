@@ -22,7 +22,7 @@ import { useQueryTimelineContext } from '../QueryTimeline'
 
 export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const { t } = useTranslation('', { keyPrefix: 'components.rerouteMessage' })
-    const { client } = useClient()
+    const { client, isDomainOffline } = useClient()
     const { push } = useStack()
     const { hapticSuccess } = useHaptics()
     const qt = useQueryTimelineContext()
@@ -145,7 +145,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     <TimeDiff date={props.message.createdAt} />
                 </div>
             </OnelineMessageLayout>
-            <ErrorBoundary FallbackComponent={RenderError}>
+            <ErrorBoundary FallbackComponent={RenderError} resetKeys={[isDomainOffline]}>
                 {/* rerouteした本人は元投稿が見えているはずなので、そのホームドメインを解決hintに使う */}
                 <MessageContainer
                     uri={props.message.value.targetURI}

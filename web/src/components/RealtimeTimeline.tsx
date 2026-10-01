@@ -578,9 +578,11 @@ interface CellProps {
 }
 
 const Cell = memo<CellProps>(({ item }: CellProps) => {
+    // オフライン中に失敗したセルを自ドメイン復帰時に再取得させる
+    const { isDomainOffline } = useClient()
     return (
         <>
-            <ErrorBoundary FallbackComponent={RenderError}>
+            <ErrorBoundary FallbackComponent={RenderError} resetKeys={[isDomainOffline]}>
                 <div
                     style={{
                         padding: `0 ${CssVar.space(2)}`,

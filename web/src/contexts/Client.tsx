@@ -512,9 +512,13 @@ export const ClientProvider = (props: Props): ReactNode => {
         // (キャッシュ即表示→取得後にpush通知でUI更新)。TauriのWebViewでも
         // foreground/backgroundでvisibilitychangeが発火するためweb/app共通実装
         const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                client.refreshFreshResources()
+            if (document.visibilityState !== 'visible') return
+            // オフライン中の復帰はバックオフ待ちせず即プローブする(成功すればオンライン遷移側がrefreshする)
+            if (!client.isOnline) {
+                client.probeDomainStatus()
+                return
             }
+            client.refreshFreshResources()
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
         client.refreshFreshResources()
