@@ -401,6 +401,7 @@ export const RealtimeTimeline = (props: Props) => {
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
+        // スナップショット起動ではloading/hasMoreDataが差し替え前後で変わらないため、差し替え(snapshot解除)でも再判定する
         const fill = setTimeout(() => {
             if (loadingRef.current) return
             handleScroll()
@@ -412,7 +413,7 @@ export const RealtimeTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, initialLoaded, loading])
+    }, [scrollRef, reader, hasMoreData, initialLoaded, loading, snapshot])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
