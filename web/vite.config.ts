@@ -61,7 +61,7 @@ export default defineConfig({
             strategies: 'injectManifest',
             injectManifest: {
                 maximumFileSizeToCacheInBytes: 10 * 1024 ** 2,
-                globPatterns: ['**/*.{css,html}', '**/index*.js']
+                globPatterns: ['**/*.{css,html}', '**/index*.js', '**/*.woff2']
             },
             devOptions: {
                 enabled: true,
