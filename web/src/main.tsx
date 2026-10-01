@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react'
 import ReactDOM from 'react-dom/client'
 
+import '@fontsource/source-code-pro/400.css'
 import '@concrnt/ui/style.css'
 import './index.css'
 import './i18n'
