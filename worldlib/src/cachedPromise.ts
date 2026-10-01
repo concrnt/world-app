@@ -1,7 +1,11 @@
+import { ServerOfflineError } from '@concrnt/client'
+
 export class CachedPromise<T> {
     private promise: Promise<T> | null = null
     private subscriptions: Array<() => void> = []
     private settled?: { value: T }
+    // 現在のpromiseがServerOfflineErrorでrejectした場合の失敗ホスト。dropRejectedの判定に使う
+    private rejectedHost?: string
 
     constructor(
         private executor: (fresh?: boolean) => Promise<T>,
@@ -17,6 +21,7 @@ export class CachedPromise<T> {
                     // これが無いと、解決済みでも初めてuse()する度に一度サスペンドして描画パスがやり直しになる
                     Object.assign(promise, { status: 'fulfilled', value })
                     if (this.promise === promise) {
+                        this.rejectedHost = undefined
                         this.settled = { value }
                         // current で非サスペンド読みしている購読者へ解決を知らせる。
                         // (use()経由の購読者は同じpromiseを読み直すだけなので無害)
@@ -25,12 +30,14 @@ export class CachedPromise<T> {
                         }
                     }
                 },
-                () => {
+                (err) => {
                     // 失敗はキャッシュしない(後のvalue()で再実行できるようにする)。
                     // ただし即座にnullへ戻すと、useSyncExternalStore+use()で購読している
                     // コンポーネントがreject直後の再レンダーのたびに新しいpromiseを受け取り、
-                    // 無限suspend/refetchループ(=画面フリーズ)になるため、猶予を置いて破棄する
+                    // 無限suspend/refetchループ(=画面フリーズ)になるため、猶予を置いて破棄する。
+                    // オフライン由来の失敗はそのホストの復帰時にdropRejectedで先に破棄される
                     if (this.promise === promise) {
+                        if (err instanceof ServerOfflineError) this.rejectedHost = err.host
                         setTimeout(() => {
                             if (this.promise === promise) {
                                 this.promise = null
@@ -42,6 +49,15 @@ export class CachedPromise<T> {
             this.promise = promise
         }
         return this.promise
+    }
+
+    // hostのオフラインでrejectした結果を破棄し、次のvalue()で再実行させる。
+    // ホスト復帰時にworldlibが購読者への通知より前に呼ぶ(通知で再試行するErrorBoundaryが
+    // 同じ失敗promiseを引き直さないようにするため)。失敗状態の購読者は既にunmountしているので通知はしない
+    dropRejected(host: string): void {
+        if (this.rejectedHost !== host) return
+        this.rejectedHost = undefined
+        this.promise = null
     }
 
     // 解決済みの値をサスペンドせずに読む(未解決ならundefined)。
@@ -61,6 +77,7 @@ export class CachedPromise<T> {
         // これが無いとsnapshot差し替えで一瞬suspendしてSuspenseフォールバックがちらつく
         Object.assign(promise, { status: 'fulfilled', value })
         this.promise = promise
+        this.rejectedHost = undefined
         this.settled = { value }
         for (const callback of this.subscriptions) {
             callback()
@@ -78,6 +95,7 @@ export class CachedPromise<T> {
 
     reload() {
         this.promise = null
+        this.rejectedHost = undefined
         this.value()
         for (const callback of this.subscriptions) {
             callback()

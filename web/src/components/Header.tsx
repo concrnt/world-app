@@ -1,7 +1,7 @@
 import { CSSProperties, ReactNode, useState } from 'react'
 import { MdCloudOff } from 'react-icons/md'
 import { useNavigation } from '../contexts/Navigation'
-import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { CssVar } from '../types/Theme'
 import { IconButton, Popover, useAnchor, useTheme } from '@concrnt/ui'
 import { ConnectionStatus } from './ConnectionStatus'
@@ -19,7 +19,7 @@ export const Header = (props: Props) => {
     const nav = useNavigation()
 
     // ホームドメイン切断中はrightスロットの左に雲アイコンを出し、タップで再接続状況をポップオーバー表示する
-    const { isDomainOffline } = useClient()
+    const homeStatus = useDomainStatus()
     const statusAnchor = useAnchor()
     const [statusOpen, setStatusOpen] = useState(false)
 
@@ -55,7 +55,7 @@ export const Header = (props: Props) => {
             >
                 {props.children}
             </div>
-            {isDomainOffline && (
+            {!homeStatus.online && (
                 <div
                     data-testid="header-connection-status"
                     style={{

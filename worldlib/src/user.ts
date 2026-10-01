@@ -53,9 +53,9 @@ export class User {
     }
 
     static async load(client: Client, id: CCID, hint?: string): Promise<User> {
-        const entity = await client.api.getEntity(id, hint).catch((_e) => {
-            throw new Error('entity not found')
-        })
+        // 失敗はそのまま伝播させる(NotFoundError=存在しない、ServerOfflineError=解決先がオフライン、を
+        // 呼び出し側が区別できるようにする。null扱いにしたい場合はclient.getUserを使う)
+        const entity = await client.api.getEntity(id, hint)
 
         const profile = await client.api
             .getDocument<ProfileSchema>(semantics.profile(entity.author, 'main'), entity.value.domain)

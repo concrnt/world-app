@@ -15,8 +15,12 @@ import { ChunklineItem } from './chunkline'
 import { CheckJwtIsValid, JwtPayload } from './crypto'
 
 export class ServerOfflineError extends Error {
+    // 失敗した接続先。UI側はこのホストの復帰を購読して再試行する
+    readonly host: string
+
     constructor(server: string) {
         super(`server ${server} is offline`)
+        this.host = server
     }
 }
 
@@ -127,8 +131,16 @@ export class Api {
     // バックオフ状態はプロセス内限定(永続KVSに書くと再起動をまたいで残ってしまう)
     private offlineState = new Map<string, { count: number; since: number }>()
     private onlineProbeMemo = new Map<string, number>()
+    // 一斉失敗時(アプリ復帰直後など)に確認プローブを1本にまとめる
+    private onlineProbeInFlight = new Map<string, Promise<boolean>>()
 
     private inFlightRequests = new Map<string, Promise<any>>()
+
+    // 現在オフラインと記録しているホスト一覧。Client生成前(create時のプローブ等)に記録された分を
+    // Client側のレジストリへ引き継ぐために使う
+    getOfflineHosts(): string[] {
+        return Array.from(this.offlineState.keys())
+    }
 
     constructor(host: string, authProvider: AuthProvider, cache: KVS) {
         this.defaultHost = host
@@ -221,33 +233,42 @@ export class Api {
             return true
         }
 
-        try {
-            const res = await fetchWithTimeout(
-                `https://${host}/.well-known/concrnt`,
-                { headers: { Accept: 'application/json' } },
-                5000
-            )
-            if (!res.ok) throw new Error(`fetch failed on transport: ${res.status}`)
-            this.onlineProbeMemo.set(host, Date.now())
-            this.markHostOnline(host)
-            return true
-        } catch (_err) {
-            this.onlineProbeMemo.delete(host)
-            this.markHostOffline(host)
-            return false
-        }
+        const inFlight = this.onlineProbeInFlight.get(host)
+        if (inFlight) return await inFlight
+
+        const probe = (async (): Promise<boolean> => {
+            const startedAt = Date.now()
+            try {
+                // WebViewのディスクキャッシュが答えると到達確認にならないのでno-store
+                const res = await fetchWithTimeout(
+                    `https://${host}/.well-known/concrnt`,
+                    { headers: { Accept: 'application/json' }, cache: 'no-store' },
+                    5000
+                )
+                if (!res.ok) throw new Error(`fetch failed on transport: ${res.status}`)
+                this.onlineProbeMemo.set(host, Date.now())
+                this.markHostOnline(host, startedAt)
+                return true
+            } catch (_err) {
+                this.onlineProbeMemo.delete(host)
+                this.markHostOffline(host)
+                return false
+            }
+        })().finally(() => {
+            this.onlineProbeInFlight.delete(host)
+        })
+        this.onlineProbeInFlight.set(host, probe)
+        return await probe
     }
 
     private isHostOnline = (host: string): boolean => {
-        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-            // ゲートで弾く場合もオフライン遷移は通知する(hasガードでcount増加とsinceリセットを防ぐ)
-            if (!this.offlineState.has(host)) {
-                this.markHostOffline(host)
-            }
-            return false
-        }
         const entry = this.offlineState.get(host)
         if (entry) {
+            // 記録が無いうちはnavigator.onLineがfalseでもリクエストを通す(iOSの復帰直後は一瞬falseになる)。
+            // 本当に圏外ならfetchが即失敗してconfirmHostOnlineの確認経路に入る
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+                return false
+            }
             const age = Date.now() - entry.since
             const threshold = 500 * Math.pow(1.5, Math.min(entry.count, 15))
             if (age < threshold) {
@@ -257,18 +278,35 @@ export class Api {
         return true
     }
 
-    private markHostOnline = (host: string) => {
-        if (this.offlineState.delete(host)) {
-            this.onHostOnlineStatusChanged?.(host, true)
-        }
+    // オフライン記録より前に発行されていたリクエストの成功は復帰の証拠にしない
+    // (部分障害で成功と失敗が混在すると、在庫のレスポンスでオンライン/オフラインが高速に振動する)
+    private markHostOnline = (host: string, startedAt?: number) => {
+        const entry = this.offlineState.get(host)
+        if (!entry) return
+        if (startedAt !== undefined && startedAt <= entry.since) return
+        this.offlineState.delete(host)
+        this.onHostOnlineStatusChanged?.(host, true)
     }
 
     private markHostOffline = (host: string) => {
+        // 直近のプローブ成功メモは失敗で無効化する(残すと回復プローブがメモに答えられて実際に叩かない)
+        this.onlineProbeMemo.delete(host)
         const prev = this.offlineState.get(host)
         this.offlineState.set(host, { count: (prev?.count ?? 0) + 1, since: Date.now() })
         if (!prev) {
             this.onHostOnlineStatusChanged?.(host, false)
         }
+    }
+
+    // 一過性の失敗(iOSのバックグラウンド復帰直後の接続切れ・復帰時に即発火するtimeout等)で
+    // 即オフライン扱いにしないための確認。既に記録があれば失敗を積むだけ、無ければwell-knownをプローブする
+    // (プローブ失敗はgetServerOnlineStatus側でmarkHostOfflineされる)。戻り値はホストが到達可能か
+    private confirmHostOnline = async (host: string): Promise<boolean> => {
+        if (this.offlineState.has(host)) {
+            this.markHostOffline(host)
+            return false
+        }
+        return await this.getServerOnlineStatus(host)
     }
 
     async callConcrntApi<T>(host: string, api: string, args: Record<string, string>, init?: RequestInit): Promise<T> {
@@ -322,59 +360,78 @@ export class Api {
                 ...init.headers
             }
 
-            const req = fetchWithTimeout(url, init, timeoutms)
-                .then(async (res) => {
-                    switch (res.status) {
-                        case 403:
-                            throw new PermissionError(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                        case 404: {
-                            const body = await res.text()
-                            let code: string | undefined
-                            try {
-                                const parsed = JSON.parse(body)
-                                if (typeof parsed?.code === 'string') code = parsed.code
-                            } catch {
-                                /* JSONでないボディはコード無し扱い */
+            // 一過性の失敗は確認プローブが通れば一度だけ再試行する。GET以外(commit等)は二重送信になるので再試行しない
+            const retryable = !init.method || init.method === 'GET'
+            let retried = false
+            const attempt = (): Promise<T> => {
+                const startedAt = Date.now()
+                return fetchWithTimeout(url, init, timeoutms)
+                    .then(async (res) => {
+                        switch (res.status) {
+                            case 403:
+                                throw new PermissionError(
+                                    `fetch failed on transport: ${res.status} ${await res.text()}`
+                                )
+                            case 404: {
+                                const body = await res.text()
+                                let code: string | undefined
+                                try {
+                                    const parsed = JSON.parse(body)
+                                    if (typeof parsed?.code === 'string') code = parsed.code
+                                } catch {
+                                    /* JSONでないボディはコード無し扱い */
+                                }
+                                throw new NotFoundError(`fetch failed on transport: ${res.status} ${body}`, url, code)
                             }
-                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${body}`, url, code)
+                            case 502:
+                            case 503:
+                            case 504:
+                                this.markHostOffline(fetchHost)
+                                throw new ServerOfflineError(fetchHost)
                         }
-                        case 502:
-                        case 503:
-                        case 504:
-                            this.markHostOffline(fetchHost)
-                            throw new ServerOfflineError(fetchHost)
-                    }
 
-                    if (!res.ok) {
-                        return await Promise.reject(
-                            new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                        )
-                    }
+                        if (!res.ok) {
+                            return await Promise.reject(
+                                new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                            )
+                        }
 
-                    this.markHostOnline(fetchHost)
+                        this.markHostOnline(fetchHost, startedAt)
 
-                    // 204(購読解除・カウンターリセット等)は本文が無い
-                    if (res.status === 204) return undefined as T
-                    return await res.json()
-                })
-                .catch(async (err) => {
-                    if (err instanceof ServerOfflineError) {
+                        // 204(購読解除・カウンターリセット等)は本文が無い
+                        if (res.status === 204) return undefined as T
+                        return await res.json()
+                    })
+                    .catch(async (err) => {
+                        if (err instanceof ServerOfflineError) {
+                            return Promise.reject(err)
+                        }
+
+                        if (
+                            err instanceof TimeoutError ||
+                            err instanceof NetworkError ||
+                            ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
+                        ) {
+                            if (retried) {
+                                // 再試行後の失敗はプローブ直後なので確認せずそのまま記録する(ループ防止)
+                                this.markHostOffline(fetchHost)
+                                return Promise.reject(new ServerOfflineError(fetchHost))
+                            }
+                            if (!(await this.confirmHostOnline(fetchHost))) {
+                                // 到達不能はconfirm側で記録済み
+                                return Promise.reject(new ServerOfflineError(fetchHost))
+                            }
+                            // 到達できるのに失敗した=一過性。再試行できない書き込みは元の失敗を呼び出し側に返す
+                            if (!retryable) return Promise.reject(err)
+                            retried = true
+                            return attempt()
+                        }
+
                         return Promise.reject(err)
-                    }
+                    })
+            }
 
-                    if (
-                        err instanceof TimeoutError ||
-                        err instanceof NetworkError ||
-                        ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
-                    ) {
-                        this.markHostOffline(fetchHost)
-                        return Promise.reject(new ServerOfflineError(fetchHost))
-                    }
-
-                    return Promise.reject(err)
-                })
-
-            return req
+            return attempt()
         }
 
         return await fetchNetwork()
@@ -436,6 +493,9 @@ export class Api {
                       })
                     : Promise.resolve({})
 
+            // 一過性の失敗は確認プローブが通れば一度だけ再試行する(常にGET)。
+            // 再試行は同じin-flight promiseの中で完結させ、同一キーの並列callerの合流を保つ
+            let retried = false
             const req = authHeadersPromise
                 .then(async (authHeaders) => {
                     const requestOptions = {
@@ -445,54 +505,70 @@ export class Api {
                             ...authHeaders
                         }
                     }
-                    return await fetchWithTimeout(url, requestOptions, opts?.timeoutms)
-                })
-                .then(async (res) => {
-                    if (res.status === 403) {
-                        return await Promise.reject(new PermissionError(await res.text()))
+                    const attempt = (): Promise<T> => {
+                        const startedAt = Date.now()
+                        return fetchWithTimeout(url, requestOptions, opts?.timeoutms)
+                            .then(async (res) => {
+                                if (res.status === 403) {
+                                    return await Promise.reject(new PermissionError(await res.text()))
+                                }
+
+                                if ([502, 503, 504].includes(res.status)) {
+                                    this.markHostOffline(fetchHost)
+                                    return await Promise.reject(new ServerOfflineError(fetchHost))
+                                }
+
+                                if (!res.ok) {
+                                    if (res.status === 404) {
+                                        // 書き込み完了前にin-flightが解除されると後続callerがキャッシュミスして
+                                        // 同じリクエストを再発火するためawaitする(成功側も同様)
+                                        await this.cache.set(cacheKey, null)
+                                        throw new NotFoundError(
+                                            `fetch failed on transport: ${res.status} ${await res.text()}`,
+                                            url
+                                        )
+                                    }
+                                    return await Promise.reject(
+                                        new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
+                                    )
+                                }
+
+                                this.markHostOnline(fetchHost, startedAt)
+
+                                const data: T = await res.json()
+
+                                opts?.expressGetter?.(data)
+                                if (opts?.cache !== 'negative-only') await this.cache.set(cacheKey, data)
+
+                                return data
+                            })
+                            .catch(async (err) => {
+                                if (err instanceof ServerOfflineError) {
+                                    return Promise.reject(err)
+                                }
+
+                                if (
+                                    err instanceof TimeoutError ||
+                                    err instanceof NetworkError ||
+                                    ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
+                                ) {
+                                    if (retried) {
+                                        // 再試行後の失敗はプローブ直後なので確認せずそのまま記録する(ループ防止)
+                                        this.markHostOffline(fetchHost)
+                                        return Promise.reject(new ServerOfflineError(fetchHost))
+                                    }
+                                    if (!(await this.confirmHostOnline(fetchHost))) {
+                                        // 到達不能はconfirm側で記録済み
+                                        return Promise.reject(new ServerOfflineError(fetchHost))
+                                    }
+                                    retried = true
+                                    return attempt()
+                                }
+
+                                return Promise.reject(err)
+                            })
                     }
-
-                    if ([502, 503, 504].includes(res.status)) {
-                        this.markHostOffline(fetchHost)
-                        return await Promise.reject(new ServerOfflineError(fetchHost))
-                    }
-
-                    if (!res.ok) {
-                        if (res.status === 404) {
-                            // 書き込み完了前にin-flightが解除されると後続callerがキャッシュミスして
-                            // 同じリクエストを再発火するためawaitする(成功側も同様)
-                            await this.cache.set(cacheKey, null)
-                            throw new NotFoundError(`fetch failed on transport: ${res.status} ${await res.text()}`, url)
-                        }
-                        return await Promise.reject(
-                            new Error(`fetch failed on transport: ${res.status} ${await res.text()}`)
-                        )
-                    }
-
-                    this.markHostOnline(fetchHost)
-
-                    const data: T = await res.json()
-
-                    opts?.expressGetter?.(data)
-                    if (opts?.cache !== 'negative-only') await this.cache.set(cacheKey, data)
-
-                    return data
-                })
-                .catch(async (err) => {
-                    if (err instanceof ServerOfflineError) {
-                        return Promise.reject(err)
-                    }
-
-                    if (
-                        err instanceof TimeoutError ||
-                        err instanceof NetworkError ||
-                        ['ENOTFOUND', 'ECONNREFUSED'].includes((err.cause as any)?.code)
-                    ) {
-                        this.markHostOffline(fetchHost)
-                        return Promise.reject(new ServerOfflineError(fetchHost))
-                    }
-
-                    return Promise.reject(err)
+                    return await attempt()
                 })
                 .finally(() => {
                     this.inFlightRequests.delete(cacheKey)
