@@ -17,7 +17,8 @@ import {
     Entity,
     InMemoryAuthProvider,
     InMemoryKVS,
-    ServerOfflineError
+    ServerOfflineError,
+    CacheMissError
 } from '@concrnt/client'
 import {
     ListSchema,
@@ -204,12 +205,24 @@ export class Client {
     pinnedLists = new CachedPromise<PinnedListItemClass[]>(
         async (fresh) => {
             const uri = semantics.lists(this.ccid, this.currentProfile)
+            if (!fresh) {
+                // 起動用: キャッシュだけを読み、無ければ空(初期値)で確定する(ネットワークへは出ない)。
+                // 本物の中身・既定リストの作成はrefresh()(fresh)が行い、届いたらpushで置き換わる
+                const cached = await this.api
+                    .getDocument<PinnedListsSchema>(uri, undefined, { cache: 'cache-only' })
+                    .then((doc) => doc.value)
+                    .catch((err) => {
+                        if (err instanceof CacheMissError || err instanceof NotFoundError) return null
+                        throw err
+                    })
+                return (cached ?? []).map((i) => new PinnedListItemClass(this, i))
+            }
             // 下のNotFoundError分岐は「listsドキュメントが無い」時だけ既定リストを作るためのもの。
             // 自分のentity解決の404(一過性のCDN 404等)まで同じ分岐に流れてリストを作り直さないよう、
             // ドメイン解決だけ先に済ませて失敗はそのままrejectさせる
             await this.api.resolveDomain(this.ccid)
             const item = await this.api
-                .getDocument<PinnedListsSchema>(uri, undefined, fresh ? { cache: 'no-cache' } : undefined)
+                .getDocument<PinnedListsSchema>(uri, undefined, { cache: 'no-cache' })
                 .then((doc) => doc.value) // TODO: home timelineが消されていたら復元する
                 .catch(async (err) => {
                     if (err instanceof NotFoundError) {
@@ -552,11 +565,9 @@ export class Client {
     // ログイン時に保存済みの自分のwell-known(`domain:<host>`)とentity(`cckv://<ccid>`)をKVSから直接読んで構築する。
     // TTL切れでも使う(登録の実在・subkey失効の検証はアプリ側が表示後に裏で行う)ため、
     // 期限切れでthrowするfetchWithCache(force-cache)ではなくKVSを直接読む。プローブもしない。
-    // 欠落(初回起動・キャッシュ削除)なら欠けている分だけネットワークから取得してKVSに保存し、
-    // 到達不能なら仮の値(endpoints空)をメモリだけで使って縮退起動する(KVSには書かない。
-    // 復帰時にno-cacheで取り直されて置き換わる)。
-    // オンライン状態は楽観的にオンライン扱い。オフラインなら最初の失敗リクエストがonHostOnlineStatusChangedで
-    // 知らせる(ここで失敗した分はApiの記録からコンストラクタが引き継ぐ)
+    // 欠落(初回起動・キャッシュ削除)でもネットワークは待たず、仮の値(endpoints空)で即構築して
+    // 欠けている分を裏で取得する(届いたら差し替え。取得はKVSにも書かれるので次回はキャッシュ起動)。
+    // オンライン状態は楽観的にオンライン扱い。オフラインなら最初の失敗リクエストがonHostOnlineStatusChangedで知らせる
     static async create(
         host: FQDN,
         authProvider: AuthProvider,
@@ -570,27 +581,41 @@ export class Client {
             cacheEngine.get<Server>(`domain:${host}`).catch(() => null),
             cacheEngine.get<SignedDocument>(`cckv://${ccid}`).catch(() => null)
         ])
-        let server: Server | null = serverEntry?.data ?? null
+        const server: Server | null = serverEntry?.data ?? null
         let entity: Entity | null = null
         if (entityEntry?.data) {
             const document: Document<Entity> = JSON.parse(entityEntry.data.document)
             entity = document.value
         }
 
-        if (!server || !entity) {
-            try {
-                server ??= await api.getServer(host, { timeoutms: 5000 })
-                entity ??= (await api.getEntity(ccid, undefined, { cache: 'no-cache', timeoutms: 5000 })).value
-            } catch (err) {
-                if (!(err instanceof ServerOfflineError)) throw err
-                console.error(`server ${host} is offline. booting with placeholders...`)
-                server ??= { version: '2.0', domain: host, csid: '', layer: '', endpoints: {} }
-                entity ??= { domain: host, alias: '', alias_proof_type: '' }
-            }
-        }
-
         // 各種タイムラインの作成やリストの読み込みなどの初期化はアプリケーション側の責務
-        return new Client(api, ccid, entity, server, profile)
+        const client = new Client(
+            api,
+            ccid,
+            entity ?? { domain: host, alias: '', alias_proof_type: '' },
+            server ?? { version: '2.0', domain: host, csid: '', layer: '', endpoints: {} },
+            profile
+        )
+        if (!server) {
+            console.warn(`well-known of ${host} is not cached. booting with a placeholder...`)
+            api.getServer(host, { cache: 'no-cache' })
+                .then((fetched) => {
+                    client.server = fetched
+                    for (const callback of client.serverSubscriptions) {
+                        callback()
+                    }
+                })
+                .catch(() => {}) // 到達不能はApiの記録→onHostOnlineStatusChangedで伝わる
+        }
+        if (!entity) {
+            console.warn(`entity of ${ccid} is not cached. booting with a placeholder...`)
+            api.getEntity(ccid, undefined, { cache: 'no-cache' })
+                .then((fetched) => {
+                    client.entity = fetched.value
+                })
+                .catch(() => {})
+        }
+        return client
     }
 
     // 鍵を持たないゲスト(未ログイン)用クライアント。公開リソースの閲覧のみ可能で、署名を伴う操作は行えない
@@ -607,7 +632,8 @@ export class Client {
         return new Client(api, '', guestEntity, server)
     }
 
-    // 既定はキャッシュ即返し(裏で再取得)。fresh=trueで必ずネットワークから取り直す(復帰時リフレッシュ用)
+    // 既定はキャッシュだけを読む(無ければ何もせず初期値のまま。ネットワークへは出ない。
+    // 取り直しはrefreshFreshResources(起動直後・復帰時)が行う)。fresh=trueで必ずネットワークから取り直す
     async updateProfiles(fresh: boolean = false): Promise<void> {
         const before = JSON.stringify(this.profiles)
         await this.api
@@ -617,7 +643,7 @@ export class Client {
                     order: 'asc'
                 },
                 undefined,
-                { cache: fresh ? 'no-cache' : 'swr' }
+                { cache: fresh ? 'no-cache' : 'cache-only' }
             )
             .then((res) => {
                 const prefixLength = semantics.profiles(this.ccid).length + 1
@@ -626,6 +652,10 @@ export class Client {
                     this.profiles[name] = JSON.parse(sd.document)
                 }
                 console.log('Profiles updated:', this.profiles)
+            })
+            .catch((err) => {
+                if (!fresh && (err instanceof CacheMissError || err instanceof NotFoundError)) return
+                throw err
             })
         if (JSON.stringify(this.profiles) !== before) {
             for (const callback of this.profilesSubscriptions) {

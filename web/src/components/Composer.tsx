@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Button,
@@ -19,6 +19,7 @@ import { MessageLayout } from './message/MessageLayout'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
+import { useSubscribe } from '../hooks/useSubscribe'
 import { Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { ComposerMode } from '../contexts/Composer'
@@ -648,17 +649,46 @@ export const Composer = (props: Props) => {
                     {modeIcons[displayMode]}
                 </IconButton>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <TimelinePicker
-                        items={props.options ?? []}
-                        selected={props.destinations}
-                        setSelected={props.setDestinations ?? (() => {})}
-                        keyFunc={(item: Timeline) => item.uri}
-                        labelFunc={(item: Timeline) => item.name}
-                        postHome={postHome}
-                        setPostHome={setPostHome}
-                        selectedProfile={selectedProfile}
-                        setSelectedProfile={setSelectedProfile}
-                    />
+                    {/* 候補が明示されていなければknownCommunitiesを使う。その解決待ちはこの欄の中だけでサスペンドさせる
+                        (プロバイダー側で購読するとメイン画面のcommitまで止めてしまう) */}
+                    {props.options ? (
+                        <TimelinePicker
+                            items={props.options}
+                            selected={props.destinations}
+                            setSelected={props.setDestinations ?? (() => {})}
+                            keyFunc={(item: Timeline) => item.uri}
+                            labelFunc={(item: Timeline) => item.name}
+                            postHome={postHome}
+                            setPostHome={setPostHome}
+                            selectedProfile={selectedProfile}
+                            setSelectedProfile={setSelectedProfile}
+                        />
+                    ) : (
+                        <Suspense
+                            fallback={
+                                <TimelinePicker
+                                    items={[]}
+                                    selected={props.destinations}
+                                    setSelected={props.setDestinations ?? (() => {})}
+                                    keyFunc={(item: Timeline) => item.uri}
+                                    labelFunc={(item: Timeline) => item.name}
+                                    postHome={postHome}
+                                    setPostHome={setPostHome}
+                                    selectedProfile={selectedProfile}
+                                    setSelectedProfile={setSelectedProfile}
+                                />
+                            }
+                        >
+                            <KnownCommunitiesPicker
+                                selected={props.destinations}
+                                setSelected={props.setDestinations ?? (() => {})}
+                                postHome={postHome}
+                                setPostHome={setPostHome}
+                                selectedProfile={selectedProfile}
+                                setSelectedProfile={setSelectedProfile}
+                            />
+                        </Suspense>
+                    )}
                 </div>
                 {/* v1と同じく、デフォルトから外れているときだけ復帰ボタンを出す */}
                 {destinationModified && (
@@ -1089,5 +1119,21 @@ export const Composer = (props: Props) => {
             {/* 隠しファイル入力 */}
             <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
         </div>
+    )
+}
+
+// 投稿先候補にknownCommunitiesを使うTimelinePicker。useSubscribeでサスペンドするので、Composer内のSuspenseの下で使う
+const KnownCommunitiesPicker = (
+    props: Omit<ComponentProps<typeof TimelinePicker>, 'items' | 'keyFunc' | 'labelFunc'>
+) => {
+    const { client } = useClient()
+    const [knownCommunities] = useSubscribe(client.knownCommunities)
+    return (
+        <TimelinePicker
+            {...props}
+            items={knownCommunities}
+            keyFunc={(item: Timeline) => item.uri}
+            labelFunc={(item: Timeline) => item.name}
+        />
     )
 }

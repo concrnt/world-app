@@ -348,9 +348,7 @@ const TimelineWrap = (props: {
     setDestinations: (destinations: string[]) => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
-    const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
     const isMobile = useIsMobile()
 
     if (!list) return <Text>{t('listNotFound')}</Text>
@@ -373,7 +371,6 @@ const TimelineWrap = (props: {
                                 destinations={props.destinations}
                                 setDestinations={props.setDestinations}
                                 defaultDestinations={props.pin.defaultPostTimelines}
-                                options={knownCommunities}
                                 initialProfile={props.pin.defaultProfile}
                             />
                         </div>
