@@ -23,6 +23,7 @@ import { useQueryTimelineContext } from '../QueryTimeline'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { shareText } from '../../lib/share'
+import { CssVar } from '../../types/Theme'
 
 interface Props {
     message: Message<any>
@@ -110,7 +111,7 @@ export const MessageActions = (props: Props) => {
                     hapticLight()
                     push(<PostView uri={props.message.uri} initialTab="replies" />)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 <MdReply size={20} />
                 {replyCount > 0 && <span style={{ marginLeft: '4px' }}>{replyCount}</span>}
@@ -128,7 +129,7 @@ export const MessageActions = (props: Props) => {
                     hapticLight()
                     push(<PostView uri={props.message.uri} initialTab="reroutes" />)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 <MdRepeat size={20} />
                 {rerouteCount > 0 && <span style={{ marginLeft: '4px' }}>{rerouteCount}</span>}
@@ -177,7 +178,7 @@ export const MessageActions = (props: Props) => {
                     hapticLight()
                     push(<PostView uri={props.message.uri} initialTab="favorites" />)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
                 <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
@@ -229,7 +230,7 @@ export const MessageActions = (props: Props) => {
                     hapticLight()
                     push(<PostView uri={props.message.uri} initialTab="reactions" />)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 <MdAddReaction size={20} />
             </Button>
@@ -240,6 +241,7 @@ export const MessageActions = (props: Props) => {
                     e.stopPropagation()
                     setMenuOpen(true)
                 }}
+                style={{ color: CssVar.contentTextDim }}
             >
                 <MdMoreHoriz size={20} />
             </Button>

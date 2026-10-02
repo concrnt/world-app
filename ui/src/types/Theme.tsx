@@ -21,6 +21,7 @@ export interface Theme {
 
 export const CssVar = {
     contentText: 'var(--content-text)',
+    contentTextDim: 'var(--content-text-dim)',
     contentLink: 'var(--content-link)',
     contentBackground: 'var(--content-background)',
     uiText: 'var(--ui-text)',
