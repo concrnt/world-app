@@ -17,7 +17,6 @@ import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { ComposeFAB } from '../components/ComposeFAB'
 import { PostContextProvider } from '../contexts/PostContext'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { useSubscribe } from '../hooks/useSubscribe'
 
 interface Props {
     uri: string
@@ -53,8 +52,6 @@ export const TimelineView = (props: Props) => {
     const timeline = fetched?.uri === props.uri ? fetched.timeline : undefined
 
     const restricted = timeline ? timeline.isRestrictedFor(client.ccid) : false
-
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
 
     // インラインエディタの投稿先。このタイムラインを初期値にしつつ、その場で編集できるようにする
     const [destinations, setDestinations] = useState<string[]>([props.uri])
@@ -104,7 +101,6 @@ export const TimelineView = (props: Props) => {
                                                 destinations={destinations}
                                                 setDestinations={setDestinations}
                                                 defaultDestinations={[props.uri]}
-                                                options={knownCommunities}
                                             />
                                         </div>
                                         <Divider />

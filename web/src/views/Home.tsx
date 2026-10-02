@@ -295,7 +295,7 @@ const HomeMain = ({
                     {/*
                       フォールバックはTimelineWrapが描く構造(Composer + タイムライン)と同じ形にしてレイアウトシフトを防ぐ。
                       Composerはリストの読み込みを待たなくても出せる(draft等はComposerDraftContextで共有されるので
-                      本物に置き換わっても入力は引き継がれる)。knownCommunitiesだけ未取得なので候補は空で出す
+                      本物に置き換わっても入力は引き継がれる)。投稿先候補はTimelineSearch contextからサスペンドせずに届く
                     */}
                     <Suspense
                         key={pin.uri}
@@ -311,7 +311,6 @@ const HomeMain = ({
                                                     destinations={destinations}
                                                     setDestinations={setDestinations}
                                                     defaultDestinations={pin.defaultPostTimelines}
-                                                    options={[]}
                                                     initialProfile={pin.defaultProfile}
                                                 />
                                             </div>

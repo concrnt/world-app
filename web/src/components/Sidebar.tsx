@@ -190,7 +190,7 @@ export const Sidebar = () => {
                         onClick={() => {
                             // 最前面のビューが提供するデフォルト投稿先で開く。文脈のないページではホームのみ
                             const postCtx = currentPostContext()
-                            composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
+                            composer.open(postCtx.destinations, undefined, undefined, postCtx.profile)
                         }}
                         style={{
                             width: '100%',

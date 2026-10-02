@@ -31,7 +31,7 @@ import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
 import { useClient } from '../contexts/Client'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
-import { List, type ListEntry, ListSchema, type ProfileSchema, Schemas, semantics, Timeline } from '@concrnt/worldlib'
+import { List, type ListEntry, ListSchema, type ProfileSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -415,18 +415,13 @@ const DefaultPostTimelines = (props: {
     setSelectedProfile: (profile: string) => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.listSettings' })
-    const { client } = useClient()
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
             <Text variant="h5">{t('defaultPostTimelines')}</Text>
             <TimelinePicker
-                items={knownCommunities}
                 selected={props.selected}
                 setSelected={props.setSelected}
-                keyFunc={(item: Timeline) => item.uri}
-                labelFunc={(item: Timeline) => item.name}
                 selectedProfile={props.selectedProfile}
                 setSelectedProfile={props.setSelectedProfile}
             />

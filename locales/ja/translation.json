@@ -799,7 +799,8 @@
         },
         "timelinePicker": {
             "postProfile": "投稿元プロフィール",
-            "addDestination": "投稿先を追加"
+            "addDestination": "投稿先を追加",
+            "inYourLists": "リストに登録済み"
         },
         "serverChip": {
             "codeOfConduct": "コード・オブ・コンダクト",

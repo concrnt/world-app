@@ -17,6 +17,7 @@ import { HapticsProvider } from './contexts/Haptics'
 import { OverlayProvider } from './contexts/Overlay'
 import { ComposerProvider } from './contexts/Composer'
 import { ComposerDraftProvider } from './contexts/ComposerDraft'
+import { TimelineSearchProvider } from './contexts/TimelineSearch'
 import { MediaViewerProvider } from './contexts/MediaViewer'
 import { AudioPlayerProvider } from './contexts/AudioPlayer'
 import { ImageCropperProvider } from './contexts/ImageCropper'
@@ -75,25 +76,27 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                     <OverlayStackBackBridge />
                                                     <EmojiPickerProvider>
                                                         <ComposerDraftProvider>
-                                                            <ComposerProvider>
-                                                                <ScannerProvider>
-                                                                    <OverlayProvider>
-                                                                        <MediaViewerProvider
-                                                                            renderPost={(uri) => (
-                                                                                <PostView uri={uri} embedded />
-                                                                            )}
-                                                                        >
-                                                                            <AudioPlayerProvider>
-                                                                                <TickerProvider>
-                                                                                    <UrlSummaryProvider>
-                                                                                        <App />
-                                                                                    </UrlSummaryProvider>
-                                                                                </TickerProvider>
-                                                                            </AudioPlayerProvider>
-                                                                        </MediaViewerProvider>
-                                                                    </OverlayProvider>
-                                                                </ScannerProvider>
-                                                            </ComposerProvider>
+                                                            <TimelineSearchProvider>
+                                                                <ComposerProvider>
+                                                                    <ScannerProvider>
+                                                                        <OverlayProvider>
+                                                                            <MediaViewerProvider
+                                                                                renderPost={(uri) => (
+                                                                                    <PostView uri={uri} embedded />
+                                                                                )}
+                                                                            >
+                                                                                <AudioPlayerProvider>
+                                                                                    <TickerProvider>
+                                                                                        <UrlSummaryProvider>
+                                                                                            <App />
+                                                                                        </UrlSummaryProvider>
+                                                                                    </TickerProvider>
+                                                                                </AudioPlayerProvider>
+                                                                            </MediaViewerProvider>
+                                                                        </OverlayProvider>
+                                                                    </ScannerProvider>
+                                                                </ComposerProvider>
+                                                            </TimelineSearchProvider>
                                                         </ComposerDraftProvider>
                                                     </EmojiPickerProvider>
                                                 </OverlayStackProvider>
