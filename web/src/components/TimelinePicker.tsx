@@ -3,7 +3,7 @@ import { Chip } from '@concrnt/ui'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { MdCheckCircle, MdOutlineTag } from 'react-icons/md'
+import { MdCheckCircle, MdHistory, MdOutlineTag } from 'react-icons/md'
 import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
@@ -182,6 +182,7 @@ export const TimelinePicker = (props: Props) => {
                                 break
                             case 'Enter':
                                 if (options.length > 0 && focusedIdx >= 0 && focusedIdx < options.length) {
+                                    provider.remember?.(options[focusedIdx])
                                     props.setSelected([...props.selected, options[focusedIdx].uri])
                                     inputRef.current?.blur()
                                 }
@@ -244,6 +245,8 @@ export const TimelinePicker = (props: Props) => {
                             backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
                         }}
                         onMouseDown={() => {
+                            // 手動で選んだ候補だけを履歴に残す(プロバイダー側が履歴を持たなければ何もしない)
+                            provider.remember?.(opt)
                             props.setSelected([...props.selected, opt.uri])
                         }}
                     >
@@ -259,6 +262,8 @@ export const TimelinePicker = (props: Props) => {
                             >
                                 {opt.name}
                             </span>
+                            {/* 最近手動で選んだ候補は履歴アイコンで、どうして先頭に居るのかを示す */}
+                            {opt.recent && <MdHistory size={14} style={{ opacity: 0.7, flexShrink: 0 }} />}
                             {/* リスト登録済みの候補は、ack済みユーザーと同じチェックマークで区別する */}
                             {opt.known && (
                                 <MdCheckCircle

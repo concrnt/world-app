@@ -13,6 +13,8 @@ export interface SearchHit {
     known: boolean
     // 解決hint(crawler の sourceServer)。client.getTimeline(uri, hint) に渡す
     hint?: string
+    // 最近手動で選択した候補(RecentSearchProvider 由来。候補行の末尾に履歴アイコンを出す)
+    recent?: boolean
 }
 
 export interface SearchProvider {
@@ -23,6 +25,8 @@ export interface SearchProvider {
     // この uri を「登録済み」として知っているか(同期)。合成時に、他プロバイダーのヒットへチェックを付けるのに使う
     // (known 側の名前がクエリに一致しなくても、crawler 側が同じ uri を返せばチェックが付く)
     knows?(uri: string): boolean
+    // ユーザーが候補を手動で選んだことを通知する。履歴を持つプロバイダーだけが実装し、他は無視する
+    remember?(hit: SearchHit): void
 }
 
 const matches = (name: string, query: string): boolean => {
@@ -79,6 +83,57 @@ export class StaticSearchProvider implements SearchProvider {
     }
 }
 
+// 最近手動で選択した候補。クエリが空の時だけ、選んだ順(新しい順)に出す(emoji picker の recent と同じ発想)。
+// name/hint を一緒に保存しているので、リスト未登録の候補でも再表示とchipのラベル解決にネットワークが要らない
+const RECENT_STORAGE_KEY = 'timelinePicker:recent'
+const RECENT_LIMIT = 10
+
+type RecentEntry = Pick<SearchHit, 'uri' | 'name' | 'description' | 'hint'>
+
+export class RecentSearchProvider implements SearchProvider {
+    private listeners = new Set<() => void>()
+
+    private load(): RecentEntry[] {
+        try {
+            const raw = localStorage.getItem(RECENT_STORAGE_KEY)
+            const parsed: unknown = raw ? JSON.parse(raw) : []
+            if (!Array.isArray(parsed)) return []
+            return parsed.filter(
+                (entry): entry is RecentEntry =>
+                    typeof entry === 'object' &&
+                    entry !== null &&
+                    typeof entry.uri === 'string' &&
+                    typeof entry.name === 'string'
+            )
+        } catch {
+            return []
+        }
+    }
+
+    search(query: string, signal: AbortSignal, emit: (hits: SearchHit[]) => void): void {
+        if (query !== '') return
+        const read = (): void => {
+            if (signal.aborted) return
+            emit(this.load().map((entry) => ({ ...entry, known: false, recent: true })))
+        }
+        this.listeners.add(read)
+        signal.addEventListener('abort', () => this.listeners.delete(read), { once: true })
+        read()
+    }
+
+    remember(hit: SearchHit): void {
+        const entry: RecentEntry = { uri: hit.uri, name: hit.name, description: hit.description, hint: hit.hint }
+        const next = [entry, ...this.load().filter((e) => e.uri !== hit.uri)].slice(0, RECENT_LIMIT)
+        try {
+            localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next))
+        } catch {
+            // ストレージが使えない環境では履歴を諦めるだけで、選択自体は妨げない
+        }
+        // 候補一覧を開いたまま(クエリ空のまま)選んだ場合も、次に開いた時を待たずに並びを更新する
+        for (const listener of this.listeners) listener()
+    }
+}
+
 // crawler のコミュニティ検索(explorer と同じ)。mainnet かつオンラインの時だけ使い、失敗は無視する。
 // デバウンスはここに閉じ込める(picker 側に置くと known の結果まで遅れる)
 const CRAWLER_DEBOUNCE_MS = 300
@@ -130,6 +185,10 @@ export class CompositeSearchProvider implements SearchProvider {
 
     knows(uri: string): boolean {
         return this.providers.some((provider) => provider.knows?.(uri) ?? false)
+    }
+
+    remember(hit: SearchHit): void {
+        for (const provider of this.providers) provider.remember?.(hit)
     }
 
     private merge(parts: SearchHit[][]): SearchHit[] {
