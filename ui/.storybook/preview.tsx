@@ -147,6 +147,7 @@ const preview: Preview = {
                                 justifyContent: 'center',
                                 background: 'var(--content-background)',
                                 '--content-text': themeData.content.text,
+                                '--content-text-dim': 'rgb(from var(--content-text) r g b / 0.7)',
                                 '--content-link': themeData.content.link,
                                 '--content-background': themeData.content.background,
                                 '--ui-text': themeData.ui.text,

@@ -28,6 +28,7 @@ body {
 
 :root {
   --content-text: #000000;
+  --content-text-dim: rgb(from var(--content-text) r g b / 0.7);
   --content-link: #000000;
   --content-background: #ffffff;
 
