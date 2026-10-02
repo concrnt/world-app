@@ -4,7 +4,6 @@ import { Sidebar } from '../components/Sidebar'
 import { DrawerMenu } from '../components/DrawerMenu'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { SwipableView } from '../layouts/Stack'
-import { DomainOfflineBanner } from '../components/DomainOfflineBanner'
 import { AccountSwitchingBanner } from '../components/AccountSwitchingBanner'
 import { PwaManager } from '../components/PwaManager'
 import { NavigationProvider } from '../contexts/Navigation'
@@ -36,7 +35,6 @@ const DesktopShell = () => {
         >
             <PwaManager />
             <AccountSwitchingBanner />
-            <DomainOfflineBanner />
             <div
                 style={{
                     display: 'flex',
@@ -152,7 +150,6 @@ const MobileShell = () => {
         >
             <PwaManager />
             <AccountSwitchingBanner />
-            <DomainOfflineBanner />
             <div
                 style={{
                     flex: 1,

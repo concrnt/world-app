@@ -141,7 +141,7 @@ export const ProfileEditor = (props: Props) => {
 
                         client.api.commit(document).then(() => {
                             console.log('Profile updated')
-                            client.updateProfiles()
+                            client.updateProfiles(true)
                             props.onComplete?.()
                         })
                     }}

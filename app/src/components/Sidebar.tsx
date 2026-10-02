@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 
 import { ListItem, Divider, Text, useTheme, List } from '@concrnt/ui'
 import { Avatar } from '@concrnt/ui'
@@ -19,6 +20,7 @@ import { MdList } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
+import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 
 interface Props {
@@ -29,6 +31,7 @@ export const Sidebar = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
+    const homeStatus = useDomainStatus()
 
     return (
         <>
@@ -86,6 +89,11 @@ export const Sidebar = (props: Props) => {
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
+                    {!homeStatus.online && (
+                        <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                            <ConnectionStatus />
+                        </div>
+                    )}
                     <Divider
                         style={{
                             marginTop: CssVar.space(2),

@@ -1,24 +1,17 @@
 import { Composer } from '../components/Composer'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Message, Timeline } from '@concrnt/worldlib'
+import { Message } from '@concrnt/worldlib'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from './Client'
-import { useSubscribe } from '../hooks/useSubscribe'
 import { CssVar } from '../types/Theme'
 import { useKeyboard } from './Keyboard'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
 interface ComposerContextState {
-    open: (
-        destinations: string[],
-        options?: Timeline[],
-        mode?: ComposerMode,
-        targetMessage?: Message<any>,
-        profile?: string
-    ) => void
+    open: (destinations: string[], mode?: ComposerMode, targetMessage?: Message<any>, profile?: string) => void
     close: () => void
 }
 
@@ -38,30 +31,20 @@ export const ComposerProvider = (props: Props) => {
     const [destinations, setDestinations] = useState<string[]>([])
     // open()時の投稿先を覚えておき、Composerの「デフォルトに戻す」の復帰先にする
     const [defaultDestinations, setDefaultDestinations] = useState<string[]>([])
-    const [options, setOptions] = useState<Timeline[]>([])
     const [mode, setMode] = useState<ComposerMode>('normal')
     const [targetMessage, setTargetMessage] = useState<Message<any> | undefined>(undefined)
     const [profile, setProfile] = useState<string | undefined>(undefined)
 
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
-
     const open = useCallback(
-        (
-            destinations: string[],
-            options?: Timeline[],
-            mode?: ComposerMode,
-            targetMessage?: Message<any>,
-            profile?: string
-        ) => {
+        (destinations: string[], mode?: ComposerMode, targetMessage?: Message<any>, profile?: string) => {
             setDestinations(destinations)
             setDefaultDestinations(destinations)
-            setOptions(options ?? knownCommunities)
             setMode(mode ?? 'normal')
             setTargetMessage(targetMessage)
             setProfile(profile)
             setShowComposer(true)
         },
-        [client, knownCommunities]
+        [client]
     )
 
     const close = useCallback(() => {
@@ -114,7 +97,6 @@ export const ComposerProvider = (props: Props) => {
                             destinations={destinations}
                             setDestinations={setDestinations}
                             defaultDestinations={defaultDestinations}
-                            options={options}
                             mode={mode}
                             targetMessage={targetMessage}
                             initialProfile={profile}
@@ -132,7 +114,6 @@ const ComposerOverlay = (props: {
     destinations: string[]
     setDestinations: (destinations: string[]) => void
     defaultDestinations: string[]
-    options: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
     initialProfile?: string
@@ -209,7 +190,6 @@ const ComposerOverlay = (props: {
                                 destinations={props.destinations}
                                 setDestinations={props.setDestinations}
                                 defaultDestinations={props.defaultDestinations}
-                                options={props.options}
                                 mode={props.mode}
                                 targetMessage={props.targetMessage}
                                 initialProfile={props.initialProfile}

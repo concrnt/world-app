@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ScrollViewHandle, ScrollViewProps, ScrollViewRef } from '../types/ScrollView'
 
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { Drawer } from '../components/Drawer'
 
 import { Tabs, Tab, Text, Divider, Button } from '@concrnt/ui'
@@ -42,7 +43,9 @@ import { useIsMobile } from '../hooks/useIsMobile'
 
 export const HomeView = (props: ScrollViewProps) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // プロフィール・ピン留めリストは自ドメインのリソース
+    const homeStatus = useDomainStatus()
 
     const scrollRef = useRef<ScrollViewHandle>(null)
     useImperativeHandle(props.ref, () => ({
@@ -101,14 +104,22 @@ export const HomeView = (props: ScrollViewProps) => {
     useEffect(() => {
         if (!client) return
         // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
-        // そもそもcommitもできないので表示しない
-        if (isDomainOffline) return
+        // そもそもcommitもできないので表示しない。復帰直後も同様なので、取り直し(refreshFreshResources)の
+        // 完了を待ってから判定する
+        if (!homeStatus.online) return
         if (profileSetupOpened.current) return
-        if (!(client.currentProfile in client.profiles)) {
-            profileSetupOpened.current = true
-            setProfileSetupOpen(true)
+        let isCancelled = false
+        client.refreshFreshResources().then(() => {
+            if (isCancelled || profileSetupOpened.current) return
+            if (!(client.currentProfile in client.profiles)) {
+                profileSetupOpened.current = true
+                setProfileSetupOpen(true)
+            }
+        })
+        return () => {
+            isCancelled = true
         }
-    }, [client, isDomainOffline])
+    }, [client, homeStatus.online, homeStatus.onlineSince])
 
     return (
         <>
@@ -141,21 +152,8 @@ export const HomeView = (props: ScrollViewProps) => {
                     />
                 </Drawer>
                 <ErrorBoundary
-                    // オフライン起動で失敗していた場合、復帰(バナー消灯)時に自動で再試行する
-                    resetKeys={[isDomainOffline]}
                     fallbackRender={({ resetErrorBoundary }) => (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: CssVar.space(2),
-                                padding: CssVar.space(4)
-                            }}
-                        >
-                            <Text variant="caption">{t('loadFailed')}</Text>
-                            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
-                        </div>
+                        <HomeLoadError resetErrorBoundary={resetErrorBoundary} />
                     )}
                 >
                     {timelineSnapshot !== undefined && (
@@ -173,6 +171,31 @@ export const HomeView = (props: ScrollViewProps) => {
                 </ErrorBoundary>
             </View>
         </>
+    )
+}
+
+// 読み込み失敗の表示。オフライン起動で失敗していた場合、自ドメインの復帰時に自動で再試行する
+// (worldlibが復帰通知の前に失敗したCachedPromiseを破棄しているので、resetは新しい取得になる)
+const HomeLoadError = ({ resetErrorBoundary }: { resetErrorBoundary: () => void }) => {
+    const { t } = useTranslation('', { keyPrefix: 'views.home' })
+    const homeStatus = useDomainStatus()
+    const [errorAt] = useState(() => Date.now())
+    useEffect(() => {
+        if (homeStatus.online && homeStatus.onlineSince > errorAt) resetErrorBoundary()
+    }, [homeStatus.online, homeStatus.onlineSince, errorAt, resetErrorBoundary])
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: CssVar.space(2),
+                padding: CssVar.space(4)
+            }}
+        >
+            <Text variant="caption">{t('loadFailed')}</Text>
+            <Button onClick={() => resetErrorBoundary()}>{t('retry')}</Button>
+        </div>
     )
 }
 
@@ -272,7 +295,7 @@ const HomeMain = ({
                     {/*
                       フォールバックはTimelineWrapが描く構造(Composer + タイムライン)と同じ形にしてレイアウトシフトを防ぐ。
                       Composerはリストの読み込みを待たなくても出せる(draft等はComposerDraftContextで共有されるので
-                      本物に置き換わっても入力は引き継がれる)。knownCommunitiesだけ未取得なので候補は空で出す
+                      本物に置き換わっても入力は引き継がれる)。投稿先候補はTimelineSearch contextからサスペンドせずに届く
                     */}
                     <Suspense
                         key={pin.uri}
@@ -288,7 +311,6 @@ const HomeMain = ({
                                                     destinations={destinations}
                                                     setDestinations={setDestinations}
                                                     defaultDestinations={pin.defaultPostTimelines}
-                                                    options={[]}
                                                     initialProfile={pin.defaultProfile}
                                                 />
                                             </div>
@@ -325,9 +347,7 @@ const TimelineWrap = (props: {
     setDestinations: (destinations: string[]) => void
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'views.home' })
-    const { client } = useClient()
     const [list] = useSubscribe(props.pin.list)
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
     const isMobile = useIsMobile()
 
     if (!list) return <Text>{t('listNotFound')}</Text>
@@ -350,7 +370,6 @@ const TimelineWrap = (props: {
                                 destinations={props.destinations}
                                 setDestinations={props.setDestinations}
                                 defaultDestinations={props.pin.defaultPostTimelines}
-                                options={knownCommunities}
                                 initialProfile={props.pin.defaultProfile}
                             />
                         </div>

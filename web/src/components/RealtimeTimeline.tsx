@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { ChunklineItem, TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { TimelineSnapshot } from '../lib/timelineSnapshot'
@@ -52,7 +53,8 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const RealtimeTimeline = (props: Props) => {
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    const homeStatus = useDomainStatus()
 
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
     // 表示中はpull-to-refresh実行中の見た目にし、スケルトン・末尾表示は出さない
@@ -132,10 +134,10 @@ export const RealtimeTimeline = (props: Props) => {
 
     // 自ドメインがオフラインでも、単一タイムラインならそのホストから直接読める。
     // reader再生成のトリガーは解決済みのhostOverride値の変化のみにする
-    // (isDomainOffline自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
+    // (online自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
     const [hostOverride, setHostOverride] = useState<string | undefined>(undefined)
     useEffect(() => {
-        if (!client || !isDomainOffline || props.timelines.length !== 1) {
+        if (!client || homeStatus.online || props.timelines.length !== 1) {
             setHostOverride(undefined)
             return
         }
@@ -156,7 +158,10 @@ export const RealtimeTimeline = (props: Props) => {
             isCancelled = true
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client, isDomainOffline, timelinesKey])
+    }, [client, homeStatus.online, timelinesKey])
+
+    // このタイムラインを購読しているホスト(先頭取得・socketとも同じ)。復帰時の再試行キーにする
+    const subscribedStatus = useDomainStatus(hostOverride ?? client.api.defaultHost)
 
     useEffect(() => {
         // 再アタッチパス: effectが再実行されても、タイムライン構成が同じなら
@@ -329,17 +334,17 @@ export const RealtimeTimeline = (props: Props) => {
         }
     }, [reader, swapToLive])
 
-    // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
+    // スナップショット表示のまま先頭取得に失敗していた場合、購読先ホストの復帰時に無音で本物へ差し替える
     // (投稿は既に見えているので、コールド起動のような再試行導線は出さない)
     useEffect(() => {
-        if (isDomainOffline) return
+        if (!subscribedStatus.online) return
         if (!snapshotRef.current || !listenFailedRef.current) return
         listenFailedRef.current = false
         // まだ届かなければスナップショット表示のまま(次の復帰で再試行)。reloadのrejectをunhandledにしない
         onRefresh().catch(() => {
             listenFailedRef.current = true
         })
-    }, [isDomainOffline, onRefresh])
+    }, [subscribedStatus.online, subscribedStatus.onlineSince, onRefresh])
 
     // リアクション等のcommit後に、そのアイテムだけ再取得させる。
     // socketのassociatedイベント任せだとcommit応答より遅れて届いたときに
@@ -404,6 +409,7 @@ export const RealtimeTimeline = (props: Props) => {
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
+        // スナップショット起動ではloading/hasMoreDataが差し替え前後で変わらないため、差し替え(snapshot解除)でも再判定する
         const fill = setTimeout(() => {
             if (loadingRef.current) return
             handleScroll()
@@ -415,7 +421,7 @@ export const RealtimeTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, initialLoaded, loading])
+    }, [scrollRef, reader, hasMoreData, initialLoaded, loading, snapshot])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)

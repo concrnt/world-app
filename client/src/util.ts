@@ -1,7 +1,7 @@
 import { Server } from './api'
 import { parse } from 'uri-template'
 
-// メッセージ文字列は既存のエラー文字列と互換を保つこと(RenderError等が正規表現でマッチしている)
+// 到達できなかったURLをurlフィールドで持つ(RenderError等がホストを取り出してそのドメインの復帰を購読する)
 export class TimeoutError extends Error {
     url: string
 

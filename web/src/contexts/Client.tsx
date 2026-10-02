@@ -29,7 +29,6 @@ export interface ClientContextState {
     client: Client
     reload: (name?: string) => Promise<void>
     logout: () => Promise<void>
-    isDomainOffline: boolean
     isSubkeyInvalid: boolean
     isSwitching: boolean
     switchError: string | null
@@ -46,7 +45,6 @@ const ClientContext = createContext<ClientContextState>({
     client: {} as Client,
     reload: async () => {},
     logout: async () => {},
-    isDomainOffline: false,
     isSubkeyInvalid: false,
     isSwitching: false,
     switchError: null,
@@ -72,7 +70,6 @@ const readStoredString = (key: string): string | undefined => {
 export const ClientProvider = (props: Props): ReactNode => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.client' })
     const [client, setClient] = useState<Client | null | undefined>(undefined)
-    const [isDomainOffline, setIsDomainOffline] = useState(false)
     const [subkeyInvalid, setSubkeyInvalid] = useState(false)
     const [progress, setProgress] = useState('')
     const [setupError, setSetupError] = useState<string | null>(null)
@@ -378,9 +375,11 @@ export const ClientProvider = (props: Props): ReactNode => {
                     }
 
                     // 保存されていたプロフィールが削除済みの場合はmainへフォールバックする
-                    // (明示的な切替(name指定)は既存プロフィール一覧から選ばれるため対象外)
+                    // (明示的な切替(name指定)は既存プロフィール一覧から選ばれるため対象外。
+                    // キャッシュが無く一覧が空のときは判定せず、裏の取り直し後にonProfilesUpdatedが戻す)
                     if (
                         name === undefined &&
+                        Object.keys(client.profiles).length > 0 &&
                         client.currentProfile !== 'main' &&
                         !(client.currentProfile in client.profiles)
                     ) {
@@ -405,7 +404,6 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('Client created successfully. online:', client.isOnline)
                     clientRef.current?.dispose()
                     clientRef.current = client
-                    setIsDomainOffline(!client.isOnline)
                     setSubkeyInvalid(subkeyIsInvalid)
                     setClient(client)
                     if (verifyAfterPaint) {
@@ -462,26 +460,21 @@ export const ClientProvider = (props: Props): ReactNode => {
 
     useEffect(() => {
         if (!client) return
-        const onStatusChanged = (online: boolean) => {
-            if (!online) {
-                setIsDomainOffline(true)
-                return
-            }
-            // 復帰: 裏検証(オフライン中に起動していた場合)と鮮度重視リソースの取り直しを済ませてから
-            // バナーを消す。先に消すと、失敗promiseを保持したままのHome等のErrorBoundaryが
-            // resetKeysで再試行しても同じ失敗を引いてまた落ちる(復帰時は30秒抑制が解除されている)
-            const tasks = [client.refreshFreshResources()]
+        // 自ドメインがオンラインへ遷移したら、裏検証(オフライン中に起動していた場合)と
+        // 鮮度重視リソースの取り直しを行う。UIの状態(バナー・再試行)はuseDomainStatusが各自で購読する
+        let lastOnline = client.isOnline
+        const onDomainStatusChanged = (host: string) => {
+            if (host !== client.api.defaultHost) return
+            const online = client.isOnline
+            if (online === lastOnline) return
+            lastOnline = online
+            if (!online) return
+            client.refreshFreshResources()
             if (!verifiedRef.current) {
-                tasks.push(verifyInBackground(client))
+                verifyInBackground(client)
             }
-            Promise.allSettled(tasks).then(() => {
-                if (clientRef.current !== client) return
-                setIsDomainOffline(!client.isOnline)
-            })
         }
-        client.subscribeOnlineStatus(onStatusChanged)
-        // 購読前(setClient直後の裏検証の失敗など)に遷移していた分を取り込む
-        setIsDomainOffline(!client.isOnline)
+        client.subscribeDomainStatus(onDomainStatusChanged)
 
         const onProfilesUpdated = () => {
             setProfilesVersion((v) => v + 1)
@@ -500,31 +493,36 @@ export const ClientProvider = (props: Props): ReactNode => {
         }
         client.subscribeServerUpdated(onServerUpdated)
 
-        // オンライン/オフラインとも即時プローブする(オフライン時はプローブが失敗して遷移が発火し、
-        // リクエストが発生しないアイドル状態でもバナーが表示される)
-        const onBrowserNetworkChange = () => {
-            client.probeDomainStatus()
+        // ブラウザがオンラインに戻ったら、オフライン中の全ドメインをbackoff待ちせず即プローブする。
+        // オフラインになったら自ドメインをプローブする(失敗して遷移が発火し、リクエストが発生しない
+        // アイドル状態でもバナーが表示される)
+        const onBrowserOnline = () => {
+            client.probeOfflineDomains()
         }
-        window.addEventListener('online', onBrowserNetworkChange)
-        window.addEventListener('offline', onBrowserNetworkChange)
+        const onBrowserOffline = () => {
+            client.probeDomain(client.api.defaultHost)
+        }
+        window.addEventListener('online', onBrowserOnline)
+        window.addEventListener('offline', onBrowserOffline)
 
         // 起動/クライアント差し替え直後と、アプリ復帰時に鮮度重視リソースを裏で最新化する
         // (キャッシュ即表示→取得後にpush通知でUI更新)。TauriのWebViewでも
-        // foreground/backgroundでvisibilitychangeが発火するためweb/app共通実装
+        // foreground/backgroundでvisibilitychangeが発火するためweb/app共通実装。
+        // 復帰時はオフライン中のドメインをbackoff待ちせず即プローブする(成功すれば遷移側がrefreshする)
         const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                client.refreshFreshResources()
-            }
+            if (document.visibilityState !== 'visible') return
+            client.probeOfflineDomains()
+            if (client.isOnline) client.refreshFreshResources()
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
         client.refreshFreshResources()
 
         return () => {
-            client.unsubscribeOnlineStatus(onStatusChanged)
+            client.unsubscribeDomainStatus(onDomainStatusChanged)
             client.unsubscribeProfilesUpdated(onProfilesUpdated)
             client.unsubscribeServerUpdated(onServerUpdated)
-            window.removeEventListener('online', onBrowserNetworkChange)
-            window.removeEventListener('offline', onBrowserNetworkChange)
+            window.removeEventListener('online', onBrowserOnline)
+            window.removeEventListener('offline', onBrowserOffline)
             document.removeEventListener('visibilitychange', onVisibilityChange)
         }
     }, [client, reload, verifyInBackground])
@@ -556,7 +554,6 @@ export const ClientProvider = (props: Props): ReactNode => {
             client,
             reload,
             logout,
-            isDomainOffline,
             isSubkeyInvalid: subkeyInvalid,
             isSwitching,
             switchError,
@@ -566,7 +563,6 @@ export const ClientProvider = (props: Props): ReactNode => {
         client,
         reload,
         logout,
-        isDomainOffline,
         subkeyInvalid,
         isSwitching,
         switchError,
@@ -689,7 +685,6 @@ export const GuestClientProvider = (props: { client: Client; children: ReactNode
             client: props.client,
             reload: async () => {},
             logout: async () => {},
-            isDomainOffline: false,
             isSubkeyInvalid: false,
             isSwitching: false,
             switchError: null,

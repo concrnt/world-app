@@ -20,7 +20,6 @@ import { useClient } from '../contexts/Client'
 import { MessageLayout } from './message/MessageLayout'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
 import { TimelinePicker } from './TimelinePicker'
-import { Timeline } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { ComposerMode } from '../contexts/Composer'
 import { EditorMode, MediaDraft, useComposerDraft } from '../contexts/ComposerDraft'
@@ -49,6 +48,7 @@ import { EmojiSuggestion } from './EmojiSuggestion'
 import { MdOutlineUploadFile } from 'react-icons/md'
 import { CDID } from '@concrnt/client'
 import { ComposerMediaEditor } from './ComposerMediaEditor'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 
 const knownFlags = ['warn', 'nude', 'porn', 'hard']
 // 任意のプレビュー生成で投稿を止めないための待機上限。
@@ -73,7 +73,6 @@ interface Props {
     setDestinations?: (destinations: string[]) => void
     // 「投稿先をデフォルトに戻す」の復帰先。未指定なら現在の投稿先を基準にする(=投稿先の差分は検出されない)
     defaultDestinations?: string[]
-    options?: Timeline[]
     mode: ComposerMode
     targetMessage?: Message<any>
     onPost?: () => void
@@ -83,7 +82,9 @@ interface Props {
 
 export const Composer = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.composer' })
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // 投稿(commit)は自ドメイン必須
+    const homeStatus = useDomainStatus()
     const { hapticSuccess } = useHaptics()
     // 通常投稿はアプリ全体で共有される下書き(ComposerDraftProvider)を直接読み書きし、
     // タブ切替・モーダル開閉・画面遷移をまたいで内容を保持する。リプライ/リルートはこのインスタンス限り
@@ -372,7 +373,7 @@ export const Composer = (props: Props) => {
 
     const cannotSubmit =
         uploading ||
-        isDomainOffline ||
+        !homeStatus.online ||
         (displayMode !== 'media' && displayMode !== 'reroute' && draft.trim() === '') ||
         (displayMode === 'media' && mediaDrafts.length === 0)
 
@@ -641,12 +642,10 @@ export const Composer = (props: Props) => {
                     {modeIcons[displayMode]}
                 </IconButton>
                 <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* 候補は TimelineSearch context(knownCommunities + crawler)からサスペンドせずに届く */}
                     <TimelinePicker
-                        items={props.options ?? []}
                         selected={props.destinations}
                         setSelected={props.setDestinations ?? (() => {})}
-                        keyFunc={(item: Timeline) => item.uri}
-                        labelFunc={(item: Timeline) => item.name}
                         postHome={postHome}
                         setPostHome={setPostHome}
                         selectedProfile={selectedProfile}
@@ -1041,7 +1040,7 @@ export const Composer = (props: Props) => {
                     )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {isDomainOffline && (
+                    {!homeStatus.online && (
                         <Text variant="caption" style={{ margin: 0 }}>
                             {t('cannotPostOffline')}
                         </Text>

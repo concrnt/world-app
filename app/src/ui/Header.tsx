@@ -1,7 +1,10 @@
-import { ReactNode } from 'react'
+import { CSSProperties, ReactNode, useState } from 'react'
+import { MdCloudOff } from 'react-icons/md'
 import { useNavigation } from '../contexts/Navigation'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { CssVar } from '../types/Theme'
-import { useTheme } from '@concrnt/ui'
+import { IconButton, Popover, useAnchor, useTheme } from '@concrnt/ui'
+import { ConnectionStatus } from '../components/ConnectionStatus'
 
 interface Props {
     children?: ReactNode
@@ -14,6 +17,11 @@ export const Header = (props: Props) => {
     const theme = useTheme()
 
     const nav = useNavigation()
+
+    // ホームドメイン切断中はrightスロットの左に雲アイコンを出し、タップで再接続状況をポップオーバー表示する
+    const homeStatus = useDomainStatus()
+    const statusAnchor = useAnchor()
+    const [statusOpen, setStatusOpen] = useState(false)
 
     return (
         <div
@@ -47,6 +55,38 @@ export const Header = (props: Props) => {
             >
                 {props.children}
             </div>
+            {!homeStatus.online && (
+                <div
+                    data-testid="header-connection-status"
+                    style={{
+                        height: '40px',
+                        width: '40px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                >
+                    <IconButton
+                        onClick={() => setStatusOpen(true)}
+                        style={{ anchorName: statusAnchor, color: 'inherit' } as CSSProperties}
+                    >
+                        <MdCloudOff size={24} />
+                    </IconButton>
+                    <Popover
+                        open={statusOpen}
+                        onClose={() => setStatusOpen(false)}
+                        anchor={statusAnchor}
+                        style={{
+                            left: 'auto',
+                            right: 'anchor(right)',
+                            padding: CssVar.space(2),
+                            maxWidth: 'min(320px, calc(100vw - 16px))'
+                        }}
+                    >
+                        <ConnectionStatus />
+                    </Popover>
+                </div>
+            )}
             <div
                 style={{
                     height: '40px',

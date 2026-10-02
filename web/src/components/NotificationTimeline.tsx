@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
 import {
@@ -87,7 +88,9 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const NotificationTimeline = (props: Props) => {
-    const { client, isDomainOffline } = useClient()
+    const { client } = useClient()
+    // 通知タイムラインは自分のリソースなので取得先は自ドメイン
+    const homeStatus = useDomainStatus()
 
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
     // 表示中はpull-to-refresh実行中の見た目にし、末尾のLoading・End表示は出さない
@@ -388,14 +391,14 @@ export const NotificationTimeline = (props: Props) => {
 
     // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
     useEffect(() => {
-        if (isDomainOffline) return
+        if (!homeStatus.online) return
         if (!snapshotRef.current || !initFailedRef.current) return
         initFailedRef.current = false
         // まだ届かなければスナップショット表示のまま(次の復帰で再試行)。reloadのrejectをunhandledにしない
         onRefresh().catch(() => {
             initFailedRef.current = true
         })
-    }, [isDomainOffline, onRefresh])
+    }, [homeStatus.online, homeStatus.onlineSince, onRefresh])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -442,6 +445,7 @@ export const NotificationTimeline = (props: Props) => {
         // コンテンツがコンテナを満たしていないとscrollイベントが発生せず次ページが永遠に読まれないため、
         // 読み込みが落ち着いたら一度だけ手動で判定する(不足していればreadMore→loadingが戻って再判定)。
         // 猶予は短く始めて判定でreadMoreが走るたびに倍にし(上限あり)、埋まった/読み切ったら初期値に戻す
+        // スナップショット起動ではloading/hasMoreDataが差し替え前後で変わらないため、差し替え(snapshot解除)でも再判定する
         const fill = setTimeout(() => {
             if (loadingRef.current) return
             handleScroll()
@@ -453,7 +457,7 @@ export const NotificationTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, loading])
+    }, [scrollRef, reader, hasMoreData, loading, snapshot])
 
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>

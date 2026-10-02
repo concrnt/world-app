@@ -567,8 +567,10 @@
             "requested": "リクエスト済み",
             "requestAccess": "閲覧をリクエスト"
         },
-        "domainOfflineBanner": {
-            "offline": "あなたのドメイン{{domain}}は現在オフラインのため、読み取り専用モードです。復旧までしばらくお待ちください。"
+        "connectionStatus": {
+            "disconnected": "切断されました。",
+            "retryIn": "{{seconds}}秒後に接続を再試行します。",
+            "retrying": "再接続中..."
         },
         "accountSwitchingBanner": {
             "switching": "プロフィールを切り替えています...",
@@ -797,7 +799,8 @@
         },
         "timelinePicker": {
             "postProfile": "投稿元プロフィール",
-            "addDestination": "投稿先を追加"
+            "addDestination": "投稿先を追加",
+            "inYourLists": "リストに登録済み"
         },
         "serverChip": {
             "codeOfConduct": "コード・オブ・コンダクト",

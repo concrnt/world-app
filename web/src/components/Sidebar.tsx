@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
+import { useDomainStatus } from '../hooks/useDomainStatus'
 
 import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
 
@@ -15,6 +16,7 @@ import { MdCreate } from 'react-icons/md'
 import { CssVar } from '../types/Theme'
 
 import { SwitchAccountButton } from './SwitchAccountButton'
+import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 import { SidebarLists } from './SidebarLists'
 import { useNavigate } from 'react-router-dom'
@@ -26,6 +28,7 @@ export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
     const theme = useTheme()
     const { client } = useClient()
+    const homeStatus = useDomainStatus()
     const unreadCount = useNotificationCounter(client)
     const navigate = useNavigate()
     const composer = useComposer()
@@ -78,6 +81,11 @@ export const Sidebar = () => {
                     </div>
                     <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                 </div>
+                {!homeStatus.online && (
+                    <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                        <ConnectionStatus />
+                    </div>
+                )}
                 <Divider
                     style={{
                         borderColor: CssVar.backdropText
@@ -134,7 +142,7 @@ export const Sidebar = () => {
                     onClick={() => {
                         // 最前面のビューが提供するデフォルト投稿先で開く。文脈のないページではホームのみ
                         const postCtx = currentPostContext()
-                        composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
+                        composer.open(postCtx.destinations, undefined, undefined, postCtx.profile)
                     }}
                     style={{ width: '100%' }}
                 >

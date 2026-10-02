@@ -1,5 +1,4 @@
 import { MainView } from './views/Main'
-import { DomainOfflineBanner } from './components/DomainOfflineBanner'
 import { AccountSwitchingBanner } from './components/AccountSwitchingBanner'
 import { useClient } from './contexts/Client'
 
@@ -17,7 +16,6 @@ function App() {
             }}
         >
             <AccountSwitchingBanner />
-            <DomainOfflineBanner />
             <div
                 style={{
                     flex: 1,

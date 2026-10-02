@@ -16,6 +16,7 @@
     "@concrnt/ui": "workspace:*",
     "@concrnt/worldlib": "workspace:*",
     "@emotion/is-prop-valid": "^1.4.0",
+    "@fontsource/source-code-pro": "^5.3.0",
     "@google/model-viewer": "^4.2.0",
     "@rjsf/core": "^6.4.2",
     "@rjsf/utils": "^6.4.2",

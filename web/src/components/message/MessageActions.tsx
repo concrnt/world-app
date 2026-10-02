@@ -121,7 +121,7 @@ export const MessageActions = (props: Props) => {
                                 !uri.includes('/main/notify-timeline')
                         ) ?? []
                     // 候補は省略してknownCommunities全体にする(投稿先は元メッセージの配信先に限らない)
-                    composer.open(communityDestinations, undefined, 'reply', props.message)
+                    composer.open(communityDestinations, 'reply', props.message)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
@@ -135,7 +135,7 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     // リルート先は現在開いているビューのデフォルト投稿先。文脈のないページではホームのみ
-                    composer.open(postCtx.destinations, undefined, 'reroute', props.message, postCtx.profile)
+                    composer.open(postCtx.destinations, 'reroute', props.message, postCtx.profile)
                 }}
                 style={{ display: 'flex', alignItems: 'center' }}
             >

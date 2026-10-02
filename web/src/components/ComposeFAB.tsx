@@ -14,7 +14,7 @@ export const ComposeFAB = () => {
         <FAB
             onClick={() => {
                 hapticLight()
-                composer.open(postCtx.destinations, undefined, undefined, undefined, postCtx.profile)
+                composer.open(postCtx.destinations, undefined, undefined, postCtx.profile)
             }}
         >
             <MdCreate size={24} />
