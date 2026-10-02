@@ -292,7 +292,7 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     </Suspense>
                 </div>
             </ErrorBoundary>
-            <Divider />
+            <Divider inset />
         </>
     )
 })

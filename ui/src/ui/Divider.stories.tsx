@@ -22,3 +22,13 @@ export const Default: Story = {
         </div>
     )
 }
+
+export const Inset: Story = {
+    render: () => (
+        <div style={{ width: 320 }}>
+            <div style={{ padding: '0 8px 12px' }}>Above</div>
+            <Divider inset />
+            <div style={{ padding: '12px 8px 0' }}>Below</div>
+        </div>
+    )
+}
