@@ -1,9 +1,9 @@
 import { Chip } from '@concrnt/ui'
 
-import { Suspense, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { MdOutlineTag } from 'react-icons/md'
+import { MdCheckCircle, MdOutlineTag } from 'react-icons/md'
 import { IoMdCloseCircle } from 'react-icons/io'
 import { IoMdAdd } from 'react-icons/io'
 
@@ -14,13 +14,14 @@ import { useHaptics } from '../contexts/Haptics'
 import { useKeyboard } from '../contexts/Keyboard'
 import { ProfileName } from './ProfileName'
 import { useResource } from '../hooks/useResource'
+import { useTimelineSearch } from '../contexts/TimelineSearch'
+import type { SearchHit, SearchProvider } from '../lib/timelineSearch'
 
 interface Props {
     selected: string[]
     setSelected: (selected: string[]) => void
-    items: any[]
-    keyFunc: (item: any) => string
-    labelFunc: (item: any) => string
+    // 候補の検索プロバイダー。省略時は TimelineSearch context(knownCommunities + crawler の合成)
+    provider?: SearchProvider
     postHome?: boolean
     setPostHome?: (postHome: boolean) => void
     selectedProfile?: string
@@ -43,11 +44,25 @@ export const TimelinePicker = (props: Props) => {
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const options = useMemo(() => {
-        const remains = props.items.filter((i) => !props.selected.includes(props.keyFunc(i)))
-        if (filter === '') return remains
-        return remains.filter((i) => props.labelFunc(i).toLowerCase().includes(filter.toLowerCase()))
-    }, [props, filter])
+    const contextProvider = useTimelineSearch()
+    const provider = props.provider ?? contextProvider
+
+    // プロバイダーから届いた最新の候補。known の結果は search() 内で同期的に届くので打鍵と同じレンダーで追従し、
+    // crawler の結果やスナップショットの到着は後から同じコールバックで差し替わる(サスペンドしない)
+    const [hits, setHits] = useState<SearchHit[]>([])
+    // 一度でも見たヒット。選択済みchipのラベル/解決hintに使う(blurで候補が消えてもラベルを保つ)
+    const seenRef = useRef(new Map<string, SearchHit>())
+
+    useEffect(() => {
+        const controller = new AbortController()
+        provider.search(filter, controller.signal, (next) => {
+            for (const hit of next) seenRef.current.set(hit.uri, hit)
+            setHits(next)
+        })
+        return () => controller.abort()
+    }, [provider, filter])
+
+    const options = useMemo(() => hits.filter((hit) => !props.selected.includes(hit.uri)), [hits, props.selected])
 
     // 投稿元プロフィール（未指定時はクライアントのcurrentProfileにフォールバック）
     const activeProfile = props.selectedProfile ?? client?.currentProfile ?? 'main'
@@ -106,7 +121,7 @@ export const TimelinePicker = (props: Props) => {
                 {profileUsername}
             </Chip>
             {props.selected.map((sel) => {
-                const item = props.items.find((i) => props.keyFunc(i) === sel)
+                const seen = seenRef.current.get(sel)
                 return (
                     <Chip
                         key={sel}
@@ -120,8 +135,8 @@ export const TimelinePicker = (props: Props) => {
                             />
                         }
                     >
-                        {item ? (
-                            props.labelFunc(item)
+                        {seen ? (
+                            seen.name
                         ) : (
                             // リスト未登録のタイムラインを直接開いた時など、候補に無い投稿先も名前を解決してchipで見せる
                             <Suspense fallback={<Skeleton height="1em" width="3rem" />}>
@@ -145,7 +160,10 @@ export const TimelinePicker = (props: Props) => {
                         background: 'transparent'
                     }}
                     value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={(e) => {
+                        setFilter(e.target.value)
+                        setFocusedIdx(0)
+                    }}
                     onFocus={() => setFocused(true)}
                     onBlur={() => {
                         setFocused(false)
@@ -159,7 +177,7 @@ export const TimelinePicker = (props: Props) => {
                                 break
                             case 'Enter':
                                 if (options.length > 0 && focusedIdx >= 0 && focusedIdx < options.length) {
-                                    props.setSelected([...props.selected, props.keyFunc(options[focusedIdx])])
+                                    props.setSelected([...props.selected, options[focusedIdx].uri])
                                     inputRef.current?.blur()
                                 }
                                 break
@@ -209,7 +227,7 @@ export const TimelinePicker = (props: Props) => {
             >
                 {options.map((opt) => (
                     <div
-                        key={props.keyFunc(opt)}
+                        key={opt.uri}
                         ref={(el) => {
                             // 内部スクロール化に伴い、キーボード選択中の候補が見切れないよう追従させる
                             if (focusedIdx === options.indexOf(opt)) el?.scrollIntoView({ block: 'nearest' })
@@ -221,10 +239,30 @@ export const TimelinePicker = (props: Props) => {
                             backgroundColor: focusedIdx === options.indexOf(opt) ? CssVar.divider : 'transparent'
                         }}
                         onMouseDown={() => {
-                            props.setSelected([...props.selected, props.keyFunc(opt)])
+                            props.setSelected([...props.selected, opt.uri])
                         }}
                     >
-                        {props.labelFunc(opt)}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span
+                                style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {opt.name}
+                            </span>
+                            {/* リスト登録済みの候補は、ack済みユーザーと同じチェックマークで区別する */}
+                            {opt.known && (
+                                <MdCheckCircle
+                                    size={14}
+                                    style={{ opacity: 0.7, flexShrink: 0 }}
+                                    title={t('inYourLists')}
+                                />
+                            )}
+                        </div>
                     </div>
                 ))}
             </Popover>
@@ -263,8 +301,8 @@ export const TimelinePicker = (props: Props) => {
     )
 }
 
-const ResolvedTimelineName = (props: { uri: string }) => {
+const ResolvedTimelineName = (props: { uri: string; hint?: string }) => {
     const { client } = useClient()
-    const timeline = useResource(`timeline:${props.uri}`, () => client.getTimeline(props.uri))
+    const timeline = useResource(`timeline:${props.uri}`, () => client.getTimeline(props.uri, props.hint))
     return <>{timeline?.name ?? timeline?.shortname ?? props.uri}</>
 }

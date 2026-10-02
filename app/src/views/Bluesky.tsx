@@ -1,18 +1,18 @@
 import { View, Text, TextField, Button, Divider, IconButton, Switch } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { useStack } from '../layouts/Stack'
 import { BskyView } from './BskyView'
 import { NotFoundError } from '@concrnt/client'
-import { Schemas, semantics, type Timeline } from '@concrnt/worldlib'
+import { Schemas, semantics } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { Drawer } from '../ui/Drawer'
 import { TimelinePicker } from '../components/TimelinePicker'
-import { useSubscribe } from '../hooks/useSubscribe'
+import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
 import { BskyProfile, bskySettingsKey, inboxKey } from '../utils/bluesky'
 
 interface BskyEntity {
@@ -46,9 +46,18 @@ export const Bluesky = () => {
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
     const [bridgeEnabled, setBridgeEnabled] = useState(true)
     const [listenHome, setListenHome] = useState(true)
+    // 転送先の候補: リスト未登録だとknownCommunitiesに現れない自分のinboxを常に先頭に出し、
+    // 続けてブリッジ由来以外の登録済みコミュニティを並べる(crawlerのグローバル検索は使わない)
+    const forwardProvider = useMemo(
+        () =>
+            new CompositeSearchProvider([
+                new StaticSearchProvider([{ uri: inboxKey(client.ccid), name: 'Bluesky', known: false }]),
+                new KnownCommunitySearchProvider(client, (tl) => !tl.uri.includes('/atproto.concrnt.world/'))
+            ]),
+        [client]
+    )
     const [listenProfile, setListenProfile] = useState('main')
     const [listenCommunities, setListenCommunities] = useState<string[]>([])
 
@@ -295,17 +304,9 @@ export const Bluesky = () => {
                         <Text>{t('forwardTimeline')}</Text>
                         <Text>{t('forwardTimelineDesc')}</Text>
                         <TimelinePicker
-                            items={[
-                                // リスト未登録だとknownCommunitiesに現れないため、自分のinboxは常に候補に出す
-                                { uri: inboxKey(client.ccid), name: 'Bluesky' },
-                                ...knownCommunities.filter(
-                                    (tl: Timeline) => !tl.uri.includes('/atproto.concrnt.world/')
-                                )
-                            ]}
+                            provider={forwardProvider}
                             selected={listenCommunities}
                             setSelected={setListenCommunities}
-                            keyFunc={(item: Timeline) => item.uri}
-                            labelFunc={(item: Timeline) => item.name ?? 'no name'}
                             postHome={listenHome}
                             setPostHome={setListenHome}
                             selectedProfile={listenProfile}

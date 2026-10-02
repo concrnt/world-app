@@ -1,11 +1,11 @@
 import { Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError, type Document, type PolicyEntry } from '@concrnt/client'
 import { useNavigate } from 'react-router-dom'
-import { Schemas, semantics, type Timeline } from '@concrnt/worldlib'
+import { Schemas, semantics } from '@concrnt/worldlib'
 import { MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { ApFollowList } from '../components/ApFollowList'
@@ -13,6 +13,7 @@ import { Drawer } from '../components/Drawer'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { TimelinePicker } from '../components/TimelinePicker'
+import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { apInboxKey, apSettingsKey } from '../utils/activitypub'
 
@@ -40,13 +41,22 @@ export const Activitypub = () => {
 
     // 転送元タイムライン設定。ブリッジが直接読むcckvレコードが正本。
     // ホーム(プロフィール選択可)+コミュニティの複数選択で、未設定(空)はホームにフォールバックする。
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
     const [listenHome, setListenHome] = useState(true)
     const [listenProfile, setListenProfile] = useState('main')
     const [listenCommunities, setListenCommunities] = useState<string[]>([])
 
     const homeTimelineRegex = new RegExp(`^cckv://${client.ccid}/concrnt\\.world/profiles/([^/]+)/home-timeline$`)
     const inboxUri = apInboxKey(client.ccid)
+    // 転送先の候補: リスト未登録だとknownCommunitiesに現れない自分のinboxを常に先頭に出し、
+    // 続けてブリッジ由来以外の登録済みコミュニティを並べる(crawlerのグローバル検索は使わない)
+    const forwardProvider = useMemo(
+        () =>
+            new CompositeSearchProvider([
+                new StaticSearchProvider([{ uri: inboxUri, name: 'ActivityPub', known: false }]),
+                new KnownCommunitySearchProvider(client, (tl) => !tl.uri.includes('/activitypub.concrnt.world/'))
+            ]),
+        [client, inboxUri]
+    )
     const allowWriters = 'https://policy.concrnt.world/t/allow-writers.json'
 
     // ActivityPubタイムラインはリスト未登録だとknownCommunitiesに出ない上、
@@ -337,17 +347,9 @@ export const Activitypub = () => {
                         <Text>{t('forwardTimeline')}</Text>
                         <Text>{t('forwardTimelineDesc')}</Text>
                         <TimelinePicker
-                            items={[
-                                // リスト未登録だとknownCommunitiesに現れないため、自分のinboxは常に候補に出す
-                                { uri: inboxUri, name: 'ActivityPub' },
-                                ...knownCommunities.filter(
-                                    (tl: Timeline) => !tl.uri.includes('/activitypub.concrnt.world/')
-                                )
-                            ]}
+                            provider={forwardProvider}
                             selected={listenCommunities}
                             setSelected={setListenCommunities}
-                            keyFunc={(item: Timeline) => item.uri}
-                            labelFunc={(item: Timeline) => item.name ?? 'no name'}
                             postHome={listenHome}
                             setPostHome={setListenHome}
                             selectedProfile={listenProfile}

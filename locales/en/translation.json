@@ -800,7 +800,8 @@
         },
         "timelinePicker": {
             "postProfile": "Posting profile",
-            "addDestination": "Add destination"
+            "addDestination": "Add destination",
+            "inYourLists": "In your lists"
         },
         "serverChip": {
             "codeOfConduct": "Code of Conduct",

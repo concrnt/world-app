@@ -56,8 +56,6 @@ export const ListView = (props: Props) => {
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const pin = pinnedLists.find((p) => p.uri === props.uri)
 
-    const [knownCommunities] = useSubscribe(client.knownCommunities)
-
     // インラインエディタの投稿先。リストのデフォルトを初期値にしつつ、その場で編集できるようにする
     const defaultDestinations = pin?.defaultPostTimelines ?? []
     const [destinations, setDestinations] = useState<string[]>(defaultDestinations)
@@ -118,7 +116,6 @@ export const ListView = (props: Props) => {
                                                 destinations={destinations}
                                                 setDestinations={setDestinations}
                                                 defaultDestinations={defaultDestinations}
-                                                options={knownCommunities}
                                                 initialProfile={pin?.defaultProfile}
                                             />
                                         </div>
