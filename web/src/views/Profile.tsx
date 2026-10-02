@@ -651,7 +651,7 @@ const Body = (props: BodyProps) => {
                     onComplete={() => {
                         // TODO: useSubscribeパターンに移行する
                         props.reload()
-                        client.updateProfiles()
+                        client.updateProfiles(true)
                         setProfileEditorOpen(false)
                     }}
                 />

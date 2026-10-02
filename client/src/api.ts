@@ -24,6 +24,17 @@ export class ServerOfflineError extends Error {
     }
 }
 
+// cache:'cache-only' でKVSに該当エントリが無かった(ネットワークへは出ていない)。
+// 起動経路の呼び出し側はこれを初期値で受け、取り直しは裏の再取得(refresh)に任せる
+export class CacheMissError extends Error {
+    readonly key: string
+
+    constructor(key: string) {
+        super(`cache miss: ${key}`)
+        this.key = key
+    }
+}
+
 // サーバーのエラーレスポンスが持つ機械可読コード(errorメッセージ文字列はAPI契約として不安定なため、
 // 種別判定は必ずcodeで行う)。サーバー側 internal/domain/errors.go の定数と対
 export const ErrorCodeRegistrationNotFound = 'net.concrnt.errors.registration-not-found'
@@ -74,11 +85,12 @@ export interface QueryResult<T = SignedDocument> {
 
 // query系のキャッシュ指定。true=ネットワーク優先で失敗時のみキャッシュ(オフラインフォールバック)、
 // 'swr'=キャッシュがあれば即返して裏で再取得(起動経路向け)、'no-cache'=常にネットワーク(取得結果はKVSへ書く)
-export type QueryCacheOption = boolean | 'swr' | 'no-cache'
+export type QueryCacheOption = boolean | 'swr' | 'no-cache' | 'cache-only'
 
 export interface FetchOptions<T> {
     // fallback: ネットワーク優先で、失敗時のみキャッシュを返す(オフラインフォールバック用)
-    cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback'
+    // cache-only: KVSだけを読む(TTL無視)。無ければCacheMissErrorで、ネットワークへは出ない(起動経路用)
+    cache?: 'force-cache' | 'no-cache' | 'best-effort' | 'negative-only' | 'fallback' | 'cache-only'
     expressGetter?: (data: T) => void
     TTL?: number
     negativeTTL?: number
@@ -444,6 +456,13 @@ export class Api {
         opts?: FetchOptions<T>
     ): Promise<T> {
         let cached: T | null = null
+        if (opts?.cache === 'cache-only') {
+            // KVSだけを読む。負キャッシュはnullのまま返す(呼び出し側がNotFoundErrorにする)
+            const cachedEntry = await this.cache.get<T>(cacheKey)
+            if (!cachedEntry) throw new CacheMissError(cacheKey)
+            if (cachedEntry.data) opts.expressGetter?.(cachedEntry.data)
+            return cachedEntry.data
+        }
         if (opts?.cache !== 'no-cache') {
             const cachedEntry = await this.cache.get<T>(cacheKey)
             if (cachedEntry) {
@@ -603,17 +622,22 @@ export class Api {
         return data
     }
 
-    async getServerByCSID(csid: CSID, hint?: string): Promise<Server> {
+    async getServerByCSID(csid: CSID, hint?: string, opts?: FetchOptions<Server>): Promise<Server> {
         const uri = hint ? `cckv://${csid}@${hint}` : `cckv://${csid}`
 
-        const myServer = await this.getServer(this.defaultHost)
+        const myServer = await this.getServer(this.defaultHost, this.cacheOnlyOpts(opts))
 
         const endpoint = renderUriTemplate(myServer, 'net.concrnt.core.resolve', {
             uri: uri,
             owner: csid
         })
 
-        return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, {})
+        return this.fetchWithCache<Server>(this.defaultHost, endpoint, uri, { ...opts })
+    }
+
+    // cache-onlyの取得は、その前段の解決(entity・well-known)もネットワークへ出さない
+    private cacheOnlyOpts<T>(opts?: FetchOptions<T>): { cache: 'cache-only' } | undefined {
+        return opts?.cache === 'cache-only' ? { cache: 'cache-only' } : undefined
     }
 
     async getEntity(ccid: string, hint?: string, opts?: FetchOptions<SignedDocument>): Promise<Document<Entity>> {
@@ -627,7 +651,7 @@ export class Api {
 
         const uri = hint ? `cckv://${ccid}@${hint}` : `cckv://${ccid}`
 
-        const server = await this.getServer(this.defaultHost)
+        const server = await this.getServer(this.defaultHost, this.cacheOnlyOpts(opts))
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.resolve', {
             uri: uri,
@@ -679,15 +703,15 @@ export class Api {
     }
 
     // owner(CCID/CSID/FQDN)からリソースの所在ドメインを解決する
-    async resolveDomain(owner: string, hint?: string): Promise<FQDN> {
+    async resolveDomain(owner: string, hint?: string, opts?: { cache: 'cache-only' }): Promise<FQDN> {
         if (hint && (IsCCID(hint) || IsCSID(hint))) hint = undefined
         let fqdn = owner
         if (IsCCID(fqdn)) {
-            const entity = await this.getEntity(owner, hint)
+            const entity = await this.getEntity(owner, hint, opts)
             fqdn = entity.value.domain
         }
         if (IsCSID(fqdn)) {
-            const server = await this.getServerByCSID(owner, hint)
+            const server = await this.getServerByCSID(owner, hint, opts)
             fqdn = server.domain
         }
         return fqdn
@@ -701,9 +725,9 @@ export class Api {
         const owner = parsed.host
         const key = parsed.pathname
 
-        const fqdn = await this.resolveDomain(owner, hint)
+        const fqdn = await this.resolveDomain(owner, hint, this.cacheOnlyOpts(opts))
 
-        const server = await this.getServer(fqdn)
+        const server = await this.getServer(fqdn, this.cacheOnlyOpts(opts))
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.resolve', {
             uri: uri,
@@ -834,16 +858,17 @@ export class Api {
         if (!key) {
             throw new Error('prefix or parent is required')
         }
+        const cacheOnly = opts?.cache === 'cache-only' ? { cache: 'cache-only' as const } : undefined
         if (!fqdn) {
             const parsed = new URL(key)
-            fqdn = await this.resolveDomain(parsed.host)
+            fqdn = await this.resolveDomain(parsed.host, undefined, cacheOnly)
         }
 
         if (!fqdn) {
             throw new Error('cannot determine server from query')
         }
 
-        const server = await this.getServer(fqdn)
+        const server = await this.getServer(fqdn, cacheOnly)
 
         const endpoint = renderUriTemplate(server, 'net.concrnt.core.query', {
             prefix: query.prefix,
@@ -860,8 +885,21 @@ export class Api {
         if (opts?.cache && !query.since && !query.until) {
             // v2: レスポンスが封筒形式になったため旧素配列キャッシュと分離
             const cacheKey = `query2:${fqdn}:${key}:${query.schema ?? ''}:${query.order ?? ''}:${query.limit ?? ''}:${query.orderby ?? ''}`
-            const mode = opts.cache === true ? 'fallback' : opts.cache === 'swr' ? undefined : 'no-cache'
+            const mode =
+                opts.cache === true
+                    ? 'fallback'
+                    : opts.cache === 'swr'
+                      ? undefined
+                      : opts.cache === 'cache-only'
+                        ? 'cache-only'
+                        : 'no-cache'
             return await this.fetchWithCache<QueryResult<QueryItem>>(fqdn, endpoint, cacheKey, { cache: mode })
+        }
+
+        if (opts?.cache === 'cache-only') {
+            // ページング付き(2ページ目以降)はキャッシュ対象外。ネットワークへ出ずに欠落として返す
+            // (queryAllは取得済みの1ページ目を返す)
+            throw new CacheMissError(`${key}:${String(query.since ?? query.until)}`)
         }
 
         const resource = this.fetchWithCredential<QueryResult<QueryItem>>(fqdn, endpoint, {})

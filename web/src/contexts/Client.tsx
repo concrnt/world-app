@@ -375,9 +375,11 @@ export const ClientProvider = (props: Props): ReactNode => {
                     }
 
                     // 保存されていたプロフィールが削除済みの場合はmainへフォールバックする
-                    // (明示的な切替(name指定)は既存プロフィール一覧から選ばれるため対象外)
+                    // (明示的な切替(name指定)は既存プロフィール一覧から選ばれるため対象外。
+                    // キャッシュが無く一覧が空のときは判定せず、裏の取り直し後にonProfilesUpdatedが戻す)
                     if (
                         name === undefined &&
+                        Object.keys(client.profiles).length > 0 &&
                         client.currentProfile !== 'main' &&
                         !(client.currentProfile in client.profiles)
                     ) {
