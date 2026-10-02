@@ -544,7 +544,7 @@ export const RealtimeTimeline = (props: Props) => {
                                 <div style={{ padding: `0 ${CssVar.space(2)}` }}>
                                     <MessageSkeleton />
                                 </div>
-                                <Divider />
+                                <Divider inset />
                             </Fragment>
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
@@ -598,7 +598,7 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     </Suspense>
                 </div>
             </ErrorBoundary>
-            <Divider />
+            <Divider inset />
         </>
     )
 })
