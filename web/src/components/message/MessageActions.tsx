@@ -22,6 +22,7 @@ import { useEmojiPicker } from '../../contexts/EmojiPicker'
 import { ReactionState } from './Footer'
 import { useQueryTimelineContext } from '../QueryTimeline'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { CssVar } from '../../types/Theme'
 
 interface Props {
     message: Message<any>
@@ -123,7 +124,7 @@ export const MessageActions = (props: Props) => {
                     // 候補は省略してknownCommunities全体にする(投稿先は元メッセージの配信先に限らない)
                     composer.open(communityDestinations, 'reply', props.message)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 <MdReply size={20} />
                 {replyCount > 0 && <span style={{ marginLeft: '4px' }}>{replyCount}</span>}
@@ -137,7 +138,7 @@ export const MessageActions = (props: Props) => {
                     // リルート先は現在開いているビューのデフォルト投稿先。文脈のないページではホームのみ
                     composer.open(postCtx.destinations, 'reroute', props.message, postCtx.profile)
                 }}
-                style={{ display: 'flex', alignItems: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', color: CssVar.contentTextDim }}
             >
                 <MdRepeat size={20} />
                 {rerouteCount > 0 && <span style={{ marginLeft: '4px' }}>{rerouteCount}</span>}
@@ -195,7 +196,11 @@ export const MessageActions = (props: Props) => {
                             })
                         }
                     }}
-                    style={{ display: 'flex', alignItems: 'center' }}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: CssVar.contentTextDim
+                    }}
                 >
                     {likeState.ownLike ? <MdStar size={20} color="gold" /> : <MdStarOutline size={20} />}
                     <span style={{ marginLeft: '4px' }}>{likeState.count}</span>
@@ -244,7 +249,14 @@ export const MessageActions = (props: Props) => {
                         emojiPicker.close()
                     }, reactionAnchor)
                 }}
-                style={{ display: 'flex', alignItems: 'center', anchorName: reactionAnchor } as React.CSSProperties}
+                style={
+                    {
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: CssVar.contentTextDim,
+                        anchorName: reactionAnchor
+                    } as React.CSSProperties
+                }
             >
                 <MdAddReaction size={20} />
             </Button>
@@ -255,7 +267,12 @@ export const MessageActions = (props: Props) => {
                     e.stopPropagation()
                     setMenuOpen(true)
                 }}
-                style={{ anchorName: menuAnchor } as React.CSSProperties}
+                style={
+                    {
+                        color: CssVar.contentTextDim,
+                        anchorName: menuAnchor
+                    } as React.CSSProperties
+                }
             >
                 <MdMoreHoriz size={20} />
             </Button>

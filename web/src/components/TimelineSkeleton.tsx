@@ -37,7 +37,7 @@ export const TimelineSkeleton = (props: Props) => {
                         <div style={{ padding: `0 ${CssVar.space(2)}` }}>
                             <MessageSkeleton />
                         </div>
-                        <Divider />
+                        <Divider inset />
                     </Fragment>
                 ))}
             </div>

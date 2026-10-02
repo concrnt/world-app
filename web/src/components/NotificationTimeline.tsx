@@ -500,7 +500,7 @@ export const NotificationTimeline = (props: Props) => {
                                     )}
                                 </div>
                             </ErrorBoundary>
-                            <Divider />
+                            <Divider inset />
                         </Fragment>
                     ))}
                 </MessageSnapshotContext.Provider>
