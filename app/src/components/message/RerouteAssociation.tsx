@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { RerouteAssociationSchema } from '@concrnt/worldlib'
+import { RerouteAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
@@ -109,7 +110,16 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             </div>
 
             {/* 下部: 元の投稿 */}
-            {targetMessage && (
+            {targetMessage && targetMessage.schema === Schemas.apNote && (
+                <ActivitypubNoteCard
+                    noteURL={targetMessage.value.noteURL}
+                    actorURL={targetMessage.value.actorURL}
+                    onClick={() => {
+                        push(<PostView uri={targetMessage.uri} />)
+                    }}
+                />
+            )}
+            {targetMessage && targetMessage.schema !== Schemas.apNote && (
                 <MessageLayout
                     onClick={() => {
                         push(<PostView uri={targetMessage.uri} />)
