@@ -10,14 +10,18 @@ import { OnelineMessageLayout } from './OnelineLayout'
 import { Timestamp } from './Timestamp'
 
 interface Props {
-    message: Message<ApNoteSchema>
+    noteURL: string
+    actorURL?: string
+    // concrnt側のレコード(ap/note)があれば渡す。無い場合(リモートnoteのinReplyTo先など)は
+    // ノート自身のpublishedを時刻に使い、遷移先はApViewになる
+    message?: Message<ApNoteSchema>
 }
 
 // リプライ元などの1行表示用。ActivitypubNoteと同じ解決経路でノートを引き、本文はプレーンテキスト化して流す
 export const ActivitypubNoteOneline = (props: Props) => {
     const { client } = useClient()
-    const noteURL = props.message.value.noteURL
-    const actorURL = props.message.value.actorURL
+    const noteURL = props.noteURL
+    const actorURL = props.actorURL
 
     const notePromise = useMemo(() => {
         return resolveApObject(client, noteURL).catch((e) => (e instanceof Error ? e : new Error(String(e))))
@@ -40,7 +44,7 @@ export const ActivitypubNoteOneline = (props: Props) => {
                 </OnelineMessageLayout>
             }
         >
-            <Note notePromise={notePromise} authorPromise={authorPromise} message={props.message} />
+            <Note notePromise={notePromise} authorPromise={authorPromise} noteURL={noteURL} message={props.message} />
         </Suspense>
     )
 }
@@ -48,7 +52,8 @@ export const ActivitypubNoteOneline = (props: Props) => {
 const Note = (props: {
     notePromise: Promise<ApObject | Error | null>
     authorPromise: Promise<ApObject | null>
-    message: Message<ApNoteSchema>
+    noteURL: string
+    message?: Message<ApNoteSchema>
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.activitypubNote' })
     const navigate = useNavigate()
@@ -64,6 +69,10 @@ const Note = (props: {
             if (icon?.url) emojiDict[tag.name.replace(/:/g, '')] = { imageURL: icon.url }
         }
     }
+
+    const date =
+        props.message?.createdAt ??
+        (note && !(note instanceof Error) && note.published ? new Date(note.published) : null)
 
     return (
         <OnelineMessageLayout
@@ -90,13 +99,21 @@ const Note = (props: {
                 <CfmRenderer oneline messagebody={note.getPlainText()} emojiDict={emojiDict} />
             )}
             <div style={{ flex: 1 }} />
-            <Timestamp
-                onClick={() => {
-                    navigate('/post/' + encodeURIComponent(props.message.uri))
-                }}
-            >
-                <TimeDiff date={props.message.createdAt} />
-            </Timestamp>
+            {date && (
+                <Timestamp
+                    onClick={() => {
+                        // concrnt側のメッセージがあればネイティブ同等の詳細ビューへ。無ければnote IDでApViewへ
+                        // (ApView側でブリッジ保存済みなら自動でPostViewに切り替わる)
+                        if (props.message) {
+                            navigate('/post/' + encodeURIComponent(props.message.uri))
+                        } else {
+                            navigate('/activitypub/view/' + encodeURIComponent(props.noteURL))
+                        }
+                    }}
+                >
+                    <TimeDiff date={date} />
+                </Timestamp>
+            )}
         </OnelineMessageLayout>
     )
 }
