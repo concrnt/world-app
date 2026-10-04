@@ -46,18 +46,19 @@ export const NotificationsView = () => {
     )
 
     // 通知画面を開いた=全部見たとみなして未読を0に戻す。表示中のタブ復帰でも再クリア。
-    // インストール済みPWAのアイコンバッジも同時に消す
+    // インストール済みPWAのアイコンバッジも同時に消す。
+    // 通知画面に居続けている間は再マウントされないので、手動のpull-to-refreshでも同じクリアを呼ぶ
+    const clearUnread = useCallback(() => {
+        if (!client || document.visibilityState !== 'visible') return
+        client.resetNotificationCounter()
+        setAppBadge(0)
+    }, [client])
     useEffect(() => {
         if (!client) return
-        const clear = () => {
-            if (document.visibilityState !== 'visible') return
-            client.resetNotificationCounter()
-            setAppBadge(0)
-        }
-        clear()
-        document.addEventListener('visibilitychange', clear)
-        return () => document.removeEventListener('visibilitychange', clear)
-    }, [client])
+        clearUnread()
+        document.addEventListener('visibilitychange', clearUnread)
+        return () => document.removeEventListener('visibilitychange', clearUnread)
+    }, [client, clearUnread])
 
     const query = useMemo(
         () => ({
@@ -85,6 +86,7 @@ export const NotificationsView = () => {
                     query={query}
                     initialTimeline={filterChanged ? undefined : (notificationSnapshot ?? undefined)}
                     onHeadChange={selected === undefined ? onHeadChange : undefined}
+                    onPullToRefresh={clearUnread}
                 />
             )}
         </View>
