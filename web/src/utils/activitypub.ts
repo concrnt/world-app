@@ -30,6 +30,23 @@ export const apNoteKey = (serviceCcid: string, noteURL: string): string => {
     return `cckv://${serviceCcid}/activitypub.concrnt.world/inbox/${CDID.newFromStringX(noteURL).toString()}`
 }
 
+// APブリッジがconcrntネイティブ投稿をNoteとして公開するURL(`/ap/acct/<id>/posts/<cckv uri>`)から
+// 元のメッセージURIを取り出す。ブリッジ配下でないURL(リモートnote等)はnullを返す。
+// ホストはブリッジごとに異なる(他ドメインのブリッジ経由の投稿へのリプライもあり得る)ためパスだけで判定する
+export const parseBridgeNoteURL = (url: string): string | null => {
+    const path = URL.parse(url)?.pathname
+    if (!path) return null
+    const m = path.match(/^\/ap\/acct\/[^/]+\/posts\/(.+)$/)
+    if (!m) return null
+    let uri = m[1]
+    try {
+        uri = decodeURIComponent(uri)
+    } catch {
+        return null
+    }
+    return uri.startsWith('cckv://') ? uri : null
+}
+
 // noteはほぼ不変・actorの更新もSWR(stale表示+裏で再取得)で追従できるため1hで共通
 export const AP_RESOLVE_TTL = 1000 * 60 * 60
 // 死んだインスタンス/410はブリッジが404で返すため、失敗resolveの連打を5分抑止
@@ -138,6 +155,18 @@ export class ApObject {
         if (!this.preferredUsername) return undefined
         const host = URL.parse(this.id)?.host
         return host ? `@${this.preferredUsername}@${host}` : `@${this.preferredUsername}`
+    }
+
+    // inReplyToはサーバーにより文字列/埋め込みオブジェクト/それらの配列のいずれもあり得るため先頭1件のIDに正規化する
+    getInReplyTo(): string | undefined {
+        const raw = this.inReplyTo as unknown
+        if (!raw) return undefined
+        const first = ([raw].flat() as unknown[])[0]
+        if (typeof first === 'string') return first
+        if (first && typeof first === 'object' && typeof (first as { id?: unknown }).id === 'string') {
+            return (first as { id: string }).id
+        }
+        return undefined
     }
 
     getTags(): ApObject[] {

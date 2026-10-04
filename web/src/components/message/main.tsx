@@ -54,7 +54,14 @@ export const MessageContainer = (props: Props): ReactNode | null => {
 
     if (props.oneline) {
         if (message.schema === Schemas.apNote) {
-            return <ActivitypubNoteOneline message={message as Message<ApNoteSchema>} />
+            const noteMessage = message as Message<ApNoteSchema>
+            return (
+                <ActivitypubNoteOneline
+                    noteURL={noteMessage.value.noteURL}
+                    actorURL={noteMessage.value.actorURL}
+                    message={noteMessage}
+                />
+            )
         }
         return <OnelineMessage message={message} />
     }
