@@ -68,6 +68,9 @@ interface Props extends ScrollViewProps {
     initialTimeline?: NotificationSnapshot
     // 表示中の行が変わったときに呼ばれる(スナップショットの保存用)
     onHeadChange?: (prefix: string, query: any, rows: WrappedNotification[]) => void
+    // ユーザーが手動でpull-to-refreshを作動させたときに呼ばれる(自動の再取得では呼ばない)。
+    // 通知画面の未読クリアなど「見た」扱いにしたい処理用
+    onPullToRefresh?: () => void
 }
 
 // 集約キーのサフィックス（'$' を含むキーは集約対象として識別する）
@@ -393,6 +396,13 @@ export const NotificationTimeline = (props: Props) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reader, swapToLive])
 
+    // ユーザー操作のpull-to-refreshだけ親へ通知する(復帰時の自動再取得は内部でonRefreshを直接呼ぶ)
+    const { onPullToRefresh: notifyPullToRefresh } = props
+    const onPullToRefresh = useCallback(async () => {
+        notifyPullToRefresh?.()
+        await onRefresh()
+    }, [notifyPullToRefresh, onRefresh])
+
     // スナップショット表示のまま先頭取得に失敗していた場合、自ドメイン復帰時に無音で本物へ差し替える
     useEffect(() => {
         if (!homeStatus.online) return
@@ -464,7 +474,7 @@ export const NotificationTimeline = (props: Props) => {
     }, [scrollRef, reader, hasMoreData, loading, snapshot])
 
     return (
-        <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
+        <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onPullToRefresh}>
             <div
                 style={{
                     display: 'flex',
