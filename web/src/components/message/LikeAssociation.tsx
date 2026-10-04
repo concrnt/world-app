@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { LikeAssociationSchema } from '@concrnt/worldlib'
+import { LikeAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
 import { MdStar } from 'react-icons/md'
@@ -77,7 +78,16 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             </div>
 
             {/* 下部: 元の投稿 */}
-            {targetMessage && (
+            {targetMessage && targetMessage.schema === Schemas.apNote && (
+                <ActivitypubNoteCard
+                    noteURL={targetMessage.value.noteURL}
+                    actorURL={targetMessage.value.actorURL}
+                    onClick={() => {
+                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                    }}
+                />
+            )}
+            {targetMessage && targetMessage.schema !== Schemas.apNote && (
                 <MessageLayout
                     left={
                         <div
