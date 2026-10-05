@@ -16,12 +16,19 @@ export function isStaticTimelineURI(uri: string): boolean {
     return uri.startsWith('https://') || uri.startsWith('http://')
 }
 
-// 静的タイムラインの表示名: ホスト+manifestのあるディレクトリ(末尾のファイル名は落とす)
+// 静的タイムラインの表示名: ホスト+manifestのあるディレクトリ(末尾のファイル名は落とす)。
+// パスは表示用にパーセントデコードする(日本語のディレクトリ名が%E3...で出ないように)
 export function staticTimelineLabel(uri: string): string {
     try {
         const url = new URL(uri)
         const dir = url.pathname.replace(/\/[^/]*$/, '')
-        return url.host + dir
+        let decoded = dir
+        try {
+            decoded = decodeURIComponent(dir)
+        } catch {
+            // 壊れたエンコードはそのまま出す
+        }
+        return url.host + decoded
     } catch {
         return uri
     }
