@@ -484,7 +484,63 @@ export const RealtimeTimeline = (props: Props) => {
                         : { overflow: 'visible' as const })
                 }}
             >
-                {/* 新着バッジ */}
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: isMobile ? 1 : '0 0 auto',
+                        minHeight: isMobile ? 0 : undefined,
+                        gap: '8px',
+                        padding: '8px 0',
+                        // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
+                        // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
+                        overflowX: isMobile ? 'hidden' : 'clip',
+                        overflowY: isMobile ? 'auto' : 'visible',
+                        // モバイルはカラム内スクロールなので、バーが出ても内容幅が変わらないよう先に確保する。
+                        // デスクトップは親のViewがスクロールする。ここをスクロールコンテナにするとホイールが窓まで届かない
+                        scrollbarGutter: isMobile ? 'stable' : undefined,
+                        // 末尾への追記でブラウザがスクロール位置を補正し、表示が小刻みに震えるのを止める
+                        overflowAnchor: 'none',
+                        overscrollBehaviorY: 'none'
+                    }}
+                    ref={scrollRef}
+                >
+                    {props.headElement}
+                    {/* 実際のCellと同じくDividerを挟み、読み込み完了時にレイアウトが動かないようにする */}
+                    {!initialLoaded &&
+                        Array.from({ length: 10 }).map((_, i) => (
+                            <Fragment key={i}>
+                                <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                                    <MessageSkeleton />
+                                </div>
+                                <Divider inset />
+                            </Fragment>
+                        ))}
+                    <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
+                        <MessageSnapshotContext.Provider value={snapshot?.messages}>
+                            {(reader.current?.body.length ? reader.current.body : (seededItems ?? [])).map((item) => (
+                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
+                            ))}
+                        </MessageSnapshotContext.Provider>
+                    </QueryTimelineContext.Provider>
+                    {loading && <Loading message={'Loading...'} />}
+                    {!hasMoreData && (
+                        <div
+                            style={{
+                                padding: '8px',
+                                fontSize: '12px',
+                                color: '#888',
+                                width: '100%',
+                                height: '100px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            -- End of Timeline --
+                        </div>
+                    )}
+                </div>
                 <div
                     style={{
                         position: 'absolute',
@@ -493,7 +549,6 @@ export const RealtimeTimeline = (props: Props) => {
                         right: 0,
                         display: 'flex',
                         justifyContent: 'center',
-                        zIndex: 10,
                         pointerEvents: 'none',
                         transition: 'opacity 0.2s ease, transform 0.2s ease',
                         opacity: newArrivals.length > 0 ? 1 : 0,
@@ -566,64 +621,6 @@ export const RealtimeTimeline = (props: Props) => {
                             )}
                         </div>
                     </button>
-                </div>
-
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flex: isMobile ? 1 : '0 0 auto',
-                        minHeight: isMobile ? 0 : undefined,
-                        gap: '8px',
-                        padding: '8px 0',
-                        // デスクトップでhiddenにするとvisibleがautoに化けてスクロールコンテナになり、
-                        // overscrollBehaviorYがwindowへのホイールスクロールの伝播を止めてしまう
-                        overflowX: isMobile ? 'hidden' : 'clip',
-                        overflowY: isMobile ? 'auto' : 'visible',
-                        // モバイルはカラム内スクロールなので、バーが出ても内容幅が変わらないよう先に確保する。
-                        // デスクトップは親のViewがスクロールする。ここをスクロールコンテナにするとホイールが窓まで届かない
-                        scrollbarGutter: isMobile ? 'stable' : undefined,
-                        // 末尾への追記でブラウザがスクロール位置を補正し、表示が小刻みに震えるのを止める
-                        overflowAnchor: 'none',
-                        overscrollBehaviorY: 'none'
-                    }}
-                    ref={scrollRef}
-                >
-                    {props.headElement}
-                    {/* 実際のCellと同じくDividerを挟み、読み込み完了時にレイアウトが動かないようにする */}
-                    {!initialLoaded &&
-                        Array.from({ length: 10 }).map((_, i) => (
-                            <Fragment key={i}>
-                                <div style={{ padding: `0 ${CssVar.space(2)}` }}>
-                                    <MessageSkeleton />
-                                </div>
-                                <Divider inset />
-                            </Fragment>
-                        ))}
-                    <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
-                        <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(reader.current?.body.length ? reader.current.body : (seededItems ?? [])).map((item) => (
-                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
-                            ))}
-                        </MessageSnapshotContext.Provider>
-                    </QueryTimelineContext.Provider>
-                    {loading && <Loading message={'Loading...'} />}
-                    {!hasMoreData && (
-                        <div
-                            style={{
-                                padding: '8px',
-                                fontSize: '12px',
-                                color: '#888',
-                                width: '100%',
-                                height: '100px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            -- End of Timeline --
-                        </div>
-                    )}
                 </div>
             </div>
         </PullToRefresh>
