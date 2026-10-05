@@ -11,6 +11,7 @@ import {
     useRef,
     useState
 } from 'react'
+import { isStaticTimelineURI } from '@concrnt/worldlib'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
@@ -41,6 +42,8 @@ interface Props extends ScrollViewProps {
     initialTimeline?: TimelineSnapshot
     // 表示中の先頭16件が変わったときに呼ばれる(スナップショットの保存用)
     onHeadChange?: (timelines: string[], items: ChunklineItem[]) => void
+    // socket購読なしで読む(静的タイムラインなど新着が来ないもの)
+    noRealtime?: boolean
 }
 
 const SCROLL_HALT_THRESHOLD = 100
@@ -134,7 +137,8 @@ export const RealtimeTimeline = (props: Props) => {
     // (online自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
     const [hostOverride, setHostOverride] = useState<string | undefined>(undefined)
     useEffect(() => {
-        if (!client || homeStatus.online || props.timelines.length !== 1) {
+        // 静的タイムライン(https manifest)の読み出しは自ドメイン経由のみ(manifestのホストはconcrntサーバーではない)
+        if (!client || homeStatus.online || props.timelines.length !== 1 || isStaticTimelineURI(props.timelines[0])) {
             setHostOverride(undefined)
             return
         }
@@ -207,7 +211,7 @@ export const RealtimeTimeline = (props: Props) => {
             if (!client) return
 
             return client
-                .newTimelineReader({ withoutSocket: false, hostOverride })
+                .newTimelineReader({ withoutSocket: props.noRealtime ?? false, hostOverride })
                 .catch(() => client.newTimelineReader({ withoutSocket: true, hostOverride }))
                 .then((t) => {
                     if (isCancelled) return
@@ -279,7 +283,7 @@ export const RealtimeTimeline = (props: Props) => {
             })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client, reader, timelinesKey, update, hostOverride])
+    }, [client, reader, timelinesKey, update, hostOverride, props.noRealtime])
 
     const scrollRef = useRef<HTMLDivElement>(null)
 
