@@ -22,6 +22,8 @@ export const CollapsibleBody = (props: Props) => {
                 overflow: expanded ? undefined : 'hidden'
             }}
         >
+            {props.children}
+            {/* zIndexは使わず、本文(children)の後ろに置くことで前面に出す(本文内のpositioned要素より後=上) */}
             <div
                 style={{
                     display: expanded ? 'none' : 'flex',
@@ -32,8 +34,7 @@ export const CollapsibleBody = (props: Props) => {
                     height: `${gradationHeight}px`,
                     background: `linear-gradient(transparent, ${CssVar.contentBackground})`,
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1
+                    justifyContent: 'center'
                 }}
             >
                 <Button
@@ -45,7 +46,6 @@ export const CollapsibleBody = (props: Props) => {
                     {t('showMore')}
                 </Button>
             </div>
-            {props.children}
         </div>
     )
 }

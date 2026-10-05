@@ -107,6 +107,8 @@ export const ImageCropperProvider = (props: Props) => {
         <ImageCropperContext.Provider value={value}>
             {props.children}
 
+            {/* zIndexは使わない: ImageCropperProviderはOverlayStackProviderの外側なので、
+                childrenの後ろに描くこのdivはoverlay-root(ドロワー等)よりDOM順で後ろ=前面 */}
             {imageUrl && (
                 <div
                     style={{
@@ -116,7 +118,6 @@ export const ImageCropperProvider = (props: Props) => {
                         width: '100vw',
                         height: '100dvh',
                         backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                        zIndex: 10000,
                         display: 'flex',
                         flexDirection: 'column',
                         touchAction: 'none'

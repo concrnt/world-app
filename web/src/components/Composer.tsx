@@ -605,38 +605,6 @@ export const Composer = (props: Props) => {
                 setDragging(true)
             }}
         >
-            {/* D&D中のオーバーレイ。onDragLeaveは子要素通過でのちらつきを避けるためオーバーレイ側に付ける */}
-            {dragging && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        inset: 0,
-                        zIndex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: CssVar.space(1),
-                        border: '2px dashed',
-                        borderColor: CssVar.contentLink,
-                        borderRadius: CssVar.round(2),
-                        backgroundColor: CssVar.contentBackground,
-                        opacity: 0.9
-                    }}
-                    onDragLeave={(e) => {
-                        e.preventDefault()
-                        setDragging(false)
-                    }}
-                    onDrop={(e) => {
-                        e.preventDefault()
-                        setDragging(false)
-                        addFiles(Array.from(e.dataTransfer.files))
-                    }}
-                >
-                    <MdCloudUpload size={48} color={CssVar.contentLink} />
-                    <Text style={{ margin: 0, color: CssVar.contentLink }}>{t('dropToUpload')}</Text>
-                </div>
-            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
                 {/* モードセレクタ。リプライ/リルート時は状態表示のみで切り替え不可 */}
                 <IconButton
@@ -1084,6 +1052,38 @@ export const Composer = (props: Props) => {
 
             {/* 隠しファイル入力 */}
             <input ref={fileInputRef} type="file" accept="*" multiple hidden onChange={handleFileSelect} />
+            {/* D&D中のオーバーレイ。onDragLeaveは子要素通過でのちらつきを避けるためオーバーレイ側に付ける。
+                zIndexは使わず兄弟の最後に置くことで前面にする(positioned同士はDOM順で重なる) */}
+            {dragging && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        border: '2px dashed',
+                        borderColor: CssVar.contentLink,
+                        borderRadius: CssVar.round(2),
+                        backgroundColor: CssVar.contentBackground,
+                        opacity: 0.9
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault()
+                        setDragging(false)
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault()
+                        setDragging(false)
+                        addFiles(Array.from(e.dataTransfer.files))
+                    }}
+                >
+                    <MdCloudUpload size={48} color={CssVar.contentLink} />
+                    <Text style={{ margin: 0, color: CssVar.contentLink }}>{t('dropToUpload')}</Text>
+                </div>
+            )}
         </div>
     )
 }

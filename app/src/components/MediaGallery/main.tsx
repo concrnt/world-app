@@ -155,8 +155,7 @@ export const MediaTile = (props: {
                         position: 'absolute',
                         bottom: '4px',
                         right: '4px',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        zIndex: 1
+                        color: 'rgba(255, 255, 255, 0.6)'
                     }}
                 >
                     <MdVisibilityOff size={20} />
