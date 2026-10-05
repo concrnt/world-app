@@ -58,7 +58,9 @@ export const MessageFooter = (props: Props) => {
                         display: 'flex',
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: CssVar.space(2)
+                        flexWrap: 'wrap',
+                        gap: CssVar.space(2),
+                        minWidth: 0
                     }}
                 >
                     <PostedTimelines message={props.message} rerouted={props.rerouted} />
