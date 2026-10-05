@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { ReactionAssociationSchema } from '@concrnt/worldlib'
+import { ReactionAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { CCImage, Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
@@ -89,7 +90,16 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                 </span>
             </div>
 
-            {targetMessage && (
+            {targetMessage && targetMessage.schema === Schemas.apNote && (
+                <ActivitypubNoteCard
+                    noteURL={targetMessage.value.noteURL}
+                    actorURL={targetMessage.value.actorURL}
+                    onClick={() => {
+                        push(<PostView uri={targetMessage.uri} />)
+                    }}
+                />
+            )}
+            {targetMessage && targetMessage.schema !== Schemas.apNote && (
                 <MessageLayout
                     left={
                         <div

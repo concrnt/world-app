@@ -120,6 +120,8 @@ export const ImageCropperProvider = (props: Props) => {
         <ImageCropperContext.Provider value={value}>
             {props.children}
 
+            {/* zIndexは使わない: ImageCropperProviderはOverlayStackProviderの外側なので、
+                childrenの後ろに描くこのdivはoverlay-root(ドロワー等)よりDOM順で後ろ=前面 */}
             {imageUrl && (
                 <div
                     style={{
@@ -130,7 +132,6 @@ export const ImageCropperProvider = (props: Props) => {
                         height: '100dvh',
                         // モバイルは全画面クロッパー、デスクトップは半透明バックドロップ+中央カード
                         backgroundColor: isMobile ? 'rgba(0, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.5)',
-                        zIndex: 10000,
                         display: 'flex',
                         flexDirection: 'column',
                         ...(!isMobile && { alignItems: 'center', justifyContent: 'center' }),

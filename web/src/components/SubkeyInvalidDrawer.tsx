@@ -46,12 +46,13 @@ export const SubkeyInvalidDrawer = ({ client, onRecovered, onLogout }: Props) =>
         }
     }
 
+    // zIndexは使わない: ClientProviderがchildren(=OverlayStackのoverlay-rootやImageCropperを含む全UI)の
+    // 後ろに描くので、DOM順だけで最前面になる
     return (
         <div
             style={{
                 position: 'fixed',
                 inset: 0,
-                zIndex: 10001,
                 display: 'flex'
             }}
         >

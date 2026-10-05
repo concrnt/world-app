@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo } from 'react'
-import { ApObject, resolveApObject } from '../../utils/activitypub'
+import { ApObject, parseBridgeNoteURL, resolveApObject } from '../../utils/activitypub'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CssVar, ExternalLink, GfmRenderer, MfmRenderer, Text, type EmojiLite } from '@concrnt/ui'
+import { Avatar, CssVar, ExternalLink, GfmRenderer, MfmRenderer, Skeleton, Text, type EmojiLite } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
@@ -17,6 +17,11 @@ import { usePreference } from '../../contexts/Preference'
 import { MdLock, MdMail, MdOpenInNew } from 'react-icons/md'
 import { SiActivitypub } from 'react-icons/si'
 import { useTranslation } from 'react-i18next'
+import { ErrorBoundary } from 'react-error-boundary'
+import { RenderError } from './RenderError'
+import { MessageContainer } from './main'
+import { ActivitypubNoteOneline } from './ActivitypubNoteOneline'
+import { OnelineMessageLayout } from './OnelineLayout'
 
 interface Props {
     actorURL?: string
@@ -117,6 +122,11 @@ const Note = (props: {
     const visibility = note.getVisibility(author?.followers)
     const medias = note.getMedias()
 
+    // ネイティブのReplyMessageと同様に、リプライ元を1行表示で上に出す。
+    // inReplyToがブリッジ配下のURL(concrnt投稿へのリプライ)ならネイティブのonelineへ、それ以外はAPノートのonelineへ
+    const inReplyTo = note.getInReplyTo()
+    const nativeReplyTarget = inReplyTo ? parseBridgeNoteURL(inReplyTo) : null
+
     const emojiDict: Record<string, EmojiLite> = {}
     for (const tag of note.getTags()) {
         if (tag.type !== 'Emoji' || !tag.name) continue
@@ -125,112 +135,139 @@ const Note = (props: {
     }
 
     return (
-        <MessageLayout
-            detail={props.detail}
-            onClick={() => {
-                // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
-                if (props.message) {
-                    navigate('/post/' + encodeURIComponent(props.message.uri))
-                } else {
-                    navigate('/activitypub/view/' + encodeURIComponent(note.id))
-                }
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column'
             }}
-            left={
-                <div
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        if (note.attributedTo) navigate('/activitypub/view/' + encodeURIComponent(note.attributedTo))
-                    }}
-                >
-                    <Avatar
-                        ccid={note.attributedTo ?? ''}
-                        src={author?.getIcons()[0]?.url}
-                        style={{ width: '48px', height: '48px' }}
-                    />
-                </div>
-            }
-            headerLeft={
-                <span
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: CssVar.space(1),
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    <Text
-                        style={{
-                            fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+        >
+            {inReplyTo && (
+                <ErrorBoundary FallbackComponent={RenderError}>
+                    {nativeReplyTarget ? (
+                        <Suspense
+                            fallback={
+                                <OnelineMessageLayout left={<Skeleton style={{ width: '48px', height: '18px' }} />}>
+                                    <Skeleton style={{ flex: 1, height: '1em' }} />
+                                </OnelineMessageLayout>
+                            }
+                        >
+                            <MessageContainer oneline uri={nativeReplyTarget} />
+                        </Suspense>
+                    ) : (
+                        <ActivitypubNoteOneline noteURL={inReplyTo} />
+                    )}
+                </ErrorBoundary>
+            )}
+            <MessageLayout
+                detail={props.detail}
+                onClick={() => {
+                    // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
+                    if (props.message) {
+                        navigate('/post/' + encodeURIComponent(props.message.uri))
+                    } else {
+                        navigate('/activitypub/view/' + encodeURIComponent(note.id))
+                    }
+                }}
+                left={
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (note.attributedTo)
+                                navigate('/activitypub/view/' + encodeURIComponent(note.attributedTo))
                         }}
                     >
-                        {author?.name ?? author?.preferredUsername ?? 'Unknown'}
-                    </Text>
-                    <SiActivitypub size={14} style={{ flexShrink: 0 }} title="ActivityPub" />
-                    {author?.getHandle() && (
-                        <span
+                        <Avatar
+                            ccid={note.attributedTo ?? ''}
+                            src={author?.getIcons()[0]?.url}
+                            style={{ width: '48px', height: '48px' }}
+                        />
+                    </div>
+                }
+                headerLeft={
+                    <span
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1),
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <Text
                             style={{
-                                fontSize: '0.75rem',
-                                opacity: 0.7,
-                                // 幅が足りないときは名前より先にこちらを見切る
-                                flexShrink: 1000,
-                                minWidth: 0,
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis'
                             }}
                         >
-                            {author.getHandle()}
-                        </span>
-                    )}
-                </span>
-            }
-            headerRight={
-                <span
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: CssVar.space(1),
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {visibility === 'followers' && <MdLock size={14} style={{ opacity: 0.7 }} title="フォロワー限定" />}
-                    {visibility === 'direct' && <MdMail size={14} style={{ opacity: 0.7 }} title="ダイレクト" />}
-                    {note.published && <TimeDiff date={new Date(note.published)} />}
-                </span>
-            }
-        >
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
-                    {note._misskey_content ? (
-                        <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
-                    ) : (
-                        <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
-                    )}
-                </AutoSummary>
-            </CollapsibleBody>
-            {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
-            {props.detail && (
-                <ExternalLink
-                    href={note.url ?? note.id}
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: CssVar.space(1),
-                        fontSize: '0.8rem',
-                        color: CssVar.contentLink,
-                        textDecoration: 'none'
-                    }}
-                >
-                    <MdOpenInNew size={14} />
-                    {t('openRemote')}
-                </ExternalLink>
-            )}
-            {devmode && <Text variant="caption">{props.noteURL}</Text>}
-            {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
-        </MessageLayout>
+                            {author?.name ?? author?.preferredUsername ?? 'Unknown'}
+                        </Text>
+                        <SiActivitypub size={14} style={{ flexShrink: 0 }} title="ActivityPub" />
+                        {author?.getHandle() && (
+                            <span
+                                style={{
+                                    fontSize: '0.75rem',
+                                    opacity: 0.7,
+                                    // 幅が足りないときは名前より先にこちらを見切る
+                                    flexShrink: 1000,
+                                    minWidth: 0,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}
+                            >
+                                {author.getHandle()}
+                            </span>
+                        )}
+                    </span>
+                }
+                headerRight={
+                    <span
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1),
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {visibility === 'followers' && (
+                            <MdLock size={14} style={{ opacity: 0.7 }} title="フォロワー限定" />
+                        )}
+                        {visibility === 'direct' && <MdMail size={14} style={{ opacity: 0.7 }} title="ダイレクト" />}
+                        {note.published && <TimeDiff date={new Date(note.published)} />}
+                    </span>
+                }
+            >
+                <CollapsibleBody forceExpanded={props.forceExpanded}>
+                    <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
+                        {note._misskey_content ? (
+                            <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
+                        ) : (
+                            <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
+                        )}
+                    </AutoSummary>
+                </CollapsibleBody>
+                {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
+                {props.detail && (
+                    <ExternalLink
+                        href={note.url ?? note.id}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: CssVar.space(1),
+                            fontSize: '0.8rem',
+                            color: CssVar.contentLink,
+                            textDecoration: 'none'
+                        }}
+                    >
+                        <MdOpenInNew size={14} />
+                        {t('openRemote')}
+                    </ExternalLink>
+                )}
+                {devmode && <Text variant="caption">{props.noteURL}</Text>}
+                {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
+            </MessageLayout>
+        </div>
     )
 }

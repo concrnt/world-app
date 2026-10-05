@@ -23,7 +23,11 @@ export const QueryView = () => {
                     padding: CssVar.space(2)
                 }}
             >
-                <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="cckv://" />
+                <TextField
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="cckv:// / https://.../manifest.json"
+                />
                 <Button
                     onClick={() => {
                         navigate('/timeline/' + encodeURIComponent(query))

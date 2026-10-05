@@ -138,6 +138,7 @@ export const AudioPlayerProvider = (props: Props) => {
         <AudioPlayerContext.Provider value={value}>
             {props.children}
 
+            {/* zIndexは使わない: childrenの後ろに描くので画面内容より前面、overlay-rootより前なのでモーダルの下 */}
             {src && (
                 <div
                     style={{
@@ -145,7 +146,6 @@ export const AudioPlayerProvider = (props: Props) => {
                         bottom: '16px',
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        zIndex: 9000,
                         width: '100%',
                         maxWidth: '600px',
                         padding: '0 8px',

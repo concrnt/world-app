@@ -279,7 +279,8 @@ export const WelcomePage = () => {
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 gap: CssVar.space(4),
-                                zIndex: 1,
+                                // zIndexは使わない: positionedにして先行するfixedの装飾よりDOM順で前面に出す
+                                position: 'relative',
                                 backdropFilter: 'blur(2px)',
                                 borderRadius: '10px',
                                 padding: '20px'
