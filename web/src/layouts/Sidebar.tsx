@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
 import { motion, useMotionValue, animate, useTransform } from 'motion/react'
+import { isSwipeCancelled, useSwipeGuard } from '@concrnt/ui'
 
 import { MdMenu } from 'react-icons/md'
 import { NavigationProvider } from '../contexts/Navigation'
@@ -30,6 +31,11 @@ export const SidebarLayout = (props: Props) => {
 
     const x = useMotionValue(props.opened ? width : 0)
 
+    // directionLockでyにロックされた縦スクロールでもonDragEndは発火し、infoには
+    // 生のジェスチャのoffset/velocityが入るため、xロック時以外は開閉判定しない。
+    // 横スワイプ中にブラウザがタッチをスクロールとして奪う(pointercancel)のも防ぐ
+    const swipe = useSwipeGuard()
+
     useEffect(() => {
         const target = props.opened ? width : 0
         const controls = animate(x, target, { duration: 0.12 })
@@ -50,6 +56,7 @@ export const SidebarLayout = (props: Props) => {
     return (
         <SidebarLayoutContext.Provider value={value}>
             <motion.div
+                ref={swipe.ref}
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -62,12 +69,17 @@ export const SidebarLayout = (props: Props) => {
                 dragElastic={0}
                 dragMomentum={false}
                 dragConstraints={{ left: 0, right: width }}
-                onDragEnd={(_, info) => {
+                onDirectionLock={swipe.onDirectionLock}
+                onDragEnd={(event, info) => {
+                    // ブラウザがタッチを奪った(指はまだ画面上)。開閉判定はせず元の開閉状態へ戻す
+                    if (isSwipeCancelled(event)) {
+                        animate(x, props.opened ? width : 0, { duration: 0.12 })
+                        return
+                    }
+
                     const current = x.get()
 
                     const vx = info.velocity.x
-                    const vy = info.velocity.y
-
                     const dx = info.offset.x
 
                     const fast = Math.abs(vx) > popVelocity
@@ -75,8 +87,11 @@ export const SidebarLayout = (props: Props) => {
 
                     let shouldOpen: boolean
 
-                    if (fast) {
-                        shouldOpen = vx > 0 && Math.abs(vx) > Math.abs(vy)
+                    if (swipe.lockedDirection.current !== 'x') {
+                        // yロック中はビューが動いていないので、現在位置=元の開閉状態を維持する
+                        shouldOpen = current > width / 2
+                    } else if (fast) {
+                        shouldOpen = vx > 0
                     } else if (far) {
                         shouldOpen = dx > 0
                     } else {
