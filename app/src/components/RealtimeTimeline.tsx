@@ -439,7 +439,56 @@ export const RealtimeTimeline = (props: Props) => {
                     overflow: 'hidden'
                 }}
             >
-                {/* 新着バッジ */}
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        padding: '8px 0',
+                        overflowX: 'hidden',
+                        overflowY: 'auto',
+                        // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
+                        scrollbarGutter: 'stable',
+                        overscrollBehaviorY: 'none',
+                        touchAction: 'pan-y'
+                    }}
+                    ref={scrollRef}
+                >
+                    {/* 実際のCellと同じくDividerを挟み、読み込み完了時にレイアウトが動かないようにする */}
+                    {!initialLoaded &&
+                        Array.from({ length: 10 }).map((_, i) => (
+                            <Fragment key={i}>
+                                <div style={{ padding: `0 ${CssVar.space(2)}` }}>
+                                    <MessageSkeleton />
+                                </div>
+                                <Divider inset />
+                            </Fragment>
+                        ))}
+                    <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
+                        <MessageSnapshotContext.Provider value={snapshot?.messages}>
+                            {(seededItems ?? reader.current?.body ?? []).map((item) => (
+                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
+                            ))}
+                        </MessageSnapshotContext.Provider>
+                    </QueryTimelineContext.Provider>
+                    {loading && <Loading message={'Loading...'} />}
+                    {!hasMoreData && (
+                        <div
+                            style={{
+                                padding: '8px',
+                                fontSize: '12px',
+                                color: '#888',
+                                width: '100%',
+                                height: '100px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            -- End of Timeline --
+                        </div>
+                    )}
+                </div>
                 <div
                     style={{
                         position: 'absolute',
@@ -448,7 +497,6 @@ export const RealtimeTimeline = (props: Props) => {
                         right: 0,
                         display: 'flex',
                         justifyContent: 'center',
-                        zIndex: 10,
                         pointerEvents: 'none',
                         transition: 'opacity 0.2s ease, transform 0.2s ease',
                         opacity: newArrivals.length > 0 ? 1 : 0,
@@ -521,57 +569,6 @@ export const RealtimeTimeline = (props: Props) => {
                             )}
                         </div>
                     </button>
-                </div>
-
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        padding: '8px 0',
-                        overflowX: 'hidden',
-                        overflowY: 'auto',
-                        // 読み込み後にスクロールバーが出て内容幅が変わらないよう、最初からガターを確保しておく
-                        scrollbarGutter: 'stable',
-                        overscrollBehaviorY: 'none',
-                        touchAction: 'pan-y'
-                    }}
-                    ref={scrollRef}
-                >
-                    {/* 実際のCellと同じくDividerを挟み、読み込み完了時にレイアウトが動かないようにする */}
-                    {!initialLoaded &&
-                        Array.from({ length: 10 }).map((_, i) => (
-                            <Fragment key={i}>
-                                <div style={{ padding: `0 ${CssVar.space(2)}` }}>
-                                    <MessageSkeleton />
-                                </div>
-                                <Divider inset />
-                            </Fragment>
-                        ))}
-                    <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
-                        <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(seededItems ?? reader.current?.body ?? []).map((item) => (
-                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
-                            ))}
-                        </MessageSnapshotContext.Provider>
-                    </QueryTimelineContext.Provider>
-                    {loading && <Loading message={'Loading...'} />}
-                    {!hasMoreData && (
-                        <div
-                            style={{
-                                padding: '8px',
-                                fontSize: '12px',
-                                color: '#888',
-                                width: '100%',
-                                height: '100px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            -- End of Timeline --
-                        </div>
-                    )}
                 </div>
             </div>
         </PullToRefresh>
