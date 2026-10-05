@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { CCImage, HorizontalLayout, IconButton, CfmActionsProvider, useCfmActions } from '@concrnt/ui'
+import { CCImage, HorizontalLayout, IconButton, CfmActionsProvider, OverlaySurface, useCfmActions } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { useMediaProxy } from './MediaProxy'
@@ -538,399 +538,397 @@ export const EmojiPickerProvider = (props: Props) => {
                 {props.children}
             </CfmActionsProvider>
 
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div
-                            style={{
-                                position: 'fixed',
-                                inset: 0,
-                                background: 'black',
-                                zIndex: 1000
-                            }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.5 }}
-                            exit={{ opacity: 0 }}
-                            onClick={close}
-                        />
+            {/* zIndexは使わない: OverlaySurfaceでoverlay-rootへopen順に積む(MediaViewer等の上から開いても前面)。
+                backdrop→sheetのDOM順でsheetが前面 */}
+            <OverlaySurface open={isOpen} onClose={close}>
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'black'
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.5 }}
+                        exit={{ opacity: 0 }}
+                        onClick={close}
+                    />
 
-                        {/* Bottom sheet */}
-                        <motion.div
-                            ref={sheetRef}
+                    {/* Bottom sheet */}
+                    <motion.div
+                        ref={sheetRef}
+                        style={{
+                            position: 'fixed',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            backgroundColor: CssVar.contentBackground,
+                            color: CssVar.contentText,
+                            borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: sheetHeight,
+                            paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
+                            // ドラッグ中は指に追従。離したあととキーボード追従だけアニメーションする
+                            transition:
+                                sheetDragHeight !== null
+                                    ? 'none'
+                                    : `height ${keyboard.duration > 0 ? keyboard.duration : 0.32}s cubic-bezier(0.22, 1, 0.36, 1)`
+                        }}
+                        initial={{ y: '100%' }}
+                        animate={{ y: 0 }}
+                        exit={{ y: '100%' }}
+                        transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.15 }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            dismissKeyboard(e)
+                        }}
+                    >
+                        {/* Handle */}
+                        <div
+                            onPointerDown={onHandlePointerDown}
+                            onPointerMove={onHandlePointerMove}
+                            onPointerUp={onHandlePointerUp}
+                            onPointerCancel={onHandlePointerUp}
                             style={{
-                                position: 'fixed',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                backgroundColor: CssVar.contentBackground,
-                                color: CssVar.contentText,
-                                borderRadius: `${CssVar.round(1)} ${CssVar.round(1)} 0 0`,
                                 display: 'flex',
-                                flexDirection: 'column',
-                                height: sheetHeight,
-                                paddingBottom: keyboard.visible ? 0 : 'env(safe-area-inset-bottom)',
-                                // ドラッグ中は指に追従。離したあととキーボード追従だけアニメーションする
-                                transition:
-                                    sheetDragHeight !== null
-                                        ? 'none'
-                                        : `height ${keyboard.duration > 0 ? keyboard.duration : 0.32}s cubic-bezier(0.22, 1, 0.36, 1)`,
-                                zIndex: 1001
-                            }}
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.15 }}
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                dismissKeyboard(e)
+                                justifyContent: 'center',
+                                padding: `${CssVar.space(3)} 0 ${CssVar.space(2)}`,
+                                touchAction: 'none',
+                                cursor: 'grab',
+                                flexShrink: 0
                             }}
                         >
-                            {/* Handle */}
                             <div
-                                onPointerDown={onHandlePointerDown}
-                                onPointerMove={onHandlePointerMove}
-                                onPointerUp={onHandlePointerUp}
-                                onPointerCancel={onHandlePointerUp}
+                                style={{
+                                    width: '36px',
+                                    height: '5px',
+                                    borderRadius: CssVar.round(0.5),
+                                    backgroundColor: CssVar.divider
+                                }}
+                            />
+                        </div>
+
+                        {/* Search: カテゴリアイコン列の上。ここを上下に動かしてもシートサイズが変わる */}
+                        <div
+                            onPointerDown={onSearchPointerDown}
+                            onPointerMove={onSearchPointerMove}
+                            onPointerUp={onSearchPointerUp}
+                            onPointerCancel={onSearchPointerUp}
+                            style={{
+                                padding: searchBoxFocused
+                                    ? `${CssVar.space(3)} ${CssVar.space(3)} 0`
+                                    : `${CssVar.space(1)} ${CssVar.space(3)} ${CssVar.space(3)}`,
+                                flexShrink: 0,
+                                touchAction: 'none',
+                                cursor: 'grab'
+                            }}
+                        >
+                            <div
                                 style={{
                                     display: 'flex',
-                                    justifyContent: 'center',
-                                    padding: `${CssVar.space(3)} 0 ${CssVar.space(2)}`,
-                                    touchAction: 'none',
-                                    cursor: 'grab',
-                                    flexShrink: 0
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
+                                    minHeight: '44px',
+                                    padding: `0 ${CssVar.space(3)}`,
+                                    borderRadius: CssVar.round(0.5),
+                                    backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
                                 }}
                             >
-                                <div
+                                <MdSearch size={22} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    placeholder={t('searchPlaceholder')}
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    onFocus={() => {
+                                        if (searchDragPending.current) return
+                                        expandSheetForSearch()
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && displayEmojis.length > 0) {
+                                            e.preventDefault()
+                                            selectEmoji(displayEmojis[0])
+                                            close()
+                                        }
+                                    }}
                                     style={{
-                                        width: '36px',
-                                        height: '5px',
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: CssVar.divider
+                                        flex: 1,
+                                        border: 'none',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        color: CssVar.contentText,
+                                        fontSize: '16px',
+                                        lineHeight: '24px',
+                                        cursor: 'text'
                                     }}
                                 />
+                                {query.length > 0 && (
+                                    // mousedownによる検索欄のblur(=close)を防いでクリアだけ行う
+                                    <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                                        <IconButton
+                                            onClick={() => setQuery('')}
+                                            style={{ width: '28px', height: '28px', padding: 0 }}
+                                        >
+                                            <MdClose size={18} />
+                                        </IconButton>
+                                    </span>
+                                )}
                             </div>
+                        </div>
 
-                            {/* Search: カテゴリアイコン列の上。ここを上下に動かしてもシートサイズが変わる */}
-                            <div
-                                onPointerDown={onSearchPointerDown}
-                                onPointerMove={onSearchPointerMove}
-                                onPointerUp={onSearchPointerUp}
-                                onPointerCancel={onSearchPointerUp}
-                                style={{
-                                    padding: searchBoxFocused
-                                        ? `${CssVar.space(3)} ${CssVar.space(3)} 0`
-                                        : `${CssVar.space(1)} ${CssVar.space(3)} ${CssVar.space(3)}`,
-                                    flexShrink: 0,
-                                    touchAction: 'none',
-                                    cursor: 'grab'
-                                }}
-                            >
+                        {/* One-line emoji strip (キーボード表示中) */}
+                        <HorizontalLayout
+                            style={{
+                                display: searchBoxFocused ? 'flex' : 'none',
+                                alignItems: 'center',
+                                overflowY: 'hidden',
+                                boxSizing: 'border-box',
+                                height: '48px',
+                                minHeight: '48px',
+                                padding: `0 ${CssVar.space(3)}`,
+                                flexShrink: 0
+                            }}
+                        >
+                            {displayEmojis.map((emoji, index) => (
+                                <button
+                                    key={`${emoji.shortcode}-${index}`}
+                                    onMouseDown={() => selectEmoji(emoji)}
+                                    style={
+                                        {
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            border: 'none',
+                                            background: 'transparent',
+                                            borderRadius: CssVar.round(0.5),
+                                            cursor: 'pointer',
+                                            width: '48px',
+                                            height: '48px',
+                                            padding: 0,
+                                            flexShrink: 0,
+                                            WebkitTapHighlightColor: 'transparent',
+                                            contentVisibility: 'auto',
+                                            containIntrinsicSize: '48px 48px'
+                                        } as React.CSSProperties
+                                    }
+                                >
+                                    <CCImage
+                                        src={emoji.imageURL}
+                                        maxHeight={128}
+                                        alt={emoji.shortcode}
+                                        loading="lazy"
+                                        style={{
+                                            width: '32px',
+                                            height: '32px'
+                                        }}
+                                    />
+                                </button>
+                            ))}
+                            {displayEmojis.length === 0 && (
                                 <div
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: CssVar.space(2),
-                                        minHeight: '44px',
-                                        padding: `0 ${CssVar.space(3)}`,
-                                        borderRadius: CssVar.round(0.5),
-                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.06)`
+                                        height: '48px',
+                                        opacity: 0.4,
+                                        fontSize: '16px',
+                                        lineHeight: '24px',
+                                        whiteSpace: 'nowrap'
                                     }}
                                 >
-                                    <MdSearch size={22} style={{ opacity: 0.5, flexShrink: 0 }} />
-                                    <input
-                                        ref={searchInputRef}
-                                        type="text"
-                                        placeholder={t('searchPlaceholder')}
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        onFocus={() => {
-                                            if (searchDragPending.current) return
-                                            expandSheetForSearch()
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && displayEmojis.length > 0) {
-                                                e.preventDefault()
-                                                selectEmoji(displayEmojis[0])
-                                                close()
-                                            }
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            border: 'none',
-                                            outline: 'none',
-                                            background: 'transparent',
-                                            color: CssVar.contentText,
-                                            fontSize: '16px',
-                                            lineHeight: '24px',
-                                            cursor: 'text'
-                                        }}
-                                    />
-                                    {query.length > 0 && (
-                                        // mousedownによる検索欄のblur(=close)を防いでクリアだけ行う
-                                        <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
-                                            <IconButton
-                                                onClick={() => setQuery('')}
-                                                style={{ width: '28px', height: '28px', padding: 0 }}
-                                            >
-                                                <MdClose size={18} />
-                                            </IconButton>
-                                        </span>
-                                    )}
+                                    {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
                                 </div>
-                            </div>
+                            )}
+                        </HorizontalLayout>
 
-                            {/* One-line emoji strip (キーボード表示中) */}
-                            <HorizontalLayout
+                        {/* Tabs */}
+                        <div
+                            className={styles.packTabs}
+                            onPointerDownCapture={(e) => {
+                                if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) e.stopPropagation()
+                            }}
+                            style={{
+                                display: searchBoxFocused ? 'none' : 'flex',
+                                overflowX: 'auto',
+                                gap: CssVar.space(1),
+                                padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
+                                flexShrink: 0
+                            }}
+                        >
+                            {/* よく使うタブ or 検索結果タブ */}
+                            {query.length === 0 ? (
+                                <TabButton
+                                    selected={effectiveActiveTab === 0}
+                                    onClick={() => {
+                                        setActiveTab(0)
+                                        gridRef.current?.scrollTo(0, 0)
+                                    }}
+                                >
+                                    <MdAccessTime size={22} />
+                                </TabButton>
+                            ) : (
+                                <TabButton selected>
+                                    <MdSearch size={22} />
+                                </TabButton>
+                            )}
+
+                            {/* パッケージタブ */}
+                            {emojiPackages.map((pkg, index) => (
+                                <TabButton
+                                    key={pkg.packageURL}
+                                    selected={query.length === 0 && effectiveActiveTab === index + 1}
+                                    onClick={() => {
+                                        setQuery('')
+                                        setActiveTab(index + 1)
+                                        gridRef.current?.scrollTo(0, 0)
+                                    }}
+                                >
+                                    <CCImage
+                                        src={pkg.iconURL}
+                                        maxHeight={128}
+                                        alt={pkg.name}
+                                        style={{ width: '22px', height: '22px' }}
+                                    />
+                                </TabButton>
+                            ))}
+                        </div>
+
+                        {/* Divider */}
+                        <div
+                            style={{
+                                height: '1px',
+                                backgroundColor: CssVar.divider,
+                                margin: `${CssVar.space(2)} 0`
+                            }}
+                        />
+
+                        {/* Emoji grid。見出しはリストの先頭に置き、スクロールで一緒に流す */}
+                        <div
+                            ref={gridRef}
+                            style={{
+                                display: searchBoxFocused ? 'none' : 'block',
+                                flex: 1,
+                                overflowY: 'auto',
+                                overflowX: 'hidden',
+                                padding: `0 ${CssVar.space(3)} ${CssVar.space(3)}`,
+                                minHeight: 0
+                            }}
+                        >
+                            <div
                                 style={{
-                                    display: searchBoxFocused ? 'flex' : 'none',
-                                    alignItems: 'center',
-                                    overflowY: 'hidden',
-                                    boxSizing: 'border-box',
-                                    height: '48px',
-                                    minHeight: '48px',
-                                    padding: `0 ${CssVar.space(3)}`,
-                                    flexShrink: 0
+                                    // タブアイコンの左端(行の space(3) + ボタンの space(1))に揃える
+                                    padding: `${CssVar.space(1)} 0 ${CssVar.space(2)} ${CssVar.space(1)}`,
+                                    fontSize: '13px',
+                                    lineHeight: '18px',
+                                    fontWeight: 700,
+                                    opacity: 0.6
                                 }}
                             >
-                                {displayEmojis.map((emoji, index) => (
-                                    <button
-                                        key={`${emoji.shortcode}-${index}`}
-                                        onMouseDown={() => selectEmoji(emoji)}
+                                {title}
+                            </div>
+                            {rows.length === 0 ? (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        height: '100px',
+                                        opacity: 0.4,
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    {query.length > 0
+                                        ? t('noMatchingEmojis')
+                                        : activeTab === 0
+                                          ? t('noRecentEmojis')
+                                          : t('noEmojis')}
+                                </div>
+                            ) : (
+                                rows.map((row, rowIndex) => (
+                                    <div
+                                        key={rowIndex}
                                         style={
                                             {
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                border: 'none',
-                                                background: 'transparent',
-                                                borderRadius: CssVar.round(0.5),
-                                                cursor: 'pointer',
-                                                width: '48px',
-                                                height: '48px',
-                                                padding: 0,
-                                                flexShrink: 0,
-                                                WebkitTapHighlightColor: 'transparent',
+                                                display: 'grid',
+                                                gridTemplateColumns: `repeat(${COLS}, 1fr)`,
                                                 contentVisibility: 'auto',
-                                                containIntrinsicSize: '48px 48px'
+                                                containIntrinsicHeight: '44px'
                                             } as React.CSSProperties
                                         }
                                     >
-                                        <CCImage
-                                            src={emoji.imageURL}
-                                            maxHeight={128}
-                                            alt={emoji.shortcode}
-                                            loading="lazy"
-                                            style={{
-                                                width: '32px',
-                                                height: '32px'
-                                            }}
-                                        />
-                                    </button>
-                                ))}
-                                {displayEmojis.length === 0 && (
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            height: '48px',
-                                            opacity: 0.4,
-                                            fontSize: '16px',
-                                            lineHeight: '24px',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {query.length > 0 ? t('noMatchingEmojis') : t('noEmojis')}
-                                    </div>
-                                )}
-                            </HorizontalLayout>
-
-                            {/* Tabs */}
-                            <div
-                                className={styles.packTabs}
-                                onPointerDownCapture={(e) => {
-                                    if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) e.stopPropagation()
-                                }}
-                                style={{
-                                    display: searchBoxFocused ? 'none' : 'flex',
-                                    overflowX: 'auto',
-                                    gap: CssVar.space(1),
-                                    padding: `${CssVar.space(1)} ${CssVar.space(3)}`,
-                                    flexShrink: 0
-                                }}
-                            >
-                                {/* よく使うタブ or 検索結果タブ */}
-                                {query.length === 0 ? (
-                                    <TabButton
-                                        selected={effectiveActiveTab === 0}
-                                        onClick={() => {
-                                            setActiveTab(0)
-                                            gridRef.current?.scrollTo(0, 0)
-                                        }}
-                                    >
-                                        <MdAccessTime size={22} />
-                                    </TabButton>
-                                ) : (
-                                    <TabButton selected>
-                                        <MdSearch size={22} />
-                                    </TabButton>
-                                )}
-
-                                {/* パッケージタブ */}
-                                {emojiPackages.map((pkg, index) => (
-                                    <TabButton
-                                        key={pkg.packageURL}
-                                        selected={query.length === 0 && effectiveActiveTab === index + 1}
-                                        onClick={() => {
-                                            setQuery('')
-                                            setActiveTab(index + 1)
-                                            gridRef.current?.scrollTo(0, 0)
-                                        }}
-                                    >
-                                        <CCImage
-                                            src={pkg.iconURL}
-                                            maxHeight={128}
-                                            alt={pkg.name}
-                                            style={{ width: '22px', height: '22px' }}
-                                        />
-                                    </TabButton>
-                                ))}
-                            </div>
-
-                            {/* Divider */}
-                            <div
-                                style={{
-                                    height: '1px',
-                                    backgroundColor: CssVar.divider,
-                                    margin: `${CssVar.space(2)} 0`
-                                }}
-                            />
-
-                            {/* Emoji grid。見出しはリストの先頭に置き、スクロールで一緒に流す */}
-                            <div
-                                ref={gridRef}
-                                style={{
-                                    display: searchBoxFocused ? 'none' : 'block',
-                                    flex: 1,
-                                    overflowY: 'auto',
-                                    overflowX: 'hidden',
-                                    padding: `0 ${CssVar.space(3)} ${CssVar.space(3)}`,
-                                    minHeight: 0
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        // タブアイコンの左端(行の space(3) + ボタンの space(1))に揃える
-                                        padding: `${CssVar.space(1)} 0 ${CssVar.space(2)} ${CssVar.space(1)}`,
-                                        fontSize: '13px',
-                                        lineHeight: '18px',
-                                        fontWeight: 700,
-                                        opacity: 0.6
-                                    }}
-                                >
-                                    {title}
-                                </div>
-                                {rows.length === 0 ? (
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            height: '100px',
-                                            opacity: 0.4,
-                                            fontSize: '14px'
-                                        }}
-                                    >
-                                        {query.length > 0
-                                            ? t('noMatchingEmojis')
-                                            : activeTab === 0
-                                              ? t('noRecentEmojis')
-                                              : t('noEmojis')}
-                                    </div>
-                                ) : (
-                                    rows.map((row, rowIndex) => (
-                                        <div
-                                            key={rowIndex}
-                                            style={
-                                                {
-                                                    display: 'grid',
-                                                    gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-                                                    contentVisibility: 'auto',
-                                                    containIntrinsicHeight: '44px'
-                                                } as React.CSSProperties
-                                            }
-                                        >
-                                            {row.map(({ emoji, span }) => (
-                                                <button
-                                                    key={emoji.shortcode}
-                                                    onPointerDown={(e) => {
-                                                        if (e.button !== 0) return
-                                                        e.currentTarget.dataset.press = `${e.pointerId},${e.clientX},${e.clientY}`
-                                                    }}
-                                                    onPointerUp={(e) => {
-                                                        if (e.button !== 0) return
-                                                        const start = e.currentTarget.dataset.press
-                                                        delete e.currentTarget.dataset.press
-                                                        if (!start) return
-                                                        const [pointerId, x, y] = start.split(',').map(Number)
-                                                        if (pointerId !== e.pointerId) return
-                                                        if (Math.hypot(e.clientX - x, e.clientY - y) > 10) return
-                                                        selectEmoji(emoji)
-                                                        searchInputRef.current?.blur()
-                                                    }}
-                                                    onPointerCancel={(e) => {
-                                                        delete e.currentTarget.dataset.press
-                                                    }}
-                                                    onClick={(e) => {
-                                                        // pointerupで既に選んでいる。clickの二重挿入を防ぐ
-                                                        e.preventDefault()
-                                                    }}
+                                        {row.map(({ emoji, span }) => (
+                                            <button
+                                                key={emoji.shortcode}
+                                                onPointerDown={(e) => {
+                                                    if (e.button !== 0) return
+                                                    e.currentTarget.dataset.press = `${e.pointerId},${e.clientX},${e.clientY}`
+                                                }}
+                                                onPointerUp={(e) => {
+                                                    if (e.button !== 0) return
+                                                    const start = e.currentTarget.dataset.press
+                                                    delete e.currentTarget.dataset.press
+                                                    if (!start) return
+                                                    const [pointerId, x, y] = start.split(',').map(Number)
+                                                    if (pointerId !== e.pointerId) return
+                                                    if (Math.hypot(e.clientX - x, e.clientY - y) > 10) return
+                                                    selectEmoji(emoji)
+                                                    searchInputRef.current?.blur()
+                                                }}
+                                                onPointerCancel={(e) => {
+                                                    delete e.currentTarget.dataset.press
+                                                }}
+                                                onClick={(e) => {
+                                                    // pointerupで既に選んでいる。clickの二重挿入を防ぐ
+                                                    e.preventDefault()
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    width: '100%',
+                                                    gridColumn: span > 1 ? `span ${span}` : undefined,
+                                                    aspectRatio: `${span} / 1`,
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    borderRadius: CssVar.round(0.5),
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    WebkitTapHighlightColor: 'transparent'
+                                                }}
+                                            >
+                                                <CCImage
+                                                    src={emoji.imageURL}
+                                                    maxHeight={128}
+                                                    alt={emoji.shortcode}
+                                                    loading="lazy"
                                                     style={{
-                                                        display: 'flex',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        width: '100%',
-                                                        gridColumn: span > 1 ? `span ${span}` : undefined,
-                                                        aspectRatio: `${span} / 1`,
-                                                        border: 'none',
-                                                        background: 'transparent',
-                                                        borderRadius: CssVar.round(0.5),
-                                                        cursor: 'pointer',
-                                                        padding: '4px',
-                                                        WebkitTapHighlightColor: 'transparent'
+                                                        width: 'auto',
+                                                        height: 'auto',
+                                                        maxWidth: '100%',
+                                                        maxHeight: '28px'
                                                     }}
-                                                >
-                                                    <CCImage
-                                                        src={emoji.imageURL}
-                                                        maxHeight={128}
-                                                        alt={emoji.shortcode}
-                                                        loading="lazy"
-                                                        style={{
-                                                            width: 'auto',
-                                                            height: 'auto',
-                                                            maxWidth: '100%',
-                                                            maxHeight: '28px'
-                                                        }}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                ))
+                            )}
+                        </div>
 
-                            {/* キーボードの裏まで背景を敷くスペーサ。アクセサリービューが無いため隙間分も足す */}
-                            <div
-                                style={{
-                                    flexShrink: 0,
-                                    height: `calc(${keyboard.height}px + ${keyboard.visible ? CssVar.space(2) : '0px'})`,
-                                    transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`
-                                }}
-                            />
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                        {/* キーボードの裏まで背景を敷くスペーサ。アクセサリービューが無いため隙間分も足す */}
+                        <div
+                            style={{
+                                flexShrink: 0,
+                                height: `calc(${keyboard.height}px + ${keyboard.visible ? CssVar.space(2) : '0px'})`,
+                                transition: `height ${keyboard.duration}s cubic-bezier(0.22, 1, 0.36, 1)`
+                            }}
+                        />
+                    </motion.div>
+                </>
+            </OverlaySurface>
         </EmojiPickerContext.Provider>
     )
 }

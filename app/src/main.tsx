@@ -79,21 +79,22 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                                             <TimelineSearchProvider>
                                                                 <ComposerProvider>
                                                                     <ScannerProvider>
-                                                                        <OverlayProvider>
-                                                                            <MediaViewerProvider
-                                                                                renderPost={(uri) => (
-                                                                                    <PostView uri={uri} embedded />
-                                                                                )}
-                                                                            >
-                                                                                <AudioPlayerProvider>
+                                                                        {/* AudioPlayerはOverlayProvider(FABのslot)の外側: ミニプレイヤーをFABより後ろに描いて前面にする(zIndex不使用) */}
+                                                                        <AudioPlayerProvider>
+                                                                            <OverlayProvider>
+                                                                                <MediaViewerProvider
+                                                                                    renderPost={(uri) => (
+                                                                                        <PostView uri={uri} embedded />
+                                                                                    )}
+                                                                                >
                                                                                     <TickerProvider>
                                                                                         <UrlSummaryProvider>
                                                                                             <App />
                                                                                         </UrlSummaryProvider>
                                                                                     </TickerProvider>
-                                                                                </AudioPlayerProvider>
-                                                                            </MediaViewerProvider>
-                                                                        </OverlayProvider>
+                                                                                </MediaViewerProvider>
+                                                                            </OverlayProvider>
+                                                                        </AudioPlayerProvider>
                                                                     </ScannerProvider>
                                                                 </ComposerProvider>
                                                             </TimelineSearchProvider>

@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import { useOverlayAnyOpen } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useClient } from '../contexts/Client'
 
 interface Props {
     onClick?: () => void
@@ -13,10 +14,12 @@ interface Props {
 
 // app/src/ui/FAB.tsx の移植。webではモバイル幅のときのみ表示する。
 // ドロワーのtransformやComposerのoverflow:hiddenの影響を受けないようbodyへportalする。
-// bodyはoverlay-rootより後ろなので、オーバーレイ(MediaViewer等)が開いている間は隠す
+// bodyはoverlay-rootより後ろなので、オーバーレイ(MediaViewer等)が開いている間は隠す。
+// 同様にSubkeyInvalidDrawer(ClientProvider末尾・閉じられない案内)よりも後ろになるので、subkey失効中も隠す
 export const FAB = (props: Props) => {
     const isMobile = useIsMobile()
     const anyOverlayOpen = useOverlayAnyOpen()
+    const { isSubkeyInvalid } = useClient()
 
     const [pressed, setPressed] = useState(false)
 
@@ -29,7 +32,7 @@ export const FAB = (props: Props) => {
         setPressed(false)
     }
 
-    if (!isMobile || anyOverlayOpen) return null
+    if (!isMobile || anyOverlayOpen || isSubkeyInvalid) return null
 
     return createPortal(
         <motion.button
