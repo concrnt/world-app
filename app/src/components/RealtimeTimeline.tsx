@@ -466,8 +466,13 @@ export const RealtimeTimeline = (props: Props) => {
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
                         <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(seededItems ?? reader.current?.body ?? []).map((item) => (
-                                <Cell key={item.href} item={item} lastUpdate={item.lastUpdate?.getTime() ?? 0} />
+                            {(seededItems ?? reader.current?.body ?? []).map((item, i) => (
+                                // 静的タイムラインの同梱コンテンツはhrefを持たないので、時刻+位置で代用する
+                                <Cell
+                                    key={item.href ?? `content:${item.timestamp.getTime()}:${i}`}
+                                    item={item}
+                                    lastUpdate={item.lastUpdate?.getTime() ?? 0}
+                                />
                             ))}
                         </MessageSnapshotContext.Provider>
                     </QueryTimelineContext.Provider>
@@ -591,7 +596,7 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                         containIntrinsicSize: 'auto 120px'
                     }}
                 >
-                    <Suspense key={item.href} fallback={<MessageSkeleton />}>
+                    <Suspense key={item.href ?? 'content'} fallback={<MessageSkeleton />}>
                         <MessageContainer uri={item.href} source={item.source} content={item.content} />
                     </Suspense>
                 </div>
