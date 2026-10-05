@@ -15,6 +15,8 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
         <MessageLayout
             detail={props.detail}
             onClick={() => {
+                // 静的タイムラインの同梱コンテンツはuriを持たない(開く先がない)
+                if (!message.uri) return
                 navigate('/post/' + encodeURIComponent(message.uri))
             }}
             left={

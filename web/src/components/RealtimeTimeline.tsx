@@ -12,6 +12,7 @@ import {
     useRef,
     useState
 } from 'react'
+import { isStaticTimelineURI } from '@concrnt/worldlib'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
@@ -137,7 +138,8 @@ export const RealtimeTimeline = (props: Props) => {
     // (online自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
     const [hostOverride, setHostOverride] = useState<string | undefined>(undefined)
     useEffect(() => {
-        if (!client || homeStatus.online || props.timelines.length !== 1) {
+        // 静的タイムライン(https manifest)の読み出しは自ドメイン経由のみ(manifestのホストはconcrntサーバーではない)
+        if (!client || homeStatus.online || props.timelines.length !== 1 || isStaticTimelineURI(props.timelines[0])) {
             setHostOverride(undefined)
             return
         }
