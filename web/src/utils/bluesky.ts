@@ -46,6 +46,9 @@ export interface BskyPostView {
         }
     }
     embed?: BskyEmbedView
+    // ブリッジがconcrntから輸出した投稿なら、元のcckv URI(ブリッジのresolveが付加する)。
+    // APブリッジのNote URLからcckv URIを取り出す(parseBridgeNoteURL)のと同じ役割
+    concrntURI?: string
     replyCount?: number
     repostCount?: number
     likeCount?: number

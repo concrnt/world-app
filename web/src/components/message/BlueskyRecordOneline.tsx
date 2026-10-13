@@ -8,6 +8,7 @@ import { AtprotoRecordSchema, Message } from '@concrnt/worldlib'
 import { useTranslation } from 'react-i18next'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { Timestamp } from './Timestamp'
+import { MessageContainer } from './main'
 
 interface Props {
     atUri: string
@@ -16,7 +17,15 @@ interface Props {
     message?: Message<AtprotoRecordSchema>
 }
 
-// リプライ元などの1行表示用。BlueskyRecordと同じ解決経路(ブリッジのresolve)で投稿を引き、本文を1行で流す
+const onelineSkeleton = (
+    <OnelineMessageLayout left={<Skeleton style={{ width: '48px', height: '18px' }} />}>
+        <Skeleton style={{ flex: 1, height: '1em' }} />
+    </OnelineMessageLayout>
+)
+
+// リプライ元などの1行表示用。BlueskyRecordと同じ解決経路(ブリッジのresolve)で投稿を引き、本文を1行で流す。
+// ブリッジが輸出したconcrnt投稿(resolveがconcrntURIを返す)なら、ActivitypubNoteのinReplyToがブリッジURLの場合と
+// 同じくネイティブのonelineに委譲する
 export const BlueskyRecordOneline = (props: Props) => {
     const { client } = useClient()
     const atUri = props.atUri
@@ -28,13 +37,7 @@ export const BlueskyRecordOneline = (props: Props) => {
     }, [client, atUri])
 
     return (
-        <Suspense
-            fallback={
-                <OnelineMessageLayout left={<Skeleton style={{ width: '48px', height: '18px' }} />}>
-                    <Skeleton style={{ flex: 1, height: '1em' }} />
-                </OnelineMessageLayout>
-            }
-        >
+        <Suspense fallback={onelineSkeleton}>
             <Post postPromise={postPromise} atUri={atUri} message={props.message} />
         </Suspense>
     )
@@ -49,6 +52,14 @@ const Post = (props: {
     const navigate = useNavigate()
 
     const post = use(props.postPromise)
+
+    if (post?.concrntURI) {
+        return (
+            <Suspense fallback={onelineSkeleton}>
+                <MessageContainer oneline uri={post.concrntURI} />
+            </Suspense>
+        )
+    }
 
     const date = props.message?.createdAt ?? (post?.record.createdAt ? new Date(post.record.createdAt) : null)
 
