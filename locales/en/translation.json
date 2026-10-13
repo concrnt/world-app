@@ -591,6 +591,10 @@
             "unavailable": "This post could not be fetched (it may have been deleted or is private)",
             "fetchFailed": "Failed to load this post (server unreachable)"
         },
+        "blueskyRecord": {
+            "openRemote": "Open on bsky.app",
+            "notFound": "This post could not be fetched"
+        },
         "followAck": {
             "userFollowed": "{{name}} followed",
             "loading": "Loading..."

@@ -60,9 +60,14 @@ export const bskyProfileUrl = (handleOrDid: string): string => {
 }
 
 export const bskyPostUrl = (post: BskyPostView): string | undefined => {
-    const match = post.uri.match(/^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/([^/]+)$/)
+    return bskyPostUrlFromAtUri(post.uri, post.author.handle)
+}
+
+// at://did/app.bsky.feed.post/rkey → bsky.app の投稿URL。handle が分かればそちらを使う(DIDでも開ける)
+export const bskyPostUrlFromAtUri = (atUri: string, handle?: string): string | undefined => {
+    const match = atUri.match(/^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/([^/]+)$/)
     if (!match) return undefined
-    return `https://bsky.app/profile/${post.author.handle || match[1]}/post/${match[2]}`
+    return `https://bsky.app/profile/${handle || match[1]}/post/${match[2]}`
 }
 
 // atprotoブリッジ(atproto.concrnt.world)のフォローレコードキー。

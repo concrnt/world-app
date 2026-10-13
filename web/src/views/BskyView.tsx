@@ -48,6 +48,9 @@ export const BskyView = (props: Props) => {
 
     const current = result?.uri === props.uri ? result : undefined
 
+    // 投稿はブリッジで解決できなくても BlueskyRecord 側で未取得表示+bsky.appへの導線を出す
+    if (isPost && (current?.post || current?.error)) return <BskyPost uri={props.uri} />
+
     if (current?.error) {
         return (
             <View>
@@ -56,7 +59,6 @@ export const BskyView = (props: Props) => {
         )
     }
 
-    if (current?.post) return <BskyPost post={current.post} />
     if (current?.person) return <BskyPerson person={current.person} />
 
     return <View></View>
