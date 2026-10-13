@@ -39,6 +39,11 @@ export interface BskyPostView {
     record: {
         text?: string
         createdAt?: string
+        // app.bsky.feed.post のリプライ参照(StrongRef)。リプライ元の表示に使う
+        reply?: {
+            parent?: { uri: string; cid?: string }
+            root?: { uri: string; cid?: string }
+        }
     }
     embed?: BskyEmbedView
     replyCount?: number

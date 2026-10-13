@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { LikeAssociationSchema, Schemas } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
+import { BlueskyRecordCard } from './BlueskyRecordCard'
 import { Avatar, CfmRenderer } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
 import { MdStar } from 'react-icons/md'
@@ -87,29 +88,40 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                     }}
                 />
             )}
-            {targetMessage && targetMessage.schema !== Schemas.apNote && (
-                <MessageLayout
-                    left={
-                        <div
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                navigate(
-                                    '/profile/' +
-                                        targetMessage.author +
-                                        (targetMessage.authorProfileName && targetMessage.authorProfileName !== 'main'
-                                            ? '/' + targetMessage.authorProfileName
-                                            : '')
-                                )
-                            }}
-                        >
-                            <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
-                        </div>
-                    }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
-                >
-                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                </MessageLayout>
+            {targetMessage && targetMessage.schema === Schemas.atprotoRecord && (
+                <BlueskyRecordCard
+                    atUri={targetMessage.value.atUri}
+                    onClick={() => {
+                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                    }}
+                />
             )}
+            {targetMessage &&
+                targetMessage.schema !== Schemas.apNote &&
+                targetMessage.schema !== Schemas.atprotoRecord && (
+                    <MessageLayout
+                        left={
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    navigate(
+                                        '/profile/' +
+                                            targetMessage.author +
+                                            (targetMessage.authorProfileName &&
+                                            targetMessage.authorProfileName !== 'main'
+                                                ? '/' + targetMessage.authorProfileName
+                                                : '')
+                                    )
+                                }}
+                            >
+                                <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
+                            </div>
+                        }
+                        headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
+                    >
+                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
+                    </MessageLayout>
+                )}
 
             {/* ローディング */}
             {!targetMessage && (
