@@ -34,18 +34,12 @@
     "views": {
         "settings": {
             "title": "Settings",
-            "general": "General",
-            "theme": "Theme",
-            "activitypub": "ActivityPub",
-            "bluesky": "Bluesky",
             "id": "ID Management",
-            "emoji": "Emoji",
-            "lists": "Lists",
-            "media": "Media",
-            "inventory": "Inventory",
             "notifications": "Notifications",
-            "migration": "Migration",
-            "v1import": "Import from v1",
+            "lists": "Lists",
+            "display": "Display & Customization",
+            "media": "Media",
+            "integrations": "Integrations",
             "devTools": "Developer Tools",
             "account": "Account",
             "clearCache": "Clear Cache",
@@ -58,10 +52,24 @@
                 "commit": "Commit"
             }
         },
-        "generalSettings": {
-            "title": "General",
+        "displaySettings": {
+            "title": "Display & Customization",
             "language": "Language",
-            "haptics": "Haptic Feedback"
+            "theme": "Theme",
+            "haptics": "Haptic Feedback",
+            "fontSize": "Text Size",
+            "emoji": "Emoji Packs"
+        },
+        "fontSizeSettings": {
+            "title": "Text Size",
+            "small": "Small",
+            "medium": "Default",
+            "large": "Large"
+        },
+        "integrationSettings": {
+            "title": "Integrations",
+            "activitypub": "ActivityPub",
+            "bluesky": "Bluesky"
         },
         "languageSettings": {
             "title": "Language"
@@ -146,41 +154,6 @@
                 "exec": "Switch"
             }
         },
-        "v1ImportSettings": {
-            "title": "Import from v1",
-            "description": "For those who lost their v1 key: restore posts and your profile from a v1 backup file into this account. The imported content is re-signed with a key issued just for the import, so it becomes content of this (new) account.",
-            "masterKeyRequired": "Importing requires logging in with your master key. Please log out and log in again with your master key.",
-            "step0": {
-                "title": "Select your backup file",
-                "desc": "Select the backup file (.txt) you exported from the old v1 client.",
-                "selectFile": "Select file",
-                "parseError": "Could not read this file as a v1 backup. Please check that you selected the correct file.",
-                "readError": "Failed to read the file."
-            },
-            "step1": {
-                "title": "Review the conversion",
-                "oldCcid": "Detected v1 address: {{ccid}}",
-                "stats": "{{messages}} posts and {{profiles}} profile updates will be imported.",
-                "excluded": "Excluded: {{deleted}} deleted, {{skipped}} unsupported (favorites, communities, etc.), {{invalid}} unreadable.",
-                "externalReferences": "{{count}} replies/reroutes reference other users' posts. They may not display if those users have not migrated their server to v2.",
-                "next": "Next",
-                "back": "Choose another file"
-            },
-            "step2": {
-                "title": "Import",
-                "desc": "Re-signs the converted data with your current key and imports it into this server. This may take a while — keep this screen open.",
-                "progress": "{{done}}/{{total}} chunks done ({{imported}} commits imported)",
-                "confirmTitle": "Start import",
-                "confirmDesc": "The v1 content will be imported as content of your current account. Undoing this later requires deleting the items one by one.",
-                "exec": "Start import",
-                "working": "Importing…"
-            },
-            "step3": {
-                "title": "Done",
-                "desc": "{{count}} commits imported. Your old posts should now appear on your profile page and timeline.",
-                "failures": "{{count}} commits failed to import."
-            }
-        },
         "mediaSettings": {
             "title": "Media",
             "storageQuota": "Storage Usage",
@@ -210,7 +183,7 @@
             "document": "Document"
         },
         "emojiSettings": {
-            "title": "Emoji",
+            "title": "Emoji Packs",
             "packages": "Emoji Packages",
             "updateAll": "Update All",
             "packageURL": "Emoji Package URL",
@@ -346,7 +319,8 @@
             "developerMode": "Developer Mode",
             "mockHome": "Home screen mock",
             "mockExplorer": "Explorer screen mock",
-            "mockID": "ID screen mock"
+            "mockID": "ID screen mock",
+            "inventory": "Inventory"
         },
         "id": {
             "title": "ID Management",
@@ -407,7 +381,8 @@
                 "description": "Master keys of previous accounts, preserved when you signed in with a different account. Download a backup and store it somewhere safe. Deletion becomes available after downloading.",
                 "download": "Download backup",
                 "delete": "Delete"
-            }
+            },
+            "migration": "Move to another server"
         },
         "activitypub": {
             "title": "ActivityPub Settings",

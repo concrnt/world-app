@@ -6,9 +6,10 @@ import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
-import { MdArrowForward, MdBadge, MdKey, MdPublic, MdQrCodeScanner } from 'react-icons/md'
+import { MdArrowForward, MdBadge, MdKey, MdLuggage, MdPublic, MdQrCodeScanner } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
 import { QRSetup } from './QRSetup'
+import { MigrationSettingsView } from './MigrationSettings'
 import { BackupKeyButton } from '../components/BackupKeyButton'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
@@ -174,6 +175,14 @@ export const IDView = () => {
                     {t('loginOnAnotherDevice')}
                 </Button>
                 <BackupKeyButton />
+                <Button
+                    variant="outlined"
+                    startIcon={<MdLuggage />}
+                    endIcon={<MdArrowForward size={20} />}
+                    onClick={() => stack.push(<MigrationSettingsView />)}
+                >
+                    {t('migration')}
+                </Button>
             </div>
             <Modal open={aliasModalOpen} onClose={() => setAliasModalOpen(false)}>
                 <AliasSetupModalContent onClose={() => setAliasModalOpen(false)} />

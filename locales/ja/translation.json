@@ -34,18 +34,12 @@
     "views": {
         "settings": {
             "title": "設定",
-            "general": "一般",
-            "theme": "テーマ設定",
-            "activitypub": "ActivityPub設定",
-            "bluesky": "Bluesky設定",
             "id": "ID管理",
-            "emoji": "絵文字",
-            "lists": "リスト",
-            "media": "メディア",
-            "inventory": "インベントリ",
             "notifications": "通知",
-            "migration": "引っ越し",
-            "v1import": "v1からの移行",
+            "lists": "リスト",
+            "display": "表示とカスタマイズ",
+            "media": "メディア",
+            "integrations": "外部連携",
             "devTools": "開発者ツール",
             "account": "アカウント",
             "clearCache": "キャッシュを削除",
@@ -58,10 +52,24 @@
                 "commit": "コミット"
             }
         },
-        "generalSettings": {
-            "title": "一般",
+        "displaySettings": {
+            "title": "表示とカスタマイズ",
             "language": "言語",
-            "haptics": "触覚フィードバック"
+            "theme": "テーマ",
+            "haptics": "触覚フィードバック",
+            "fontSize": "文字サイズ",
+            "emoji": "絵文字パック"
+        },
+        "fontSizeSettings": {
+            "title": "文字サイズ",
+            "small": "小",
+            "medium": "標準",
+            "large": "大"
+        },
+        "integrationSettings": {
+            "title": "外部連携",
+            "activitypub": "ActivityPub設定",
+            "bluesky": "Bluesky設定"
         },
         "languageSettings": {
             "title": "言語"
@@ -146,41 +154,6 @@
                 "exec": "切り替える"
             }
         },
-        "v1ImportSettings": {
-            "title": "v1からの移行",
-            "description": "v1の鍵を紛失した方向けに、v1のバックアップファイルから投稿とプロフィールをこのアカウントに取り込みます。取り込んだ内容は取り込み用に発行される鍵で署名し直されるため、この(新しい)アカウントのコンテンツになります。",
-            "masterKeyRequired": "取り込みにはマスターキーでのログインが必要です。一度ログアウトし、マスターキーでログインし直してください。",
-            "step0": {
-                "title": "バックアップファイルを選択",
-                "desc": "旧v1クライアントでエクスポートしたバックアップファイル(.txt)を選択してください。",
-                "selectFile": "ファイルを選択",
-                "parseError": "v1のバックアップとして読み込めませんでした。正しいファイルか確認してください。",
-                "readError": "ファイルの読み込みに失敗しました。"
-            },
-            "step1": {
-                "title": "変換内容を確認",
-                "oldCcid": "検出したv1のアドレス: {{ccid}}",
-                "stats": "投稿{{messages}}件、プロフィール更新{{profiles}}件を取り込みます。",
-                "excluded": "対象外: 削除済み{{deleted}}件 / 未対応の種別(お気に入り・コミュニティ等){{skipped}}件 / 読み取り不能{{invalid}}件。",
-                "externalReferences": "他のユーザーの投稿への返信・リルートが{{count}}件あります。相手がv2へサーバー移行していない場合、参照先は表示できないことがあります。",
-                "next": "次へ",
-                "back": "別のファイルを選ぶ"
-            },
-            "step2": {
-                "title": "取り込み",
-                "desc": "変換したデータを現在の鍵で署名し直し、このサーバーに取り込みます。データ量によっては時間がかかります。作業中は画面を閉じないでください。",
-                "progress": "{{done}}/{{total}} チャンク完了({{imported}}件取り込み済み)",
-                "confirmTitle": "取り込みを開始",
-                "confirmDesc": "v1のコンテンツを現在のアカウントの投稿として取り込みます。あとで取り消すには1件ずつ削除する必要があります。",
-                "exec": "取り込みを開始",
-                "working": "取り込み中…"
-            },
-            "step3": {
-                "title": "完了",
-                "desc": "{{count}}件のコミットを取り込みました。プロフィールページやタイムラインに旧投稿が表示されるようになります。",
-                "failures": "{{count}}件のコミットの取り込みに失敗しました。"
-            }
-        },
         "mediaSettings": {
             "title": "メディア",
             "storageQuota": "ストレージ使用量",
@@ -210,7 +183,7 @@
             "document": "ドキュメント"
         },
         "emojiSettings": {
-            "title": "絵文字",
+            "title": "絵文字パック",
             "packages": "絵文字パッケージ",
             "updateAll": "全て更新",
             "packageURL": "絵文字パッケージURL",
@@ -346,7 +319,8 @@
             "developerMode": "開発者モード",
             "mockHome": "ホーム画面 mock",
             "mockExplorer": "探索画面 mock",
-            "mockID": "ID画面 mock"
+            "mockID": "ID画面 mock",
+            "inventory": "インベントリ"
         },
         "id": {
             "title": "ID管理",
@@ -406,7 +380,8 @@
                 "description": "別のアカウントでログインした際に退避された旧マスターキーです。バックアップをダウンロードして安全な場所に保管してください。削除はダウンロード後に可能になります。",
                 "download": "バックアップをダウンロード",
                 "delete": "削除"
-            }
+            },
+            "migration": "別のサーバーへ引っ越し"
         },
         "activitypub": {
             "title": "Activitypub設定",
