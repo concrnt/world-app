@@ -9,18 +9,13 @@ import { useNavigate } from 'react-router-dom'
 import {
     MdBadge,
     MdChevronRight,
-    MdEmojiEmotions,
-    MdInventory2,
+    MdDisplaySettings,
+    MdHub,
     MdList,
-    MdLuggage,
     MdNotifications,
-    MdPalette,
     MdPermMedia,
-    MdRestore,
-    MdTerminal,
-    MdTune
+    MdTerminal
 } from 'react-icons/md'
-import { SiActivitypub, SiBluesky } from 'react-icons/si'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import buildTime from '~build/time'
@@ -46,6 +41,7 @@ export const SettingsView = () => {
 
     const activitypubEnabled = 'net.concrnt.activitypub.settings' in (client.server?.endpoints ?? {})
     const blueskyEnabled = 'world.concrnt.atproto.info' in (client.server?.endpoints ?? {})
+    const integrationsEnabled = activitypubEnabled || blueskyEnabled
     const mediaEnabled = 'net.concrnt.storage.list' in (client.server?.endpoints ?? {})
 
     const handleAppInfoClick = () => {
@@ -77,38 +73,6 @@ export const SettingsView = () => {
                 <Text variant="h3">{t('title')}</Text>
                 <List>
                     <ListItem
-                        startIcon={<MdTune size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/general')}
-                    >
-                        {t('general')}
-                    </ListItem>
-                    <ListItem
-                        startIcon={<MdPalette size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/theme')}
-                    >
-                        {t('theme')}
-                    </ListItem>
-                    {activitypubEnabled && (
-                        <ListItem
-                            startIcon={<SiActivitypub size={24} />}
-                            endIcon={<MdChevronRight size={24} />}
-                            onClick={() => navigate('/settings/activitypub')}
-                        >
-                            {t('activitypub')}
-                        </ListItem>
-                    )}
-                    {blueskyEnabled && (
-                        <ListItem
-                            startIcon={<SiBluesky size={24} />}
-                            endIcon={<MdChevronRight size={24} />}
-                            onClick={() => navigate('/settings/bluesky')}
-                        >
-                            {t('bluesky')}
-                        </ListItem>
-                    )}
-                    <ListItem
                         startIcon={<MdBadge size={24} />}
                         endIcon={<MdChevronRight size={24} />}
                         onClick={() => navigate('/settings/id')}
@@ -116,11 +80,11 @@ export const SettingsView = () => {
                         {t('id')}
                     </ListItem>
                     <ListItem
-                        startIcon={<MdEmojiEmotions size={24} />}
+                        startIcon={<MdNotifications size={24} />}
                         endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/emoji')}
+                        onClick={() => navigate('/settings/notifications')}
                     >
-                        {t('emoji')}
+                        {t('notifications')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdList size={24} />}
@@ -128,6 +92,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/lists')}
                     >
                         {t('lists')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdDisplaySettings size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/display')}
+                    >
+                        {t('display')}
                     </ListItem>
                     {mediaEnabled && (
                         <ListItem
@@ -138,34 +109,15 @@ export const SettingsView = () => {
                             {t('media')}
                         </ListItem>
                     )}
-                    <ListItem
-                        startIcon={<MdInventory2 size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/inventory')}
-                    >
-                        {t('inventory')}
-                    </ListItem>
-                    <ListItem
-                        startIcon={<MdNotifications size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/notifications')}
-                    >
-                        {t('notifications')}
-                    </ListItem>
-                    <ListItem
-                        startIcon={<MdLuggage size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/migration')}
-                    >
-                        {t('migration')}
-                    </ListItem>
-                    <ListItem
-                        startIcon={<MdRestore size={24} />}
-                        endIcon={<MdChevronRight size={24} />}
-                        onClick={() => navigate('/settings/v1import')}
-                    >
-                        {t('v1import')}
-                    </ListItem>
+                    {integrationsEnabled && (
+                        <ListItem
+                            startIcon={<MdHub size={24} />}
+                            endIcon={<MdChevronRight size={24} />}
+                            onClick={() => navigate('/settings/integrations')}
+                        >
+                            {t('integrations')}
+                        </ListItem>
+                    )}
                     {developerMode && (
                         <ListItem
                             startIcon={<MdTerminal size={24} />}

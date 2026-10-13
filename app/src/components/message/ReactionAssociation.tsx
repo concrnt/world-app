@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { ReactionAssociationSchema, Schemas } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
+import { BlueskyRecordCard } from './BlueskyRecordCard'
 import { CCImage, Avatar, CfmRenderer } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
@@ -99,28 +100,41 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                     }}
                 />
             )}
-            {targetMessage && targetMessage.schema !== Schemas.apNote && (
-                <MessageLayout
-                    left={
-                        <div
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                push(
-                                    <ProfileView
-                                        ccid={targetMessage.author}
-                                        profileName={targetMessage.authorProfileName ?? undefined}
-                                    />
-                                )
-                            }}
-                        >
-                            <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
-                        </div>
-                    }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
-                >
-                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={targetMessage.value.emojis ?? {}} />
-                </MessageLayout>
+            {targetMessage && targetMessage.schema === Schemas.atprotoRecord && (
+                <BlueskyRecordCard
+                    atUri={targetMessage.value.atUri}
+                    onClick={() => {
+                        push(<PostView uri={targetMessage.uri} />)
+                    }}
+                />
             )}
+            {targetMessage &&
+                targetMessage.schema !== Schemas.apNote &&
+                targetMessage.schema !== Schemas.atprotoRecord && (
+                    <MessageLayout
+                        left={
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    push(
+                                        <ProfileView
+                                            ccid={targetMessage.author}
+                                            profileName={targetMessage.authorProfileName ?? undefined}
+                                        />
+                                    )
+                                }}
+                            >
+                                <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
+                            </div>
+                        }
+                        headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
+                    >
+                        <CfmRenderer
+                            messagebody={targetMessage.value.body}
+                            emojiDict={targetMessage.value.emojis ?? {}}
+                        />
+                    </MessageLayout>
+                )}
 
             {!targetMessage && (
                 <div style={{ paddingLeft: '48px', opacity: 0.5, fontSize: '12px' }}>{t('loading')}</div>

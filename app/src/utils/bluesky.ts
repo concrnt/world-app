@@ -39,8 +39,16 @@ export interface BskyPostView {
     record: {
         text?: string
         createdAt?: string
+        // app.bsky.feed.post のリプライ参照(StrongRef)。リプライ元の表示に使う
+        reply?: {
+            parent?: { uri: string; cid?: string }
+            root?: { uri: string; cid?: string }
+        }
     }
     embed?: BskyEmbedView
+    // ブリッジがconcrntから輸出した投稿なら、元のcckv URI(ブリッジのresolveが付加する)。
+    // APブリッジのNote URLからcckv URIを取り出す(parseBridgeNoteURL)のと同じ役割
+    concrntURI?: string
     replyCount?: number
     repostCount?: number
     likeCount?: number
@@ -83,4 +91,10 @@ export const bskySettingsKey = (ccid: string): string => {
 
 export const inboxKey = (ccid: string): string => {
     return `cckv://${ccid}/atproto.concrnt.world/inbox`
+}
+
+// URIがBlueskyブリッジの受信タイムライン(inboxKey)かどうか。
+// Blueskyのinboxは専用schemaを持たない(t/user.json)ためschemaでは区別できず、決定的なキーで判定する
+export const isBskyInboxKey = (uri: string): boolean => {
+    return /^cckv:\/\/[^/]+\/atproto\.concrnt\.world\/inbox$/.test(uri)
 }

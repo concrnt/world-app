@@ -7,7 +7,8 @@ import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
-import { MdBadge, MdKey, MdPublic } from 'react-icons/md'
+import { MdArrowForward, MdBadge, MdKey, MdLuggage, MdPublic } from 'react-icons/md'
+import { useNavigate } from 'react-router-dom'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
 import { RegistrationInfo } from '../components/RegistrationInfo'
@@ -63,6 +64,7 @@ const InfoTile = ({
 export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
+    const navigate = useNavigate()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
     const [subkeyCopied, setSubkeyCopied] = useState(false)
     const [downloadedSlots, setDownloadedSlots] = useState<string[]>([])
@@ -246,6 +248,15 @@ export const IDView = () => {
                 {localStorage.getItem('SubKey') && (
                     <Button onClick={copySubkey}>{subkeyCopied ? t('subkeyCopied') : t('copySubkey')}</Button>
                 )}
+
+                <Button
+                    variant="outlined"
+                    startIcon={<MdLuggage />}
+                    endIcon={<MdArrowForward size={20} />}
+                    onClick={() => navigate('/settings/migration')}
+                >
+                    {t('migration')}
+                </Button>
 
                 {evacuatedSlots.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>

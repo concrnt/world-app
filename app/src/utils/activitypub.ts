@@ -24,6 +24,11 @@ export const apInboxKey = (ccid: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/inbox`
 }
 
+// URIがAPブリッジの受信タイムライン(apInboxKey)かどうか。キーはブリッジ名前空間で決定的に導出されるのでURIで判定できる
+export const isApInboxKey = (uri: string): boolean => {
+    return /^cckv:\/\/[^/]+\/activitypub\.concrnt\.world\/inbox$/.test(uri)
+}
+
 // ブリッジがインバウンドnoteを保存するレコードキー(ブリッジ側inboxKeyと同一の決定的導出)。
 // serviceCcidはブリッジのサービスアカウント(net.concrnt.activitypub.infoのserviceAccountId)。
 export const apNoteKey = (serviceCcid: string, noteURL: string): string => {

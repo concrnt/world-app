@@ -1,0 +1,10 @@
+/* 投稿先の集合(通常側/リルート側)。display: contents で子はFooterの折返しflex行にそのまま並ぶ */
+.group {
+    display: contents;
+}
+
+/* TimelineTagは解決後にnullになり得る(schema不一致・未解決)ので、空かどうかはDOM上で
+   「PiEmptyが唯一の子」になった時だけ表示するCSSで判定する */
+.group > .empty:not(:only-child) {
+    display: none;
+}
