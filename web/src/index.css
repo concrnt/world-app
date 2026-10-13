@@ -5,8 +5,37 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Chrome は "Hiragino Sans" の 400 を W4、700 を W7 に割り当てる。本文 W3・太字 W6 に固定する */
+@font-face {
+    font-family: "Hiragino Sans UI";
+    src: local("Hiragino Sans W3"), local("HiraginoSans-W3");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Hiragino Sans UI";
+    src: local("Hiragino Sans W4"), local("HiraginoSans-W4");
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Hiragino Sans UI";
+    src: local("Hiragino Sans W5"), local("HiraginoSans-W5");
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Hiragino Sans UI";
+    src: local("Hiragino Sans W6"), local("HiraginoSans-W6");
+    font-weight: 700;
+    font-style: normal;
+}
+
 html {
-    font-family: "Hiragino Sans W3", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "メイリオ", Meiryo, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+    font-family: "Hiragino Sans UI", "Hiragino Kaku Gothic ProN", "メイリオ", Meiryo, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
     font-size: 16px;
     overscroll-behavior-y: none;
 }

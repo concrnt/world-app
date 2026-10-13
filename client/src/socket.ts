@@ -19,6 +19,12 @@ export class Socket {
 
     private checkConnectionInterval?: ReturnType<typeof setInterval>
     private heartbeatInterval?: ReturnType<typeof setInterval>
+    // ハートビート(購読リストの再送)に対する応答待ち。次のハートビートまでに何も届かなければ
+    // 相手が消えた接続(half-open: readyStateはOPENのまま)とみなして張り直す
+    private awaitingAck = false
+    // 接続先が subscribed 応答を返すサーバーか。未対応サーバー(旧バージョン)では応答が無いのが
+    // 正常なので、一度応答を見るまでは無応答を切断の根拠にしない
+    private ackSupported = false
     private reconnectTimeout?: ReturnType<typeof setTimeout>
     private connectPromise: Promise<void> | null = null
     private disposed = false
@@ -62,9 +68,24 @@ export class Socket {
 
         this.ws?.close?.() // 古い接続が残っているとイベントが二重配信されるため閉じる
         this.ws = new WS('wss://' + (this.hostOverride ?? this.api.defaultHost) + endpoint)
+        this.awaitingAck = false
+        this.ackSupported = false
 
         this.ws.onmessage = async (rawevent: any) => {
+            // 何か届いた=接続は生きている(イベントでも応答でもよい)
+            this.awaitingAck = false
             const event: RealtimeEvent = JSON.parse(rawevent.data)
+
+            if (event.type === 'subscribed') {
+                // listenの応答。サーバーが実際に購読しているリストが返る
+                this.ackSupported = true
+                const prefixes: string[] = (event as any).prefixes ?? []
+                const missing = Array.from(this.subscriptions.keys()).filter((p) => !prefixes.includes(p))
+                if (missing.length > 0) {
+                    console.info('socket subscribed without:', missing)
+                }
+                return
+            }
 
             switch (event.type) {
                 case 'created': {
@@ -118,9 +139,38 @@ export class Socket {
         this.openListeners.delete(listener)
     }
 
+    // 購読リストをそのまま再送する(listenは全置換なので何度送ってもよい)。サーバーは実際に
+    // 購読しているリストを subscribed で返すので、これを生存確認を兼ねたハートビートにする。
+    // 前回の送信に何の応答も無いまま次の周期が来たら、ブラウザが気付けない切断とみなして張り直す
     heartbeat() {
         if (this.ws?.readyState !== WS.OPEN) return
-        this.ws.send(JSON.stringify({ type: 'h' }))
+        if (this.ackSupported && this.awaitingAck) {
+            console.info('socket heartbeat unanswered. reconnecting')
+            this.discard()
+            this.reconnectNow()
+            return
+        }
+        this.awaitingAck = true
+        this.ws.send(JSON.stringify({ type: 'listen', prefixes: Array.from(this.subscriptions.keys()) }))
+    }
+
+    // 死んだとみなした接続を手放す。closeハンドシェイクは相手が居ないと完了しないので待たず、
+    // 以後のイベント(遅れて届いたcloseなど)も受け取らない
+    private discard() {
+        const ws = this.ws
+        if (!ws) return
+        ws.onmessage = null
+        ws.onerror = null
+        ws.onclose = null
+        ws.onopen = null
+        this.ws = undefined
+        this.awaitingAck = false
+        this.ackSupported = false
+        try {
+            ws.close()
+        } catch (e) {
+            console.info('socket close failed', e)
+        }
     }
 
     checkConnection() {
@@ -200,14 +250,14 @@ export class Socket {
             }
         })
         const newtimelines = Array.from(this.subscriptions.keys())
+        // 購読解除は縮小したリストでlistenを送り直す(全置換。unlistenという種別は無い)
         if (newtimelines.length < currenttimelines.length && this.ws?.readyState === WS.OPEN) {
-            this.ws.send(JSON.stringify({ type: 'unlisten', prefixes: newtimelines }))
+            this.ws.send(JSON.stringify({ type: 'listen', prefixes: newtimelines }))
         }
     }
 
     ping() {
-        if (this.ws?.readyState !== WS.OPEN) return
-        this.ws.send(JSON.stringify({ type: 'h' }))
+        this.heartbeat()
     }
 
     dispose() {

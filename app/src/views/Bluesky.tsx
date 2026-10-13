@@ -10,10 +10,11 @@ import { NotFoundError } from '@concrnt/client'
 import { Schemas, semantics } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
+import { BskyFollowList } from '../components/BskyFollowList'
 import { Drawer } from '../ui/Drawer'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
-import { BskyProfile, bskySettingsKey, inboxKey } from '../utils/bluesky'
+import { bskySettingsKey, inboxKey } from '../utils/bluesky'
 
 interface BskyEntity {
     did: string
@@ -43,6 +44,8 @@ export const Bluesky = () => {
     const [setupError, setSetupError] = useState<string>()
     const [verifyError, setVerifyError] = useState<string>()
     const [verifying, setVerifying] = useState(false)
+    const [announcing, setAnnouncing] = useState(false)
+    const [announceResult, setAnnounceResult] = useState<'done' | 'failed'>()
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
@@ -82,27 +85,7 @@ export const Bluesky = () => {
             })
     }
 
-    const [following, setFollowing] = useState<BskyProfile[]>([])
-    const [followers, setFollowers] = useState<BskyProfile[]>([])
-    const [followersCursor, setFollowersCursor] = useState<string>()
-
     const [lookupDraft, setLookupDraft] = useState('')
-
-    const loadFollowers = (cursor?: string) => {
-        client.api
-            .callConcrntApi<{ followers: BskyProfile[]; cursor?: string }>(
-                client.server.domain,
-                'world.concrnt.atproto.followers',
-                cursor ? { cursor } : {}
-            )
-            .then((res) => {
-                setFollowers((prev) => (cursor ? [...prev, ...(res.followers ?? [])] : (res.followers ?? [])))
-                setFollowersCursor(res.cursor)
-            })
-            .catch((err) => {
-                console.log(err)
-            })
-    }
 
     const updateInfo = () => {
         client.api
@@ -138,17 +121,6 @@ export const Bluesky = () => {
             .catch((err) => {
                 if (!(err instanceof NotFoundError)) console.log(err)
             })
-
-        client.api
-            .callConcrntApi<{ following: BskyProfile[] }>(client.server.domain, 'world.concrnt.atproto.following', {})
-            .then((res) => {
-                setFollowing(res.following ?? [])
-            })
-            .catch((err) => {
-                console.log(err)
-            })
-
-        loadFollowers()
 
         const inboxUri = inboxKey(client.ccid)
         client.api
@@ -186,6 +158,8 @@ export const Bluesky = () => {
             <Header>{t('title')}</Header>
             <div
                 style={{
+                    flex: 1,
+                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: CssVar.space(2),
@@ -216,6 +190,7 @@ export const Bluesky = () => {
                                         {},
                                         {
                                             method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
                                                 handle
                                             })
@@ -314,6 +289,38 @@ export const Bluesky = () => {
                         />
                         <Button onClick={() => commitSettings(bridgeEnabled)}>{t('update')}</Button>
                         <Divider />
+                        <Text>{t('announceDesc')}</Text>
+                        {announceResult === 'done' && <Text variant="caption">{t('announceDone')}</Text>}
+                        {announceResult === 'failed' && <Text style={{ color: '#ff5b5b' }}>{t('announceFailed')}</Text>}
+                        <Button
+                            disabled={announcing}
+                            onClick={() => {
+                                setAnnouncing(true)
+                                setAnnounceResult(undefined)
+                                client.api
+                                    .callConcrntApi<BskyEntity>(
+                                        client.server.domain,
+                                        'world.concrnt.atproto.announce',
+                                        {},
+                                        {
+                                            method: 'POST'
+                                        }
+                                    )
+                                    .then(() => {
+                                        setAnnounceResult('done')
+                                    })
+                                    .catch((err) => {
+                                        console.log(err)
+                                        setAnnounceResult('failed')
+                                    })
+                                    .finally(() => {
+                                        setAnnouncing(false)
+                                    })
+                            }}
+                        >
+                            {t('announce')}
+                        </Button>
+                        <Divider />
                         <IconButton
                             onClick={(e) => {
                                 e.stopPropagation()
@@ -325,89 +332,6 @@ export const Bluesky = () => {
                         <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
                             <Subscription target={inboxKey(client.ccid)} />
                         </Drawer>
-                        {following.length > 0 && (
-                            <>
-                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
-                                    {t('following')}
-                                </Text>
-                                {following.map((profile) => (
-                                    <div
-                                        key={profile.did}
-                                        onClick={() => {
-                                            stack.push(<BskyView uri={profile.did} />)
-                                        }}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {profile.avatar && (
-                                            <img
-                                                src={profile.avatar}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%'
-                                                }}
-                                            />
-                                        )}
-                                        <Text style={{ fontWeight: 'bold' }}>
-                                            {profile.displayName || profile.handle}
-                                        </Text>
-                                        <Text variant="caption">@{profile.handle}</Text>
-                                    </div>
-                                ))}
-                                <Divider />
-                            </>
-                        )}
-                        {followers.length > 0 && (
-                            <>
-                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
-                                    {t('followers')}
-                                </Text>
-                                {followers.map((profile) => (
-                                    <div
-                                        key={profile.did}
-                                        onClick={() => {
-                                            stack.push(<BskyView uri={profile.did} />)
-                                        }}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {profile.avatar && (
-                                            <img
-                                                src={profile.avatar}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%'
-                                                }}
-                                            />
-                                        )}
-                                        <Text style={{ fontWeight: 'bold' }}>
-                                            {profile.displayName || profile.handle}
-                                        </Text>
-                                        <Text variant="caption">@{profile.handle}</Text>
-                                    </div>
-                                ))}
-                                {followersCursor && (
-                                    <Button
-                                        onClick={() => {
-                                            loadFollowers(followersCursor)
-                                        }}
-                                    >
-                                        {t('loadMore')}
-                                    </Button>
-                                )}
-                                <Divider />
-                            </>
-                        )}
                         <TextField
                             value={lookupDraft}
                             placeholder="alice.bsky.social / at://..."
@@ -420,6 +344,8 @@ export const Bluesky = () => {
                         >
                             {t('inquiry')}
                         </Button>
+                        <Divider />
+                        <BskyFollowList />
                     </>
                 )}
             </div>

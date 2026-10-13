@@ -464,13 +464,14 @@
             "verifyFailed": "Verification failed. Check that the record is published and try again after a while.",
             "active": "Bluesky integration is enabled.",
             "yourHandle": "Your handle: @{{handle}}",
+            "announceDesc": "If your handle or profile is not showing up on Bluesky (e.g. it appears as handle.invalid), you can re-send your account information.",
+            "announce": "Re-send to Bluesky",
+            "announceDone": "Re-sent. It can take a few minutes to be reflected.",
+            "announceFailed": "Re-send failed. Please wait a while and try again.",
             "enabledToggle": "Enable federation",
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to Bluesky. If none are set, your home timeline is used.",
             "update": "Update",
-            "following": "Following",
-            "followers": "Followers",
-            "loadMore": "Show more",
             "inquiry": "Inquiry"
         },
         "bskyPerson": {
@@ -589,6 +590,10 @@
             "openRemote": "Open on remote server",
             "unavailable": "This post could not be fetched (it may have been deleted or is private)",
             "fetchFailed": "Failed to load this post (server unreachable)"
+        },
+        "blueskyRecord": {
+            "openRemote": "Open on bsky.app",
+            "notFound": "This post could not be fetched"
         },
         "followAck": {
             "userFollowed": "{{name}} followed",
@@ -790,6 +795,15 @@
             "follow": "Follow",
             "unfollow": "Unfollow",
             "pending": "Pending",
+            "loadMore": "Load more",
+            "empty": "No users",
+            "loadError": "Failed to load"
+        },
+        "bskyFollowList": {
+            "following": "Following",
+            "followers": "Followers",
+            "follow": "Follow",
+            "unfollow": "Unfollow",
             "loadMore": "Load more",
             "empty": "No users",
             "loadError": "Failed to load"

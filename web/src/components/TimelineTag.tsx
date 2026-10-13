@@ -28,12 +28,13 @@ export const TimelineTag = (props: Props) => {
                 style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.25rem'
+                    gap: '1px',
+                    flexShrink: 0
                 }}
                 onClick={props.onClick}
             >
                 <MdOutlineTag size={16} />
-                <Text style={props.style}>{staticTimelineLabel(props.uri)}</Text>
+                <Text style={{ whiteSpace: 'nowrap', ...props.style }}>{staticTimelineLabel(props.uri)}</Text>
             </span>
         )
     }
@@ -68,12 +69,15 @@ const Inner = (props: InnerProps) => {
             style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem'
+                gap: '1px',
+                flexShrink: 0
             }}
             onClick={props.onClick}
         >
             <MdOutlineTag size={16} />
-            <Text style={props.style}>{timeline.shortname?.trim() || (timeline.name ?? 'no name')}</Text>
+            <Text style={{ whiteSpace: 'nowrap', ...props.style }}>
+                {timeline.shortname?.trim() || (timeline.name ?? 'no name')}
+            </Text>
         </span>
     )
 }

@@ -184,7 +184,11 @@ export const ApNote = (props: Props) => {
                                     client.server.domain,
                                     'net.concrnt.activitypub.import',
                                     {},
-                                    { method: 'POST', body: JSON.stringify({ uri: props.note.id }) }
+                                    {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ uri: props.note.id })
+                                    }
                                 )
                                 // 直前の存在チェックがKVSに負キャッシュ(404の記憶)を残しているため、
                                 // no-cacheで正エントリを取り直す(commit伝播待ちで1回だけリトライ)

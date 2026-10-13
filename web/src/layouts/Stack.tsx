@@ -1,5 +1,6 @@
-import { ReactNode, useEffect, useRef } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
+import { isSwipeCancelled, useSwipeGuard } from '@concrnt/ui'
 import { useTranslation } from 'react-i18next'
 
 import { MdArrowBack } from 'react-icons/md'
@@ -24,8 +25,9 @@ export const SwipableView = ({ onPop, children }: { onPop: () => void; children:
     const popVelocity = 50 // px/s 目安
 
     // directionLockでyにロックされた縦スクロールでもonDragEndは発火し、infoには
-    // 生のジェスチャの速度が入るため、xロック時以外はpop判定しない
-    const lockedDirection = useRef<'x' | 'y' | null>(null)
+    // 生のジェスチャの速度が入るため、xロック時以外はpop判定しない。
+    // 横スワイプ中にブラウザがタッチをスクロールとして奪う(pointercancel)のも防ぐ
+    const swipe = useSwipeGuard()
 
     const hintOpacity = useTransform(x, [0, popDistance], [0, 1])
 
@@ -59,6 +61,7 @@ export const SwipableView = ({ onPop, children }: { onPop: () => void; children:
             </motion.div>
 
             <motion.div
+                ref={swipe.ref}
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -75,17 +78,16 @@ export const SwipableView = ({ onPop, children }: { onPop: () => void; children:
                 dragElastic={0}
                 dragMomentum={false}
                 dragConstraints={{ left: 0, right: width }}
-                onPointerDownCapture={() => {
-                    // ジェスチャごとにロック方向をリセットする。onDragStartはframe経由の遅延実行で
-                    // 同期発火のonDirectionLockより後に走ることがあるため、ここで行う
-                    lockedDirection.current = null
-                }}
-                onDirectionLock={(axis) => {
-                    lockedDirection.current = axis
-                }}
-                onDragEnd={(_, info) => {
+                onDirectionLock={swipe.onDirectionLock}
+                onDragEnd={(event, info) => {
+                    // ブラウザがタッチを奪った(指はまだ画面上)。残る/消えるの判定はせず元の位置へ戻す
+                    if (isSwipeCancelled(event)) {
+                        animate(x, 0, { duration: 0.12 })
+                        return
+                    }
+
                     const shouldPop =
-                        lockedDirection.current === 'x' &&
+                        swipe.lockedDirection.current === 'x' &&
                         (info.offset.x > popDistance || info.velocity.x > popVelocity)
 
                     if (shouldPop) {

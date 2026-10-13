@@ -286,6 +286,7 @@ export const Activitypub = () => {
                                         {},
                                         {
                                             method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
                                                 id: idDraft
                                             })
