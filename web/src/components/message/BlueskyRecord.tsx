@@ -8,6 +8,7 @@ import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { AtprotoRecordSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
+import { SiBluesky } from 'react-icons/si'
 
 interface Props {
     atUri: string
@@ -75,13 +76,40 @@ const Post = (props: {
                 </div>
             }
             headerLeft={
-                <Text
+                <span
                     style={{
-                        fontWeight: 'bold'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
                     }}
                 >
-                    {post.author.displayName || post.author.handle}
-                </Text>
+                    <Text
+                        style={{
+                            fontWeight: 'bold',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}
+                    >
+                        {post.author.displayName || post.author.handle}
+                    </Text>
+                    <SiBluesky size={14} style={{ flexShrink: 0 }} title="Bluesky" />
+                    <span
+                        style={{
+                            fontSize: '0.75rem',
+                            opacity: 0.7,
+                            // 幅が足りないときは名前より先にこちらを見切る
+                            flexShrink: 1000,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}
+                    >
+                        @{post.author.handle}
+                    </span>
+                </span>
             }
             headerRight={post.record.createdAt && <TimeDiff date={new Date(post.record.createdAt)} />}
         >
