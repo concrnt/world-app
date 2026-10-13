@@ -472,9 +472,6 @@
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to Bluesky. If none are set, your home timeline is used.",
             "update": "Update",
-            "following": "Following",
-            "followers": "Followers",
-            "loadMore": "Show more",
             "inquiry": "Inquiry"
         },
         "bskyPerson": {
@@ -794,6 +791,15 @@
             "follow": "Follow",
             "unfollow": "Unfollow",
             "pending": "Pending",
+            "loadMore": "Load more",
+            "empty": "No users",
+            "loadError": "Failed to load"
+        },
+        "bskyFollowList": {
+            "following": "Following",
+            "followers": "Followers",
+            "follow": "Follow",
+            "unfollow": "Unfollow",
             "loadMore": "Load more",
             "empty": "No users",
             "loadError": "Failed to load"

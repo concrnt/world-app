@@ -471,9 +471,6 @@
             "forwardTimeline": "転送元タイムライン",
             "forwardTimelineDesc": "選択したタイムラインへの自分の投稿がBlueskyへ転送されます。未設定の場合はホームタイムラインが使用されます。",
             "update": "更新",
-            "following": "フォロー中",
-            "followers": "フォロワー",
-            "loadMore": "もっと見る",
             "inquiry": "照会"
         },
         "bskyPerson": {
@@ -793,6 +790,15 @@
             "follow": "フォロー",
             "unfollow": "フォロー解除",
             "pending": "承認待ち",
+            "loadMore": "もっと見る",
+            "empty": "ユーザーがいません",
+            "loadError": "読み込みに失敗しました"
+        },
+        "bskyFollowList": {
+            "following": "フォロー中",
+            "followers": "フォロワー",
+            "follow": "フォロー",
+            "unfollow": "フォロー解除",
             "loadMore": "もっと見る",
             "empty": "ユーザーがいません",
             "loadError": "読み込みに失敗しました"
