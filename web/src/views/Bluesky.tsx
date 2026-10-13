@@ -43,6 +43,8 @@ export const Bluesky = () => {
     const [setupError, setSetupError] = useState<string>()
     const [verifyError, setVerifyError] = useState<string>()
     const [verifying, setVerifying] = useState(false)
+    const [announcing, setAnnouncing] = useState(false)
+    const [announceResult, setAnnounceResult] = useState<'done' | 'failed'>()
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
@@ -314,6 +316,38 @@ export const Bluesky = () => {
                             setSelectedProfile={setListenProfile}
                         />
                         <Button onClick={() => commitSettings(bridgeEnabled)}>{t('update')}</Button>
+                        <Divider />
+                        <Text>{t('announceDesc')}</Text>
+                        {announceResult === 'done' && <Text variant="caption">{t('announceDone')}</Text>}
+                        {announceResult === 'failed' && <Text style={{ color: '#ff5b5b' }}>{t('announceFailed')}</Text>}
+                        <Button
+                            disabled={announcing}
+                            onClick={() => {
+                                setAnnouncing(true)
+                                setAnnounceResult(undefined)
+                                client.api
+                                    .callConcrntApi<BskyEntity>(
+                                        client.server.domain,
+                                        'world.concrnt.atproto.announce',
+                                        {},
+                                        {
+                                            method: 'POST'
+                                        }
+                                    )
+                                    .then(() => {
+                                        setAnnounceResult('done')
+                                    })
+                                    .catch((err) => {
+                                        console.log(err)
+                                        setAnnounceResult('failed')
+                                    })
+                                    .finally(() => {
+                                        setAnnouncing(false)
+                                    })
+                            }}
+                        >
+                            {t('announce')}
+                        </Button>
                         <Divider />
                         <IconButton
                             onClick={(e) => {
