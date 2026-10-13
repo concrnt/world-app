@@ -84,3 +84,9 @@ export const bskySettingsKey = (ccid: string): string => {
 export const inboxKey = (ccid: string): string => {
     return `cckv://${ccid}/atproto.concrnt.world/inbox`
 }
+
+// URIがBlueskyブリッジの受信タイムライン(inboxKey)かどうか。
+// Blueskyのinboxは専用schemaを持たない(t/user.json)ためschemaでは区別できず、決定的なキーで判定する
+export const isBskyInboxKey = (uri: string): boolean => {
+    return /^cckv:\/\/[^/]+\/atproto\.concrnt\.world\/inbox$/.test(uri)
+}

@@ -9,7 +9,7 @@ import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { AtprotoRecordSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
-import { SiBluesky } from 'react-icons/si'
+import { RiBlueskyLine } from 'react-icons/ri'
 import { MdOpenInNew } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 
@@ -131,7 +131,7 @@ const Post = (props: {
                     >
                         {post.author.displayName || post.author.handle}
                     </Text>
-                    <SiBluesky size={14} style={{ flexShrink: 0 }} title="Bluesky" />
+                    <RiBlueskyLine size={14} style={{ flexShrink: 0 }} title="Bluesky" />
                     <span
                         style={{
                             fontSize: '0.75rem',
