@@ -7,12 +7,4 @@
 
 export interface AtprotoFollowNotifySchema {
     did: string
-    profileOverride?: {
-        username?: string
-        avatar?: string
-        description?: string
-        link?: string
-        characterID?: string
-        profileOverride?: string
-    }
 }

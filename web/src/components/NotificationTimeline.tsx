@@ -8,7 +8,9 @@ import {
     useLayoutEffect,
     useReducer,
     useRef,
-    useState
+    useState,
+    use,
+    useMemo
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
@@ -28,7 +30,8 @@ import {
 import { MessageContainer, MessageSnapshotContext } from './message'
 import { NotificationSnapshot } from '../lib/timelineSnapshot'
 import { QueryTimelineContext } from './QueryTimeline'
-import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Text } from '@concrnt/ui'
+import { CCImage, Avatar, Button, CfmRenderer, CssVar, Divider, Skeleton, Text } from '@concrnt/ui'
+import { BskyProfile } from '../utils/bluesky'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
@@ -725,14 +728,38 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
 }
 
 // Blueskyユーザーからのフォロー通知の表示
-// 集約せず 1 件ずつ表示する。author はブリッジのサービスアカウントなので、
-// 表示は value に埋め込まれた profileOverride（ブリッジがingest時に解決済み）を使う。
+// 集約せず 1 件ずつ表示する。author はブリッジのサービスアカウントで、value はフォロワーの DID だけを持つ。
+// 表示名・アバターは BlueskyRecord と同じくブリッジの resolveActor で表示時に解決する
+// (ActivityPub ブリッジ同型: レコードは対象を指す URI だけを持ち、スナップショットは持たない)。
 // タップでフォロワーの Bluesky プロフィールへ。
 const BskyFollowNotification = (props: { item: Message<AtprotoFollowNotifySchema> }) => {
+    const { client } = useClient()
+    const did = props.item.value.did
+
+    const profilePromise = useMemo(() => {
+        return client.api
+            .callConcrntApi<BskyProfile>(client.server.domain, 'world.concrnt.atproto.resolveActor', { target: did })
+            .catch(() => null)
+    }, [client, did])
+
+    return (
+        <Suspense fallback={<BskyFollowNotificationRow did={did} />}>
+            <BskyFollowNotificationResolved did={did} profilePromise={profilePromise} />
+        </Suspense>
+    )
+}
+
+const BskyFollowNotificationResolved = (props: { did: string; profilePromise: Promise<BskyProfile | null> }) => {
+    const profile = use(props.profilePromise)
+    return <BskyFollowNotificationRow did={props.did} profile={profile} />
+}
+
+// profile: undefined=解決中(名前はスケルトン) / null=解決失敗(DID をそのまま出す)
+const BskyFollowNotificationRow = (props: { did: string; profile?: BskyProfile | null }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.notificationTimeline' })
     const navigate = useNavigate()
 
-    const override = props.item.value.profileOverride
+    const name = props.profile?.displayName || props.profile?.handle || props.did
 
     return (
         <div
@@ -742,7 +769,7 @@ const BskyFollowNotification = (props: { item: Message<AtprotoFollowNotifySchema
                 cursor: 'pointer'
             }}
             onClick={() => {
-                navigate('/bluesky/view/' + encodeURIComponent(props.item.value.did))
+                navigate('/bluesky/view/' + encodeURIComponent(props.did))
             }}
         >
             {/* 左カラム: フォローアイコン */}
@@ -770,11 +797,15 @@ const BskyFollowNotification = (props: { item: Message<AtprotoFollowNotifySchema
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', flexWrap: 'wrap' }}>
-                    <Avatar ccid={props.item.author} src={override?.avatar} style={{ width: '32px', height: '32px' }} />
+                    <Avatar ccid={props.did} src={props.profile?.avatar} style={{ width: '32px', height: '32px' }} />
                 </div>
 
                 <div style={{ fontSize: '13px', opacity: 0.8 }}>
-                    <span>{t('bskyFollow', { name: override?.username ?? props.item.value.did })}</span>
+                    {props.profile === undefined ? (
+                        <Skeleton style={{ width: '12em', height: '1em' }} />
+                    ) : (
+                        <span>{t('bskyFollow', { name })}</span>
+                    )}
                 </div>
             </div>
         </div>

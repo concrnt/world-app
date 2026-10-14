@@ -73,7 +73,6 @@ const Post = (props: {
     const post = use(props.postPromise)
 
     if (!post) {
-        const override = props.message?.value.profileOverride
         // ブリッジで解決できなくても元の投稿自体は bsky.app に残っている場合があるので、AP同様に導線だけ出す
         const fallbackUrl = bskyPostUrlFromAtUri(props.atUri)
         return (
@@ -85,10 +84,7 @@ const Post = (props: {
                     gap: CssVar.space(1)
                 }}
             >
-                <Text>
-                    {t('notFound')}
-                    {override?.username ? ` (by ${override.username})` : ''}
-                </Text>
+                <Text>{t('notFound')}</Text>
                 {fallbackUrl && (
                     <ExternalLink href={fallbackUrl} style={openRemoteStyle}>
                         <MdOpenInNew size={14} />
