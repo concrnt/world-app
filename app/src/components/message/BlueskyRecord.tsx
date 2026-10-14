@@ -1,5 +1,5 @@
 import { Suspense, use, useMemo } from 'react'
-import { BskyPostView, getPostImages, getPostExternal, bskyPostUrl, bskyPostUrlFromAtUri } from '../../utils/bluesky'
+import { BskyPostView, getPostMedias, getPostExternal, bskyPostUrl, bskyPostUrlFromAtUri } from '../../utils/bluesky'
 import { useStack } from '../../layouts/Stack'
 import { MessageLayout } from './MessageLayout'
 import { Avatar, CssVar, ExternalLink, Text } from '@concrnt/ui'
@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './RenderError'
 import { BlueskyRecordOneline } from './BlueskyRecordOneline'
+import { MediaGallery } from '../MediaGallery/main'
 
 interface Props {
     atUri: string
@@ -98,7 +99,7 @@ const Post = (props: {
         )
     }
 
-    const images = getPostImages(post)
+    const medias = getPostMedias(post)
     const external = getPostExternal(post)
     const postUrl = bskyPostUrl(post)
     // ネイティブのReplyMessage/ActivitypubNoteと同じく、リプライ元を1行表示で上に出す
@@ -182,29 +183,7 @@ const Post = (props: {
                 >
                     {post.record.text ?? ''}
                 </Text>
-                {images.length > 0 && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: CssVar.space(1)
-                        }}
-                    >
-                        {images.map((image, i) => (
-                            <img
-                                key={i}
-                                src={image.thumb}
-                                alt={image.alt ?? ''}
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '300px',
-                                    borderRadius: '8px',
-                                    objectFit: 'contain'
-                                }}
-                            />
-                        ))}
-                    </div>
-                )}
+                {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
                 {external && (
                     <ExternalLink
                         href={external.uri}

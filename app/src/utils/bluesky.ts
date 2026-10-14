@@ -12,6 +12,17 @@ export interface BskyImage {
     thumb: string
     fullsize: string
     alt?: string
+    aspectRatio?: { width: number; height: number }
+}
+
+// com.atproto.label.defs#label(appview が post view に付ける。自己ラベルは src=投稿者DID)
+export interface BskyLabel {
+    src?: string
+    uri?: string
+    cid?: string
+    val: string
+    neg?: boolean
+    cts?: string
 }
 
 export interface BskyExternal {
@@ -44,8 +55,12 @@ export interface BskyPostView {
             parent?: { uri: string; cid?: string }
             root?: { uri: string; cid?: string }
         }
+        // 投稿者の自己ラベル(com.atproto.label.defs#selfLabels)。appview は labels にも展開するが念のため両方読む
+        labels?: { values?: { val: string }[] }
     }
     embed?: BskyEmbedView
+    // appview が付けたモデレーションラベル(自己ラベル+ラベラーのもの)
+    labels?: BskyLabel[]
     // ブリッジがconcrntから輸出した投稿なら、元のcckv URI(ブリッジのresolveが付加する)。
     // APブリッジのNote URLからcckv URIを取り出す(parseBridgeNoteURL)のと同じ役割
     concrntURI?: string
@@ -77,6 +92,48 @@ export const getPostImages = (post: BskyPostView): BskyImage[] => {
 
 export const getPostExternal = (post: BskyPostView): BskyExternal | undefined => {
     return post.embed?.external ?? post.embed?.media?.external
+}
+
+// Blueskyのモデレーションラベル → concrnt の medias[].flag(warn/nude/porn/hard)。
+// メディアを隠す対象の global label だけを見る(spam 等の投稿全体向けラベルは対象外)。
+// 複数付いているときは先に並ぶものを優先する
+const MEDIA_LABEL_FLAGS: [label: string, flag: string][] = [
+    ['porn', 'porn'],
+    ['graphic-media', 'hard'],
+    ['gore', 'hard'], // graphic-media の旧名
+    ['nudity', 'nude'],
+    ['sexual', 'warn'],
+    ['!hide', 'warn'],
+    ['!warn', 'warn']
+]
+
+export const getPostMediaFlag = (post: BskyPostView): string | undefined => {
+    const vals = new Set<string>()
+    for (const label of post.labels ?? []) {
+        // neg は取り消しラベル
+        if (!label.neg) vals.add(label.val)
+    }
+    for (const label of post.record.labels?.values ?? []) vals.add(label.val)
+    return MEDIA_LABEL_FLAGS.find(([label]) => vals.has(label))?.[1]
+}
+
+// 画像embedを MediaGallery の medias 形式へ(ActivitypubNote の getMedias と同じ役割)。
+// ラベルは投稿単位なので全画像に同じ flag を付ける
+export const getPostMedias = (
+    post: BskyPostView
+): { mediaURL: string; mediaType: string; thumbnailURL?: string; altText?: string; flag?: string }[] => {
+    const flag = getPostMediaFlag(post)
+    return getPostImages(post).map((image) => {
+        // CDNのURLは .../<cid>@jpeg のように末尾に形式が付く
+        const ext = image.fullsize.match(/@(\w+)$/)?.[1]
+        return {
+            mediaURL: image.fullsize,
+            mediaType: ext ? `image/${ext}` : 'image/*',
+            thumbnailURL: image.thumb,
+            altText: image.alt || undefined,
+            flag
+        }
+    })
 }
 
 export const bskyProfileUrl = (handleOrDid: string): string => {
