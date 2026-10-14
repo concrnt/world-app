@@ -69,7 +69,8 @@
         "integrationSettings": {
             "title": "外部連携",
             "activitypub": "ActivityPub設定",
-            "bluesky": "Bluesky設定"
+            "bluesky": "Bluesky設定",
+            "experimental": "実験的"
         },
         "languageSettings": {
             "title": "言語"

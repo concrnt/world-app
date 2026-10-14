@@ -69,7 +69,8 @@
         "integrationSettings": {
             "title": "Integrations",
             "activitypub": "ActivityPub",
-            "bluesky": "Bluesky"
+            "bluesky": "Bluesky",
+            "experimental": "Experimental"
         },
         "languageSettings": {
             "title": "Language"

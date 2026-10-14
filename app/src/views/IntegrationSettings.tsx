@@ -1,4 +1,4 @@
-import { View, List, ListItem } from '@concrnt/ui'
+import { View, List, ListItem, Text } from '@concrnt/ui'
 import { MdChevronRight } from 'react-icons/md'
 import { SiActivitypub, SiBluesky } from 'react-icons/si'
 import { useTranslation } from 'react-i18next'
@@ -47,7 +47,24 @@ export const IntegrationSettingsView = () => {
                             endIcon={<MdChevronRight size={24} />}
                             onClick={() => stack.push(<Bluesky />)}
                         >
-                            {t('bluesky')}
+                            <span style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                                {t('bluesky')}
+                                <Text
+                                    variant="caption"
+                                    style={{
+                                        fontSize: '0.65rem',
+                                        opacity: 0.6,
+                                        fontWeight: 'normal',
+                                        flexShrink: 0,
+                                        border: `1px solid ${CssVar.divider}`,
+                                        borderRadius: CssVar.round(0.5),
+                                        padding: `1px ${CssVar.space(1)}`,
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {t('experimental')}
+                                </Text>
+                            </span>
                         </ListItem>
                     )}
                 </List>
