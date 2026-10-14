@@ -5,6 +5,7 @@ import { MessageLayout } from './MessageLayout'
 import { Avatar, CssVar, ExternalLink, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { BskyView } from '../../views/BskyView'
+import { PostView } from '../../views/Post'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { AtprotoRecordSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
@@ -118,7 +119,12 @@ const Post = (props: {
             <MessageLayout
                 detail={props.detail}
                 onClick={() => {
-                    push(<BskyView uri={post.uri} />)
+                    // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
+                    if (props.message) {
+                        push(<PostView uri={props.message.uri} />)
+                    } else {
+                        push(<BskyView uri={post.uri} />)
+                    }
                 }}
                 left={
                     <div

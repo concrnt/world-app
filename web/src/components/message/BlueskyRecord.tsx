@@ -117,7 +117,12 @@ const Post = (props: {
             <MessageLayout
                 detail={props.detail}
                 onClick={() => {
-                    navigate('/bluesky/view/' + encodeURIComponent(post.uri))
+                    // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
+                    if (props.message) {
+                        navigate('/post/' + encodeURIComponent(props.message.uri))
+                    } else {
+                        navigate('/bluesky/view/' + encodeURIComponent(post.uri))
+                    }
                 }}
                 left={
                     <div

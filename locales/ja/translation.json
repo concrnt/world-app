@@ -449,6 +449,12 @@
             "update": "更新",
             "inquiry": "照会"
         },
+        "bskyPost": {
+            "notImported": "この投稿はまだこのサーバーに取得されていません。",
+            "import": "concrntメッセージとして取得する",
+            "importing": "取得中...",
+            "importFailed": "取得に失敗しました"
+        },
         "bskyPerson": {
             "follow": "フォロー",
             "unfollow": "フォロー解除",

@@ -109,6 +109,13 @@ export const inboxKey = (ccid: string): string => {
     return `cckv://${ccid}/atproto.concrnt.world/inbox`
 }
 
+// ブリッジがミラーした投稿のレコードキー(ブリッジ側 toconcrnt.InboxKey と同一の決定的導出)。
+// serviceCcid はブリッジのサービスアカウント(world.concrnt.atproto.info の serviceCcid)。
+// APブリッジの apNoteKey と同じ CDID ハッシュ形式
+export const bskyRecordKey = (serviceCcid: string, atUri: string): string => {
+    return `cckv://${serviceCcid}/atproto.concrnt.world/inbox/${CDID.newFromStringX(atUri).toString()}`
+}
+
 // URIがBlueskyブリッジの受信タイムライン(inboxKey)かどうか。
 // Blueskyのinboxは専用schemaを持たない(t/user.json)ためschemaでは区別できず、決定的なキーで判定する
 export const isBskyInboxKey = (uri: string): boolean => {
