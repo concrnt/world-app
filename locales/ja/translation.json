@@ -69,7 +69,8 @@
         "integrationSettings": {
             "title": "外部連携",
             "activitypub": "ActivityPub設定",
-            "bluesky": "Bluesky設定"
+            "bluesky": "Bluesky設定",
+            "experimental": "実験的"
         },
         "languageSettings": {
             "title": "言語"
@@ -448,12 +449,21 @@
             "update": "更新",
             "inquiry": "照会"
         },
+        "bskyPost": {
+            "notImported": "この投稿はまだこのサーバーに取得されていません。",
+            "import": "concrntメッセージとして取得する",
+            "importing": "取得中...",
+            "importFailed": "取得に失敗しました"
+        },
         "bskyPerson": {
             "follow": "フォロー",
             "unfollow": "フォロー解除",
             "noDescription": "説明はまだありません",
             "bskyUserNotice": "このユーザーはBlueskyのユーザーです。",
-            "openRemote": "bsky.appで開く"
+            "openRemote": "bsky.appで開く",
+            "noPosts": "表示できる投稿はありません",
+            "loadFailed": "投稿を読み込めませんでした",
+            "reposted": "{{name}}がリポスト"
         },
         "home": {
             "setUpProfile": "プロフィールを設定しましょう！",
@@ -473,7 +483,12 @@
         },
         "query": {
             "title": "照会",
-            "submit": "照会"
+            "submit": "照会",
+            "resolving": "照会中...",
+            "invalid": "cckv:// のURIかCCIDを入力してください",
+            "notFound": "見つかりませんでした",
+            "unsupported": "このURIの種類は照会では開けません",
+            "failed": "照会に失敗しました: {{error}}"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"

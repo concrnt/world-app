@@ -10,11 +10,15 @@ import { ContactsView } from './Contacts'
 import { PostView } from './Post'
 import { TimelineView } from './Timeline'
 import { ProfileView } from './Profile'
+import { ListView } from './List'
+import { QueryView } from './Query'
 import { ApView } from './ApView'
 import { BskyView } from './BskyView'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
+import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -213,6 +217,62 @@ export const MainView = () => {
 
         return () => {
             listener?.unregister()
+        }
+    }, [client])
+
+    // cckv:// links opened outside the app (OS deep link): resolve the URI the
+    // same way the 照会 (Query) view does and open that, on top of the current tab.
+    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
+    // after login), so it is consumed here once. Warm start: live event.
+    useEffect(() => {
+        if (!client) return
+
+        const openDeepLink = (uri: string) => {
+            setOpen(false)
+            const stack = stackRefs.current[selectedTabRef.current]
+            resolveQueryTarget(client, uri)
+                .then((target) => {
+                    switch (target.kind) {
+                        case 'profile':
+                            stack?.push(
+                                <ProfileView ccid={target.ccid} profileName={target.profileName} hint={target.hint} />
+                            )
+                            break
+                        case 'post':
+                            stack?.push(<PostView uri={target.uri} />)
+                            break
+                        case 'timeline':
+                            stack?.push(<TimelineView uri={target.uri} />)
+                            break
+                        case 'list':
+                            stack?.push(<ListView uri={target.uri} />)
+                            break
+                    }
+                })
+                .catch(() => {
+                    // 解決できなかったURIは照会画面に入れた状態で開き、失敗理由をそこで見せる
+                    stack?.push(<QueryView initialQuery={uri} autoSubmit />)
+                })
+        }
+
+        getLaunchDeepLink()
+            .then((url) => {
+                if (url) openDeepLink(url)
+            })
+            .catch(() => {})
+
+        let unlisten: (() => void) | undefined
+        let cancelled = false
+        onDeepLink(openDeepLink)
+            .then((f) => {
+                if (cancelled) f()
+                else unlisten = f
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+            unlisten?.()
         }
     }, [client])
 

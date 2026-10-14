@@ -26,6 +26,14 @@
                 <!-- AndroidTV support -->
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
+            <!-- cckv:// links opened outside the app (tauri-plugin-deep-link;
+                 the scheme is also declared in tauri.conf.json plugins.deep-link) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="cckv" />
+            </intent-filter>
         </activity>
 
         <provider

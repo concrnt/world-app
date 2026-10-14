@@ -1,5 +1,5 @@
 import { Suspense, use, useMemo } from 'react'
-import { BskyPostView, getPostImages, getPostExternal, bskyPostUrl, bskyPostUrlFromAtUri } from '../../utils/bluesky'
+import { BskyPostView, getPostMedias, getPostExternal, bskyPostUrl, bskyPostUrlFromAtUri } from '../../utils/bluesky'
 import { MessageLayout } from './MessageLayout'
 import { Avatar, CssVar, ExternalLink, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
@@ -14,9 +14,12 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './RenderError'
 import { BlueskyRecordOneline } from './BlueskyRecordOneline'
+import { MediaGallery } from '../MediaGallery/main'
 
 interface Props {
     atUri: string
+    // 一覧(author feed)で既に取得済みのpost view。渡されたときはブリッジのresolveを呼ばない
+    post?: BskyPostView
     message?: Message<AtprotoRecordSchema>
     detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
@@ -26,10 +29,11 @@ export const BlueskyRecord = (props: Props) => {
     const { client } = useClient()
 
     const postPromise = useMemo(() => {
+        if (props.post) return Promise.resolve(props.post)
         return client.api
             .callConcrntApi<BskyPostView>(client.server.domain, 'world.concrnt.atproto.resolve', { uri: props.atUri })
             .catch(() => null)
-    }, [client, props.atUri])
+    }, [client, props.atUri, props.post])
 
     return (
         <Suspense fallback={<MessageSkeleton />}>
@@ -93,7 +97,7 @@ const Post = (props: {
         )
     }
 
-    const images = getPostImages(post)
+    const medias = getPostMedias(post)
     const external = getPostExternal(post)
     const postUrl = bskyPostUrl(post)
     // ネイティブのReplyMessage/ActivitypubNoteと同じく、リプライ元を1行表示で上に出す
@@ -114,7 +118,12 @@ const Post = (props: {
             <MessageLayout
                 detail={props.detail}
                 onClick={() => {
-                    navigate('/bluesky/view/' + encodeURIComponent(post.uri))
+                    // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
+                    if (props.message) {
+                        navigate('/post/' + encodeURIComponent(props.message.uri))
+                    } else {
+                        navigate('/bluesky/view/' + encodeURIComponent(post.uri))
+                    }
                 }}
                 left={
                     <div
@@ -176,29 +185,7 @@ const Post = (props: {
                 >
                     {post.record.text ?? ''}
                 </Text>
-                {images.length > 0 && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: CssVar.space(1)
-                        }}
-                    >
-                        {images.map((image, i) => (
-                            <img
-                                key={i}
-                                src={image.thumb}
-                                alt={image.alt ?? ''}
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '300px',
-                                    borderRadius: '8px',
-                                    objectFit: 'contain'
-                                }}
-                            />
-                        ))}
-                    </div>
-                )}
+                {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
                 {external && (
                     <ExternalLink
                         href={external.uri}
