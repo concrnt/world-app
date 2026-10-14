@@ -483,7 +483,12 @@
         },
         "query": {
             "title": "照会",
-            "submit": "照会"
+            "submit": "照会",
+            "resolving": "照会中...",
+            "invalid": "cckv:// のURIかCCIDを入力してください",
+            "notFound": "見つかりませんでした",
+            "unsupported": "このURIの種類は照会では開けません",
+            "failed": "照会に失敗しました: {{error}}"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"

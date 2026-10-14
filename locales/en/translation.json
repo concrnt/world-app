@@ -484,7 +484,12 @@
         },
         "query": {
             "title": "Inquiry",
-            "submit": "Inquiry"
+            "submit": "Inquiry",
+            "resolving": "Resolving...",
+            "invalid": "Enter a cckv:// URI or a CCID",
+            "notFound": "Not found",
+            "unsupported": "This kind of URI cannot be opened here",
+            "failed": "Failed to resolve: {{error}}"
         },
         "list": {
             "listNotFound": "List not found"
