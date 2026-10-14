@@ -23,6 +23,16 @@
       "csp": null
     }
   },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["cckv"],
+          "appLink": false
+        }
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

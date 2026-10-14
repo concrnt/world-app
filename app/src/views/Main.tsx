@@ -15,6 +15,7 @@ import { BskyView } from './BskyView'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
+import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -213,6 +214,39 @@ export const MainView = () => {
 
         return () => {
             listener?.unregister()
+        }
+    }, [client])
+
+    // cckv:// links opened outside the app (OS deep link): show exactly what
+    // the 照会 (Query) view shows for that URI, on top of the current tab.
+    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
+    // after login), so it is consumed here once. Warm start: live event.
+    useEffect(() => {
+        if (!client) return
+
+        const openDeepLink = (uri: string) => {
+            setOpen(false)
+            stackRefs.current[selectedTabRef.current]?.push(<TimelineView uri={uri} />)
+        }
+
+        getLaunchDeepLink()
+            .then((url) => {
+                if (url) openDeepLink(url)
+            })
+            .catch(() => {})
+
+        let unlisten: (() => void) | undefined
+        let cancelled = false
+        onDeepLink(openDeepLink)
+            .then((f) => {
+                if (cancelled) f()
+                else unlisten = f
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+            unlisten?.()
         }
     }, [client])
 

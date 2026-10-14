@@ -22,6 +22,10 @@ swift-rs = { git = "https://github.com/totegamma/swift-rs", branch = "fix/xcode2
 # that crashes release builds at launch. Fixed upstream in tao 0.37.0, which
 # tauri-runtime-wry (tao ^0.35) cannot reach; fork backports the one-liner.
 # Drop once a tao 0.35.4 backport ships (tauri-apps/tao#1340).
+# The fork additionally emits Event::Opened for the URLContexts of the first
+# scene connection (cold start from a cckv:// link). Upstream tao (dev) drops
+# them, so this patch is needed as long as the deep-link plugin relies on
+# RunEvent::Opened on iOS.
 tao = { git = "https://github.com/totegamma/tao", branch = "fix/ios27-scene-config-uaf" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -43,6 +47,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
+# ~2.4: 2.5+ requires tauri ^2.12 (-> tao 0.37 from crates.io, which would
+# bypass the tao fork patched above). Bump together with tauri.
+tauri-plugin-deep-link = "~2.4.10"
 concrnt = { path = "crates/concrnt" }
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
