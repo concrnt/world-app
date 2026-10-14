@@ -18,6 +18,8 @@ import { BlueskyRecordOneline } from './BlueskyRecordOneline'
 
 interface Props {
     atUri: string
+    // 一覧(author feed)で既に取得済みのpost view。渡されたときはブリッジのresolveを呼ばない
+    post?: BskyPostView
     message?: Message<AtprotoRecordSchema>
     detail?: boolean
     rerouted?: Message<RerouteMessageSchema>
@@ -27,10 +29,11 @@ export const BlueskyRecord = (props: Props) => {
     const { client } = useClient()
 
     const postPromise = useMemo(() => {
+        if (props.post) return Promise.resolve(props.post)
         return client.api
             .callConcrntApi<BskyPostView>(client.server.domain, 'world.concrnt.atproto.resolve', { uri: props.atUri })
             .catch(() => null)
-    }, [client, props.atUri])
+    }, [client, props.atUri, props.post])
 
     return (
         <Suspense fallback={<MessageSkeleton />}>

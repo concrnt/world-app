@@ -55,6 +55,22 @@ export interface BskyPostView {
     indexedAt?: string
 }
 
+// app.bsky.feed.getAuthorFeed の1行(ブリッジ world.concrnt.atproto.authorFeed が返す形)。
+// reason はリポスト(app.bsky.feed.defs#reasonRepost)のとき付く。post はリポスト元の投稿そのもの
+export interface BskyFeedItem {
+    post: BskyPostView
+    reason?: {
+        $type?: string
+        by?: BskyProfile
+        indexedAt?: string
+    }
+}
+
+export interface BskyAuthorFeed {
+    feed: BskyFeedItem[]
+    cursor?: string
+}
+
 export const getPostImages = (post: BskyPostView): BskyImage[] => {
     return post.embed?.images ?? post.embed?.media?.images ?? []
 }

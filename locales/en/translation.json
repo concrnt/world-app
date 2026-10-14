@@ -455,7 +455,10 @@
             "unfollow": "Unfollow",
             "noDescription": "No description yet",
             "bskyUserNotice": "This user is a Bluesky user.",
-            "openRemote": "Open on bsky.app"
+            "openRemote": "Open on bsky.app",
+            "noPosts": "No posts to show",
+            "loadFailed": "Failed to load posts",
+            "reposted": "Reposted by {{name}}"
         },
         "home": {
             "setUpProfile": "Let's set up your profile!",

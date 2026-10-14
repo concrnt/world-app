@@ -454,7 +454,10 @@
             "unfollow": "フォロー解除",
             "noDescription": "説明はまだありません",
             "bskyUserNotice": "このユーザーはBlueskyのユーザーです。",
-            "openRemote": "bsky.appで開く"
+            "openRemote": "bsky.appで開く",
+            "noPosts": "表示できる投稿はありません",
+            "loadFailed": "投稿を読み込めませんでした",
+            "reposted": "{{name}}がリポスト"
         },
         "home": {
             "setUpProfile": "プロフィールを設定しましょう！",
