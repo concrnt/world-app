@@ -1,6 +1,7 @@
 // Chrome内蔵 Translator / LanguageDetector API (Chrome 138+) の最小宣言。
 // @types/dom-chromium-ai を入れず、使う範囲だけを書く。
-// 両グローバルは非Chromium環境では未定義なので `typeof Translator !== 'undefined'` で必ずガードする
+// 両グローバルは非Chromium環境では未定義なので `typeof Translator !== 'undefined'` で必ずガードする。
+// 存在しても非対応プラットフォーム(Edge/Brave・Chrome Android 等)では availability() が 'unavailable' を返す
 export {}
 
 declare global {
