@@ -54,7 +54,7 @@ export const MessageActions = (props: Props) => {
     const isMobile = useIsMobile()
     const [linkCopied, setLinkCopied] = useState(false)
     const [sourceCopied, setSourceCopied] = useState(false)
-    // 本文の翻訳(翻訳APIが無い環境ではGoogle翻訳を外部で開く)。状態は本文側(TranslatedBody)と共有
+    // 本文の翻訳(翻訳APIが無い環境ではGoogle翻訳を外部で開く)。状態は本文側(TranslatableBody)と共有
     const messageTranslation = useMessageTranslation()
 
     // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
@@ -352,7 +352,7 @@ export const MessageActions = (props: Props) => {
                               <ListItem
                                   key="translateExternal"
                                   onClick={() => {
-                                      window.open(messageTranslation.externalUrl, '_blank', 'noopener,noreferrer')
+                                      window.open(messageTranslation.externalUrl(), '_blank', 'noopener,noreferrer')
                                       setMenuOpen(false)
                                   }}
                               >

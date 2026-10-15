@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
-import { TranslatedBody } from './TranslatedBody'
+import { TranslatableBody } from './TranslatableBody'
 import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
@@ -61,14 +61,13 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <MessageTranslationProvider text={message.value.body ?? ''}>
+            <MessageTranslationProvider>
                 <CollapsibleBody forceExpanded={props.forceExpanded}>
                     <AutoSummary body={message.value.body ?? ''}>
-                        <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                        <TranslatableBody>
+                            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                        </TranslatableBody>
                     </AutoSummary>
-                    <TranslatedBody
-                        render={(text) => <CfmRenderer messagebody={text} emojiDict={message.value.emojis ?? {}} />}
-                    />
                 </CollapsibleBody>
                 <MessageFooter message={message} rerouted={props.rerouted} />
             </MessageTranslationProvider>

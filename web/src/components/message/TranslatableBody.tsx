@@ -19,17 +19,17 @@ const languageName = (code: string, uiLanguage: string): string => {
 }
 
 interface Props {
-    // 訳文の描画(原文と同じレンダラに通す)
-    render: (text: string) => ReactNode
+    // 原文の描画(この要素の innerText が翻訳元になる)
+    children: ReactNode
 }
 
-// 原文の下に「○○による△△語からの翻訳」のキャプション付きで訳文を出す。
+// 原文を包み、翻訳後はその下に「○○による△△語からの翻訳」のキャプション付きで訳文をプレーンテキストで出す。
 // 翻訳中・失敗時はキャプションだけ出す。翻訳の実行/取り消しは MessageActions のメニューから
-export const TranslatedBody = (props: Props) => {
+export const TranslatableBody = (props: Props) => {
     const mt = useMessageTranslation()
     const { t, i18n } = useTranslation('', { keyPrefix: 'components.translatedBody' })
 
-    if (!mt || (!mt.working && !mt.error && !mt.translated)) return null
+    if (!mt) return <>{props.children}</>
 
     const caption = mt.working
         ? t('translating')
@@ -40,14 +40,21 @@ export const TranslatedBody = (props: Props) => {
                   engine: t(engineLabelKey[mt.translated.engine]),
                   language: languageName(mt.translated.sourceLanguage, i18n.resolvedLanguage ?? 'en')
               })
-            : ''
+            : undefined
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {caption}
-            </Text>
-            {mt.translated && props.render(mt.translated.text)}
-        </div>
+        <>
+            <div ref={mt.bodyRef}>{props.children}</div>
+            {caption !== undefined && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                    <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                        {caption}
+                    </Text>
+                    {mt.translated && (
+                        <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{mt.translated.text}</div>
+                    )}
+                </div>
+            )}
+        </>
     )
 }

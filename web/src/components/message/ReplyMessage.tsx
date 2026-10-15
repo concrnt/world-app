@@ -15,7 +15,7 @@ import { AutoSummary } from '../AutoSummary'
 import { CCUserChip } from '../CCUserChip'
 import { MdReply } from 'react-icons/md'
 import { CollapsibleBody } from './CollapsibleBody'
-import { TranslatedBody } from './TranslatedBody'
+import { TranslatableBody } from './TranslatableBody'
 import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
@@ -80,19 +80,16 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 {props.message.value.replyToMessageAuthor && (
                     <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
                 )}
-                <MessageTranslationProvider text={props.message.value.body ?? ''}>
+                <MessageTranslationProvider>
                     <CollapsibleBody forceExpanded={props.forceExpanded}>
                         <AutoSummary body={props.message.value.body ?? ''}>
-                            <CfmRenderer
-                                messagebody={props.message.value.body}
-                                emojiDict={props.message.value.emojis ?? {}}
-                            />
+                            <TranslatableBody>
+                                <CfmRenderer
+                                    messagebody={props.message.value.body}
+                                    emojiDict={props.message.value.emojis ?? {}}
+                                />
+                            </TranslatableBody>
                         </AutoSummary>
-                        <TranslatedBody
-                            render={(text) => (
-                                <CfmRenderer messagebody={text} emojiDict={props.message.value.emojis ?? {}} />
-                            )}
-                        />
                     </CollapsibleBody>
                     <MessageFooter message={props.message} rerouted={props.rerouted} />
                 </MessageTranslationProvider>

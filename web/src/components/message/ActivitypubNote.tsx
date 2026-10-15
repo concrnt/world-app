@@ -10,7 +10,7 @@ import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
-import { TranslatedBody } from './TranslatedBody'
+import { TranslatableBody } from './TranslatableBody'
 import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 import { ErrorNotice } from './ErrorNotice'
 import { AutoSummary } from '../AutoSummary'
@@ -24,12 +24,6 @@ import { RenderError } from './RenderError'
 import { MessageContainer } from './main'
 import { ActivitypubNoteOneline } from './ActivitypubNoteOneline'
 import { OnelineMessageLayout } from './OnelineLayout'
-
-// ActivityPubのHTML本文を翻訳用のプレーンテキストにする(改行はbr/pから復元)
-const htmlToText = (html: string): string => {
-    const normalized = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n')
-    return (new DOMParser().parseFromString(normalized, 'text/html').body.textContent ?? '').trim()
-}
 
 interface Props {
     actorURL?: string
@@ -87,11 +81,6 @@ const Note = (props: {
 
     const note = use(props.notePromise)
     const author = use(props.authorPromise)
-    // 翻訳元テキスト: MFMがあればそれ、無ければHTML本文をタグ除去してプレーン化する(訳文はHTMLでないのでpre-wrapで出す)
-    const translationSource = useMemo(() => {
-        if (!note || note instanceof Error) return ''
-        return note._misskey_content ?? htmlToText(note.content ?? '')
-    }, [note])
 
     if (!note || note instanceof Error) {
         // nullはnegative cacheヒット(=404由来)。404以外のエラーは接続系として文言を分ける
@@ -252,24 +241,17 @@ const Note = (props: {
                     </span>
                 }
             >
-                <MessageTranslationProvider text={translationSource}>
+                <MessageTranslationProvider>
                     <CollapsibleBody forceExpanded={props.forceExpanded}>
                         <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
-                            {note._misskey_content ? (
-                                <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
-                            ) : (
-                                <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
-                            )}
-                        </AutoSummary>
-                        <TranslatedBody
-                            render={(text) =>
-                                note._misskey_content ? (
-                                    <MfmRenderer messagebody={text} emojiDict={emojiDict} />
+                            <TranslatableBody>
+                                {note._misskey_content ? (
+                                    <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
                                 ) : (
-                                    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{text}</div>
-                                )
-                            }
-                        />
+                                    <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
+                                )}
+                            </TranslatableBody>
+                        </AutoSummary>
                     </CollapsibleBody>
                     {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
                     {props.detail && (
