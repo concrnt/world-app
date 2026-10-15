@@ -5,7 +5,7 @@ import { ReplyMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -53,7 +53,23 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                             )
                         }}
                     >
-                        <Avatar ccid={props.message.author} src={props.message.authorProfile?.avatar} />
+                        <Avatar
+                            ccid={props.message.author}
+                            src={props.message.authorProfile?.avatar}
+                            badge={
+                                // profileOverrideでアイコンが差し替えられた代理投稿(discord-bridge等)は、
+                                // 差し替え前のアイコン(サービスアカウント自身)を右下に添えて出どころを示す
+                                props.message.authorOriginalProfile && (
+                                    <Avatar
+                                        ccid={props.message.author}
+                                        src={props.message.authorOriginalProfile.avatar}
+                                        style={{ width: '16px', height: '16px' }}
+                                    />
+                                )
+                            }
+                            badgeColor={CssVar.contentBackground}
+                            badgeSize={20}
+                        />
                     </div>
                 }
                 headerLeft={<MessageAuthor message={props.message} />}
