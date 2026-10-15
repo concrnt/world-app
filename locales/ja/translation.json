@@ -598,10 +598,25 @@
             "share": "シェア",
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
-            "copySource": "ソースをコピー"
+            "copySource": "ソースをコピー",
+            "translate": "翻訳",
+            "hideTranslation": "翻訳を隠す",
+            "openGoogleTranslate": "Google翻訳で開く"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
+        },
+        "translatedBody": {
+            "translating": "翻訳中...",
+            "translatedBy": "{{engine}}による{{language}}からの翻訳",
+            "failed": "翻訳に失敗しました",
+            "unsupported": "この言語は翻訳できません",
+            "undetermined": "言語を判定できませんでした",
+            "needsTap": "もう一度お試しください",
+            "sameLanguage": "翻訳の必要はありません",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple翻訳",
+            "engineMlkit": "ML Kit"
         },
         "messageInspector": {
             "title": "インスペクター",

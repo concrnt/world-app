@@ -12,6 +12,8 @@ import { MessageAuthor } from './MessageAuthor'
 import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) => {
     const { push } = useStack()
@@ -54,17 +56,21 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {/* plaintextはマークダウン・絵文字のレンダリングを行わずそのまま表示する */}
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <div
-                    style={{
-                        whiteSpace: 'pre-wrap',
-                        overflowWrap: 'anywhere'
-                    }}
-                >
-                    {message.value.body}
-                </div>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <MessageTranslationProvider>
+                <CollapsibleBody forceExpanded={props.forceExpanded}>
+                    <TranslatableBody>
+                        <div
+                            style={{
+                                whiteSpace: 'pre-wrap',
+                                overflowWrap: 'anywhere'
+                            }}
+                        >
+                            {message.value.body}
+                        </div>
+                    </TranslatableBody>
+                </CollapsibleBody>
+                <MessageFooter message={message} rerouted={props.rerouted} />
+            </MessageTranslationProvider>
         </MessageLayout>
     )
 }

@@ -4426,6 +4426,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-translation"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-runtime"
 version = "2.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5772,6 +5782,7 @@ dependencies = [
  "tauri-plugin-scroll-killer",
  "tauri-plugin-share",
  "tauri-plugin-store",
+ "tauri-plugin-translation",
 ]
 
 [[package]]

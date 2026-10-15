@@ -1,35 +1,36 @@
 {
-  "$schema": "../gen/schemas/mobile-schema.json",
-  "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "barcode-scanner:allow-check-permissions",
-    "barcode-scanner:allow-request-permissions",
-    "barcode-scanner:allow-scan",
-    "barcode-scanner:allow-cancel",
-    "dialog:allow-message",
-    "haptics:allow-impact-feedback",
-    "haptics:allow-notification-feedback",
-    "haptics:allow-selection-feedback",
-    "haptics:allow-vibrate",
-    "keyboard:default",
-    "push:default",
-    "share:default",
-    "deep-link:default",
-    {
-      "identifier": "opener:allow-open-url",
-      "allow": [
+    "$schema": "../gen/schemas/mobile-schema.json",
+    "identifier": "default",
+    "description": "Capability for the main window",
+    "windows": ["main"],
+    "permissions": [
+        "core:default",
+        "barcode-scanner:allow-check-permissions",
+        "barcode-scanner:allow-request-permissions",
+        "barcode-scanner:allow-scan",
+        "barcode-scanner:allow-cancel",
+        "dialog:allow-message",
+        "haptics:allow-impact-feedback",
+        "haptics:allow-notification-feedback",
+        "haptics:allow-selection-feedback",
+        "haptics:allow-vibrate",
+        "keyboard:default",
+        "push:default",
+        "share:default",
+        "deep-link:default",
+        "translation:default",
         {
-          "url": "https://*",
-          "app": true
-        },
-        {
-          "url": "http://*",
-          "app": true
+            "identifier": "opener:allow-open-url",
+            "allow": [
+                {
+                    "url": "https://*",
+                    "app": true
+                },
+                {
+                    "url": "http://*",
+                    "app": true
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

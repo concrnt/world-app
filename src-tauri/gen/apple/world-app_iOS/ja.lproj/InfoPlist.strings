@@ -1,0 +1,5 @@
+/* Info.plist の日本語版(許可ダイアログの文言)。../../project.yml の
+   フォールバック値と en.lproj/InfoPlist.strings と同期を保つこと。 */
+"NSCameraUsageDescription" = "カメラは、ログイン QR を読み込むために使用されます。";
+"NSFaceIDUsageDescription" = "FaceID はマスターキーを保護するために使用されます。";
+"NSPhotoLibraryAddUsageDescription" = "画像を写真ライブラリに保存するために使用されます。";
