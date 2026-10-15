@@ -43,6 +43,16 @@ export interface BskyEmbedView {
     }
 }
 
+export interface BskyFacet {
+    index: { byteStart: number; byteEnd: number }
+    features: {
+        $type?: string // app.bsky.richtext.facet#link | #mention | #tag
+        uri?: string // link
+        did?: string // mention
+        tag?: string // tag
+    }[]
+}
+
 export interface BskyPostView {
     uri: string
     cid: string
@@ -57,6 +67,8 @@ export interface BskyPostView {
         }
         // 投稿者の自己ラベル(com.atproto.label.defs#selfLabels)。appview は labels にも展開するが念のため両方読む
         labels?: { values?: { val: string }[] }
+        // app.bsky.richtext.facet。本文中のリンク/メンション/タグの位置(UTF-8バイトオフセット)と実体
+        facets?: BskyFacet[]
     }
     embed?: BskyEmbedView
     // appview が付けたモデレーションラベル(自己ラベル+ラベラーのもの)

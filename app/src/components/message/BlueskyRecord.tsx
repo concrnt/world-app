@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './RenderError'
 import { BlueskyRecordOneline } from './BlueskyRecordOneline'
+import { BskyRichText } from './BskyRichText'
 import { MediaGallery } from '../MediaGallery/main'
 import { UrlEmbed } from '../AutoSummary'
 import { TranslatableBody } from './TranslatableBody'
@@ -183,14 +184,7 @@ const Post = (props: {
                     <MessageTranslationProvider>
                         <TranslatableBody>
                             <RenderedBody>
-                                <Text
-                                    style={{
-                                        whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-word'
-                                    }}
-                                >
-                                    {post.record.text ?? ''}
-                                </Text>
+                                <BskyRichText text={post.record.text ?? ''} facets={post.record.facets} />
                             </RenderedBody>
                         </TranslatableBody>
                         {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
