@@ -4,7 +4,6 @@ import {
     Avatar,
     ButtonBase,
     CCWallpaper,
-    CfmRenderer,
     IconButton,
     Select,
     Text,
@@ -17,6 +16,7 @@ import {
     ListItem,
     Tooltip
 } from '@concrnt/ui'
+import { CfmRenderer } from '../components/CfmRenderer'
 import { Confirm } from '../components/Confirm'
 import { useClient } from '../contexts/Client'
 

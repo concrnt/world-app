@@ -4,7 +4,6 @@ import {
     Avatar,
     ButtonBase,
     CCWallpaper,
-    CfmRenderer,
     Confirm,
     IconButton,
     Text,
@@ -17,6 +16,7 @@ import {
     useAnchor,
     Tooltip
 } from '@concrnt/ui'
+import { CfmRenderer } from '../components/CfmRenderer'
 import { View } from '../components/View'
 import { useClient } from '../contexts/Client'
 

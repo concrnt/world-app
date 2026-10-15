@@ -13,9 +13,9 @@ import {
     Text,
     TextField,
     Avatar,
-    CfmRenderer,
     useAnchor
 } from '@concrnt/ui'
+import { CfmRenderer } from './CfmRenderer'
 import { useClient } from '../contexts/Client'
 import { MessageLayout } from './message/MessageLayout'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'

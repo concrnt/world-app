@@ -1,16 +1,7 @@
-import {
-    Avatar,
-    Button,
-    CCWallpaper,
-    CssVar,
-    useTheme,
-    View,
-    Text,
-    Divider,
-    GfmRenderer,
-    MfmRenderer,
-    type EmojiLite
-} from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, CssVar, useTheme, View, Text, Divider } from '@concrnt/ui'
+import { GfmRenderer } from '../components/GfmRenderer'
+import { MfmRenderer } from '../components/MfmRenderer'
+import { type EmojiLite } from '../components/CfmRenderer'
 import { useNavigation } from '../contexts/Navigation'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { Fragment, useEffect, useRef, useState } from 'react'

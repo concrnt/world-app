@@ -3,7 +3,8 @@ import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
 import { MarkdownMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, Confirm, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
+import { Avatar, Confirm, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 
 import { useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'

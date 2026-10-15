@@ -5,7 +5,8 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'

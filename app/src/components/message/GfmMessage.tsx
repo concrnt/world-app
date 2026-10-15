@@ -5,7 +5,8 @@ import { GfmMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, GfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
+import { GfmRenderer } from '../GfmRenderer'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'

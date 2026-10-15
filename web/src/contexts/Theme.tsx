@@ -3,16 +3,13 @@ import { Theme } from '../types/Theme'
 import { usePreference, type Preference } from './Preference'
 import { usePersistent } from '../hooks/usePersistent'
 import { Themes } from '../data/themes'
-import { ThemeProvider as BaseThemeProvider, CfmActionsProvider, migrateTheme } from '@concrnt/ui'
+import { ThemeProvider as BaseThemeProvider, migrateTheme } from '@concrnt/ui'
 import { useClient } from './Client'
 import {
     deleteCustomTheme as deleteCustomThemeDocument,
     loadCustomThemes,
     saveCustomTheme as saveCustomThemeDocument
 } from '../utils/themeList'
-import { CCUserChip } from '../components/CCUserChip'
-import { TimelineChip } from '../components/TimelineChip'
-import { useNavigate } from 'react-router-dom'
 
 interface Props {
     theme?: Theme
@@ -42,6 +39,8 @@ interface ThemeLibraryState {
     reloadThemes: () => Promise<void>
     saveTheme: (theme: Theme) => Promise<Theme>
     deleteTheme: (title: string) => Promise<void>
+    // 投稿中の```theme```ブロックからの取込。ThemeProviderの外(既定値)では未定義=取込ボタンを出さない
+    importTheme?: (theme: Theme) => Promise<void>
 }
 
 const ThemeLibraryContext = createContext<ThemeLibraryState>({
@@ -126,57 +125,20 @@ export const ThemeProvider = (props: Props) => {
         [saveTheme, setThemeName]
     )
 
-    const navigate = useNavigate()
-
-    // concrnt.worldオリジンの共有URLは外部ブラウザに出さず内部ルートで開く
-    const openInternal = useCallback(
-        (url: string): boolean => {
-            let parsed: URL
-            try {
-                parsed = new URL(url)
-            } catch {
-                return false
-            }
-            if (parsed.hostname !== 'concrnt.world') return false
-            const path = parsed.pathname
-            const isInternal =
-                /^\/(post|timeline)\/[^/]+$/.test(path) ||
-                /^\/profile\/[^/]+(\/[^/]+)?$/.test(path) ||
-                /^\/activitypub\/(person|note|view)\/[^/]+$/.test(path) ||
-                /^\/bluesky\/(person|post|view)\/[^/]+$/.test(path)
-            if (!isInternal) return false
-            navigate(path + parsed.search + parsed.hash)
-            return true
-        },
-        [navigate]
-    )
-
     const value = useMemo(
         () => ({
             customThemes,
             reloadThemes,
             saveTheme,
-            deleteTheme
+            deleteTheme,
+            importTheme
         }),
-        [customThemes, reloadThemes, saveTheme, deleteTheme]
+        [customThemes, reloadThemes, saveTheme, deleteTheme, importTheme]
     )
 
     return (
         <ThemeLibraryContext.Provider value={value}>
-            <CfmActionsProvider
-                value={{
-                    importTheme,
-                    renderUserChip: (ccid) => (
-                        <CCUserChip ccid={ccid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    ),
-                    renderTimelineChip: (fqid) => (
-                        <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    ),
-                    openInternal
-                }}
-            >
-                <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
-            </CfmActionsProvider>
+            <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
         </ThemeLibraryContext.Provider>
     )
 }

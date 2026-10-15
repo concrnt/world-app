@@ -1,4 +1,5 @@
-import { Text, CssVar, ExternalLink } from '@concrnt/ui'
+import { Text, CssVar } from '@concrnt/ui'
+import { ExternalLink } from '../components/ExternalLink'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useResetPreference } from '../contexts/Preference'

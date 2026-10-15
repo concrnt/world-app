@@ -8,11 +8,11 @@ import {
     CCWallpaper,
     ConcrntLogo,
     Divider,
-    ExternalLink,
     Passport,
     Text,
     ThemeProvider as BaseThemeProvider
 } from '@concrnt/ui'
+import { ExternalLink } from '../components/ExternalLink'
 import { Themes } from '../data/themes'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
