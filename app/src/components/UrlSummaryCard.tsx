@@ -6,28 +6,33 @@ import { ExternalLink } from '@concrnt/ui'
 
 interface Props {
     url: string
+    // 取得済みのサマリー(Blueskyのexternal embed等)。渡されたときはhyperproxyへ問い合わせない
+    summary?: Partial<Summary>
 }
 
 export const UrlSummaryCard = (props: Props) => {
     const service = useUrlSummary()
     const { getImageURL } = useMediaProxy()
-    const [preview, setPreview] = useState<Summary | undefined>(undefined)
+    const [fetched, setFetched] = useState<Summary | undefined>(undefined)
     const [errored, setErrored] = useState(false)
 
+    const given = props.summary
+
     useEffect(() => {
-        if (!service) return
+        if (given || !service) return
         service
             .getSummary(props.url)
             .then((summary) => {
-                if (summary) setPreview(summary)
+                if (summary) setFetched(summary)
                 else setErrored(true)
             })
             .catch(() => {
                 setErrored(true)
             })
-    }, [props.url, service])
+    }, [props.url, service, given])
 
-    if (!service || errored) return null
+    const preview = given ?? fetched
+    if (errored || (!service && !preview)) return null
 
     let hostname = ''
     try {
@@ -95,6 +100,8 @@ export const UrlSummaryCard = (props: Props) => {
         )
     }
 
+    const image = preview.thumbnail || preview.icon
+
     return (
         <ExternalLink
             href={props.url}
@@ -109,14 +116,14 @@ export const UrlSummaryCard = (props: Props) => {
                 border: `1px solid ${CssVar.divider}`
             }}
         >
-            {(preview.thumbnail || preview.icon) && (
+            {image && (
                 <div
                     style={{
                         width: '80px',
                         height: '80px',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundImage: `url(${getImageURL(preview.thumbnail || preview.icon, { maxWidth: 512 })})`,
+                        backgroundImage: `url(${getImageURL(image, { maxWidth: 512 })})`,
                         flexShrink: 0
                     }}
                 />

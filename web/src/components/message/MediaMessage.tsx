@@ -1,7 +1,7 @@
 import { MessageProps } from './types'
 import { MediaMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -44,6 +44,19 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
                         ccid={message.author}
                         src={message.authorProfile?.avatar}
                         style={{ width: '48px', height: '48px' }}
+                        badge={
+                            // profileOverrideでアイコンが差し替えられた代理投稿(discord-bridge等)は、
+                            // 差し替え前のアイコン(サービスアカウント自身)を右下に添えて出どころを示す
+                            message.authorOriginalProfile && (
+                                <Avatar
+                                    ccid={message.author}
+                                    src={message.authorOriginalProfile.avatar}
+                                    style={{ width: '18px', height: '18px' }}
+                                />
+                            )
+                        }
+                        badgeColor={CssVar.contentBackground}
+                        badgeSize={22}
                     />
                 </div>
             }

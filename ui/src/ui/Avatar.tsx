@@ -35,14 +35,16 @@ export const Avatar = (props: Props) => {
     if (!props.badge) return body
 
     const badgeSize = props.badgeSize ?? 16
+    // MUIのBadge(overlap=circular)風に、バッジの3割ほどをアバターの右下角から外へはみ出させる
+    const badgeOffset = `${-Math.round(badgeSize * 0.3)}px`
     return (
         <div style={{ position: 'relative', width: 'fit-content' }}>
             {body}
             <div
                 style={{
                     position: 'absolute',
-                    bottom: '-3px',
-                    right: '-3px',
+                    bottom: badgeOffset,
+                    right: badgeOffset,
                     width: `${badgeSize}px`,
                     height: `${badgeSize}px`,
                     borderRadius: '4px',
