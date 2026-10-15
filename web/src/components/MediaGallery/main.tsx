@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CssVar, HorizontalLayout, IconButton, Text } from '@concrnt/ui'
+import { CCImage, CssVar, HorizontalLayout, IconButton, Text } from '@concrnt/ui'
 import { MediaMessageSchema } from '@concrnt/worldlib'
 import { GalleryImage } from './Image'
 import { GalleryVideo } from './Video'
@@ -95,7 +95,7 @@ export const MediaTile = (props: {
                     backgroundColor: '#111'
                 }}
             >
-                {props.media.blurhash && (
+                {props.media.blurhash ? (
                     <Blurhash
                         hash={props.media.blurhash}
                         height={'100%'}
@@ -104,9 +104,29 @@ export const MediaTile = (props: {
                         resolutionX={32}
                         resolutionY={32}
                     />
+                ) : (
+                    hidden &&
+                    props.media.mediaType.startsWith('image/') && (
+                        // blurhashが無い(AP/Bluesky由来に多い)画像は真っ黒にせず実画像をCSSブラーで敷く。
+                        // 縮小取得+scaleでブラー端の透け(edge bleed)を隠す。altは出さない
+                        <CCImage
+                            src={props.media.mediaURL}
+                            maxWidth={64}
+                            alt=""
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                filter: 'blur(24px)',
+                                transform: 'scale(1.2)',
+                                pointerEvents: 'none',
+                                userSelect: 'none'
+                            }}
+                        />
+                    )
                 )}
             </div>
-            {/* 解除するまで実URLはDOMに出さない */}
+            {/* 解除するまで実URLはDOMに出さない(blurhash無し画像のブラー背景は例外) */}
             {!hidden && (
                 <div
                     style={{
