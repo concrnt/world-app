@@ -17,6 +17,10 @@ import { RenderError } from './RenderError'
 import { BlueskyRecordOneline } from './BlueskyRecordOneline'
 import { MediaGallery } from '../MediaGallery/main'
 import { UrlEmbed } from '../AutoSummary'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 interface Props {
     atUri: string
@@ -175,34 +179,44 @@ const Post = (props: {
                 }
                 headerRight={post.record.createdAt && <TimeDiff date={new Date(post.record.createdAt)} />}
             >
-                <Text
-                    style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                    }}
-                >
-                    {post.record.text ?? ''}
-                </Text>
-                {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
-                {external && (
-                    // ネイティブのAutoSummaryと同じ埋め込み(YouTube等はiframe・他はUrlSummaryCard)。
-                    // サマリーはBluesky側のembedに入っているものを使い、hyperproxyには問い合わせない
-                    <UrlEmbed
-                        url={external.uri}
-                        summary={{
-                            title: external.title,
-                            description: external.description,
-                            thumbnail: external.thumb
-                        }}
-                    />
-                )}
-                {props.detail && postUrl && (
-                    <ExternalLink href={postUrl} style={openRemoteStyle}>
-                        <MdOpenInNew size={14} />
-                        {t('openRemote')}
-                    </ExternalLink>
-                )}
-                {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
+                {/* ネイティブ/APノートと同じく、本文を RenderedBody で包んで三点メニューの「翻訳」を使えるようにする。
+                    リンクカードは Bluesky 側の external embed を使うので AutoSummary は挟まない */}
+                <RenderedBodyProvider>
+                    <MessageTranslationProvider>
+                        <TranslatableBody>
+                            <RenderedBody>
+                                <Text
+                                    style={{
+                                        whiteSpace: 'pre-wrap',
+                                        wordBreak: 'break-word'
+                                    }}
+                                >
+                                    {post.record.text ?? ''}
+                                </Text>
+                            </RenderedBody>
+                        </TranslatableBody>
+                        {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
+                        {external && (
+                            // ネイティブのAutoSummaryと同じ埋め込み(YouTube等はiframe・他はUrlSummaryCard)。
+                            // サマリーはBluesky側のembedに入っているものを使い、hyperproxyには問い合わせない
+                            <UrlEmbed
+                                url={external.uri}
+                                summary={{
+                                    title: external.title,
+                                    description: external.description,
+                                    thumbnail: external.thumb
+                                }}
+                            />
+                        )}
+                        {props.detail && postUrl && (
+                            <ExternalLink href={postUrl} style={openRemoteStyle}>
+                                <MdOpenInNew size={14} />
+                                {t('openRemote')}
+                            </ExternalLink>
+                        )}
+                        {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
+                    </MessageTranslationProvider>
+                </RenderedBodyProvider>
             </MessageLayout>
         </div>
     )
