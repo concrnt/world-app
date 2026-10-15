@@ -19,6 +19,7 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_scroll_killer::init())
             .plugin(tauri_plugin_keyboard::init())
+            .plugin(tauri_plugin_translation::init())
     }
 
     builder

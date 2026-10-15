@@ -14,6 +14,8 @@ import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatedBody } from './TranslatedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
@@ -55,16 +57,21 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            {message.value.body && (
-                <CollapsibleBody forceExpanded={props.forceExpanded}>
-                    <AutoSummary body={message.value.body}>
-                        <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
-                    </AutoSummary>
-                </CollapsibleBody>
-            )}
+            <MessageTranslationProvider text={message.value.body ?? ''}>
+                {message.value.body && (
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary body={message.value.body}>
+                            <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
+                        </AutoSummary>
+                        <TranslatedBody
+                            render={(text) => <CfmRenderer messagebody={text} emojiDict={message.value.emojis ?? {}} />}
+                        />
+                    </CollapsibleBody>
+                )}
 
-            <MediaGallery medias={message.value.medias ?? []} messageURI={message.uri} />
-            <MessageFooter message={message} rerouted={props.rerouted} />
+                <MediaGallery medias={message.value.medias ?? []} messageURI={message.uri} />
+                <MessageFooter message={message} rerouted={props.rerouted} />
+            </MessageTranslationProvider>
         </MessageLayout>
     )
 }

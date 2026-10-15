@@ -599,10 +599,25 @@
             "share": "Share",
             "copyLink": "Copy link",
             "linkCopied": "Copied",
-            "copySource": "Copy source"
+            "copySource": "Copy source",
+            "translate": "Translate",
+            "hideTranslation": "Hide translation",
+            "openGoogleTranslate": "Open in Google Translate"
         },
         "collapsibleBody": {
             "showMore": "Show more"
+        },
+        "translatedBody": {
+            "translating": "Translating...",
+            "translatedBy": "Translated from {{language}} by {{engine}}",
+            "failed": "Translation failed",
+            "unsupported": "Unsupported language",
+            "undetermined": "Could not detect the language",
+            "needsTap": "Please try again",
+            "sameLanguage": "Already in your language",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple Translation",
+            "engineMlkit": "ML Kit"
         },
         "messageInspector": {
             "title": "Inspector",
