@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Languages offered in Android 13+ Settings > Apps > Concrnt > Language.
+     The web frontend picks the locale up via navigator.language
+     (i18next-browser-languagedetector). Keep in sync with locales/ and
+     res/values-* . -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="ja" />
+</locale-config>

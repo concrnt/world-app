@@ -1,0 +1,7 @@
+<!-- Japanese resource qualifier. The strings are identical to values/strings.xml;
+     the folder exists so the APK/AAB records "ja" as a supported locale
+     (Google Play's "Languages" and Android 13+ per-app language settings). -->
+<resources>
+    <string name="app_name">Concrnt</string>
+    <string name="main_activity_title">Concrnt</string>
+</resources>
