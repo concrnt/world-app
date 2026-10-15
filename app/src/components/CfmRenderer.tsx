@@ -4,6 +4,7 @@ import { CCImage, Codeblock, CssVar, EmojipackCard, IconButton, migrateTheme, Te
 import { useThemeLibrary } from '../contexts/Theme'
 import { EmojiPickerContext, type EmojiPackage } from '../contexts/EmojiPicker'
 import { useMediaViewer } from '../contexts/MediaViewer'
+import { useRenderedBody } from '../contexts/RenderedBody'
 import { CCUserChip } from './CCUserChip'
 import { TimelineChip } from './TimelineChip'
 import { ExternalLink } from './ExternalLink'
@@ -63,6 +64,8 @@ const EmojiPackBlock = ({ url }: { url: string }): ReactNode => {
     const picker = useContext(EmojiPickerContext)
     const loadEmojiPackage = picker?.loadEmojiPackage
     const [pack, setPack] = useState<EmojiPackage | null>(null)
+    const body = useRenderedBody()
+    const updateBody = body?.update
 
     useEffect(() => {
         if (!loadEmojiPackage) return
@@ -78,6 +81,11 @@ const EmojiPackBlock = ({ url }: { url: string }): ReactNode => {
             cancelled = true
         }
     }, [url, loadEmojiPackage])
+
+    // 「[Emoji Pack: url]」のテキストがカードに置き換わると本文の innerText からURLが消えるので配り直す
+    useEffect(() => {
+        updateBody?.()
+    }, [pack, updateBody])
 
     if (!pack || !picker) {
         return <Text>[Emoji Pack: {url}]</Text>
@@ -184,6 +192,7 @@ const Spoiler = ({ children }: { children: ReactNode }) => {
 
 const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactNode => {
     const { open: openMedias } = useMediaViewer()
+    const body = useRenderedBody()
 
     if (Array.isArray(ast)) {
         return (
@@ -312,7 +321,8 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                 <details
                     onClick={(e) => e.stopPropagation()}
                     onToggle={() => {
-                        //summary.update()
+                        // 閉じた details の中身は innerText に含まれないので、開閉で本文を配り直す
+                        body?.update()
                     }}
                 >
                     <summary>{ast.summary.body}</summary>

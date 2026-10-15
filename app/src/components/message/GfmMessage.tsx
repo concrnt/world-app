@@ -15,7 +15,9 @@ import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
 import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
 import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
     const { push } = useStack()
@@ -57,16 +59,20 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <MessageTranslationProvider>
-                <CollapsibleBody forceExpanded={props.forceExpanded}>
-                    <AutoSummary body={message.value.body ?? ''}>
-                        <TranslatableBody>
-                            <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
-                        </TranslatableBody>
-                    </AutoSummary>
-                </CollapsibleBody>
-                <MessageFooter message={message} rerouted={props.rerouted} />
-            </MessageTranslationProvider>
+            <RenderedBodyProvider>
+                <MessageTranslationProvider>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary>
+                            <TranslatableBody>
+                                <RenderedBody>
+                                    <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
+                                </RenderedBody>
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }

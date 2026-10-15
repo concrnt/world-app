@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import { CCImage, Codeblock, CssVar, Divider, Text } from '@concrnt/ui'
 import { useMediaViewer } from '../contexts/MediaViewer'
+import { useRenderedBody } from '../contexts/RenderedBody'
 import { ExternalLink } from './ExternalLink'
 import type { EmojiLite } from './CfmRenderer'
 import styles from './GfmRenderer.module.css'
@@ -57,6 +58,7 @@ const sanitizeSchema = {
 
 export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
     const { open: openMedias } = useMediaViewer()
+    const body = useRenderedBody()
 
     return (
         <div className={styles.body}>
@@ -152,6 +154,10 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
                             <details
                                 onClick={(e) => {
                                     e.stopPropagation()
+                                }}
+                                onToggle={() => {
+                                    // 閉じた details の中身は innerText に含まれないので、開閉で本文を配り直す
+                                    body?.update()
                                 }}
                             >
                                 {children}

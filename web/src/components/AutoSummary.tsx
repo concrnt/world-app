@@ -1,13 +1,14 @@
 import { ReactNode, useMemo } from 'react'
 import type { Summary } from '../contexts/UrlSummary'
+import { useRenderedBody } from '../contexts/RenderedBody'
 import { UrlSummaryCard } from './UrlSummaryCard'
 
 interface Props {
-    body: string
     limit?: number
     children: ReactNode
 }
 
+// 入力は描画済み本文の innerText(RenderedBodyProvider から)。記法向けの strip は innerText には現れないが無害なので据え置き
 function extractUrls(text: string): string[] {
     // strip markdown image syntax
     let replaced = text.replace(/!\[.*?\]\(.*?\)/g, '')
@@ -177,13 +178,16 @@ export const UrlEmbed = (props: { url: string; summary?: Partial<Summary> }) => 
     return <UrlSummaryCard url={url} summary={props.summary} />
 }
 
+// 描画済み本文(innerText)からURLを抜き出して本文の下に埋め込みを出す。表示されている文字列だけが対象なので、
+// リンク文字がURLと異なるリンク([文字](URL)等)は対象外(v1と同じ)
 export const AutoSummary = (props: Props) => {
     const limit = props.limit ?? 1
+    const text = useRenderedBody()?.text ?? ''
 
     const urls = useMemo(() => {
         if (limit <= 0) return []
-        return extractUrls(props.body)
-    }, [props.body, limit])
+        return extractUrls(text)
+    }, [text, limit])
 
     return (
         <>

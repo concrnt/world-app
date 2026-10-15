@@ -1,14 +1,13 @@
-import { createContext, ReactNode, RefObject, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toErrorCode, TranslationErrorCode, TranslationResult, useTranslationService } from './Translation'
+import { useRenderedBody } from './RenderedBody'
 
 // none: 本文なし(項目を出さない) / native: 翻訳APIで翻訳 / external: Google翻訳を外部で開く
 export type TranslationMode = 'none' | 'native' | 'external'
 
 export interface MessageTranslationState {
     mode: TranslationMode
-    // 描画済み本文の要素。TranslatableBody が付け、翻訳時にその innerText を翻訳元にする
-    bodyRef: RefObject<HTMLDivElement | null>
     translated?: TranslationResult
     working: boolean
     error?: TranslationErrorCode
@@ -29,12 +28,13 @@ interface Props {
 }
 
 // 投稿1件ぶんの翻訳状態。三点メニュー(MessageActions)で翻訳を実行し、本文下(TranslatableBody)に結果を出す。
-// 翻訳元は記法のソースではなく描画結果の innerText(画面に見えている文字列)。訳文はマークアップを維持せずプレーンテキストで出す
+// 翻訳元は記法のソースではなく描画結果の innerText(画面に見えている文字列・RenderedBodyProvider 経由)。訳文はマークアップを維持せずプレーンテキストで出す
 export const MessageTranslationProvider = (props: Props): ReactNode => {
     const { i18n } = useTranslation()
     const service = useTranslationService()
     const target = (i18n.resolvedLanguage ?? 'en').split('-')[0]
-    const bodyRef = useRef<HTMLDivElement>(null)
+    const body = useRenderedBody()
+    const readBody = body?.update
 
     const [translated, setTranslated] = useState<TranslationResult>()
     const [working, setWorking] = useState(false)
@@ -42,7 +42,8 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
 
     const mode: TranslationMode = props.enabled === false ? 'none' : service.available ? 'native' : 'external'
 
-    const sourceText = useCallback(() => (bodyRef.current?.innerText ?? '').trim(), [])
+    // クリック時点の本文を読み直す(update は最新の innerText を返しつつ AutoSummary 側にも配り直す)
+    const sourceText = useCallback(() => (readBody?.() ?? '').trim(), [readBody])
 
     const translate = useCallback(() => {
         if (working) return
@@ -68,7 +69,7 @@ export const MessageTranslationProvider = (props: Props): ReactNode => {
     )
 
     const value = useMemo<MessageTranslationState>(
-        () => ({ mode, bodyRef, translated, working, error, translate, undo, externalUrl }),
+        () => ({ mode, translated, working, error, translate, undo, externalUrl }),
         [mode, translated, working, error, translate, undo, externalUrl]
     )
 

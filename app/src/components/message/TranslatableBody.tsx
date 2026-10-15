@@ -19,11 +19,11 @@ const languageName = (code: string, uiLanguage: string): string => {
 }
 
 interface Props {
-    // 原文の描画(この要素の innerText が翻訳元になる)
+    // 原文の描画(翻訳元は RenderedBody が配る innerText)
     children: ReactNode
 }
 
-// 原文を包み、翻訳後はその下に「○○による△△語からの翻訳」のキャプション付きで訳文をプレーンテキストで出す。
+// 原文の下に、翻訳後は「○○による△△語からの翻訳」のキャプション付きで訳文をプレーンテキストで出す。
 // 翻訳中・失敗時はキャプションだけ出す。翻訳の実行/取り消しは MessageActions のメニューから
 export const TranslatableBody = (props: Props) => {
     const mt = useMessageTranslation()
@@ -44,7 +44,7 @@ export const TranslatableBody = (props: Props) => {
 
     return (
         <>
-            <div ref={mt.bodyRef}>{props.children}</div>
+            {props.children}
             {caption !== undefined && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
                     <Text variant="caption" style={{ color: CssVar.contentTextDim }}>

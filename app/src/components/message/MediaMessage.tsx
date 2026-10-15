@@ -16,7 +16,9 @@ import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
 import { CollapsibleBody } from './CollapsibleBody'
 import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
 import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
     const { push } = useStack()
@@ -58,20 +60,27 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <MessageTranslationProvider enabled={Boolean(message.value.body)}>
-                {message.value.body && (
-                    <CollapsibleBody forceExpanded={props.forceExpanded}>
-                        <AutoSummary body={message.value.body}>
-                            <TranslatableBody>
-                                <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
-                            </TranslatableBody>
-                        </AutoSummary>
-                    </CollapsibleBody>
-                )}
+            <RenderedBodyProvider>
+                <MessageTranslationProvider enabled={Boolean(message.value.body)}>
+                    {message.value.body && (
+                        <CollapsibleBody forceExpanded={props.forceExpanded}>
+                            <AutoSummary>
+                                <TranslatableBody>
+                                    <RenderedBody>
+                                        <CfmRenderer
+                                            messagebody={message.value.body}
+                                            emojiDict={message.value.emojis ?? {}}
+                                        />
+                                    </RenderedBody>
+                                </TranslatableBody>
+                            </AutoSummary>
+                        </CollapsibleBody>
+                    )}
 
-                <MediaGallery medias={message.value.medias ?? []} messageURI={message.uri} />
-                <MessageFooter message={message} rerouted={props.rerouted} />
-            </MessageTranslationProvider>
+                    <MediaGallery medias={message.value.medias ?? []} messageURI={message.uri} />
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }
