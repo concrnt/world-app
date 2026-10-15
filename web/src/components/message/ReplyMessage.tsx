@@ -1,7 +1,8 @@
 import { MessageProps } from './types'
 import { ReplyMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -15,6 +16,10 @@ import { AutoSummary } from '../AutoSummary'
 import { CCUserChip } from '../CCUserChip'
 import { MdReply } from 'react-icons/md'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
     const navigate = useNavigate()
@@ -78,15 +83,23 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 {props.message.value.replyToMessageAuthor && (
                     <CCUserChip iconOverride={<MdReply size={16} />} ccid={props.message.value.replyToMessageAuthor} />
                 )}
-                <CollapsibleBody forceExpanded={props.forceExpanded}>
-                    <AutoSummary body={props.message.value.body ?? ''}>
-                        <CfmRenderer
-                            messagebody={props.message.value.body}
-                            emojiDict={props.message.value.emojis ?? {}}
-                        />
-                    </AutoSummary>
-                </CollapsibleBody>
-                <MessageFooter message={props.message} rerouted={props.rerouted} />
+                <RenderedBodyProvider>
+                    <MessageTranslationProvider>
+                        <CollapsibleBody forceExpanded={props.forceExpanded}>
+                            <AutoSummary>
+                                <TranslatableBody>
+                                    <RenderedBody>
+                                        <CfmRenderer
+                                            messagebody={props.message.value.body}
+                                            emojiDict={props.message.value.emojis ?? {}}
+                                        />
+                                    </RenderedBody>
+                                </TranslatableBody>
+                            </AutoSummary>
+                        </CollapsibleBody>
+                        <MessageFooter message={props.message} rerouted={props.rerouted} />
+                    </MessageTranslationProvider>
+                </RenderedBodyProvider>
             </MessageLayout>
         </div>
     )

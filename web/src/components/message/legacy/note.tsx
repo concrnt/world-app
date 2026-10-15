@@ -1,6 +1,7 @@
 import { MessageProps } from '../types'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar } from '@concrnt/ui'
+import { CfmRenderer } from '../../CfmRenderer'
 import { MessageLayout } from '../MessageLayout'
 import { useNavigate } from 'react-router-dom'
 import { CollapsibleBody } from '../CollapsibleBody'

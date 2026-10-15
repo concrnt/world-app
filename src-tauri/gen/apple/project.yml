@@ -7,6 +7,13 @@
 name: world-app
 options:
   bundleIdPrefix: world.concrnt.app
+  # Languages the app declares to the App Store ("Languages" on the product
+  # page). The UI itself is localized in the web frontend (locales/{en,ja}),
+  # so without this Xcode only sees the development language (en). Keep in
+  # sync with CFBundleLocalizations below and the *.lproj dirs under
+  # world-app_iOS/.
+  developmentLanguage: en
+  knownRegions: [en, ja]
   deploymentTarget:
     # NOTE: keep >= 18.0. The frontend uses APIs that WKWebView only provides
     # from iOS 18 (e.g. URL.parse — on iOS <18 it throws
@@ -69,9 +76,16 @@ targets:
         # device. The user-visible name is CFBundleDisplayName.
         CFBundleName: concrnt-world
         CFBundleDisplayName: Concrnt
+        # Languages shown on the App Store product page (derived from the
+        # binary, not from App Store Connect metadata). See options.knownRegions.
+        CFBundleLocalizations: [en, ja]
         CFBundleShortVersionString: 0.1.5
         CFBundleVersion: "0.1.5"
         LSRequiresIPhoneOS: true
+        # Fallback permission texts. The per-language versions live in
+        # world-app_iOS/{en,ja}.lproj/InfoPlist.strings (picked up by xcodegen
+        # as a variant group because world-app_iOS is a source dir); keep the
+        # three files in sync when changing wording.
         NSFaceIDUsageDescription: FaceID はマスターキーを保護するために使用されます。
         NSCameraUsageDescription: カメラは、ログイン QR を読み込むために使用されます。
         NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。

@@ -4,15 +4,12 @@ import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
-import { Codeblock } from './Codeblock'
-import { Link } from './Link'
-import { Text } from './Text'
-import { Divider } from './Divider'
-import { useCfmActions } from '../contexts/CfmActions'
-import { CCImage } from '../contexts/CCImage'
+import { CCImage, Codeblock, CssVar, Divider, Text } from '@concrnt/ui'
+import { useMediaViewer } from '../contexts/MediaViewer'
+import { useRenderedBody } from '../contexts/RenderedBody'
+import { ExternalLink } from './ExternalLink'
 import type { EmojiLite } from './CfmRenderer'
 import styles from './GfmRenderer.module.css'
-import { CssVar } from '../types/Theme'
 
 export interface GfmRendererProps {
     messagebody: string
@@ -60,7 +57,8 @@ const sanitizeSchema = {
 }
 
 export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
-    const { openMedias } = useCfmActions()
+    const { open: openMedias } = useMediaViewer()
+    const body = useRenderedBody()
 
     return (
         <div className={styles.body}>
@@ -94,7 +92,11 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
                         ),
                         a: ({ children, href }) => {
                             if (!href) return <></>
-                            return <Link href={href}>{children}</Link>
+                            return (
+                                <ExternalLink href={href} style={{ color: CssVar.contentLink }}>
+                                    {children}
+                                </ExternalLink>
+                            )
                         },
                         code: ({ node, children }) => {
                             const language = node?.position
@@ -132,12 +134,12 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
                                         maxHeight: '20vh',
                                         borderRadius: '8px',
                                         maxWidth: '100%',
-                                        cursor: openMedias ? 'pointer' : undefined
+                                        cursor: 'pointer'
                                     }}
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         e.preventDefault()
-                                        openMedias?.([
+                                        openMedias([
                                             {
                                                 mediaURL: String(src),
                                                 mediaType: 'image/*',
@@ -152,6 +154,10 @@ export const GfmRenderer = (props: GfmRendererProps): ReactNode => {
                             <details
                                 onClick={(e) => {
                                     e.stopPropagation()
+                                }}
+                                onToggle={() => {
+                                    // 閉じた details の中身は innerText に含まれないので、開閉で本文を配り直す
+                                    body?.update()
                                 }}
                             >
                                 {children}

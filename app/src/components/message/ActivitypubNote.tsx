@@ -2,7 +2,11 @@ import { Suspense, use, useMemo } from 'react'
 import { ApObject, parseBridgeNoteURL, resolveApObject } from '../../utils/activitypub'
 import { useStack } from '../../layouts/Stack'
 import { MessageLayout } from './MessageLayout'
-import { Avatar, CssVar, ExternalLink, GfmRenderer, MfmRenderer, Skeleton, Text, type EmojiLite } from '@concrnt/ui'
+import { Avatar, CssVar, Skeleton, Text } from '@concrnt/ui'
+import { ExternalLink } from '../ExternalLink'
+import { GfmRenderer } from '../GfmRenderer'
+import { MfmRenderer } from '../MfmRenderer'
+import { type EmojiLite } from '../CfmRenderer'
 import { TimeDiff } from '../TimeDiff'
 import { ApView } from '../../views/ApView'
 import { useClient } from '../../contexts/Client'
@@ -11,6 +15,10 @@ import { NotFoundError } from '@concrnt/client'
 import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 import { ErrorNotice } from './ErrorNotice'
 import { AutoSummary } from '../AutoSummary'
 import { MediaGallery } from '../MediaGallery/main'
@@ -236,34 +244,42 @@ const Note = (props: {
                     </span>
                 }
             >
-                <CollapsibleBody forceExpanded={props.forceExpanded}>
-                    <AutoSummary body={note._misskey_content ?? note.content ?? ''}>
-                        {note._misskey_content ? (
-                            <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
-                        ) : (
-                            <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
+                <RenderedBodyProvider>
+                    <MessageTranslationProvider>
+                        <CollapsibleBody forceExpanded={props.forceExpanded}>
+                            <AutoSummary>
+                                <TranslatableBody>
+                                    <RenderedBody>
+                                        {note._misskey_content ? (
+                                            <MfmRenderer messagebody={note._misskey_content} emojiDict={emojiDict} />
+                                        ) : (
+                                            <GfmRenderer messagebody={note.content ?? ''} emojiDict={emojiDict} />
+                                        )}
+                                    </RenderedBody>
+                                </TranslatableBody>
+                            </AutoSummary>
+                        </CollapsibleBody>
+                        {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
+                        {props.detail && (
+                            <ExternalLink
+                                href={note.url ?? note.id}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(1),
+                                    fontSize: '0.8rem',
+                                    color: CssVar.contentLink,
+                                    textDecoration: 'none'
+                                }}
+                            >
+                                <MdOpenInNew size={14} />
+                                {t('openRemote')}
+                            </ExternalLink>
                         )}
-                    </AutoSummary>
-                </CollapsibleBody>
-                {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
-                {props.detail && (
-                    <ExternalLink
-                        href={note.url ?? note.id}
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: CssVar.space(1),
-                            fontSize: '0.8rem',
-                            color: CssVar.contentLink,
-                            textDecoration: 'none'
-                        }}
-                    >
-                        <MdOpenInNew size={14} />
-                        {t('openRemote')}
-                    </ExternalLink>
-                )}
-                {devmode && <Text variant="caption">{props.noteURL}</Text>}
-                {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
+                        {devmode && <Text variant="caption">{props.noteURL}</Text>}
+                        {props.message && <MessageFooter message={props.message} rerouted={props.rerouted} />}
+                    </MessageTranslationProvider>
+                </RenderedBodyProvider>
             </MessageLayout>
         </div>
     )

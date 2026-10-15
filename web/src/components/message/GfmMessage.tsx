@@ -1,7 +1,8 @@
 import { MessageProps } from './types'
 import { GfmMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar, GfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
+import { GfmRenderer } from '../GfmRenderer'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -10,6 +11,10 @@ import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
     const navigate = useNavigate()
@@ -59,12 +64,20 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <AutoSummary body={message.value.body ?? ''}>
-                    <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
-                </AutoSummary>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <RenderedBodyProvider>
+                <MessageTranslationProvider>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary>
+                            <TranslatableBody>
+                                <RenderedBody>
+                                    <GfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis} />
+                                </RenderedBody>
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }

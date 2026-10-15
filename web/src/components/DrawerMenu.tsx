@@ -2,7 +2,8 @@ import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
 import { useTranslation } from 'react-i18next'
 
-import { ListItem, Divider, Text, useTheme, List, Avatar, ExternalLink } from '@concrnt/ui'
+import { ListItem, Divider, Text, useTheme, List, Avatar } from '@concrnt/ui'
+import { ExternalLink } from './ExternalLink'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'

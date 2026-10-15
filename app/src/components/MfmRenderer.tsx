@@ -1,12 +1,10 @@
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import * as mfm from 'mfm-js'
-import { Codeblock } from './Codeblock'
-import { Link } from './Link'
+import { CCImage, Codeblock, CssVar } from '@concrnt/ui'
+import { openUrl } from '@tauri-apps/plugin-opener'
+import { ExternalLink } from './ExternalLink'
 import { type EmojiLite } from './CfmRenderer'
-import { CCImage } from '../contexts/CCImage'
-import { useCfmActions } from '../contexts/CfmActions'
 import styles from './MfmRenderer.module.css'
-import { CssVar } from '../types/Theme'
 
 // mfm-renderer-reactはMUI/emotion/React18に依存しておりこのmonorepoでは使えないため、
 // パーサ(mfm-js)だけ借りてレンダラは自前実装している。
@@ -130,7 +128,6 @@ const Sparkle = ({ children }: { children: ReactNode }): ReactNode => {
 }
 
 const Search = ({ query }: { query: string }): ReactNode => {
-    const { openExternal } = useCfmActions()
     return (
         <span style={{ display: 'flex', margin: '8px 0' }}>
             <span
@@ -156,11 +153,8 @@ const Search = ({ query }: { query: string }): ReactNode => {
                     const params = new URLSearchParams()
                     params.append('q', query)
                     const url = `https://www.google.com/search?${params.toString()}`
-                    if (openExternal) {
-                        openExternal(url)
-                    } else {
-                        window.open(url, '_blank', 'noopener')
-                    }
+                    // 第2引数なし = システム既定ブラウザ(inAppBrowserではない)
+                    openUrl(url)
                 }}
                 style={{
                     flexShrink: 0,
@@ -489,12 +483,16 @@ const RenderMfm = ({ ast, emojis }: RenderMfmProps): ReactNode => {
             return <>unknown fn: {ast.props.name}</>
         }
         case 'url':
-            return <Link href={ast.props.url}>{ast.props.url}</Link>
+            return (
+                <ExternalLink href={ast.props.url} style={{ color: CssVar.contentLink }}>
+                    {ast.props.url}
+                </ExternalLink>
+            )
         case 'link':
             return (
-                <Link href={ast.props.url}>
+                <ExternalLink href={ast.props.url} style={{ color: CssVar.contentLink }}>
                     <RenderMfm ast={ast.children} emojis={emojis} />
-                </Link>
+                </ExternalLink>
             )
         case 'mention':
             return <span>{ast.props.acct}</span>

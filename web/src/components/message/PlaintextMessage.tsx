@@ -8,7 +8,12 @@ import { MessageAuthor } from './MessageAuthor'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
+import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) => {
     const navigate = useNavigate()
@@ -59,17 +64,27 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {/* plaintextはマークダウン・絵文字のレンダリングを行わずそのまま表示する */}
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <div
-                    style={{
-                        whiteSpace: 'pre-wrap',
-                        overflowWrap: 'anywhere'
-                    }}
-                >
-                    {message.value.body}
-                </div>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <RenderedBodyProvider>
+                <MessageTranslationProvider>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary>
+                            <TranslatableBody>
+                                <RenderedBody>
+                                    <div
+                                        style={{
+                                            whiteSpace: 'pre-wrap',
+                                            overflowWrap: 'anywhere'
+                                        }}
+                                    >
+                                        {message.value.body}
+                                    </div>
+                                </RenderedBody>
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }

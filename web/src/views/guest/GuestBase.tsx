@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { Client } from '@concrnt/worldlib'
-import { Button, CfmActionsProvider, ConcrntLogo, OverlayStackProvider, Text } from '@concrnt/ui'
+import { Button, ConcrntLogo, OverlayStackProvider, Text } from '@concrnt/ui'
 import { ThemeProvider as BaseThemeProvider } from '@concrnt/ui'
 import { Themes } from '../../data/themes'
 import { CssVar } from '../../types/Theme'
@@ -14,8 +14,6 @@ import TickerProvider from '../../contexts/Ticer'
 import { UrlSummaryProvider } from '../../contexts/UrlSummary'
 import { LoadingFull } from '../../components/LoadingFull'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { CCUserChip } from '../../components/CCUserChip'
-import { TimelineChip } from '../../components/TimelineChip'
 import { GuestPostView } from './GuestPost'
 
 // 未ログイン閲覧用のシェル。鍵を持たないゲストクライアントを生成し、
@@ -84,142 +82,112 @@ export const GuestShell = () => {
     return (
         <BaseThemeProvider theme={Themes.blue}>
             <GuestClientProvider client={client}>
-                <CfmActionsProvider
-                    value={{
-                        renderUserChip: (ccid) => (
-                            <CCUserChip ccid={ccid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                        ),
-                        renderTimelineChip: (fqid) => (
-                            <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                        ),
-                        // concrnt.worldオリジンの共有URLは外部ブラウザに出さず内部ルートで開く
-                        // (ゲストビューが存在するルートのみ)
-                        openInternal: (url) => {
-                            let parsed: URL
-                            try {
-                                parsed = new URL(url)
-                            } catch {
-                                return false
-                            }
-                            if (parsed.hostname !== 'concrnt.world') return false
-                            const path = parsed.pathname
-                            const isInternal =
-                                /^\/(post|timeline)\/[^/]+$/.test(path) || /^\/profile\/[^/]+(\/[^/]+)?$/.test(path)
-                            if (!isInternal) return false
-                            navigate(path + parsed.search + parsed.hash)
-                            return true
-                        }
-                    }}
-                >
-                    <OverlayStackProvider>
-                        <MediaViewerProvider renderPost={(uri) => <GuestPostView uri={uri} embedded />}>
-                            <AudioPlayerProvider>
-                                <TickerProvider>
-                                    <UrlSummaryProvider>
+                <OverlayStackProvider>
+                    <MediaViewerProvider renderPost={(uri) => <GuestPostView uri={uri} embedded />}>
+                        <AudioPlayerProvider>
+                            <TickerProvider>
+                                <UrlSummaryProvider>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            width: '100vw',
+                                            height: '100dvh',
+                                            boxSizing: 'border-box',
+                                            backgroundColor: CssVar.backdropBackground,
+                                            alignItems: 'center'
+                                        }}
+                                    >
                                         <div
                                             style={{
                                                 display: 'flex',
-                                                flexDirection: 'column',
-                                                width: '100vw',
-                                                height: '100dvh',
-                                                boxSizing: 'border-box',
-                                                backgroundColor: CssVar.backdropBackground,
-                                                alignItems: 'center'
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                width: '100%',
+                                                maxWidth: '1280px',
+                                                padding: `calc(env(safe-area-inset-top) + ${CssVar.space(1)}) ${CssVar.space(2)} ${CssVar.space(1)}`,
+                                                boxSizing: 'border-box'
                                             }}
                                         >
                                             <div
                                                 style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    width: '100%',
-                                                    maxWidth: '1280px',
-                                                    padding: `calc(env(safe-area-inset-top) + ${CssVar.space(1)}) ${CssVar.space(2)} ${CssVar.space(1)}`,
-                                                    boxSizing: 'border-box'
+                                                    gap: CssVar.space(1),
+                                                    cursor: 'pointer'
                                                 }}
+                                                onClick={() => navigate('/')}
                                             >
-                                                <div
+                                                <ConcrntLogo
+                                                    size="28px"
+                                                    upperColor={CssVar.backdropText}
+                                                    lowerColor={CssVar.backdropText}
+                                                    frameColor={CssVar.backdropText}
+                                                />
+                                                <Text
                                                     style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: CssVar.space(1),
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    onClick={() => navigate('/')}
-                                                >
-                                                    <ConcrntLogo
-                                                        size="28px"
-                                                        upperColor={CssVar.backdropText}
-                                                        lowerColor={CssVar.backdropText}
-                                                        frameColor={CssVar.backdropText}
-                                                    />
-                                                    <Text
-                                                        style={{
-                                                            color: CssVar.backdropText,
-                                                            fontWeight: 700,
-                                                            fontSize: '20px'
-                                                        }}
-                                                    >
-                                                        Concrnt
-                                                    </Text>
-                                                </div>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: CssVar.space(1)
+                                                        color: CssVar.backdropText,
+                                                        fontWeight: 700,
+                                                        fontSize: '20px'
                                                     }}
                                                 >
-                                                    <Button variant="text" onClick={() => navigate('/login')}>
-                                                        {t('login')}
-                                                    </Button>
-                                                    <Button onClick={() => navigate('/signup')}>
-                                                        {t('getStarted')}
-                                                    </Button>
-                                                </div>
+                                                    Concrnt
+                                                </Text>
                                             </div>
                                             <div
                                                 style={{
                                                     display: 'flex',
-                                                    flex: 1,
-                                                    minHeight: 0,
-                                                    maxWidth: '1280px',
-                                                    width: '100%'
+                                                    alignItems: 'center',
+                                                    gap: CssVar.space(1)
                                                 }}
                                             >
-                                                <main
-                                                    style={{
-                                                        display: 'flex',
-                                                        flex: 1,
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            flexGrow: '1',
-                                                            margin: isMobile ? 0 : CssVar.space(2),
-                                                            marginTop: 0,
-                                                            display: 'flex',
-                                                            flexFlow: 'column',
-                                                            borderRadius: isMobile ? 0 : CssVar.round(2),
-                                                            overflow: 'hidden',
-                                                            background: 'none',
-                                                            boxShadow: isMobile
-                                                                ? 'none'
-                                                                : '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
-                                                        }}
-                                                    >
-                                                        <Outlet />
-                                                    </div>
-                                                </main>
+                                                <Button variant="text" onClick={() => navigate('/login')}>
+                                                    {t('login')}
+                                                </Button>
+                                                <Button onClick={() => navigate('/signup')}>{t('getStarted')}</Button>
                                             </div>
                                         </div>
-                                    </UrlSummaryProvider>
-                                </TickerProvider>
-                            </AudioPlayerProvider>
-                        </MediaViewerProvider>
-                    </OverlayStackProvider>
-                </CfmActionsProvider>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flex: 1,
+                                                minHeight: 0,
+                                                maxWidth: '1280px',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            <main
+                                                style={{
+                                                    display: 'flex',
+                                                    flex: 1,
+                                                    overflow: 'hidden'
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        flexGrow: '1',
+                                                        margin: isMobile ? 0 : CssVar.space(2),
+                                                        marginTop: 0,
+                                                        display: 'flex',
+                                                        flexFlow: 'column',
+                                                        borderRadius: isMobile ? 0 : CssVar.round(2),
+                                                        overflow: 'hidden',
+                                                        background: 'none',
+                                                        boxShadow: isMobile
+                                                            ? 'none'
+                                                            : '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
+                                                    }}
+                                                >
+                                                    <Outlet />
+                                                </div>
+                                            </main>
+                                        </div>
+                                    </div>
+                                </UrlSummaryProvider>
+                            </TickerProvider>
+                        </AudioPlayerProvider>
+                    </MediaViewerProvider>
+                </OverlayStackProvider>
             </GuestClientProvider>
         </BaseThemeProvider>
     )

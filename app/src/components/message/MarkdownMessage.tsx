@@ -5,7 +5,8 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, CssVar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
@@ -13,6 +14,10 @@ import { TimeDiff } from '../TimeDiff'
 import { MessageFooter } from './Footer'
 import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
     const { push } = useStack()
@@ -54,12 +59,23 @@ export const MarkdownMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             headerLeft={<MessageAuthor message={message} />}
             headerRight={<TimeDiff date={message.createdAt} />}
         >
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <AutoSummary body={message.value.body ?? ''}>
-                    <CfmRenderer messagebody={message.value.body} emojiDict={message.value.emojis ?? {}} />
-                </AutoSummary>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <RenderedBodyProvider>
+                <MessageTranslationProvider>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary>
+                            <TranslatableBody>
+                                <RenderedBody>
+                                    <CfmRenderer
+                                        messagebody={message.value.body}
+                                        emojiDict={message.value.emojis ?? {}}
+                                    />
+                                </RenderedBody>
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }

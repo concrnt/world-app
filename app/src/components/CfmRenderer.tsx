@@ -1,17 +1,17 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
-import { Codeblock } from './Codeblock'
+import { type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import cfm from '@concrnt/cfm'
-import { Link } from './Link'
-import { Text } from './Text'
-import { ThemeCard } from './ThemeCard'
-import { EmojipackCard, type EmojipackLite } from './EmojipackCard'
-import { IconButton } from './IconButton'
-import { migrateTheme, CssVar } from '../types/Theme'
-import { useCfmActions } from '../contexts/CfmActions'
-import { CCImage } from '../contexts/CCImage'
+import { CCImage, Codeblock, CssVar, EmojipackCard, IconButton, migrateTheme, Text, ThemeCard } from '@concrnt/ui'
+import { useThemeLibrary } from '../contexts/Theme'
+import { EmojiPickerContext, type EmojiPackage } from '../contexts/EmojiPicker'
+import { useMediaViewer } from '../contexts/MediaViewer'
+import { useRenderedBody } from '../contexts/RenderedBody'
+import { CCUserChip } from './CCUserChip'
+import { TimelineChip } from './TimelineChip'
+import { ExternalLink } from './ExternalLink'
 
 const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNode => {
-    const { importTheme } = useCfmActions()
+    // ThemeProviderの外(guest/welcome)ではundefined: 取込ボタンを出さない
+    const { importTheme } = useThemeLibrary()
 
     const theme = useMemo(() => {
         try {
@@ -60,13 +60,17 @@ const ThemeCodeBlock = ({ body, lang }: { body: string; lang: string }): ReactNo
 }
 
 const EmojiPackBlock = ({ url }: { url: string }): ReactNode => {
-    const { loadEmojipack, addEmojipack, emojipackURLs } = useCfmActions()
-    const [pack, setPack] = useState<EmojipackLite | null>(null)
+    // EmojiPickerProviderの外(guest/welcome)ではundefined: カードは出さずテキスト表示に落とす
+    const picker = useContext(EmojiPickerContext)
+    const loadEmojiPackage = picker?.loadEmojiPackage
+    const [pack, setPack] = useState<EmojiPackage | null>(null)
+    const body = useRenderedBody()
+    const updateBody = body?.update
 
     useEffect(() => {
-        if (!loadEmojipack) return
+        if (!loadEmojiPackage) return
         let cancelled = false
-        loadEmojipack(url)
+        loadEmojiPackage(url)
             .then((p) => {
                 if (!cancelled) setPack(p)
             })
@@ -76,57 +80,60 @@ const EmojiPackBlock = ({ url }: { url: string }): ReactNode => {
         return () => {
             cancelled = true
         }
-    }, [url, loadEmojipack])
+    }, [url, loadEmojiPackage])
 
-    if (!pack) {
+    // 「[Emoji Pack: url]」のテキストがカードに置き換わると本文の innerText からURLが消えるので配り直す
+    useEffect(() => {
+        updateBody?.()
+    }, [pack, updateBody])
+
+    if (!pack || !picker) {
         return <Text>[Emoji Pack: {url}]</Text>
     }
 
-    const added = emojipackURLs?.includes(url) ?? false
+    const added = picker.packageURLs.includes(url)
 
     return (
         <EmojipackCard
             pack={pack}
             action={
-                addEmojipack && (
-                    <IconButton
-                        disabled={added}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            addEmojipack(url)
-                        }}
-                        style={{ color: CssVar.contentText, opacity: added ? 0.4 : 1 }}
-                    >
-                        {added ? (
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                        ) : (
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                        )}
-                    </IconButton>
-                )
+                <IconButton
+                    disabled={added}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        picker.addEmojiPackage(url)
+                    }}
+                    style={{ color: CssVar.contentText, opacity: added ? 0.4 : 1 }}
+                >
+                    {added ? (
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    ) : (
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    )}
+                </IconButton>
             }
         />
     )
@@ -184,7 +191,8 @@ const Spoiler = ({ children }: { children: ReactNode }) => {
 }
 
 const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactNode => {
-    const { openMedias, renderUserChip, renderTimelineChip } = useCfmActions()
+    const { open: openMedias } = useMediaViewer()
+    const body = useRenderedBody()
 
     if (Array.isArray(ast)) {
         return (
@@ -230,10 +238,13 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                 </s>
             )
         case 'URL':
-            return <Link href={ast.body}>{ast.alt || ast.body}</Link>
+            return (
+                <ExternalLink href={ast.body} style={{ color: CssVar.contentLink }}>
+                    {ast.alt || ast.body}
+                </ExternalLink>
+            )
         case 'Timeline':
-            if (renderTimelineChip) return renderTimelineChip(ast.body)
-            return oneline ? <span>[Timeline: {ast.body}]</span> : <Text>[Timeline: {ast.body}]</Text>
+            return <TimelineChip fqid={ast.body} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
         case 'Spoiler':
             return (
                 <Spoiler>
@@ -283,8 +294,7 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
             return <span>#{ast.body}</span>
         case 'Mention': {
             if (ast.body.startsWith('con1') && ast.body.length === 42) {
-                if (renderUserChip) return renderUserChip(ast.body)
-                return oneline ? <span>@{ast.body}</span> : <Text>@{ast.body}</Text>
+                return <CCUserChip ccid={ast.body} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
             } else {
                 return <span>@{ast.body}</span>
             }
@@ -311,7 +321,8 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                 <details
                     onClick={(e) => e.stopPropagation()}
                     onToggle={() => {
-                        //summary.update()
+                        // 閉じた details の中身は innerText に含まれないので、開閉で本文を配り直す
+                        body?.update()
                     }}
                 >
                     <summary>{ast.summary.body}</summary>
@@ -343,12 +354,12 @@ const RenderAst = ({ ast, emojis, imageNodes, oneline }: RenderAstProps): ReactN
                         maxHeight: '20vh',
                         borderRadius: '8px',
                         maxWidth: '100%',
-                        cursor: openMedias ? 'pointer' : undefined
+                        cursor: 'pointer'
                     }}
                     onClick={(e) => {
                         e.stopPropagation()
                         e.preventDefault()
-                        openMedias?.(
+                        openMedias(
                             imageNodes.map((node) => ({
                                 mediaURL: node.url,
                                 mediaType: 'image/*',

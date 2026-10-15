@@ -1,18 +1,7 @@
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-    Avatar,
-    Button,
-    CCWallpaper,
-    CfmRenderer,
-    IconButton,
-    Passport,
-    Tab,
-    Tabs,
-    Text,
-    TextField,
-    View
-} from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, IconButton, Passport, Tab, Tabs, Text, TextField, View } from '@concrnt/ui'
+import { CfmRenderer } from '../components/CfmRenderer'
 import Tilt from 'react-parallax-tilt'
 import {
     MdAddReaction,

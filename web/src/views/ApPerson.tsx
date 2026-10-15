@@ -1,15 +1,7 @@
-import {
-    Avatar,
-    Button,
-    CCWallpaper,
-    CssVar,
-    useTheme,
-    Text,
-    Divider,
-    GfmRenderer,
-    MfmRenderer,
-    type EmojiLite
-} from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text, Divider } from '@concrnt/ui'
+import { GfmRenderer } from '../components/GfmRenderer'
+import { MfmRenderer } from '../components/MfmRenderer'
+import { type EmojiLite } from '../components/CfmRenderer'
 import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
 import { Fragment, useEffect, useRef, useState } from 'react'

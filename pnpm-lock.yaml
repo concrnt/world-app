@@ -111,6 +111,9 @@ importers:
       i18next-browser-languagedetector:
         specifier: ^8.2.1
         version: 8.2.1
+      mfm-js:
+        specifier: ^0.24.0
+        version: 0.24.0
       motion:
         specifier: ^12.36.0
         version: 12.38.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -135,12 +138,27 @@ importers:
       react-icons:
         specifier: ^5.5.0
         version: 5.6.0(react@19.2.4)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
       react-parallax-tilt:
         specifier: ^1.7.324
         version: 1.7.324(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-syntax-highlighter:
         specifier: ^16.1.0
         version: 16.1.1(react@19.2.4)
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
+      rehype-sanitize:
+        specifier: ^6.0.0
+        version: 6.0.0
+      remark-breaks:
+        specifier: ^4.0.0
+        version: 4.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
       unplugin-info:
         specifier: ^1.3.2
         version: 1.3.2(esbuild@0.28.1)(rollup@4.60.1)(vite@7.3.1(@types/node@25.6.0)(terser@5.49.0)(yaml@2.8.3))
@@ -214,15 +232,9 @@ importers:
 
   ui:
     dependencies:
-      '@concrnt/cfm':
-        specifier: ^0.0.0
-        version: 0.0.0
       boring-avatars:
         specifier: ^2.0.4
         version: 2.0.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      mfm-js:
-        specifier: ^0.24.0
-        version: 0.24.0
       motion:
         specifier: ^12.23.26
         version: 12.38.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -232,24 +244,9 @@ importers:
       react-dom:
         specifier: ^19.2.0
         version: 19.2.4(react@19.2.4)
-      react-markdown:
-        specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
       react-syntax-highlighter:
         specifier: ^16.1.0
         version: 16.1.1(react@19.2.4)
-      rehype-raw:
-        specifier: ^7.0.0
-        version: 7.0.0
-      rehype-sanitize:
-        specifier: ^6.0.0
-        version: 6.0.0
-      remark-breaks:
-        specifier: ^4.0.0
-        version: 4.0.0
-      remark-gfm:
-        specifier: ^4.0.1
-        version: 4.0.1
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^5.0.1
@@ -359,6 +356,9 @@ importers:
       i18next-browser-languagedetector:
         specifier: ^8.2.1
         version: 8.2.1
+      mfm-js:
+        specifier: ^0.24.0
+        version: 0.24.0
       motion:
         specifier: ^12.36.0
         version: 12.38.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -386,6 +386,9 @@ importers:
       react-icons:
         specifier: ^5.6.0
         version: 5.6.0(react@19.2.4)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
       react-parallax-tilt:
         specifier: ^1.7.324
         version: 1.7.324(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -398,6 +401,18 @@ importers:
       react-syntax-highlighter:
         specifier: ^16.1.0
         version: 16.1.1(react@19.2.4)
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
+      rehype-sanitize:
+        specifier: ^6.0.0
+        version: 6.0.0
+      remark-breaks:
+        specifier: ^4.0.0
+        version: 4.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
       unplugin-info:
         specifier: ^1.3.2
         version: 1.3.2(esbuild@0.28.1)(rollup@4.60.1)(vite@7.3.1(@types/node@24.12.0)(terser@5.49.0)(yaml@2.8.3))

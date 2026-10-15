@@ -12,9 +12,9 @@ import {
     Text,
     TextField,
     Avatar,
-    CfmRenderer,
     useAnchor
 } from '@concrnt/ui'
+import { CfmRenderer } from './CfmRenderer'
 import { MessageLayout } from './message/MessageLayout'
 import { useClient } from '../contexts/Client'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'

@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { Avatar, CfmRenderer, Text } from '@concrnt/ui'
+import { Avatar, Text } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 import { MdMoreHoriz, MdOutlineAddReaction, MdRepeat, MdReply, MdStarOutline } from 'react-icons/md'
 import { MessageLayout } from '../message/MessageLayout'
 import { humanReadableTimeDiff } from '../../utils/humanReadableTimeDiff'

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { type Summary, useUrlSummary } from '../contexts/UrlSummary'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { CssVar } from '../types/Theme'
-import { ExternalLink } from '@concrnt/ui'
+import { ExternalLink } from './ExternalLink'
 
 interface Props {
     url: string

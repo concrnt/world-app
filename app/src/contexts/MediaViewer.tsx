@@ -5,7 +5,7 @@ import { animate } from 'motion'
 import { useTranslation } from 'react-i18next'
 
 import { MdClose, MdInfoOutline, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr } from 'react-icons/md'
-import { CfmActionsProvider, CircularProgress, OverlaySurface, useCfmActions } from '@concrnt/ui'
+import { CircularProgress, OverlaySurface } from '@concrnt/ui'
 import styles from './MediaViewer.module.css'
 import { ModelViewer } from '../components/ModelViewer'
 import { Drawer } from '../ui/Drawer'
@@ -532,7 +532,6 @@ export const MediaViewerProvider = (props: Props) => {
 
     const value = useMemo(() => ({ open, openSource }), [open, openSource])
 
-    const parentCfmActions = useCfmActions()
     const { getImageURL } = useMediaProxy()
 
     const isImage = currentMedia?.mediaType.startsWith('image/') ?? false
@@ -560,14 +559,7 @@ export const MediaViewerProvider = (props: Props) => {
 
     return (
         <MediaViewerContext.Provider value={value}>
-            <CfmActionsProvider
-                value={{
-                    ...parentCfmActions,
-                    openMedias: open
-                }}
-            >
-                {props.children}
-            </CfmActionsProvider>
+            {props.children}
 
             {/* OverlaySurfaceに載せる: 内側から開くDrawer(同じくOverlaySurface)がDOM順で上に積まれるようにする。
                 openはcurrentMediaの有無まで含める(nullの瞬間にfalseが渡るとhostが破棄されて再表示されない) */}

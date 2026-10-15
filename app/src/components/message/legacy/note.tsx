@@ -4,7 +4,8 @@ import { MessageProps } from '../types'
 import { ProfileView } from '../../../views/Profile'
 import { PostView } from '../../../views/Post'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar } from '@concrnt/ui'
+import { CfmRenderer } from '../../CfmRenderer'
 import { MessageLayout } from '../MessageLayout'
 import { CollapsibleBody } from '../CollapsibleBody'
 
