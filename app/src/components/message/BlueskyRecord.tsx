@@ -17,6 +17,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from './RenderError'
 import { BlueskyRecordOneline } from './BlueskyRecordOneline'
 import { MediaGallery } from '../MediaGallery/main'
+import { UrlEmbed } from '../AutoSummary'
 
 interface Props {
     atUri: string
@@ -181,19 +182,16 @@ const Post = (props: {
                 </Text>
                 {medias.length > 0 && <MediaGallery medias={medias} messageURI={props.message?.uri} />}
                 {external && (
-                    <ExternalLink
-                        href={external.uri}
-                        style={{
-                            display: 'block',
-                            border: `1px solid ${CssVar.divider}`,
-                            borderRadius: '8px',
-                            padding: CssVar.space(1),
-                            textDecoration: 'none'
+                    // ネイティブのAutoSummaryと同じ埋め込み(YouTube等はiframe・他はUrlSummaryCard)。
+                    // サマリーはBluesky側のembedに入っているものを使い、hyperproxyには問い合わせない
+                    <UrlEmbed
+                        url={external.uri}
+                        summary={{
+                            title: external.title,
+                            description: external.description,
+                            thumbnail: external.thumb
                         }}
-                    >
-                        <Text style={{ fontWeight: 'bold' }}>{external.title || external.uri}</Text>
-                        {external.description && <Text variant="caption">{external.description}</Text>}
-                    </ExternalLink>
+                    />
                 )}
                 {props.detail && postUrl && (
                     <ExternalLink href={postUrl} style={openRemoteStyle}>
