@@ -801,7 +801,10 @@
             "pending": "承認待ち",
             "loadMore": "もっと見る",
             "empty": "ユーザーがいません",
-            "loadError": "読み込みに失敗しました"
+            "loadError": "読み込みに失敗しました",
+            "removeFollower": "フォロワーから削除",
+            "removeFollowerConfirmTitle": "フォロワーから削除しますか?",
+            "removeFollowerConfirmDescription": "相手にはあなたの投稿が届かなくなります。相手のサーバーが稼働していれば、相手側のフォローも解除されます。"
         },
         "bskyFollowList": {
             "following": "フォロー中",

@@ -802,7 +802,10 @@
             "pending": "Pending",
             "loadMore": "Load more",
             "empty": "No users",
-            "loadError": "Failed to load"
+            "loadError": "Failed to load",
+            "removeFollower": "Remove follower",
+            "removeFollowerConfirmTitle": "Remove this follower?",
+            "removeFollowerConfirmDescription": "They will stop receiving your posts. If their server is still online, their follow will be cancelled as well."
         },
         "bskyFollowList": {
             "following": "Following",

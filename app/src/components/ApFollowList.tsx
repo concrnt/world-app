@@ -1,6 +1,8 @@
 import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Button, Chip, Tab, Tabs, Text } from '@concrnt/ui'
+import { Avatar, Button, Chip, IconButton, ListItem, Select, Tab, Tabs, Text } from '@concrnt/ui'
+import { MdMoreHoriz } from 'react-icons/md'
+import { Confirm } from './Confirm'
 import { NotFoundError, Document } from '@concrnt/client'
 import { Schemas, ApFollowSchema } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
@@ -89,13 +91,17 @@ export const ApFollowList = (props: Props) => {
                     </div>
                 }
             >
-                <ActorList entriesPromise={entries} onNavigate={props.onNavigate} />
+                <ActorList kind={tab} entriesPromise={entries} onNavigate={props.onNavigate} />
             </Suspense>
         </div>
     )
 }
 
-const ActorList = (props: { entriesPromise: Promise<Entry[] | null>; onNavigate?: () => void }) => {
+const ActorList = (props: {
+    kind: 'following' | 'followers'
+    entriesPromise: Promise<Entry[] | null>
+    onNavigate?: () => void
+}) => {
     const { t } = useTranslation('', { keyPrefix: 'components.apFollowList' })
 
     const entries = use(props.entriesPromise)
@@ -122,7 +128,7 @@ const ActorList = (props: { entriesPromise: Promise<Entry[] | null>; onNavigate?
                     }}
                 >
                     {entries.slice(0, visibleCount).map((entry) => (
-                        <ActorRow key={entry.actorURI} entry={entry} onNavigate={props.onNavigate} />
+                        <ActorRow key={entry.actorURI} kind={props.kind} entry={entry} onNavigate={props.onNavigate} />
                     ))}
                     {visibleCount < entries.length && (
                         <Button
@@ -139,7 +145,7 @@ const ActorList = (props: { entriesPromise: Promise<Entry[] | null>; onNavigate?
     )
 }
 
-const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
+const ActorRow = (props: { kind: 'following' | 'followers'; entry: Entry; onNavigate?: () => void }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.apFollowList' })
     const { client } = useClient()
     const { getImageURL } = useMediaProxy()
@@ -148,6 +154,13 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
     const [actor, setActor] = useState<ApObject | null | undefined>(undefined)
     const [followed, setFollowed] = useState<boolean | undefined>(undefined)
     const [hovered, setHovered] = useState(false)
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
+    const [removed, setRemoved] = useState(false)
+
+    // フォロワーの手動解除(消滅サーバー・引っ越し済みユーザーの掃除用)。ブリッジが対応している場合だけ出す
+    const canRemoveFollower =
+        props.kind === 'followers' && 'net.concrnt.activitypub.removeFollower' in (client.server?.endpoints ?? {})
 
     useEffect(() => {
         resolveApObject(client, props.entry.actorURI)
@@ -202,6 +215,25 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
                 })
         }
     }
+
+    const removeFollower = () => {
+        client.api
+            .callConcrntApi(
+                client.server.domain,
+                'net.concrnt.activitypub.removeFollower',
+                { uri: props.entry.actorURI },
+                { method: 'DELETE' }
+            )
+            .then(() => {
+                setRemoved(true)
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+    }
+
+    // 一覧のPromiseは固定なので、解除済みの行はローカルで消す
+    if (removed) return null
 
     // resolveに失敗した(消滅済み等)actorも行としては残し、生のURIで表示する
     const handle =
@@ -294,6 +326,43 @@ const ActorRow = (props: { entry: Entry; onNavigate?: () => void }) => {
                         {followed ? (hovered ? t('unfollow') : t('following')) : t('follow')}
                     </Button>
                 </div>
+            )}
+            {canRemoveFollower && (
+                <>
+                    <IconButton
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpen(true)
+                        }}
+                        style={{ flexShrink: 0 }}
+                    >
+                        <MdMoreHoriz size={18} />
+                    </IconButton>
+                    <Select
+                        open={menuOpen}
+                        onClose={() => setMenuOpen(false)}
+                        title={handle}
+                        options={[
+                            <ListItem
+                                key="removeFollower"
+                                onClick={() => {
+                                    setMenuOpen(false)
+                                    setRemoveConfirmOpen(true)
+                                }}
+                            >
+                                <Text>{t('removeFollower')}</Text>
+                            </ListItem>
+                        ]}
+                    />
+                    <Confirm
+                        open={removeConfirmOpen}
+                        onClose={() => setRemoveConfirmOpen(false)}
+                        title={t('removeFollowerConfirmTitle')}
+                        description={t('removeFollowerConfirmDescription')}
+                        confirmText={t('removeFollower')}
+                        onConfirm={removeFollower}
+                    />
+                </>
             )}
         </div>
     )
