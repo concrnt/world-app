@@ -35,13 +35,22 @@ export const DummyMessage = (props: Props) => {
                     <Text
                         style={{
                             fontWeight: 700,
-                            fontSize: isMobile ? '0.9rem' : '0.95rem'
+                            fontSize: isMobile ? '0.9rem' : '0.95rem',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
                         }}
                     >
                         {props.username}
                     </Text>
                 }
-                headerRight={props.timestamp ?? <Text variant="caption">{humanReadableTimeDiff(new Date())}</Text>}
+                headerRight={
+                    props.timestamp ?? (
+                        <Text variant="caption" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {humanReadableTimeDiff(new Date())}
+                        </Text>
+                    )
+                }
             >
                 <CfmRenderer messagebody={props.body} emojiDict={{}} />
                 {!props.hideActions && (

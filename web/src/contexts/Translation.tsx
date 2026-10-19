@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface TranslationResult {
     text: string
@@ -29,6 +30,24 @@ const fallbackService: TranslationService = {
 }
 
 const TranslationContext = createContext<TranslationService>(fallbackService)
+
+// 翻訳APIがこの環境で実際に使えるか。Edge/Brave や Chrome Android では両グローバルが存在しても
+// availability() が 'unavailable' を返す(Chrome内蔵APIはデスクトップ限定)ので、typeof だけでは判定できない。
+// 翻訳ペアは「英語⇔UI言語」で代表させる(API自体の非対応と、UI言語への翻訳ペア非対応の両方を拾う)。
+// 'downloadable'/'downloading' はタップ時にモデルDLできるので利用可とみなす
+export const isTranslationAvailable = async (targetLanguage: string): Promise<boolean> => {
+    if (typeof Translator === 'undefined' || typeof LanguageDetector === 'undefined') return false
+    try {
+        if ((await LanguageDetector.availability()) === 'unavailable') return false
+        const pair =
+            targetLanguage === 'en'
+                ? { sourceLanguage: 'ja', targetLanguage: 'en' }
+                : { sourceLanguage: 'en', targetLanguage }
+        return (await Translator.availability(pair)) !== 'unavailable'
+    } catch {
+        return false
+    }
+}
 
 // 検知器はモデルDL後は使い回す(create は user activation を要することがあるので1回で済ませる)
 let detectorPromise: Promise<LanguageDetectorInstance> | undefined
@@ -61,7 +80,16 @@ interface Props {
 // web版: Chrome内蔵の Translator / LanguageDetector API を使う。
 // モデルDLを伴う create は transient user activation が必要なので、translate はタップ直後に呼ばれる想定
 export const TranslationProvider = (props: Props): ReactNode => {
-    const available = typeof Translator !== 'undefined' && typeof LanguageDetector !== 'undefined'
+    const { i18n } = useTranslation()
+    const target = (i18n.resolvedLanguage ?? 'en').split('-')[0]
+    const [available, setAvailable] = useState(false)
+
+    // 非対応ブラウザ/プラットフォームは利用不可扱い(言語設定を変えたら再判定)
+    useEffect(() => {
+        isTranslationAvailable(target)
+            .then(setAvailable)
+            .catch(() => setAvailable(false))
+    }, [target])
 
     const translate = useCallback(async (text: string, targetLanguage: string): Promise<TranslationResult> => {
         if (typeof Translator === 'undefined') throw new Error('unsupported')

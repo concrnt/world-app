@@ -435,7 +435,11 @@ const MockTimelineCell = ({ post }: { post: MockPost }) => {
                 <MessageLayout
                     left={<Avatar ccid={post.ccid} />}
                     headerLeft={<div style={{ fontWeight: 'bold' }}>{post.username}</div>}
-                    headerRight={<Text variant="caption">{post.time}</Text>}
+                    headerRight={
+                        <Text variant="caption" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {post.time}
+                        </Text>
+                    }
                 >
                     <CfmRenderer messagebody={post.body} emojiDict={{}} />
                     <MockMessageFooter post={post} />

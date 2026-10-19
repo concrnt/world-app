@@ -54,7 +54,11 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                     </div>
                 </div>
             }
-            headerRight={<div>{new Date(message.createdAt).toLocaleString()}</div>}
+            headerRight={
+                <div style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {new Date(message.createdAt).toLocaleString()}
+                </div>
+            }
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
                 <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />

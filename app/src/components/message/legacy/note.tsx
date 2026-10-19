@@ -49,7 +49,9 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                     >
                         {message.author.slice(0, 16)}...
                     </div>
-                    <div>{new Date(message.createdAt).toLocaleString()}</div>
+                    <div style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {new Date(message.createdAt).toLocaleString()}
+                    </div>
                 </div>
             }
         >

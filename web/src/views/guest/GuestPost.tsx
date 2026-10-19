@@ -492,8 +492,13 @@ const AssociationUserItem = (props: AssociationUserItemProps) => {
             onClick={props.onClick}
         >
             <Avatar ccid={props.ccid} src={user?.profile.avatar} style={{ width: '32px', height: '32px' }} />
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 'bold' }}>{user?.profile.username || 'Anonymous'}</span>
+            {/* 時刻(TimeDiff)は縮めないので、名前側がminWidth:0で縮んでellipsisになる */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                <span
+                    style={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                    {user?.profile.username || 'Anonymous'}
+                </span>
                 {props.children && <span style={{ opacity: 0.7 }}>{props.children}</span>}
             </div>
             <TimeDiff date={props.date instanceof Date ? props.date : new Date(props.date)} />

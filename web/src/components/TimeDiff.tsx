@@ -21,7 +21,11 @@ export const TimeDiff = (props: TimeDiffProps): ReactNode => {
         <Text
             variant="caption"
             style={{
-                fontSize: '0.8rem'
+                fontSize: '0.8rem',
+                // 名前・ID(alias/handle)が長くても時刻は縮めない・折り返さない(Textの既定pre-wrap/break-wordを上書き)。
+                // 幅が足りないときは名前側(ellipsis/クリップ)に譲らせる
+                whiteSpace: 'nowrap',
+                flexShrink: 0
             }}
         >
             {diffTooLong && '?'}
