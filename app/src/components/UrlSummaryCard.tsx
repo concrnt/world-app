@@ -6,7 +6,6 @@ import { ExternalLink } from './ExternalLink'
 
 interface Props {
     url: string
-    // 取得済みのサマリー(Blueskyのexternal embed等)。渡されたときはhyperproxyへ問い合わせない
     summary?: Partial<Summary>
 }
 
@@ -132,7 +131,7 @@ export const UrlSummaryCard = (props: Props) => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '8px',
+                    padding: '6px 8px',
                     height: '80px',
                     overflow: 'hidden',
                     flex: 1,
@@ -147,7 +146,8 @@ export const UrlSummaryCard = (props: Props) => {
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        lineHeight: 1.3
+                        lineHeight: 1.3,
+                        flexShrink: 0
                     }}
                 >
                     {preview.title || hostname}
@@ -157,7 +157,7 @@ export const UrlSummaryCard = (props: Props) => {
                         fontSize: '12px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        flex: 1,
+                        flexShrink: 0,
                         lineHeight: 1.3,
                         opacity: 0.7,
                         display: '-webkit-box',
@@ -173,7 +173,10 @@ export const UrlSummaryCard = (props: Props) => {
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        opacity: 0.5
+                        opacity: 0.5,
+                        lineHeight: 1.3,
+                        marginTop: 'auto',
+                        flexShrink: 0
                     }}
                 >
                     {hostname}
