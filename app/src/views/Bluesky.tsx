@@ -12,6 +12,7 @@ import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { BskyFollowList } from '../components/BskyFollowList'
 import { Drawer } from '../ui/Drawer'
+import { Confirm } from '../components/Confirm'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
 import { bskySettingsKey, inboxKey } from '../utils/bluesky'
@@ -28,6 +29,16 @@ interface BridgeInfo {
     version: string
     serviceCcid: string
     entity?: BskyEntity
+    // 公式Blueskyアプリのログイン画面に入れる値(ブリッジが組み立てる)
+    login?: { service: string; identifier: string }
+}
+
+// ブリッジが発行する、公式Blueskyアプリ用のログイン資格情報(平文は発行時の応答にしか無い)
+interface AppPassword {
+    id: string
+    name: string
+    createdAt: string
+    lastUsedAt?: string
 }
 
 export const Bluesky = () => {
@@ -87,6 +98,84 @@ export const Bluesky = () => {
 
     const [lookupDraft, setLookupDraft] = useState('')
 
+    // 公式Blueskyアプリ用アプリパスワード(DM閲覧用。投稿・いいね等はブリッジ側が拒否する)
+    const [appPasswords, setAppPasswords] = useState<AppPassword[] | undefined>(undefined)
+    const [appPasswordName, setAppPasswordName] = useState('')
+    const [appPasswordCreating, setAppPasswordCreating] = useState(false)
+    const [appPasswordError, setAppPasswordError] = useState<string>()
+    const [issuedAppPassword, setIssuedAppPassword] = useState<{ name: string; password: string }>()
+    const [revokeTarget, setRevokeTarget] = useState<AppPassword>()
+
+    const loadAppPasswords = () => {
+        client.api
+            .callConcrntApi<{ appPasswords: AppPassword[] }>(
+                client.server.domain,
+                'world.concrnt.atproto.appPasswords',
+                {}
+            )
+            .then((res) => {
+                setAppPasswords(res.appPasswords ?? [])
+            })
+            .catch((err) => {
+                console.log(err)
+                setAppPasswords([])
+            })
+    }
+
+    const createAppPassword = () => {
+        const name = appPasswordName.trim()
+        if (!name) return
+        setAppPasswordCreating(true)
+        setAppPasswordError(undefined)
+        client.api
+            .callConcrntApi<AppPassword & { password: string }>(
+                client.server.domain,
+                'world.concrnt.atproto.createAppPassword',
+                {},
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                }
+            )
+            .then((res) => {
+                setIssuedAppPassword({ name: res.name, password: res.password })
+                setAppPasswordName('')
+                loadAppPasswords()
+            })
+            .catch((err) => {
+                console.log(err)
+                setAppPasswordError(t('appPasswordCreateFailed'))
+            })
+            .finally(() => {
+                setAppPasswordCreating(false)
+            })
+    }
+
+    const revokeAppPassword = () => {
+        const target = revokeTarget
+        if (!target) return
+        setRevokeTarget(undefined)
+        setAppPasswordError(undefined)
+        client.api
+            .callConcrntApi(
+                client.server.domain,
+                'world.concrnt.atproto.revokeAppPassword',
+                { id: target.id },
+                { method: 'DELETE' }
+            )
+            .then(() => {
+                if (issuedAppPassword?.name === target.name) setIssuedAppPassword(undefined)
+                loadAppPasswords()
+            })
+            .catch((err) => {
+                console.log(err)
+                setAppPasswordError(t('appPasswordRevokeFailed'))
+            })
+    }
+
+    const appPasswordSupported = 'world.concrnt.atproto.appPasswords' in (client.server?.endpoints ?? {})
+
     const updateInfo = () => {
         client.api
             .callConcrntApi<BridgeInfo>(client.server.domain, 'world.concrnt.atproto.info', {})
@@ -107,6 +196,8 @@ export const Bluesky = () => {
 
     useEffect(() => {
         if (!active) return
+
+        if (appPasswordSupported) loadAppPasswords()
 
         client.api
             .getDocument<{ listenTimelines: string[]; enabled?: boolean }>(bskySettingsKey(client.ccid))
@@ -320,6 +411,90 @@ export const Bluesky = () => {
                         >
                             {t('announce')}
                         </Button>
+                        {appPasswordSupported && (
+                            <>
+                                <Divider />
+                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
+                                    {t('appPasswordTitle')}
+                                </Text>
+                                <Text>{t('appPasswordDesc')}</Text>
+                                <Text variant="caption">{t('appPasswordLimits')}</Text>
+                                {info.login && (
+                                    <>
+                                        <RecordRow name={t('appPasswordService')} value={info.login.service} />
+                                        <RecordRow name={t('appPasswordIdentifier')} value={info.login.identifier} />
+                                    </>
+                                )}
+                                {appPasswords === undefined && <Text variant="caption">{t('loading')}</Text>}
+                                {appPasswords && appPasswords.length === 0 && (
+                                    <Text variant="caption">{t('appPasswordEmpty')}</Text>
+                                )}
+                                {appPasswords?.map((ap) => (
+                                    <div
+                                        key={ap.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: CssVar.space(1),
+                                            border: `1px solid ${CssVar.divider}`,
+                                            borderRadius: '8px',
+                                            padding: CssVar.space(1)
+                                        }}
+                                    >
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <Text style={{ wordBreak: 'break-all' }}>{ap.name}</Text>
+                                            <Text variant="caption">
+                                                {t('appPasswordCreatedAt', {
+                                                    date: new Date(ap.createdAt).toLocaleDateString()
+                                                })}
+                                                {' / '}
+                                                {ap.lastUsedAt
+                                                    ? t('appPasswordLastUsed', {
+                                                          date: new Date(ap.lastUsedAt).toLocaleDateString()
+                                                      })
+                                                    : t('appPasswordNeverUsed')}
+                                            </Text>
+                                        </div>
+                                        <Button variant="outlined" onClick={() => setRevokeTarget(ap)}>
+                                            {t('appPasswordRevoke')}
+                                        </Button>
+                                    </div>
+                                ))}
+                                <div style={{ display: 'flex', gap: CssVar.space(1), alignItems: 'center' }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <TextField
+                                            value={appPasswordName}
+                                            placeholder={t('appPasswordNamePlaceholder')}
+                                            onChange={(e) => setAppPasswordName(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button
+                                        disabled={appPasswordCreating || appPasswordName.trim().length === 0}
+                                        onClick={createAppPassword}
+                                    >
+                                        {t('appPasswordCreate')}
+                                    </Button>
+                                </div>
+                                {appPasswordError && <Text style={{ color: '#ff5b5b' }}>{appPasswordError}</Text>}
+                                {issuedAppPassword && (
+                                    <>
+                                        <Text>{t('appPasswordIssued', { name: issuedAppPassword.name })}</Text>
+                                        <RecordRow name={t('appPasswordLabel')} value={issuedAppPassword.password} />
+                                        <Text variant="caption">{t('appPasswordIssuedNote')}</Text>
+                                    </>
+                                )}
+                                <Confirm
+                                    open={revokeTarget !== undefined}
+                                    onClose={() => setRevokeTarget(undefined)}
+                                    title={t('appPasswordRevokeConfirmTitle')}
+                                    description={t('appPasswordRevokeConfirmDescription', {
+                                        name: revokeTarget?.name ?? ''
+                                    })}
+                                    confirmText={t('appPasswordRevoke')}
+                                    onConfirm={revokeAppPassword}
+                                />
+                            </>
+                        )}
                         <Divider />
                         <IconButton
                             onClick={(e) => {
