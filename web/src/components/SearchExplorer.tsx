@@ -2,7 +2,6 @@ import { Fragment, Suspense, useDeferredValue, useMemo, useRef, useState, useTra
 import { useTranslation } from 'react-i18next'
 import {
     Text,
-    TextField,
     CCWallpaper,
     Avatar,
     IconButton,
@@ -20,18 +19,12 @@ import { CssVar } from '../types/Theme'
 import { Drawer } from './Drawer'
 import { Select } from './Select'
 import { Subscription } from './Subscription'
-import {
-    MdArrowDropDown,
-    MdCheck,
-    MdChevronLeft,
-    MdChevronRight,
-    MdClear,
-    MdPlaylistAdd,
-    MdSearch
-} from 'react-icons/md'
+import { MdArrowDropDown, MdCheck, MdChevronLeft, MdChevronRight, MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useResource } from '../hooks/useResource'
+import { SearchQueryField } from './SearchQueryField'
+import { composeSearchQuery, parseSearchQuery, type SearchFilter } from '../lib/searchQuery'
 import { usePersistent } from '../hooks/usePersistent'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useMediaProxy } from '../contexts/MediaProxy'
@@ -163,7 +156,12 @@ type UserLandingSort = 'createdAt' | 'activityScore'
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export const SearchExplorer = () => {
+interface SearchExplorerProps {
+    // 外から持ち込む検索式(in:/author: フィルターを含んでよい)。初期状態にだけ使う
+    initialQuery?: string
+}
+
+export const SearchExplorer = (props: SearchExplorerProps) => {
     const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
     const theme = useTheme()
     const activeColor = theme.variant === 'classic' ? CssVar.backdropBackground : CssVar.contentLink
@@ -173,8 +171,9 @@ export const SearchExplorer = () => {
         fontWeight: selected ? ('bold' as const) : ('normal' as const)
     })
 
-    // 検索語が無くても一覧が出るコミュニティタブから始める
-    const [tab, setTab] = useState<SearchTab>('communities')
+    // フィルター(投稿検索にしか効かない)を持ち込まれたら投稿タブ、それ以外は検索語が無くても一覧が出るコミュニティタブから始める
+    const [initial] = useState(() => parseSearchQuery(props.initialQuery ?? ''))
+    const [tab, setTab] = useState<SearchTab>(initial.filters.length > 0 ? 'posts' : 'communities')
     const { client } = useClient()
     // ゲスト(ccid空)にはフォロー先が無いので、フォロー中の人が活発な一覧は出さない
     const viewer = client.ccid !== '' ? client.ccid : undefined
@@ -182,8 +181,13 @@ export const SearchExplorer = () => {
     const [communitySort, setCommunitySort] = useState<CommunitySort>(viewer ? 'followee' : 'activityScore')
     const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')
     const [userSort, setUserSort] = usePersistent<UserLandingSort>('explorer-landing-user-sort', 'createdAt')
-    const [query, setQuery] = useState('')
-    const [searchQuery, setSearchQuery] = useState('')
+    // 入力欄の状態はフィルター(チップ)と本文に分け、crawler へ送る文字列は composeSearchQuery で合成する
+    const [filters, setFiltersState] = useState<SearchFilter[]>(initial.filters)
+    const [text, setText] = useState(initial.text)
+    const [searchQuery, setSearchQuery] = useState(composeSearchQuery(initial.filters, initial.text))
+    // デバウンスのタイマーやイベントハンドラから最新値を読むための写し
+    const filtersRef = useRef(initial.filters)
+    const textRef = useRef(initial.text)
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const isMobile = useIsMobile()
     // モバイル幅では見出しと並び順ボタンが1行に収まらず折り返すため、両方を詰める
@@ -192,8 +196,47 @@ export const SearchExplorer = () => {
 
     const clearSearch = () => {
         if (debounceRef.current) clearTimeout(debounceRef.current)
-        setQuery('')
+        filtersRef.current = []
+        textRef.current = ''
+        setFiltersState([])
+        setText('')
         setSearchQuery('')
+    }
+
+    const changeText = (value: string) => {
+        textRef.current = value
+        setText(value)
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        // 入力中に文字を全部消しても直前の結果を出したままにする(一覧へ戻るのはblur時)。
+        // 打ち直しのたびに一覧と結果が入れ替わってチラつくのを避ける
+        if (value === '') return
+        debounceRef.current = setTimeout(() => {
+            setSearchQuery(composeSearchQuery(filtersRef.current, value))
+        }, 300)
+    }
+
+    // チップの増減はデバウンスせず即反映する。フィルターは投稿検索にしか効かないので、増えたら投稿タブへ移す
+    const setFilters = (next: SearchFilter[]) => {
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        const added = next.length > filtersRef.current.length
+        filtersRef.current = next
+        setFiltersState(next)
+        setSearchQuery(composeSearchQuery(next, textRef.current))
+        if (added) setTab('posts')
+    }
+
+    const submitSearch = () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        setSearchQuery(composeSearchQuery(filtersRef.current, textRef.current))
+    }
+
+    const blurSearch = () => {
+        if (textRef.current !== '') return
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        // 即時に戻すと、結果カードをタップした際の blur で差し替わりタップ先が消えるので少し待つ
+        debounceRef.current = setTimeout(() => {
+            setSearchQuery(composeSearchQuery(filtersRef.current, ''))
+        }, 300)
     }
 
     // タブと入力欄は即時反応させ、結果リストだけ遅れて追従させる
@@ -208,6 +251,10 @@ export const SearchExplorer = () => {
         deferredCommunitySort !== communitySort ||
         deferredLandingSort !== landingSort ||
         deferredUserSort !== userSort
+
+    // フィルターは crawler の投稿検索にしか無いので、ユーザー/コミュニティのタブには本文だけを送る
+    const deferredText = parseSearchQuery(deferredQuery).text
+    const deferredEffectiveQuery = deferredTab === 'posts' ? deferredQuery : deferredText
 
     const resultSort =
         deferredCommunitySort === 'relevance' || deferredCommunitySort === 'followee'
@@ -229,43 +276,16 @@ export const SearchExplorer = () => {
                     paddingBottom: 0
                 }}
             >
-                <TextField
-                    value={query}
+                <SearchQueryField
+                    filters={filters}
+                    text={text}
+                    filtersActive={tab === 'posts'}
                     placeholder={t('searchPlaceholder')}
-                    startAdornment={<MdSearch size={20} style={{ opacity: 0.5, flexShrink: 0 }} />}
-                    endAdornment={
-                        query ? (
-                            <IconButton onClick={clearSearch} title={t('clearSearch')}>
-                                <MdClear size={20} />
-                            </IconButton>
-                        ) : undefined
-                    }
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setQuery(value)
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        // 入力中に文字を全部消しても直前の結果を出したままにする(一覧へ戻るのはblur時)。
-                        // 打ち直しのたびに一覧と結果が入れ替わってチラつくのを避ける
-                        if (value === '') return
-                        debounceRef.current = setTimeout(() => {
-                            setSearchQuery(value)
-                        }, 300)
-                    }}
-                    onBlur={() => {
-                        if (query !== '') return
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        // 即時に戻すと、結果カードをタップした際の blur で差し替わりタップ先が消えるので少し待つ
-                        debounceRef.current = setTimeout(() => {
-                            setSearchQuery('')
-                        }, 300)
-                    }}
-                    onKeyDown={(e) => {
-                        // Enterで検索を確定してフォーカスを外す(モバイルではキーボードが閉じる)。日本語入力の確定Enterは除外
-                        if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
-                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                        setSearchQuery(query)
-                        e.currentTarget.blur()
-                    }}
+                    onTextChange={changeText}
+                    onFiltersChange={setFilters}
+                    onSubmit={submitSearch}
+                    onBlur={blurSearch}
+                    onClear={clearSearch}
                 />
 
                 <Tabs>
@@ -307,7 +327,7 @@ export const SearchExplorer = () => {
                     overflowY: 'auto'
                 }}
             >
-                {deferredQuery === '' ? (
+                {deferredEffectiveQuery === '' ? (
                     <div
                         style={{
                             display: 'flex',
@@ -415,16 +435,16 @@ export const SearchExplorer = () => {
                         <div style={{ opacity: isStale ? 0.6 : 1, transition: 'opacity 0.2s' }}>
                             {/* keyで結果コンポーネントを作り直し、「もっと見る」で伸ばしたlimitを条件ごとにリセットする */}
                             <Suspense
-                                key={`${deferredTab}:${deferredQuery}:${deferredCommunitySort}`}
+                                key={`${deferredTab}:${deferredEffectiveQuery}:${deferredCommunitySort}`}
                                 fallback={<Text variant="caption">{t('loading')}</Text>}
                             >
                                 {deferredTab === 'posts' ? (
                                     <PostResults query={deferredQuery} loadMore />
                                 ) : deferredTab === 'users' ? (
-                                    <UserResults query={deferredQuery} loadMore />
+                                    <UserResults query={deferredText} loadMore />
                                 ) : (
                                     <CommunityResults
-                                        query={deferredQuery}
+                                        query={deferredText}
                                         sort={resultSort}
                                         viewer={deferredCommunitySort === 'followee' ? viewer : undefined}
                                         loadMore

@@ -15,7 +15,7 @@ import { FAB } from '../components/FAB'
 import { usePersistent } from '../hooks/usePersistent'
 import { invalidateResource } from '../hooks/useResource'
 import { ClassicExplorer } from '../components/ClassicExplorer'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 interface CommunityDraft {
     name: string
@@ -41,11 +41,15 @@ export const ExplorerView = () => {
     const navigate = useNavigate()
     const scrollRef = useRef<HTMLDivElement>(null)
     const { client } = useClient()
+    // プロフィール/コミュニティ情報の検索ボタンから ?q= で検索式(in:cckv://… 等)を持ち込める
+    const [searchParams] = useSearchParams()
+    const presetQuery = searchParams.get('q') ?? ''
 
     const [preferredClassicMode, setPreferredClassicMode] = usePersistent('explorer-classic-mode', false)
     const [, startModeTransition] = useTransition()
     const supportsSearchExplorer = client.server.layer === 'concrnt-mainnet'
-    const classicMode = supportsSearchExplorer ? preferredClassicMode : true
+    // 検索式を持ち込まれたときは classic の設定に関わらず検索画面を出す
+    const classicMode = supportsSearchExplorer ? (presetQuery ? false : preferredClassicMode) : true
     const closeCreator = () => {
         setCreatorOpen(false)
         if (!communityDraft.communityUri) setCommunityDraft(emptyCommunityDraft)
@@ -92,8 +96,9 @@ export const ExplorerView = () => {
                         <ClassicExplorer />
                     </div>
                 ) : (
-                    // 検索バーを常に見せるため、スクロール領域は SearchExplorer 内の結果リストに持たせる
-                    <SearchExplorer />
+                    // 検索バーを常に見せるため、スクロール領域は SearchExplorer 内の結果リストに持たせる。
+                    // ?q= が変わったら key で作り直す(入力中の文字列は URL に書き戻さない)
+                    <SearchExplorer key={presetQuery} initialQuery={presetQuery || undefined} />
                 )}
                 <FAB
                     onClick={() => {

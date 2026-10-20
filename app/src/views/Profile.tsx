@@ -20,8 +20,7 @@ import { CfmRenderer } from '../components/CfmRenderer'
 import { Confirm } from '../components/Confirm'
 import { useClient } from '../contexts/Client'
 
-// import { MdSearch } from 'react-icons/md'
-import { MdMoreHoriz } from 'react-icons/md'
+import { MdMoreHoriz, MdSearch } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { Drawer } from '../ui/Drawer'
@@ -39,6 +38,7 @@ import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
 import { useStack } from '../layouts/Stack'
 import { shareText } from '../lib/share'
+import { SearchView } from './Search'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
 import { PrivateContentDoor } from '../components/PrivateContentDoor'
@@ -333,11 +333,24 @@ const Body = (props: BodyProps) => {
                             {navigation.backNode}
                         </div>
                         <div style={{ flex: 1 }} />
-                        {/*
-                        <IconButton variant="contained">
-                            <MdSearch size={24} />
-                        </IconButton>
-                        */}
+                        {/* 投稿検索は crawler(mainnet)の explorer に、このプロフィールのホームタイムラインを in: フィルターにして委ねる */}
+                        {client.server.layer === 'concrnt-mainnet' && (
+                            <IconButton
+                                variant="contained"
+                                title={t('searchPosts')}
+                                onClick={() => {
+                                    stack.push(
+                                        <SearchView
+                                            initialQuery={
+                                                'in:' + semantics.homeTimeline(props.ccid, props.profileName ?? 'main')
+                                            }
+                                        />
+                                    )
+                                }}
+                            >
+                                <MdSearch size={24} />
+                            </IconButton>
+                        )}
                         {selectOptions.length > 0 && (
                             <IconButton
                                 variant="contained"

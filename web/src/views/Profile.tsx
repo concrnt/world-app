@@ -20,8 +20,7 @@ import { CfmRenderer } from '../components/CfmRenderer'
 import { View } from '../components/View'
 import { useClient } from '../contexts/Client'
 
-// import { MdSearch } from 'react-icons/md'
-import { MdMoreHoriz } from 'react-icons/md'
+import { MdMoreHoriz, MdSearch } from 'react-icons/md'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { Drawer } from '../components/Drawer'
@@ -373,11 +372,23 @@ const Body = (props: BodyProps) => {
                             {navigation.backNode}
                         </div>
                         <div style={{ flex: 1 }} />
-                        {/*
-                        <IconButton variant="contained">
-                            <MdSearch size={24} />
-                        </IconButton>
-                        */}
+                        {/* 投稿検索は crawler(mainnet)の explorer に、このプロフィールのホームタイムラインを in: フィルターにして委ねる */}
+                        {client.server.layer === 'concrnt-mainnet' && (
+                            <IconButton
+                                variant="contained"
+                                title={t('searchPosts')}
+                                onClick={() => {
+                                    navigate(
+                                        '/explorer?q=' +
+                                            encodeURIComponent(
+                                                'in:' + semantics.homeTimeline(props.ccid, props.profileName ?? 'main')
+                                            )
+                                    )
+                                }}
+                            >
+                                <MdSearch size={24} />
+                            </IconButton>
+                        )}
                         {selectOptions.length > 0 && (
                             <IconButton
                                 variant="contained"

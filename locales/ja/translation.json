@@ -285,6 +285,7 @@
             "masterKeyHint": "12個の単語を順番に入力してください。12語をまとめて貼り付けることもできます。"
         },
         "profile": {
+            "searchPosts": "投稿を検索",
             "userNotFound": "ユーザーが見つかりませんでした",
             "blockConfirmTitle": "ユーザーをブロック",
             "blockConfirmDescription": "このユーザーをブロックしてもよろしいですか？ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。",
@@ -492,6 +493,9 @@
             "notFound": "見つかりませんでした",
             "unsupported": "このURIの種類は照会では開けません",
             "failed": "照会に失敗しました: {{error}}"
+        },
+        "search": {
+            "title": "検索"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"
@@ -754,7 +758,8 @@
             "nextPage": "次のページ",
             "pageIndicator": "{{page}}ページ目",
             "noFolloweeCommunities": "フォロー中のユーザーが活動しているコミュニティはありません",
-            "postsHint": "検索語を入力すると投稿を検索できます",
+            "postsHint": "検索語を入力すると投稿を検索できます(in:<タイムラインURI> や author:<CCID> で絞り込めます)",
+            "removeFilter": "フィルターを外す",
             "sortFollowee": "フォロー中",
             "sortGlobal": "グローバル",
             "followeeActiveCommunities": "フォロー中で活発なコミュニティ",
@@ -862,16 +867,7 @@
             "deleteTimeline": "コミュニティを削除",
             "confirmDeleteTimeline": "コミュニティを削除",
             "confirmDeleteTimelineDescription": "このコミュニティを削除してもよろしいですか？この操作は取り消せません。",
-            "search": "検索",
-            "searchNotAvailable": "{{host}}では検索機能が利用できません",
-            "clearSearch": "検索をクリア",
-            "searching": "検索中...",
-            "searchResultPlaceholder": "ここに検索結果が表示されます",
-            "searchResultEmpty": "見つかりませんでした",
-            "searchResultTitle": "{{query}} の検索結果",
-            "searchFailed": "検索に失敗しました",
-            "prev": "前のページ",
-            "next": "次のページ"
+            "search": "検索"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",
