@@ -1,17 +1,17 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chip, IconButton, TextField } from '@concrnt/ui'
 import { MdAlternateEmail, MdClear, MdOutlineHome, MdOutlineTag, MdSearch } from 'react-icons/md'
 import { IoIosCloseCircle } from 'react-icons/io'
 import { useClient } from '../contexts/Client'
 import { useResource } from '../hooks/useResource'
-import { parseSearchQuery, type SearchFilter } from '../lib/searchQuery'
+import { parseSearchQuery, type SearchFilter, type SearchFilterKind } from '../lib/searchQuery'
 
 interface Props {
     filters: SearchFilter[]
     text: string
-    // フィルターが効くタブ(投稿)かどうか。効かないタブではチップを薄く見せる
-    filtersActive: boolean
+    // 現在のタブで効かないフィルター種別。該当するチップは薄く見せる
+    inactiveKinds: SearchFilterKind[]
     placeholder?: string
     onTextChange: (text: string) => void
     onFiltersChange: (filters: SearchFilter[]) => void
@@ -24,6 +24,13 @@ interface Props {
 // 入力中に「in:cckv://… 」のように空白で区切られたトークンはその場でチップに変換する
 export const SearchQueryField = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.searchExplorer' })
+
+    // チップ列は横スクロールするので、チップが増えたら末尾(新しいチップと×)が見えるまで送る
+    const rowRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        const row = rowRef.current
+        if (row) row.scrollLeft = row.scrollWidth
+    }, [props.filters.length])
 
     const removeFilter = (index: number) => {
         props.onFiltersChange(props.filters.filter((_, i) => i !== index))
@@ -55,6 +62,7 @@ export const SearchQueryField = (props: Props) => {
                     {props.filters.length > 0 && (
                         // チップ列は横に伸びすぎないよう縮め、入力欄の幅を残す
                         <div
+                            ref={rowRef}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -71,7 +79,7 @@ export const SearchQueryField = (props: Props) => {
                                 <FilterChip
                                     key={`${filter.kind}:${filter.value}`}
                                     filter={filter}
-                                    active={props.filtersActive}
+                                    active={!props.inactiveKinds.includes(filter.kind)}
                                     removeTitle={t('removeFilter')}
                                     onRemove={() => removeFilter(index)}
                                 />

@@ -25,7 +25,7 @@ import { ProfileView } from '../views/Profile'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useResource } from '../hooks/useResource'
 import { SearchQueryField } from './SearchQueryField'
-import { composeSearchQuery, parseSearchQuery, type SearchFilter } from '../lib/searchQuery'
+import { composeSearchQuery, parseSearchQuery, type SearchFilter, type SearchFilterKind } from '../lib/searchQuery'
 import { usePersistent } from '../hooks/usePersistent'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { useClient } from '../contexts/Client'
@@ -171,9 +171,9 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
         fontWeight: selected ? ('bold' as const) : ('normal' as const)
     })
 
-    // フィルター(投稿検索にしか効かない)を持ち込まれたら投稿タブ、それ以外は検索語が無くても一覧が出るコミュニティタブから始める
+    // in: フィルター(投稿検索にしか効かない)を持ち込まれたら投稿タブ、それ以外は検索語が無くても一覧が出るコミュニティタブから始める
     const [initial] = useState(() => parseSearchQuery(props.initialQuery ?? ''))
-    const [tab, setTab] = useState<SearchTab>(initial.filters.length > 0 ? 'posts' : 'communities')
+    const [tab, setTab] = useState<SearchTab>(initial.filters.some((f) => f.kind === 'in') ? 'posts' : 'communities')
     const { client } = useClient()
     // ゲスト(ccid空)にはフォロー先が無いので、フォロー中の人が活発な一覧は出さない
     const viewer = client.ccid !== '' ? client.ccid : undefined
@@ -214,14 +214,15 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
         }, 300)
     }
 
-    // チップの増減はデバウンスせず即反映する。フィルターは投稿検索にしか効かないので、増えたら投稿タブへ移す
+    // チップの増減はデバウンスせず即反映する。in: は投稿検索にしか効かないので、増えたら投稿タブへ移す(author: は全タブで効く)
     const setFilters = (next: SearchFilter[]) => {
         if (debounceRef.current) clearTimeout(debounceRef.current)
-        const added = next.length > filtersRef.current.length
+        const prev = filtersRef.current
+        const addedIn = next.some((f) => f.kind === 'in' && !prev.some((p) => p.kind === 'in' && p.value === f.value))
         filtersRef.current = next
         setFiltersState(next)
         setSearchQuery(composeSearchQuery(next, textRef.current))
-        if (added) setTab('posts')
+        if (addedIn) setTab('posts')
     }
 
     const submitSearch = () => {
@@ -251,9 +252,17 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
         deferredLandingSort !== landingSort ||
         deferredUserSort !== userSort
 
-    // フィルターは crawler の投稿検索にしか無いので、ユーザー/コミュニティのタブには本文だけを送る
-    const deferredText = parseSearchQuery(deferredQuery).text
-    const deferredEffectiveQuery = deferredTab === 'posts' ? deferredQuery : deferredText
+    // crawler の users/communities は author: だけを解釈し in: は通常の検索語になるので、投稿タブ以外では in: を落として送る
+    const deferredEffectiveQuery = useMemo(() => {
+        if (deferredTab === 'posts') return deferredQuery
+        const parsed = parseSearchQuery(deferredQuery)
+        return composeSearchQuery(
+            parsed.filters.filter((f) => f.kind === 'author'),
+            parsed.text
+        )
+    }, [deferredTab, deferredQuery])
+    // 現在のタブで効かないフィルター種別(チップを薄く見せる)
+    const inactiveKinds: SearchFilterKind[] = tab === 'posts' ? [] : ['in']
 
     const resultSort =
         deferredCommunitySort === 'relevance' || deferredCommunitySort === 'followee'
@@ -278,7 +287,7 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
                 <SearchQueryField
                     filters={filters}
                     text={text}
-                    filtersActive={tab === 'posts'}
+                    inactiveKinds={inactiveKinds}
                     placeholder={t('searchPlaceholder')}
                     onTextChange={changeText}
                     onFiltersChange={setFilters}
@@ -442,10 +451,10 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
                                 {deferredTab === 'posts' ? (
                                     <PostResults query={deferredQuery} loadMore />
                                 ) : deferredTab === 'users' ? (
-                                    <UserResults query={deferredText} loadMore />
+                                    <UserResults query={deferredEffectiveQuery} loadMore />
                                 ) : (
                                     <CommunityResults
-                                        query={deferredText}
+                                        query={deferredEffectiveQuery}
                                         sort={resultSort}
                                         viewer={deferredCommunitySort === 'followee' ? viewer : undefined}
                                         loadMore

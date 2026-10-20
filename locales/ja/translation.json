@@ -758,7 +758,7 @@
             "nextPage": "次のページ",
             "pageIndicator": "{{page}}ページ目",
             "noFolloweeCommunities": "フォロー中のユーザーが活動しているコミュニティはありません",
-            "postsHint": "検索語を入力すると投稿を検索できます(in:<タイムラインURI> や author:<CCID> で絞り込めます)",
+            "postsHint": "検索語を入力すると投稿を検索できます",
             "removeFilter": "フィルターを外す",
             "sortFollowee": "フォロー中",
             "sortGlobal": "グローバル",

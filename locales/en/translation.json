@@ -759,7 +759,7 @@
             "nextPage": "Next page",
             "pageIndicator": "Page {{page}}",
             "noFolloweeCommunities": "No communities where people you follow are active",
-            "postsHint": "Type a search term to search posts (narrow down with in:<timeline URI> or author:<CCID>)",
+            "postsHint": "Type a search term to search posts",
             "removeFilter": "Remove filter",
             "sortFollowee": "Following",
             "sortGlobal": "Global",
