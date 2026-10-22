@@ -1200,6 +1200,7 @@
                 "originMismatch": "request_uri と client_id のオリジンが一致しません",
                 "fetchFailed": "ログイン要求を取得できませんでした",
                 "invalidRequest": "ログイン要求の内容が正しくありません",
+                "modeMismatch": "この開き方では使えないログイン要求です (QRコードは別の端末から、リンクは同じ端末からのログイン専用です)",
                 "expired": "ログイン要求の有効期限が切れています。サイトでQRコードを再表示してください",
                 "signFailed": "署名できませんでした",
                 "postFailed": "サイトへの送信に失敗しました"

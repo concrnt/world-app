@@ -27,6 +27,7 @@ export const ExternalAuthView = (props: Props) => {
             >
                 <ExternalAuthConsent
                     uri={props.uri}
+                    source="deeplink"
                     onComplete={() => {
                         setTimeout(() => {
                             stack.pop()

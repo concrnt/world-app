@@ -13,6 +13,12 @@ export const AUTH_URI_SCHEME = 'concrnt-auth://'
 // ID Token の有効期間 (秒)。ログイン操作の証明なので短命にする (§7.2 は iat から 10 分以内を推奨)
 const ID_TOKEN_LIFETIME = 300
 
+// 応答の配送方法 (§8)。要求の開き方で一意に決まる:
+//   QR コード (別端末) → direct_post (§8.1) / deep link (同一端末) → fragment (§8.2)
+// 逆の組み合わせ (QR なのに fragment、リンクなのに direct_post) は受け付けない。
+// 特にリンクで届く direct_post は、攻撃者が別端末で作った要求を踏ませる同意フィッシング (§10.1) の形そのもの
+export type ResponseMode = 'direct_post' | 'fragment'
+
 export interface AuthorizationRequestUri {
     clientId: string
     requestUri: string
@@ -41,6 +47,7 @@ export type ExternalAuthErrorCode =
     | 'originMismatch'
     | 'fetchFailed'
     | 'invalidRequest'
+    | 'modeMismatch'
     | 'expired'
     | 'signFailed'
     | 'postFailed'
@@ -86,7 +93,10 @@ const parseHttpsUrl = (text: string): URL | null => {
 
 // §5.3 / §5.4-2〜5: Request Object の取得と検証。
 // 失敗したら throw するだけで、RP には何も送らない (§5.4, §8.3)
-export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<RequestObject> => {
+export const fetchRequestObject = async (
+    uri: AuthorizationRequestUri,
+    expectedMode: ResponseMode
+): Promise<RequestObject> => {
     let res: Response
     try {
         // §5.4-2: リダイレクトに追従しない。redirect: 'manual' のリダイレクトは status 0 の
@@ -116,10 +126,11 @@ export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<
     if (typeof request.exp !== 'number') throw new ExternalAuthError('invalidRequest')
     if (request.exp <= Math.floor(Date.now() / 1000)) throw new ExternalAuthError('expired')
 
-    // §8.1 direct_post (QR・別端末) と §8.2 fragment (同一端末・リンク) の両方を扱う
+    // 応答方式は要求の開き方と一致しなければならない (ResponseMode のコメント参照)
     if (request.response_mode !== 'direct_post' && request.response_mode !== 'fragment') {
         throw new ExternalAuthError('invalidRequest')
     }
+    if (request.response_mode !== expectedMode) throw new ExternalAuthError('modeMismatch')
 
     return request
 }

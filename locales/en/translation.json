@@ -1201,6 +1201,7 @@
                 "originMismatch": "request_uri and client_id have different origins",
                 "fetchFailed": "Could not fetch the login request",
                 "invalidRequest": "The login request is invalid",
+                "modeMismatch": "This login request cannot be used this way (QR codes are for logging in from another device, links from this device)",
                 "expired": "The login request has expired. Show the QR code again on the site",
                 "signFailed": "Could not sign",
                 "postFailed": "Could not send the response to the site"

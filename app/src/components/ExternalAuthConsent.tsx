@@ -19,6 +19,8 @@ import {
 
 interface Props {
     uri: string
+    // 要求の開き方。QR (別端末) は direct_post、deep link (同一端末) は fragment の要求しか受け付けない
+    source: 'qr' | 'deeplink'
     onComplete: (result: 'approved' | 'denied') => void
 }
 
@@ -39,9 +41,10 @@ export const ExternalAuthConsent = (props: Props) => {
 
     useEffect(() => {
         let cancelled = false
+        const expectedMode = props.source === 'qr' ? 'direct_post' : 'fragment'
         ;(async () => {
             try {
-                const request = await fetchRequestObject(parseAuthorizationRequestUri(props.uri))
+                const request = await fetchRequestObject(parseAuthorizationRequestUri(props.uri), expectedMode)
                 if (!cancelled) setState({ kind: 'consent', request, submitting: false })
             } catch (e) {
                 if (!cancelled) {
@@ -52,7 +55,7 @@ export const ExternalAuthConsent = (props: Props) => {
         return () => {
             cancelled = true
         }
-    }, [props.uri])
+    }, [props.uri, props.source])
 
     // §8.1 / §8.2: 応答の配送方法は Request Object の response_mode で決まる
     const deliver = (request: RequestObject, params: Record<string, string>) =>
@@ -148,7 +151,8 @@ export const ExternalAuthConsent = (props: Props) => {
 
             {isFirstTime && <Text style={{ margin: 0, fontWeight: 'bold' }}>{t('firstTimeWarning')}</Text>}
 
-            {request.display_code && (
+            {/* 照合コードは別端末の画面と見比べるためのもの。deep link (同一端末) では見比べる画面が無いので出さない */}
+            {props.source === 'qr' && request.display_code && (
                 <div>
                     <Text variant="caption" style={{ margin: 0 }}>
                         {t('displayCode')}
