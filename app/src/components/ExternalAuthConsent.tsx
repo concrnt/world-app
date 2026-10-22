@@ -146,9 +146,7 @@ export const ExternalAuthConsent = (props: Props) => {
                     <Text variant="caption" style={{ margin: 0 }}>
                         {t('displayCode')}
                     </Text>
-                    <Text style={{ margin: 0, fontSize: '2rem', fontFamily: 'monospace', textAlign: 'center' }}>
-                        {request.display_code}
-                    </Text>
+                    <Text style={{ margin: 0, fontSize: '2rem', textAlign: 'center' }}>{request.display_code}</Text>
                 </div>
             )}
 
