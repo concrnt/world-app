@@ -10,6 +10,7 @@ import {
     buildIdToken,
     ExternalAuthError,
     fetchRequestObject,
+    openFragmentResponse,
     parseAuthorizationRequestUri,
     postResponse,
     type ExternalAuthErrorCode,
@@ -24,7 +25,7 @@ interface Props {
 type State =
     | { kind: 'loading' }
     | { kind: 'consent'; request: RequestObject; submitting: boolean }
-    | { kind: 'done'; result: 'approved' | 'denied' }
+    | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' }
     | { kind: 'error'; code: ExternalAuthErrorCode }
 
 export const ExternalAuthConsent = (props: Props) => {
@@ -53,17 +54,23 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }, [props.uri])
 
+    // §8.1 / §8.2: 応答の配送方法は Request Object の response_mode で決まる
+    const deliver = (request: RequestObject, params: Record<string, string>) =>
+        request.response_mode === 'fragment'
+            ? openFragmentResponse(request.client_id, params)
+            : postResponse(request.client_id, params)
+
     const approve = async (request: RequestObject) => {
         setState({ kind: 'consent', request, submitting: true })
         try {
             const idToken = await buildIdToken(client, request) // ここで端末認証が出る
-            await postResponse(request.client_id, {
+            await deliver(request, {
                 id_token: idToken,
                 ...(request.state !== undefined ? { state: request.state } : {})
             })
             const origin = new URL(request.client_id).origin
             setKnownOrigins((prev) => (prev.includes(origin) ? prev : [...prev, origin]))
-            setState({ kind: 'done', result: 'approved' })
+            setState({ kind: 'done', message: request.response_mode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
             setState({ kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'signFailed' })
@@ -74,14 +81,14 @@ export const ExternalAuthConsent = (props: Props) => {
         setState({ kind: 'consent', request, submitting: true })
         // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
-            await postResponse(request.client_id, {
+            await deliver(request, {
                 error: 'access_denied',
                 ...(request.state !== undefined ? { state: request.state } : {})
             })
         } catch {
             // 通知失敗は無視する
         }
-        setState({ kind: 'done', result: 'denied' })
+        setState({ kind: 'done', message: 'denied' })
         props.onComplete('denied')
     }
 
@@ -100,7 +107,7 @@ export const ExternalAuthConsent = (props: Props) => {
     }
 
     if (state.kind === 'done') {
-        return <Text variant="h3">{t(state.result)}</Text>
+        return <Text variant="h3">{t(state.message)}</Text>
     }
 
     const { request, submitting } = state

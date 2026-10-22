@@ -16,6 +16,8 @@ import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { AUTH_URI_SCHEME } from '../lib/externalAuth'
+import { ExternalAuthView } from './ExternalAuth'
 import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
@@ -175,8 +177,9 @@ export const MainView = () => {
         }
     }, [client])
 
-    // cckv:// links opened outside the app (OS deep link): resolve the URI the
-    // same way the 照会 (Query) view does and open that, on top of the current tab.
+    // Deep links opened outside the app: cckv:// is resolved the same way the
+    // 照会 (Query) view does and opened on top of the current tab; concrnt-auth://
+    // (CIP-17 same-device sign-in) opens the consent screen there instead.
     // Cold start: the URL is held by the plugin until MainView mounts (i.e.
     // after login), so it is consumed here once. Warm start: live event.
     useEffect(() => {
@@ -185,6 +188,10 @@ export const MainView = () => {
         const openDeepLink = (uri: string) => {
             setOpen(false)
             const stack = stackRefs.current[selectedTabRef.current]
+            if (uri.startsWith(AUTH_URI_SCHEME)) {
+                stack?.push(<ExternalAuthView uri={uri} />)
+                return
+            }
             resolveQueryTarget(client, uri)
                 .then((target) => {
                     switch (target.kind) {

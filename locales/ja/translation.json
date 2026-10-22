@@ -1191,6 +1191,7 @@
             "deny": "拒否",
             "submitting": "送信しています...",
             "approved": "ログインしました。サイトの画面を確認してください。",
+            "approvedFragment": "承認しました。ブラウザに戻って続けてください。",
             "denied": "ログインを拒否しました",
             "errorTitle": "ログインできません",
             "nothingSent": "サイトには何も送信していません。",
@@ -1200,7 +1201,6 @@
                 "fetchFailed": "ログイン要求を取得できませんでした",
                 "invalidRequest": "ログイン要求の内容が正しくありません",
                 "expired": "ログイン要求の有効期限が切れています。サイトでQRコードを再表示してください",
-                "unsupportedMode": "この応答方式 (fragment) には対応していません",
                 "signFailed": "署名できませんでした",
                 "postFailed": "サイトへの送信に失敗しました"
             }

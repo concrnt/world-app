@@ -27,7 +27,7 @@
     "deep-link": {
       "mobile": [
         {
-          "scheme": ["cckv"],
+          "scheme": ["cckv", "concrnt-auth"],
           "appLink": false
         }
       ]

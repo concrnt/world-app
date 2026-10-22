@@ -3,8 +3,10 @@
 //   1. QR の文字列 (Authorization Request URI) を検証する      parseAuthorizationRequestUri
 //   2. request_uri から Request Object を取得して検証する       fetchRequestObject
 //   3. (同意画面で承認されたら) master key で ID Token に署名する buildIdToken
-//   4. client_id に direct_post する                            postResponse
+//   4. 応答を返す: client_id に direct_post する (§8.1)         postResponse
+//              または client_id#… をブラウザで開く (§8.2)       openFragmentResponse
 import type { Client } from '@concrnt/worldlib'
+import { openUrl } from '@tauri-apps/plugin-opener'
 
 export const AUTH_URI_SCHEME = 'concrnt-auth://'
 
@@ -40,7 +42,6 @@ export type ExternalAuthErrorCode =
     | 'fetchFailed'
     | 'invalidRequest'
     | 'expired'
-    | 'unsupportedMode'
     | 'signFailed'
     | 'postFailed'
 
@@ -115,9 +116,10 @@ export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<
     if (typeof request.exp !== 'number') throw new ExternalAuthError('invalidRequest')
     if (request.exp <= Math.floor(Date.now() / 1000)) throw new ExternalAuthError('expired')
 
-    // 同一端末フロー (fragment, §8.2) は未対応。QR 経由の cross-device (direct_post) のみ扱う
-    if (request.response_mode === 'fragment') throw new ExternalAuthError('unsupportedMode')
-    if (request.response_mode !== 'direct_post') throw new ExternalAuthError('invalidRequest')
+    // §8.1 direct_post (QR・別端末) と §8.2 fragment (同一端末・リンク) の両方を扱う
+    if (request.response_mode !== 'direct_post' && request.response_mode !== 'fragment') {
+        throw new ExternalAuthError('invalidRequest')
+    }
 
     return request
 }
@@ -184,6 +186,16 @@ export const postResponse = async (clientId: string, params: Record<string, stri
         throw new ExternalAuthError('postFailed')
     }
     if (!res.ok) throw new ExternalAuthError('postFailed')
+}
+
+// §8.2 fragment (同一端末): 応答パラメータをフラグメントに付けた client_id を外部ブラウザで開く。
+// フラグメントは HTTP リクエストに含まれないので、RP のサーバーログに ID Token が残らない
+export const openFragmentResponse = async (clientId: string, params: Record<string, string>): Promise<void> => {
+    try {
+        await openUrl(`${clientId}#${new URLSearchParams(params).toString()}`)
+    } catch {
+        throw new ExternalAuthError('postFailed')
+    }
 }
 
 const utf8 = (text: string): Uint8Array => new TextEncoder().encode(text)

@@ -1192,6 +1192,7 @@
             "deny": "Deny",
             "submitting": "Sending...",
             "approved": "Logged in. Check the site.",
+            "approvedFragment": "Approved. Return to the browser to continue.",
             "denied": "Login denied",
             "errorTitle": "Cannot log in",
             "nothingSent": "Nothing was sent to the site.",
@@ -1201,7 +1202,6 @@
                 "fetchFailed": "Could not fetch the login request",
                 "invalidRequest": "The login request is invalid",
                 "expired": "The login request has expired. Show the QR code again on the site",
-                "unsupportedMode": "This response mode (fragment) is not supported",
                 "signFailed": "Could not sign",
                 "postFailed": "Could not send the response to the site"
             }

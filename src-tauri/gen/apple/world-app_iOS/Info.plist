@@ -29,6 +29,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>cckv</string>
+				<string>concrnt-auth</string>
 			</array>
 			<key>CFBundleURLName</key>
 			<string>cckv</string>
