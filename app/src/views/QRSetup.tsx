@@ -6,6 +6,8 @@ import { emojihash, semantics, SignalLoginSender } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Document } from '@concrnt/client'
 import { Header } from '../ui/Header'
+import { ExternalAuthConsent } from '../components/ExternalAuthConsent'
+import { AUTH_URI_SCHEME } from '../lib/externalAuth'
 
 interface Props {
     onComplete?: () => void
@@ -24,6 +26,9 @@ export const QRSetup = (props: Props) => {
     const confirmResolveRef = useRef<((ok: boolean) => void) | null>(null)
 
     const [sender, setSender] = useState<SignalLoginSender | null>(null)
+
+    // CIP-17 の Authorization Request URI (外部サービスへのログイン) を読み取った場合
+    const [authRequestUri, setAuthRequestUri] = useState<string | null>(null)
 
     const waitUserConfirmation = (ckid: string): Promise<boolean> => {
         setPendingCkid(ckid)
@@ -73,6 +78,10 @@ export const QRSetup = (props: Props) => {
 
     const scanCallback = (result: string | null) => {
         if (!result) return
+        if (result.startsWith(AUTH_URI_SCHEME)) {
+            setAuthRequestUri(result)
+            return
+        }
         const sender = new SignalLoginSender(result, client.ccid, client.server.domain, keyCreationCallback, () => {
             setCompleted(true)
             props.onComplete?.()
@@ -93,7 +102,7 @@ export const QRSetup = (props: Props) => {
 
     return (
         <View>
-            <Header>{t('title')}</Header>
+            <Header>{authRequestUri ? t('externalAuthTitle') : t('title')}</Header>
             <div
                 style={{
                     display: 'flex',
@@ -102,7 +111,15 @@ export const QRSetup = (props: Props) => {
                     padding: '1rem'
                 }}
             >
-                {pendingCkid ? (
+                {authRequestUri ? (
+                    <ExternalAuthConsent
+                        uri={authRequestUri}
+                        onComplete={() => {
+                            setCompleted(true)
+                            props.onComplete?.()
+                        }}
+                    />
+                ) : pendingCkid ? (
                     <div>
                         <Text variant="h3">{t('confirmTitle')}</Text>
                         <Text>{t('confirmDescription')}</Text>

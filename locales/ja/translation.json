@@ -1172,7 +1172,38 @@
             "ok": "OK",
             "loginCompleted": "ログインが完了しました！",
             "waitingForDevice": "端末から情報が送られてくるのを待っています......",
-            "scanQRCode": "QRコードをスキャン"
+            "scanQRCode": "QRコードをスキャン",
+            "externalAuthTitle": "外部サービスにログイン"
+        },
+        "externalAuth": {
+            "loading": "ログイン要求を確認しています...",
+            "consentTitle": "外部サービスにログインしますか？",
+            "siteLabel": "ログイン先のサイト",
+            "selfReportedName": "サイトの自称: {{name}}",
+            "firstTimeWarning": "このサイトへのログインは初めてです。QRコードを表示している画面が本当にこのサイトのものか確認してください。",
+            "displayCode": "照合コード (サイトの画面と同じか確認してください)",
+            "signingAs": "ログインに使うアカウント",
+            "sharedInfoTitle": "サイトに渡される情報",
+            "shareCcid": "CCID",
+            "shareDomain": "所属サーバー ({{domain}})",
+            "shareProfile": "表示名・アイコン・エイリアス",
+            "approve": "ログイン",
+            "deny": "拒否",
+            "submitting": "送信しています...",
+            "approved": "ログインしました。サイトの画面を確認してください。",
+            "denied": "ログインを拒否しました",
+            "errorTitle": "ログインできません",
+            "nothingSent": "サイトには何も送信していません。",
+            "errors": {
+                "invalidUri": "QRコードの形式が正しくありません",
+                "originMismatch": "request_uri と client_id のオリジンが一致しません",
+                "fetchFailed": "ログイン要求を取得できませんでした",
+                "invalidRequest": "ログイン要求の内容が正しくありません",
+                "expired": "ログイン要求の有効期限が切れています。サイトでQRコードを再表示してください",
+                "unsupportedMode": "この応答方式 (fragment) には対応していません",
+                "signFailed": "署名できませんでした",
+                "postFailed": "サイトへの送信に失敗しました"
+            }
         },
         "serverSelector": {
             "title": "サーバーを選択",

@@ -1173,7 +1173,38 @@
             "ok": "OK",
             "loginCompleted": "Login completed!",
             "waitingForDevice": "Waiting for information from the device...",
-            "scanQRCode": "Scan QR code"
+            "scanQRCode": "Scan QR code",
+            "externalAuthTitle": "Log in to an external service"
+        },
+        "externalAuth": {
+            "loading": "Checking the login request...",
+            "consentTitle": "Log in to an external service?",
+            "siteLabel": "Site you are logging in to",
+            "selfReportedName": "Self-reported name: {{name}}",
+            "firstTimeWarning": "This is your first login to this site. Make sure the screen showing the QR code really belongs to this site.",
+            "displayCode": "Verification code (check that it matches the site)",
+            "signingAs": "Account used to log in",
+            "sharedInfoTitle": "Information shared with the site",
+            "shareCcid": "CCID",
+            "shareDomain": "Home server ({{domain}})",
+            "shareProfile": "Display name, avatar and alias",
+            "approve": "Log in",
+            "deny": "Deny",
+            "submitting": "Sending...",
+            "approved": "Logged in. Check the site.",
+            "denied": "Login denied",
+            "errorTitle": "Cannot log in",
+            "nothingSent": "Nothing was sent to the site.",
+            "errors": {
+                "invalidUri": "The QR code is not a valid login request",
+                "originMismatch": "request_uri and client_id have different origins",
+                "fetchFailed": "Could not fetch the login request",
+                "invalidRequest": "The login request is invalid",
+                "expired": "The login request has expired. Show the QR code again on the site",
+                "unsupportedMode": "This response mode (fragment) is not supported",
+                "signFailed": "Could not sign",
+                "postFailed": "Could not send the response to the site"
+            }
         },
         "serverSelector": {
             "title": "Select a server",
