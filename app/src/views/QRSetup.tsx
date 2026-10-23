@@ -114,7 +114,6 @@ export const QRSetup = (props: Props) => {
                 {authRequestUri ? (
                     <ExternalAuthConsent
                         uri={authRequestUri}
-                        source="qr"
                         onComplete={() => {
                             setCompleted(true)
                             props.onComplete?.()

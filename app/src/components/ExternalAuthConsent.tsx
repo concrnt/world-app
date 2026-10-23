@@ -1,5 +1,6 @@
 // CIP-17 §6: 外部サービス (RP) へのログインの同意画面。
-// QR から読み取った Authorization Request URI を受け取り、検証 → 同意 → 署名 → 送信まで行う
+// Authorization Request URI (QR でも deep link でも同じ) を受け取り、検証 → 同意 → 署名 → 送信まで行う。
+// 応答方式は URI の <response_mode> で決まり、開き方には依らない
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Button, Text } from '@concrnt/ui'
@@ -13,20 +14,19 @@ import {
     openFragmentResponse,
     parseAuthorizationRequestUri,
     postResponse,
+    type AuthorizationRequestUri,
     type ExternalAuthErrorCode,
     type RequestObject
 } from '../lib/externalAuth'
 
 interface Props {
     uri: string
-    // 要求の開き方。QR (別端末) は direct_post、deep link (同一端末) は fragment の要求しか受け付けない
-    source: 'qr' | 'deeplink'
     onComplete: (result: 'approved' | 'denied') => void
 }
 
 type State =
     | { kind: 'loading' }
-    | { kind: 'consent'; request: RequestObject; submitting: boolean }
+    | { kind: 'consent'; uri: AuthorizationRequestUri; request: RequestObject; submitting: boolean }
     | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' }
     | { kind: 'error'; code: ExternalAuthErrorCode }
 
@@ -41,11 +41,11 @@ export const ExternalAuthConsent = (props: Props) => {
 
     useEffect(() => {
         let cancelled = false
-        const expectedMode = props.source === 'qr' ? 'direct_post' : 'fragment'
         ;(async () => {
             try {
-                const request = await fetchRequestObject(parseAuthorizationRequestUri(props.uri), expectedMode)
-                if (!cancelled) setState({ kind: 'consent', request, submitting: false })
+                const uri = parseAuthorizationRequestUri(props.uri)
+                const request = await fetchRequestObject(uri)
+                if (!cancelled) setState({ kind: 'consent', uri, request, submitting: false })
             } catch (e) {
                 if (!cancelled) {
                     setState({ kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'invalidRequest' })
@@ -55,24 +55,23 @@ export const ExternalAuthConsent = (props: Props) => {
         return () => {
             cancelled = true
         }
-    }, [props.uri, props.source])
+    }, [props.uri])
 
-    // §8.1 / §8.2: 応答の配送方法は Request Object の response_mode で決まる
+    // §8.1 / §8.2: 応答は redirect_uri へ。配送方法は response_mode (URI と一致済み) で決まる
     const deliver = (request: RequestObject, params: Record<string, string>) =>
         request.response_mode === 'fragment'
-            ? openFragmentResponse(request.client_id, params)
-            : postResponse(request.client_id, params)
+            ? openFragmentResponse(request.redirect_uri, params)
+            : postResponse(request.redirect_uri, params)
 
-    const approve = async (request: RequestObject) => {
-        setState({ kind: 'consent', request, submitting: true })
+    const approve = async (uri: AuthorizationRequestUri, request: RequestObject) => {
+        setState({ kind: 'consent', uri, request, submitting: true })
         try {
-            const idToken = await buildIdToken(client, request) // ここで端末認証が出る
+            const idToken = await buildIdToken(client, request, uri.origin) // ここで端末認証が出る
             await deliver(request, {
                 id_token: idToken,
                 ...(request.state !== undefined ? { state: request.state } : {})
             })
-            const origin = new URL(request.client_id).origin
-            setKnownOrigins((prev) => (prev.includes(origin) ? prev : [...prev, origin]))
+            setKnownOrigins((prev) => (prev.includes(uri.origin) ? prev : [...prev, uri.origin]))
             setState({ kind: 'done', message: request.response_mode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
@@ -80,8 +79,8 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }
 
-    const deny = async (request: RequestObject) => {
-        setState({ kind: 'consent', request, submitting: true })
+    const deny = async (uri: AuthorizationRequestUri, request: RequestObject) => {
+        setState({ kind: 'consent', uri, request, submitting: true })
         // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
             await deliver(request, {
@@ -113,11 +112,13 @@ export const ExternalAuthConsent = (props: Props) => {
         return <Text variant="h3">{t(state.message)}</Text>
     }
 
-    const { request, submitting } = state
-    const host = new URL(request.client_id).host
+    const { uri, request, submitting } = state
+    const host = new URL(uri.origin).host
     const clientName = request.client_metadata?.client_name
-    const isFirstTime = !knownOrigins.includes(new URL(request.client_id).origin)
+    const isFirstTime = !knownOrigins.includes(uri.origin)
     const sharesProfile = request.scope.split(' ').includes('profile')
+    // §6: direct_post は別端末の画面へのログイン。読み方 (QR / deep link) に関わらず照合コードと警告を必ず出す
+    const isRemote = request.response_mode === 'direct_post'
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
@@ -151,13 +152,29 @@ export const ExternalAuthConsent = (props: Props) => {
 
             {isFirstTime && <Text style={{ margin: 0, fontWeight: 'bold' }}>{t('firstTimeWarning')}</Text>}
 
-            {/* 照合コードは別端末の画面と見比べるためのもの。deep link (同一端末) では見比べる画面が無いので出さない */}
-            {props.source === 'qr' && request.display_code && (
-                <div>
+            {/* direct_post: 照合コードを相手の画面と見比べさせ、自分で開いた要求でなければ拒否するよう促す (§6, §10.1)。
+                fragment (この端末のブラウザに戻る) では見比べる画面が無いので出さない */}
+            {isRemote && (
+                <div
+                    style={{
+                        border: `1px solid ${CssVar.divider}`,
+                        borderRadius: '8px',
+                        padding: CssVar.space(2),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(1)
+                    }}
+                >
+                    <Text style={{ margin: 0, fontWeight: 'bold' }}>{t('remoteLoginWarning')}</Text>
                     <Text variant="caption" style={{ margin: 0 }}>
                         {t('displayCode')}
                     </Text>
-                    <Text style={{ margin: 0, fontSize: '2rem', textAlign: 'center' }}>{request.display_code}</Text>
+                    <Text style={{ margin: 0, fontSize: '2.5rem', textAlign: 'center', lineHeight: 1.2 }}>
+                        {request.display_code}
+                    </Text>
+                    <Text variant="caption" style={{ margin: 0, textAlign: 'center' }}>
+                        {t('displayCodeHint')}
+                    </Text>
                 </div>
             )}
 
@@ -197,10 +214,10 @@ export const ExternalAuthConsent = (props: Props) => {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1), alignItems: 'center' }}>
                 {submitting && <Text variant="caption">{t('submitting')}</Text>}
-                <Button variant="outlined" disabled={submitting} onClick={() => deny(request)}>
+                <Button variant="outlined" disabled={submitting} onClick={() => deny(uri, request)}>
                     {t('deny')}
                 </Button>
-                <Button disabled={submitting} onClick={() => approve(request)}>
+                <Button disabled={submitting} onClick={() => approve(uri, request)}>
                     {t('approve')}
                 </Button>
             </div>

@@ -179,7 +179,8 @@ export const MainView = () => {
 
     // Deep links opened outside the app: cckv:// is resolved the same way the
     // 照会 (Query) view does and opened on top of the current tab; concrnt-auth://
-    // (CIP-17 same-device sign-in) opens the consent screen there instead.
+    // (CIP-17 sign-in: a same-device link, or a QR read by the OS camera) opens
+    // the consent screen there instead.
     // Cold start: the URL is held by the plugin until MainView mounts (i.e.
     // after login), so it is consumed here once. Warm start: live event.
     useEffect(() => {

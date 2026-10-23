@@ -8,8 +8,8 @@ interface Props {
     uri: string
 }
 
-// concrnt-auth:// の deep link (CIP-17 同一端末フロー・§8.2) で開かれる同意画面。
-// QR 経由 (QRSetup) と同じ ExternalAuthConsent を使う
+// concrnt-auth:// の deep link で開かれる同意画面 (CIP-17)。同一端末のリンク (fragment) だけでなく、
+// OS のカメラで読んだ QR (direct_post) もここに届く。アプリ内スキャナー (QRSetup) と同じ ExternalAuthConsent を使う
 export const ExternalAuthView = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'app.qrSetup' })
     const stack = useStack()
@@ -27,7 +27,6 @@ export const ExternalAuthView = (props: Props) => {
             >
                 <ExternalAuthConsent
                     uri={props.uri}
-                    source="deeplink"
                     onComplete={() => {
                         setTimeout(() => {
                             stack.pop()
