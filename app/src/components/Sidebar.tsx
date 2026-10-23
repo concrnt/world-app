@@ -11,7 +11,7 @@ import { SettingsView } from '../views/Settings'
 import { ProfileView } from '../views/Profile'
 import { QueryView } from '../views/Query'
 import { ListsView } from '../views/Lists'
-import { QRSetup } from '../views/QRSetup'
+import { useScanner } from '../contexts/Scanner'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
@@ -27,6 +27,8 @@ import { ProfileName } from './ProfileName'
 
 interface Props {
     onPush?: (view: ReactNode) => void
+    // QR スキャンで読み取った URI。deep link と同じく Main 側で同意画面を開く
+    onScanned?: (uri: string) => void
 }
 
 export const Sidebar = (props: Props) => {
@@ -34,6 +36,7 @@ export const Sidebar = (props: Props) => {
     const theme = useTheme()
     const { client } = useClient()
     const homeStatus = useDomainStatus()
+    const { scan } = useScanner()
 
     return (
         <>
@@ -130,7 +133,8 @@ export const Sidebar = (props: Props) => {
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />
-                    {/* QR スキャン (他の端末のログイン / 外部サービスへのログイン) は使用頻度が低いので最下部に置く */}
+                    {/* QR スキャン (他の端末のログイン / 外部サービスへのログイン) は使用頻度が低いので最下部に置く。
+                        受け皿のページは持たず、スキャナーを直接起動する。キャンセルならこのサイドバーに戻るだけ */}
                     <List
                         dense
                         disablePadding
@@ -138,7 +142,14 @@ export const Sidebar = (props: Props) => {
                             color: CssVar.backdropText
                         }}
                     >
-                        <ListItem icon={<MdQrCodeScanner size={24} />} onClick={() => props.onPush?.(<QRSetup />)}>
+                        <ListItem
+                            icon={<MdQrCodeScanner size={24} />}
+                            onClick={() => {
+                                scan().then((result) => {
+                                    if (result) props.onScanned?.(result)
+                                })
+                            }}
+                        >
                             {t('scanQrCode')}
                         </ListItem>
                     </List>

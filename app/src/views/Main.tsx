@@ -253,6 +253,11 @@ export const MainView = () => {
                         stackRef?.set(view)
                         setOpen(false)
                     }}
+                    onScanned={(uri) => {
+                        // deep link の concrnt-auth:// と同じ扱い: 現在のタブに同意画面を重ねる
+                        stackRefs.current[selectedTab]?.push(<ExternalAuthView uri={uri} />)
+                        setOpen(false)
+                    }}
                 />
             }
         >
