@@ -19,7 +19,8 @@ const ID_TOKEN_LIFETIME = 300
 //   fragment (§8.2):    この端末のブラウザに戻る
 export type ResponseMode = 'direct_post' | 'fragment'
 
-// §5.2: concrnt-auth://<response_mode>/<host>/<path>[?query] は request_uri = https://<host>/<path>[?query] と同値
+// §5.2: concrnt-auth://<response_mode>/<host>/<path>[?query] は request_uri = https://<host>/<path>[?query] と同値。
+// concrnt-auth://signal/… (他の端末のログイン) は CIP-17 ではなく lib/signalLogin.ts が先に拾う
 export interface AuthorizationRequestUri {
     responseMode: ResponseMode
     requestUri: string

@@ -1045,7 +1045,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner in the app under Settings > ID Management",
+            "scanWithAppHint": "You can find the scanner at the bottom of the sidebar in the app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
@@ -1169,11 +1169,14 @@
             "title": "Log in on another device",
             "confirmTitle": "Allow login on this device?",
             "confirmDescription": "Make sure the emoji shown here matches the one displayed on the other device",
+            "linkWarning": "You are about to let another device log in to this account. Cancel unless you opened this QR code or link yourself.",
             "cancel": "Cancel",
             "ok": "OK",
             "loginCompleted": "Login completed!",
             "waitingForDevice": "Waiting for information from the device...",
+            "signalHost": "Connecting to: {{host}}",
             "scanQRCode": "Scan QR code",
+            "invalidQRCode": "The scanned content is not a login QR code",
             "externalAuthTitle": "Log in to an external service"
         },
         "externalAuth": {
