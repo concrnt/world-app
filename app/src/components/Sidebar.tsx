@@ -11,11 +11,13 @@ import { SettingsView } from '../views/Settings'
 import { ProfileView } from '../views/Profile'
 import { QueryView } from '../views/Query'
 import { ListsView } from '../views/Lists'
+import { QRSetup } from '../views/QRSetup'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
 import { MdTravelExplore } from 'react-icons/md'
 import { MdList } from 'react-icons/md'
+import { MdQrCodeScanner } from 'react-icons/md'
 
 import { CssVar } from '../types/Theme'
 
@@ -128,6 +130,18 @@ export const Sidebar = (props: Props) => {
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />
+                    {/* QR スキャン (他の端末のログイン / 外部サービスへのログイン) は使用頻度が低いので最下部に置く */}
+                    <List
+                        dense
+                        disablePadding
+                        style={{
+                            color: CssVar.backdropText
+                        }}
+                    >
+                        <ListItem icon={<MdQrCodeScanner size={24} />} onClick={() => props.onPush?.(<QRSetup />)}>
+                            {t('scanQrCode')}
+                        </ListItem>
+                    </List>
                     <Divider
                         style={{
                             marginTop: CssVar.space(2),

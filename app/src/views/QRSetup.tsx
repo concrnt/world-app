@@ -6,17 +6,19 @@ import { emojihash, semantics, SignalLoginSender } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { Document } from '@concrnt/client'
 import { Header } from '../ui/Header'
+import { useStack } from '../layouts/Stack'
 import { ExternalAuthConsent } from '../components/ExternalAuthConsent'
 import { AUTH_URI_SCHEME } from '../lib/externalAuth'
 
-interface Props {
-    onComplete?: () => void
-}
-
-export const QRSetup = (props: Props) => {
+// QR コードのスキャン画面 (サイドバー最下部から開く)。読み取った内容で分岐する:
+//   wss://…            他の端末のログイン (SignalLoginSender)
+//   concrnt-auth://…   外部サービスへのログイン (CIP-17)
+// 完了したら少し見せてから自分でスタックを閉じる
+export const QRSetup = () => {
     const { t } = useTranslation('', { keyPrefix: 'app.qrSetup' })
     const { scan } = useScanner()
     const { client } = useClient()
+    const stack = useStack()
 
     const [completed, setCompleted] = useState(false)
     const initialized = useRef(false)
@@ -26,6 +28,13 @@ export const QRSetup = (props: Props) => {
     const confirmResolveRef = useRef<((ok: boolean) => void) | null>(null)
 
     const [sender, setSender] = useState<SignalLoginSender | null>(null)
+
+    const finish = () => {
+        setCompleted(true)
+        setTimeout(() => {
+            stack.pop()
+        }, 1000)
+    }
 
     // CIP-17 の Authorization Request URI (外部サービスへのログイン) を読み取った場合
     const [authRequestUri, setAuthRequestUri] = useState<string | null>(null)
@@ -82,10 +91,7 @@ export const QRSetup = (props: Props) => {
             setAuthRequestUri(result)
             return
         }
-        const sender = new SignalLoginSender(result, client.ccid, client.server.domain, keyCreationCallback, () => {
-            setCompleted(true)
-            props.onComplete?.()
-        })
+        const sender = new SignalLoginSender(result, client.ccid, client.server.domain, keyCreationCallback, finish)
         setSender(sender)
     }
 
@@ -114,13 +120,7 @@ export const QRSetup = (props: Props) => {
                 }}
             >
                 {authRequestUri ? (
-                    <ExternalAuthConsent
-                        uri={authRequestUri}
-                        onComplete={() => {
-                            setCompleted(true)
-                            props.onComplete?.()
-                        }}
-                    />
+                    <ExternalAuthConsent uri={authRequestUri} onComplete={finish} />
                 ) : pendingCkid ? (
                     <div>
                         <Text variant="h3">{t('confirmTitle')}</Text>
