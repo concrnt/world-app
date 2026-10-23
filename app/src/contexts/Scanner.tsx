@@ -7,6 +7,7 @@ import {
     type PermissionState
 } from '@tauri-apps/plugin-barcode-scanner'
 import { Activity, createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { MdClose } from 'react-icons/md'
 import { useBackHandler } from './BackHandler'
@@ -81,13 +82,16 @@ export const ScannerProvider = (props: Props) => {
             console.error('Scan failed', e)
             return null
         } finally {
-            setMode('idle')
+            // 呼び出し側 (components/Sidebar.tsx → views/Main.tsx) は resolve 直後に StackLayout の ref を触って
+            // 結果画面を push する。Activity が hidden の間は配下の layout effect (useImperativeHandle) が外れて
+            // ref が null なので、復帰のレンダーを同期的に commit してから resolve する
+            flushSync(() => setMode('idle'))
         }
     }, [])
 
     const close = useCallback(() => {
         cancel().then(() => {
-            setMode('idle')
+            flushSync(() => setMode('idle'))
         })
     }, [])
 
