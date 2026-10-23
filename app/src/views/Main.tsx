@@ -141,8 +141,10 @@ export const MainView = () => {
     })
 
     // Push notifications: re-upsert the subscription on every app start (the
-    // cheapest way to keep the native token fresh across rotations), surface
-    // a cold-start tap's deep link once, and listen for warm-start taps.
+    // cheapest way to keep the native token fresh across rotations), then
+    // drain the native tap buffer once on mount (cold start, or a tap that
+    // arrived while nobody was listening) and again on every warm-start tap
+    // signal. See getLaunchNotification for the buffer contract.
     useEffect(() => {
         if (!client) return
 

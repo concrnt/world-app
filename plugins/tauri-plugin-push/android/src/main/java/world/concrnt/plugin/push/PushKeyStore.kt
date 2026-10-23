@@ -29,6 +29,7 @@ object PushKeyStore {
     private const val KEY_FCM_TOKEN = "fcm_token"
     private const val KEY_LAUNCH_URI = "launch_uri"
     private const val KEY_LAUNCH_VIEW = "launch_view"
+    private const val KEY_LAST_TAP_ID = "last_tap_id"
 
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -95,13 +96,22 @@ object PushKeyStore {
 
     fun getFcmToken(context: Context): String? = prefs(context).getString(KEY_FCM_TOKEN, null)
 
-    /** Buffers a deep link so a cold-started app can retrieve it once the webview is ready. */
-    fun bufferLaunch(context: Context, uri: String?, view: String?) {
-        prefs(context).edit()
+    /**
+     * Buffers a tapped notification's deep link until the webview drains it
+     * (consumeLaunch). [tapId] is remembered separately and is NOT cleared by
+     * consumeLaunch, so a re-delivery of the same launch intent (Activity
+     * recreation after process death) can be told apart from a new tap.
+     */
+    fun bufferLaunch(context: Context, uri: String?, view: String?, tapId: String?) {
+        val editor = prefs(context).edit()
             .putString(KEY_LAUNCH_URI, uri)
             .putString(KEY_LAUNCH_VIEW, view)
-            .apply()
+        if (tapId != null) editor.putString(KEY_LAST_TAP_ID, tapId)
+        editor.apply()
     }
+
+    /** The tap id of the most recently buffered notification tap, if any. */
+    fun lastTapId(context: Context): String? = prefs(context).getString(KEY_LAST_TAP_ID, null)
 
     /** Reads and clears the buffered launch deep link. */
     fun consumeLaunch(context: Context): JSObject {
@@ -115,12 +125,17 @@ object PushKeyStore {
         }
     }
 
-    /** Extracts the "cc-deeplink"/"cc-view" extras a notification tap launches MainActivity with. */
+    /**
+     * Extracts the "cc-deeplink"/"cc-view"/"cc-tap-id" extras a notification
+     * tap launches MainActivity with ("tapId" is null for intents posted before
+     * the id was introduced).
+     */
     fun extractDeepLink(intent: Intent?): JSObject? {
         val uri = intent?.getStringExtra("cc-deeplink") ?: return null
         return JSObject().apply {
             put("uri", uri)
             put("view", intent.getStringExtra("cc-view") ?: "post")
+            put("tapId", intent.getStringExtra("cc-tap-id"))
         }
     }
 }
