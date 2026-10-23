@@ -108,7 +108,9 @@ export const QRSetup = (props: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1rem',
-                    padding: '1rem'
+                    padding: '1rem',
+                    flex: 1,
+                    overflowY: 'auto'
                 }}
             >
                 {authRequestUri ? (

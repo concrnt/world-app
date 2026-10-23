@@ -119,10 +119,20 @@ export const ExternalAuthConsent = (props: Props) => {
     const sharesProfile = request.scope.split(' ').includes('profile')
     // §6: direct_post は別端末の画面へのログイン。読み方 (QR / deep link) に関わらず照合コードと警告を必ず出す
     const isRemote = request.response_mode === 'direct_post'
+    const sharedInfo = [t('shareCcid'), t('shareDomain', { domain: client.server.domain })]
+    if (sharesProfile) sharedInfo.push(t('shareProfile'))
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
-            <Text variant="h3" style={{ margin: 0 }}>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: CssVar.space(1.5),
+                // 画面下の FAB (60px + 余白) に操作ボタンが隠れないよう、スクロールで逃がせる余白を取る
+                paddingBottom: CssVar.space(20)
+            }}
+        >
+            <Text variant="h4" style={{ margin: 0 }}>
                 {t('consentTitle')}
             </Text>
 
@@ -131,10 +141,9 @@ export const ExternalAuthConsent = (props: Props) => {
                 style={{
                     border: `1px solid ${CssVar.divider}`,
                     borderRadius: '8px',
-                    padding: CssVar.space(2),
+                    padding: `${CssVar.space(1)} ${CssVar.space(1.5)}`,
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: CssVar.space(0.5)
+                    flexDirection: 'column'
                 }}
             >
                 <Text variant="caption" style={{ margin: 0 }}>
@@ -150,7 +159,11 @@ export const ExternalAuthConsent = (props: Props) => {
                 )}
             </div>
 
-            {isFirstTime && <Text style={{ margin: 0, fontWeight: 'bold' }}>{t('firstTimeWarning')}</Text>}
+            {isFirstTime && (
+                <Text variant="caption" style={{ margin: 0, fontWeight: 'bold', color: 'inherit' }}>
+                    {t('firstTimeWarning')}
+                </Text>
+            )}
 
             {/* direct_post: 照合コードを相手の画面と見比べさせ、自分で開いた要求でなければ拒否するよう促す (§6, §10.1)。
                 fragment (この端末のブラウザに戻る) では見比べる画面が無いので出さない */}
@@ -159,21 +172,27 @@ export const ExternalAuthConsent = (props: Props) => {
                     style={{
                         border: `1px solid ${CssVar.divider}`,
                         borderRadius: '8px',
-                        padding: CssVar.space(2),
+                        padding: `${CssVar.space(1)} ${CssVar.space(1.5)}`,
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: CssVar.space(1)
+                        alignItems: 'center',
+                        gap: CssVar.space(0.5)
                     }}
                 >
-                    <Text style={{ margin: 0, fontWeight: 'bold' }}>{t('remoteLoginWarning')}</Text>
                     <Text variant="caption" style={{ margin: 0 }}>
                         {t('displayCode')}
                     </Text>
-                    <Text style={{ margin: 0, fontSize: '2.5rem', textAlign: 'center', lineHeight: 1.2 }}>
+                    <Text style={{ margin: 0, fontSize: '2rem', lineHeight: 1.2, textAlign: 'center' }}>
                         {request.display_code}
                     </Text>
                     <Text variant="caption" style={{ margin: 0, textAlign: 'center' }}>
                         {t('displayCodeHint')}
+                    </Text>
+                    <Text
+                        variant="caption"
+                        style={{ margin: 0, marginTop: CssVar.space(0.5), fontWeight: 'bold', color: 'inherit' }}
+                    >
+                        {t('remoteLoginWarning')}
                     </Text>
                 </div>
             )}
@@ -183,10 +202,19 @@ export const ExternalAuthConsent = (props: Props) => {
                     {t('signingAs')}
                 </Text>
                 <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1), minWidth: 0 }}>
-                    <Avatar ccid={client.ccid} src={client.profile.avatar} style={{ width: 40, height: 40 }} />
-                    <div style={{ minWidth: 0 }}>
-                        <Text style={{ margin: 0 }}>{client.profile.username}</Text>
-                        <Text variant="caption" style={{ margin: 0, wordBreak: 'break-all' }}>
+                    <Avatar
+                        ccid={client.ccid}
+                        src={client.profile.avatar}
+                        style={{ width: 32, height: 32, flexShrink: 0 }}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                        <Text style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {client.profile.username}
+                        </Text>
+                        <Text
+                            variant="caption"
+                            style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        >
                             {client.ccid}
                         </Text>
                     </div>
@@ -197,19 +225,7 @@ export const ExternalAuthConsent = (props: Props) => {
                 <Text variant="caption" style={{ margin: 0 }}>
                     {t('sharedInfoTitle')}
                 </Text>
-                <ul style={{ margin: 0, paddingLeft: '1.5em' }}>
-                    <li>
-                        <Text style={{ margin: 0 }}>{t('shareCcid')}</Text>
-                    </li>
-                    <li>
-                        <Text style={{ margin: 0 }}>{t('shareDomain', { domain: client.server.domain })}</Text>
-                    </li>
-                    {sharesProfile && (
-                        <li>
-                            <Text style={{ margin: 0 }}>{t('shareProfile')}</Text>
-                        </li>
-                    )}
-                </ul>
+                <Text style={{ margin: 0 }}>{sharedInfo.join(' / ')}</Text>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1), alignItems: 'center' }}>
