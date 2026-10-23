@@ -1165,6 +1165,10 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "Scan QR code",
+            "close": "Close"
+        },
         "qrSetup": {
             "title": "Log in on another device",
             "confirmTitle": "Allow login on this device?",

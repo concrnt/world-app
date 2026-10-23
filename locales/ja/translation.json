@@ -1164,6 +1164,10 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "QRコードをスキャン",
+            "close": "閉じる"
+        },
         "qrSetup": {
             "title": "他の端末でログイン",
             "confirmTitle": "この端末でログインを許可しますか？",
