@@ -1209,7 +1209,6 @@
                 "originMismatch": "応答の送り先 (redirect_uri) のオリジンが request_uri と一致しません",
                 "fetchFailed": "ログイン要求を取得できませんでした",
                 "invalidRequest": "ログイン要求の内容が正しくありません",
-                "modeMismatch": "ログイン要求の応答方式が URI と一致しません",
                 "expired": "ログイン要求の有効期限が切れています。サイトでログインをやり直してください",
                 "signFailed": "署名できませんでした",
                 "postFailed": "サイトへの送信に失敗しました"

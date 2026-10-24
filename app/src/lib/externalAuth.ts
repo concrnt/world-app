@@ -27,16 +27,15 @@ export interface AuthorizationRequestUri {
     origin: string // RP のオリジン (§5.1) = request_uri のオリジン。同意画面の host と ID Token の aud に使う
 }
 
-// §5.3 Request Object
+// §5.3 Request Object。応答方式には依存しない (response_mode は URI にだけある)
 export interface RequestObject {
     redirect_uri: string
     response_type: string
-    response_mode: string
     scope: string
     nonce: string
     state?: string
     exp: number
-    display_code?: string
+    display_code: string
     client_metadata?: {
         client_name?: string
         logo_uri?: string
@@ -50,7 +49,6 @@ export type ExternalAuthErrorCode =
     | 'originMismatch'
     | 'fetchFailed'
     | 'invalidRequest'
-    | 'modeMismatch'
     | 'expired'
     | 'signFailed'
     | 'postFailed'
@@ -95,7 +93,7 @@ const parseHttpsUrl = (text: string): URL | null => {
     }
 }
 
-// §5.3 / §5.4-2〜6: Request Object の取得と検証。
+// §5.3 / §5.4-2〜4: Request Object の取得と検証。
 // 失敗したら throw するだけで、RP には何も送らない (§5.4, §8.3)
 export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<RequestObject> => {
     let res: Response
@@ -115,16 +113,13 @@ export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<
         throw new ExternalAuthError('invalidRequest')
     }
 
-    // §5.4-3: response_mode が URI の <response_mode> と一致する。URI と中身で言うことが違う要求は受け付けない
-    if (request.response_mode !== uri.responseMode) throw new ExternalAuthError('modeMismatch')
-
-    // §5.4-4: redirect_uri (応答の送り先) は https で、オリジンが request_uri と一致する
+    // §5.4-3: redirect_uri (応答の送り先) は https で、オリジンが request_uri と一致する
     if (typeof request.redirect_uri !== 'string') throw new ExternalAuthError('invalidRequest')
     const redirectUrl = parseHttpsUrl(request.redirect_uri)
     if (!redirectUrl) throw new ExternalAuthError('invalidRequest')
     if (redirectUrl.origin !== uri.origin) throw new ExternalAuthError('originMismatch')
 
-    // §5.4-5: 必須パラメータの型と値
+    // §5.4-4: 必須パラメータの型と値
     if (request.response_type !== 'id_token') throw new ExternalAuthError('invalidRequest')
     if (typeof request.nonce !== 'string' || request.nonce === '') throw new ExternalAuthError('invalidRequest')
     if (typeof request.scope !== 'string' || !request.scope.split(' ').includes('openid')) {
@@ -133,12 +128,9 @@ export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<
     if (typeof request.exp !== 'number') throw new ExternalAuthError('invalidRequest')
     if (request.exp <= Math.floor(Date.now() / 1000)) throw new ExternalAuthError('expired')
 
-    // §5.4-6: direct_post (別端末の画面へのログイン) では display_code が必須。照合できない要求は通さない
-    if (request.response_mode === 'direct_post') {
-        if (typeof request.display_code !== 'string' || request.display_code === '') {
-            throw new ExternalAuthError('invalidRequest')
-        }
-    }
+    // display_code は常に必須 (direct_post のときだけ同意画面に出す。照合できない要求は通さない)
+    if (typeof request.display_code !== 'string' || request.display_code === '')
+        throw new ExternalAuthError('invalidRequest')
 
     return request
 }

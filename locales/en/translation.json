@@ -1210,7 +1210,6 @@
                 "originMismatch": "The response target (redirect_uri) has a different origin from request_uri",
                 "fetchFailed": "Could not fetch the login request",
                 "invalidRequest": "The login request is invalid",
-                "modeMismatch": "The response mode of the login request does not match the URI",
                 "expired": "The login request has expired. Start the login again on the site",
                 "signFailed": "Could not sign",
                 "postFailed": "Could not send the response to the site"

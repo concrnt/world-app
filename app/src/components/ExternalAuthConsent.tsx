@@ -57,9 +57,9 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }, [props.uri])
 
-    // §8.1 / §8.2: 応答は redirect_uri へ。配送方法は response_mode (URI と一致済み) で決まる
-    const deliver = (request: RequestObject, params: Record<string, string>) =>
-        request.response_mode === 'fragment'
+    // §8.1 / §8.2: 応答は redirect_uri へ。配送方法は URI の <response_mode> で決まる (Request Object には無い)
+    const deliver = (uri: AuthorizationRequestUri, request: RequestObject, params: Record<string, string>) =>
+        uri.responseMode === 'fragment'
             ? openFragmentResponse(request.redirect_uri, params)
             : postResponse(request.redirect_uri, params)
 
@@ -67,12 +67,12 @@ export const ExternalAuthConsent = (props: Props) => {
         setState({ kind: 'consent', uri, request, submitting: true })
         try {
             const idToken = await buildIdToken(client, request, uri.origin) // ここで端末認証が出る
-            await deliver(request, {
+            await deliver(uri, request, {
                 id_token: idToken,
                 ...(request.state !== undefined ? { state: request.state } : {})
             })
             setKnownOrigins((prev) => (prev.includes(uri.origin) ? prev : [...prev, uri.origin]))
-            setState({ kind: 'done', message: request.response_mode === 'fragment' ? 'approvedFragment' : 'approved' })
+            setState({ kind: 'done', message: uri.responseMode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
             setState({ kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'signFailed' })
@@ -83,7 +83,7 @@ export const ExternalAuthConsent = (props: Props) => {
         setState({ kind: 'consent', uri, request, submitting: true })
         // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
-            await deliver(request, {
+            await deliver(uri, request, {
                 error: 'access_denied',
                 ...(request.state !== undefined ? { state: request.state } : {})
             })
@@ -117,8 +117,9 @@ export const ExternalAuthConsent = (props: Props) => {
     const clientName = request.client_metadata?.client_name
     const isFirstTime = !knownOrigins.includes(uri.origin)
     const sharesProfile = request.scope.split(' ').includes('profile')
-    // §6: direct_post は別端末の画面へのログイン。読み方 (QR / deep link) に関わらず照合コードと警告を必ず出す
-    const isRemote = request.response_mode === 'direct_post'
+    // §6: direct_post は別端末の画面へのログイン。読み方 (QR / deep link) に関わらず照合コードと警告を必ず出す。
+    // fragment では display_code は Request Object にあっても表示しない
+    const isRemote = uri.responseMode === 'direct_post'
     const sharedInfo = [t('shareCcid'), t('shareDomain', { domain: client.server.domain })]
     if (sharesProfile) sharedInfo.push(t('shareProfile'))
 
