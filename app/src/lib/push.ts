@@ -68,14 +68,38 @@ export interface LaunchNotification {
     view: string | null
 }
 
+/**
+ * Reads and clears the notification tap buffered by the native side.
+ *
+ * Contract with the native plugins (iOS `didReceive`, Android `load`/`onNewIntent`):
+ * a tap is always written to the persistent buffer first and then signalled
+ * with the `notificationTapped` event. The buffer is the single source of
+ * truth; the event is only a wake-up. JS drains the buffer both when MainView
+ * mounts (cold start, or a tap that arrived while nobody was listening) and
+ * whenever the event fires (warm start), so each tap is delivered exactly
+ * once and nothing stale is left on disk to be replayed by a later launch,
+ * WebView reload or MainView remount.
+ */
 export const getLaunchNotification = (): Promise<LaunchNotification> => invoke('plugin:push|get_launch_notification')
 
 /** Mirrors the unread count onto the app icon (iOS). On Android 0 clears posted notifications. */
 export const setAppBadge = (count: number): Promise<void> =>
     invoke<void>('plugin:push|set_badge', { payload: { count } }).catch(() => {})
 
+/**
+ * Warm-start taps. The event payload is deliberately ignored: the tap is
+ * read from the buffer (see getLaunchNotification) so the buffer is cleared.
+ * If the mount-time drain already consumed it, the buffer comes back empty
+ * and nothing is delivered twice.
+ */
 export const onNotificationTapped = (cb: (payload: LaunchNotification) => void): Promise<PluginListener> =>
-    addPluginListener('push', 'notificationTapped', cb)
+    addPluginListener('push', 'notificationTapped', () => {
+        getLaunchNotification()
+            .then((payload) => {
+                if (payload.view) cb(payload)
+            })
+            .catch(() => {})
+    })
 
 /**
  * Requests OS permission, gets the native push token + on-device WebPush

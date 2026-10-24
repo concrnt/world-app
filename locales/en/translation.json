@@ -329,7 +329,6 @@
             "aliasNotSet": "<Not set>",
             "passportDescription": "View your current ID, registered server, and credentials.",
             "alias": "Alias",
-            "loginOnAnotherDevice": "Log in on another device",
             "backupMasterKey": "Back up master key",
             "copySubkey": "Copy Subkey",
             "subkeyCopied": "Copied!",
@@ -676,6 +675,7 @@
             "lists": "Lists",
             "query": "Query",
             "settings": "Settings",
+            "scanQrCode": "Scan QR code",
             "post": "Post",
             "documentation": "Documentation",
             "forum": "Forum",
@@ -1045,7 +1045,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner in the app under Settings > ID Management",
+            "scanWithAppHint": "You can find the scanner at the bottom of the sidebar in the app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
@@ -1165,15 +1165,55 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "Scan QR code",
+            "close": "Close"
+        },
         "qrSetup": {
             "title": "Log in on another device",
             "confirmTitle": "Allow login on this device?",
             "confirmDescription": "Make sure the emoji shown here matches the one displayed on the other device",
+            "linkWarning": "You are about to let another device log in to this account. Cancel unless you opened this QR code or link yourself.",
             "cancel": "Cancel",
             "ok": "OK",
             "loginCompleted": "Login completed!",
             "waitingForDevice": "Waiting for information from the device...",
-            "scanQRCode": "Scan QR code"
+            "signalHost": "Connecting to: {{host}}",
+            "scanQRCode": "Scan QR code",
+            "invalidQRCode": "The scanned content is not a login QR code",
+            "externalAuthTitle": "Log in to an external service"
+        },
+        "externalAuth": {
+            "loading": "Checking the login request...",
+            "consentTitle": "Log in as <user/>",
+            "siteLabel": "Site you are logging in to",
+            "emojiPrompt": "Select the emoji shown on the site you are logging in to",
+            "notInList": "None of these",
+            "details": "Information shared with the site",
+            "canTitle": "What this site can do",
+            "canKnowIdentity": "Know your CCID and home server",
+            "canKnowProfile": "Know your current profile",
+            "cannotTitle": "What this site cannot do",
+            "cannotPost": "Post to concrnt on your behalf",
+            "cannotRead": "Read concrnt with your permissions",
+            "approve": "Log in",
+            "deny": "Deny",
+            "submitting": "Sending...",
+            "approved": "Logged in. Check the site.",
+            "approvedFragment": "Approved. Return to the browser to continue.",
+            "denied": "Login denied",
+            "mismatch": "The emoji did not match, so the login was cancelled. Check the site and try again.",
+            "errorTitle": "Cannot log in",
+            "nothingSent": "Nothing was sent to the site.",
+            "errors": {
+                "invalidUri": "The login request is malformed",
+                "originMismatch": "The response target (redirect_uri) has a different origin from request_uri",
+                "fetchFailed": "Could not fetch the login request",
+                "invalidRequest": "The login request is invalid",
+                "expired": "The login request has expired. Start the login again on the site",
+                "signFailed": "Could not sign",
+                "postFailed": "Could not send the response to the site"
+            }
         },
         "serverSelector": {
             "title": "Select a server",
