@@ -6,10 +6,12 @@
 //   fragment:    この端末のブラウザに戻る。見比べる画面が無いので「ログイン / 拒否」ボタンだけ
 import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { Avatar, Button, Chip, Text } from '@concrnt/ui'
+import { MdInfoOutline } from 'react-icons/md'
+import { Avatar, Button, Chip, IconButton, Text } from '@concrnt/ui'
 import { EMOJIHASH_TABLE } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
+import { Drawer } from '../ui/Drawer'
 import {
     buildIdToken,
     ExternalAuthError,
@@ -39,6 +41,7 @@ export const ExternalAuthConsent = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'app.externalAuth' })
     const { client } = useClient()
     const [state, setState] = useState<State>({ kind: 'loading' })
+    const [detailsOpen, setDetailsOpen] = useState(false)
 
     useEffect(() => {
         let cancelled = false
@@ -117,13 +120,11 @@ export const ExternalAuthConsent = (props: Props) => {
 
     const { uri, request, submitting } = state
     const host = new URL(uri.origin).host
-    const clientName = request.client_metadata?.client_name
+    // §7.3: profile scope があるときだけプロフィールも渡る。client_name は自己申告なので表示しない (§10.5)
     const sharesProfile = request.scope.split(' ').includes('profile')
     // §6: direct_post は別端末の画面へのログインなので display_code の照合を操作に組み込む。
     // fragment では display_code は Request Object にあっても使わない
     const isRemote = uri.responseMode === 'direct_post'
-    const sharedInfo = [t('shareCcid'), t('shareDomain', { domain: client.server.domain })]
-    if (sharesProfile) sharedInfo.push(t('shareProfile'))
 
     return (
         <div
@@ -135,42 +136,99 @@ export const ExternalAuthConsent = (props: Props) => {
                 paddingBottom: CssVar.space(20)
             }}
         >
-            {/* 「[アカウント] でログイン」。アカウントはチップで見せる (タップしても何も起きない) */}
-            <Text
-                variant="h4"
-                style={{ margin: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: CssVar.space(1) }}
-            >
-                <Trans
-                    t={t}
-                    i18nKey="consentTitle"
-                    components={{
-                        user: (
-                            <Chip
-                                variant="outlined"
-                                style={{ maxWidth: '100%', height: '28px', fontSize: '1rem' }}
-                                headElement={
-                                    <Avatar
-                                        ccid={client.ccid}
-                                        src={client.profile.avatar}
-                                        style={{ width: 22, height: 22, flexShrink: 0 }}
-                                    />
-                                }
-                            >
-                                <span
-                                    style={{
-                                        display: 'block',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {client.profile.username || client.ccid}
-                                </span>
-                            </Chip>
-                        )
+            {/* 「[アカウント] でログイン」+ i ボタン (サイトに渡る情報の詳細をドロワーで)。アカウントはチップで見せる */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1), minWidth: 0 }}>
+                <Text
+                    variant="h4"
+                    style={{
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: CssVar.space(1),
+                        minWidth: 0
                     }}
-                />
-            </Text>
+                >
+                    <Trans
+                        t={t}
+                        i18nKey="consentTitle"
+                        components={{
+                            user: (
+                                <Chip
+                                    variant="outlined"
+                                    style={{ maxWidth: '100%', height: '28px', fontSize: '1rem' }}
+                                    headElement={
+                                        <Avatar
+                                            ccid={client.ccid}
+                                            src={client.profile.avatar}
+                                            style={{ width: 22, height: 22, flexShrink: 0 }}
+                                        />
+                                    }
+                                >
+                                    <span
+                                        style={{
+                                            display: 'block',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {client.profile.username || client.ccid}
+                                    </span>
+                                </Chip>
+                            )
+                        }}
+                    />
+                </Text>
+                <IconButton
+                    title={t('details')}
+                    onClick={() => setDetailsOpen(true)}
+                    style={{ width: '1.5em', height: '1.5em', padding: 0, flexShrink: 0 }}
+                >
+                    <MdInfoOutline size="1.25em" />
+                </IconButton>
+            </div>
+            <Drawer open={detailsOpen} onClose={() => setDetailsOpen(false)}>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(2),
+                        height: '100%',
+                        overflowY: 'auto',
+                        padding: '4px'
+                    }}
+                >
+                    <div>
+                        <Text variant="h2" style={{ margin: 0 }}>
+                            {t('canTitle')}
+                        </Text>
+                        <ul style={{ margin: `${CssVar.space(1)} 0 0`, paddingLeft: '1.5em' }}>
+                            <li>
+                                <Text style={{ margin: 0 }}>{t('canKnowIdentity')}</Text>
+                            </li>
+                            {sharesProfile && (
+                                <li>
+                                    <Text style={{ margin: 0 }}>{t('canKnowProfile')}</Text>
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                    <div>
+                        <Text variant="h2" style={{ margin: 0 }}>
+                            {t('cannotTitle')}
+                        </Text>
+                        <ul style={{ margin: `${CssVar.space(1)} 0 0`, paddingLeft: '1.5em' }}>
+                            <li>
+                                <Text style={{ margin: 0 }}>{t('cannotPost')}</Text>
+                            </li>
+                            <li>
+                                <Text style={{ margin: 0 }}>{t('cannotRead')}</Text>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </Drawer>
 
             {/* §6: RP の身元はオリジンの host。client_name は自己申告なので host を置き換えない (§10.5) */}
             <div
@@ -187,14 +245,6 @@ export const ExternalAuthConsent = (props: Props) => {
                 </Text>
                 <Text variant="h4" style={{ margin: 0, wordBreak: 'break-all' }}>
                     {host}
-                </Text>
-                {clientName && (
-                    <Text variant="caption" style={{ margin: 0 }}>
-                        {t('selfReportedName', { name: clientName })}
-                    </Text>
-                )}
-                <Text variant="caption" style={{ margin: 0, marginTop: CssVar.space(0.5) }}>
-                    {t('sharedInfoTitle')}: {sharedInfo.join(' / ')}
                 </Text>
             </div>
 
