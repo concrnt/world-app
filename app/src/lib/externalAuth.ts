@@ -27,13 +27,13 @@ export interface AuthorizationRequestUri {
     origin: string // RP のオリジン (§5.1) = request_uri のオリジン。同意画面の host と ID Token の aud に使う
 }
 
-// §5.3 Request Object。応答方式には依存しない (response_mode は URI にだけある)
+// §5.3 Request Object。応答方式には依存しない (response_mode は URI にだけある)。
+// redirect_uri は要求ごとに異なり、RP はそれで応答を要求に対応付ける (state は無い)
 export interface RequestObject {
     redirect_uri: string
     response_type: string
     scope: string
     nonce: string
-    state?: string
     exp: number
     display_code: string
     client_metadata?: {

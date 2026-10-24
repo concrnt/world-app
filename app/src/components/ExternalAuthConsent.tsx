@@ -67,10 +67,7 @@ export const ExternalAuthConsent = (props: Props) => {
         setState({ kind: 'consent', uri, request, submitting: true })
         try {
             const idToken = await buildIdToken(client, request, uri.origin) // ここで端末認証が出る
-            await deliver(uri, request, {
-                id_token: idToken,
-                ...(request.state !== undefined ? { state: request.state } : {})
-            })
+            await deliver(uri, request, { id_token: idToken })
             setKnownOrigins((prev) => (prev.includes(uri.origin) ? prev : [...prev, uri.origin]))
             setState({ kind: 'done', message: uri.responseMode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
@@ -83,10 +80,7 @@ export const ExternalAuthConsent = (props: Props) => {
         setState({ kind: 'consent', uri, request, submitting: true })
         // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
-            await deliver(uri, request, {
-                error: 'access_denied',
-                ...(request.state !== undefined ? { state: request.state } : {})
-            })
+            await deliver(uri, request, { error: 'access_denied' })
         } catch {
             // 通知失敗は無視する
         }
