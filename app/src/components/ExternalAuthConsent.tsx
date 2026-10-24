@@ -1,11 +1,14 @@
 // CIP-17 §6: 外部サービス (RP) へのログインの同意画面。
 // Authorization Request URI (QR でも deep link でも同じ) を受け取り、検証 → 同意 → 署名 → 送信まで行う。
-// 応答方式は URI の <response_mode> で決まり、開き方には依らない
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Avatar, Button, Text } from '@concrnt/ui'
+// 応答方式は URI の <response_mode> で決まり、開き方には依らない。
+//   direct_post: 別端末の画面へのログイン。RP の画面に出ている絵文字 (display_code) を 3 択から選ばせ、
+//                正解を選んだことを承認とみなす (見比べを操作そのものに組み込み、注意文を減らす)
+//   fragment:    この端末のブラウザに戻る。見比べる画面が無いので「ログイン / 拒否」ボタンだけ
+import { useEffect, useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Avatar, Button, Chip, Text } from '@concrnt/ui'
+import { EMOJIHASH_TABLE } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { usePersistent } from '../hooks/usePersistent'
 import { CssVar } from '../types/Theme'
 import {
     buildIdToken,
@@ -27,17 +30,15 @@ interface Props {
 type State =
     | { kind: 'loading' }
     | { kind: 'consent'; uri: AuthorizationRequestUri; request: RequestObject; submitting: boolean }
-    | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' }
+    | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' | 'mismatch' }
     | { kind: 'error'; code: ExternalAuthErrorCode }
+
+const CHOICE_COUNT = 3
 
 export const ExternalAuthConsent = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'app.externalAuth' })
     const { client } = useClient()
     const [state, setState] = useState<State>({ kind: 'loading' })
-
-    // このアカウントで過去にログインした RP のオリジン。初回なら警告を出す (§6 SHOULD)。
-    // localStorage はログアウトやアカウント切替で消えるが、消えても警告が再び出るだけなので許容する
-    const [knownOrigins, setKnownOrigins] = usePersistent<string[]>(`externalAuth.knownOrigins.${client.ccid}`, [])
 
     useEffect(() => {
         let cancelled = false
@@ -57,6 +58,10 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }, [props.uri])
 
+    // 3 択の候補 (正解 1 + ランダム 2)。要求ごとに 1 回だけ作り、送信中の再描画で並びが変わらないようにする
+    const displayCode = state.kind === 'consent' ? state.request.display_code : null
+    const choices = useMemo(() => (displayCode === null ? [] : buildChoices(displayCode)), [displayCode])
+
     // §8.1 / §8.2: 応答は redirect_uri へ。配送方法は URI の <response_mode> で決まる (Request Object には無い)
     const deliver = (uri: AuthorizationRequestUri, request: RequestObject, params: Record<string, string>) =>
         uri.responseMode === 'fragment'
@@ -68,7 +73,6 @@ export const ExternalAuthConsent = (props: Props) => {
         try {
             const idToken = await buildIdToken(client, request, uri.origin) // ここで端末認証が出る
             await deliver(uri, request, { id_token: idToken })
-            setKnownOrigins((prev) => (prev.includes(uri.origin) ? prev : [...prev, uri.origin]))
             setState({ kind: 'done', message: uri.responseMode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
@@ -76,7 +80,7 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }
 
-    const deny = async (uri: AuthorizationRequestUri, request: RequestObject) => {
+    const deny = async (uri: AuthorizationRequestUri, request: RequestObject, message: 'denied' | 'mismatch') => {
         setState({ kind: 'consent', uri, request, submitting: true })
         // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
@@ -84,9 +88,14 @@ export const ExternalAuthConsent = (props: Props) => {
         } catch {
             // 通知失敗は無視する
         }
-        setState({ kind: 'done', message: 'denied' })
+        setState({ kind: 'done', message })
         props.onComplete('denied')
     }
+
+    // 絵文字の 3 択。正解なら承認、違うものを選んだら照合失敗として拒否する。
+    // (選び直しを許すと 3 回で必ず当たるので、1 回の選択で決める)
+    const choose = (uri: AuthorizationRequestUri, request: RequestObject, choice: string) =>
+        choice === request.display_code ? approve(uri, request) : deny(uri, request, 'mismatch')
 
     if (state.kind === 'loading') {
         return <Text>{t('loading')}</Text>
@@ -109,10 +118,9 @@ export const ExternalAuthConsent = (props: Props) => {
     const { uri, request, submitting } = state
     const host = new URL(uri.origin).host
     const clientName = request.client_metadata?.client_name
-    const isFirstTime = !knownOrigins.includes(uri.origin)
     const sharesProfile = request.scope.split(' ').includes('profile')
-    // §6: direct_post は別端末の画面へのログイン。読み方 (QR / deep link) に関わらず照合コードと警告を必ず出す。
-    // fragment では display_code は Request Object にあっても表示しない
+    // §6: direct_post は別端末の画面へのログインなので display_code の照合を操作に組み込む。
+    // fragment では display_code は Request Object にあっても使わない
     const isRemote = uri.responseMode === 'direct_post'
     const sharedInfo = [t('shareCcid'), t('shareDomain', { domain: client.server.domain })]
     if (sharesProfile) sharedInfo.push(t('shareProfile'))
@@ -122,13 +130,46 @@ export const ExternalAuthConsent = (props: Props) => {
             style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: CssVar.space(1.5),
+                gap: CssVar.space(2),
                 // 画面下の FAB (60px + 余白) に操作ボタンが隠れないよう、スクロールで逃がせる余白を取る
                 paddingBottom: CssVar.space(20)
             }}
         >
-            <Text variant="h4" style={{ margin: 0 }}>
-                {t('consentTitle')}
+            {/* 「[アカウント] でログイン」。アカウントはチップで見せる (タップしても何も起きない) */}
+            <Text
+                variant="h4"
+                style={{ margin: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: CssVar.space(1) }}
+            >
+                <Trans
+                    t={t}
+                    i18nKey="consentTitle"
+                    components={{
+                        user: (
+                            <Chip
+                                variant="outlined"
+                                style={{ maxWidth: '100%', height: '28px', fontSize: '1rem' }}
+                                headElement={
+                                    <Avatar
+                                        ccid={client.ccid}
+                                        src={client.profile.avatar}
+                                        style={{ width: 22, height: 22, flexShrink: 0 }}
+                                    />
+                                }
+                            >
+                                <span
+                                    style={{
+                                        display: 'block',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {client.profile.username || client.ccid}
+                                </span>
+                            </Chip>
+                        )
+                    }}
+                />
             </Text>
 
             {/* §6: RP の身元はオリジンの host。client_name は自己申告なので host を置き換えない (§10.5) */}
@@ -152,86 +193,98 @@ export const ExternalAuthConsent = (props: Props) => {
                         {t('selfReportedName', { name: clientName })}
                     </Text>
                 )}
+                <Text variant="caption" style={{ margin: 0, marginTop: CssVar.space(0.5) }}>
+                    {t('sharedInfoTitle')}: {sharedInfo.join(' / ')}
+                </Text>
             </div>
 
-            {isFirstTime && (
-                <Text variant="caption" style={{ margin: 0, fontWeight: 'bold', color: 'inherit' }}>
-                    {t('firstTimeWarning')}
-                </Text>
-            )}
-
-            {/* direct_post: 照合コードを相手の画面と見比べさせ、自分で開いた要求でなければ拒否するよう促す (§6, §10.1)。
-                fragment (この端末のブラウザに戻る) では見比べる画面が無いので出さない */}
-            {isRemote && (
-                <div
-                    style={{
-                        border: `1px solid ${CssVar.divider}`,
-                        borderRadius: '8px',
-                        padding: `${CssVar.space(1)} ${CssVar.space(1.5)}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: CssVar.space(0.5)
-                    }}
-                >
-                    <Text variant="caption" style={{ margin: 0 }}>
-                        {t('displayCode')}
-                    </Text>
-                    <Text style={{ margin: 0, fontSize: '2rem', lineHeight: 1.2, textAlign: 'center' }}>
-                        {request.display_code}
-                    </Text>
-                    <Text variant="caption" style={{ margin: 0, textAlign: 'center' }}>
-                        {t('displayCodeHint')}
-                    </Text>
-                    <Text
-                        variant="caption"
-                        style={{ margin: 0, marginTop: CssVar.space(0.5), fontWeight: 'bold', color: 'inherit' }}
+            {isRemote ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1.5) }}>
+                    <Text style={{ margin: 0 }}>{t('emojiPrompt')}</Text>
+                    <div
+                        role="group"
+                        aria-label={t('emojiPrompt')}
+                        style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}
                     >
-                        {t('remoteLoginWarning')}
-                    </Text>
+                        {choices.map((choice) => (
+                            <Button
+                                key={choice}
+                                disabled={submitting}
+                                onClick={() => choose(uri, request, choice)}
+                                style={{
+                                    width: '100%',
+                                    fontSize: '1.75rem',
+                                    lineHeight: 1.3,
+                                    letterSpacing: '0.1em',
+                                    padding: `${CssVar.space(1.5)} ${CssVar.space(2)}`
+                                }}
+                            >
+                                {choice}
+                            </Button>
+                        ))}
+                    </div>
+                    <Button
+                        variant="outlined"
+                        disabled={submitting}
+                        onClick={() => deny(uri, request, 'denied')}
+                        style={{ width: '100%' }}
+                    >
+                        {t('notInList')}
+                    </Button>
+                    {submitting && (
+                        <Text variant="caption" style={{ margin: 0, textAlign: 'center' }}>
+                            {t('submitting')}
+                        </Text>
+                    )}
+                </div>
+            ) : (
+                <div
+                    style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1), alignItems: 'center' }}
+                >
+                    {submitting && <Text variant="caption">{t('submitting')}</Text>}
+                    <Button variant="outlined" disabled={submitting} onClick={() => deny(uri, request, 'denied')}>
+                        {t('deny')}
+                    </Button>
+                    <Button disabled={submitting} onClick={() => approve(uri, request)}>
+                        {t('approve')}
+                    </Button>
                 </div>
             )}
-
-            <div>
-                <Text variant="caption" style={{ margin: 0 }}>
-                    {t('signingAs')}
-                </Text>
-                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1), minWidth: 0 }}>
-                    <Avatar
-                        ccid={client.ccid}
-                        src={client.profile.avatar}
-                        style={{ width: 32, height: 32, flexShrink: 0 }}
-                    />
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                        <Text style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {client.profile.username}
-                        </Text>
-                        <Text
-                            variant="caption"
-                            style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                        >
-                            {client.ccid}
-                        </Text>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <Text variant="caption" style={{ margin: 0 }}>
-                    {t('sharedInfoTitle')}
-                </Text>
-                <Text style={{ margin: 0 }}>{sharedInfo.join(' / ')}</Text>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1), alignItems: 'center' }}>
-                {submitting && <Text variant="caption">{t('submitting')}</Text>}
-                <Button variant="outlined" disabled={submitting} onClick={() => deny(uri, request)}>
-                    {t('deny')}
-                </Button>
-                <Button disabled={submitting} onClick={() => approve(uri, request)}>
-                    {t('approve')}
-                </Button>
-            </div>
         </div>
     )
+}
+
+// 正解 1 つとランダムな偽物 2 つを混ぜて並べる。偽物は worldlib の emojihash と同じ表から、
+// 正解と同じ文字数 (グラフェム数) で作る。正解や互いと同じ文字列にはしない
+const buildChoices = (correct: string): string[] => {
+    const length = Math.max(1, countGraphemes(correct))
+    const choices = [correct]
+    while (choices.length < CHOICE_COUNT) {
+        const decoy = randomCode(length)
+        if (!choices.includes(decoy)) choices.push(decoy)
+    }
+    return shuffle(choices)
+}
+
+const randomCode = (length: number): string => {
+    const values = crypto.getRandomValues(new Uint32Array(length))
+    return Array.from(values, (v) => EMOJIHASH_TABLE[v % EMOJIHASH_TABLE.length]).join('')
+}
+
+// 絵文字は複数コードポイント (☀️ など) で 1 文字になるので、Intl.Segmenter があればそれで数える
+const countGraphemes = (text: string): number => {
+    const Segmenter = (Intl as unknown as { Segmenter?: new () => { segment: (s: string) => Iterable<unknown> } })
+        .Segmenter
+    if (Segmenter) return Array.from(new Segmenter().segment(text)).length
+    return Array.from(text).length
+}
+
+const shuffle = <T,>(items: T[]): T[] => {
+    const result = [...items]
+    const randoms = crypto.getRandomValues(new Uint32Array(result.length))
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = randoms[i] % (i + 1)
+        ;[result[i], result[j]] = [result[j], result[i]]
+    }
+    return result
 }
