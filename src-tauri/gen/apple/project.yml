@@ -89,13 +89,14 @@ targets:
         NSFaceIDUsageDescription: FaceID はマスターキーを保護するために使用されます。
         NSCameraUsageDescription: カメラは、ログイン QR を読み込むために使用されます。
         NSPhotoLibraryAddUsageDescription: 画像を写真ライブラリに保存するために使用されます。
-        # cckv:// links opened outside the app (tauri-plugin-deep-link). The
+        # cckv:// and concrnt-auth:// (CIP-17 sign-in) links opened outside the
+        # app (tauri-plugin-deep-link). The
         # Tauri CLI would only write this on `tauri ios init`, which is
         # forbidden here (see header), so it is maintained by hand. Keep in
         # sync with tauri.conf.json plugins.deep-link.
         CFBundleURLTypes:
           - CFBundleURLName: world.concrnt.app
-            CFBundleURLSchemes: [cckv]
+            CFBundleURLSchemes: [cckv, concrnt-auth]
         # iOS 27 SDK requires UIScene adoption: without a static
         # UIApplicationSceneManifest the app aborts at launch. tao 0.35 only
         # activates its scene support (TaoSceneDelegate registration, windows

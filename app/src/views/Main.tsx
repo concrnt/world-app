@@ -16,6 +16,8 @@ import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { AUTH_URI_SCHEME } from '../lib/externalAuth'
+import { ExternalAuthView } from './ExternalAuth'
 import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
@@ -139,8 +141,10 @@ export const MainView = () => {
     })
 
     // Push notifications: re-upsert the subscription on every app start (the
-    // cheapest way to keep the native token fresh across rotations), surface
-    // a cold-start tap's deep link once, and listen for warm-start taps.
+    // cheapest way to keep the native token fresh across rotations), then
+    // drain the native tap buffer once on mount (cold start, or a tap that
+    // arrived while nobody was listening) and again on every warm-start tap
+    // signal. See getLaunchNotification for the buffer contract.
     useEffect(() => {
         if (!client) return
 
@@ -175,8 +179,10 @@ export const MainView = () => {
         }
     }, [client])
 
-    // cckv:// links opened outside the app (OS deep link): resolve the URI the
-    // same way the 照会 (Query) view does and open that, on top of the current tab.
+    // Deep links opened outside the app: cckv:// is resolved the same way the
+    // 照会 (Query) view does and opened on top of the current tab; concrnt-auth://
+    // (CIP-17 sign-in: a same-device link, or a QR read by the OS camera) opens
+    // the consent screen there instead.
     // Cold start: the URL is held by the plugin until MainView mounts (i.e.
     // after login), so it is consumed here once. Warm start: live event.
     useEffect(() => {
@@ -185,6 +191,10 @@ export const MainView = () => {
         const openDeepLink = (uri: string) => {
             setOpen(false)
             const stack = stackRefs.current[selectedTabRef.current]
+            if (uri.startsWith(AUTH_URI_SCHEME)) {
+                stack?.push(<ExternalAuthView uri={uri} />)
+                return
+            }
             resolveQueryTarget(client, uri)
                 .then((target) => {
                     switch (target.kind) {
@@ -241,6 +251,11 @@ export const MainView = () => {
                         console.log('pushing view to tab:', selectedTab)
                         const stackRef = stackRefs.current[selectedTab]
                         stackRef?.set(view)
+                        setOpen(false)
+                    }}
+                    onScanned={(uri) => {
+                        // deep link の concrnt-auth:// と同じ扱い: 現在のタブに同意画面を重ねる
+                        stackRefs.current[selectedTab]?.push(<ExternalAuthView uri={uri} />)
                         setOpen(false)
                     }}
                 />

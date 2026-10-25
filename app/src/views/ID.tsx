@@ -6,9 +6,8 @@ import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
-import { MdArrowForward, MdBadge, MdKey, MdLuggage, MdPublic, MdQrCodeScanner } from 'react-icons/md'
+import { MdArrowForward, MdBadge, MdKey, MdLuggage, MdPublic } from 'react-icons/md'
 import { useStack } from '../layouts/Stack'
-import { QRSetup } from './QRSetup'
 import { MigrationSettingsView } from './MigrationSettings'
 import { BackupKeyButton } from '../components/BackupKeyButton'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
@@ -157,23 +156,6 @@ export const IDView = () => {
                     }}
                 />
 
-                <Button
-                    startIcon={<MdQrCodeScanner />}
-                    endIcon={<MdArrowForward size={20} />}
-                    onClick={() => {
-                        stack.push(
-                            <QRSetup
-                                onComplete={() => {
-                                    setTimeout(() => {
-                                        stack.pop()
-                                    }, 1000)
-                                }}
-                            />
-                        )
-                    }}
-                >
-                    {t('loginOnAnotherDevice')}
-                </Button>
                 <BackupKeyButton />
                 <Button
                     variant="outlined"

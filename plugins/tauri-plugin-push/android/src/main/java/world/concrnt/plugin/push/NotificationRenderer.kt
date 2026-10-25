@@ -15,6 +15,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.UUID
 
 /**
  * Parses a decrypted concrnt push payload and shows a system notification.
@@ -281,14 +282,22 @@ object NotificationRenderer {
     private fun display(context: Context, content: Content) {
         ensureChannel(context)
 
+        val notificationId = (content.targetUri ?: content.title).hashCode()
+
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
         val intent = Intent(launchIntent).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("cc-deeplink", content.targetUri)
             putExtra("cc-view", content.view)
+            // Unique per posted notification so PushPlugin can tell a genuine
+            // tap from the system re-delivering the same launch intent.
+            putExtra("cc-tap-id", UUID.randomUUID().toString())
         }
+        // Extras do not take part in PendingIntent equality, so a shared
+        // request code would make every notification open the most recently
+        // posted one's target. Key the PendingIntent by notification instead.
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, pendingIntentFlags)
+        val pendingIntent = PendingIntent.getActivity(context, notificationId, intent, pendingIntentFlags)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .apply {
@@ -306,7 +315,6 @@ object NotificationRenderer {
             .apply { content.targetUri?.let { setGroup(it) } }
             .build()
 
-        val notificationId = (content.targetUri ?: content.title).hashCode()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(notificationId, notification)
     }

@@ -329,7 +329,6 @@
             "aliasNotSet": "<未設定>",
             "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
             "alias": "エイリアス",
-            "loginOnAnotherDevice": "他デバイスでログイン",
             "backupMasterKey": "マスターキーをバックアップ",
             "copySubkey": "サブキーをコピー",
             "subkeyCopied": "コピーしました",
@@ -675,6 +674,7 @@
             "lists": "リスト",
             "query": "照会",
             "settings": "設定",
+            "scanQrCode": "QRコードをスキャン",
             "post": "投稿",
             "documentation": "ドキュメント",
             "forum": "フォーラム",
@@ -1044,7 +1044,7 @@
         },
         "qrSetup": {
             "scanWithApp": "ConcrntアプリでQRコードをスキャンしてください",
-            "scanWithAppHint": "スキャナーはアプリの設定 > ID管理にあります",
+            "scanWithAppHint": "スキャナーはアプリのサイドバーの一番下にあります",
             "usePasskeyTitle": "パスキーを利用しますか？",
             "usePasskeyDescription": "パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。",
             "no": "いいえ",
@@ -1164,15 +1164,51 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "QRコードをスキャン",
+            "close": "閉じる"
+        },
         "qrSetup": {
             "title": "他の端末でログイン",
             "confirmTitle": "この端末でログインを許可しますか？",
             "confirmDescription": "表示されている絵文字が端末で表示されているものと同じであることを確認してください",
+            "linkWarning": "別の端末をこのアカウントでログインさせようとしています。このQRコードやリンクを自分で開いていないなら「キャンセル」してください。",
             "cancel": "キャンセル",
             "ok": "OK",
             "loginCompleted": "ログインが完了しました！",
             "waitingForDevice": "端末から情報が送られてくるのを待っています......",
-            "scanQRCode": "QRコードをスキャン"
+            "signalHost": "接続先: {{host}}",
+            "scanQRCode": "QRコードをスキャン",
+            "invalidQRCode": "読み取った内容はログイン用のQRコードではありません",
+            "externalAuthTitle": "外部サービスにログイン"
+        },
+        "externalAuth": {
+            "consentTitle": "<user/> でログイン",
+            "siteLabel": "ログイン先のサイト",
+            "emojiPrompt": "ログイン先で表示されている絵文字と同じものを選択してください",
+            "notInList": "この中にない",
+            "details": "サイトに渡される情報",
+            "canTitle": "このサイトができること",
+            "canKnowIdentity": "CCID / 所属サーバーを知る",
+            "canKnowProfile": "現在のプロフィールを知る",
+            "cannotTitle": "このサイトができないこと",
+            "cannotPost": "あなたの代わりにconcrntに投稿する",
+            "cannotRead": "あなたの権限でconcrntを閲覧する",
+            "approve": "ログイン",
+            "deny": "拒否",
+            "submitting": "送信しています...",
+            "approved": "ログインしました。サイトの画面を確認してください。",
+            "approvedFragment": "承認しました。ブラウザに戻って続けてください。",
+            "denied": "ログインを拒否しました",
+            "mismatch": "絵文字が一致しなかったため、ログインを中止しました。サイトの画面を確認してやり直してください。",
+            "errorTitle": "ログインできません",
+            "nothingSent": "サイトには何も送信していません。",
+            "errors": {
+                "invalidUri": "ログイン要求の形式が正しくありません",
+                "invalidRequest": "ログイン要求の内容が正しくありません",
+                "signFailed": "署名できませんでした",
+                "postFailed": "サイトへの送信に失敗しました"
+            }
         },
         "serverSelector": {
             "title": "サーバーを選択",
