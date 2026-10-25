@@ -27,7 +27,7 @@ import { ProfileName } from './ProfileName'
 
 interface Props {
     onPush?: (view: ReactNode) => void
-    // QR スキャンで読み取った URI。deep link と同じく Main 側で同意画面を開く
+    // QR スキャンで読み取った文字列。deep link と同じく Main 側で振り分ける(ログイン系は同意画面、cckv:// や concrnt.world の URL は該当ビュー)
     onScanned?: (uri: string) => void
 }
 
@@ -133,7 +133,7 @@ export const Sidebar = (props: Props) => {
                         </ListItem>
                     </List>
                     <div style={{ flex: 1 }} />
-                    {/* QR スキャン (他の端末のログイン / 外部サービスへのログイン) は使用頻度が低いので最下部に置く。
+                    {/* QR スキャン (他の端末のログイン / 外部サービスへのログイン / プロフィールや投稿の共有QR) は使用頻度が低いので最下部に置く。
                         受け皿のページは持たず、スキャナーを直接起動する。キャンセルならこのサイドバーに戻るだけ */}
                     <List
                         dense

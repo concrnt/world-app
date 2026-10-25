@@ -302,7 +302,9 @@
             "linkCopied": "Copied",
             "mainProfile": "Main profile",
             "mediaViewList": "List view",
-            "mediaViewGrid": "Grid view"
+            "mediaViewGrid": "Grid view",
+            "showQrCode": "Show QR code",
+            "closeQrCode": "Close"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -489,7 +491,7 @@
             "title": "Inquiry",
             "submit": "Inquiry",
             "resolving": "Resolving...",
-            "invalid": "Enter a cckv:// URI or a CCID",
+            "invalid": "Enter a cckv:// URI, a CCID, or a concrnt.world URL",
             "notFound": "Not found",
             "unsupported": "This kind of URI cannot be opened here",
             "failed": "Failed to resolve: {{error}}"

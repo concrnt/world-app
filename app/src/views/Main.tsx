@@ -11,6 +11,8 @@ import { PostView } from './Post'
 import { TimelineView } from './Timeline'
 import { ProfileView } from './Profile'
 import { ListView } from './List'
+import { ApView } from './ApView'
+import { BskyView } from './BskyView'
 import { QueryView } from './Query'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
@@ -179,19 +181,16 @@ export const MainView = () => {
         }
     }, [client])
 
-    // Deep links opened outside the app: cckv:// is resolved the same way the
-    // 照会 (Query) view does and opened on top of the current tab; concrnt-auth://
-    // (CIP-17 sign-in: a same-device link, or a QR read by the OS camera) opens
-    // the consent screen there instead.
-    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
-    // after login), so it is consumed here once. Warm start: live event.
-    useEffect(() => {
-        if (!client) return
-
-        const openDeepLink = (uri: string) => {
+    // OSからのdeep link(cckv:// / concrnt-auth://)とサイドバーのQRスキャン結果は同じ入口で振り分ける:
+    //   concrnt-auth://(CIP-17 / signal)または wss://(webログイン画面の旧signal QR)→ 同意画面
+    //   それ以外(cckv:// / CCID / https://concrnt.world/... / manifest URL)→ 照会と同じ解決で該当ビュー
+    //   解決できなければ照会画面に入れた状態で開き、失敗理由をそこで見せる
+    const openDeepLink = useCallback(
+        (uri: string) => {
+            if (!client) return
             setOpen(false)
             const stack = stackRefs.current[selectedTabRef.current]
-            if (uri.startsWith(AUTH_URI_SCHEME)) {
+            if (uri.startsWith(AUTH_URI_SCHEME) || uri.startsWith('wss://')) {
                 stack?.push(<ExternalAuthView uri={uri} />)
                 return
             }
@@ -212,13 +211,25 @@ export const MainView = () => {
                         case 'list':
                             stack?.push(<ListView uri={target.uri} />)
                             break
+                        case 'apView':
+                            stack?.push(<ApView uri={target.uri} />)
+                            break
+                        case 'bskyView':
+                            stack?.push(<BskyView uri={target.uri} />)
+                            break
                     }
                 })
                 .catch(() => {
-                    // 解決できなかったURIは照会画面に入れた状態で開き、失敗理由をそこで見せる
                     stack?.push(<QueryView initialQuery={uri} autoSubmit />)
                 })
-        }
+        },
+        [client]
+    )
+
+    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
+    // after login), so it is consumed here once. Warm start: live event.
+    useEffect(() => {
+        if (!client) return
 
         getLaunchDeepLink()
             .then((url) => {
@@ -239,7 +250,7 @@ export const MainView = () => {
             cancelled = true
             unlisten?.()
         }
-    }, [client])
+    }, [client, openDeepLink])
 
     return (
         <SidebarLayout
@@ -253,11 +264,7 @@ export const MainView = () => {
                         stackRef?.set(view)
                         setOpen(false)
                     }}
-                    onScanned={(uri) => {
-                        // deep link の concrnt-auth:// と同じ扱い: 現在のタブに同意画面を重ねる
-                        stackRefs.current[selectedTab]?.push(<ExternalAuthView uri={uri} />)
-                        setOpen(false)
-                    }}
+                    onScanned={openDeepLink}
                 />
             }
         >

@@ -302,7 +302,9 @@
             "linkCopied": "コピーしました",
             "mainProfile": "メインプロフィール",
             "mediaViewList": "リスト表示",
-            "mediaViewGrid": "グリッド表示"
+            "mediaViewGrid": "グリッド表示",
+            "showQrCode": "QRコードを表示",
+            "closeQrCode": "閉じる"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -488,7 +490,7 @@
             "title": "照会",
             "submit": "照会",
             "resolving": "照会中...",
-            "invalid": "cckv:// のURIかCCIDを入力してください",
+            "invalid": "cckv:// のURI、CCID、または concrnt.world のURLを入力してください",
             "notFound": "見つかりませんでした",
             "unsupported": "このURIの種類は照会では開けません",
             "failed": "照会に失敗しました: {{error}}"
