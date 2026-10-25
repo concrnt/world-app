@@ -124,6 +124,7 @@ export const TimelineView = (props: Props) => {
                 <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
                     <TimelineSettings
                         uri={props.uri}
+                        onNavigate={() => setSettingsOpen(false)}
                         onDeleted={() => {
                             setSettingsOpen(false)
                             navigate('/')

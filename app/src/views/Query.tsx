@@ -3,6 +3,8 @@ import { TimelineView } from '../views/Timeline'
 import { ProfileView } from '../views/Profile'
 import { PostView } from '../views/Post'
 import { ListView } from '../views/List'
+import { ApView } from '../views/ApView'
+import { BskyView } from '../views/BskyView'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useEffect, useState } from 'react'
@@ -46,6 +48,12 @@ export const QueryView = (props: Props) => {
                 case 'list':
                     push?.(<ListView uri={target.uri} />)
                     break
+                case 'apView':
+                    push?.(<ApView uri={target.uri} />)
+                    break
+                case 'bskyView':
+                    push?.(<BskyView uri={target.uri} />)
+                    break
             }
         } catch (e) {
             setError(e instanceof QueryResolveError ? t(e.reason) : t('failed', { error: String(e) }))
@@ -77,7 +85,7 @@ export const QueryView = (props: Props) => {
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(query)
                     }}
-                    placeholder="cckv:// / CCID / https://.../manifest.json"
+                    placeholder="cckv:// / CCID / https://concrnt.world/..."
                 />
                 <Button disabled={busy} onClick={() => submit(query)}>
                     {busy ? t('resolving') : t('submit')}

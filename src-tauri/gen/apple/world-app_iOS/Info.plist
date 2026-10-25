@@ -22,20 +22,21 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.24</string>
+	<string>0.1.25</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>cckv</string>
+				<string>concrnt-auth</string>
 			</array>
 			<key>CFBundleURLName</key>
 			<string>cckv</string>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>0.1.24</string>
+	<string>0.1.25</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useId, type CSSProperties, type ReactNode } from 'react'
 import { CssVar } from '../types/Theme'
 import styles from './TextField.module.css'
 
@@ -38,8 +38,12 @@ const inputStyle: CSSProperties = {
 }
 
 export const TextField = (props: Props) => {
+    // label の暗黙のターゲットは「最初の labelable な子孫」なので、startAdornment にボタン(Chip等)を置くと
+    // 枠クリックでそのボタンが押されてしまう。htmlFor で入力欄を明示する
+    const id = useId()
     const input = (
         <input
+            id={id}
             type="text"
             className={props.startAdornment || props.endAdornment ? undefined : styles.frame}
             autoFocus={props.autofocus}
@@ -68,6 +72,7 @@ export const TextField = (props: Props) => {
     // label で包むと装飾部分のクリックでも入力欄にフォーカスが移る(内側のボタンはボタン自身が受ける)
     return (
         <label
+            htmlFor={id}
             className={styles.frame}
             style={{
                 ...frameStyle,

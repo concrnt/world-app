@@ -285,6 +285,7 @@
             "masterKeyHint": "Enter the 12 words in order. You can also paste all 12 words at once."
         },
         "profile": {
+            "searchPosts": "Search posts",
             "userNotFound": "User not found",
             "blockConfirmTitle": "Block user",
             "blockConfirmDescription": "Are you sure you want to block this user? They will no longer be able to reply to you or react to your posts, but they will still be able to see your public posts.",
@@ -301,7 +302,9 @@
             "linkCopied": "Copied",
             "mainProfile": "Main profile",
             "mediaViewList": "List view",
-            "mediaViewGrid": "Grid view"
+            "mediaViewGrid": "Grid view",
+            "showQrCode": "Show QR code",
+            "closeQrCode": "Close"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -328,7 +331,6 @@
             "aliasNotSet": "<Not set>",
             "passportDescription": "View your current ID, registered server, and credentials.",
             "alias": "Alias",
-            "loginOnAnotherDevice": "Log in on another device",
             "backupMasterKey": "Back up master key",
             "copySubkey": "Copy Subkey",
             "subkeyCopied": "Copied!",
@@ -448,7 +450,10 @@
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to Bluesky. If none are set, your home timeline is used.",
             "update": "Update",
-            "inquiry": "Inquiry"
+            "inquiry": "Inquiry",
+            "hintLabel": "Hint",
+            "appPasswordHint": "To open this account in another app, such as the official Bluesky app, issue an app password and log in with it (read-only from Bluesky, though).",
+            "manageAppPasswords": "Manage app passwords"
         },
         "bskyPost": {
             "notImported": "This post has not been fetched to this server yet.",
@@ -486,10 +491,13 @@
             "title": "Inquiry",
             "submit": "Inquiry",
             "resolving": "Resolving...",
-            "invalid": "Enter a cckv:// URI or a CCID",
+            "invalid": "Enter a cckv:// URI, a CCID, or a concrnt.world URL",
             "notFound": "Not found",
             "unsupported": "This kind of URI cannot be opened here",
             "failed": "Failed to resolve: {{error}}"
+        },
+        "search": {
+            "title": "Search"
         },
         "list": {
             "listNotFound": "List not found"
@@ -669,6 +677,7 @@
             "lists": "Lists",
             "query": "Query",
             "settings": "Settings",
+            "scanQrCode": "Scan QR code",
             "post": "Post",
             "documentation": "Documentation",
             "forum": "Forum",
@@ -753,6 +762,7 @@
             "pageIndicator": "Page {{page}}",
             "noFolloweeCommunities": "No communities where people you follow are active",
             "postsHint": "Type a search term to search posts",
+            "removeFilter": "Remove filter",
             "sortFollowee": "Following",
             "sortGlobal": "Global",
             "followeeActiveCommunities": "Communities active among people you follow",
@@ -807,6 +817,27 @@
             "removeFollowerConfirmTitle": "Remove this follower?",
             "removeFollowerConfirmDescription": "They will stop receiving your posts. If their server is still online, their follow will be cancelled as well."
         },
+        "bskyAppPasswords": {
+            "title": "App passwords",
+            "serviceLabel": "Server (hosting provider)",
+            "identifierLabel": "Username",
+            "namePlaceholder": "Name (e.g. iPhone)",
+            "issue": "Issue",
+            "issueFailed": "Failed to issue. The name may already exist, or you may have reached the limit (20).",
+            "issued": "Issued an app password for \"{{name}}\".",
+            "issuedNote": "It cannot be shown again once you close this screen. Enter it in the app now, or copy it somewhere safe.",
+            "passwordLabel": "App password",
+            "issuedHeading": "Issued",
+            "createdAt": "Issued: {{date}}",
+            "lastUsed": "Last used: {{date}}",
+            "neverUsed": "Never used",
+            "empty": "None yet.",
+            "loading": "Loading...",
+            "revoke": "Revoke",
+            "revokeConfirmTitle": "Revoke this app password?",
+            "revokeConfirmDescription": "Any app signed in with \"{{name}}\" will be logged out immediately.",
+            "revokeFailed": "Failed to revoke. Please wait a while and try again."
+        },
         "bskyFollowList": {
             "following": "Following",
             "followers": "Followers",
@@ -839,16 +870,7 @@
             "deleteTimeline": "Delete Community",
             "confirmDeleteTimeline": "Delete community",
             "confirmDeleteTimelineDescription": "Are you sure you want to delete this community? This action cannot be undone.",
-            "search": "Search",
-            "searchNotAvailable": "Search is not available on {{host}}",
-            "clearSearch": "Clear search",
-            "searching": "Searching...",
-            "searchResultPlaceholder": "Search results will appear here",
-            "searchResultEmpty": "No results found",
-            "searchResultTitle": "Search results for {{query}}",
-            "searchFailed": "Search failed",
-            "prev": "Previous",
-            "next": "Next"
+            "search": "Search"
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",
@@ -1025,7 +1047,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner in the app under Settings > ID Management",
+            "scanWithAppHint": "You can find the scanner at the bottom of the sidebar in the app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
@@ -1145,15 +1167,51 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "Scan QR code",
+            "close": "Close"
+        },
         "qrSetup": {
             "title": "Log in on another device",
             "confirmTitle": "Allow login on this device?",
             "confirmDescription": "Make sure the emoji shown here matches the one displayed on the other device",
+            "linkWarning": "You are about to let another device log in to this account. Cancel unless you opened this QR code or link yourself.",
             "cancel": "Cancel",
             "ok": "OK",
             "loginCompleted": "Login completed!",
             "waitingForDevice": "Waiting for information from the device...",
-            "scanQRCode": "Scan QR code"
+            "signalHost": "Connecting to: {{host}}",
+            "scanQRCode": "Scan QR code",
+            "invalidQRCode": "The scanned content is not a login QR code",
+            "externalAuthTitle": "Log in to an external service"
+        },
+        "externalAuth": {
+            "consentTitle": "Log in as <user/>",
+            "siteLabel": "Site you are logging in to",
+            "emojiPrompt": "Select the emoji shown on the site you are logging in to",
+            "notInList": "None of these",
+            "details": "Information shared with the site",
+            "canTitle": "What this site can do",
+            "canKnowIdentity": "Know your CCID and home server",
+            "canKnowProfile": "Know your current profile",
+            "cannotTitle": "What this site cannot do",
+            "cannotPost": "Post to concrnt on your behalf",
+            "cannotRead": "Read concrnt with your permissions",
+            "approve": "Log in",
+            "deny": "Deny",
+            "submitting": "Sending...",
+            "approved": "Logged in. Check the site.",
+            "approvedFragment": "Approved. Return to the browser to continue.",
+            "denied": "Login denied",
+            "mismatch": "The emoji did not match, so the login was cancelled. Check the site and try again.",
+            "errorTitle": "Cannot log in",
+            "nothingSent": "Nothing was sent to the site.",
+            "errors": {
+                "invalidUri": "The login request is malformed",
+                "invalidRequest": "The login request is invalid",
+                "signFailed": "Could not sign",
+                "postFailed": "Could not send the response to the site"
+            }
         },
         "serverSelector": {
             "title": "Select a server",

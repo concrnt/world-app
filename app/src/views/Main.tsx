@@ -11,11 +11,15 @@ import { PostView } from './Post'
 import { TimelineView } from './Timeline'
 import { ProfileView } from './Profile'
 import { ListView } from './List'
+import { ApView } from './ApView'
+import { BskyView } from './BskyView'
 import { QueryView } from './Query'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { AUTH_URI_SCHEME } from '../lib/externalAuth'
+import { ExternalAuthView } from './ExternalAuth'
 import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
@@ -139,8 +143,10 @@ export const MainView = () => {
     })
 
     // Push notifications: re-upsert the subscription on every app start (the
-    // cheapest way to keep the native token fresh across rotations), surface
-    // a cold-start tap's deep link once, and listen for warm-start taps.
+    // cheapest way to keep the native token fresh across rotations), then
+    // drain the native tap buffer once on mount (cold start, or a tap that
+    // arrived while nobody was listening) and again on every warm-start tap
+    // signal. See getLaunchNotification for the buffer contract.
     useEffect(() => {
         if (!client) return
 
@@ -175,16 +181,19 @@ export const MainView = () => {
         }
     }, [client])
 
-    // cckv:// links opened outside the app (OS deep link): resolve the URI the
-    // same way the 照会 (Query) view does and open that, on top of the current tab.
-    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
-    // after login), so it is consumed here once. Warm start: live event.
-    useEffect(() => {
-        if (!client) return
-
-        const openDeepLink = (uri: string) => {
+    // OSからのdeep link(cckv:// / concrnt-auth://)とサイドバーのQRスキャン結果は同じ入口で振り分ける:
+    //   concrnt-auth://(CIP-17 / signal)または wss://(webログイン画面の旧signal QR)→ 同意画面
+    //   それ以外(cckv:// / CCID / https://concrnt.world/... / manifest URL)→ 照会と同じ解決で該当ビュー
+    //   解決できなければ照会画面に入れた状態で開き、失敗理由をそこで見せる
+    const openDeepLink = useCallback(
+        (uri: string) => {
+            if (!client) return
             setOpen(false)
             const stack = stackRefs.current[selectedTabRef.current]
+            if (uri.startsWith(AUTH_URI_SCHEME) || uri.startsWith('wss://')) {
+                stack?.push(<ExternalAuthView uri={uri} />)
+                return
+            }
             resolveQueryTarget(client, uri)
                 .then((target) => {
                     switch (target.kind) {
@@ -202,13 +211,25 @@ export const MainView = () => {
                         case 'list':
                             stack?.push(<ListView uri={target.uri} />)
                             break
+                        case 'apView':
+                            stack?.push(<ApView uri={target.uri} />)
+                            break
+                        case 'bskyView':
+                            stack?.push(<BskyView uri={target.uri} />)
+                            break
                     }
                 })
                 .catch(() => {
-                    // 解決できなかったURIは照会画面に入れた状態で開き、失敗理由をそこで見せる
                     stack?.push(<QueryView initialQuery={uri} autoSubmit />)
                 })
-        }
+        },
+        [client]
+    )
+
+    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
+    // after login), so it is consumed here once. Warm start: live event.
+    useEffect(() => {
+        if (!client) return
 
         getLaunchDeepLink()
             .then((url) => {
@@ -229,7 +250,7 @@ export const MainView = () => {
             cancelled = true
             unlisten?.()
         }
-    }, [client])
+    }, [client, openDeepLink])
 
     return (
         <SidebarLayout
@@ -243,6 +264,7 @@ export const MainView = () => {
                         stackRef?.set(view)
                         setOpen(false)
                     }}
+                    onScanned={openDeepLink}
                 />
             }
         >

@@ -38,6 +38,12 @@ export const QueryView = () => {
                 case 'list':
                     navigate('/lists/' + encodeURIComponent(target.uri))
                     break
+                case 'apView':
+                    navigate('/activitypub/view/' + encodeURIComponent(target.uri))
+                    break
+                case 'bskyView':
+                    navigate('/bluesky/view/' + encodeURIComponent(target.uri))
+                    break
             }
         } catch (e) {
             setError(e instanceof QueryResolveError ? t(e.reason) : t('failed', { error: String(e) }))
@@ -63,7 +69,7 @@ export const QueryView = () => {
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(query)
                     }}
-                    placeholder="cckv:// / CCID / https://.../manifest.json"
+                    placeholder="cckv:// / CCID / https://concrnt.world/..."
                 />
                 <Button disabled={busy} onClick={() => submit(query)}>
                     {busy ? t('resolving') : t('submit')}

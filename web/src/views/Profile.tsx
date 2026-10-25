@@ -14,14 +14,16 @@ import {
     useTheme,
     ListItem,
     useAnchor,
-    Tooltip
+    Tooltip,
+    OverlaySurface
 } from '@concrnt/ui'
 import { CfmRenderer } from '../components/CfmRenderer'
 import { View } from '../components/View'
 import { useClient } from '../contexts/Client'
 
-// import { MdSearch } from 'react-icons/md'
-import { MdMoreHoriz } from 'react-icons/md'
+import { MdMoreHoriz, MdSearch, MdClose } from 'react-icons/md'
+import Tilt from 'react-parallax-tilt'
+import { ProfileQRCard } from '../components/ProfileQRCard'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
 import { Drawer } from '../components/Drawer'
@@ -229,6 +231,7 @@ const Body = (props: BodyProps) => {
     const [mediaView, setMediaView] = usePersistent<'list' | 'grid'>('profile-media-view', 'grid')
 
     const [menuOpen, setMenuOpen] = useState(false)
+    const [qrOpen, setQrOpen] = useState(false)
     const [blockConfirmOpen, setBlockConfirmOpen] = useState(false)
     const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false)
     const [profileEditorOpen, setProfileEditorOpen] = useState(false)
@@ -236,9 +239,13 @@ const Body = (props: BodyProps) => {
     const isMobile = useIsMobile()
     const [linkCopied, setLinkCopied] = useState(false)
 
-    // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
+    // シェア/QR用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)。
+    // QRには解決用の ?hint=<ドメイン> を付ける(読み取り側がユーザーの所在ドメインを知らなくても開けるように)
     const shareURL =
-        'https://concrnt.world/profile/' + props.ccid + (props.profileName !== 'main' ? '/' + props.profileName : '')
+        'https://concrnt.world/profile/' +
+        props.ccid +
+        (props.profileName !== 'main' ? '/' + encodeURIComponent(props.profileName) : '')
+    const qrURL = shareURL + '?hint=' + encodeURIComponent(props.user.domain)
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -300,6 +307,18 @@ const Body = (props: BodyProps) => {
                 </ListItem>
             )
         }
+        options.push(
+            <ListItem
+                key="qr"
+                onClick={() => {
+                    // 先にメニューを閉じる: webデスクトップのSelectはtop layerのpopoverなので、開いたままだとQRの上に残る
+                    setMenuOpen(false)
+                    setQrOpen(true)
+                }}
+            >
+                <Text>{t('showQrCode')}</Text>
+            </ListItem>
+        )
         if (!isMe) {
             if (isBlocking) {
                 options.push(
@@ -373,11 +392,23 @@ const Body = (props: BodyProps) => {
                             {navigation.backNode}
                         </div>
                         <div style={{ flex: 1 }} />
-                        {/*
-                        <IconButton variant="contained">
-                            <MdSearch size={24} />
-                        </IconButton>
-                        */}
+                        {/* 投稿検索は crawler(mainnet)の explorer に、このプロフィールのホームタイムラインを in: フィルターにして委ねる */}
+                        {client.server.layer === 'concrnt-mainnet' && (
+                            <IconButton
+                                variant="contained"
+                                title={t('searchPosts')}
+                                onClick={() => {
+                                    navigate(
+                                        '/explorer?q=' +
+                                            encodeURIComponent(
+                                                'in:' + semantics.homeTimeline(props.ccid, props.profileName ?? 'main')
+                                            )
+                                    )
+                                }}
+                            >
+                                <MdSearch size={24} />
+                            </IconButton>
+                        )}
                         {selectOptions.length > 0 && (
                             <IconButton
                                 variant="contained"
@@ -625,6 +656,49 @@ const Body = (props: BodyProps) => {
                 <QueryTimeline prefix={target.prefix} query={target.query} header={header} />
             )}
             <Select open={menuOpen} onClose={() => setMenuOpen(false)} options={selectOptions} anchor={menuAnchor} />
+            <OverlaySurface open={qrOpen} onClose={() => setQrOpen(false)}>
+                {/* Modal(CenterDialog)は幅80vw・top30%固定で1:1.618のカードが収まらないため、全画面の独自レイアウト */}
+                <div
+                    data-testid="profile-qr-overlay"
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
+                        boxSizing: 'border-box'
+                    }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setQrOpen(false)
+                    }}
+                >
+                    <div style={{ width: 'min(400px, 90vw, calc(80dvh / 1.618))' }}>
+                        <Tilt glareEnable={true} glareBorderRadius="1%">
+                            <ProfileQRCard
+                                ccid={props.ccid}
+                                username={profile.value.username ?? props.ccid}
+                                avatar={profile.value.avatar}
+                                alias={props.user.alias}
+                                url={qrURL}
+                            />
+                        </Tilt>
+                    </div>
+                    <IconButton
+                        title={t('closeQrCode')}
+                        onClick={() => setQrOpen(false)}
+                        style={{
+                            position: 'absolute',
+                            top: 'max(10px, env(safe-area-inset-top))',
+                            right: '10px',
+                            color: 'white'
+                        }}
+                    >
+                        <MdClose size={24} />
+                    </IconButton>
+                </div>
+            </OverlaySurface>
             <Confirm
                 open={unblockConfirmOpen}
                 onClose={() => setUnblockConfirmOpen(false)}

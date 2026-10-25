@@ -35,6 +35,8 @@ export const CachedThemeProvider = (props: { children: React.ReactNode }) => {
 }
 
 interface ThemeLibraryState {
+    // 現在適用中のテーマ。canvas描画など CSS 変数が使えない場所で具体的な色が要るとき用
+    theme: Theme
     customThemes: Record<string, Theme>
     reloadThemes: () => Promise<void>
     saveTheme: (theme: Theme) => Promise<Theme>
@@ -44,6 +46,7 @@ interface ThemeLibraryState {
 }
 
 const ThemeLibraryContext = createContext<ThemeLibraryState>({
+    theme: Themes.blue,
     customThemes: {},
     reloadThemes: async () => {},
     saveTheme: async (theme) => theme,
@@ -127,13 +130,14 @@ export const ThemeProvider = (props: Props) => {
 
     const value = useMemo(
         () => ({
+            theme,
             customThemes,
             reloadThemes,
             saveTheme,
             deleteTheme,
             importTheme
         }),
-        [customThemes, reloadThemes, saveTheme, deleteTheme, importTheme]
+        [theme, customThemes, reloadThemes, saveTheme, deleteTheme, importTheme]
     )
 
     return (

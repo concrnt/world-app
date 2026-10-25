@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "concrnt-world",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "identifier": "world.concrnt.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -27,7 +27,7 @@
     "deep-link": {
       "mobile": [
         {
-          "scheme": ["cckv"],
+          "scheme": ["cckv", "concrnt-auth"],
           "appLink": false
         }
       ]
