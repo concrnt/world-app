@@ -1,27 +1,26 @@
 // CIP-17 §6: 外部サービス (RP) へのログインの同意画面。
 // Authorization Request URI (QR でも deep link でも同じ) を受け取り、検証 → 同意 → 署名 → 送信まで行う。
-// 応答方式は URI の <response_mode> で決まり、開き方には依らない。
-//   direct_post: 別端末の画面へのログイン。RP の画面に出ている絵文字 (display_code) を 3 択から選ばせ、
-//                正解を選んだことを承認とみなす (見比べを操作そのものに組み込み、注意文を減らす)
-//   fragment:    この端末のブラウザに戻る。見比べる画面が無いので「ログイン / 拒否」ボタンだけ
-import { useEffect, useMemo, useState } from 'react'
+// 要求の内容はすべて URI に載っている (by-value) ので、同意の前に RP へ何かを取りに行くことは無い。
+// 応答方式は URI の <type> で決まり、開き方には依らない。
+//   post:     別端末の画面へのログイン。RP の画面に出ている絵文字 (display_code = emojihash(n)、付録 A) を
+//             3 択から選ばせ、正解を選んだことを承認とみなす (見比べを操作そのものに組み込み、注意文を減らす)
+//   fragment: この端末のブラウザに戻る。見比べる画面が無いので「ログイン / 拒否」ボタンだけ
+import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { MdInfoOutline } from 'react-icons/md'
 import { Avatar, Button, Chip, IconButton, Text } from '@concrnt/ui'
-import { EMOJIHASH_TABLE } from '@concrnt/worldlib'
+import { EMOJIHASH_TABLE, emojihash } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { Drawer } from '../ui/Drawer'
 import {
     buildIdToken,
     ExternalAuthError,
-    fetchRequestObject,
     openFragmentResponse,
     parseAuthorizationRequestUri,
     postResponse,
     type AuthorizationRequestUri,
-    type ExternalAuthErrorCode,
-    type RequestObject
+    type ExternalAuthErrorCode
 } from '../lib/externalAuth'
 
 interface Props {
@@ -30,52 +29,43 @@ interface Props {
 }
 
 type State =
-    | { kind: 'loading' }
-    | { kind: 'consent'; uri: AuthorizationRequestUri; request: RequestObject; submitting: boolean }
+    | { kind: 'consent'; uri: AuthorizationRequestUri; submitting: boolean }
     | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' | 'mismatch' }
     | { kind: 'error'; code: ExternalAuthErrorCode }
+
+// §5.3: URI の検証。取得は無いので同期で済む。失敗しても RP には何も送らない
+const initialState = (text: string): State => {
+    try {
+        return { kind: 'consent', uri: parseAuthorizationRequestUri(text), submitting: false }
+    } catch (e) {
+        return { kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'invalidUri' }
+    }
+}
 
 const CHOICE_COUNT = 3
 
 export const ExternalAuthConsent = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'app.externalAuth' })
     const { client } = useClient()
-    const [state, setState] = useState<State>({ kind: 'loading' })
+    const [state, setState] = useState<State>(() => initialState(props.uri))
     const [detailsOpen, setDetailsOpen] = useState(false)
 
-    useEffect(() => {
-        let cancelled = false
-        ;(async () => {
-            try {
-                const uri = parseAuthorizationRequestUri(props.uri)
-                const request = await fetchRequestObject(uri)
-                if (!cancelled) setState({ kind: 'consent', uri, request, submitting: false })
-            } catch (e) {
-                if (!cancelled) {
-                    setState({ kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'invalidRequest' })
-                }
-            }
-        })()
-        return () => {
-            cancelled = true
-        }
-    }, [props.uri])
-
-    // 3 択の候補 (正解 1 + ランダム 2)。要求ごとに 1 回だけ作り、送信中の再描画で並びが変わらないようにする
-    const displayCode = state.kind === 'consent' ? state.request.display_code : null
+    // display_code は RP も Authenticator も n から導出する (付録 A)。
+    // 3 択の候補 (正解 1 + ランダム 2) は要求ごとに 1 回だけ作り、送信中の再描画で並びが変わらないようにする
+    const displayCode = state.kind === 'consent' ? emojihash(state.uri.nonce) : null
     const choices = useMemo(() => (displayCode === null ? [] : buildChoices(displayCode)), [displayCode])
 
-    // §8.1 / §8.2: 応答は redirect_uri へ。配送方法は URI の <response_mode> で決まる (Request Object には無い)
-    const deliver = (uri: AuthorizationRequestUri, request: RequestObject, params: Record<string, string>) =>
+    // §8.1 / §8.2: 応答は送り先 URL へ。配送方法は URI の <type> で決まる
+    const deliver = (uri: AuthorizationRequestUri, params: Record<string, string>) =>
         uri.responseMode === 'fragment'
-            ? openFragmentResponse(request.redirect_uri, params)
-            : postResponse(request.redirect_uri, params)
+            ? openFragmentResponse(uri.redirectUri, params)
+            : postResponse(uri.redirectUri, params)
 
-    const approve = async (uri: AuthorizationRequestUri, request: RequestObject) => {
-        setState({ kind: 'consent', uri, request, submitting: true })
+    const approve = async (uri: AuthorizationRequestUri) => {
+        setState({ kind: 'consent', uri, submitting: true })
         try {
-            const idToken = await buildIdToken(client, request, uri.origin) // ここで端末認証が出る
-            await deliver(uri, request, { id_token: idToken })
+            const idToken = await buildIdToken(client, uri) // ここで端末認証が出る
+            await deliver(uri, { id_token: idToken })
             setState({ kind: 'done', message: uri.responseMode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
@@ -83,11 +73,12 @@ export const ExternalAuthConsent = (props: Props) => {
         }
     }
 
-    const deny = async (uri: AuthorizationRequestUri, request: RequestObject, message: 'denied' | 'mismatch') => {
-        setState({ kind: 'consent', uri, request, submitting: true })
-        // §8.3: 拒否の通知は MAY。届かなくてもユーザーの操作としては完了しているので結果は変えない
+    const deny = async (uri: AuthorizationRequestUri, message: 'denied' | 'mismatch') => {
+        setState({ kind: 'consent', uri, submitting: true })
+        // §8.3: 拒否の通知は MAY。nonce を付けて RP がどの要求か分かるようにする。
+        // 届かなくてもユーザーの操作としては完了しているので結果は変えない
         try {
-            await deliver(uri, request, { error: 'access_denied' })
+            await deliver(uri, { error: 'access_denied', nonce: uri.nonce })
         } catch {
             // 通知失敗は無視する
         }
@@ -96,13 +87,9 @@ export const ExternalAuthConsent = (props: Props) => {
     }
 
     // 絵文字の 3 択。正解なら承認、違うものを選んだら照合失敗として拒否する。
-    // (選び直しを許すと 3 回で必ず当たるので、1 回の選択で決める)
-    const choose = (uri: AuthorizationRequestUri, request: RequestObject, choice: string) =>
-        choice === request.display_code ? approve(uri, request) : deny(uri, request, 'mismatch')
-
-    if (state.kind === 'loading') {
-        return <Text>{t('loading')}</Text>
-    }
+    // (選び直しを許すと 3 回で必ず当たるので、1 回の選択で決める。§6 MUST NOT)
+    const choose = (uri: AuthorizationRequestUri, choice: string) =>
+        choice === displayCode ? approve(uri) : deny(uri, 'mismatch')
 
     if (state.kind === 'error') {
         return (
@@ -118,13 +105,12 @@ export const ExternalAuthConsent = (props: Props) => {
         return <Text variant="h3">{t(state.message)}</Text>
     }
 
-    const { uri, request, submitting } = state
-    const host = new URL(uri.origin).host
-    // §7.3: profile scope があるときだけプロフィールも渡る。client_name は自己申告なので表示しない (§10.5)
-    const sharesProfile = request.scope.split(' ').includes('profile')
-    // §6: direct_post は別端末の画面へのログインなので display_code の照合を操作に組み込む。
-    // fragment では display_code は Request Object にあっても使わない
-    const isRemote = uri.responseMode === 'direct_post'
+    const { uri, submitting } = state
+    const host = uri.host
+    // §7.3: s に profile があるとき (省略時を含む) だけプロフィールも渡る
+    const sharesProfile = uri.scope.includes('profile')
+    // §6: post は別端末の画面へのログインなので display_code の照合を操作に組み込む。fragment では使わない
+    const isRemote = uri.responseMode === 'post'
 
     return (
         <div
@@ -230,7 +216,7 @@ export const ExternalAuthConsent = (props: Props) => {
                 </div>
             </Drawer>
 
-            {/* §6: RP の身元はオリジンの host。client_name は自己申告なので host を置き換えない (§10.5) */}
+            {/* §6: RP の身元は送り先 URL の host。URI に自己申告 (名前・ロゴ) は無く、host 以外は表示しない */}
             <div
                 style={{
                     border: `1px solid ${CssVar.divider}`,
@@ -260,7 +246,7 @@ export const ExternalAuthConsent = (props: Props) => {
                             <Button
                                 key={choice}
                                 disabled={submitting}
-                                onClick={() => choose(uri, request, choice)}
+                                onClick={() => choose(uri, choice)}
                                 style={{
                                     width: '100%',
                                     fontSize: '1.75rem',
@@ -276,7 +262,7 @@ export const ExternalAuthConsent = (props: Props) => {
                     <Button
                         variant="outlined"
                         disabled={submitting}
-                        onClick={() => deny(uri, request, 'denied')}
+                        onClick={() => deny(uri, 'denied')}
                         style={{ width: '100%' }}
                     >
                         {t('notInList')}
@@ -292,10 +278,10 @@ export const ExternalAuthConsent = (props: Props) => {
                     style={{ display: 'flex', justifyContent: 'flex-end', gap: CssVar.space(1), alignItems: 'center' }}
                 >
                     {submitting && <Text variant="caption">{t('submitting')}</Text>}
-                    <Button variant="outlined" disabled={submitting} onClick={() => deny(uri, request, 'denied')}>
+                    <Button variant="outlined" disabled={submitting} onClick={() => deny(uri, 'denied')}>
                         {t('deny')}
                     </Button>
-                    <Button disabled={submitting} onClick={() => approve(uri, request)}>
+                    <Button disabled={submitting} onClick={() => approve(uri)}>
                         {t('approve')}
                     </Button>
                 </div>

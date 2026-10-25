@@ -1183,7 +1183,6 @@
             "externalAuthTitle": "外部サービスにログイン"
         },
         "externalAuth": {
-            "loading": "ログイン要求を確認しています...",
             "consentTitle": "<user/> でログイン",
             "siteLabel": "ログイン先のサイト",
             "emojiPrompt": "ログイン先で表示されている絵文字と同じものを選択してください",
@@ -1206,10 +1205,7 @@
             "nothingSent": "サイトには何も送信していません。",
             "errors": {
                 "invalidUri": "ログイン要求の形式が正しくありません",
-                "originMismatch": "応答の送り先 (redirect_uri) のオリジンが request_uri と一致しません",
-                "fetchFailed": "ログイン要求を取得できませんでした",
                 "invalidRequest": "ログイン要求の内容が正しくありません",
-                "expired": "ログイン要求の有効期限が切れています。サイトでログインをやり直してください",
                 "signFailed": "署名できませんでした",
                 "postFailed": "サイトへの送信に失敗しました"
             }

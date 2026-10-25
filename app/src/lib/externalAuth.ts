@@ -1,57 +1,41 @@
 // CIP-17 (Sign-In with Concrnt) の Authenticator 側の処理。UI は持たない。
 //
 //   1. Authorization Request URI (QR / deep link の文字列) を検証する  parseAuthorizationRequestUri
-//   2. request_uri から Request Object を取得して検証する             fetchRequestObject
-//   3. (同意画面で承認されたら) master key で ID Token に署名する       buildIdToken
-//   4. 応答を返す: redirect_uri に direct_post する (§8.1)            postResponse
-//              または redirect_uri#… をブラウザで開く (§8.2)          openFragmentResponse
+//      要求の内容はすべて URI に載っている (by-value)。RP に何かを取りに行くことは無い
+//   2. (同意画面で承認されたら) master key で ID Token に署名する       buildIdToken
+//   3. 応答を返す: 送り先 URL に POST する (§8.1)                      postResponse
+//              または 送り先 URL#… をブラウザで開く (§8.2)             openFragmentResponse
 import type { Client } from '@concrnt/worldlib'
 import { openUrl } from '@tauri-apps/plugin-opener'
 
 export const AUTH_URI_SCHEME = 'concrnt-auth://'
 
-// ID Token の有効期間 (秒)。ログイン操作の証明なので短命にする (§7.2 は iat から 10 分以内を推奨)
+// ID Token の有効期間 (秒)。§7.2: exp = iat + 300 に固定
 const ID_TOKEN_LIFETIME = 300
 
-// 応答の配送方法 (§8)。Authorization Request URI の <response_mode> で決まり、開き方 (アプリ内スキャナーか
+// 応答の配送方法 (§8)。Authorization Request URI の <type> で決まり、開き方 (アプリ内スキャナーか
 // deep link か) には依存しない。OS のカメラで読んだ QR は deep link として届くので、開き方では区別できない。
-//   direct_post (§8.1): 別端末の画面にログインする。同意画面で display_code の照合と警告を出す
-//   fragment (§8.2):    この端末のブラウザに戻る
-export type ResponseMode = 'direct_post' | 'fragment'
+//   post (§8.1):     別端末の画面にログインする。同意画面で display_code の照合を出す
+//   fragment (§8.2): この端末のブラウザに戻る
+export type ResponseMode = 'post' | 'fragment'
 
-// §5.2: concrnt-auth://<response_mode>/<host>/<path>[?query] は request_uri = https://<host>/<path>[?query] と同値。
+// §5.2: concrnt-auth://<type>/<host>/<path>?n=<nonce>[&s=<scope>]
 // concrnt-auth://signal/… (他の端末のログイン) は CIP-17 ではなく lib/signalLogin.ts が先に拾う
 export interface AuthorizationRequestUri {
     responseMode: ResponseMode
-    requestUri: string
-    origin: string // RP のオリジン (§5.1) = request_uri のオリジン。同意画面の host と ID Token の aud に使う
-}
-
-// §5.3 Request Object。応答方式には依存しない (response_mode は URI にだけある)。
-// redirect_uri は要求ごとに異なり、RP はそれで応答を要求に対応付ける (state は無い)
-export interface RequestObject {
-    redirect_uri: string
-    response_type: string
-    scope: string
+    /** RP の身元としてユーザーに見せる host (§6) */
+    host: string
+    /** 応答の送り先 https://<host>/<path> (§5.1)。host が localhost / 127.0.0.1 のときだけ http (§5.2 MAY) */
+    redirectUri: string
+    /** ID Token の aud (§7.2)。常に "https://" + <host>/<path> で、正規化しない */
+    audience: string
+    /** n。ID Token の nonce になり、RP が要求を引くキー */
     nonce: string
-    exp: number
-    display_code: string
-    client_metadata?: {
-        client_name?: string
-        logo_uri?: string
-        policy_uri?: string
-        tos_uri?: string
-    }
+    /** s をスペースで分けたもの。省略時は ['profile']、`s=` なら []。未知の値はそのまま入る (無視する) */
+    scope: string[]
 }
 
-export type ExternalAuthErrorCode =
-    | 'invalidUri'
-    | 'originMismatch'
-    | 'fetchFailed'
-    | 'invalidRequest'
-    | 'expired'
-    | 'signFailed'
-    | 'postFailed'
+export type ExternalAuthErrorCode = 'invalidUri' | 'invalidRequest' | 'signFailed' | 'postFailed'
 
 export class ExternalAuthError extends Error {
     constructor(public readonly code: ExternalAuthErrorCode) {
@@ -59,102 +43,78 @@ export class ExternalAuthError extends Error {
     }
 }
 
-// §5.1 / §5.2 / §5.4-1: Authorization Request URI の検証。
-// 旧文法 (concrnt-auth://?client_id=…&request_uri=…) は受け付けない
+// §5.2 / §5.3: Authorization Request URI の構文と制約。
+// 失敗したら throw するだけで、RP には何も送らない (§5.3, §8.3)
 export const parseAuthorizationRequestUri = (text: string): AuthorizationRequestUri => {
     if (!text.startsWith(AUTH_URI_SCHEME)) throw new ExternalAuthError('invalidUri')
+    if (text.includes('#')) throw new ExternalAuthError('invalidUri')
     const rest = text.slice(AUTH_URI_SCHEME.length)
-
-    // <response_mode>/<host>/<path>。response_mode は既知の値だけ (将来の追加はここで受け入れる)
     const slash = rest.indexOf('/')
     if (slash <= 0) throw new ExternalAuthError('invalidUri')
+    // §5.2: <type> は post / fragment のみ。未知の値は拒否する (MUST)
     const responseMode = rest.slice(0, slash)
-    if (responseMode !== 'direct_post' && responseMode !== 'fragment') throw new ExternalAuthError('invalidUri')
+    if (responseMode !== 'post' && responseMode !== 'fragment') throw new ExternalAuthError('invalidUri')
 
-    // <host>/<path>: host は空でなく userinfo を含まない。パスは必須
-    const hostAndPath = rest.slice(slash + 1)
+    const afterMode = rest.slice(slash + 1)
+    const query = afterMode.indexOf('?')
+    if (query < 0) throw new ExternalAuthError('invalidUri') // n は必須なのでクエリは必ずある
+    const hostAndPath = afterMode.slice(0, query)
+    const params = new URLSearchParams(afterMode.slice(query + 1))
+
+    // <host> は userinfo を含まない (MUST NOT)、<path> は空でない (MUST NOT)
     const pathStart = hostAndPath.indexOf('/')
-    if (pathStart <= 0 || /[@\\]/.test(hostAndPath.slice(0, pathStart))) throw new ExternalAuthError('invalidUri')
+    if (pathStart <= 0 || /[@\\?#\s]/.test(hostAndPath.slice(0, pathStart))) throw new ExternalAuthError('invalidUri')
+    const target = parseHttpsUrl('https://' + hostAndPath)
+    if (!target || target.pathname === '/' || target.host !== hostAndPath.slice(0, pathStart)) {
+        throw new ExternalAuthError('invalidUri')
+    }
 
-    // 残りは https の URL として読む (フラグメント無し)。request_uri はこの URL そのもの
-    const requestUrl = parseHttpsUrl('https://' + hostAndPath)
-    if (!requestUrl || requestUrl.pathname === '/') throw new ExternalAuthError('invalidUri')
+    // n: 16 バイト以上の乱数の base64url (22 文字以上)
+    const nonce = params.get('n')
+    if (!nonce || !/^[A-Za-z0-9_-]{22,}$/.test(nonce)) throw new ExternalAuthError('invalidUri')
 
-    return { responseMode, requestUri: requestUrl.href, origin: requestUrl.origin }
+    // s: 省略 = profile、空 = CCID のみ。未知のクエリパラメータは無視する (MUST)
+    const s = params.get('s')
+    const scope = s === null ? ['profile'] : s.split(' ').filter((v) => v !== '')
+
+    // 送り先: ローカル開発用に localhost だけ http で送ってよい (MAY)。識別子 (aud) は常に https 表記
+    const audience = 'https://' + hostAndPath
+    const isLocalhost = target.hostname === 'localhost' || target.hostname === '127.0.0.1'
+    const redirectUri = (isLocalhost ? 'http://' : 'https://') + hostAndPath
+
+    return { responseMode, host: target.host, redirectUri, audience, nonce, scope }
 }
 
 const parseHttpsUrl = (text: string): URL | null => {
     try {
         const url = new URL(text)
-        if (url.protocol !== 'https:' || text.includes('#')) return null
+        if (url.protocol !== 'https:' || url.username || url.password) return null
         return url
     } catch {
         return null
     }
 }
 
-// §5.3 / §5.4-2〜4: Request Object の取得と検証。
-// 失敗したら throw するだけで、RP には何も送らない (§5.4, §8.3)
-export const fetchRequestObject = async (uri: AuthorizationRequestUri): Promise<RequestObject> => {
-    let res: Response
-    try {
-        // §5.4-2: リダイレクトに追従しない。redirect: 'manual' のリダイレクトは status 0 の
-        // opaqueredirect になるので、ok でないものを一律に失敗扱いにすればよい
-        res = await fetch(uri.requestUri, { redirect: 'manual' })
-    } catch {
-        throw new ExternalAuthError('fetchFailed')
-    }
-    if (!res.ok) throw new ExternalAuthError('fetchFailed')
-
-    let request: RequestObject
-    try {
-        request = await res.json()
-    } catch {
-        throw new ExternalAuthError('invalidRequest')
-    }
-
-    // §5.4-3: redirect_uri (応答の送り先) は https で、オリジンが request_uri と一致する
-    if (typeof request.redirect_uri !== 'string') throw new ExternalAuthError('invalidRequest')
-    const redirectUrl = parseHttpsUrl(request.redirect_uri)
-    if (!redirectUrl) throw new ExternalAuthError('invalidRequest')
-    if (redirectUrl.origin !== uri.origin) throw new ExternalAuthError('originMismatch')
-
-    // §5.4-4: 必須パラメータの型と値
-    if (request.response_type !== 'id_token') throw new ExternalAuthError('invalidRequest')
-    if (typeof request.nonce !== 'string' || request.nonce === '') throw new ExternalAuthError('invalidRequest')
-    if (typeof request.scope !== 'string' || !request.scope.split(' ').includes('openid')) {
-        throw new ExternalAuthError('invalidRequest')
-    }
-    if (typeof request.exp !== 'number') throw new ExternalAuthError('invalidRequest')
-    if (request.exp <= Math.floor(Date.now() / 1000)) throw new ExternalAuthError('expired')
-
-    // display_code は常に必須 (direct_post のときだけ同意画面に出す。照合できない要求は通さない)
-    if (typeof request.display_code !== 'string' || request.display_code === '')
-        throw new ExternalAuthError('invalidRequest')
-
-    return request
-}
-
 // §7: ID Token を組み立てて master key で署名する。
 // CIP-2 の auth token と違い iat/exp は数値で、nonce やプロフィールのクレームが入るため
 // client.api.signJWT は使わず、ここで組み立てる
-export const buildIdToken = async (client: Client, request: RequestObject, origin: string): Promise<string> => {
+export const buildIdToken = async (client: Client, uri: AuthorizationRequestUri): Promise<string> => {
     const now = Math.floor(Date.now() / 1000)
 
-    // §7.2: aud は RP のオリジン (scheme://host[:port]、末尾スラッシュ無し)
+    // §7.2: aud は送り先 URL そのもの (オリジンではない)。exp = iat + 300
     const claims: Record<string, string | number> = {
         iss: client.ccid,
         sub: client.ccid,
-        aud: origin,
-        nonce: request.nonce,
+        aud: uri.audience,
+        nonce: uri.nonce,
         iat: now,
         exp: now + ID_TOKEN_LIFETIME,
         jti: crypto.randomUUID(),
         concrnt_domain: client.server.domain
     }
 
-    // §7.3: scope に profile があるときだけ、現在のプロフィールから自己申告で付ける
-    if (request.scope.split(' ').includes('profile')) {
+    // §7.3: s に profile があるとき (省略時を含む) だけ、現在のプロフィールから自己申告で付ける
+    if (uri.scope.includes('profile')) {
         if (client.profile.username) claims.name = client.profile.username
         if (client.profile.avatar) claims.picture = client.profile.avatar
         claims.profile =
@@ -182,11 +142,12 @@ export const buildIdToken = async (client: Client, request: RequestObject, origi
     return signingInput + '.' + base64url(signature)
 }
 
-// §8.1 direct_post / §8.3 エラー応答: redirect_uri へ form-urlencoded で POST する
+// §8.1 post / §8.3 エラー応答: 送り先 URL へ form-urlencoded で POST する
 export const postResponse = async (redirectUri: string, params: Record<string, string>): Promise<void> => {
     let res: Response
     try {
-        // §8.1: この POST でもリダイレクトに追従しない
+        // §8.1: リダイレクトに追従しない (MUST NOT)。redirect: 'manual' のリダイレクトは status 0 の
+        // opaqueredirect になるので、ok でないものを一律に失敗扱いにすればよい
         res = await fetch(redirectUri, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -199,7 +160,7 @@ export const postResponse = async (redirectUri: string, params: Record<string, s
     if (!res.ok) throw new ExternalAuthError('postFailed')
 }
 
-// §8.2 fragment (同一端末): 応答パラメータをフラグメントに付けた redirect_uri を外部ブラウザで開く。
+// §8.2 fragment (同一端末): 応答パラメータをフラグメントに付けた送り先 URL を外部ブラウザで開く。
 // フラグメントは HTTP リクエストに含まれないので、RP のサーバーログに ID Token が残らない
 export const openFragmentResponse = async (redirectUri: string, params: Record<string, string>): Promise<void> => {
     try {

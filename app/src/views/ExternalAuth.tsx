@@ -14,8 +14,8 @@ interface Props {
 // concrnt-auth:// の deep link、またはサイドバーの QR スキャナー (components/Sidebar.tsx) が読み取った URI で開かれる画面。
 // 内容で分岐する:
 //   concrnt-auth://signal/… または wss://…   他の端末のログイン (SignalLoginConsent)
-//   concrnt-auth://<direct_post|fragment>/…  外部サービスへのログイン (CIP-17・ExternalAuthConsent)。同一端末のリンク (fragment)
-//                                            だけでなく、OS のカメラで読んだ QR (direct_post) もここに届く
+//   concrnt-auth://<post|fragment>/…?n=…     外部サービスへのログイン (CIP-17・ExternalAuthConsent)。同一端末のリンク (fragment)
+//                                            だけでなく、OS のカメラで読んだ QR (post) もここに届く
 //   それ以外                                 ログイン用ではない QR として弾く
 // 完了したら少し見せてから自分でスタックを閉じる
 type Kind = { kind: 'signal'; channelUrl: string } | { kind: 'externalAuth' } | { kind: 'invalid' }
