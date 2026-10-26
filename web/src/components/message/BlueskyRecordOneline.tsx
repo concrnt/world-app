@@ -1,5 +1,5 @@
 import { Suspense, use, useMemo } from 'react'
-import { BskyPostView } from '../../utils/bluesky'
+import { BskyPostView, resolveBskyPost } from '../../utils/bluesky'
 import { Avatar, Skeleton, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
@@ -31,9 +31,7 @@ export const BlueskyRecordOneline = (props: Props) => {
     const atUri = props.atUri
 
     const postPromise = useMemo(() => {
-        return client.api
-            .callConcrntApi<BskyPostView>(client.server.domain, 'world.concrnt.atproto.resolve', { uri: atUri })
-            .catch(() => null)
+        return resolveBskyPost(client, atUri).catch(() => null)
     }, [client, atUri])
 
     return (

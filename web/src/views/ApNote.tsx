@@ -1,5 +1,5 @@
 import { Button, CssVar, Divider, Tab, Tabs, Text } from '@concrnt/ui'
-import { ApObject, apNoteKey } from '../utils/activitypub'
+import { ApObject, apNoteKey, getApBridgeInfo } from '../utils/activitypub'
 import { ActivitypubNote } from '../components/message/ActivitypubNote'
 import { Suspense, useEffect, useState } from 'react'
 import { MessageSkeleton } from '../components/message/MessageSkeleton'
@@ -35,11 +35,7 @@ export const ApNote = (props: Props) => {
     useEffect(() => {
         let cancelled = false
         ;(async () => {
-            const info = await client.api.callConcrntApi<{ serviceAccountId: string }>(
-                client.server.domain,
-                'net.concrnt.activitypub.info',
-                {}
-            )
+            const info = await getApBridgeInfo(client)
             const uri = apNoteKey(info.serviceAccountId, props.note.id)
             const message = await client.getMessage(uri)
             if (!cancelled) setMessageUri(message ? uri : null)

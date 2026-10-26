@@ -58,19 +58,34 @@ export const AP_RESOLVE_TTL = 1000 * 60 * 60
 export const AP_RESOLVE_NEGATIVE_TTL = 1000 * 60 * 5
 
 // resolveはネットワーク素通しだと表示中のノート数×2(note+author)のリクエストが飛ぶため、
-// 通常メッセージと同じfetchWithCache(KVS永続+in-flight dedup+negative cache)に乗せる
+// 通常メッセージと同じfetchWithCache(KVS永続+in-flight dedup+negative cache)に乗せる。
+// client.server はコールド起動時に placeholder(endpoints 空)のことがあるので、callConcrntApi と同じく getServer で引く
 export const resolveApObject = async (
     client: Client,
     uri: string,
     opts?: FetchOptions<Partial<ApObject> | null>
 ): Promise<ApObject | null> => {
-    const endpoint = renderUriTemplate(client.server, 'net.concrnt.activitypub.resolve', { uri })
+    const server = await client.api.getServer(client.server.domain)
+    const endpoint = renderUriTemplate(server, 'net.concrnt.activitypub.resolve', { uri })
     const res = await client.api.fetchWithCache<Partial<ApObject> | null>(client.server.domain, endpoint, `ap:${uri}`, {
         TTL: AP_RESOLVE_TTL,
         negativeTTL: AP_RESOLVE_NEGATIVE_TTL,
         ...opts
     })
     return res ? new ApObject(res) : null
+}
+
+export interface ApBridgeInfo {
+    serviceAccountId: string
+}
+
+// 投稿単体ページが毎マウントで serviceAccountId を引くだけに使う。設定画面は最新値が要るので callConcrntApi のまま
+export const getApBridgeInfo = async (client: Client): Promise<ApBridgeInfo> => {
+    const server = await client.api.getServer(client.server.domain)
+    const endpoint = renderUriTemplate(server, 'net.concrnt.activitypub.info', {})
+    return client.api.fetchWithCache<ApBridgeInfo>(client.server.domain, endpoint, 'ap:info', {
+        TTL: AP_RESOLVE_TTL
+    })
 }
 
 export class ApObject {

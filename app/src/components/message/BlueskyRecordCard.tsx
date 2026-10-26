@@ -1,5 +1,5 @@
 import { Suspense, use, useMemo } from 'react'
-import { BskyPostView } from '../../utils/bluesky'
+import { BskyPostView, resolveBskyPost } from '../../utils/bluesky'
 import { Avatar, CssVar, Text } from '@concrnt/ui'
 import { useStack } from '../../layouts/Stack'
 import { BskyView } from '../../views/BskyView'
@@ -20,9 +20,7 @@ export const BlueskyRecordCard = (props: Props) => {
     const { client } = useClient()
 
     const postPromise = useMemo(() => {
-        return client.api
-            .callConcrntApi<BskyPostView>(client.server.domain, 'world.concrnt.atproto.resolve', { uri: props.atUri })
-            .catch(() => null)
+        return resolveBskyPost(client, props.atUri).catch(() => null)
     }, [client, props.atUri])
 
     return (

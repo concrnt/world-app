@@ -1,4 +1,5 @@
-import { CDID } from '@concrnt/client'
+import { CDID, renderUriTemplate, type FetchOptions } from '@concrnt/client'
+import { type Client } from '@concrnt/worldlib'
 
 export interface BskyProfile {
     did: string
@@ -112,6 +113,57 @@ export interface BskyFeedItem {
 export interface BskyAuthorFeed {
     feed: BskyFeedItem[]
     cursor?: string
+}
+
+// AP の AP_RESOLVE_TTL と同じ判断: post view/profile は SWR(stale表示+裏で再取得)で追従できる
+export const BSKY_RESOLVE_TTL = 1000 * 60 * 60
+// 削除済み/未存在はブリッジが404で返すため、失敗resolveの連打を5分抑止
+export const BSKY_RESOLVE_NEGATIVE_TTL = 1000 * 60 * 5
+
+// resolveはネットワーク素通しだと表示のたび(再マウント・同一投稿の行+リプライ元+カード)にブリッジへ飛ぶため、
+// resolveApObject と同じ fetchWithCache(KVS永続+in-flight dedup+negative cache)に乗せる。
+// 負キャッシュヒット時はnull、初回404はNotFoundErrorになる。
+// client.server はコールド起動時に placeholder(endpoints 空)のことがあるので、callConcrntApi と同じく getServer で引く
+export const resolveBskyPost = async (
+    client: Client,
+    atUri: string,
+    opts?: FetchOptions<BskyPostView | null>
+): Promise<BskyPostView | null> => {
+    const server = await client.api.getServer(client.server.domain)
+    const endpoint = renderUriTemplate(server, 'world.concrnt.atproto.resolve', { uri: atUri })
+    return client.api.fetchWithCache<BskyPostView | null>(client.server.domain, endpoint, `bsky:${atUri}`, {
+        TTL: BSKY_RESOLVE_TTL,
+        negativeTTL: BSKY_RESOLVE_NEGATIVE_TTL,
+        ...opts
+    })
+}
+
+// target は DID または handle
+export const resolveBskyActor = async (
+    client: Client,
+    target: string,
+    opts?: FetchOptions<BskyProfile | null>
+): Promise<BskyProfile | null> => {
+    const server = await client.api.getServer(client.server.domain)
+    const endpoint = renderUriTemplate(server, 'world.concrnt.atproto.resolveActor', { target })
+    return client.api.fetchWithCache<BskyProfile | null>(client.server.domain, endpoint, `bsky-actor:${target}`, {
+        TTL: BSKY_RESOLVE_TTL,
+        negativeTTL: BSKY_RESOLVE_NEGATIVE_TTL,
+        ...opts
+    })
+}
+
+export interface BskyBridgeInfo {
+    serviceCcid: string
+}
+
+// 投稿単体ページが毎マウントで serviceCcid を引くだけに使う。設定画面は最新値が要るので callConcrntApi のまま
+export const getBskyBridgeInfo = async (client: Client): Promise<BskyBridgeInfo> => {
+    const server = await client.api.getServer(client.server.domain)
+    const endpoint = renderUriTemplate(server, 'world.concrnt.atproto.info', {})
+    return client.api.fetchWithCache<BskyBridgeInfo>(client.server.domain, endpoint, 'bsky:info', {
+        TTL: BSKY_RESOLVE_TTL
+    })
 }
 
 export const getPostImages = (post: BskyPostView): BskyImage[] => {
