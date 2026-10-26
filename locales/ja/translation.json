@@ -230,7 +230,10 @@
                 "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
             },
             "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
-            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する"
+            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する",
+            "scanQrToRegister": "サーバーのQRコードを読み取って登録",
+            "scanNotRegisterQr": "読み取った内容は登録用のQRコードではありません。",
+            "scanInvalidQr": "読み取ったQRコードが不正です。"
         },
         "ageBlocked": {
             "title": "まだConcrntを利用できません",
@@ -335,7 +338,7 @@
             "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
             "alias": "エイリアス",
             "backupMasterKey": "マスターキーをバックアップ",
-            "backupUnavailable": "このブラウザはマスターキーを保持していません。マスターキー(12単語)でログインし直すとバックアップできます。",
+            "backupUnavailable": "マスターキーでログイン時のみバックアップ可能",
             "homeServer": {
                 "title": "ホームサーバー",
                 "description": "このサーバーに登録されているあなたの登録情報を確認・編集できます。",
@@ -364,7 +367,6 @@
             "subkeys": {
                 "title": "サブキー",
                 "count": "{{count}}個",
-                "description": "このアカウントで承認されているサブキーの一覧です。ログインした各デバイスはこの鍵で署名を行います。",
                 "loading": "読み込み中...",
                 "empty": "サブキーはありません",
                 "loadFailed": "サブキーの読み込みに失敗しました",
@@ -1071,7 +1073,8 @@
             "passkeyUnavailable": "このブラウザではパスキーを利用できません。",
             "passkeyCreateFailed": "パスキーを作成できませんでした。この環境ではパスキーを利用できない可能性があります。「いいえ」を選ぶと通常のキーでログインできます。",
             "passkeyNoPrf": "お使いのパスキーは必要な拡張機能(PRF)に対応していませんでした😭 今作成されたパスキーはログインに使用できないため、お手数ですが端末のパスキー設定から削除してください。別のパスキーをお試しいただくか、「いいえ」で通常のキーを利用できます。",
-            "confirmEmoji": "端末で表示されている絵文字を確認し、同じであれば端末で「はい」を選択してください。"
+            "confirmEmoji": "端末で表示されている絵文字を確認し、同じであれば端末で「はい」を選択してください。",
+            "scanWithAppRegister": "ConcrntアプリでQRコードをスキャンして登録してください"
         },
         "guestBase": {
             "connectionFailed": "サーバーに接続できませんでした",
@@ -1180,6 +1183,24 @@
                     "crnt5": "お店で食べた焼き鳥、外はサクサク、中はジューシー。次は友達を連れて行く！"
                 }
             }
+        },
+        "signupWithApp": {
+            "title": "このサーバーに登録する",
+            "consentDescription": "{{domain}} にアカウントを登録します。以下の規約を確認してフォームに入力し、アプリで続けてください。",
+            "agreeAndContinue": "同意して続ける",
+            "registerInBrowser": "ブラウザで鍵を作成して登録する",
+            "back": "戻る",
+            "installTitle": "続けるにはConcrntアプリをインストールしてください",
+            "installDescription": "アプリがマスターキーを作成・保管します。スマートフォンで下のQRコードを読み取ってアプリを入手し、アプリで登録用のQRコードを読み取ってください。",
+            "scanTitle": "アプリでこのQRコードを読み取ってください",
+            "scanDescription": "{{domain}} への登録はアプリで続けます。アプリでの操作が終わると、このブラウザもログイン状態になります。",
+            "appVersionHint": "最新版のConcrntアプリが必要です。アプリの最初の画面の「サーバーのQRコードを読み取って登録」、または端末のカメラアプリで読み取れます。",
+            "reloadHint": "このページを再読み込みした場合は、新しいQRコードを読み直してください。",
+            "receivedDescription": "アプリでアカウントの鍵が作成されました。絵文字を確認して {{domain}} に登録してください。",
+            "confirmEmoji": "アプリに表示されている絵文字と同じであることを確認してから登録してください。",
+            "registerFailed": "登録に失敗しました。もう一度お試しください。",
+            "loginFallbackTitle": "既存のアカウントでログイン",
+            "loginFallbackDescription": "アプリには既にアカウントがあります。新規作成の代わりに、そのアカウントでこのブラウザにログインします。"
         }
     },
     "app": {
@@ -1200,7 +1221,11 @@
             "scanQRCode": "QRコードをスキャン",
             "invalidQRCode": "読み取った内容はログイン用のQRコードではありません",
             "externalAuthTitle": "外部サービスにログイン",
-            "keyName": "名前: {{name}}"
+            "keyName": "名前: {{name}}",
+            "alreadyHaveAccountTitle": "あなたはすでにアカウントをお持ちです",
+            "alreadyHaveAccountDescription": "この端末は {{username}}({{accountDomain}})でログインしています。新規作成の代わりに、このアカウントで {{domain}} のWebサイトにログインしますか？",
+            "alreadyHaveAccountYes": "既存のアカウントでログイン",
+            "alreadyHaveAccountNo": "キャンセル"
         },
         "externalAuth": {
             "consentTitle": "<user/> でログイン",
@@ -1274,6 +1299,31 @@
             "searchUsers": "ユーザーを検索...",
             "noCommunitiesFound": "該当するコミュニティが見つかりませんでした",
             "noUsersFound": "該当するユーザーが見つかりませんでした"
+        },
+        "qrRegister": {
+            "title": "QRコードで登録",
+            "waiting": "Webサイトから情報が送られてくるのを待っています......",
+            "signalHost": "接続先: {{host}}",
+            "consentTitle": "{{domain}} に登録しますか？",
+            "consentDescription": "この端末に新しいアカウント(マスターキー)を作成し、サーバーに登録します。サーバーの規約にはWebサイトで同意済みです。",
+            "linkWarning": "このQRコードやリンクを自分で開いていないなら「キャンセル」してください。",
+            "ok": "登録する",
+            "cancel": "キャンセル",
+            "sentTitle": "Webサイトで続けてください",
+            "sentDescription": "鍵をWebサイトに送りました。{{domain}} で絵文字を確認して「登録する」を押してください。",
+            "compareEmoji": "Webサイトに表示されている絵文字と同じであることを確認してください",
+            "cancelWithKeyWarning": "今キャンセルすると鍵はこの端末に残ります。最初の画面から後でサーバーに登録できます。",
+            "confirmTitle": "Webサイトでのログインを許可しますか？",
+            "confirmDescription": "表示されている絵文字がWebサイトで表示されているものと同じであることを確認してください",
+            "keyName": "名前: {{name}}",
+            "finalizing": "この端末をセットアップしています......",
+            "done": "登録が完了しました！",
+            "finalizeFailed": "セットアップに失敗しました。もう一度お試しください。",
+            "retry": "再試行",
+            "loginRequestedTitle": "このQRコードはログイン用です",
+            "loginRequestedDescription": "このQRコードは既存のアカウントでログインするためのものですが、この端末にはアカウントがありません。先にアカウントを作成するか、Webサイトの「このサーバーに登録する」をお使いください。",
+            "back": "戻る",
+            "allow": "許可する"
         }
     }
 }
