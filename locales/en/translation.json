@@ -1047,7 +1047,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner at the bottom of the sidebar in the app",
+            "scanWithAppHint": "Use the scanner at the bottom of the app's sidebar, or your device's camera app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",

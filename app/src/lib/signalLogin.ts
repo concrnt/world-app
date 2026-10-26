@@ -2,9 +2,9 @@
 //
 //   concrnt-auth://signal/<host>/<path>   ==   wss://<host>/<path>
 //
-// web のログイン画面が出す QR は今のところ wss://signal.concrnt.net/<uuid> そのものだが、
-// 今後は CIP-17 と同じ concrnt-auth:// スキームに寄せて deep link でも開けるようにする。
-// その第一歩として、アプリはどちらの表記も受け付ける (UI は共通)。
+// web のログイン画面 (web/src/components/QRSetup.tsx) が出す QR は 2026-10-26 から
+// concrnt-auth://signal/signal.concrnt.net/<uuid> (CIP-17 と同じスキーム。OS のカメラで読んでも
+// deep link でアプリに届く)。wss:// は旧 web が出していた生の WebSocket URL との互換で残す (UI は共通)。
 export const SIGNAL_URI_PREFIX = 'concrnt-auth://signal/'
 
 /**
