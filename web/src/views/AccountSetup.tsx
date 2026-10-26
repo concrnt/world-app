@@ -30,6 +30,9 @@ import googlePlayBadge from '../assets/googleplay-badge.png'
 interface Props {
     entrypoint: string
     onBack?: () => void
+    // 既存のマスターキー。指定時は鍵生成とバックアップ手順を飛ばし、このCCIDでサーバー登録だけを行う
+    // (登録サーバーが閉鎖された等でログインできないユーザーが、同じCCIDで別サーバーに登録し直すための経路)
+    identity?: Identity
 }
 
 const encodeRegistrationDocument = (input: string) =>
@@ -66,7 +69,10 @@ const storeWebSession = (domain: string, ccid: string, masterKey: string, mnemon
 
     localStorage.setItem('Domain', domain)
     localStorage.setItem('PrivateKey', masterKey)
-    localStorage.setItem('Mnemonic', mnemonic)
+    // 64桁hex鍵でログインした既存アカウントはmnemonicを持たない(空文字)ので書かない
+    if (mnemonic) {
+        localStorage.setItem('Mnemonic', mnemonic)
+    }
     localStorage.setItem('SubKey', subKey)
 }
 
@@ -82,7 +88,7 @@ export const AccountSetup = (props: Props) => {
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
     const [finalizeError, setFinalizeError] = useState<string | null>(null)
-    const [identity, setIdentity] = useState<Identity | null>(null)
+    const [identity, setIdentity] = useState<Identity | null>(props.identity ?? null)
 
     const serverInput = useRef<HTMLInputElement>(null)
 
@@ -94,8 +100,10 @@ export const AccountSetup = (props: Props) => {
             const kvs = new InMemoryKVS()
             const api = new Api(domain, auth, kvs)
 
+            // 既存CCIDの登録し直しでは、登録前でも登録先がフェデレーション経由で持っている
+            // 古いentity(旧サーバーを指す)を返しうるので、domainが登録先に切り替わるまで待つ
             const registration = await api.getEntity(identity.CCID).catch(() => null)
-            if (!registration) return
+            if (!registration || registration.value.domain !== domain) return
 
             setAccountCreated(true)
             clearInterval(timer)
@@ -190,7 +198,12 @@ export const AccountSetup = (props: Props) => {
         }
     }
 
-    const state = accountCreated ? 'done' : identity && !registrationPageOpened ? 'backup' : 'initial'
+    // 既存マスターキーでの登録し直し(props.identity)はユーザーが既に鍵を持っているのでバックアップ画面を挟まない
+    const state = accountCreated
+        ? 'done'
+        : identity && !registrationPageOpened && !props.identity
+          ? 'backup'
+          : 'initial'
 
     return (
         <AuthScreen align="top">
@@ -199,7 +212,11 @@ export const AccountSetup = (props: Props) => {
                     <AuthHeader
                         title={t('title')}
                         description={
-                            isConcrntWorld ? t('chooseServerDescription') : t('registerOnDomainDescription', { domain })
+                            props.identity
+                                ? t('reregisterDescription', { ccid: props.identity.CCID })
+                                : isConcrntWorld
+                                  ? t('chooseServerDescription')
+                                  : t('registerOnDomainDescription', { domain })
                         }
                     />
 
@@ -272,143 +289,150 @@ export const AccountSetup = (props: Props) => {
                         </Text>
                     </div>
 
-                    <div
-                        style={{
-                            width: '100%',
-                            border: `1px solid ${CssVar.divider}`,
-                            borderRadius: CssVar.round(1),
-                            padding: CssVar.space(2.5),
-                            backgroundColor: `rgb(from ${CssVar.contentBackground} r g b / 0.86)`,
-                            boxShadow: `inset 0 1px 0 rgb(from ${CssVar.contentText} r g b / 0.08)`,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: CssVar.space(2)
-                        }}
-                    >
+                    {/* アプリでの「作成」の案内なので、既存鍵での登録し直しでは出さない */}
+                    {!props.identity && (
                         <div
                             style={{
+                                width: '100%',
+                                border: `1px solid ${CssVar.divider}`,
+                                borderRadius: CssVar.round(1),
+                                padding: CssVar.space(2.5),
+                                backgroundColor: `rgb(from ${CssVar.contentBackground} r g b / 0.86)`,
+                                boxShadow: `inset 0 1px 0 rgb(from ${CssVar.contentText} r g b / 0.08)`,
                                 display: 'flex',
-                                alignItems: 'flex-start',
+                                flexDirection: 'column',
                                 gap: CssVar.space(2)
                             }}
                         >
                             <div
                                 style={{
-                                    width: 42,
-                                    height: 42,
-                                    borderRadius: CssVar.round(1),
-                                    backgroundColor: `rgb(from ${CssVar.contentLink} r g b / 0.14)`,
-                                    color: CssVar.contentLink,
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flex: '0 0 auto'
+                                    alignItems: 'flex-start',
+                                    gap: CssVar.space(2)
                                 }}
                             >
-                                <MdPhoneIphone size={24} />
-                            </div>
-                            <div
-                                style={{
-                                    minWidth: 0,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: CssVar.space(1)
-                                }}
-                            >
-                                <Text
+                                <div
                                     style={{
-                                        color: CssVar.contentText,
-                                        fontWeight: 700,
-                                        lineHeight: 1.35
+                                        width: 42,
+                                        height: 42,
+                                        borderRadius: CssVar.round(1),
+                                        backgroundColor: `rgb(from ${CssVar.contentLink} r g b / 0.14)`,
+                                        color: CssVar.contentLink,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flex: '0 0 auto'
                                     }}
                                 >
-                                    {t('appRecommendedTitle')}
-                                </Text>
-                                <Text
+                                    <MdPhoneIphone size={24} />
+                                </div>
+                                <div
                                     style={{
-                                        color: CssVar.contentText,
-                                        opacity: 0.76,
-                                        lineHeight: 1.65,
-                                        fontSize: '0.92rem'
-                                    }}
-                                >
-                                    {t('appRecommendedDescription')}
-                                </Text>
-                            </div>
-                        </div>
-
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                gap: CssVar.space(3),
-                                flexWrap: 'wrap'
-                            }}
-                        >
-                            {[
-                                {
-                                    label: 'Download on the App Store',
-                                    badge: appStoreBadge,
-                                    url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
-                                },
-                                {
-                                    label: 'Get it on Google Play',
-                                    badge: googlePlayBadge,
-                                    url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
-                                }
-                            ].map((store) => (
-                                <ExternalLink
-                                    key={store.label}
-                                    href={store.url}
-                                    style={{
+                                        minWidth: 0,
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: CssVar.space(1.5),
-                                        textDecoration: 'none'
+                                        gap: CssVar.space(1)
                                     }}
                                 >
-                                    <div
+                                    <Text
                                         style={{
-                                            padding: 8,
-                                            borderRadius: CssVar.round(1),
-                                            backgroundColor: '#ffffff',
-                                            boxSizing: 'border-box',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
+                                            color: CssVar.contentText,
+                                            fontWeight: 700,
+                                            lineHeight: 1.35
                                         }}
                                     >
-                                        <QRCode
-                                            value={store.url}
-                                            size={288}
-                                            ecLevel="M"
-                                            quietZone={0}
-                                            style={{ width: 144, height: 144 }}
-                                            fgColor="#000000"
-                                            bgColor="#ffffff"
-                                            qrStyle="squares"
-                                            eyeRadius={0}
-                                        />
-                                    </div>
-                                    <img
-                                        src={store.badge}
-                                        alt={store.label}
+                                        {t('appRecommendedTitle')}
+                                    </Text>
+                                    <Text
                                         style={{
-                                            height: 40,
-                                            width: 'auto'
+                                            color: CssVar.contentText,
+                                            opacity: 0.76,
+                                            lineHeight: 1.65,
+                                            fontSize: '0.92rem'
                                         }}
-                                    />
-                                </ExternalLink>
-                            ))}
+                                    >
+                                        {t('appRecommendedDescription')}
+                                    </Text>
+                                </div>
+                            </div>
+
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    gap: CssVar.space(3),
+                                    flexWrap: 'wrap'
+                                }}
+                            >
+                                {[
+                                    {
+                                        label: 'Download on the App Store',
+                                        badge: appStoreBadge,
+                                        url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
+                                    },
+                                    {
+                                        label: 'Get it on Google Play',
+                                        badge: googlePlayBadge,
+                                        url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
+                                    }
+                                ].map((store) => (
+                                    <ExternalLink
+                                        key={store.label}
+                                        href={store.url}
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: CssVar.space(1.5),
+                                            textDecoration: 'none'
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                padding: 8,
+                                                borderRadius: CssVar.round(1),
+                                                backgroundColor: '#ffffff',
+                                                boxSizing: 'border-box',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <QRCode
+                                                value={store.url}
+                                                size={288}
+                                                ecLevel="M"
+                                                quietZone={0}
+                                                style={{ width: 144, height: 144 }}
+                                                fgColor="#000000"
+                                                bgColor="#ffffff"
+                                                qrStyle="squares"
+                                                eyeRadius={0}
+                                            />
+                                        </div>
+                                        <img
+                                            src={store.badge}
+                                            alt={store.label}
+                                            style={{
+                                                height: 40,
+                                                width: 'auto'
+                                            }}
+                                        />
+                                    </ExternalLink>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <AuthActions fixedBottom>
                         <AuthButton
                             disabled={!domain || registrationPageOpened}
                             onClick={() => {
-                                startSetup(domain)
+                                if (props.identity) {
+                                    void openRegistrationPage(domain)
+                                } else {
+                                    startSetup(domain)
+                                }
                             }}
                         >
                             {registrationPageOpened

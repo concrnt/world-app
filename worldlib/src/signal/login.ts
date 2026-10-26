@@ -14,6 +14,23 @@ export interface SignalLoginInitResponse {
 export interface SignalLoginSignatureRequest {
     type: 'signal_login_signature_request'
     ckid: string
+    // 受信側が付けたいサブキーの表示名(任意・world-app 独自の value.name)。送信側は検証してから enact に入れる
+    name?: string
+}
+
+// 受信した name として受け付ける上限。これを超える/空/文字列でないものは無視する
+const SUBKEY_NAME_MAX_LENGTH = 64
+
+const normalizeSubkeyName = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined
+    const trimmed = value.trim()
+    if (trimmed.length === 0 || trimmed.length > SUBKEY_NAME_MAX_LENGTH) return undefined
+    return trimmed
+}
+
+export interface SignalLoginReceiverOptions {
+    // signature_request を送るたびに呼ばれ、空でなければ name として同梱する(入力途中でも最新値が乗る)
+    keyName?: () => string | undefined
 }
 
 export interface SignalLoginSignatureResponse {
@@ -35,7 +52,8 @@ export class SignalLoginReceiver {
     constructor(
         channelURL: string,
         keyGenerationCallback: (ccid: string, domain: string) => Promise<string>,
-        completionCallback: (keyURI: string) => void
+        completionCallback: (keyURI: string) => void,
+        options?: SignalLoginReceiverOptions
     ) {
         const ws = new WS(channelURL)
         this.ws = ws
@@ -96,6 +114,8 @@ export class SignalLoginReceiver {
                         type: 'signal_login_signature_request',
                         ckid: this.ckid
                     }
+                    const name = normalizeSubkeyName(options?.keyName?.())
+                    if (name) request.name = name
                     ws.send(JSON.stringify(request))
                 }
             }
@@ -121,7 +141,7 @@ export class SignalLoginSender {
         channelURL: string,
         ccid: string,
         domain: string,
-        keyCreationCallback: (ckid: string) => Promise<string>,
+        keyCreationCallback: (ckid: string, name?: string) => Promise<string>,
         onCompleted: () => void
     ) {
         const ws = new WS(channelURL)
@@ -157,7 +177,7 @@ export class SignalLoginSender {
                             if (this.generatingKey) return
                             const ckid = data.ckid
                             if (!ckid) return
-                            keyCreationCallback(ckid)
+                            keyCreationCallback(ckid, normalizeSubkeyName(data.name))
                                 .then((keyURI) => {
                                     this.keyURI = keyURI
                                     const response: SignalLoginSignatureResponse = {

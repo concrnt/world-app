@@ -66,7 +66,6 @@ export const IDView = () => {
     const { client } = useClient()
     const navigate = useNavigate()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
-    const [subkeyCopied, setSubkeyCopied] = useState(false)
     const [downloadedSlots, setDownloadedSlots] = useState<string[]>([])
     const [slotVersion, setSlotVersion] = useState(0)
     const [subkeyDrawerOpen, setSubkeyDrawerOpen] = useState(false)
@@ -165,23 +164,6 @@ export const IDView = () => {
         setDownloadedSlots((prev) => (prev.includes(slotKey) ? prev : [...prev, slotKey]))
     }
 
-    const copySubkey = () => {
-        let subkey = localStorage.getItem('SubKey')
-        if (!subkey) return
-        // QRSetup経由のセッションはusePersistentがJSON文字列化して保存している
-        if (subkey.startsWith('"')) {
-            try {
-                subkey = JSON.parse(subkey)
-            } catch {
-                /* raw文字列のまま使う */
-            }
-        }
-        if (!subkey) return
-        navigator.clipboard.writeText(subkey)
-        setSubkeyCopied(true)
-        setTimeout(() => setSubkeyCopied(false), 2000)
-    }
-
     return (
         <View>
             <Header>{t('title')}</Header>
@@ -244,10 +226,6 @@ export const IDView = () => {
                     {t('backupMasterKey')}
                 </Button>
                 {!canBackup && <Text variant="caption">{t('backupUnavailable')}</Text>}
-
-                {localStorage.getItem('SubKey') && (
-                    <Button onClick={copySubkey}>{subkeyCopied ? t('subkeyCopied') : t('copySubkey')}</Button>
-                )}
 
                 <Button
                     variant="outlined"

@@ -20,6 +20,9 @@ interface Props {
     onBack?: () => void
     onComplete?: () => void
     embedded?: boolean
+    // キーチェーンに既にある鍵のCCID。指定時は新しい鍵を生成せず、このCCIDでサーバー登録だけを行う
+    // (登録サーバーが閉鎖された等でログインできないユーザーが、同じCCIDで別サーバーに登録し直すための経路)
+    ccid?: string
 }
 
 export const AccountSetup = (props: Props) => {
@@ -33,7 +36,7 @@ export const AccountSetup = (props: Props) => {
     // initialize_masterの返り値をstateで保持する。多アカウント環境では
     // 「アクティブなアカウント」を再取得すると別のアカウントを掴む恐れがあるため、
     // このフローで生成したccidだけを一貫して使う。
-    const [createdCCID, setCreatedCCID] = useState<string | null>(null)
+    const [createdCCID, setCreatedCCID] = useState<string | null>(props.ccid ?? null)
     const [registrationPageOpened, setRegistrationPageOpened] = useState(false)
     const [accountCreated, setAccountCreated] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
@@ -53,8 +56,10 @@ export const AccountSetup = (props: Props) => {
             const kvs = new InMemoryKVS()
             const api = new Api(domain, auth, kvs)
 
-            const registration = await api.getEntity(createdCCID)
-            if (!registration) {
+            // 既存CCIDの登録し直しでは、登録前でも登録先がフェデレーション経由で持っている
+            // 古いentity(旧サーバーを指す)を返しうるので、domainが登録先に切り替わるまで待つ
+            const registration = await api.getEntity(createdCCID).catch(() => null)
+            if (!registration || registration.value.domain !== domain) {
                 console.log('Registration not found, waiting...')
                 return
             }
@@ -113,12 +118,17 @@ export const AccountSetup = (props: Props) => {
         <AuthScreen align="top" embedded={props.embedded}>
             {state === 'initial' && (
                 <>
-                    <AuthHeader title={t('title')} description={t('chooseServerDescription')} />
+                    <AuthHeader
+                        title={t('title')}
+                        description={
+                            props.ccid ? t('reregisterDescription', { ccid: props.ccid }) : t('chooseServerDescription')
+                        }
+                    />
 
                     <div style={authStyles.passportWrap}>
                         <Tilt glareEnable={true} glareBorderRadius="5%">
                             <Passport
-                                ccid={'con1......................................'}
+                                ccid={createdCCID ?? 'con1......................................'}
                                 name={'your name'}
                                 avatar={''}
                                 host={domain}

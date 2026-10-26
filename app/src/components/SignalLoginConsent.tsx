@@ -20,12 +20,14 @@ export const SignalLoginConsent = (props: Props) => {
 
     const [completed, setCompleted] = useState(false)
     const [pendingCkid, setPendingCkid] = useState<string | null>(null)
+    const [pendingName, setPendingName] = useState<string | undefined>(undefined)
     const confirmResolveRef = useRef<((ok: boolean) => void) | null>(null)
 
     const host = new URL(props.channelUrl).host
 
-    const waitUserConfirmation = (ckid: string): Promise<boolean> => {
+    const waitUserConfirmation = (ckid: string, name?: string): Promise<boolean> => {
         setPendingCkid(ckid)
+        setPendingName(name)
         return new Promise<boolean>((resolve) => {
             confirmResolveRef.current = resolve
         })
@@ -38,8 +40,9 @@ export const SignalLoginConsent = (props: Props) => {
     }
 
     useEffect(() => {
-        const keyCreationCallback = async (ckid: string): Promise<string> => {
-            const ok = await waitUserConfirmation(ckid)
+        // name は受信側(web の新規追加モーダル)が付けた表示名。worldlib 側で検証済み(空/長すぎは undefined)
+        const keyCreationCallback = async (ckid: string, name?: string): Promise<string> => {
+            const ok = await waitUserConfirmation(ckid, name)
             if (!ok) {
                 throw new Error('User cancelled key creation')
             }
@@ -50,9 +53,7 @@ export const SignalLoginConsent = (props: Props) => {
                 key: uri,
                 author: client.ccid,
                 schema: 'https://schema.concrnt.net/subkey.json',
-                value: {
-                    ckid
-                },
+                value: name ? { ckid, name } : { ckid },
                 createdAt: new Date(),
                 onUpdate: 'retain'
             }
@@ -91,6 +92,9 @@ export const SignalLoginConsent = (props: Props) => {
                 <Text style={{ margin: 0, fontSize: '2rem', lineHeight: 1.2, textAlign: 'center' }}>
                     {emojihash(pendingCkid)}
                 </Text>
+                {pendingName && (
+                    <Text style={{ margin: 0, textAlign: 'center' }}>{t('keyName', { name: pendingName })}</Text>
+                )}
                 {/* リンクで届いた要求を踏まされている可能性 (CIP-17 §10.1 と同じ形) に備えて、別端末へのログインであることを明示する */}
                 <Text variant="caption" style={{ margin: 0, fontWeight: 'bold', color: 'inherit' }}>
                     {t('linkWarning')}

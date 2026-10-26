@@ -225,10 +225,12 @@
                 "registrationFound": "Registration found.",
                 "registrationNotFound": "Registration not found.",
                 "continue": "Continue",
-                "registerNew": "Register a new account",
+                "registerNew": "Register with a new key",
                 "deleteBrowserAccount": "Delete account data from this browser",
                 "checkFailed": "Could not verify. Please check your connection or the server status and try again."
-            }
+            },
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerWithExistingKey": "Register this CCID on another server"
         },
         "ageBlocked": {
             "title": "You can't use Concrnt yet",
@@ -267,7 +269,8 @@
             "finalizeFailedNetwork": "Registration failed. Check your network connection and try again.",
             "ccidMissing": "Program error: CCID not found",
             "registering": "Registering...",
-            "done": "Done"
+            "done": "Done",
+            "reregisterDescription": "Register CCID {{ccid}} on the server you choose. Posts and follows from the previous server will not be carried over."
         },
         "accountImport": {
             "title": "Import Account",
@@ -332,8 +335,6 @@
             "passportDescription": "View your current ID, registered server, and credentials.",
             "alias": "Alias",
             "backupMasterKey": "Back up master key",
-            "copySubkey": "Copy Subkey",
-            "subkeyCopied": "Copied!",
             "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
             "homeServer": {
                 "title": "Home Server",
@@ -377,7 +378,21 @@
                 "revokeConfirmDescription": "Devices using this subkey will no longer be able to post or log in. Signatures made before revocation remain verifiable.",
                 "revokeConfirmCurrentDescription": "This is the subkey used by this device. Revoking it will log this device out.",
                 "revokeFailed": "Failed to revoke subkey",
-                "masterKeyRequired": "Revoking a subkey requires the master key."
+                "masterKeyRequired": "Revoking a subkey requires the master key.",
+                "add": "Add",
+                "namePlaceholder": "Name (optional)",
+                "secret": "Secret string",
+                "secretNotice": "This string can only be viewed and copied on this screen. Save it somewhere safe before registering.",
+                "register": "Register",
+                "addFailed": "Failed to register subkey",
+                "copy": "Copy subkey",
+                "copied": "Copied!",
+                "menu": "More",
+                "qrHint": "Scan this QR code with the Concrnt app and approve it.",
+                "qrEmojiHint": "Make sure the emoji shown in the app match these.",
+                "qrScanned": "Scanned by the app. Check the emoji in the app and tap OK there.",
+                "qrAccountMismatch": "Scanned by an app logged in as a different account. Please scan with this account.",
+                "registered": "Registered"
             },
             "evacuated": {
                 "title": "Evacuated keys",
@@ -1029,7 +1044,9 @@
             "manualRawKey": "Subkey or private key",
             "manualRawKeyPlaceholder": "Enter a subkey starting with concrnt-subkey, or a 64-char hex private key",
             "switchToRawKey": "Use a subkey / private key instead",
-            "switchToMasterKey": "Use the 12-word master key instead"
+            "switchToMasterKey": "Use the 12-word master key instead",
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerOnAnotherServer": "Register this CCID on another server"
         },
         "register": {
             "title": "Account Registration",
@@ -1047,7 +1064,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner at the bottom of the sidebar in the app",
+            "scanWithAppHint": "Use the scanner at the bottom of the app's sidebar, or your device's camera app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
@@ -1183,7 +1200,8 @@
             "signalHost": "Connecting to: {{host}}",
             "scanQRCode": "Scan QR code",
             "invalidQRCode": "The scanned content is not a login QR code",
-            "externalAuthTitle": "Log in to an external service"
+            "externalAuthTitle": "Log in to an external service",
+            "keyName": "Name: {{name}}"
         },
         "externalAuth": {
             "consentTitle": "Log in as <user/>",

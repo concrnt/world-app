@@ -117,14 +117,27 @@ export const MigrationSettingsView = () => {
             // インポートより先にsubkeyを移住先で有効化しておく
             const ckid = client.api.authProvider.getCKID()
             if (!ckid) throw new Error('subkey not available')
-            const subkeyDoc: Document<{ ckid: string }> = {
+            // 既存のenact文書に付いている表示名(value.name)を引き継ぐ。取れなければ名前無しで再有効化する
+            let name: string | undefined
+            try {
+                const existing = await client.api.getDocument<any>(semantics.subkey(client.ccid, ckid), undefined, {
+                    cache: 'no-cache'
+                })
+                const enactValue =
+                    existing.schema === 'https://schema.concrnt.net/revoked-subkey.json'
+                        ? JSON.parse(existing.value.document).value
+                        : existing.value
+                if (typeof enactValue?.name === 'string' && enactValue.name) name = enactValue.name
+            } catch {
+                /* 未登録/取得失敗 */
+            }
+
+            const subkeyDoc: Document<{ ckid: string; name?: string }> = {
                 kind: 'record',
                 key: semantics.subkey(client.ccid, ckid),
                 author: client.ccid,
                 schema: 'https://schema.concrnt.net/subkey.json',
-                value: {
-                    ckid
-                },
+                value: name ? { ckid, name } : { ckid },
                 createdAt: new Date(),
                 onUpdate: 'retain'
             }

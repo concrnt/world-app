@@ -12,6 +12,7 @@ import {
     Entity,
     InMemoryAuthProvider,
     NotFoundError,
+    ServerOfflineError,
     SignedDocument
 } from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
@@ -55,9 +56,13 @@ interface User {
 
 export const WelcomeView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
-    const [state, setState] = useState<'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error'>(
-        'initial'
-    )
+    const [state, setState] = useState<
+        'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error' | 'reregister'
+    >('initial')
+    // 'reregister'(既存CCIDで別サーバーに登録し直す)から「戻る」で復帰する画面
+    const [reregisterReturn, setReregisterReturn] = useState<'ready' | 'missing' | 'error'>('ready')
+    // 登録情報は見つかったが、その登録サーバーに到達できなかった(閉鎖等)ドメイン
+    const [domainOffline, setDomainOffline] = useState<string | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
     const [existingCCID, setExistingCCID] = useState<string | null>(null)
     const [user, setUser] = useState<User | null>(null)
@@ -135,7 +140,13 @@ export const WelcomeView = () => {
                     return
                 }
             }
-            const profile = await api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main')).catch(() => undefined)
+            // プロフィールは登録サーバーから引く。閉鎖等で到達できなければ、続行を押す前から
+            // 「このCCIDで別のサーバーに登録し直す」導線を出すために覚えておく
+            setDomainOffline(null)
+            const profile = await api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main')).catch((e) => {
+                if (e instanceof ServerOfflineError) setDomainOffline(e.host)
+                return undefined
+            })
 
             setUser({
                 ccid,
@@ -152,6 +163,11 @@ export const WelcomeView = () => {
 
     const reload = () => {
         setUpdater((prev) => prev + 1)
+    }
+
+    const startReregister = (from: 'ready' | 'missing' | 'error') => {
+        setReregisterReturn(from)
+        setState('reregister')
     }
 
     switch (state) {
@@ -219,11 +235,27 @@ export const WelcomeView = () => {
                         >
                             {t('retry')}
                         </AuthButton>
+                        {/* 端末に残っている登録サーバー(resolver)が閉鎖済みだと再試行では永久に抜けられないので、
+                            鍵がある限り同じCCIDで別サーバーへ登録し直す脱出口を出す */}
+                        {existingCCID && (
+                            <AuthButton variant="outlined" onClick={() => startReregister('error')}>
+                                {t('registerWithExistingKey')}
+                            </AuthButton>
+                        )}
                     </AuthActions>
                 </AuthScreen>
             )
         case 'signup':
             return <AccountSetup entrypoint={resolver ?? resolveEntrypoint()} onBack={() => setState('welcome')} />
+        case 'reregister':
+            // resolverは閉鎖済みドメインのことがあるので、登録先候補はエントリポイントから選び直す
+            return (
+                <AccountSetup
+                    entrypoint={resolveEntrypoint()}
+                    ccid={existingCCID!}
+                    onBack={() => setState(reregisterReturn)}
+                />
+            )
         case 'signin':
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
         case 'welcome':
@@ -263,7 +295,7 @@ export const WelcomeView = () => {
                     ccid={existingCCID!}
                     accounts={accounts}
                     reload={reload}
-                    giveup={() => setState('signup')}
+                    reregister={() => startReregister('missing')}
                     setDomain={(domain) => {
                         setResolver(domain)
                     }}
@@ -297,6 +329,18 @@ export const WelcomeView = () => {
                                 {t('continueFailed')}
                                 {'\n'}
                                 {continueError}
+                            </Text>
+                        )}
+                        {domainOffline && (
+                            <Text
+                                style={{
+                                    color: CssVar.uiText,
+                                    textAlign: 'center',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {t('serverUnreachable', { domain: domainOffline })}
                             </Text>
                         )}
                         <AuthButton
@@ -368,6 +412,9 @@ export const WelcomeView = () => {
                                     window.location.reload()
                                 } catch (err) {
                                     console.error('Failed to continue with account', err)
+                                    // 登録サーバーが閉鎖されている等。ariakeに登録情報が残っていても先へ進めないので、
+                                    // 同じCCIDで別のサーバーに登録し直す導線を出す
+                                    if (err instanceof ServerOfflineError) setDomainOffline(err.host)
                                     setContinueError(err instanceof Error ? err.message : String(err))
                                     setContinuing(false)
                                 }
@@ -375,6 +422,15 @@ export const WelcomeView = () => {
                         >
                             {continuing ? t('continuing') : t('continueWithAccount')}
                         </AuthButton>
+                        {domainOffline && (
+                            <AuthButton
+                                variant="outlined"
+                                disabled={continuing}
+                                onClick={() => startReregister('ready')}
+                            >
+                                {t('registerWithExistingKey')}
+                            </AuthButton>
+                        )}
                         <ResetSessionButton
                             ccid={user!.ccid}
                             onDone={async () => {
@@ -391,7 +447,9 @@ export const WelcomeView = () => {
 
 const RecoveryView = (props: {
     reload: () => void
-    giveup: () => void
+    // 端末にある鍵(同じCCID)のまま別サーバーに新規登録する。
+    // この画面に来た時点で鍵は端末にあるので、新しい鍵を生成する導線は置かない(孤児アカウントを作るだけ)
+    reregister: () => void
     setDomain?: (domain: string) => void
     ccid: string
     accounts: AccountSummary[]
@@ -470,15 +528,15 @@ const RecoveryView = (props: {
                 <AuthActions fixedBottom>
                     <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
-            ) : found === 'error' ? null : (
+            ) : found === 'error' ? (
+                // 通信失敗時は削除へ誘導しない。既存鍵での登録し直しは非破壊なので、
+                // 手入力したサーバーが閉鎖済みのケースの脱出口として出す
                 <AuthActions fixedBottom>
-                    <AuthButton
-                        onClick={() => {
-                            props.giveup()
-                        }}
-                    >
-                        {t('recovery.registerNew')}
-                    </AuthButton>
+                    <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
+                </AuthActions>
+            ) : (
+                <AuthActions fixedBottom>
+                    <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
                     <ResetSessionButton
                         ccid={props.ccid}
                         onDone={() => {
