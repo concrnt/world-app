@@ -332,8 +332,6 @@
             "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
             "alias": "エイリアス",
             "backupMasterKey": "マスターキーをバックアップ",
-            "copySubkey": "サブキーをコピー",
-            "subkeyCopied": "コピーしました",
             "backupUnavailable": "このブラウザはマスターキーを保持していません。マスターキー(12単語)でログインし直すとバックアップできます。",
             "homeServer": {
                 "title": "ホームサーバー",
@@ -376,7 +374,21 @@
                 "revokeConfirmDescription": "このサブキーを使用しているデバイスは投稿やログインができなくなります。失効前に行われた署名は引き続き検証可能です。",
                 "revokeConfirmCurrentDescription": "これは今このデバイスが使用しているサブキーです。失効させるとこのデバイスはログアウトされます。",
                 "revokeFailed": "サブキーの失効に失敗しました",
-                "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。"
+                "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。",
+                "add": "新規追加",
+                "namePlaceholder": "名前(任意)",
+                "secret": "秘密鍵文字列",
+                "secretNotice": "この文字列を表示・コピーできるのはこの画面だけです。登録する前に控えてください。",
+                "register": "登録",
+                "addFailed": "サブキーの登録に失敗しました",
+                "copy": "サブキーをコピー",
+                "copied": "コピーしました",
+                "menu": "その他",
+                "qrHint": "ConcrntアプリでこのQRコードを読み込んで承認してください。",
+                "qrEmojiHint": "アプリに表示される絵文字が同じであることを確認してください。",
+                "qrScanned": "アプリで読み取られました。アプリで絵文字を確認して OK を押してください。",
+                "qrAccountMismatch": "別のアカウントでログインしているアプリで読み取られました。このアカウントのアプリで読み取ってください。",
+                "registered": "登録しました"
             },
             "evacuated": {
                 "title": "退避された鍵",
@@ -1182,7 +1194,8 @@
             "signalHost": "接続先: {{host}}",
             "scanQRCode": "QRコードをスキャン",
             "invalidQRCode": "読み取った内容はログイン用のQRコードではありません",
-            "externalAuthTitle": "外部サービスにログイン"
+            "externalAuthTitle": "外部サービスにログイン",
+            "keyName": "名前: {{name}}"
         },
         "externalAuth": {
             "consentTitle": "<user/> でログイン",

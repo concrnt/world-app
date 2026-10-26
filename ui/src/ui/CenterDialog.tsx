@@ -1,10 +1,12 @@
-import { type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 
 interface Props {
     onBackdropClick?: () => void
     children: ReactNode
+    // ダイアログ本体(幅など)の上書き。既定は min(480px, 80vw)
+    style?: CSSProperties
 }
 
 export const CenterDialog = (props: Props) => {
@@ -44,7 +46,8 @@ export const CenterDialog = (props: Props) => {
                         borderRadius: CssVar.round(1),
                         width: 'min(480px, 80vw)',
                         position: 'absolute',
-                        top: '30%'
+                        top: '30%',
+                        ...props.style
                     }}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
