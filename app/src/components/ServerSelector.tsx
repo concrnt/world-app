@@ -31,26 +31,37 @@ export const ServerSelector = (props: Props) => {
             >
                 <Button onClick={props.onCancel}>{t('cancel')}</Button>
                 <Button
-                    disabled={verifying}
+                    disabled={verifying || !domainInput.trim()}
                     onClick={async () => {
+                        // "https://example.com/" のような貼り付けも受け付ける
+                        const domain = domainInput
+                            .trim()
+                            .replace(/^https?:\/\//, '')
+                            .replace(/\/.*$/, '')
+                        setDomainInput(domain)
+                        setError(null)
                         setVerifying(true)
-                        const wk = await fetch(`https://${domainInput}/.well-known/concrnt`)
-                            .then((res) => {
-                                if (!res.ok) {
-                                    setError(t('connectionFailed'))
-                                }
-                                return res.json()
+                        try {
+                            // 到達不能(DNS失敗・タイムアウト等)はfetchがrejectするので、握りつぶさず接続失敗として表示する
+                            const res = await fetch(`https://${domain}/.well-known/concrnt`, {
+                                signal: AbortSignal.timeout(10000)
                             })
-                            .finally(() => {
-                                setVerifying(false)
-                            })
-
-                        if (wk?.domain !== domainInput) {
-                            setError(t('notConcrntServer'))
-                            return
+                            if (!res.ok) {
+                                setError(t('connectionFailed'))
+                                return
+                            }
+                            const wk = await res.json().catch(() => null)
+                            if (wk?.domain !== domain) {
+                                setError(t('notConcrntServer'))
+                                return
+                            }
+                            props.onSelected(domain)
+                        } catch (e) {
+                            console.error('Failed to verify server', e)
+                            setError(t('connectionFailed'))
+                        } finally {
+                            setVerifying(false)
                         }
-
-                        props.onSelected(domainInput)
                     }}
                 >
                     {verifying ? t('verifying') : t('confirm')}
