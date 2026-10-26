@@ -73,7 +73,7 @@ export default defineConfig({
         dedupe: ['react', 'react-dom', 'react/jsx-runtime']
     },
     optimizeDeps: {
-        include: ['@concrnt/ui']
+        include: ['@concrnt/ui', 'hls.js']
     },
     server: {
         host: true,

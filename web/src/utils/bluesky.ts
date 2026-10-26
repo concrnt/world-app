@@ -32,14 +32,30 @@ export interface BskyExternal {
     thumb?: string
 }
 
+// app.bsky.embed.video#view。playlist は HLS の master m3u8
+export interface BskyVideo {
+    playlist: string
+    thumbnail?: string
+    alt?: string
+    aspectRatio?: { width: number; height: number }
+}
+
 export interface BskyEmbedView {
     $type?: string
     images?: BskyImage[]
     external?: BskyExternal
+    playlist?: string
+    thumbnail?: string
+    alt?: string
+    aspectRatio?: { width: number; height: number }
     media?: {
         $type?: string
         images?: BskyImage[]
         external?: BskyExternal
+        playlist?: string
+        thumbnail?: string
+        alt?: string
+        aspectRatio?: { width: number; height: number }
     }
 }
 
@@ -106,6 +122,12 @@ export const getPostExternal = (post: BskyPostView): BskyExternal | undefined =>
     return post.embed?.external ?? post.embed?.media?.external
 }
 
+export const getPostVideo = (post: BskyPostView): BskyVideo | undefined => {
+    if (post.embed?.playlist) return post.embed as BskyVideo
+    if (post.embed?.media?.playlist) return post.embed.media as BskyVideo
+    return undefined
+}
+
 // Blueskyのモデレーションラベル → concrnt の medias[].flag(warn/nude/porn/hard)。
 // メディアを隠す対象の global label だけを見る(spam 等の投稿全体向けラベルは対象外)。
 // 複数付いているときは先に並ぶものを優先する
@@ -135,6 +157,19 @@ export const getPostMedias = (
     post: BskyPostView
 ): { mediaURL: string; mediaType: string; thumbnailURL?: string; altText?: string; flag?: string }[] => {
     const flag = getPostMediaFlag(post)
+    const video = getPostVideo(post)
+    if (video) {
+        // Bluesky では画像と動画は排他。mediaType は HLS の実 MIME で、MediaViewer 側が hls.js に振り分ける
+        return [
+            {
+                mediaURL: video.playlist,
+                mediaType: 'application/vnd.apple.mpegurl',
+                thumbnailURL: video.thumbnail,
+                altText: video.alt || undefined,
+                flag
+            }
+        ]
+    }
     return getPostImages(post).map((image) => {
         // CDNのURLは .../<cid>@jpeg のように末尾に形式が付く
         const ext = image.fullsize.match(/@(\w+)$/)?.[1]

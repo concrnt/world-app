@@ -186,7 +186,8 @@ export const MediaTile = (props: {
 }
 
 const MediaBody = (props: { media: Media; objectFit?: 'contain' | 'cover' }) => {
-    const kind = props.media.mediaType.split('/')[0]
+    const kind =
+        props.media.mediaType === 'application/vnd.apple.mpegurl' ? 'video' : props.media.mediaType.split('/')[0]
     switch (kind) {
         case 'image':
             return <GalleryImage media={props.media} objectFit={props.objectFit} />
