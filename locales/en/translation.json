@@ -335,7 +335,7 @@
             "passportDescription": "View your current ID, registered server, and credentials.",
             "alias": "Alias",
             "backupMasterKey": "Back up master key",
-            "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
+            "backupUnavailable": "Backups can be performed only when logged in with the master key.",
             "homeServer": {
                 "title": "Home Server",
                 "description": "View and edit your registration info stored on this server.",
@@ -365,7 +365,6 @@
                 "title": "Subkeys",
                 "count_one": "{{count}} key",
                 "count_other": "{{count}} keys",
-                "description": "Subkeys authorized for this account. Devices you have logged in on sign with these keys.",
                 "loading": "Loading...",
                 "empty": "No subkeys",
                 "loadFailed": "Failed to load subkeys",

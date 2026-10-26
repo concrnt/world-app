@@ -92,7 +92,6 @@ export const SubkeyList = () => {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: CssVar.space(2) }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(0.5), flex: 1, minWidth: 0 }}>
                     <Text variant="h3">{t('title')}</Text>
-                    <Text variant="caption">{t('description')}</Text>
                 </div>
                 <Button variant="outlined" onClick={() => setAddOpen(true)} style={{ flexShrink: 0 }}>
                     {t('add')}
