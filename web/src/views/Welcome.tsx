@@ -4,7 +4,19 @@ import Tilt from 'react-parallax-tilt'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate } from 'react-router-dom'
-import { Api, InMemoryAuthProvider, InMemoryKVS, Document, Entity, NotFoundError } from '@concrnt/client'
+import {
+    Api,
+    ComputeCCID,
+    InMemoryAuthProvider,
+    InMemoryKVS,
+    Document,
+    Entity,
+    LoadIdentity,
+    LoadKey,
+    NotFoundError,
+    type Identity
+} from '@concrnt/client'
+import { AccountSetup } from './AccountSetup'
 import { Passport } from '@concrnt/ui'
 import { ProfileSchema, semantics } from '@concrnt/worldlib'
 import { resourceCache } from '../lib/cache'
@@ -50,7 +62,33 @@ export const WelcomeView = () => {
         return authProvider?.getCCID()
     }, [authProvider])
 
-    const [state, setState] = useState<'initial' | 'missing' | 'ready' | 'error'>('initial')
+    // ブラウザに残っているマスターキー(あれば)。登録が見つからない時に、新しい鍵を作るのではなく
+    // この鍵のまま別サーバーへ登録し直すために使う。サブキーしか無ければnull(マスター署名が要るので登録できない)
+    const masterIdentity = useMemo((): Identity | null => {
+        if (!masterKey || !existingCCID) return null
+        try {
+            const mnemonic = readStoredString('Mnemonic')
+            if (mnemonic) {
+                const identity = LoadIdentity(mnemonic)
+                if (identity.CCID === existingCCID) return identity
+            }
+            const keypair = LoadKey(masterKey)
+            if (!keypair) return null
+            const ccid = ComputeCCID(keypair.publickey)
+            if (ccid !== existingCCID) return null
+            return {
+                mnemonic: '',
+                mnemonic_ja: '',
+                privateKey: keypair.privatekey,
+                publicKey: keypair.publickey,
+                CCID: ccid
+            }
+        } catch {
+            return null
+        }
+    }, [masterKey, existingCCID])
+
+    const [state, setState] = useState<'initial' | 'missing' | 'ready' | 'error' | 'reregister'>('initial')
     const [loadError, setLoadError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -173,9 +211,18 @@ export const WelcomeView = () => {
                     giveup={() => {
                         window.location.href = '/signup'
                     }}
+                    reregister={masterIdentity ? () => setState('reregister') : undefined}
                     setDomain={(domain) => {
                         setResolver(domain)
                     }}
+                />
+            )
+        case 'reregister':
+            return (
+                <AccountSetup
+                    entrypoint={resolveEntrypoint()}
+                    identity={masterIdentity!}
+                    onBack={() => setState('missing')}
                 />
             )
         case 'ready':
@@ -225,7 +272,10 @@ export const WelcomeView = () => {
 
 const RecoveryView = (props: {
     reload: () => void
+    // 新しい鍵で新規登録する(マスターキーがブラウザに無く、既存鍵では登録できない時だけ出す)
     giveup: () => void
+    // ブラウザにある鍵(同じCCID)のまま別サーバーに新規登録する。マスターキーが無ければundefined
+    reregister?: () => void
     setDomain?: (domain: string) => void
     ccid: string
 }) => {
@@ -296,9 +346,21 @@ const RecoveryView = (props: {
                 <AuthActions fixedBottom>
                     <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
-            ) : found === 'error' ? null : (
+            ) : found === 'error' ? (
+                // 通信失敗時は新規鍵生成/削除へ誘導しない。既存鍵での登録し直しは非破壊なので、
+                // 手入力したサーバーが閉鎖済みのケースの脱出口として出す
+                props.reregister ? (
+                    <AuthActions fixedBottom>
+                        <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
+                    </AuthActions>
+                ) : null
+            ) : (
                 <AuthActions fixedBottom>
-                    <AuthButton onClick={props.giveup}>{t('recovery.registerNew')}</AuthButton>
+                    {props.reregister ? (
+                        <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
+                    ) : (
+                        <AuthButton onClick={props.giveup}>{t('recovery.registerNew')}</AuthButton>
+                    )}
                     <ResetSessionButton
                         ccid={props.ccid}
                         onDone={() => {

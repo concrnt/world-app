@@ -295,7 +295,6 @@ export const WelcomeView = () => {
                     ccid={existingCCID!}
                     accounts={accounts}
                     reload={reload}
-                    giveup={() => setState('signup')}
                     reregister={() => startReregister('missing')}
                     setDomain={(domain) => {
                         setResolver(domain)
@@ -448,8 +447,8 @@ export const WelcomeView = () => {
 
 const RecoveryView = (props: {
     reload: () => void
-    giveup: () => void
-    // 端末にある鍵(同じCCID)のまま別サーバーに新規登録する
+    // 端末にある鍵(同じCCID)のまま別サーバーに新規登録する。
+    // この画面に来た時点で鍵は端末にあるので、新しい鍵を生成する導線は置かない(孤児アカウントを作るだけ)
     reregister: () => void
     setDomain?: (domain: string) => void
     ccid: string
@@ -530,25 +529,14 @@ const RecoveryView = (props: {
                     <AuthButton onClick={props.reload}>{t('recovery.continue')}</AuthButton>
                 </AuthActions>
             ) : found === 'error' ? (
-                // 通信失敗時は新規鍵生成/削除へ誘導しない。既存鍵での登録し直しは非破壊なので、
+                // 通信失敗時は削除へ誘導しない。既存鍵での登録し直しは非破壊なので、
                 // 手入力したサーバーが閉鎖済みのケースの脱出口として出す
                 <AuthActions fixedBottom>
-                    <AuthButton variant="outlined" onClick={props.reregister}>
-                        {t('registerWithExistingKey')}
-                    </AuthButton>
+                    <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
                 </AuthActions>
             ) : (
                 <AuthActions fixedBottom>
-                    <AuthButton variant="outlined" onClick={props.reregister}>
-                        {t('registerWithExistingKey')}
-                    </AuthButton>
-                    <AuthButton
-                        onClick={() => {
-                            props.giveup()
-                        }}
-                    >
-                        {t('recovery.registerNew')}
-                    </AuthButton>
+                    <AuthButton onClick={props.reregister}>{t('registerWithExistingKey')}</AuthButton>
                     <ResetSessionButton
                         ccid={props.ccid}
                         onDone={() => {
