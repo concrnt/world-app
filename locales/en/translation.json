@@ -225,10 +225,12 @@
                 "registrationFound": "Registration found.",
                 "registrationNotFound": "Registration not found.",
                 "continue": "Continue",
-                "registerNew": "Register a new account",
+                "registerNew": "Register with a new key",
                 "deleteBrowserAccount": "Delete account data from this browser",
                 "checkFailed": "Could not verify. Please check your connection or the server status and try again."
-            }
+            },
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerWithExistingKey": "Register this CCID on another server"
         },
         "ageBlocked": {
             "title": "You can't use Concrnt yet",

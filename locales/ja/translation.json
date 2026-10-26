@@ -225,10 +225,12 @@
                 "registrationFound": "登録情報が見つかりました。",
                 "registrationNotFound": "登録情報が見つかりませんでした。",
                 "continue": "続行",
-                "registerNew": "新規登録する",
+                "registerNew": "新しい鍵で新規登録する",
                 "deleteBrowserAccount": "ブラウザのアカウント情報を削除",
                 "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
-            }
+            },
+            "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
+            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する"
         },
         "ageBlocked": {
             "title": "まだConcrntを利用できません",
