@@ -21,6 +21,7 @@ import {
     LoadKey,
     LoadSubKey,
     NotFoundError,
+    ServerOfflineError,
     SignedDocument,
     type Identity,
     type SubKey
@@ -28,6 +29,7 @@ import {
 import { semantics } from '@concrnt/worldlib'
 import { resourceCache } from '../lib/cache'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from '../views/authLayout'
+import { AccountSetup } from '../views/AccountSetup'
 import { useResetPreference } from '../contexts/Preference'
 import { MNEMONIC_WORD_COUNT, MnemonicInput } from '../components/MnemonicInput'
 
@@ -185,6 +187,12 @@ export const Login = () => {
     const [manualServer, setManualServer] = useState('')
     const [needsServer, setNeedsServer] = useState(false)
     const [resolvedCCID, setResolvedCCID] = useState<string>()
+    // 登録情報は見つかったが、その登録サーバーに到達できなかった(閉鎖等)ドメイン
+    const [offlineDomain, setOfflineDomain] = useState<string>()
+    // 「このCCIDで別のサーバーに新規登録する」を押した時点のマスターキー。
+    // 入力欄の変化に引きずられないようstateに固定し、non-nullの間はAccountSetupをインライン描画する
+    // (ルート遷移で秘密鍵をhistory stateに乗せない)
+    const [reregisterIdentity, setReregisterIdentity] = useState<Identity | null>(null)
 
     // 12語入力は全欄が埋まったときだけ1本の文字列として扱う(途中の入力で検証を走らせない)
     const mnemonic = useMemo(
@@ -194,6 +202,7 @@ export const Login = () => {
 
     const resetManualInput = () => {
         setNeedsServer(false)
+        setOfflineDomain(undefined)
         setResolvedCCID(undefined)
         setStatus('')
     }
@@ -328,11 +337,14 @@ export const Login = () => {
 
         setBusy(true)
         setResolvedCCID(identity.CCID)
+        setOfflineDomain(undefined)
         setStatus(t('checkingRegistration', { resolver }))
 
+        // catchでServerOfflineErrorの発生元(登録サーバー)を参照するためtryの外に置く
+        let domain: string | undefined
         try {
             const entity = await resolveEntity(identity.CCID, resolver, isManualResolver ? resolver : undefined)
-            const domain = entity?.value.domain
+            domain = entity?.value.domain
 
             if (!domain) {
                 if (!isManualResolver) {
@@ -354,10 +366,27 @@ export const Login = () => {
             continueWithSession()
         } catch (error) {
             console.error(error)
+            if (error instanceof ServerOfflineError && domain) {
+                // 登録サーバーが閉鎖されている等。ariakeには登録情報が残っていても先へ進めないので、
+                // 同じCCIDで別のサーバーに登録し直す導線を出す
+                setOfflineDomain(domain)
+                setStatus(t('serverUnreachable', { domain: error.host }))
+                return
+            }
             setStatus(error instanceof Error ? error.message : t('masterKeyLoginFailed'))
         } finally {
             setBusy(false)
         }
+    }
+
+    if (reregisterIdentity) {
+        return (
+            <AccountSetup
+                entrypoint={entrypoint}
+                identity={reregisterIdentity}
+                onBack={() => setReregisterIdentity(null)}
+            />
+        )
     }
 
     return (
@@ -495,6 +524,15 @@ export const Login = () => {
                                 }}
                             >
                                 {busy ? t('checking') : parsedSubkey ? t('subkeyLogin') : t('masterKeyLogin')}
+                            </AuthButton>
+                        )}
+                        {recoveryIdentity && (needsServer || offlineDomain) && (
+                            <AuthButton
+                                variant="outlined"
+                                disabled={busy}
+                                onClick={() => setReregisterIdentity(recoveryIdentity)}
+                            >
+                                {t('registerOnAnotherServer')}
                             </AuthButton>
                         )}
                         <AuthTextButton

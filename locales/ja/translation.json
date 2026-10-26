@@ -267,7 +267,8 @@
             "finalizeFailedNetwork": "登録に失敗しました。通信環境を確認して、もう一度お試しください。",
             "ccidMissing": "プログラムエラー: CCIDが見つかりません",
             "registering": "登録中...",
-            "done": "完了"
+            "done": "完了",
+            "reregisterDescription": "CCID {{ccid}} をそのまま使って、選んだサーバーに新規登録します。以前のサーバーの投稿やフォローは引き継がれません。"
         },
         "accountImport": {
             "title": "アカウントをインポート",
@@ -1040,7 +1041,9 @@
             "manualRawKey": "サブキーまたは秘密鍵",
             "manualRawKeyPlaceholder": "concrnt-subkey から始まるサブキー、または64桁のhex秘密鍵を入力",
             "switchToRawKey": "サブキー・秘密鍵で入力する",
-            "switchToMasterKey": "マスターキー(12語)で入力する"
+            "switchToMasterKey": "マスターキー(12語)で入力する",
+            "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
+            "registerOnAnotherServer": "このCCIDで別のサーバーに新規登録する"
         },
         "register": {
             "title": "アカウント登録",

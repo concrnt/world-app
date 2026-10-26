@@ -267,7 +267,8 @@
             "finalizeFailedNetwork": "Registration failed. Check your network connection and try again.",
             "ccidMissing": "Program error: CCID not found",
             "registering": "Registering...",
-            "done": "Done"
+            "done": "Done",
+            "reregisterDescription": "Register CCID {{ccid}} on the server you choose. Posts and follows from the previous server will not be carried over."
         },
         "accountImport": {
             "title": "Import Account",
@@ -1041,7 +1042,9 @@
             "manualRawKey": "Subkey or private key",
             "manualRawKeyPlaceholder": "Enter a subkey starting with concrnt-subkey, or a 64-char hex private key",
             "switchToRawKey": "Use a subkey / private key instead",
-            "switchToMasterKey": "Use the 12-word master key instead"
+            "switchToMasterKey": "Use the 12-word master key instead",
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerOnAnotherServer": "Register this CCID on another server"
         },
         "register": {
             "title": "Account Registration",
