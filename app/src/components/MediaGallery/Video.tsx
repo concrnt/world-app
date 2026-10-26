@@ -6,7 +6,7 @@ export const GalleryVideo = ({ media, objectFit }: { media: Media; objectFit?: '
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
-        if (media.thumbnailURL) return
+        if (media.thumbnailURL || media.mediaType === 'application/vnd.apple.mpegurl') return
         const canvas = canvasRef.current
         if (!canvas) return
         const context = canvas.getContext('2d')
@@ -39,7 +39,7 @@ export const GalleryVideo = ({ media, objectFit }: { media: Media; objectFit?: '
         // loadeddataで停止した場合にもplay()はrejectされる。
         void video.play().catch(() => {})
         return release
-    }, [media.mediaURL, media.thumbnailURL])
+    }, [media.mediaURL, media.thumbnailURL, media.mediaType])
 
     return (
         <div

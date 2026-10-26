@@ -14,7 +14,7 @@ export default defineConfig(async () => ({
         dedupe: ['react', 'react-dom', 'react/jsx-runtime']
     },
     optimizeDeps: {
-        include: ['@concrnt/ui']
+        include: ['@concrnt/ui', 'hls.js']
     },
 
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

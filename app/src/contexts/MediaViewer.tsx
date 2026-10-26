@@ -8,6 +8,7 @@ import { MdClose, MdInfoOutline, MdMusicNote, MdPlayCircle, MdStop, MdViewInAr }
 import { CircularProgress, OverlaySurface } from '@concrnt/ui'
 import styles from './MediaViewer.module.css'
 import { ModelViewer } from '../components/ModelViewer'
+import { HlsVideo } from '../components/HlsVideo'
 import { Drawer } from '../ui/Drawer'
 import { useAudioPlayer } from './AudioPlayer'
 import { useMediaProxy } from './MediaProxy'
@@ -663,9 +664,11 @@ export const MediaViewerProvider = (props: Props) => {
                                             draggable={false}
                                             ref={imgRef}
                                         />
-                                    ) : currentMedia.mediaType.startsWith('video/') ? (
-                                        <video
+                                    ) : currentMedia.mediaType.startsWith('video/') ||
+                                      currentMedia.mediaType === 'application/vnd.apple.mpegurl' ? (
+                                        <HlsVideo
                                             src={currentMedia.mediaURL}
+                                            poster={currentMedia.thumbnailURL}
                                             controls
                                             autoPlay
                                             playsInline
@@ -850,6 +853,24 @@ export const MediaViewerProvider = (props: Props) => {
 // 前後スライド用の軽量プレビュー（modelやaudioは実体をロードしない）
 const SlidePreview = ({ media }: { media: MediaItem }) => {
     const { getImageURL } = useMediaProxy()
+    // HLS は <video> に載せるだけで playlist/segment の取得が走るので、プレビューはサムネイルで代用する
+    if (media.mediaType === 'application/vnd.apple.mpegurl') {
+        if (!media.thumbnailURL) return <MdPlayCircle size={96} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+        return (
+            <img
+                src={media.thumbnailURL}
+                alt={media.altText ?? ''}
+                style={{
+                    maxWidth: '90%',
+                    maxHeight: '85dvh',
+                    objectFit: 'contain',
+                    userSelect: 'none',
+                    pointerEvents: 'none'
+                }}
+                draggable={false}
+            />
+        )
+    }
     const kind = media.mediaType.split('/')[0]
     switch (kind) {
         case 'image':
