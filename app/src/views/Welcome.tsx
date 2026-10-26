@@ -25,6 +25,10 @@ import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 import { ResetSessionButton } from '../components/ResetSessionButton'
+import { SignalRegisterConsent } from '../components/SignalRegisterConsent'
+import { useScanner } from '../contexts/Scanner'
+import { parseSignalLoginUri } from '../lib/signalLogin'
+import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
 
 /*
 - 完全に初期状態 <initial>
@@ -57,8 +61,14 @@ interface User {
 export const WelcomeView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [state, setState] = useState<
-        'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error' | 'reregister'
+        'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error' | 'reregister' | 'qrRegister'
     >('initial')
+    // web の「このサーバーに登録する」QR (signal) を読んだときのチャンネルと、そのセッションで生成したマスターキー
+    // (読み直しても同じ鍵を使い回す)
+    const [qrRegisterChannel, setQrRegisterChannel] = useState<string | null>(null)
+    const [qrRegisterCcid, setQrRegisterCcid] = useState<string | null>(null)
+    const [scanError, setScanError] = useState<string | null>(null)
+    const { scan } = useScanner()
     // 'reregister'(既存CCIDで別サーバーに登録し直す)から「戻る」で復帰する画面
     const [reregisterReturn, setReregisterReturn] = useState<'ready' | 'missing' | 'error'>('ready')
     // 登録情報は見つかったが、その登録サーバーに到達できなかった(閉鎖等)ドメイン
@@ -99,7 +109,9 @@ export const WelcomeView = () => {
             if (typeof ccid !== 'string') {
                 setExistingCCID(null)
                 setUser(null)
-                setState('welcome')
+                // QR スキャン中は ScannerProvider の Activity が子を隠し、再表示でこの effect が走り直す。
+                // 読み取り結果で開いた登録画面を welcome に戻さない
+                setState((prev) => (prev === 'qrRegister' ? prev : 'welcome'))
                 return
             }
             setExistingCCID(ccid)
@@ -164,6 +176,52 @@ export const WelcomeView = () => {
     const reload = () => {
         setUpdater((prev) => prev + 1)
     }
+
+    const openSignalUri = (text: string) => {
+        let channel: string | null
+        try {
+            channel = parseSignalLoginUri(text)
+        } catch {
+            setScanError(t('scanInvalidQr'))
+            return
+        }
+        if (!channel) {
+            setScanError(t('scanNotRegisterQr'))
+            return
+        }
+        setScanError(null)
+        setQrRegisterChannel(channel)
+        setState('qrRegister')
+    }
+
+    // アカウントが無い間だけ、OS のカメラ等で読んだ登録 QR の deep link を受け取る。
+    // 他の状態では消費しない(ログイン後に Main が拾い、既存アカウントでのログイン確認になる)
+    useEffect(() => {
+        if (state !== 'welcome') return
+
+        getLaunchDeepLink()
+            .then((url) => {
+                if (url && parseSignalLoginUri(url)) openSignalUri(url)
+            })
+            .catch(() => {})
+
+        let unlisten: (() => void) | undefined
+        let cancelled = false
+        onDeepLink((url) => {
+            if (parseSignalLoginUri(url)) openSignalUri(url)
+        })
+            .then((f) => {
+                if (cancelled) f()
+                else unlisten = f
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+            unlisten?.()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state])
 
     const startReregister = (from: 'ready' | 'missing' | 'error') => {
         setReregisterReturn(from)
@@ -258,6 +316,15 @@ export const WelcomeView = () => {
             )
         case 'signin':
             return <AccountImport onImported={reload} onBack={() => setState('welcome')} />
+        case 'qrRegister':
+            return (
+                <SignalRegisterConsent
+                    channelUrl={qrRegisterChannel!}
+                    ccid={qrRegisterCcid}
+                    onCcidCreated={setQrRegisterCcid}
+                    onCancel={() => setState('welcome')}
+                />
+            )
         case 'welcome':
             return (
                 <AuthScreen>
@@ -284,7 +351,26 @@ export const WelcomeView = () => {
                     </div>
                     <div style={{ flex: 1 }} />
                     <AuthActions fixedBottom>
+                        {scanError && (
+                            <Text style={{ color: '#ff5b5b', textAlign: 'center', whiteSpace: 'pre-line' }}>
+                                {scanError}
+                            </Text>
+                        )}
                         <AuthButton onClick={() => setState('signup')}>{t('getStarted')}</AuthButton>
+                        <AuthButton
+                            variant="outlined"
+                            onClick={() => {
+                                scan()
+                                    .then((result) => {
+                                        if (result) openSignalUri(result)
+                                    })
+                                    .catch((e) => {
+                                        console.error('Failed to scan', e)
+                                    })
+                            }}
+                        >
+                            {t('scanQrToRegister')}
+                        </AuthButton>
                         <AuthTextButton onClick={() => setState('signin')}>{t('login')}</AuthTextButton>
                     </AuthActions>
                 </AuthScreen>

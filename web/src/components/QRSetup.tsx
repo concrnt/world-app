@@ -11,7 +11,13 @@ import {
     LoadKey
 } from '@concrnt/client'
 import { Button, CssVar, Passport, Text } from '@concrnt/ui'
-import { emojihash, type ProfileSchema, semantics, SignalLoginReceiver } from '@concrnt/worldlib'
+import {
+    emojihash,
+    type ProfileSchema,
+    semantics,
+    SignalLoginReceiver,
+    type SignalRegisterInitResponse
+} from '@concrnt/worldlib'
 import { resourceCache } from '../lib/cache'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +28,18 @@ import Tilt from 'react-parallax-tilt'
 
 const SIGNAL_HOST = 'signal.concrnt.net'
 
-export const QRSetup = () => {
+interface Props {
+    // 指定すると登録モード(web/src/pages/SignupWithApp.tsx)。アプリから届いた entity 文書を onRegister で
+    // サーバーに登録し、resolve 後はこのコンポーネントの通常のログイン手順(サブキー生成 → 絵文字確認)に合流する。
+    // onRegister が解決するまでは何も描画せず、ページ側が受信 UI を描く
+    registration?: {
+        domain: string
+        onRegister: (ccid: string, entity: SignalRegisterInitResponse['entity']) => Promise<void>
+        onLoginFallback?: () => void
+    }
+}
+
+export const QRSetup = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'web.qrSetup' })
     const [sessionID, _] = useState<string>(crypto.randomUUID())
     // 自分が繋ぐ signal チャンネル。QR には CIP-17 と同じ concrnt-auth:// スキームで載せる
@@ -46,6 +63,12 @@ export const QRSetup = () => {
     const [passkeyError, setPasskeyError] = useState<string>('')
 
     const passkeyAvailable = !!window.PublicKeyCredential && !!navigator.credentials
+
+    // 受信側の effect は signalURL でしか張り直さないので、最新のコールバックを ref から読む
+    const registrationRef = useRef(props.registration)
+    registrationRef.current = props.registration
+    const registrationDomain = props.registration?.domain
+    const [registering, setRegistering] = useState(false)
 
     const waitForKeyTypeSelection = (ccid: string, domain: string): Promise<'instant' | 'passkey'> => {
         setPendingKeyGeneration({ ccid, domain })
@@ -71,11 +94,14 @@ export const QRSetup = () => {
             const kvs = new InMemoryKVS()
             const api = new Api(domain, authProvider, kvs)
 
-            api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main'), domain).then((doc) => {
-                if (doc) {
-                    setProfile(doc)
-                }
-            })
+            // 登録直後の新規アカウントはまだプロフィールが無い(404)。Passport は空のまま出す
+            api.getDocument<ProfileSchema>(semantics.profile(ccid, 'main'), domain)
+                .then((doc) => {
+                    if (doc) {
+                        setProfile(doc)
+                    }
+                })
+                .catch(() => {})
 
             // パスキー作成に失敗してもrejectせず、選択UIに戻して成功するまでやり直す
             // (SignalLoginReceiverはこのコールバックを一度しか呼ばないため、rejectすると画面が進まなくなる)
@@ -160,54 +186,74 @@ export const QRSetup = () => {
             }
         }
 
-        const receiver = new SignalLoginReceiver(signalURL, keyGenerationCallback, (keyURI: string) => {
-            // 前セッションの別アカウントのマスターキーが残ったままだと、subkeyのccidと不一致のまま
-            // マスターキー署名が使われてしまう。削除はせずEvacuatedKeys:<旧ccid>へ退避して
-            // ID画面から回収できるようにする(同一アカウントならそのまま残す)
-            const prevKeyRaw = localStorage.getItem('PrivateKey')
-            const prevMnemonicRaw = localStorage.getItem('Mnemonic')
-            if (prevKeyRaw !== null || prevMnemonicRaw !== null) {
-                let prevCcid: string | null = null
-                try {
-                    if (prevKeyRaw) {
-                        const keypair = LoadKey(prevKeyRaw)
-                        prevCcid = keypair ? ComputeCCID(keypair.publickey) : null
-                    } else if (prevMnemonicRaw) {
-                        prevCcid = LoadIdentity(prevMnemonicRaw).CCID
+        const registration = registrationDomain
+            ? {
+                  domain: registrationDomain,
+                  onRegister: (ccid: string, entity: SignalRegisterInitResponse['entity']) => {
+                      setRegistering(true)
+                      return registrationRef.current!.onRegister(ccid, entity).finally(() => {
+                          setRegistering(false)
+                      })
+                  },
+                  onLoginFallback: () => registrationRef.current?.onLoginFallback?.()
+              }
+            : undefined
+
+        const receiver = new SignalLoginReceiver(
+            signalURL,
+            keyGenerationCallback,
+            (keyURI: string) => {
+                // 前セッションの別アカウントのマスターキーが残ったままだと、subkeyのccidと不一致のまま
+                // マスターキー署名が使われてしまう。削除はせずEvacuatedKeys:<旧ccid>へ退避して
+                // ID画面から回収できるようにする(同一アカウントならそのまま残す)
+                const prevKeyRaw = localStorage.getItem('PrivateKey')
+                const prevMnemonicRaw = localStorage.getItem('Mnemonic')
+                if (prevKeyRaw !== null || prevMnemonicRaw !== null) {
+                    let prevCcid: string | null = null
+                    try {
+                        if (prevKeyRaw) {
+                            const keypair = LoadKey(prevKeyRaw)
+                            prevCcid = keypair ? ComputeCCID(keypair.publickey) : null
+                        } else if (prevMnemonicRaw) {
+                            prevCcid = LoadIdentity(prevMnemonicRaw).CCID
+                        }
+                    } catch {
+                        prevCcid = null
                     }
-                } catch {
-                    prevCcid = null
+                    if (prevCcid !== c) {
+                        localStorage.setItem(
+                            `EvacuatedKeys:${prevCcid ?? 'unknown'}`,
+                            JSON.stringify({
+                                privateKey: prevKeyRaw ?? undefined,
+                                mnemonic: prevMnemonicRaw ?? undefined,
+                                evacuatedAt: new Date().toISOString()
+                            })
+                        )
+                        localStorage.removeItem('PrivateKey')
+                        localStorage.removeItem('Mnemonic')
+                    }
                 }
-                if (prevCcid !== c) {
-                    localStorage.setItem(
-                        `EvacuatedKeys:${prevCcid ?? 'unknown'}`,
-                        JSON.stringify({
-                            privateKey: prevKeyRaw ?? undefined,
-                            mnemonic: prevMnemonicRaw ?? undefined,
-                            evacuatedAt: new Date().toISOString()
-                        })
-                    )
-                    localStorage.removeItem('PrivateKey')
-                    localStorage.removeItem('Mnemonic')
-                }
-            }
 
-            setPersistentDomain(d)
-            setPersistentSubkey(subkey)
+                setPersistentDomain(d)
+                setPersistentSubkey(subkey)
 
-            // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
-            new Api(d, new InMemoryAuthProvider(), resourceCache)
-                .getEntity(c, undefined, { cache: 'no-cache' })
-                .catch(console.error)
-                .then(() => {
-                    window.location.href = '/'
-                })
-        })
+                // 起動がネットワークを待たないよう、自分のwell-known/entityをリソースキャッシュへ保存しておく(Client.createが直接読む)
+                new Api(d, new InMemoryAuthProvider(), resourceCache)
+                    .getEntity(c, undefined, { cache: 'no-cache' })
+                    .catch(console.error)
+                    .then(() => {
+                        window.location.href = '/'
+                    })
+            },
+            registration ? { registration } : undefined
+        )
 
         return () => {
             receiver.dispose()
         }
-    }, [signalURL])
+    }, [signalURL, registrationDomain])
+
+    if (registering) return null
 
     return (
         <div
@@ -265,7 +311,7 @@ export const QRSetup = () => {
                             gap: CssVar.space(1)
                         }}
                     >
-                        <Text>{t('scanWithApp')}</Text>
+                        <Text>{t(registrationDomain ? 'scanWithAppRegister' : 'scanWithApp')}</Text>
                         <Text variant="caption">{t('scanWithAppHint')}</Text>
                     </div>
                 )}
