@@ -32,7 +32,7 @@ import { NotificationSnapshot } from '../lib/timelineSnapshot'
 import { QueryTimelineContext } from './QueryTimeline'
 import { CCImage, Avatar, Button, CssVar, Divider, Skeleton, Text } from '@concrnt/ui'
 import { CfmRenderer } from './CfmRenderer'
-import { BskyProfile } from '../utils/bluesky'
+import { BskyProfile, resolveBskyActor } from '../utils/bluesky'
 import { MessageSkeleton } from './message/MessageSkeleton'
 import { Loading } from './message/Loading'
 import { RenderError } from './message/RenderError'
@@ -738,9 +738,7 @@ const BskyFollowNotification = (props: { item: Message<AtprotoFollowNotifySchema
     const did = props.item.value.did
 
     const profilePromise = useMemo(() => {
-        return client.api
-            .callConcrntApi<BskyProfile>(client.server.domain, 'world.concrnt.atproto.resolveActor', { target: did })
-            .catch(() => null)
+        return resolveBskyActor(client, did).catch(() => null)
     }, [client, did])
 
     return (

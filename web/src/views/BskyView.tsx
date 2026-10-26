@@ -3,7 +3,7 @@ import { useClient } from '../contexts/Client'
 import { View } from '../components/View'
 import { BskyPost } from './BskyPost'
 import { BskyPerson } from './BskyPerson'
-import { BskyPostView, BskyProfile } from '../utils/bluesky'
+import { BskyPostView, BskyProfile, resolveBskyActor, resolveBskyPost } from '../utils/bluesky'
 
 interface Props {
     uri: string
@@ -24,21 +24,18 @@ export const BskyView = (props: Props) => {
 
     useEffect(() => {
         if (isPost) {
-            client.api
-                .callConcrntApi<BskyPostView>(client.server.domain, 'world.concrnt.atproto.resolve', {
-                    uri: props.uri
-                })
-                .then((res) => setResult({ uri: props.uri, post: res }))
+            // 負キャッシュ(404済み)はnullで返るので初回404と同じく未解決扱いにする
+            resolveBskyPost(client, props.uri)
+                .then((res) => setResult(res ? { uri: props.uri, post: res } : { uri: props.uri, error: 'not found' }))
                 .catch((err) => {
                     console.log(err)
                     setResult({ uri: props.uri, error: String(err) })
                 })
         } else {
-            client.api
-                .callConcrntApi<BskyProfile>(client.server.domain, 'world.concrnt.atproto.resolveActor', {
-                    target: props.uri
-                })
-                .then((res) => setResult({ uri: props.uri, person: res }))
+            resolveBskyActor(client, props.uri)
+                .then((res) =>
+                    setResult(res ? { uri: props.uri, person: res } : { uri: props.uri, error: 'not found' })
+                )
                 .catch((err) => {
                     console.log(err)
                     setResult({ uri: props.uri, error: String(err) })

@@ -7,7 +7,7 @@ import { useClient } from '../contexts/Client'
 import { PostView } from './Post'
 import { useTranslation } from 'react-i18next'
 import { MdAddReaction, MdMoreHoriz, MdRepeat, MdReply, MdStarOutline } from 'react-icons/md'
-import { BskyPostView, bskyRecordKey } from '../utils/bluesky'
+import { BskyPostView, bskyRecordKey, getBskyBridgeInfo } from '../utils/bluesky'
 
 interface Props {
     uri: string
@@ -40,11 +40,7 @@ export const BskyPost = (props: Props) => {
         if (nativeUri) return
         let cancelled = false
         ;(async () => {
-            const info = await client.api.callConcrntApi<{ serviceCcid: string }>(
-                client.server.domain,
-                'world.concrnt.atproto.info',
-                {}
-            )
+            const info = await getBskyBridgeInfo(client)
             const uri = bskyRecordKey(info.serviceCcid, props.uri)
             const message = await client.getMessage(uri)
             if (!cancelled) setMessageUri(message ? uri : null)
