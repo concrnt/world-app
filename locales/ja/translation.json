@@ -444,6 +444,7 @@
             "enableIntro": "Bluesky連携を有効化しましょう",
             "enableDescription": "連携を有効化すると、Bluesky(AT Protocol)のネットワークと繋がることができます。自分が所有しているドメインが必要です。ドメインがそのままBlueskyのハンドルになります。",
             "handleLabel": "ハンドル(自分が所有するドメイン)",
+            "newAccountHint": "Bluesky上に新たなアカウントとして作成します。既存のBlueskyアカウントを引き継ぐことはできません。",
             "setup": "セットアップ開始",
             "setupFailed": "セットアップに失敗しました。このハンドルは既に使われている可能性があります。",
             "pendingTitle": "ドメイン所有権の確認",
