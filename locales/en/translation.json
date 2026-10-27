@@ -444,6 +444,7 @@
             "unavailable": "Failed to communicate with the Bluesky bridge.",
             "enableIntro": "Let's enable Bluesky integration",
             "enableDescription": "Enabling integration lets you connect with the Bluesky (AT Protocol) network. You need a domain you own — it becomes your Bluesky handle.",
+            "newAccountHint": "This creates a brand-new account on Bluesky. An existing Bluesky account cannot be migrated or taken over.",
             "handleLabel": "Your handle (a domain you own)",
             "setup": "Start setup",
             "setupFailed": "Setup failed. The handle may already be taken.",

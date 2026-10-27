@@ -1,4 +1,4 @@
-import { View, Text, TextField, Button, Divider, IconButton, Switch } from '@concrnt/ui'
+import { View, Text, TextField, Button, Divider, IconButton, Switch, Hint } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useEffect, useMemo, useState } from 'react'
@@ -8,7 +8,7 @@ import { useStack } from '../layouts/Stack'
 import { BskyView } from './BskyView'
 import { NotFoundError } from '@concrnt/client'
 import { Schemas, semantics } from '@concrnt/worldlib'
-import { MdContentCopy, MdLightbulbOutline, MdPlaylistAdd } from 'react-icons/md'
+import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { BskyFollowList } from '../components/BskyFollowList'
 import { BskyAppPasswords } from '../components/BskyAppPasswords'
@@ -183,6 +183,7 @@ export const Bluesky = () => {
                             <>
                                 <Text>{t('enableIntro')}</Text>
                                 <Text>{t('enableDescription')}</Text>
+                                <Hint title={t('hintLabel')}>{t('newAccountHint')}</Hint>
                             </>
                         )}
                         <Text>{t('handleLabel')}</Text>
@@ -358,25 +359,7 @@ export const Bluesky = () => {
                         {appPasswordSupported && (
                             <>
                                 <Divider />
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: CssVar.space(1),
-                                        border: `1px solid ${CssVar.divider}`,
-                                        borderRadius: '8px',
-                                        padding: CssVar.space(2),
-                                        backgroundColor: `rgb(from ${CssVar.contentText} r g b / 0.08)`
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
-                                        <MdLightbulbOutline size={18} />
-                                        <Text variant="caption" style={{ fontWeight: 'bold' }}>
-                                            {t('hintLabel')}
-                                        </Text>
-                                    </div>
-                                    <Text>{t('appPasswordHint')}</Text>
-                                </div>
+                                <Hint title={t('hintLabel')}>{t('appPasswordHint')}</Hint>
                                 <Button variant="outlined" onClick={() => setAppPasswordsOpen(true)}>
                                     {t('manageAppPasswords')}
                                 </Button>
