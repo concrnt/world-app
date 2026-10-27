@@ -45,6 +45,8 @@ export const Bluesky = () => {
     const handleOk = handle.length > 0 && handle.match(/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z][a-z0-9-]*$/)
 
     const [setupError, setSetupError] = useState<string>()
+    // pending のまま別のドメインに差し替える編集中(ブリッジは同じ DID で handle だけ更新する)
+    const [editingHandle, setEditingHandle] = useState(false)
     const [verifyError, setVerifyError] = useState<string>()
     const [verifying, setVerifying] = useState(false)
     const [announcing, setAnnouncing] = useState(false)
@@ -175,10 +177,14 @@ export const Bluesky = () => {
             >
                 {info === undefined && <Text>{t('loading')}</Text>}
                 {info === null && <Text>{t('unavailable')}</Text>}
-                {info && !info.entity && (
+                {info && (!info.entity || (info.entity.status === 'pending' && editingHandle)) && (
                     <>
-                        <Text>{t('enableIntro')}</Text>
-                        <Text>{t('enableDescription')}</Text>
+                        {!info.entity && (
+                            <>
+                                <Text>{t('enableIntro')}</Text>
+                                <Text>{t('enableDescription')}</Text>
+                            </>
+                        )}
                         <Text>{t('handleLabel')}</Text>
                         <TextField
                             value={handleDraft}
@@ -204,6 +210,7 @@ export const Bluesky = () => {
                                         }
                                     )
                                     .then((_res) => {
+                                        setEditingHandle(false)
                                         updateInfo()
                                     })
                                     .catch((err) => {
@@ -214,9 +221,20 @@ export const Bluesky = () => {
                         >
                             {t('setup')}
                         </Button>
+                        {info.entity && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setSetupError(undefined)
+                                    setEditingHandle(false)
+                                }}
+                            >
+                                {t('cancelEdit')}
+                            </Button>
+                        )}
                     </>
                 )}
-                {info?.entity && info.entity.status === 'pending' && (
+                {info?.entity && info.entity.status === 'pending' && !editingHandle && (
                     <>
                         <Text variant="h6" style={{ fontWeight: 'bold' }}>
                             {t('pendingTitle')}
@@ -258,6 +276,16 @@ export const Bluesky = () => {
                             }}
                         >
                             {t('verify')}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                setHandleDraft(info.entity!.handle)
+                                setSetupError(undefined)
+                                setEditingHandle(true)
+                            }}
+                        >
+                            {t('changeHandle')}
                         </Button>
                     </>
                 )}
