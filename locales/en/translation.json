@@ -454,6 +454,8 @@
             "verifyNote": "DNS changes can take a few minutes to propagate. Once published, press Verify.",
             "verify": "Verify",
             "verifyFailed": "Verification failed. Check that the record is published and try again after a while.",
+            "changeHandle": "Use a different domain",
+            "cancelEdit": "Back",
             "active": "Bluesky integration is enabled.",
             "yourHandle": "Your handle: @{{handle}}",
             "announceDesc": "If your handle or profile is not showing up on Bluesky (e.g. it appears as handle.invalid), you can re-send your account information.",

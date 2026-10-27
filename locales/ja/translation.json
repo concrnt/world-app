@@ -453,6 +453,8 @@
             "verifyNote": "DNSの変更が反映されるまで数分かかることがあります。設置できたら「確認する」を押してください。",
             "verify": "確認する",
             "verifyFailed": "確認に失敗しました。レコードが公開されているか確認し、しばらく待ってから再試行してください。",
+            "changeHandle": "別のドメインにする",
+            "cancelEdit": "戻る",
             "active": "Bluesky連携は有効化されています。",
             "yourHandle": "あなたのハンドル: @{{handle}}",
             "announceDesc": "Bluesky側にハンドルやプロフィールが反映されない場合(handle.invalid と表示される等)は、再送信で情報を流し直せます。",
