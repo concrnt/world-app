@@ -51,6 +51,11 @@ export const Bluesky = () => {
     const [verifying, setVerifying] = useState(false)
     const [announcing, setAnnouncing] = useState(false)
     const [announceResult, setAnnounceResult] = useState<'done' | 'failed'>()
+    // active のまま別のドメインへ移す編集中(ブリッジは新ドメインの DNS を検証してから PLC を更新する)
+    const [changingHandle, setChangingHandle] = useState(false)
+    const [changeBusy, setChangeBusy] = useState(false)
+    const [changeError, setChangeError] = useState<string>()
+    const [changeDone, setChangeDone] = useState(false)
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
@@ -95,6 +100,7 @@ export const Bluesky = () => {
     // 公式Blueskyアプリ等からのログイン用アプリパスワード。管理UIはドロワー(BskyAppPasswords)
     const [appPasswordsOpen, setAppPasswordsOpen] = useState(false)
     const appPasswordSupported = 'world.concrnt.atproto.appPasswords' in (client.server?.endpoints ?? {})
+    const changeHandleSupported = 'world.concrnt.atproto.changeHandle' in (client.server?.endpoints ?? {})
 
     const updateInfo = () => {
         client.api
@@ -295,6 +301,96 @@ export const Bluesky = () => {
                         <Text>{t('active')}</Text>
                         <Text>{t('yourHandle', { handle: info.entity.handle })}</Text>
                         <Text variant="caption">{info.entity.did}</Text>
+                        {changeDone && <Text variant="caption">{t('changeHandleDone')}</Text>}
+                        {changeHandleSupported && !changingHandle && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setHandleDraft('')
+                                    setChangeError(undefined)
+                                    setChangeDone(false)
+                                    setChangingHandle(true)
+                                }}
+                            >
+                                {t('changeHandle')}
+                            </Button>
+                        )}
+                        {changingHandle && (
+                            <>
+                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
+                                    {t('changeHandleTitle')}
+                                </Text>
+                                <Text>{t('changeHandleDescription')}</Text>
+                                <Text>{t('handleLabel')}</Text>
+                                <TextField
+                                    value={handleDraft}
+                                    placeholder="alice.example.com"
+                                    onChange={(e) => setHandleDraft(e.target.value)}
+                                />
+                                {handleOk && handle !== info.entity.handle && (
+                                    <>
+                                        <Text>{t('verifyDnsInstruction')}</Text>
+                                        <RecordRow name={`_atproto.${handle}`} value={`did=${info.entity.did}`} />
+                                        <Text>{t('verifyWellKnownInstruction')}</Text>
+                                        <RecordRow
+                                            name={`https://${handle}/.well-known/atproto-did`}
+                                            value={info.entity.did}
+                                        />
+                                        <Text>{t('changeHandleNote')}</Text>
+                                    </>
+                                )}
+                                {changeError && <Text style={{ color: '#ff5b5b' }}>{changeError}</Text>}
+                                <Button
+                                    disabled={!handleOk || handle === info.entity.handle || changeBusy}
+                                    onClick={() => {
+                                        setChangeBusy(true)
+                                        setChangeError(undefined)
+                                        client.api
+                                            .callConcrntApi<BskyEntity>(
+                                                client.server.domain,
+                                                'world.concrnt.atproto.changeHandle',
+                                                {},
+                                                {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ handle })
+                                                }
+                                            )
+                                            .then(() => {
+                                                setChangingHandle(false)
+                                                setChangeDone(true)
+                                                updateInfo()
+                                            })
+                                            .catch((err) => {
+                                                console.log(err)
+                                                const msg = err instanceof Error ? err.message : ''
+                                                setChangeError(
+                                                    msg.includes('handle already taken')
+                                                        ? t('changeHandleTaken')
+                                                        : msg.includes('handle_not_resolvable') ||
+                                                            msg.includes('did_mismatch')
+                                                          ? t('changeHandleUnverified')
+                                                          : t('changeHandleFailed')
+                                                )
+                                            })
+                                            .finally(() => {
+                                                setChangeBusy(false)
+                                            })
+                                    }}
+                                >
+                                    {t('changeHandleSubmit')}
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setChangeError(undefined)
+                                        setChangingHandle(false)
+                                    }}
+                                >
+                                    {t('cancelEdit')}
+                                </Button>
+                            </>
+                        )}
                         <div
                             style={{
                                 display: 'flex',
