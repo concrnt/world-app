@@ -573,6 +573,8 @@
             "hidePost": "投稿を隠す"
         },
         "mediaGallery": {
+            "play": "再生",
+            "expand": "拡大",
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",
             "flagWarn": "注意",

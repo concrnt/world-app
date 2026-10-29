@@ -574,6 +574,8 @@
             "hidePost": "Hide post"
         },
         "mediaGallery": {
+            "play": "Play",
+            "expand": "Expand",
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
             "flagWarn": "Content Warning",
