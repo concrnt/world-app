@@ -125,209 +125,216 @@ export const GuestPostView = (props: Props) => {
         <>
             <View style={props.embedded ? { margin: 0 } : undefined}>
                 {!props.embedded && <Header>Message</Header>}
-                <div
-                    style={{
-                        padding: CssVar.space(1)
-                    }}
-                >
-                    <ErrorBoundary FallbackComponent={RestrictedFallback}>
-                        <Suspense fallback={<MessageSkeleton />}>
-                            {!props.embedded && <PostHead uri={props.uri} />}
-                            <MessageContainer uri={props.uri} forceExpanded detail />
-                        </Suspense>
-                    </ErrorBoundary>
-                </div>
-                <Divider />
-                <Tabs>
-                    <Tab
-                        selected={tab === 'replies'}
-                        onClick={() => setTab('replies')}
-                        groupId="post-detail-tabs"
-                        style={{ color: CssVar.contentText, flex: 1 }}
+                <div style={{ flex: 1, overflowY: 'auto', touchAction: 'pan-y' }}>
+                    <div
+                        style={{
+                            padding: CssVar.space(1)
+                        }}
                     >
-                        Replies
-                    </Tab>
-                    <Tab
-                        selected={tab === 'reroutes'}
-                        onClick={() => setTab('reroutes')}
-                        groupId="post-detail-tabs"
-                        style={{ color: CssVar.contentText, flex: 1 }}
+                        <ErrorBoundary FallbackComponent={RestrictedFallback}>
+                            <Suspense fallback={<MessageSkeleton />}>
+                                {!props.embedded && <PostHead uri={props.uri} />}
+                                <MessageContainer uri={props.uri} forceExpanded detail />
+                            </Suspense>
+                        </ErrorBoundary>
+                    </div>
+                    <Divider />
+                    <Tabs>
+                        <Tab
+                            selected={tab === 'replies'}
+                            onClick={() => setTab('replies')}
+                            groupId="post-detail-tabs"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Replies
+                        </Tab>
+                        <Tab
+                            selected={tab === 'reroutes'}
+                            onClick={() => setTab('reroutes')}
+                            groupId="post-detail-tabs"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Reroutes
+                        </Tab>
+                        <Tab
+                            selected={tab === 'favorites'}
+                            onClick={() => setTab('favorites')}
+                            groupId="post-detail-tabs"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Favorites
+                        </Tab>
+                        <Tab
+                            selected={tab === 'reactions'}
+                            onClick={() => setTab('reactions')}
+                            groupId="post-detail-tabs"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Reactions
+                        </Tab>
+                    </Tabs>
+
+                    <div
+                        style={{
+                            padding: CssVar.space(1),
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(1)
+                        }}
                     >
-                        Reroutes
-                    </Tab>
-                    <Tab
-                        selected={tab === 'favorites'}
-                        onClick={() => setTab('favorites')}
-                        groupId="post-detail-tabs"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Favorites
-                    </Tab>
-                    <Tab
-                        selected={tab === 'reactions'}
-                        onClick={() => setTab('reactions')}
-                        groupId="post-detail-tabs"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Reactions
-                    </Tab>
-                </Tabs>
+                        {loading && (
+                            <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
+                                <Text>{t('loading')}</Text>
+                            </div>
+                        )}
 
-                <div
-                    style={{
-                        padding: CssVar.space(1),
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: CssVar.space(1)
-                    }}
-                >
-                    {loading && (
-                        <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                            <Text>{t('loading')}</Text>
-                        </div>
-                    )}
+                        {!loading && tab === 'replies' && (
+                            <>
+                                {replies.length === 0 && (
+                                    <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
+                                        <Text>{t('noReplies')}</Text>
+                                    </div>
+                                )}
+                                {replies.map((reply) => (
+                                    <div
+                                        key={reply.ccfs}
+                                        style={{
+                                            backgroundColor: CssVar.contentBackground,
+                                            borderRadius: CssVar.round(1),
+                                            padding: CssVar.space(1)
+                                        }}
+                                    >
+                                        <ErrorBoundary FallbackComponent={RenderError}>
+                                            <Suspense fallback={<MessageSkeleton />}>
+                                                <MessageContainer uri={reply.value.targetURI} />
+                                            </Suspense>
+                                        </ErrorBoundary>
+                                    </div>
+                                ))}
+                            </>
+                        )}
 
-                    {!loading && tab === 'replies' && (
-                        <>
-                            {replies.length === 0 && (
-                                <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>{t('noReplies')}</Text>
-                                </div>
-                            )}
-                            {replies.map((reply) => (
-                                <div
-                                    key={reply.ccfs}
-                                    style={{
-                                        backgroundColor: CssVar.contentBackground,
-                                        borderRadius: CssVar.round(1),
-                                        padding: CssVar.space(1)
-                                    }}
-                                >
-                                    <ErrorBoundary FallbackComponent={RenderError}>
-                                        <Suspense fallback={<MessageSkeleton />}>
-                                            <MessageContainer uri={reply.value.targetURI} />
-                                        </Suspense>
-                                    </ErrorBoundary>
-                                </div>
-                            ))}
-                        </>
-                    )}
+                        {!loading && tab === 'reroutes' && (
+                            <>
+                                {reroutes.length === 0 && (
+                                    <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
+                                        <Text>{t('noReroutes')}</Text>
+                                    </div>
+                                )}
+                                {reroutes.map((reroute) => (
+                                    <AssociationUserItem
+                                        key={reroute.ccfs}
+                                        ccid={reroute.author}
+                                        date={reroute.createdAt}
+                                        onClick={() => navigate('/profile/' + reroute.author)}
+                                    >
+                                        {t('rerouted')}
+                                    </AssociationUserItem>
+                                ))}
+                            </>
+                        )}
 
-                    {!loading && tab === 'reroutes' && (
-                        <>
-                            {reroutes.length === 0 && (
-                                <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>{t('noReroutes')}</Text>
-                                </div>
-                            )}
-                            {reroutes.map((reroute) => (
-                                <AssociationUserItem
-                                    key={reroute.ccfs}
-                                    ccid={reroute.author}
-                                    date={reroute.createdAt}
-                                    onClick={() => navigate('/profile/' + reroute.author)}
-                                >
-                                    {t('rerouted')}
-                                </AssociationUserItem>
-                            ))}
-                        </>
-                    )}
+                        {!loading && tab === 'favorites' && (
+                            <>
+                                {favorites.length === 0 && (
+                                    <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
+                                        <Text>{t('noFavorites')}</Text>
+                                    </div>
+                                )}
+                                {favorites.map((fav) => (
+                                    <AssociationUserItem
+                                        key={fav.ccfs}
+                                        ccid={fav.author}
+                                        date={fav.createdAt}
+                                        onClick={() => navigate('/profile/' + fav.author)}
+                                    >
+                                        {t('favorited')}
+                                    </AssociationUserItem>
+                                ))}
+                            </>
+                        )}
 
-                    {!loading && tab === 'favorites' && (
-                        <>
-                            {favorites.length === 0 && (
-                                <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>{t('noFavorites')}</Text>
-                                </div>
-                            )}
-                            {favorites.map((fav) => (
-                                <AssociationUserItem
-                                    key={fav.ccfs}
-                                    ccid={fav.author}
-                                    date={fav.createdAt}
-                                    onClick={() => navigate('/profile/' + fav.author)}
-                                >
-                                    {t('favorited')}
-                                </AssociationUserItem>
-                            ))}
-                        </>
-                    )}
+                        {!loading && tab === 'reactions' && (
+                            <>
+                                {Object.keys(reactionCounts).length === 0 && (
+                                    <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
+                                        <Text>{t('noReactions')}</Text>
+                                    </div>
+                                )}
 
-                    {!loading && tab === 'reactions' && (
-                        <>
-                            {Object.keys(reactionCounts).length === 0 && (
-                                <div style={{ padding: CssVar.space(2), textAlign: 'center', opacity: 0.5 }}>
-                                    <Text>{t('noReactions')}</Text>
-                                </div>
-                            )}
-
-                            {/* リアクション絵文字チップ一覧 */}
-                            {Object.keys(reactionCounts).length > 0 && (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '8px'
-                                    }}
-                                >
-                                    {Object.entries(reactionCounts).map(([imageUrl, count]) => (
-                                        <button
-                                            key={imageUrl}
-                                            onClick={() => fetchReactionMembers(imageUrl)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                padding: '4px 10px',
-                                                borderRadius: '16px',
-                                                border:
-                                                    selectedReaction === imageUrl
-                                                        ? `2px solid ${CssVar.contentLink}`
-                                                        : `1px solid ${CssVar.divider}`,
-                                                backgroundColor:
-                                                    selectedReaction === imageUrl
-                                                        ? CssVar.backdropBackground
-                                                        : 'transparent',
-                                                cursor: 'pointer',
-                                                color: CssVar.contentText,
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            <CCImage src={imageUrl} maxHeight={128} alt="" style={{ height: '20px' }} />
-                                            <span>{count}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* 選択中リアクションのメンバー一覧 */}
-                            {selectedReaction && (
-                                <>
-                                    <Divider />
-                                    {loadingMembers && (
-                                        <div
-                                            style={{
-                                                padding: CssVar.space(2),
-                                                textAlign: 'center',
-                                                opacity: 0.5
-                                            }}
-                                        >
-                                            <Text>{t('loading')}</Text>
-                                        </div>
-                                    )}
-                                    {!loadingMembers &&
-                                        reactionMembers.map((member) => (
-                                            <AssociationUserItem
-                                                key={member.ccfs}
-                                                ccid={member.author}
-                                                date={member.createdAt}
-                                                onClick={() => navigate('/profile/' + member.author)}
-                                            />
+                                {/* リアクション絵文字チップ一覧 */}
+                                {Object.keys(reactionCounts).length > 0 && (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        {Object.entries(reactionCounts).map(([imageUrl, count]) => (
+                                            <button
+                                                key={imageUrl}
+                                                onClick={() => fetchReactionMembers(imageUrl)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '16px',
+                                                    border:
+                                                        selectedReaction === imageUrl
+                                                            ? `2px solid ${CssVar.contentLink}`
+                                                            : `1px solid ${CssVar.divider}`,
+                                                    backgroundColor:
+                                                        selectedReaction === imageUrl
+                                                            ? CssVar.backdropBackground
+                                                            : 'transparent',
+                                                    cursor: 'pointer',
+                                                    color: CssVar.contentText,
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                <CCImage
+                                                    src={imageUrl}
+                                                    maxHeight={128}
+                                                    alt=""
+                                                    style={{ height: '20px' }}
+                                                />
+                                                <span>{count}</span>
+                                            </button>
                                         ))}
-                                </>
-                            )}
-                        </>
-                    )}
+                                    </div>
+                                )}
+
+                                {/* 選択中リアクションのメンバー一覧 */}
+                                {selectedReaction && (
+                                    <>
+                                        <Divider />
+                                        {loadingMembers && (
+                                            <div
+                                                style={{
+                                                    padding: CssVar.space(2),
+                                                    textAlign: 'center',
+                                                    opacity: 0.5
+                                                }}
+                                            >
+                                                <Text>{t('loading')}</Text>
+                                            </div>
+                                        )}
+                                        {!loadingMembers &&
+                                            reactionMembers.map((member) => (
+                                                <AssociationUserItem
+                                                    key={member.ccfs}
+                                                    ccid={member.author}
+                                                    date={member.createdAt}
+                                                    onClick={() => navigate('/profile/' + member.author)}
+                                                />
+                                            ))}
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </View>
         </>

@@ -12,7 +12,10 @@ import { Blurhash } from 'react-blurhash'
 import { MdVisibilityOff } from 'react-icons/md'
 import { useMediaViewer } from '../../contexts/MediaViewer'
 
-export type Media = NonNullable<MediaMessageSchema['medias']>[number]
+// aspectRatio は Bluesky の HLS 動画用(variant 切替で固有サイズが変わってもビューアの寸法を固定する)
+export type Media = NonNullable<MediaMessageSchema['medias']>[number] & {
+    aspectRatio?: { width: number; height: number }
+}
 
 interface Props {
     medias: Media[]

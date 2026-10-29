@@ -207,7 +207,14 @@ export const getPostMediaFlag = (post: BskyPostView): string | undefined => {
 // ラベルは投稿単位なので全画像に同じ flag を付ける
 export const getPostMedias = (
     post: BskyPostView
-): { mediaURL: string; mediaType: string; thumbnailURL?: string; altText?: string; flag?: string }[] => {
+): {
+    mediaURL: string
+    mediaType: string
+    thumbnailURL?: string
+    altText?: string
+    flag?: string
+    aspectRatio?: { width: number; height: number }
+}[] => {
     const flag = getPostMediaFlag(post)
     const video = getPostVideo(post)
     if (video) {
@@ -218,7 +225,8 @@ export const getPostMedias = (
                 mediaType: 'application/vnd.apple.mpegurl',
                 thumbnailURL: video.thumbnail,
                 altText: video.alt || undefined,
-                flag
+                flag,
+                aspectRatio: video.aspectRatio
             }
         ]
     }

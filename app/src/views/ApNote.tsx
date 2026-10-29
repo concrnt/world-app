@@ -87,124 +87,131 @@ export const ApNote = (props: Props) => {
     return (
         <View>
             <Header>ActivityPub Note</Header>
-            <div
-                style={{
-                    padding: CssVar.space(1)
-                }}
-            >
-                <Suspense fallback={<MessageSkeleton />}>
-                    <ActivitypubNote noteURL={props.note.id} actorURL={props.note.attributedTo} forceExpanded detail />
-                </Suspense>
+            <div style={{ flex: 1, overflowY: 'auto', touchAction: 'pan-y' }}>
+                <div
+                    style={{
+                        padding: CssVar.space(1)
+                    }}
+                >
+                    <Suspense fallback={<MessageSkeleton />}>
+                        <ActivitypubNote
+                            noteURL={props.note.id}
+                            actorURL={props.note.attributedTo}
+                            forceExpanded
+                            detail
+                        />
+                    </Suspense>
+                    <div
+                        style={{
+                            opacity: 0.45,
+                            pointerEvents: 'none',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: CssVar.space(3),
+                            // MessageLayoutのアバター列(40px)+gap(8px)ぶんを空けて実フッターと揃える
+                            paddingLeft: '48px',
+                            paddingTop: CssVar.space(1),
+                            color: CssVar.contentText
+                        }}
+                    >
+                        <MdReply size={20} />
+                        <MdRepeat size={20} />
+                        <MdStarOutline size={20} />
+                        <MdAddReaction size={20} />
+                        <MdMoreHoriz size={20} />
+                    </div>
+                </div>
+                <Divider />
                 <div
                     style={{
                         opacity: 0.45,
-                        pointerEvents: 'none',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: CssVar.space(3),
-                        // MessageLayoutのアバター列(40px)+gap(8px)ぶんを空けて実フッターと揃える
-                        paddingLeft: '48px',
-                        paddingTop: CssVar.space(1),
-                        color: CssVar.contentText
+                        pointerEvents: 'none'
                     }}
                 >
-                    <MdReply size={20} />
-                    <MdRepeat size={20} />
-                    <MdStarOutline size={20} />
-                    <MdAddReaction size={20} />
-                    <MdMoreHoriz size={20} />
+                    <Tabs>
+                        <Tab
+                            selected
+                            onClick={() => {}}
+                            groupId="ap-note-detail-tabs-disabled"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Replies
+                        </Tab>
+                        <Tab
+                            selected={false}
+                            onClick={() => {}}
+                            groupId="ap-note-detail-tabs-disabled"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Reroutes
+                        </Tab>
+                        <Tab
+                            selected={false}
+                            onClick={() => {}}
+                            groupId="ap-note-detail-tabs-disabled"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Favorites
+                        </Tab>
+                        <Tab
+                            selected={false}
+                            onClick={() => {}}
+                            groupId="ap-note-detail-tabs-disabled"
+                            style={{ color: CssVar.contentText, flex: 1 }}
+                        >
+                            Reactions
+                        </Tab>
+                    </Tabs>
                 </div>
-            </div>
-            <Divider />
-            <div
-                style={{
-                    opacity: 0.45,
-                    pointerEvents: 'none'
-                }}
-            >
-                <Tabs>
-                    <Tab
-                        selected
-                        onClick={() => {}}
-                        groupId="ap-note-detail-tabs-disabled"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Replies
-                    </Tab>
-                    <Tab
-                        selected={false}
-                        onClick={() => {}}
-                        groupId="ap-note-detail-tabs-disabled"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Reroutes
-                    </Tab>
-                    <Tab
-                        selected={false}
-                        onClick={() => {}}
-                        groupId="ap-note-detail-tabs-disabled"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Favorites
-                    </Tab>
-                    <Tab
-                        selected={false}
-                        onClick={() => {}}
-                        groupId="ap-note-detail-tabs-disabled"
-                        style={{ color: CssVar.contentText, flex: 1 }}
-                    >
-                        Reactions
-                    </Tab>
-                </Tabs>
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: CssVar.space(1),
-                    padding: CssVar.space(2)
-                }}
-            >
-                <Text style={{ opacity: 0.7 }}>{t('notImported')}</Text>
-                {importError && <Text style={{ color: '#ff5b5b' }}>{importError}</Text>}
-                {canImport && (
-                    <Button
-                        busyChildren={t('importing')}
-                        onClick={async () => {
-                            setImportError(null)
-                            try {
-                                const res = await client.api.callConcrntApi<{ key: string }>(
-                                    client.server.domain,
-                                    'net.concrnt.activitypub.import',
-                                    {},
-                                    {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ uri: props.note.id })
-                                    }
-                                )
-                                // 直前の存在チェックがKVSに負キャッシュ(404の記憶)を残しているため、
-                                // no-cacheで正エントリを取り直す(commit伝播待ちで1回だけリトライ)
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: CssVar.space(1),
+                        padding: CssVar.space(2)
+                    }}
+                >
+                    <Text style={{ opacity: 0.7 }}>{t('notImported')}</Text>
+                    {importError && <Text style={{ color: '#ff5b5b' }}>{importError}</Text>}
+                    {canImport && (
+                        <Button
+                            busyChildren={t('importing')}
+                            onClick={async () => {
+                                setImportError(null)
                                 try {
-                                    await client.api.getDocument(res.key, undefined, { cache: 'no-cache' })
-                                } catch {
-                                    await new Promise((resolve) => setTimeout(resolve, 500))
-                                    await client.api.getDocument(res.key, undefined, { cache: 'no-cache' })
+                                    const res = await client.api.callConcrntApi<{ key: string }>(
+                                        client.server.domain,
+                                        'net.concrnt.activitypub.import',
+                                        {},
+                                        {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ uri: props.note.id })
+                                        }
+                                    )
+                                    // 直前の存在チェックがKVSに負キャッシュ(404の記憶)を残しているため、
+                                    // no-cacheで正エントリを取り直す(commit伝播待ちで1回だけリトライ)
+                                    try {
+                                        await client.api.getDocument(res.key, undefined, { cache: 'no-cache' })
+                                    } catch {
+                                        await new Promise((resolve) => setTimeout(resolve, 500))
+                                        await client.api.getDocument(res.key, undefined, { cache: 'no-cache' })
+                                    }
+                                    // worldlib側のnullキャッシュも消してからPostViewへ切り替える
+                                    client.invalidateMessage(res.key)
+                                    setMessageUri(res.key)
+                                } catch (e) {
+                                    console.error('failed to import ap note:', e)
+                                    setImportError(t('importFailed'))
                                 }
-                                // worldlib側のnullキャッシュも消してからPostViewへ切り替える
-                                client.invalidateMessage(res.key)
-                                setMessageUri(res.key)
-                            } catch (e) {
-                                console.error('failed to import ap note:', e)
-                                setImportError(t('importFailed'))
-                            }
-                        }}
-                    >
-                        {t('import')}
-                    </Button>
-                )}
+                            }}
+                        >
+                            {t('import')}
+                        </Button>
+                    )}
+                </div>
             </div>
         </View>
     )
