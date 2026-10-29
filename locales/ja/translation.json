@@ -159,6 +159,7 @@
             "title": "メディア",
             "storageQuota": "ストレージ使用量",
             "noFiles": "メディアサーバーにファイルはまだありません。",
+            "play": "再生",
             "copyURL": "URLをコピー",
             "copyMarkdown": "Markdownをコピー",
             "delete": "削除",

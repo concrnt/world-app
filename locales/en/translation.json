@@ -159,6 +159,7 @@
             "title": "Media",
             "storageQuota": "Storage Usage",
             "noFiles": "No files on the media server yet.",
+            "play": "Play",
             "copyURL": "Copy URL",
             "copyMarkdown": "Copy Markdown",
             "delete": "Delete",
