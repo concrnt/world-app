@@ -32,6 +32,8 @@ export interface MediaItem {
     mediaType: string
     thumbnailURL?: string
     altText?: string
+    // HLS 動画は ABR の variant 切替で固有サイズが変わるので、要素の寸法はこの比率だけで決める
+    aspectRatio?: { width: number; height: number }
     // メディアを含む投稿のURI。あれば投稿パネル(デスクトップ)/ドロワー(モバイル)で投稿単体ビューを出す
     messageURI?: string
     // 元投稿の medias 内での位置と件数。コールバックモードでも投稿内のページインジケーターを出すために使う
@@ -131,6 +133,8 @@ export const MediaViewerProvider = (props: Props) => {
     // 最後に読み込みが完了(または失敗)した画像のsrc。現在のsrcと違う間は読み込み中とみなし、
     // 前の画像の上にスピナーを重ねて「次へ」への反応を即座に返す
     const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
+    // embed に aspectRatio が無い HLS 動画は loadedmetadata の最初の variant で比率を確定して以後固定する
+    const [metadataRatio, setMetadataRatio] = useState<{ src: string; ratio: number } | null>(null)
 
     const currentMedia = source?.getMedia(currentIndex) ?? null
     const prevMedia = currentIndex > 0 ? (source?.getMedia(currentIndex - 1) ?? null) : null
@@ -720,6 +724,15 @@ export const MediaViewerProvider = (props: Props) => {
 
     const isImage = currentMedia?.mediaType.startsWith('image/') ?? false
     const currentSrc = isImage && currentMedia ? getImageURL(currentMedia.mediaURL) : null
+    const isHls = currentMedia?.mediaType === 'application/vnd.apple.mpegurl'
+    // HLS は固有サイズ(variant の解像度)に依らず比率×表示枠で寸法を決める。mp4 は従来どおり固有サイズ
+    const videoRatio = !isHls
+        ? undefined
+        : currentMedia.aspectRatio
+          ? currentMedia.aspectRatio.width / currentMedia.aspectRatio.height
+          : metadataRatio?.src === currentMedia.mediaURL
+            ? metadataRatio.ratio
+            : undefined
     const imageLoading = currentSrc !== null && currentSrc !== loadedSrc
     // 画像の取得待ち、または末尾での追加読み込み待ち
     const showSpinner = imageLoading || loadingMore
@@ -870,9 +883,26 @@ export const MediaViewerProvider = (props: Props) => {
                                             controls
                                             autoPlay
                                             playsInline
-                                            style={{
-                                                maxWidth: '90%',
-                                                maxHeight: '85dvh'
+                                            style={
+                                                videoRatio !== undefined
+                                                    ? {
+                                                          width: `min(90%, calc(85dvh * ${videoRatio}))`,
+                                                          aspectRatio: String(videoRatio)
+                                                      }
+                                                    : {
+                                                          maxWidth: '90%',
+                                                          maxHeight: '85dvh'
+                                                      }
+                                            }
+                                            onLoadedMetadata={(e) => {
+                                                if (!isHls || currentMedia.aspectRatio) return
+                                                if (metadataRatio?.src === currentMedia.mediaURL) return
+                                                const v = e.currentTarget
+                                                if (!v.videoWidth || !v.videoHeight) return
+                                                setMetadataRatio({
+                                                    src: currentMedia.mediaURL,
+                                                    ratio: v.videoWidth / v.videoHeight
+                                                })
                                             }}
                                             onClick={(e) => e.stopPropagation()}
                                         />
