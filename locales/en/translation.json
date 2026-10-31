@@ -159,6 +159,7 @@
             "title": "Media",
             "storageQuota": "Storage Usage",
             "noFiles": "No files on the media server yet.",
+            "play": "Play",
             "copyURL": "Copy URL",
             "copyMarkdown": "Copy Markdown",
             "delete": "Delete",
@@ -471,6 +472,10 @@
             "announce": "Re-send to Bluesky",
             "announceDone": "Re-sent. It can take a few minutes to be reflected.",
             "announceFailed": "Re-send failed. Please wait a while and try again.",
+            "inboxPolicyBroken": "There is a problem with the inbox timeline permissions. Posts from Bluesky cannot be delivered.",
+            "repair": "Repair",
+            "repairing": "Repairing...",
+            "repairFailed": "Repair failed. Please try again later.",
             "enabledToggle": "Enable federation",
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to Bluesky. If none are set, your home timeline is used.",
@@ -574,6 +579,8 @@
             "hidePost": "Hide post"
         },
         "mediaGallery": {
+            "play": "Play",
+            "expand": "Expand",
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
             "flagWarn": "Content Warning",

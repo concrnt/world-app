@@ -159,6 +159,7 @@
             "title": "メディア",
             "storageQuota": "ストレージ使用量",
             "noFiles": "メディアサーバーにファイルはまだありません。",
+            "play": "再生",
             "copyURL": "URLをコピー",
             "copyMarkdown": "Markdownをコピー",
             "delete": "削除",
@@ -470,6 +471,10 @@
             "announce": "Blueskyに再送信",
             "announceDone": "再送信しました。反映まで数分かかることがあります。",
             "announceFailed": "再送信に失敗しました。しばらく待ってから再試行してください。",
+            "inboxPolicyBroken": "受信タイムラインの権限設定に問題があり、Blueskyからの投稿が届かない状態です。",
+            "repair": "修復する",
+            "repairing": "修復中...",
+            "repairFailed": "修復に失敗しました。時間をおいて再度お試しください。",
             "enabledToggle": "連携を有効にする",
             "forwardTimeline": "転送元タイムライン",
             "forwardTimelineDesc": "選択したタイムラインへの自分の投稿がBlueskyへ転送されます。未設定の場合はホームタイムラインが使用されます。",
@@ -573,6 +578,8 @@
             "hidePost": "投稿を隠す"
         },
         "mediaGallery": {
+            "play": "再生",
+            "expand": "拡大",
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",
             "flagWarn": "注意",

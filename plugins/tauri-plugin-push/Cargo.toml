@@ -6,6 +6,7 @@ description = "Native push notification registration (APNs/FCM token + on-device
 edition = "2021"
 rust-version = "1.77.2"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
+build = "build.rs"
 links = "tauri-plugin-push"
 
 [dependencies]

@@ -6,7 +6,7 @@ import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { useMediaViewer } from '../contexts/MediaViewer'
-import { MdMoreHoriz } from 'react-icons/md'
+import { MdMoreHoriz, MdPlayCircle } from 'react-icons/md'
 
 interface StorageFile {
     id: string
@@ -214,8 +214,11 @@ const FileCard = (props: { file: StorageFile; onDelete: (id: string) => void }) 
     const mediaViewer = useMediaViewer()
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    // 動画はタップされるまで取得しない
+    const [playing, setPlaying] = useState(false)
 
     const file = props.file
+    const isVideo = file.mime.startsWith('video/')
     const sizeMB = file.size / 1000 / 1000
 
     return (
@@ -223,6 +226,10 @@ const FileCard = (props: { file: StorageFile; onDelete: (id: string) => void }) 
         <>
             <div
                 onClick={() => {
+                    if (isVideo) {
+                        setPlaying(true)
+                        return
+                    }
                     mediaViewer.open([{ mediaURL: file.url, mediaType: file.mime }])
                 }}
                 style={{
@@ -247,6 +254,42 @@ const FileCard = (props: { file: StorageFile; onDelete: (id: string) => void }) 
                             display: 'block'
                         }}
                     />
+                ) : isVideo && playing ? (
+                    <video
+                        src={file.url}
+                        controls
+                        autoPlay
+                        playsInline
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                            backgroundColor: '#000'
+                        }}
+                    />
+                ) : isVideo ? (
+                    <div
+                        role="button"
+                        aria-label={t('play')}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: CssVar.space(1),
+                            backgroundColor: '#111',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }}
+                    >
+                        <MdPlayCircle size={40} />
+                        <Text variant="caption" style={{ margin: 0, color: 'inherit' }}>
+                            {file.mime}
+                        </Text>
+                    </div>
                 ) : (
                     <div
                         style={{

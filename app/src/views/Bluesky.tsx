@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { useStack } from '../layouts/Stack'
 import { BskyView } from './BskyView'
-import { NotFoundError } from '@concrnt/client'
+import { NotFoundError, type Document, type PolicyEntry } from '@concrnt/client'
 import { Schemas, semantics } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
@@ -56,6 +56,12 @@ export const Bluesky = () => {
     const [changeBusy, setChangeBusy] = useState(false)
     const [changeError, setChangeError] = useState<string>()
     const [changeDone, setChangeDone] = useState(false)
+
+    // 配送時のrequesterはブリッジのserviceCcidなので、inboxのallow-writersに現在のIDが
+    // 含まれていないと受信が全て拒否される(AP設定画面と同型の検知+修復)
+    const allowWriters = 'https://policy.concrnt.world/t/allow-writers.json'
+    const [inboxPolicyBroken, setInboxPolicyBroken] = useState(false)
+    const [repairError, setRepairError] = useState(false)
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
@@ -139,8 +145,20 @@ export const Bluesky = () => {
 
         const inboxUri = inboxKey(client.ccid)
         client.api
-            .getDocument(inboxUri)
-            .then((_doc) => {})
+            .getDocument<any>(inboxUri)
+            .then((doc) => {
+                if (!info?.serviceCcid) return
+                setInboxPolicyBroken(
+                    !(
+                        doc.policy?.entries?.some(
+                            (e: PolicyEntry) =>
+                                e.url === allowWriters &&
+                                Array.isArray(e.params?.entities) &&
+                                e.params.entities.includes(info.serviceCcid)
+                        ) ?? false
+                    )
+                )
+            })
             .catch((err) => {
                 if (err instanceof NotFoundError && info?.serviceCcid) {
                     console.log('Inbox not found. creating...')
@@ -167,6 +185,55 @@ export const Bluesky = () => {
                 }
             })
     }, [active])
+
+    const repairInboxPolicy = async (): Promise<void> => {
+        setRepairError(false)
+        try {
+            // マウント時のIDは古いかもしれないので、押下時点で取り直す
+            const fresh = await client.api.callConcrntApi<BridgeInfo>(
+                client.server.domain,
+                'world.concrnt.atproto.info',
+                {}
+            )
+            if (!fresh.serviceCcid) throw new Error('bridge info has no serviceCcid')
+            const inboxUri = inboxKey(client.ccid)
+            // staleキャッシュ由来の誤検知のまま上書きしないよう、書き込み前にno-cacheで確定させる
+            let doc: Document<any> | null = null
+            try {
+                doc = await client.api.getDocument<any>(inboxUri, undefined, { cache: 'no-cache' })
+            } catch (err) {
+                if (!(err instanceof NotFoundError)) throw err
+            }
+            const alreadyOk =
+                doc?.policy?.entries?.some(
+                    (e: PolicyEntry) =>
+                        e.url === allowWriters &&
+                        Array.isArray(e.params?.entities) &&
+                        e.params.entities.includes(fresh.serviceCcid)
+                ) ?? false
+            if (alreadyOk) {
+                setInboxPolicyBroken(false)
+                return
+            }
+            // allow-writers系entryは全て除去して正規形1本に置換(誤IDに書き込み権を残さない)。
+            // restrict-readers等の他entryは温存
+            const entries = (doc?.policy?.entries ?? []).filter((e: PolicyEntry) => e.url !== allowWriters)
+            entries.push({ url: allowWriters, params: { entities: [fresh.serviceCcid] } })
+            await client.api.commit({
+                kind: 'record' as const,
+                key: inboxUri,
+                author: client.ccid,
+                schema: doc?.schema ?? Schemas.userTimeline,
+                value: doc?.value ?? {},
+                createdAt: new Date(),
+                policy: { entries }
+            })
+            setInboxPolicyBroken(false)
+        } catch (err) {
+            console.error('failed to repair inbox policy:', err)
+            setRepairError(true)
+        }
+    }
 
     return (
         <View>
@@ -301,6 +368,21 @@ export const Bluesky = () => {
                         <Text>{t('active')}</Text>
                         <Text>{t('yourHandle', { handle: info.entity.handle })}</Text>
                         <Text variant="caption">{info.entity.did}</Text>
+                        {inboxPolicyBroken && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                                <Text variant="caption" style={{ color: 'red' }}>
+                                    {t('inboxPolicyBroken')}
+                                </Text>
+                                <Button variant="text" busyChildren={t('repairing')} onClick={repairInboxPolicy}>
+                                    {t('repair')}
+                                </Button>
+                            </div>
+                        )}
+                        {repairError && (
+                            <Text variant="caption" style={{ color: 'red' }}>
+                                {t('repairFailed')}
+                            </Text>
+                        )}
                         {changeDone && <Text variant="caption">{t('changeHandleDone')}</Text>}
                         {changeHandleSupported && !changingHandle && (
                             <Button

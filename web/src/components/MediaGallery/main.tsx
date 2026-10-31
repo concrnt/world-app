@@ -36,6 +36,7 @@ export const MediaGallery = (props: Props) => {
                 <MediaTile
                     key={index}
                     media={media}
+                    playable
                     onClick={() => {
                         mediaViewer.open(
                             props.medias.map((m) => ({ ...m, messageURI: props.messageURI })),
@@ -53,6 +54,8 @@ export const MediaTile = (props: {
     onClick?: () => void
     style?: CSSProperties
     objectFit?: 'contain' | 'cover'
+    // 動画をタイル内で再生する(onClick は拡大ボタンに回る)。メディアグリッドのような一覧では使わない
+    playable?: boolean
 }) => {
     const { t } = useTranslation('', { keyPrefix: 'components.mediaGallery' })
     // 解除状態はURL単位でセッション内共有する(v1と同じ。画面遷移でアンマウントされても再ブラーしない)
@@ -66,6 +69,10 @@ export const MediaTile = (props: {
         hard: t('flagHard')
     }
     const flagLabel = props.media.flag ? (flagLabels[props.media.flag] ?? props.media.flag) : undefined
+    const isVideo =
+        props.media.mediaType.startsWith('video/') || props.media.mediaType === 'application/vnd.apple.mpegurl'
+    // インライン再生中はネイティブコントロールが下端に出るので「再度隠す」は上端に逃がす(右上は拡大ボタン)
+    const inlineVideo = !!props.playable && isVideo
 
     return (
         <div
@@ -140,7 +147,11 @@ export const MediaTile = (props: {
                         height: '100%'
                     }}
                 >
-                    <MediaBody media={props.media} objectFit={props.objectFit} />
+                    <MediaBody
+                        media={props.media}
+                        objectFit={props.objectFit}
+                        onExpand={inlineVideo ? props.onClick : undefined}
+                    />
                 </div>
             )}
             {hidden && (
@@ -173,12 +184,22 @@ export const MediaTile = (props: {
                         sessionStorage.removeItem('reveal:' + props.media.mediaURL)
                         setRevealed(false)
                     }}
-                    style={{
-                        position: 'absolute',
-                        bottom: '4px',
-                        right: '4px',
-                        color: 'rgba(255, 255, 255, 0.6)'
-                    }}
+                    style={
+                        inlineVideo
+                            ? {
+                                  position: 'absolute',
+                                  top: '4px',
+                                  left: '4px',
+                                  color: 'rgba(255, 255, 255, 0.8)',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.4)'
+                              }
+                            : {
+                                  position: 'absolute',
+                                  bottom: '4px',
+                                  right: '4px',
+                                  color: 'rgba(255, 255, 255, 0.6)'
+                              }
+                    }
                 >
                     <MdVisibilityOff size={20} />
                 </IconButton>
@@ -187,14 +208,14 @@ export const MediaTile = (props: {
     )
 }
 
-const MediaBody = (props: { media: Media; objectFit?: 'contain' | 'cover' }) => {
+const MediaBody = (props: { media: Media; objectFit?: 'contain' | 'cover'; onExpand?: () => void }) => {
     const kind =
         props.media.mediaType === 'application/vnd.apple.mpegurl' ? 'video' : props.media.mediaType.split('/')[0]
     switch (kind) {
         case 'image':
             return <GalleryImage media={props.media} objectFit={props.objectFit} />
         case 'video':
-            return <GalleryVideo media={props.media} objectFit={props.objectFit} />
+            return <GalleryVideo media={props.media} objectFit={props.objectFit} onExpand={props.onExpand} />
         case 'audio':
             return <GalleryAudio media={props.media} />
         case 'model':
