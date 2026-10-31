@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { Api, InMemoryAuthProvider, InMemoryKVS } from '@concrnt/client'
 import { Button, ConcrntLogo, CssVar, HorizontalLayout, Text, TextField } from '@concrnt/ui'
+import { safeHttpUrl } from '@concrnt/worldlib'
 import css from './Register.module.css'
 
 export const Register = () => {
@@ -93,7 +94,8 @@ export const Inner = (props: {
     const encodedDocument = searchParams.get('document')
     const registration = encodedDocument ? atob(encodedDocument.replace('-', '+').replace('_', '/')) : null
     const signature = searchParams.get('signature')
-    const callback = searchParams.get('callback')
+    // 登録後の戻り先は外部から渡される。javascript: 等を location.href に流さないよう http(s) 以外は捨てる
+    const callback = safeHttpUrl(searchParams.get('callback'))
 
     const signedObj = useMemo(() => {
         if (!registration) return null
