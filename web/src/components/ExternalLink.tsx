@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { safeHttpUrl } from '@concrnt/worldlib'
 
 interface Props {
     href: string
@@ -8,12 +9,15 @@ interface Props {
 }
 
 // アプリ外URLへのアンカー。concrnt.worldオリジンの共有URLは新しいタブに出さず内部ルートで開く。
-// それ以外は素の<a target="_blank">
+// それ以外は素の<a target="_blank">。
+// hrefは投稿本文やリモートの文書など外部入力なので、http(s)以外はリンクにせず文字列だけ出す
 export const ExternalLink = (props: Props) => {
     const navigate = useNavigate()
+    const href = safeHttpUrl(props.href)
+    if (!href) return <span style={props.style}>{props.children}</span>
     return (
         <a
-            href={props.href}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             style={props.style}
@@ -21,7 +25,7 @@ export const ExternalLink = (props: Props) => {
                 e.stopPropagation()
                 let parsed: URL
                 try {
-                    parsed = new URL(props.href)
+                    parsed = new URL(href)
                 } catch {
                     return
                 }

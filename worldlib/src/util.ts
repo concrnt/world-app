@@ -10,6 +10,21 @@ export function isNonNullOrUndefined<T>(value: T | null | undefined): value is T
     return value !== null && value !== undefined
 }
 
+// 外部入力 (クエリパラメータ、リモートの文書、CFM/Bluesky/AP 由来のリンク) をナビゲーション先
+// (href / window.open / openUrl / location.href) に使う前の検証。http/https 以外 (javascript:, data:,
+// 独自スキーム, 相対URL) と parse できない文字列は null。成功時は入力文字列をそのまま返す
+// (URL オブジェクトで再構成すると表示や送信先が意図せず正規化されるため)
+export function safeHttpUrl(text: string | null | undefined): string | null {
+    if (!text) return null
+    try {
+        const url = new URL(text)
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+        return text
+    } catch {
+        return null
+    }
+}
+
 // http(s)のmanifest URLで指定される静的chunklineタイムライン。cckvの作成物ではないので
 // ドキュメント解決・投稿・リアルタイム購読の対象外で、読み出しはサーバーのtimeline APIにそのまま渡す
 export function isStaticTimelineURI(uri: string): boolean {

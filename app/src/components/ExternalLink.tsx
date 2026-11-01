@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import { safeHttpUrl } from '@concrnt/worldlib'
 import { useStack } from '../layouts/Stack'
 import { PostView } from '../views/Post'
 import { TimelineView } from '../views/Timeline'
@@ -16,12 +17,15 @@ interface Props {
 // アプリ外URLへのアンカー。concrnt.worldオリジンの共有URLは外部ブラウザに出さず、
 // 対応するビューを最寄りのスタックに積む(StackLayout外ではpushは既定のno-op)。
 // それ以外はOSの既定ブラウザで開く(openUrlの第2引数なし = inAppBrowserではない)。
-// ビューの参照はクリック時に行う: モジュール先頭で参照すると循環importで未初期化になる
+// ビューの参照はクリック時に行う: モジュール先頭で参照すると循環importで未初期化になる。
+// hrefは投稿本文やリモートの文書など外部入力なので、http(s)以外はリンクにせず文字列だけ出す
 export const ExternalLink = (props: Props) => {
     const { push } = useStack()
+    const href = safeHttpUrl(props.href)
+    if (!href) return <span style={props.style}>{props.children}</span>
     return (
         <a
-            href={props.href}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             style={props.style}
@@ -30,7 +34,7 @@ export const ExternalLink = (props: Props) => {
                 e.preventDefault()
                 let parsed: URL | null = null
                 try {
-                    parsed = new URL(props.href)
+                    parsed = new URL(href)
                 } catch {
                     parsed = null
                 }
@@ -59,7 +63,7 @@ export const ExternalLink = (props: Props) => {
                         return
                     }
                 }
-                openUrl(props.href)
+                openUrl(href)
             }}
         >
             {props.children}
