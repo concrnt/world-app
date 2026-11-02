@@ -13,8 +13,8 @@ importers:
         version: 2.0.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^4.20260702.1
-        version: 4.20260702.1
+        specifier: ^5.20261030.1
+        version: 5.20261030.1
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
@@ -47,7 +47,7 @@ importers:
         version: 8.72.1(eslint@9.39.4)(typescript@5.9.3)
       wrangler:
         specifier: ^4.156.0
-        version: 4.156.0(@cloudflare/workers-types@4.20260702.1)
+        version: 4.156.0(@cloudflare/workers-types@5.20261030.1)
 
   app:
     dependencies:
@@ -1149,8 +1149,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@4.20260702.1':
-    resolution: {integrity: sha512-mOhf5TUEB1m2vPrxtqoIGfz0fUC9xyxRDx5gWHy5s+OCo6dcV+g7wI1R7gYCMFohhqF/2y2xeKVwMwCJjfn/WA==}
+  '@cloudflare/workers-types@5.20261030.1':
+    resolution: {integrity: sha512-oKHewMzKBtXq3dWiYL9GpHFnBfg8juBOir9PPREMPT8G2MHotAxIBIQ2w1rpO1xCN9etRlAxJaeoQbMGSlXqlQ==}
 
   '@concrnt/cfm@0.0.0':
     resolution: {integrity: sha512-MvLqxM7KU8P7X7rw72iEiP8dk9GOzYzXKNtKNa1OZGGJqeIbXDnar6gKtv/OV1rlaZqzZDc+1qW0iDaeM1Adnw==}
@@ -6272,7 +6272,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20261023.1':
     optional: true
 
-  '@cloudflare/workers-types@4.20260702.1': {}
+  '@cloudflare/workers-types@5.20261030.1': {}
 
   '@concrnt/cfm@0.0.0': {}
 
@@ -10953,7 +10953,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20261023.1
       '@cloudflare/workerd-windows-64': 1.20261023.1
 
-  wrangler@4.156.0(@cloudflare/workers-types@4.20260702.1):
+  wrangler@4.156.0(@cloudflare/workers-types@5.20261030.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261023.1)
@@ -10964,7 +10964,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20261023.1
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20260702.1
+      '@cloudflare/workers-types': 5.20261030.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - '@types/node'
