@@ -11,7 +11,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260702.1",
+    "@cloudflare/workers-types": "^5.20261030.1",
     "@eslint/js": "^9.39.5",
     "@tauri-apps/cli": "^2.12.4",
     "eslint": "^9.39.2",
