@@ -32,7 +32,7 @@
     "react": "^19.3.1",
     "react-blurhash": "^0.3.0",
     "react-dom": "^19.3.1",
-    "react-easy-crop": "^5.5.7",
+    "react-easy-crop": "^6.2.4",
     "react-error-boundary": "^6.1.6",
     "react-google-recaptcha": "^3.1.0",
     "react-i18next": "^17.1.9",
