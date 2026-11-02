@@ -26,29 +26,29 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.1",
+    "@chromatic-com/storybook": "^5.6.0",
     "@eslint/js": "^9.39.1",
-    "@storybook/addon-a11y": "^10.2.11",
-    "@storybook/addon-docs": "^10.2.11",
-    "@storybook/addon-themes": "^10.2.12",
-    "@storybook/react-vite": "^10.2.11",
+    "@storybook/addon-a11y": "^10.6.5",
+    "@storybook/addon-docs": "^10.6.5",
+    "@storybook/addon-themes": "^10.6.5",
+    "@storybook/react-vite": "^10.6.5",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^16.5.0",
-    "storybook": "^10.6.2",
+    "storybook": "^10.6.5",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.48.0",
+    "typescript-eslint": "^8.72.1",
     "vite": "^7.3.1"
   },
   "dependencies": {
     "boring-avatars": "^2.0.4",
     "motion": "^12.23.26",
-    "react-syntax-highlighter": "^16.1.0"
+    "react-syntax-highlighter": "^16.1.2"
   }
 }
