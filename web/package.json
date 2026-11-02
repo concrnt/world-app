@@ -28,7 +28,7 @@
     "i18next": "^26.5.11",
     "i18next-browser-languagedetector": "^8.2.3",
     "mfm-js": "^0.28.0",
-    "motion": "^12.36.0",
+    "motion": "^14.8.0",
     "react": "^19.3.1",
     "react-blurhash": "^0.3.0",
     "react-dom": "^19.3.1",
