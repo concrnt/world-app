@@ -1240,11 +1240,11 @@
             "mismatch": "絵文字が一致しなかったため、ログインを中止しました。サイトの画面を確認してやり直してください。",
             "errorTitle": "ログインできません",
             "nothingSent": "サイトには何も送信していません。",
+            "postFailedTitle": "通信に失敗しました",
             "errors": {
                 "invalidUri": "ログイン要求の形式が正しくありません",
                 "invalidRequest": "ログイン要求の内容が正しくありません",
-                "signFailed": "署名できませんでした",
-                "postFailed": "サイトへの送信に失敗しました"
+                "signFailed": "署名できませんでした"
             }
         },
         "serverSelector": {

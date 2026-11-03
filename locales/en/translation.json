@@ -1241,11 +1241,11 @@
             "mismatch": "The emoji did not match, so the login was cancelled. Check the site and try again.",
             "errorTitle": "Cannot log in",
             "nothingSent": "Nothing was sent to the site.",
+            "postFailedTitle": "Communication failed",
             "errors": {
                 "invalidUri": "The login request is malformed",
                 "invalidRequest": "The login request is invalid",
-                "signFailed": "Could not sign",
-                "postFailed": "Could not send the response to the site"
+                "signFailed": "Could not sign"
             }
         },
         "serverSelector": {
