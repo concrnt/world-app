@@ -1,0 +1,17 @@
+.formShell,
+.formShell form {
+    width: 100%;
+}
+
+.formShell form {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--space) * 3);
+}
+
+.formShell fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}

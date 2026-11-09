@@ -22,6 +22,9 @@ export const SignalLoginConsent = (props: Props) => {
     const [pendingCkid, setPendingCkid] = useState<string | null>(null)
     const [pendingName, setPendingName] = useState<string | undefined>(undefined)
     const confirmResolveRef = useRef<((ok: boolean) => void) | null>(null)
+    // 読んだのが web の「このサーバーに登録する」QR だったとき(この端末には既にアカウントがある)
+    const [pendingRegisterDomain, setPendingRegisterDomain] = useState<string | null>(null)
+    const registerResolveRef = useRef<((ok: boolean) => void) | null>(null)
 
     const host = new URL(props.channelUrl).host
 
@@ -37,6 +40,13 @@ export const SignalLoginConsent = (props: Props) => {
         confirmResolveRef.current?.(ok)
         confirmResolveRef.current = null
         setPendingCkid(null)
+    }
+
+    const answerRegister = (ok: boolean) => {
+        registerResolveRef.current?.(ok)
+        registerResolveRef.current = null
+        setPendingRegisterDomain(null)
+        if (!ok) props.onComplete()
     }
 
     useEffect(() => {
@@ -69,6 +79,15 @@ export const SignalLoginConsent = (props: Props) => {
             () => {
                 setCompleted(true)
                 props.onComplete()
+            },
+            {
+                // 登録 QR: 既存アカウントで web をログインさせるかを一度だけ確認する。OK なら通常のログイン手順に合流
+                onRegisterRequest: (domain: string) => {
+                    setPendingRegisterDomain(domain)
+                    return new Promise<boolean>((resolve) => {
+                        registerResolveRef.current = resolve
+                    })
+                }
             }
         )
         return () => {
@@ -80,6 +99,32 @@ export const SignalLoginConsent = (props: Props) => {
 
     if (completed) {
         return <Text variant="h3">{t('loginCompleted')}</Text>
+    }
+
+    if (pendingRegisterDomain) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1.5) }}>
+                <Text variant="h4" style={{ margin: 0 }}>
+                    {t('alreadyHaveAccountTitle')}
+                </Text>
+                <Text style={{ margin: 0 }}>
+                    {t('alreadyHaveAccountDescription', {
+                        username: client.profile.username || client.ccid,
+                        accountDomain: client.server.domain,
+                        domain: pendingRegisterDomain
+                    })}
+                </Text>
+                <Text variant="caption" style={{ margin: 0, fontWeight: 'bold', color: 'inherit' }}>
+                    {t('linkWarning')}
+                </Text>
+                <div style={{ display: 'flex', gap: CssVar.space(1), justifyContent: 'flex-end' }}>
+                    <Button variant="outlined" onClick={() => answerRegister(false)}>
+                        {t('alreadyHaveAccountNo')}
+                    </Button>
+                    <Button onClick={() => answerRegister(true)}>{t('alreadyHaveAccountYes')}</Button>
+                </div>
+            </div>
+        )
     }
 
     if (pendingCkid) {

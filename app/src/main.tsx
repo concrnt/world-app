@@ -64,7 +64,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             failed={
                                 <OverlayStackProvider>
                                     <OverlayStackBackBridge />
-                                    <WelcomeView />
+                                    {/* ログイン前でも登録 QR (signal) を読めるようスキャナーを提供する */}
+                                    <ScannerProvider>
+                                        <WelcomeView />
+                                    </ScannerProvider>
                                 </OverlayStackProvider>
                             }
                         >

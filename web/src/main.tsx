@@ -55,7 +55,7 @@ import { Bluesky } from './views/Bluesky'
 import { BskyView } from './views/BskyView'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
-import { Signup } from './pages/Signup'
+import { Signup, SignupInBrowser } from './pages/Signup'
 import { WelcomePage } from './pages/Welcome'
 import { GuestShell } from './views/guest/GuestBase'
 import { GuestProfileView } from './views/guest/GuestProfile'
@@ -495,6 +495,14 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             element={
                                 <BaseThemeProvider theme={Themes.blue}>
                                     <Signup />
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route
+                            path="/signup/browser"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <SignupInBrowser />
                                 </BaseThemeProvider>
                             }
                         />
