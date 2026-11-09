@@ -11,7 +11,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261030.1",
+    "@cloudflare/workers-types": "^5.20261104.1",
     "@eslint/js": "^9.39.5",
     "@tauri-apps/cli": "^2.12.4",
     "eslint": "^9.39.2",
@@ -22,7 +22,7 @@
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "typescript-eslint": "^8.72.1",
-    "wrangler": "^4.156.0"
+    "wrangler": "^4.158.0"
   },
   "packageManager": "pnpm@10.33.0",
   "volta": {
