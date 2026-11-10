@@ -39,8 +39,12 @@ export interface AuthorizationRequestUri {
 export type ExternalAuthErrorCode = 'invalidUri' | 'invalidRequest' | 'signFailed' | 'postFailed'
 
 export class ExternalAuthError extends Error {
-    constructor(public readonly code: ExternalAuthErrorCode) {
-        super(code)
+    /** RP の開発者がデバッグに使う具体的な原因 (fetch の例外・HTTP ステータスと本文など)。画面にそのまま出す */
+    constructor(
+        public readonly code: ExternalAuthErrorCode,
+        public readonly detail?: string
+    ) {
+        super(detail ? `${code}: ${detail}` : code)
     }
 }
 
@@ -136,10 +140,10 @@ export const buildIdToken = async (client: Client, uri: AuthorizationRequestUri)
     let hex: string
     try {
         hex = await client.api.authProvider.signMaster(signingInput)
-    } catch {
-        throw new ExternalAuthError('signFailed')
+    } catch (e) {
+        throw new ExternalAuthError('signFailed', e instanceof Error ? `${e.name}: ${e.message}` : String(e))
     }
-    if (!/^[0-9a-f]{130}$/i.test(hex)) throw new ExternalAuthError('signFailed')
+    if (!/^[0-9a-f]{130}$/i.test(hex)) throw new ExternalAuthError('signFailed', `unexpected signature format: ${hex}`)
     const signature = Uint8Array.from(hex.match(/../g)!, (byte) => parseInt(byte, 16))
 
     return signingInput + '.' + base64url(signature)
@@ -149,18 +153,30 @@ export const buildIdToken = async (client: Client, uri: AuthorizationRequestUri)
 export const postResponse = async (redirectUri: string, params: Record<string, string>): Promise<void> => {
     let res: Response
     try {
-        // §8.1: リダイレクトに追従しない (MUST NOT)。redirect: 'manual' のリダイレクトは status 0 の
-        // opaqueredirect になるので、ok でないものを一律に失敗扱いにすればよい
+        // §8.1: リダイレクトに追従しない (MUST NOT)。redirect: 'manual' のリダイレクトは status 0 の opaqueredirect になる
         res = await fetch(redirectUri, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(params).toString(),
             redirect: 'manual'
         })
-    } catch {
-        throw new ExternalAuthError('postFailed')
+    } catch (e) {
+        // RP が処理済みでも、応答に Access-Control-Allow-Origin が無いとここに来る (中身は TypeError: Load failed 等)
+        throw new ExternalAuthError(
+            'postFailed',
+            `POST ${redirectUri}\n${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`
+        )
     }
-    if (!res.ok) throw new ExternalAuthError('postFailed')
+    if (res.type === 'opaqueredirect') {
+        throw new ExternalAuthError('postFailed', `POST ${redirectUri}\nredirect is not allowed (opaqueredirect)`)
+    }
+    if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new ExternalAuthError(
+            'postFailed',
+            `POST ${redirectUri}\nHTTP ${res.status} ${res.statusText}` + (body ? `\n${body.slice(0, 1000)}` : '')
+        )
+    }
 }
 
 // §8.2 fragment (同一端末): 応答パラメータをフラグメントに付けた送り先 URL を外部ブラウザで開く。
@@ -168,8 +184,11 @@ export const postResponse = async (redirectUri: string, params: Record<string, s
 export const openFragmentResponse = async (redirectUri: string, params: Record<string, string>): Promise<void> => {
     try {
         await openUrl(`${redirectUri}#${new URLSearchParams(params).toString()}`)
-    } catch {
-        throw new ExternalAuthError('postFailed')
+    } catch (e) {
+        throw new ExternalAuthError(
+            'postFailed',
+            `open ${redirectUri}\n${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`
+        )
     }
 }
 

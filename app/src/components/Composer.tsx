@@ -1013,16 +1013,20 @@ export const Composer = (props: Props) => {
                             {t('cannotPostOffline')}
                         </Text>
                     )}
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={cannotSubmit}
-                        endIcon={<MdSend />}
-                        style={{
-                            minWidth: '100px'
-                        }}
-                    >
-                        {getSubmitLabel()}
-                    </Button>
+                    {/* 押下でボタンへフォーカスが移るとtextareaがblurしてキーボードが閉じてしまうので防ぐ(clickは発火する)。
+                        投稿完了でコンポーザーが閉じるまでキーボードを出したままにする */}
+                    <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={cannotSubmit}
+                            endIcon={<MdSend />}
+                            style={{
+                                minWidth: '100px'
+                            }}
+                        >
+                            {getSubmitLabel()}
+                        </Button>
+                    </span>
                 </div>
             </div>
 

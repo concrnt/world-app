@@ -31,7 +31,7 @@ interface Props {
 type State =
     | { kind: 'consent'; uri: AuthorizationRequestUri; submitting: boolean }
     | { kind: 'done'; message: 'approved' | 'approvedFragment' | 'denied' | 'mismatch' }
-    | { kind: 'error'; code: ExternalAuthErrorCode }
+    | { kind: 'error'; code: ExternalAuthErrorCode; detail?: string }
 
 // §5.3: URI の検証。取得は無いので同期で済む。失敗しても RP には何も送らない
 const initialState = (text: string): State => {
@@ -69,7 +69,11 @@ export const ExternalAuthConsent = (props: Props) => {
             setState({ kind: 'done', message: uri.responseMode === 'fragment' ? 'approvedFragment' : 'approved' })
             props.onComplete('approved')
         } catch (e) {
-            setState({ kind: 'error', code: e instanceof ExternalAuthError ? e.code : 'signFailed' })
+            setState(
+                e instanceof ExternalAuthError
+                    ? { kind: 'error', code: e.code, detail: e.detail }
+                    : { kind: 'error', code: 'signFailed', detail: String(e) }
+            )
         }
     }
 
@@ -92,11 +96,34 @@ export const ExternalAuthConsent = (props: Props) => {
         choice === displayCode ? approve(uri) : deny(uri, 'mismatch')
 
     if (state.kind === 'error') {
+        // postFailed は RP に届いたかどうか分からない (処理済みで応答だけ読めないこともある) ので、送っていないとは言わない
         return (
             <div>
-                <Text variant="h3">{t('errorTitle')}</Text>
-                <Text>{t(`errors.${state.code}`)}</Text>
-                <Text variant="caption">{t('nothingSent')}</Text>
+                {state.code === 'postFailed' ? (
+                    <Text variant="h3">{t('postFailedTitle')}</Text>
+                ) : (
+                    <>
+                        <Text variant="h3">{t('errorTitle')}</Text>
+                        <Text>{t(`errors.${state.code}`)}</Text>
+                        <Text variant="caption">{t('nothingSent')}</Text>
+                    </>
+                )}
+                {state.detail && (
+                    <pre
+                        style={{
+                            margin: `${CssVar.space(1)} 0 0`,
+                            padding: CssVar.space(1),
+                            border: `1px solid ${CssVar.divider}`,
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all',
+                            userSelect: 'text'
+                        }}
+                    >
+                        {state.detail}
+                    </pre>
+                )}
             </div>
         )
     }
