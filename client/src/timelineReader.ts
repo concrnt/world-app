@@ -29,8 +29,6 @@ export class TimelineReader {
 
     // 先頭取得中に届いたsocketイベントの一時置き場(取得完了後に再生する)。nullなら通常配送
     private pendingEvents: RealtimeEvent[] | null = null
-    // 先頭取得の時点でsocketが未接続だった=接続完了までの新着を取りこぼしている可能性がある
-    private needsCatchUp = false
 
     constructor(api: Api, socket?: Socket, hostOverride?: string) {
         this.api = api
@@ -108,7 +106,6 @@ export class TimelineReader {
         this.pendingEvents = []
         this.socket?.listen(timelines, this.boundProcessEvent)
         this.socket?.addOpenListener(this.boundCatchUp)
-        this.needsCatchUp = !(this.socket?.isOpen ?? true)
 
         await this.api
             .getTimelineRecent(timelines, this.hostOverride)
@@ -140,17 +137,10 @@ export class TimelineReader {
     // socketのopen時(初回・再接続)に先頭ページを取り直し、まだ持っていない新着だけを先頭に足す。
     // (timeline.recentはsinceを受け付けないため先頭ページ丸ごと取り直してhrefで差分を取る。
     // 隙間が1ページを超える大量の新着は取りこぼすが、pull-to-refreshと同じ範囲)
-    // 初回openで先頭取得時点から購読済みだった(needsCatchUpがfalse)なら隙間はない。
-    // 再接続時は切断中のイベントを取りこぼしているので毎回行う
-    private catchUpDone = false
+    // openのたびに毎回行う。listen時点でsocketが開いていたreaderには初回openが届かず、最初に届く
+    // openがすでに再接続(=切断中のイベントを取りこぼしている)なので、初回だけ省くことはできない
     async catchUp(): Promise<void> {
         if (this.body.length === 0) return
-        if (!this.catchUpDone && !this.needsCatchUp) {
-            this.catchUpDone = true
-            return
-        }
-        this.catchUpDone = true
-        this.needsCatchUp = false
 
         const items = await this.api
             .getTimelineRecent(this.timelines, this.hostOverride)
@@ -198,15 +188,19 @@ export class TimelineReader {
         console.log('Reload!!!!!!!!!!!!!!!!!!!!!!!!')
         let hasMore = true
         this.haltUpdate = true
-        const items = await this.api.getTimelineRecent(this.timelines, this.hostOverride)
-        const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
-        this.body = itemsWithUpdate
-        this.chunkedBody = [itemsWithUpdate]
-        this.headLoaded = true
-        if (items.length < 16) {
-            hasMore = false
+        try {
+            const items = await this.api.getTimelineRecent(this.timelines, this.hostOverride)
+            const itemsWithUpdate = items.map((item) => Object.assign(item, { lastUpdate: new Date() }))
+            this.body = itemsWithUpdate
+            this.chunkedBody = [itemsWithUpdate]
+            this.headLoaded = true
+            if (items.length < 16) {
+                hasMore = false
+            }
+        } finally {
+            // 取得に失敗してもhaltしたままにしない(戻さないと以後のcreatedがbodyに入らなくなる)
+            this.haltUpdate = false
         }
-        this.haltUpdate = false
         this.onUpdate?.()
         return hasMore
     }
