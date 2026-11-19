@@ -19,6 +19,7 @@ import { CssVar } from '../types/Theme'
 import { Drawer } from './Drawer'
 import { Select } from './Select'
 import { Subscription } from './Subscription'
+import { CCUserAvatar } from './CCUserAvatar'
 import { MdArrowDropDown, MdCheck, MdChevronLeft, MdChevronRight, MdPlaylistAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -804,7 +805,10 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
                                         flexShrink: 0
                                     }}
                                 >
-                                    <TopAuthorAvatar ccid={ccid} />
+                                    <CCUserAvatar
+                                        ccid={ccid}
+                                        style={{ width: '22px', height: '22px', borderRadius: '50%' }}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -825,13 +829,6 @@ const CommunityResultCard = ({ community }: { community: CommunityHit }) => {
             </div>
         </div>
     )
-}
-
-// 並び順切替の遅延レンダー中に毎レンダー新しいPromiseを渡すとAvatarが解決→再サスペンドを繰り返して切替が確定しないので、CCIDごとにPromiseを固定する
-const TopAuthorAvatar = ({ ccid }: { ccid: string }) => {
-    const { client } = useClient()
-    const src = useMemo(() => client.getUser(ccid).then((user) => user?.profile.avatar), [client, ccid])
-    return <Avatar ccid={ccid} src={src} style={{ width: '22px', height: '22px', borderRadius: '50%' }} />
 }
 
 // ─── User card ────────────────────────────────────────────────────────────────

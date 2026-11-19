@@ -1,11 +1,9 @@
 import BoringAvatar from 'boring-avatars'
-import { Suspense, use, useDeferredValue } from 'react'
 import { CCImage } from '../contexts/CCImage'
-import { Skeleton } from './Skeleton'
 
 interface Props {
     ccid: string
-    src?: string | Promise<string | undefined>
+    src?: string
     style?: React.CSSProperties
     onClick?: () => void
     badge?: React.ReactNode
@@ -14,23 +12,7 @@ interface Props {
 }
 
 export const Avatar = (props: Props) => {
-    const body = (
-        <Suspense
-            fallback={
-                <Skeleton
-                    width="40px"
-                    height="40px"
-                    style={{
-                        display: 'block',
-                        borderRadius: '4px',
-                        ...props.style
-                    }}
-                />
-            }
-        >
-            {useDeferredValue(<Inner {...props} />)}
-        </Suspense>
-    )
+    const body = <Inner {...props} />
 
     if (!props.badge) return body
 
@@ -63,12 +45,10 @@ export const Avatar = (props: Props) => {
 }
 
 const Inner = (props: Props) => {
-    const src = props.src instanceof Promise ? use(props.src) : props.src
-
-    if (src) {
+    if (props.src) {
         return (
             <CCImage
-                src={src}
+                src={props.src}
                 maxWidth={256}
                 alt="avatar"
                 style={{

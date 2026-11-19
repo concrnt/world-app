@@ -1,7 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { motion, useMotionValue, useTransform } from 'motion/react'
-import { animate } from 'motion'
+import {
+    animate,
+    AnimatePresence,
+    cancelFrame,
+    frame,
+    LazyMotion,
+    motion,
+    pinchFeatures,
+    useDragControls,
+    useMotionValue,
+    useTransform
+} from 'motion/react'
+import type { PanInfo, TapInfo } from 'motion/react'
 import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -77,49 +88,19 @@ interface Props {
 const PANEL_WIDTH = 420
 const SWIPE_X_THRESHOLD = 50
 const SWIPE_Y_THRESHOLD = 120
-const DOUBLE_TAP_DELAY = 300
 const DOUBLE_TAP_ZOOM = 2.5
 const MIN_SCALE = 1
 const MAX_SCALE = 5
 const IMAGE_GAP = 5
+// カルーセルの移動(ページ送り・閉じるスワイプの取り消し)
 const ANIM_CONFIG = { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.25 }
-const INERTIA_MULTIPLIER = 0.3
-const INERTIA_DURATION = 1
-const INERTIA_EASE: [number, number, number, number] = [0.25, 1, 0.5, 1]
-
-type GestureType = 'none' | 'swipe-x' | 'swipe-y' | 'pan' | 'pinch'
-
-interface GestureRef {
-    gestureType: GestureType
-    startX: number
-    startY: number
-    startPanX: number
-    startPanY: number
-    startScale: number
-    lastPinchDist: number
-    pinchMidX: number
-    pinchMidY: number
-    lastTapTime: number
-    lastTapX: number
-    lastTapY: number
-    // 慣性用: 速度追跡
-    prevMoveX: number
-    prevMoveY: number
-    prevMoveTime: number
-    velocityX: number
-    velocityY: number
-    // マウス/ペンのドラッグパン中か(タッチのpanと区別する)
-    pointerPanning: boolean
-    // ドラッグ直後のclickで閉じないよう、実際に動かしたら立てて次のclickで消費する
-    suppressClick: boolean
-}
-
-const getDistance = (t1: React.Touch, t2: React.Touch) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
-
-const getMidpoint = (t1: React.Touch, t2: React.Touch) => ({
-    x: (t1.clientX + t2.clientX) / 2,
-    y: (t1.clientY + t2.clientY) / 2
-})
+// ズーム・パンの補正(motion公式のpinchサンプルと同じばね)
+const ZOOM_SPRING = { type: 'spring' as const, stiffness: 305, damping: 33 }
+// パンを離したとき、速度×この秒数ぶん流れてから端に収まる
+const PAN_MOMENTUM = 0.2
+// 端(未読み込みの先も含む)を引っ張ったときの抵抗
+const EDGE_ELASTIC = 0.3
+const DOUBLE_TAP = { count: 2 }
 
 export const MediaViewerProvider = (props: Props) => {
     const [source, setSource] = useState<ViewerSource | null>(null)
@@ -148,17 +129,17 @@ export const MediaViewerProvider = (props: Props) => {
     // 投稿パネル(デスクトップ): 開閉状態は端末内で記憶。ドロワー(モバイル幅)は開くたびに閉じた状態から
     const [panelOpen, setPanelOpen] = usePersistent('media-viewer-panel', false)
     const [drawerOpen, setDrawerOpen] = useState(false)
-    // 収縮アニメーション中も中身を残すため、表示条件から遅れて落とす
-    const [panelMounted, setPanelMounted] = useState(false)
     // 画像領域(パネルを除いた部分)。スワイプ幅・パンの上限・ズーム焦点はビューポートではなくここを基準にする
     const stageRef = useRef<HTMLDivElement>(null)
     const hasPost = currentMedia?.messageURI !== undefined
     const showPanel = !isMobile && panelOpen && hasPost
 
     // --- motion values ---
+    // カルーセル(前・現在・次)の位置。横はページ送り、縦は閉じるスワイプ
     const mvOffsetX = useMotionValue(0)
     const mvOffsetY = useMotionValue(0)
 
+    // 現在のメディアのズームレイヤー。pinch・drag・animate() が同じ値を読み書きする
     const mvScale = useMotionValue(1)
     const mvPanX = useMotionValue(0)
     const mvPanY = useMotionValue(0)
@@ -170,15 +151,17 @@ export const MediaViewerProvider = (props: Props) => {
         return `rgba(0, 0, 0, ${opacity})`
     })
 
-    // 拡大中はドラッグでパンできるのでカーソルで示す
-    const imgCursor = useTransform(mvScale, (s) => (s > 1 ? 'grab' : 'auto'))
     const contentOpacity = useTransform(mvOffsetY, (oy) => {
         const progress = Math.min(Math.abs(oy) / (SWIPE_Y_THRESHOLD * 1.5), 1)
         return 1 - progress * 0.3
     })
 
+    // 拡大中はドラッグでパンできるのでカーソルで示す
+    const imgCursor = useTransform(mvScale, (s) => (s > 1 ? 'grab' : 'auto'))
+
     const imgRef = useRef<HTMLImageElement>(null)
 
+    // 拡大率 s のとき、画像の端がステージの内側に入らずに動かせる範囲へ収める
     const clampPan = useCallback((px: number, py: number, s: number): { x: number; y: number } => {
         const img = imgRef.current
         if (!img || s <= 1) return { x: 0, y: 0 }
@@ -198,27 +181,19 @@ export const MediaViewerProvider = (props: Props) => {
         }
     }, [])
 
-    const gestureRef = useRef<GestureRef>({
-        gestureType: 'none',
-        startX: 0,
-        startY: 0,
-        startPanX: 0,
-        startPanY: 0,
-        startScale: 1,
-        lastPinchDist: 0,
-        pinchMidX: 0,
-        pinchMidY: 0,
-        lastTapTime: 0,
-        lastTapX: 0,
-        lastTapY: 0,
-        prevMoveX: 0,
-        prevMoveY: 0,
-        prevMoveTime: 0,
-        velocityX: 0,
-        velocityY: 0,
-        pointerPanning: false,
-        suppressClick: false
-    })
+    // カルーセル(スワイプ)とズームレイヤー(パン)のdragは、どちらもpointerdownから手動で開始する
+    const carouselDrag = useDragControls()
+    const zoomDrag = useDragControls()
+    // 進行中のポインター操作をどちらのdragが担当しているか。
+    // 1本目の指で始まったスワイプが2本目でピンチになったら、同じ指をズーム側のdragに引き継ぐ
+    const pointerGestureRef = useRef<{ kind: 'carousel' | 'zoom'; downEvent: PointerEvent } | null>(null)
+    const zoomDraggingRef = useRef(false)
+    // ページ送りのアニメーション中。ここで掴むとアニメーションが止まって中途半端な位置に残るので受け付けない
+    const pagingRef = useRef(false)
+    // ピンチ自身の戻りアニメーションが終わるのを待ってから端を補正する、その待機
+    const settlingRef = useRef<VoidFunction>(() => {})
+    // ドラッグ直後のclickで閉じないよう、実際に動かしたら立てて次のclickで消費する
+    const suppressClickRef = useRef(false)
 
     const stateRef = useRef({ currentIndex: 0, hasPrev: false, hasNext: false, canLoadMore: false, isImage: false })
     stateRef.current = {
@@ -231,20 +206,52 @@ export const MediaViewerProvider = (props: Props) => {
 
     const getPageWidth = useCallback(() => (stageRef.current?.clientWidth ?? window.innerWidth) + IMAGE_GAP, [])
 
-    // ステージ中央のビューポート座標(ズーム焦点の基準)
-    const getStageCenter = useCallback(() => {
-        const rect = stageRef.current?.getBoundingClientRect()
-        if (!rect) return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
-    }, [])
+    // ズームが落ち着いたら、画像の端が見えないよう収まる位置へ戻す。フリックは少し流れてから止まる
+    const settleEdges = useCallback(
+        (velocity = { x: 0, y: 0 }) => {
+            const target = clampPan(
+                mvPanX.get() + velocity.x * PAN_MOMENTUM,
+                mvPanY.get() + velocity.y * PAN_MOMENTUM,
+                mvScale.get()
+            )
+            animate(mvPanX, target.x, { ...ZOOM_SPRING, velocity: velocity.x })
+            animate(mvPanY, target.y, { ...ZOOM_SPRING, velocity: velocity.y })
+        },
+        [mvScale, mvPanX, mvPanY, clampPan]
+    )
+
+    // ピンチを離すと拡大率は上下限の内側へばねで戻るので、それが止まってから callback を呼ぶ
+    const afterZoomSettles = useCallback(
+        (callback: VoidFunction) => {
+            cancelFrame(settlingRef.current)
+            let last: number | undefined
+            const check = (settlingRef.current = () => {
+                const latest = mvScale.get()
+                if (latest === last) {
+                    cancelFrame(check)
+                    callback()
+                }
+                last = latest
+            })
+            frame.postRender(check, true)
+        },
+        [mvScale]
+    )
+
+    const resetZoom = useCallback(() => {
+        cancelFrame(settlingRef.current)
+        // jump: 走っているアニメーションも止める
+        mvScale.jump(1)
+        mvPanX.jump(0)
+        mvPanY.jump(0)
+    }, [mvScale, mvPanX, mvPanY])
 
     const resetMotion = useCallback(() => {
-        mvOffsetX.set(0)
-        mvOffsetY.set(0)
-        mvScale.set(1)
-        mvPanX.set(0)
-        mvPanY.set(0)
-    }, [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY])
+        resetZoom()
+        pagingRef.current = false
+        mvOffsetX.jump(0)
+        mvOffsetY.jump(0)
+    }, [resetZoom, mvOffsetX, mvOffsetY])
 
     const openSource = useCallback(
         (source: ViewerSource, startIndex?: number) => {
@@ -281,19 +288,14 @@ export const MediaViewerProvider = (props: Props) => {
         close()
     }, [location.key, close])
 
-    useEffect(() => {
-        if (showPanel) setPanelMounted(true)
-    }, [showPanel])
-
     const changeImage = useCallback(
         (newIndex: number) => {
             setCurrentIndex(newIndex)
-            mvOffsetX.set(0)
-            mvScale.set(1)
-            mvPanX.set(0)
-            mvPanY.set(0)
+            resetZoom()
+            pagingRef.current = false
+            mvOffsetX.jump(0)
         },
-        [mvOffsetX, mvScale, mvPanX, mvPanY]
+        [resetZoom, mvOffsetX]
     )
 
     // 次へ: 読み込み済みならそのまま進み、末尾なら loadMore をキックして解決後に進む。
@@ -363,360 +365,165 @@ export const MediaViewerProvider = (props: Props) => {
             if (!stageRef.current?.contains(e.target as Node)) return
             if (!stateRef.current.isImage) return
             e.preventDefault()
+            // ctrl付き(トラックパッドのピンチ)はズームレイヤーのpinchが扱う
+            if (e.ctrlKey) return
 
+            const rect = stageRef.current.getBoundingClientRect()
             const currentScale = mvScale.get()
-            // deltaMode 1 は行単位(Firefox)なのでピクセル相当に正規化。ctrlKey付きはトラックパッドのピンチでdeltaが小さい
+            // deltaMode 1 は行単位(Firefox)なのでピクセル相当に正規化
             const delta = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY
-            const factor = Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.002))
-            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * factor))
+            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * Math.exp(-delta * 0.002)))
             if (newScale === currentScale) return
 
-            const center = getStageCenter()
-            const focalX = e.clientX - center.x
-            const focalY = e.clientY - center.y
-            const scaleChange = newScale / currentScale
-            const newPanX = mvPanX.get() * scaleChange - focalX * (scaleChange - 1)
-            const newPanY = mvPanY.get() * scaleChange - focalY * (scaleChange - 1)
-
-            const clamped = clampPan(newPanX, newPanY, newScale)
-            mvScale.set(newScale)
-            mvPanX.set(clamped.x)
-            mvPanY.set(clamped.y)
+            // カーソル位置が動かないように拡大する(ステージ中央からの位置)
+            const fx = e.clientX - rect.left - rect.width / 2
+            const fy = e.clientY - rect.top - rect.height / 2
+            const ratio = newScale / currentScale
+            const pan = clampPan(fx - (fx - mvPanX.get()) * ratio, fy - (fy - mvPanY.get()) * ratio, newScale)
+            cancelFrame(settlingRef.current)
+            // jump: 補正のアニメーションが走っていれば止めて上書きする
+            mvScale.jump(newScale)
+            mvPanX.jump(pan.x)
+            mvPanY.jump(pan.y)
         }
         window.addEventListener('wheel', onWheel, { passive: false })
         return () => window.removeEventListener('wheel', onWheel)
-    }, [isOpen, mvScale, mvPanX, mvPanY, clampPan, getStageCenter])
-
-    // --- ダブルタップ処理（ズームは画像のみ） ---
-    const handleDoubleTap = useCallback(
-        (clientX: number, clientY: number) => {
-            if (!stateRef.current.isImage) return
-            const currentScale = mvScale.get()
-            if (currentScale > 1) {
-                animate(mvScale, 1, ANIM_CONFIG)
-                animate(mvPanX, 0, ANIM_CONFIG)
-                animate(mvPanY, 0, ANIM_CONFIG)
-            } else {
-                const center = getStageCenter()
-                const newPanX = (center.x - clientX) * (DOUBLE_TAP_ZOOM - 1)
-                const newPanY = (center.y - clientY) * (DOUBLE_TAP_ZOOM - 1)
-                const clamped = clampPan(newPanX, newPanY, DOUBLE_TAP_ZOOM)
-                animate(mvScale, DOUBLE_TAP_ZOOM, ANIM_CONFIG)
-                animate(mvPanX, clamped.x, ANIM_CONFIG)
-                animate(mvPanY, clamped.y, ANIM_CONFIG)
-            }
-        },
-        [mvScale, mvPanX, mvPanY, clampPan, getStageCenter]
-    )
-
-    // --- タッチイベント ---
-    const handleTouchStart = useCallback(
-        (e: React.TouchEvent) => {
-            const g = gestureRef.current
-
-            if (e.touches.length === 2) {
-                // ピンチズームは画像のみ
-                if (!stateRef.current.isImage) return
-                g.gestureType = 'pinch'
-                g.lastPinchDist = getDistance(e.touches[0], e.touches[1])
-                const mid = getMidpoint(e.touches[0], e.touches[1])
-                g.pinchMidX = mid.x
-                g.pinchMidY = mid.y
-                g.startScale = mvScale.get()
-                g.startPanX = mvPanX.get()
-                g.startPanY = mvPanY.get()
-                return
-            }
-
-            if (e.touches.length === 1) {
-                const touch = e.touches[0]
-                g.gestureType = 'none'
-                g.startX = touch.clientX
-                g.startY = touch.clientY
-                g.startPanX = mvPanX.get()
-                g.startPanY = mvPanY.get()
-                // 慣性用の速度リセット
-                g.prevMoveX = touch.clientX
-                g.prevMoveY = touch.clientY
-                g.prevMoveTime = performance.now()
-                g.velocityX = 0
-                g.velocityY = 0
-            }
-        },
-        [mvScale, mvPanX, mvPanY]
-    )
-
-    const handleTouchMove = useCallback(
-        (e: React.TouchEvent) => {
-            const g = gestureRef.current
-
-            if (e.touches.length === 2 && g.gestureType === 'pinch') {
-                const newDist = getDistance(e.touches[0], e.touches[1])
-                const ratio = newDist / g.lastPinchDist
-                const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * ratio))
-
-                const center = getStageCenter()
-                const focalX = g.pinchMidX - center.x
-                const focalY = g.pinchMidY - center.y
-                const scaleChange = newScale / g.startScale
-                const newPanX = g.startPanX - focalX * (scaleChange - 1)
-                const newPanY = g.startPanY - focalY * (scaleChange - 1)
-
-                const clamped = clampPan(newPanX, newPanY, newScale)
-                mvScale.set(newScale)
-                mvPanX.set(clamped.x)
-                mvPanY.set(clamped.y)
-                return
-            }
-
-            if (e.touches.length !== 1) return
-            if (g.gestureType === 'pinch') return
-
-            const touch = e.touches[0]
-            const dx = touch.clientX - g.startX
-            const dy = touch.clientY - g.startY
-
-            if (mvScale.get() > 1) {
-                g.gestureType = 'pan'
-                const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, mvScale.get())
-                mvPanX.set(clamped.x)
-                mvPanY.set(clamped.y)
-
-                // 慣性用の速度計算
-                const now = performance.now()
-                const dt = now - g.prevMoveTime
-                if (dt > 0) {
-                    g.velocityX = (touch.clientX - g.prevMoveX) / dt
-                    g.velocityY = (touch.clientY - g.prevMoveY) / dt
-                }
-                g.prevMoveX = touch.clientX
-                g.prevMoveY = touch.clientY
-                g.prevMoveTime = now
-                return
-            }
-
-            // 等倍時 → ジェスチャー方向を判定
-            if (g.gestureType === 'none') {
-                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-                    g.gestureType = Math.abs(dx) > Math.abs(dy) ? 'swipe-x' : 'swipe-y'
-                } else {
-                    return
-                }
-            }
-
-            if (g.gestureType === 'swipe-x') {
-                const s = stateRef.current
-                let clampedDx = dx
-                // 端(未読み込みの先も含む)は引っ張り抵抗をつける
-                if ((!s.hasPrev && dx > 0) || (!s.hasNext && dx < 0)) {
-                    clampedDx = dx * 0.3
-                }
-                mvOffsetX.set(clampedDx)
-            } else if (g.gestureType === 'swipe-y') {
-                mvOffsetY.set(dy)
-            }
-        },
-        [mvScale, mvPanX, mvPanY, mvOffsetX, mvOffsetY, clampPan, getStageCenter]
-    )
-
-    const handleTouchEnd = useCallback(
-        (e: React.TouchEvent) => {
-            const g = gestureRef.current
-            const s = stateRef.current
-
-            // ピンチ終了
-            if (g.gestureType === 'pinch') {
-                if (e.touches.length === 0) {
-                    g.gestureType = 'none'
-                    const currentScale = mvScale.get()
-                    if (currentScale <= 1) {
-                        animate(mvScale, 1, ANIM_CONFIG)
-                        animate(mvPanX, 0, ANIM_CONFIG)
-                        animate(mvPanY, 0, ANIM_CONFIG)
-                    } else {
-                        const clamped = clampPan(mvPanX.get(), mvPanY.get(), currentScale)
-                        animate(mvPanX, clamped.x, ANIM_CONFIG)
-                        animate(mvPanY, clamped.y, ANIM_CONFIG)
-                    }
-                }
-                return
-            }
-
-            if (e.touches.length > 0) return
-
-            const now = Date.now()
-            const touch = e.changedTouches[0]
-
-            // タップ判定
-            if (g.gestureType === 'none') {
-                const timeDiff = now - g.lastTapTime
-                const distDiff = Math.hypot(touch.clientX - g.lastTapX, touch.clientY - g.lastTapY)
-
-                if (timeDiff < DOUBLE_TAP_DELAY && distDiff < 30) {
-                    g.lastTapTime = 0
-                    handleDoubleTap(touch.clientX, touch.clientY)
-                } else {
-                    g.lastTapTime = now
-                    g.lastTapX = touch.clientX
-                    g.lastTapY = touch.clientY
-                }
-                return
-            }
-
-            if (g.gestureType === 'swipe-x') {
-                // 横スワイプ完了
-                const currentOX = mvOffsetX.get()
-                const pw = getPageWidth()
-
-                if (currentOX < -SWIPE_X_THRESHOLD && s.hasNext) {
-                    animate(mvOffsetX, -pw, {
-                        ...ANIM_CONFIG,
-                        onComplete: () => {
-                            setCurrentIndex(s.currentIndex + 1)
-                            mvScale.set(1)
-                            mvPanX.set(0)
-                            mvPanY.set(0)
-                            mvOffsetX.set(0)
-                        }
-                    })
-                } else if (currentOX > SWIPE_X_THRESHOLD && s.hasPrev) {
-                    animate(mvOffsetX, pw, {
-                        ...ANIM_CONFIG,
-                        onComplete: () => {
-                            setCurrentIndex(s.currentIndex - 1)
-                            mvScale.set(1)
-                            mvPanX.set(0)
-                            mvPanY.set(0)
-                            mvOffsetX.set(0)
-                        }
-                    })
-                } else {
-                    animate(mvOffsetX, 0, ANIM_CONFIG)
-                    // 読み込み済みの末尾で次へスワイプ → 追加読み込みをキック(解決後に自動で進む)
-                    if (currentOX < -SWIPE_X_THRESHOLD && s.canLoadMore) goNext()
-                }
-            } else if (g.gestureType === 'swipe-y') {
-                const currentOY = mvOffsetY.get()
-                if (Math.abs(currentOY) > SWIPE_Y_THRESHOLD) {
-                    close()
-                } else {
-                    animate(mvOffsetY, 0, ANIM_CONFIG)
-                }
-            } else if (g.gestureType === 'pan') {
-                // パン終了 — 慣性アニメーション
-                const currentScale = mvScale.get()
-                const vx = g.velocityX * 1000 // px/ms → px/s
-                const vy = g.velocityY * 1000
-
-                const targetX = mvPanX.get() + vx * INERTIA_MULTIPLIER
-                const targetY = mvPanY.get() + vy * INERTIA_MULTIPLIER
-                const clamped = clampPan(targetX, targetY, currentScale)
-
-                animate(mvPanX, clamped.x, {
-                    type: 'tween',
-                    ease: INERTIA_EASE,
-                    duration: INERTIA_DURATION
-                })
-                animate(mvPanY, clamped.y, {
-                    type: 'tween',
-                    ease: INERTIA_EASE,
-                    duration: INERTIA_DURATION
-                })
-            }
-
-            g.gestureType = 'none'
-        },
-        [mvOffsetX, mvOffsetY, mvScale, mvPanX, mvPanY, clampPan, handleDoubleTap, close, getPageWidth, goNext]
-    )
-
-    // --- マウス/ペンのドラッグパン(デスクトップ向け) ---
-    // 拡大中のみ。移動と離した時の処理はwindow側で拾い、画像の外までドラッグしても追従させる
-    const handlePointerDown = useCallback(
-        (e: React.PointerEvent) => {
-            if (e.pointerType === 'touch') return
-            if (e.button !== 0) return
-            if (!stateRef.current.isImage) return
-            if (mvScale.get() <= 1) return
-            const g = gestureRef.current
-            g.pointerPanning = true
-            g.suppressClick = false
-            g.gestureType = 'pan'
-            g.startX = e.clientX
-            g.startY = e.clientY
-            g.startPanX = mvPanX.get()
-            g.startPanY = mvPanY.get()
-            g.prevMoveX = e.clientX
-            g.prevMoveY = e.clientY
-            g.prevMoveTime = performance.now()
-            g.velocityX = 0
-            g.velocityY = 0
-            e.preventDefault()
-        },
-        [mvScale, mvPanX, mvPanY]
-    )
-
-    useEffect(() => {
-        if (!isOpen) return
-        const onPointerMove = (e: PointerEvent): void => {
-            const g = gestureRef.current
-            if (!g.pointerPanning) return
-            const dx = e.clientX - g.startX
-            const dy = e.clientY - g.startY
-            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) g.suppressClick = true
-            const clamped = clampPan(g.startPanX + dx, g.startPanY + dy, mvScale.get())
-            mvPanX.set(clamped.x)
-            mvPanY.set(clamped.y)
-
-            const now = performance.now()
-            const dt = now - g.prevMoveTime
-            if (dt > 0) {
-                g.velocityX = (e.clientX - g.prevMoveX) / dt
-                g.velocityY = (e.clientY - g.prevMoveY) / dt
-            }
-            g.prevMoveX = e.clientX
-            g.prevMoveY = e.clientY
-            g.prevMoveTime = now
-        }
-        const onPointerUp = (): void => {
-            const g = gestureRef.current
-            if (!g.pointerPanning) return
-            g.pointerPanning = false
-            // パン終了 — 慣性アニメーション(タッチ側と同じ)
-            const currentScale = mvScale.get()
-            const vx = g.velocityX * 1000 // px/ms → px/s
-            const vy = g.velocityY * 1000
-
-            const targetX = mvPanX.get() + vx * INERTIA_MULTIPLIER
-            const targetY = mvPanY.get() + vy * INERTIA_MULTIPLIER
-            const clamped = clampPan(targetX, targetY, currentScale)
-
-            animate(mvPanX, clamped.x, {
-                type: 'tween',
-                ease: INERTIA_EASE,
-                duration: INERTIA_DURATION
-            })
-            animate(mvPanY, clamped.y, {
-                type: 'tween',
-                ease: INERTIA_EASE,
-                duration: INERTIA_DURATION
-            })
-            g.gestureType = 'none'
-        }
-        window.addEventListener('pointermove', onPointerMove)
-        window.addEventListener('pointerup', onPointerUp)
-        window.addEventListener('pointercancel', onPointerUp)
-        return () => {
-            window.removeEventListener('pointermove', onPointerMove)
-            window.removeEventListener('pointerup', onPointerUp)
-            window.removeEventListener('pointercancel', onPointerUp)
-        }
     }, [isOpen, mvScale, mvPanX, mvPanY, clampPan])
 
-    // bodyのスクロール抑制はOverlaySurface(OverlayStackProvider)が行う
+    // --- ポインター操作の振り分け ---
+    // 拡大中の画像はズームレイヤーのdrag(パン)、それ以外はカルーセルのdrag(スワイプ)。
+    // 2本目以降の指はズームレイヤーのpinchが拾う
+    const handlePointerDown = useCallback(
+        (e: React.PointerEvent) => {
+            if (!e.isPrimary) return
+            suppressClickRef.current = false
+            if (e.pointerType === 'mouse' && e.button !== 0) return
+            if (stateRef.current.isImage && mvScale.get() > 1) {
+                pointerGestureRef.current = { kind: 'zoom', downEvent: e.nativeEvent }
+                zoomDrag.start(e)
+                return
+            }
+            // マウスは拡大中のパンのみ(等倍でのスワイプはタッチ/ペン)
+            if (e.pointerType === 'mouse') return
+            if (pagingRef.current) return
+            pointerGestureRef.current = { kind: 'carousel', downEvent: e.nativeEvent }
+            carouselDrag.start(e)
+        },
+        [mvScale, zoomDrag, carouselDrag]
+    )
 
-    useEffect(() => {
-        gestureRef.current.gestureType = 'none'
-    }, [currentIndex])
+    const handlePointerEnd = useCallback((e: React.PointerEvent) => {
+        if (e.isPrimary) pointerGestureRef.current = null
+    }, [])
+
+    // --- カルーセル: 横スワイプでページ送り、縦スワイプで閉じる ---
+    const handleCarouselDragEnd = useCallback(() => {
+        const s = stateRef.current
+        const ox = mvOffsetX.get()
+        const oy = mvOffsetY.get()
+
+        // dragDirectionLock で片方の軸しか動かない
+        if (Math.abs(oy) > Math.abs(ox)) {
+            if (Math.abs(oy) > SWIPE_Y_THRESHOLD) {
+                close()
+            } else {
+                animate(mvOffsetY, 0, ANIM_CONFIG)
+            }
+            return
+        }
+
+        const pw = getPageWidth()
+        if (ox < -SWIPE_X_THRESHOLD && s.hasNext) {
+            pagingRef.current = true
+            animate(mvOffsetX, -pw, { ...ANIM_CONFIG, onComplete: () => changeImage(s.currentIndex + 1) })
+        } else if (ox > SWIPE_X_THRESHOLD && s.hasPrev) {
+            pagingRef.current = true
+            animate(mvOffsetX, pw, { ...ANIM_CONFIG, onComplete: () => changeImage(s.currentIndex - 1) })
+        } else {
+            animate(mvOffsetX, 0, ANIM_CONFIG)
+            // 読み込み済みの末尾で次へスワイプ → 追加読み込みをキック(解決後に自動で進む)
+            if (ox < -SWIPE_X_THRESHOLD && s.canLoadMore) goNext()
+        }
+    }, [mvOffsetX, mvOffsetY, close, getPageWidth, changeImage, goNext])
+
+    // --- ズームレイヤー: ピンチ・パン・ダブルタップ(画像のみ) ---
+    const handlePinchStart = useCallback(
+        (event: Event) => {
+            // 新しいピンチは、待機中の端の補正より優先する
+            cancelFrame(settlingRef.current)
+            const g = pointerGestureRef.current
+            if (g?.kind !== 'carousel' || event.type !== 'pointerdown') return
+            // 1本目の指で始まったスワイプは取り消し、その指をズームレイヤーのdragに引き継ぐ。
+            // ピンチ中のdragの扱いはpinchが面倒を見るので、指が1本残ればそのままパンが続く
+            carouselDrag.cancel()
+            animate(mvOffsetX, 0, ANIM_CONFIG)
+            animate(mvOffsetY, 0, ANIM_CONFIG)
+            pointerGestureRef.current = { kind: 'zoom', downEvent: g.downEvent }
+            zoomDrag.start(g.downEvent)
+        },
+        [carouselDrag, zoomDrag, mvOffsetX, mvOffsetY]
+    )
+
+    const handlePinchEnd = useCallback(() => {
+        // 指が残ってdragが続くなら、補正はdragを離したときに行う
+        if (!zoomDraggingRef.current) afterZoomSettles(() => settleEdges())
+    }, [afterZoomSettles, settleEdges])
+
+    const handleZoomDragStart = useCallback(() => {
+        zoomDraggingRef.current = true
+        suppressClickRef.current = true
+        cancelFrame(settlingRef.current)
+    }, [])
+
+    const handleZoomDragEnd = useCallback(
+        (_event: PointerEvent, info: PanInfo) => {
+            zoomDraggingRef.current = false
+            afterZoomSettles(() => settleEdges(info.velocity))
+        },
+        [afterZoomSettles, settleEdges]
+    )
+
+    // tap={{ count: 2 }} なので2回目の素早いタップでだけ呼ばれる。タップした点を中心に拡大、拡大中なら等倍へ
+    const handleDoubleTap = useCallback(
+        (_event: MouseEvent | TouchEvent | PointerEvent, info: TapInfo) => {
+            const rect = stageRef.current?.getBoundingClientRect()
+            if (!rect) return
+            cancelFrame(settlingRef.current)
+            const current = mvScale.get()
+            const target = current > 1.05 ? 1 : DOUBLE_TAP_ZOOM
+
+            // ステージ中央からのタップ位置(info.point はページ座標)
+            let px = info.point.x - window.scrollX - rect.left - rect.width / 2
+            let py = info.point.y - window.scrollY - rect.top - rect.height / 2
+            // キーボード操作にはポインター位置が無いので中央で拡大する
+            if (Math.abs(px) > rect.width / 2 || Math.abs(py) > rect.height / 2) {
+                px = 0
+                py = 0
+            }
+
+            // 倍率が変わってもタップした点が指の下に留まるようにする
+            const ratio = target / current
+            const pan = clampPan(px - (px - mvPanX.get()) * ratio, py - (py - mvPanY.get()) * ratio, target)
+            animate(mvScale, target, ZOOM_SPRING)
+            animate(mvPanX, pan.x, ZOOM_SPRING)
+            animate(mvPanY, pan.y, ZOOM_SPRING)
+        },
+        [mvScale, mvPanX, mvPanY, clampPan]
+    )
+
+    const pinchOptions = useMemo(
+        () => ({
+            // 1倍未満・上限超えは抵抗がつき、離すと指の間を中心に範囲内へ戻る
+            scale: { min: MIN_SCALE, max: MAX_SCALE },
+            rotate: false,
+            transition: ZOOM_SPRING,
+            onStart: handlePinchStart,
+            onEnd: handlePinchEnd
+        }),
+        [handlePinchStart, handlePinchEnd]
+    )
+
+    // bodyのスクロール抑制はOverlaySurface(OverlayStackProvider)が行う
 
     const value = useMemo(() => ({ open, openSource }), [open, openSource])
 
@@ -793,181 +600,210 @@ export const MediaViewerProvider = (props: Props) => {
                                 touchAction: 'none'
                             }}
                             onClick={(e) => {
-                                if (gestureRef.current.suppressClick) {
-                                    gestureRef.current.suppressClick = false
+                                if (suppressClickRef.current) {
+                                    suppressClickRef.current = false
                                     return
                                 }
                                 if (e.target === e.currentTarget) close()
                             }}
                         >
-                            {/* カルーセル: 前・現在・次 のメディアを横並び */}
-                            <motion.div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    height: '100%',
-                                    x: mvOffsetX,
-                                    y: mvOffsetY,
-                                    opacity: contentOpacity,
-                                    gap: `${IMAGE_GAP}px`
-                                }}
-                                onTouchStart={handleTouchStart}
-                                onTouchMove={handleTouchMove}
-                                onTouchEnd={handleTouchEnd}
-                                onPointerDown={handlePointerDown}
-                            >
-                                {/* 前のメディア */}
-                                <div
+                            {/* pinch は motion の既定バンドルに含まれないので LazyMotion で読み込む */}
+                            <LazyMotion features={pinchFeatures}>
+                                {/* カルーセル: 前・現在・次 のメディアを横並び。
+                                dragは handlePointerDown から手動で開始する(拡大中はズームレイヤー側のdragになる) */}
+                                <motion.div
                                     style={{
-                                        flexShrink: 0,
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
                                         width: '100%',
                                         height: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginLeft: `calc(-100% - ${IMAGE_GAP}px)`
+                                        x: mvOffsetX,
+                                        y: mvOffsetY,
+                                        opacity: contentOpacity,
+                                        gap: `${IMAGE_GAP}px`
                                     }}
+                                    drag
+                                    dragControls={carouselDrag}
+                                    dragListener={false}
+                                    dragDirectionLock
+                                    dragMomentum={false}
+                                    // 前後が無い(未読み込みの先も含む)側は引っ張り抵抗をつける
+                                    dragConstraints={{
+                                        left: nextMedia ? undefined : 0,
+                                        right: prevMedia ? undefined : 0
+                                    }}
+                                    dragElastic={EDGE_ELASTIC}
+                                    onDragEnd={handleCarouselDragEnd}
+                                    onPointerDown={handlePointerDown}
+                                    onPointerUp={handlePointerEnd}
+                                    onPointerCancel={handlePointerEnd}
                                 >
-                                    {prevMedia && <SlidePreview media={prevMedia} />}
-                                </div>
+                                    {/* 前のメディア */}
+                                    <div
+                                        style={{
+                                            flexShrink: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginLeft: `calc(-100% - ${IMAGE_GAP}px)`
+                                        }}
+                                    >
+                                        {prevMedia && <SlidePreview media={prevMedia} />}
+                                    </div>
 
-                                {/* 現在のメディア（画像はズーム・パン対応） */}
-                                <div
-                                    style={{
-                                        position: 'relative',
-                                        flexShrink: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                    // このラッパーがbackdrop全面を覆うため、余白クリックでの閉じるはここで拾う
-                                    onClick={(e) => {
-                                        // ドラッグパンの離した位置が余白でもclickは飛んでくるので、その分は無視する
-                                        if (gestureRef.current.suppressClick) {
-                                            gestureRef.current.suppressClick = false
-                                            return
-                                        }
-                                        if (e.target === e.currentTarget) close()
-                                    }}
-                                >
-                                    {currentSrc !== null ? (
-                                        <motion.img
-                                            src={currentSrc}
-                                            alt={currentMedia.altText ?? ''}
-                                            onLoad={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
-                                            onError={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
-                                            style={{
-                                                maxWidth: '90%',
-                                                maxHeight: '85dvh',
-                                                objectFit: 'contain',
-                                                userSelect: 'none',
-                                                pointerEvents: 'auto',
-                                                cursor: imgCursor,
-                                                scale: mvScale,
-                                                x: mvPanX,
-                                                y: mvPanY,
-                                                transformOrigin: 'center center'
-                                            }}
-                                            draggable={false}
-                                            ref={imgRef}
-                                        />
-                                    ) : currentMedia.mediaType.startsWith('video/') ||
-                                      currentMedia.mediaType === 'application/vnd.apple.mpegurl' ? (
-                                        <HlsVideo
-                                            src={currentMedia.mediaURL}
-                                            poster={currentMedia.thumbnailURL}
-                                            controls
-                                            autoPlay
-                                            playsInline
-                                            style={
-                                                videoRatio !== undefined
-                                                    ? {
-                                                          width: `min(90%, calc(85dvh * ${videoRatio}))`,
-                                                          aspectRatio: String(videoRatio)
-                                                      }
-                                                    : {
-                                                          maxWidth: '90%',
-                                                          maxHeight: '85dvh'
-                                                      }
-                                            }
-                                            onLoadedMetadata={(e) => {
-                                                if (!isHls || currentMedia.aspectRatio) return
-                                                if (metadataRatio?.src === currentMedia.mediaURL) return
-                                                const v = e.currentTarget
-                                                if (!v.videoWidth || !v.videoHeight) return
-                                                setMetadataRatio({
-                                                    src: currentMedia.mediaURL,
-                                                    ratio: v.videoWidth / v.videoHeight
-                                                })
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                    ) : currentMedia.mediaType.startsWith('audio/') ? (
-                                        <AudioSlide media={currentMedia} />
-                                    ) : currentMedia.mediaType.startsWith('model/') ? (
-                                        <div
-                                            // model-viewerのカメラ操作とスワイプが競合しないよう、タッチをここで止める
-                                            onClick={(e) => e.stopPropagation()}
-                                            onTouchStart={(e) => e.stopPropagation()}
-                                            onTouchMove={(e) => e.stopPropagation()}
-                                            onTouchEnd={(e) => e.stopPropagation()}
-                                        >
-                                            <ModelViewer
-                                                src={currentMedia.mediaURL}
-                                                style={{
-                                                    backgroundColor: '#3f3f3f',
-                                                    width: '90%',
-                                                    height: '70dvh',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                                            Unsupported media type: {currentMedia.mediaType}
-                                        </span>
-                                    )}
-                                    {/* 読み込み中は前の画像(src差し替え前の表示)の上にスピナーを重ねる */}
-                                    {showSpinner && (
-                                        <div
+                                    {/* 現在のメディア */}
+                                    <div
+                                        style={{
+                                            position: 'relative',
+                                            flexShrink: 0,
+                                            width: '100%',
+                                            height: '100%'
+                                        }}
+                                    >
+                                        {/* ズームレイヤー(画像のみ有効)。ステージ全面を覆うので、画像の外に置いた指からでもピンチできる。
+                                        拡大・パンは画像ではなくこのレイヤーの scale/x/y で行う */}
+                                        <motion.div
                                             style={{
                                                 position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)',
-                                                // svgをインラインのまま置くと行送り分だけ縦に伸びて楕円になるのでflexで揃える
+                                                inset: 0,
                                                 display: 'flex',
-                                                padding: '12px',
-                                                borderRadius: '50%',
-                                                background: 'rgba(0, 0, 0, 0.45)',
-                                                color: 'white',
-                                                pointerEvents: 'none',
-                                                animation: `${styles.spinnerFadeIn} 0.2s ease-out 150ms both`
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                scale: mvScale,
+                                                x: mvPanX,
+                                                y: mvPanY
+                                            }}
+                                            pinch={isImage ? pinchOptions : false}
+                                            drag={isImage}
+                                            dragControls={zoomDrag}
+                                            dragListener={false}
+                                            dragMomentum={false}
+                                            onDragStart={handleZoomDragStart}
+                                            onDragEnd={handleZoomDragEnd}
+                                            tap={isImage ? DOUBLE_TAP : undefined}
+                                            onTap={isImage ? handleDoubleTap : undefined}
+                                            // このレイヤーがbackdrop全面を覆うため、余白クリックでの閉じるはここで拾う
+                                            onClick={(e) => {
+                                                // ドラッグパンの離した位置が余白でもclickは飛んでくるので、その分は無視する
+                                                if (suppressClickRef.current) {
+                                                    suppressClickRef.current = false
+                                                    return
+                                                }
+                                                if (e.target === e.currentTarget) close()
                                             }}
                                         >
-                                            <CircularProgress size={40} />
-                                        </div>
-                                    )}
-                                </div>
+                                            {currentSrc !== null ? (
+                                                <motion.img
+                                                    src={currentSrc}
+                                                    alt={currentMedia.altText ?? ''}
+                                                    onLoad={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
+                                                    onError={(e) => setLoadedSrc(e.currentTarget.getAttribute('src'))}
+                                                    style={{
+                                                        maxWidth: '90%',
+                                                        maxHeight: '85dvh',
+                                                        objectFit: 'contain',
+                                                        userSelect: 'none',
+                                                        cursor: imgCursor
+                                                    }}
+                                                    draggable={false}
+                                                    ref={imgRef}
+                                                />
+                                            ) : currentMedia.mediaType.startsWith('video/') ||
+                                              currentMedia.mediaType === 'application/vnd.apple.mpegurl' ? (
+                                                <HlsVideo
+                                                    src={currentMedia.mediaURL}
+                                                    poster={currentMedia.thumbnailURL}
+                                                    controls
+                                                    autoPlay
+                                                    playsInline
+                                                    style={
+                                                        videoRatio !== undefined
+                                                            ? {
+                                                                  width: `min(90%, calc(85dvh * ${videoRatio}))`,
+                                                                  aspectRatio: String(videoRatio)
+                                                              }
+                                                            : {
+                                                                  maxWidth: '90%',
+                                                                  maxHeight: '85dvh'
+                                                              }
+                                                    }
+                                                    onLoadedMetadata={(e) => {
+                                                        if (!isHls || currentMedia.aspectRatio) return
+                                                        if (metadataRatio?.src === currentMedia.mediaURL) return
+                                                        const v = e.currentTarget
+                                                        if (!v.videoWidth || !v.videoHeight) return
+                                                        setMetadataRatio({
+                                                            src: currentMedia.mediaURL,
+                                                            ratio: v.videoWidth / v.videoHeight
+                                                        })
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            ) : currentMedia.mediaType.startsWith('audio/') ? (
+                                                <AudioSlide media={currentMedia} />
+                                            ) : currentMedia.mediaType.startsWith('model/') ? (
+                                                <div
+                                                    // model-viewerのカメラ操作とスワイプが競合しないよう、ここで止めてカルーセルのdragを始めない
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onPointerDown={(e) => e.stopPropagation()}
+                                                >
+                                                    <ModelViewer
+                                                        src={currentMedia.mediaURL}
+                                                        style={{
+                                                            backgroundColor: '#3f3f3f',
+                                                            width: '90%',
+                                                            height: '70dvh',
+                                                            borderRadius: '8px'
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                    Unsupported media type: {currentMedia.mediaType}
+                                                </span>
+                                            )}
+                                        </motion.div>
+                                        {/* 読み込み中は前の画像(src差し替え前の表示)の上にスピナーを重ねる */}
+                                        {showSpinner && (
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '50%',
+                                                    left: '50%',
+                                                    transform: 'translate(-50%, -50%)',
+                                                    // svgをインラインのまま置くと行送り分だけ縦に伸びて楕円になるのでflexで揃える
+                                                    display: 'flex',
+                                                    padding: '12px',
+                                                    borderRadius: '50%',
+                                                    background: 'rgba(0, 0, 0, 0.45)',
+                                                    color: 'white',
+                                                    pointerEvents: 'none',
+                                                    animation: `${styles.spinnerFadeIn} 0.2s ease-out 150ms both`
+                                                }}
+                                            >
+                                                <CircularProgress size={40} />
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* 次のメディア */}
-                                <div
-                                    style={{
-                                        flexShrink: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    {nextMedia && <SlidePreview media={nextMedia} />}
-                                </div>
-                            </motion.div>
+                                    {/* 次のメディア */}
+                                    <div
+                                        style={{
+                                            flexShrink: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        {nextMedia && <SlidePreview media={nextMedia} />}
+                                    </div>
+                                </motion.div>
+                            </LazyMotion>
 
                             {/* 閉じるボタン(左上) */}
                             <button
@@ -1150,26 +986,26 @@ export const MediaViewerProvider = (props: Props) => {
                         </div>
 
                         {/* 投稿パネル(デスクトップ): オーバーレイではなくステージと横並びで分割する。
-                        幅をアニメーションさせるとflex:1のステージが縮み、画像が左へ寄っていく */}
-                        {!isMobile && (
-                            <motion.div
-                                data-testid="media-viewer-panel"
-                                style={{
-                                    height: '100%',
-                                    flexShrink: 0,
-                                    overflow: 'hidden',
-                                    backgroundColor: CssVar.contentBackground,
-                                    color: CssVar.contentText
-                                }}
-                                // 記憶済みの開状態で開いたときは最初から展開済みにする(0からのアニメーション無し)
-                                initial={false}
-                                animate={{ width: showPanel ? PANEL_WIDTH : 0 }}
-                                transition={ANIM_CONFIG}
-                                onAnimationComplete={() => {
-                                    if (!showPanel) setPanelMounted(false)
-                                }}
-                            >
-                                {panelMounted && currentMedia.messageURI !== undefined && (
+                        幅をアニメーションさせるとflex:1のステージが縮み、画像が左へ寄っていく。
+                        閉じるときはAnimatePresenceが収縮アニメーションの間だけ中身を残す。
+                        initial={false}: 記憶済みの開状態でビューアを開いたときは最初から展開済みにする */}
+                        <AnimatePresence initial={false}>
+                            {showPanel && currentMedia.messageURI !== undefined && (
+                                <motion.div
+                                    key="panel"
+                                    data-testid="media-viewer-panel"
+                                    style={{
+                                        height: '100%',
+                                        flexShrink: 0,
+                                        overflow: 'hidden',
+                                        backgroundColor: CssVar.contentBackground,
+                                        color: CssVar.contentText
+                                    }}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: PANEL_WIDTH }}
+                                    exit={{ width: 0 }}
+                                    transition={ANIM_CONFIG}
+                                >
                                     <div
                                         key={currentMedia.messageURI}
                                         style={{
@@ -1181,9 +1017,9 @@ export const MediaViewerProvider = (props: Props) => {
                                     >
                                         {props.renderPost?.(currentMedia.messageURI)}
                                     </div>
-                                )}
-                            </motion.div>
-                        )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* 投稿ドロワー(モバイル幅): 従来のDrawerでオーバーレイ表示。
                         カルーセルの子にするとドロワー内のtouchmoveがスワイプ処理に流れるので、ステージの兄弟に置く */}
