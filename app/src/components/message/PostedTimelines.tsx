@@ -1,5 +1,4 @@
 import { Message, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
-import { Avatar } from '@concrnt/ui'
 import { TimelineTag } from '../TimelineTag'
 import { useStack } from '../../layouts/Stack'
 import { TimelineView } from '../../views/Timeline'
@@ -12,7 +11,7 @@ import { PiEmpty } from 'react-icons/pi'
 import styles from './PostedTimelines.module.css'
 import { isApInboxKey } from '../../utils/activitypub'
 import { isBskyInboxKey } from '../../utils/bluesky'
-import { useClient } from '../../contexts/Client'
+import { CCUserAvatar } from '../CCUserAvatar'
 
 interface Props {
     message: Message<any>
@@ -31,7 +30,6 @@ const isBridgeInboxKey = (uri: string): boolean => isApInboxKey(uri) || isBskyIn
 
 export const PostedTimelines = (props: Props) => {
     const { push } = useStack()
-    const { client } = useClient()
 
     const reroutedSame = useMemo(() => {
         if (!props.rerouted) return false
@@ -82,11 +80,7 @@ export const PostedTimelines = (props: Props) => {
                                     push(<ProfileView ccid={uri.split('/')[2]} />)
                                 }}
                             >
-                                <Avatar
-                                    ccid={uri.split('/')[2]}
-                                    src={client.getUser(uri.split('/')[2]).then((user) => user?.profile.avatar)}
-                                    style={{ width: '16px', height: '16px' }}
-                                />
+                                <CCUserAvatar ccid={uri.split('/')[2]} style={{ width: '16px', height: '16px' }} />
                             </span>
                         ) : (
                             <MdOutlineHome
@@ -146,9 +140,8 @@ export const PostedTimelines = (props: Props) => {
                                             push(<ProfileView ccid={uri.split('/')[2]} />)
                                         }}
                                     >
-                                        <Avatar
+                                        <CCUserAvatar
                                             ccid={uri.split('/')[2]}
-                                            src={client.getUser(uri.split('/')[2]).then((user) => user?.profile.avatar)}
                                             style={{ width: '16px', height: '16px' }}
                                         />
                                     </span>
