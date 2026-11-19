@@ -1,16 +1,79 @@
 name: WebBuild
 
+# main への push は :main を、release への push(= main からのマージ)は
+# CalVer(vYYYY.MM.DD、同日 2 回目以降は vYYYY.MM.DD.N)を採番して :<version> と :latest を作る。
+# git タグと GitHub Release はイメージの push が成功してから作るので、失敗時は再実行すればよい。
 on:
   push:
-    tags: [ 'v*.*.*' ]
     branches: [ 'main', 'release' ]
+
+concurrency:
+  group: web-build-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: concrnt/concrnt-web
+  IMAGE_NAME: concrnt/world-app
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    outputs:
+      release: ${{ steps.version.outputs.release }}
+      tag: ${{ steps.version.outputs.tag }}
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Decide version
+        id: version
+        run: |
+          if [ "$GITHUB_REF_NAME" != "release" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "tag=$GITHUB_REF_NAME-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            echo "version=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 同じコミットの再実行では採番し直さない
+          tag=$(git tag --points-at "$GITHUB_SHA" --list 'v[0-9]*' | sort -V | tail -n1)
+          if [ -z "$tag" ]; then
+            base="v$(TZ=Asia/Tokyo date +%Y.%m.%d)"
+            tag="$base"
+            n=0
+            while git rev-parse -q --verify "refs/tags/$tag" > /dev/null; do
+              n=$((n + 1))
+              tag="$base.$n"
+            done
+          fi
+
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=main,enable=${{ steps.version.outputs.release != 'true' }}
+            type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.release == 'true' }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.release == 'true' }}
+
   build:
+    needs: prepare
+
     strategy:
       fail-fast: false
       matrix:
@@ -28,9 +91,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Get tag
-        run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -50,18 +110,11 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push by digest
         id: build
@@ -69,13 +122,13 @@ jobs:
         with:
           context: .
           file: ./web/Dockerfile
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ needs.prepare.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # apt/ca-certificates layer must be rebuilt every time (eMudhra 2026-10 lesson)
           no-cache-filters: runtime
-          build-args: VERSION=${{env.TAG}}
+          build-args: VERSION=${{ needs.prepare.outputs.tag }}
 
       - name: Export digest
         run: |
@@ -92,17 +145,13 @@ jobs:
           retention-days: 1
 
   manifest:
-    needs: build
+    needs: [prepare, build]
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
       id-token: write
-
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: concrnt/concrnt-web
 
     steps:
       - name: Download digests
@@ -122,18 +171,42 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
       - name: Create manifest list and push
         working-directory: /tmp/digests
+        env:
+          TAGS: ${{ needs.prepare.outputs.tags }}
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          docker buildx imagetools create $(printf -- '-t %s ' $TAGS) \
             $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
 
       - name: Inspect image
+        env:
+          TAGS: ${{ needs.prepare.outputs.tags }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          for t in $TAGS; do
+            docker buildx imagetools inspect "$t"
+          done
+
+  release:
+    needs: [prepare, manifest]
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$TAG already released"
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes
