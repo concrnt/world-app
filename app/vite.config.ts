@@ -14,7 +14,7 @@ export default defineConfig(async () => ({
         dedupe: ['react', 'react-dom', 'react/jsx-runtime']
     },
     optimizeDeps: {
-        include: ['@concrnt/ui', 'hls.js']
+        include: ['hls.js']
     },
     build: {
         // client/worldlib の `require('ws')` は Node 専用分岐。rolldown は静的に解決しに行くので外す
