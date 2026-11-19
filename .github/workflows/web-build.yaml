@@ -113,6 +113,8 @@ jobs:
           mv web/package.json.tmp web/package.json
 
       - name: Build
+        env:
+          CONCRNT_DEV_BUILD: ${{ needs.prepare.outputs.release == 'true' && '0' || '1' }}
         run: pnpm build
 
       - name: Setup Docker buildx
