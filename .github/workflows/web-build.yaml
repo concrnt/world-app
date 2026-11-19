@@ -25,6 +25,7 @@ jobs:
     outputs:
       release: ${{ steps.version.outputs.release }}
       tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
 
@@ -102,6 +103,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      # 設定画面の version は unplugin-info が web/package.json から読むので、リリース版をここで書き込む
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          jq --arg v "$VERSION" '.version = $v' web/package.json > web/package.json.tmp
+          mv web/package.json.tmp web/package.json
 
       - name: Build
         run: pnpm build
