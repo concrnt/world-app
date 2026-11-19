@@ -1,12 +1,37 @@
-import { defineConfig } from 'vite'
+import fs from 'node:fs'
+import path from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import Info from 'unplugin-info/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// 本番と見分けられるよう、dev サーバーと CONCRNT_DEV_BUILD=1 のビルドではアイコンを黄色版に差し替える
+const devIconsDir = path.resolve(import.meta.dirname, 'devpublic')
+const devIconNames = fs.readdirSync(devIconsDir)
+const devIcons: Plugin = {
+    name: 'concrnt-dev-icons',
+    configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+            const name = req.url?.split('?')[0].slice(1) ?? ''
+            if (!devIconNames.includes(name)) return next()
+            res.setHeader('Content-Type', name.endsWith('.ico') ? 'image/x-icon' : 'image/png')
+            res.setHeader('Cache-Control', 'no-cache')
+            fs.createReadStream(path.join(devIconsDir, name)).pipe(res)
+        })
+    },
+    writeBundle(options) {
+        if (process.env.CONCRNT_DEV_BUILD !== '1' || !options.dir) return
+        for (const name of devIconNames) {
+            fs.copyFileSync(path.join(devIconsDir, name), path.join(options.dir, name))
+        }
+    }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [
         react(),
+        devIcons,
         Info(),
         VitePWA({
             registerType: 'prompt',
