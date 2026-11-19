@@ -7,7 +7,8 @@ import { Passport } from '@concrnt/ui'
 import Tilt from 'react-parallax-tilt'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
-import { MdBadge, MdKey, MdPublic } from 'react-icons/md'
+import { MdArrowForward, MdBadge, MdKey, MdLuggage, MdPublic } from 'react-icons/md'
+import { useNavigate } from 'react-router-dom'
 import { AliasSetupModalContent } from '../components/AliasSetupModalContent'
 import { SubkeyList } from '../components/SubkeyList'
 import { RegistrationInfo } from '../components/RegistrationInfo'
@@ -63,8 +64,8 @@ const InfoTile = ({
 export const IDView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.id' })
     const { client } = useClient()
+    const navigate = useNavigate()
     const [aliasModalOpen, setAliasModalOpen] = useState(false)
-    const [subkeyCopied, setSubkeyCopied] = useState(false)
     const [downloadedSlots, setDownloadedSlots] = useState<string[]>([])
     const [slotVersion, setSlotVersion] = useState(0)
     const [subkeyDrawerOpen, setSubkeyDrawerOpen] = useState(false)
@@ -163,23 +164,6 @@ export const IDView = () => {
         setDownloadedSlots((prev) => (prev.includes(slotKey) ? prev : [...prev, slotKey]))
     }
 
-    const copySubkey = () => {
-        let subkey = localStorage.getItem('SubKey')
-        if (!subkey) return
-        // QRSetup経由のセッションはusePersistentがJSON文字列化して保存している
-        if (subkey.startsWith('"')) {
-            try {
-                subkey = JSON.parse(subkey)
-            } catch {
-                /* raw文字列のまま使う */
-            }
-        }
-        if (!subkey) return
-        navigator.clipboard.writeText(subkey)
-        setSubkeyCopied(true)
-        setTimeout(() => setSubkeyCopied(false), 2000)
-    }
-
     return (
         <View>
             <Header>{t('title')}</Header>
@@ -243,9 +227,14 @@ export const IDView = () => {
                 </Button>
                 {!canBackup && <Text variant="caption">{t('backupUnavailable')}</Text>}
 
-                {localStorage.getItem('SubKey') && (
-                    <Button onClick={copySubkey}>{subkeyCopied ? t('subkeyCopied') : t('copySubkey')}</Button>
-                )}
+                <Button
+                    variant="outlined"
+                    startIcon={<MdLuggage />}
+                    endIcon={<MdArrowForward size={20} />}
+                    onClick={() => navigate('/settings/migration')}
+                >
+                    {t('migration')}
+                </Button>
 
                 {evacuatedSlots.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>

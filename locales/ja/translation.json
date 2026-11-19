@@ -34,18 +34,12 @@
     "views": {
         "settings": {
             "title": "設定",
-            "general": "一般",
-            "theme": "テーマ設定",
-            "activitypub": "ActivityPub設定",
-            "bluesky": "Bluesky設定",
             "id": "ID管理",
-            "emoji": "絵文字",
-            "lists": "リスト",
-            "media": "メディア",
-            "inventory": "インベントリ",
             "notifications": "通知",
-            "migration": "引っ越し",
-            "v1import": "v1からの移行",
+            "lists": "リスト",
+            "display": "表示とカスタマイズ",
+            "media": "メディア",
+            "integrations": "外部連携",
             "devTools": "開発者ツール",
             "account": "アカウント",
             "clearCache": "キャッシュを削除",
@@ -58,10 +52,25 @@
                 "commit": "コミット"
             }
         },
-        "generalSettings": {
-            "title": "一般",
+        "displaySettings": {
+            "title": "表示とカスタマイズ",
             "language": "言語",
-            "haptics": "触覚フィードバック"
+            "theme": "テーマ",
+            "haptics": "触覚フィードバック",
+            "fontSize": "文字サイズ",
+            "emoji": "絵文字パック"
+        },
+        "fontSizeSettings": {
+            "title": "文字サイズ",
+            "small": "小",
+            "medium": "標準",
+            "large": "大"
+        },
+        "integrationSettings": {
+            "title": "外部連携",
+            "activitypub": "ActivityPub設定",
+            "bluesky": "Bluesky設定",
+            "experimental": "実験的"
         },
         "languageSettings": {
             "title": "言語"
@@ -146,45 +155,11 @@
                 "exec": "切り替える"
             }
         },
-        "v1ImportSettings": {
-            "title": "v1からの移行",
-            "description": "v1の鍵を紛失した方向けに、v1のバックアップファイルから投稿とプロフィールをこのアカウントに取り込みます。取り込んだ内容は取り込み用に発行される鍵で署名し直されるため、この(新しい)アカウントのコンテンツになります。",
-            "masterKeyRequired": "取り込みにはマスターキーでのログインが必要です。一度ログアウトし、マスターキーでログインし直してください。",
-            "step0": {
-                "title": "バックアップファイルを選択",
-                "desc": "旧v1クライアントでエクスポートしたバックアップファイル(.txt)を選択してください。",
-                "selectFile": "ファイルを選択",
-                "parseError": "v1のバックアップとして読み込めませんでした。正しいファイルか確認してください。",
-                "readError": "ファイルの読み込みに失敗しました。"
-            },
-            "step1": {
-                "title": "変換内容を確認",
-                "oldCcid": "検出したv1のアドレス: {{ccid}}",
-                "stats": "投稿{{messages}}件、プロフィール更新{{profiles}}件を取り込みます。",
-                "excluded": "対象外: 削除済み{{deleted}}件 / 未対応の種別(お気に入り・コミュニティ等){{skipped}}件 / 読み取り不能{{invalid}}件。",
-                "externalReferences": "他のユーザーの投稿への返信・リルートが{{count}}件あります。相手がv2へサーバー移行していない場合、参照先は表示できないことがあります。",
-                "next": "次へ",
-                "back": "別のファイルを選ぶ"
-            },
-            "step2": {
-                "title": "取り込み",
-                "desc": "変換したデータを現在の鍵で署名し直し、このサーバーに取り込みます。データ量によっては時間がかかります。作業中は画面を閉じないでください。",
-                "progress": "{{done}}/{{total}} チャンク完了({{imported}}件取り込み済み)",
-                "confirmTitle": "取り込みを開始",
-                "confirmDesc": "v1のコンテンツを現在のアカウントの投稿として取り込みます。あとで取り消すには1件ずつ削除する必要があります。",
-                "exec": "取り込みを開始",
-                "working": "取り込み中…"
-            },
-            "step3": {
-                "title": "完了",
-                "desc": "{{count}}件のコミットを取り込みました。プロフィールページやタイムラインに旧投稿が表示されるようになります。",
-                "failures": "{{count}}件のコミットの取り込みに失敗しました。"
-            }
-        },
         "mediaSettings": {
             "title": "メディア",
             "storageQuota": "ストレージ使用量",
             "noFiles": "メディアサーバーにファイルはまだありません。",
+            "play": "再生",
             "copyURL": "URLをコピー",
             "copyMarkdown": "Markdownをコピー",
             "delete": "削除",
@@ -210,7 +185,7 @@
             "document": "ドキュメント"
         },
         "emojiSettings": {
-            "title": "絵文字",
+            "title": "絵文字パック",
             "packages": "絵文字パッケージ",
             "updateAll": "全て更新",
             "packageURL": "絵文字パッケージURL",
@@ -251,10 +226,12 @@
                 "registrationFound": "登録情報が見つかりました。",
                 "registrationNotFound": "登録情報が見つかりませんでした。",
                 "continue": "続行",
-                "registerNew": "新規登録する",
+                "registerNew": "新しい鍵で新規登録する",
                 "deleteBrowserAccount": "ブラウザのアカウント情報を削除",
                 "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
-            }
+            },
+            "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
+            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する"
         },
         "ageBlocked": {
             "title": "まだConcrntを利用できません",
@@ -293,7 +270,8 @@
             "finalizeFailedNetwork": "登録に失敗しました。通信環境を確認して、もう一度お試しください。",
             "ccidMissing": "プログラムエラー: CCIDが見つかりません",
             "registering": "登録中...",
-            "done": "完了"
+            "done": "完了",
+            "reregisterDescription": "CCID {{ccid}} をそのまま使って、選んだサーバーに新規登録します。以前のサーバーの投稿やフォローは引き継がれません。"
         },
         "accountImport": {
             "title": "アカウントをインポート",
@@ -311,6 +289,7 @@
             "masterKeyHint": "12個の単語を順番に入力してください。12語をまとめて貼り付けることもできます。"
         },
         "profile": {
+            "searchPosts": "投稿を検索",
             "userNotFound": "ユーザーが見つかりませんでした",
             "blockConfirmTitle": "ユーザーをブロック",
             "blockConfirmDescription": "このユーザーをブロックしてもよろしいですか？ブロックすると、このユーザーはあなたに対しリプライを送ったり、リアクションをつけたりすることが出来なくなりますが、一般公開の投稿は引き続き見ることができます。",
@@ -327,7 +306,9 @@
             "linkCopied": "コピーしました",
             "mainProfile": "メインプロフィール",
             "mediaViewList": "リスト表示",
-            "mediaViewGrid": "グリッド表示"
+            "mediaViewGrid": "グリッド表示",
+            "showQrCode": "QRコードを表示",
+            "closeQrCode": "閉じる"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -346,18 +327,16 @@
             "developerMode": "開発者モード",
             "mockHome": "ホーム画面 mock",
             "mockExplorer": "探索画面 mock",
-            "mockID": "ID画面 mock"
+            "mockID": "ID画面 mock",
+            "inventory": "インベントリ"
         },
         "id": {
             "title": "ID管理",
             "aliasNotSet": "<未設定>",
             "passportDescription": "現在のID、登録サーバー、認証情報を確認できます。",
             "alias": "エイリアス",
-            "loginOnAnotherDevice": "他デバイスでログイン",
             "backupMasterKey": "マスターキーをバックアップ",
-            "copySubkey": "サブキーをコピー",
-            "subkeyCopied": "コピーしました",
-            "backupUnavailable": "このブラウザはマスターキーを保持していません。マスターキー(12単語)でログインし直すとバックアップできます。",
+            "backupUnavailable": "マスターキーでログイン時のみバックアップ可能",
             "homeServer": {
                 "title": "ホームサーバー",
                 "description": "このサーバーに登録されているあなたの登録情報を確認・編集できます。",
@@ -386,7 +365,6 @@
             "subkeys": {
                 "title": "サブキー",
                 "count": "{{count}}個",
-                "description": "このアカウントで承認されているサブキーの一覧です。ログインした各デバイスはこの鍵で署名を行います。",
                 "loading": "読み込み中...",
                 "empty": "サブキーはありません",
                 "loadFailed": "サブキーの読み込みに失敗しました",
@@ -399,14 +377,29 @@
                 "revokeConfirmDescription": "このサブキーを使用しているデバイスは投稿やログインができなくなります。失効前に行われた署名は引き続き検証可能です。",
                 "revokeConfirmCurrentDescription": "これは今このデバイスが使用しているサブキーです。失効させるとこのデバイスはログアウトされます。",
                 "revokeFailed": "サブキーの失効に失敗しました",
-                "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。"
+                "masterKeyRequired": "サブキーの失効にはマスターキーが必要です。",
+                "add": "新規追加",
+                "namePlaceholder": "名前(任意)",
+                "secret": "秘密鍵文字列",
+                "secretNotice": "この文字列を表示・コピーできるのはこの画面だけです。登録する前に控えてください。",
+                "register": "登録",
+                "addFailed": "サブキーの登録に失敗しました",
+                "copy": "サブキーをコピー",
+                "copied": "コピーしました",
+                "menu": "その他",
+                "qrHint": "ConcrntアプリでこのQRコードを読み込んで承認してください。",
+                "qrEmojiHint": "アプリに表示される絵文字が同じであることを確認してください。",
+                "qrScanned": "アプリで読み取られました。アプリで絵文字を確認して OK を押してください。",
+                "qrAccountMismatch": "別のアカウントでログインしているアプリで読み取られました。このアカウントのアプリで読み取ってください。",
+                "registered": "登録しました"
             },
             "evacuated": {
                 "title": "退避された鍵",
                 "description": "別のアカウントでログインした際に退避された旧マスターキーです。バックアップをダウンロードして安全な場所に保管してください。削除はダウンロード後に可能になります。",
                 "download": "バックアップをダウンロード",
                 "delete": "削除"
-            }
+            },
+            "migration": "別のサーバーへ引っ越し"
         },
         "activitypub": {
             "title": "Activitypub設定",
@@ -452,6 +445,7 @@
             "enableIntro": "Bluesky連携を有効化しましょう",
             "enableDescription": "連携を有効化すると、Bluesky(AT Protocol)のネットワークと繋がることができます。自分が所有しているドメインが必要です。ドメインがそのままBlueskyのハンドルになります。",
             "handleLabel": "ハンドル(自分が所有するドメイン)",
+            "newAccountHint": "Bluesky上に新たなアカウントとして作成します。既存のBlueskyアカウントを引き継ぐことはできません。",
             "setup": "セットアップ開始",
             "setupFailed": "セットアップに失敗しました。このハンドルは既に使われている可能性があります。",
             "pendingTitle": "ドメイン所有権の確認",
@@ -461,23 +455,50 @@
             "verifyNote": "DNSの変更が反映されるまで数分かかることがあります。設置できたら「確認する」を押してください。",
             "verify": "確認する",
             "verifyFailed": "確認に失敗しました。レコードが公開されているか確認し、しばらく待ってから再試行してください。",
+            "changeHandle": "別のドメインにする",
+            "cancelEdit": "戻る",
+            "changeHandleTitle": "ハンドルの変更",
+            "changeHandleDescription": "新しいドメインに以下のレコードを設置してから「変更する」を押してください。DIDは変わらないので、投稿やフォロワーはそのまま引き継がれます。",
+            "changeHandleNote": "DNSの変更が反映されるまで数分かかることがあります。設置できたら「変更する」を押してください。",
+            "changeHandleSubmit": "変更する",
+            "changeHandleDone": "ハンドルを変更しました。Bluesky側に反映されるまで数分かかることがあります。",
+            "changeHandleUnverified": "新しいドメインの所有権を確認できませんでした。レコードが公開されているか確認し、しばらく待ってから再試行してください。",
+            "changeHandleTaken": "このハンドルは既に使われています。",
+            "changeHandleFailed": "変更に失敗しました。しばらく待ってから再試行してください。",
             "active": "Bluesky連携は有効化されています。",
             "yourHandle": "あなたのハンドル: @{{handle}}",
+            "announceDesc": "Bluesky側にハンドルやプロフィールが反映されない場合(handle.invalid と表示される等)は、再送信で情報を流し直せます。",
+            "announce": "Blueskyに再送信",
+            "announceDone": "再送信しました。反映まで数分かかることがあります。",
+            "announceFailed": "再送信に失敗しました。しばらく待ってから再試行してください。",
+            "inboxPolicyBroken": "受信タイムラインの権限設定に問題があり、Blueskyからの投稿が届かない状態です。",
+            "repair": "修復する",
+            "repairing": "修復中...",
+            "repairFailed": "修復に失敗しました。時間をおいて再度お試しください。",
             "enabledToggle": "連携を有効にする",
             "forwardTimeline": "転送元タイムライン",
             "forwardTimelineDesc": "選択したタイムラインへの自分の投稿がBlueskyへ転送されます。未設定の場合はホームタイムラインが使用されます。",
             "update": "更新",
-            "following": "フォロー中",
-            "followers": "フォロワー",
-            "loadMore": "もっと見る",
-            "inquiry": "照会"
+            "inquiry": "照会",
+            "hintLabel": "ヒント",
+            "appPasswordHint": "Bluesky公式アプリなど、ほかのアプリでこのアカウントを開きたいときは、アプリパスワードを発行してログインできます(ただし、Blueskyからは読み取り専用です)。",
+            "manageAppPasswords": "アプリパスワードの管理"
+        },
+        "bskyPost": {
+            "notImported": "この投稿はまだこのサーバーに取得されていません。",
+            "import": "concrntメッセージとして取得する",
+            "importing": "取得中...",
+            "importFailed": "取得に失敗しました"
         },
         "bskyPerson": {
             "follow": "フォロー",
             "unfollow": "フォロー解除",
             "noDescription": "説明はまだありません",
             "bskyUserNotice": "このユーザーはBlueskyのユーザーです。",
-            "openRemote": "bsky.appで開く"
+            "openRemote": "bsky.appで開く",
+            "noPosts": "表示できる投稿はありません",
+            "loadFailed": "投稿を読み込めませんでした",
+            "reposted": "{{name}}がリポスト"
         },
         "home": {
             "setUpProfile": "プロフィールを設定しましょう！",
@@ -497,7 +518,15 @@
         },
         "query": {
             "title": "照会",
-            "submit": "照会"
+            "submit": "照会",
+            "resolving": "照会中...",
+            "invalid": "cckv:// のURI、CCID、または concrnt.world のURLを入力してください",
+            "notFound": "見つかりませんでした",
+            "unsupported": "このURIの種類は照会では開けません",
+            "failed": "照会に失敗しました: {{error}}"
+        },
+        "search": {
+            "title": "検索"
         },
         "list": {
             "listNotFound": "リストが見つかりませんでした"
@@ -549,6 +578,8 @@
             "hidePost": "投稿を隠す"
         },
         "mediaGallery": {
+            "play": "再生",
+            "expand": "拡大",
             "clickToReveal": "タップして表示",
             "hideAgain": "再度隠す",
             "flagWarn": "注意",
@@ -589,6 +620,10 @@
             "unavailable": "この投稿は取得できませんでした(削除済みか、非公開の可能性があります)",
             "fetchFailed": "この投稿を読み込めませんでした(サーバーに接続できません)"
         },
+        "blueskyRecord": {
+            "openRemote": "bsky.appで開く",
+            "notFound": "この投稿は取得できませんでした"
+        },
         "followAck": {
             "userFollowed": "{{name}} がフォローしました",
             "loading": "読み込み中..."
@@ -603,10 +638,25 @@
             "share": "シェア",
             "copyLink": "リンクをコピー",
             "linkCopied": "コピーしました",
-            "copySource": "ソースをコピー"
+            "copySource": "ソースをコピー",
+            "translate": "翻訳",
+            "hideTranslation": "翻訳を隠す",
+            "openGoogleTranslate": "Google翻訳で開く"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
+        },
+        "translatedBody": {
+            "translating": "翻訳中...",
+            "translatedBy": "{{engine}}による{{language}}からの翻訳",
+            "failed": "翻訳に失敗しました",
+            "unsupported": "この言語は翻訳できません",
+            "undetermined": "言語を判定できませんでした",
+            "needsTap": "もう一度お試しください",
+            "sameLanguage": "翻訳の必要はありません",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple翻訳",
+            "engineMlkit": "ML Kit"
         },
         "messageInspector": {
             "title": "インスペクター",
@@ -658,6 +708,7 @@
             "lists": "リスト",
             "query": "照会",
             "settings": "設定",
+            "scanQrCode": "QRコードをスキャン",
             "post": "投稿",
             "documentation": "ドキュメント",
             "forum": "フォーラム",
@@ -742,6 +793,7 @@
             "pageIndicator": "{{page}}ページ目",
             "noFolloweeCommunities": "フォロー中のユーザーが活動しているコミュニティはありません",
             "postsHint": "検索語を入力すると投稿を検索できます",
+            "removeFilter": "フィルターを外す",
             "sortFollowee": "フォロー中",
             "sortGlobal": "グローバル",
             "followeeActiveCommunities": "フォロー中で活発なコミュニティ",
@@ -791,6 +843,39 @@
             "pending": "承認待ち",
             "loadMore": "もっと見る",
             "empty": "ユーザーがいません",
+            "loadError": "読み込みに失敗しました",
+            "removeFollower": "フォロワーから削除",
+            "removeFollowerConfirmTitle": "フォロワーから削除しますか?",
+            "removeFollowerConfirmDescription": "相手にはあなたの投稿が届かなくなります。相手のサーバーが稼働していれば、相手側のフォローも解除されます。"
+        },
+        "bskyAppPasswords": {
+            "title": "アプリパスワード",
+            "serviceLabel": "サーバー(ホスティングプロバイダ)",
+            "identifierLabel": "ユーザー名",
+            "namePlaceholder": "名前(例: iPhone)",
+            "issue": "発行",
+            "issueFailed": "発行に失敗しました。同じ名前が既にあるか、上限(20個)に達している可能性があります。",
+            "issued": "「{{name}}」のアプリパスワードを発行しました。",
+            "issuedNote": "この画面を閉じると再表示できません。今のうちにアプリに入力するか、コピーして保管してください。",
+            "passwordLabel": "アプリパスワード",
+            "issuedHeading": "発行済み",
+            "createdAt": "発行: {{date}}",
+            "lastUsed": "最終使用: {{date}}",
+            "neverUsed": "未使用",
+            "empty": "まだありません。",
+            "loading": "読み込み中...",
+            "revoke": "失効",
+            "revokeConfirmTitle": "アプリパスワードを失効しますか?",
+            "revokeConfirmDescription": "「{{name}}」でログイン中のアプリは直ちにログアウトされます。",
+            "revokeFailed": "失効に失敗しました。しばらく待ってから再試行してください。"
+        },
+        "bskyFollowList": {
+            "following": "フォロー中",
+            "followers": "フォロワー",
+            "follow": "フォロー",
+            "unfollow": "フォロー解除",
+            "loadMore": "もっと見る",
+            "empty": "ユーザーがいません",
             "loadError": "読み込みに失敗しました"
         },
         "userPicker": {
@@ -816,16 +901,7 @@
             "deleteTimeline": "コミュニティを削除",
             "confirmDeleteTimeline": "コミュニティを削除",
             "confirmDeleteTimelineDescription": "このコミュニティを削除してもよろしいですか？この操作は取り消せません。",
-            "search": "検索",
-            "searchNotAvailable": "{{host}}では検索機能が利用できません",
-            "clearSearch": "検索をクリア",
-            "searching": "検索中...",
-            "searchResultPlaceholder": "ここに検索結果が表示されます",
-            "searchResultEmpty": "見つかりませんでした",
-            "searchResultTitle": "{{query}} の検索結果",
-            "searchFailed": "検索に失敗しました",
-            "prev": "前のページ",
-            "next": "次のページ"
+            "search": "検索"
         },
         "policyEditor": {
             "modeEditor": "ポリシーエディタ",
@@ -984,7 +1060,9 @@
             "manualRawKey": "サブキーまたは秘密鍵",
             "manualRawKeyPlaceholder": "concrnt-subkey から始まるサブキー、または64桁のhex秘密鍵を入力",
             "switchToRawKey": "サブキー・秘密鍵で入力する",
-            "switchToMasterKey": "マスターキー(12語)で入力する"
+            "switchToMasterKey": "マスターキー(12語)で入力する",
+            "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
+            "registerOnAnotherServer": "このCCIDで別のサーバーに新規登録する"
         },
         "register": {
             "title": "アカウント登録",
@@ -1002,7 +1080,7 @@
         },
         "qrSetup": {
             "scanWithApp": "ConcrntアプリでQRコードをスキャンしてください",
-            "scanWithAppHint": "スキャナーはアプリの設定 > ID管理にあります",
+            "scanWithAppHint": "アプリのサイドバー最下部のスキャナー、または端末のカメラアプリで読み取れます",
             "usePasskeyTitle": "パスキーを利用しますか？",
             "usePasskeyDescription": "パスキーがおすすめですが、一部の端末やブラウザでは利用できない場合があります。",
             "no": "いいえ",
@@ -1122,15 +1200,52 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "QRコードをスキャン",
+            "close": "閉じる"
+        },
         "qrSetup": {
             "title": "他の端末でログイン",
             "confirmTitle": "この端末でログインを許可しますか？",
             "confirmDescription": "表示されている絵文字が端末で表示されているものと同じであることを確認してください",
+            "linkWarning": "別の端末をこのアカウントでログインさせようとしています。このQRコードやリンクを自分で開いていないなら「キャンセル」してください。",
             "cancel": "キャンセル",
             "ok": "OK",
             "loginCompleted": "ログインが完了しました！",
             "waitingForDevice": "端末から情報が送られてくるのを待っています......",
-            "scanQRCode": "QRコードをスキャン"
+            "signalHost": "接続先: {{host}}",
+            "scanQRCode": "QRコードをスキャン",
+            "invalidQRCode": "読み取った内容はログイン用のQRコードではありません",
+            "externalAuthTitle": "外部サービスにログイン",
+            "keyName": "名前: {{name}}"
+        },
+        "externalAuth": {
+            "consentTitle": "<user/> でログイン",
+            "siteLabel": "ログイン先のサイト",
+            "emojiPrompt": "ログイン先で表示されている絵文字と同じものを選択してください",
+            "notInList": "この中にない",
+            "details": "サイトに渡される情報",
+            "canTitle": "このサイトができること",
+            "canKnowIdentity": "CCID / 所属サーバーを知る",
+            "canKnowProfile": "現在のプロフィールを知る",
+            "cannotTitle": "このサイトができないこと",
+            "cannotPost": "あなたの代わりにconcrntに投稿する",
+            "cannotRead": "あなたの権限でconcrntを閲覧する",
+            "approve": "ログイン",
+            "deny": "拒否",
+            "submitting": "送信しています...",
+            "approved": "ログインしました。サイトの画面を確認してください。",
+            "approvedFragment": "承認しました。ブラウザに戻って続けてください。",
+            "denied": "ログインを拒否しました",
+            "mismatch": "絵文字が一致しなかったため、ログインを中止しました。サイトの画面を確認してやり直してください。",
+            "errorTitle": "ログインできません",
+            "nothingSent": "サイトには何も送信していません。",
+            "postFailedTitle": "通信に失敗しました",
+            "errors": {
+                "invalidUri": "ログイン要求の形式が正しくありません",
+                "invalidRequest": "ログイン要求の内容が正しくありません",
+                "signFailed": "署名できませんでした"
+            }
         },
         "serverSelector": {
             "title": "サーバーを選択",

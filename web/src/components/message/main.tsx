@@ -21,6 +21,7 @@ import { OnelineMessage } from './OnelineMessage'
 import { ActivitypubNote } from './ActivitypubNote'
 import { ActivitypubNoteOneline } from './ActivitypubNoteOneline'
 import { BlueskyRecord } from './BlueskyRecord'
+import { BlueskyRecordOneline } from './BlueskyRecordOneline'
 import { ErrorNotice } from './ErrorNotice'
 
 interface Props {
@@ -62,6 +63,10 @@ export const MessageContainer = (props: Props): ReactNode | null => {
                     message={noteMessage}
                 />
             )
+        }
+        if (message.schema === Schemas.atprotoRecord) {
+            const recordMessage = message as Message<AtprotoRecordSchema>
+            return <BlueskyRecordOneline atUri={recordMessage.value.atUri} message={recordMessage} />
         }
         return <OnelineMessage message={message} />
     }

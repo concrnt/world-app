@@ -72,6 +72,15 @@ export default defineConfig({
     resolve: {
         dedupe: ['react', 'react-dom', 'react/jsx-runtime']
     },
+    optimizeDeps: {
+        include: ['hls.js']
+    },
+    build: {
+        // client/worldlib の `require('ws')` は Node 専用分岐。rolldown は静的に解決しに行くので外す
+        rolldownOptions: {
+            external: ['ws']
+        }
+    },
     server: {
         host: true,
         allowedHosts: ['host.docker.internal', 'cc2.tunnel.anthrotech.dev']

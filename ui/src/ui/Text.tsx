@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { CssVar } from '../types/Theme'
 
 interface Props {
     children: ReactNode
@@ -40,7 +39,7 @@ const baseStyles: Record<NonNullable<Props['variant']>, CSSProperties> = {
     },
     caption: {
         fontSize: '0.875em',
-        color: CssVar.contentTextDim
+        color: 'rgb(from currentcolor r g b / 0.7)'
     }
 }
 

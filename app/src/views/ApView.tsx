@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useClient } from '../contexts/Client'
-import { CssVar, ExternalLink, Text, View } from '@concrnt/ui'
+import { CssVar, Text, View } from '@concrnt/ui'
+import { ExternalLink } from '../components/ExternalLink'
 import { ApNote } from './ApNote'
 import { ApPerson } from './ApPerson'
 import { ApObject, resolveApObject } from '../utils/activitypub'

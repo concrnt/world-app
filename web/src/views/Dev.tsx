@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, TextField, Text, Divider, List, ListItem, Switch } from '@concrnt/ui'
+import { MdChevronRight, MdInventory2 } from 'react-icons/md'
+import { useNavigate } from 'react-router-dom'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
@@ -12,6 +14,7 @@ export const DevView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.dev' })
     const { client } = useClient()
     const [developerMode, setDeveloperMode] = usePreference('developerMode')
+    const navigate = useNavigate()
 
     const [uriDraft, setURIDraft] = useState('')
     const [result, setResult] = useState<string>('')
@@ -34,6 +37,13 @@ export const DevView = () => {
                 <List>
                     <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
                         {t('developerMode')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdInventory2 size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/inventory')}
+                    >
+                        {t('inventory')}
                     </ListItem>
                 </List>
 

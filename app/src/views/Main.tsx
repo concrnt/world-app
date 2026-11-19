@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TabLayout } from '../layouts/Tab'
 import { SidebarLayout } from '../layouts/Sidebar'
 import { Sidebar } from '../components/Sidebar'
@@ -10,11 +10,17 @@ import { ContactsView } from './Contacts'
 import { PostView } from './Post'
 import { TimelineView } from './Timeline'
 import { ProfileView } from './Profile'
+import { ListView } from './List'
 import { ApView } from './ApView'
 import { BskyView } from './BskyView'
+import { QueryView } from './Query'
 import { useClient } from '../contexts/Client'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
+import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { AUTH_URI_SCHEME } from '../lib/externalAuth'
+import { ExternalAuthView } from './ExternalAuth'
+import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'
@@ -23,7 +29,7 @@ import { MdContacts } from 'react-icons/md'
 import { StackLayout, StackLayoutRef } from '../layouts/Stack'
 import { ScrollViewHandle } from '../types/ScrollView'
 import { CssVar } from '../types/Theme'
-import { Badge, CfmActionsProvider, useCfmActions, useTheme } from '@concrnt/ui'
+import { Badge, useTheme } from '@concrnt/ui'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { setAppBadge } from '../lib/push'
 
@@ -117,54 +123,11 @@ export const MainView = () => {
         [selectedTab]
     )
 
-    // openInternalはCfmActionsとしてメモ化して配るため、押し先のタブはrefで最新値を追う
+    // ディープリンク等のeffect内から押し先のタブを参照するため、refで最新値を追う
     const selectedTabRef = useRef(selectedTab)
     useEffect(() => {
         selectedTabRef.current = selectedTab
     }, [selectedTab])
-
-    const parentCfmActions = useCfmActions()
-
-    // concrnt.worldオリジンの共有URLは外部ブラウザに出さず、対応するビューを現在のタブのスタックに積む
-    const openInternal = useCallback((url: string): boolean => {
-        let parsed: URL
-        try {
-            parsed = new URL(url)
-        } catch {
-            return false
-        }
-        if (parsed.hostname !== 'concrnt.world') return false
-        const path = parsed.pathname
-        let view: ReactNode | null = null
-        let match: RegExpMatchArray | null
-        if ((match = path.match(/^\/post\/([^/]+)$/))) {
-            view = <PostView uri={decodeURIComponent(match[1])} />
-        } else if ((match = path.match(/^\/timeline\/([^/]+)$/))) {
-            view = <TimelineView uri={decodeURIComponent(match[1])} />
-        } else if ((match = path.match(/^\/profile\/([^/]+)(?:\/([^/]+))?$/))) {
-            view = (
-                <ProfileView
-                    ccid={decodeURIComponent(match[1])}
-                    profileName={match[2] ? decodeURIComponent(match[2]) : undefined}
-                />
-            )
-        } else if ((match = path.match(/^\/activitypub\/(?:person|note|view)\/([^/]+)$/))) {
-            view = <ApView uri={decodeURIComponent(match[1])} />
-        } else if ((match = path.match(/^\/bluesky\/(?:person|post|view)\/([^/]+)$/))) {
-            view = <BskyView uri={decodeURIComponent(match[1])} />
-        }
-        if (!view) return false
-        stackRefs.current[selectedTabRef.current]?.push(view)
-        return true
-    }, [])
-
-    const cfmActions = useMemo(
-        () => ({
-            ...parentCfmActions,
-            openInternal
-        }),
-        [parentCfmActions, openInternal]
-    )
 
     // Android back button handling: ナビゲーションハンドラは常時登録(=スタックの最下段)
     useBackHandler(() => {
@@ -180,8 +143,10 @@ export const MainView = () => {
     })
 
     // Push notifications: re-upsert the subscription on every app start (the
-    // cheapest way to keep the native token fresh across rotations), surface
-    // a cold-start tap's deep link once, and listen for warm-start taps.
+    // cheapest way to keep the native token fresh across rotations), then
+    // drain the native tap buffer once on mount (cold start, or a tap that
+    // arrived while nobody was listening) and again on every warm-start tap
+    // signal. See getLaunchNotification for the buffer contract.
     useEffect(() => {
         if (!client) return
 
@@ -216,61 +181,131 @@ export const MainView = () => {
         }
     }, [client])
 
+    // OSからのdeep link(cckv:// / concrnt-auth://)とサイドバーのQRスキャン結果は同じ入口で振り分ける:
+    //   concrnt-auth://(CIP-17 / signal)または wss://(webログイン画面の旧signal QR)→ 同意画面
+    //   それ以外(cckv:// / CCID / https://concrnt.world/... / manifest URL)→ 照会と同じ解決で該当ビュー
+    //   解決できなければ照会画面に入れた状態で開き、失敗理由をそこで見せる
+    const openDeepLink = useCallback(
+        (uri: string) => {
+            if (!client) return
+            setOpen(false)
+            const stack = stackRefs.current[selectedTabRef.current]
+            if (uri.startsWith(AUTH_URI_SCHEME) || uri.startsWith('wss://')) {
+                stack?.push(<ExternalAuthView uri={uri} />)
+                return
+            }
+            resolveQueryTarget(client, uri)
+                .then((target) => {
+                    switch (target.kind) {
+                        case 'profile':
+                            stack?.push(
+                                <ProfileView ccid={target.ccid} profileName={target.profileName} hint={target.hint} />
+                            )
+                            break
+                        case 'post':
+                            stack?.push(<PostView uri={target.uri} />)
+                            break
+                        case 'timeline':
+                            stack?.push(<TimelineView uri={target.uri} />)
+                            break
+                        case 'list':
+                            stack?.push(<ListView uri={target.uri} />)
+                            break
+                        case 'apView':
+                            stack?.push(<ApView uri={target.uri} />)
+                            break
+                        case 'bskyView':
+                            stack?.push(<BskyView uri={target.uri} />)
+                            break
+                    }
+                })
+                .catch(() => {
+                    stack?.push(<QueryView initialQuery={uri} autoSubmit />)
+                })
+        },
+        [client]
+    )
+
+    // Cold start: the URL is held by the plugin until MainView mounts (i.e.
+    // after login), so it is consumed here once. Warm start: live event.
+    useEffect(() => {
+        if (!client) return
+
+        getLaunchDeepLink()
+            .then((url) => {
+                if (url) openDeepLink(url)
+            })
+            .catch(() => {})
+
+        let unlisten: (() => void) | undefined
+        let cancelled = false
+        onDeepLink(openDeepLink)
+            .then((f) => {
+                if (cancelled) f()
+                else unlisten = f
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+            unlisten?.()
+        }
+    }, [client, openDeepLink])
+
     return (
-        <CfmActionsProvider value={cfmActions}>
-            <SidebarLayout
-                opened={opened}
-                setOpen={setOpen}
-                content={
-                    <Sidebar
-                        onPush={(view) => {
-                            console.log('pushing view to tab:', selectedTab)
-                            const stackRef = stackRefs.current[selectedTab]
-                            stackRef?.set(view)
-                            setOpen(false)
-                        }}
-                    />
-                }
-            >
-                <div
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: CssVar.backdropBackground
+        <SidebarLayout
+            opened={opened}
+            setOpen={setOpen}
+            content={
+                <Sidebar
+                    onPush={(view) => {
+                        console.log('pushing view to tab:', selectedTab)
+                        const stackRef = stackRefs.current[selectedTab]
+                        stackRef?.set(view)
+                        setOpen(false)
                     }}
-                >
-                    <TabLayout
-                        selectedTab={selectedTab}
-                        setSelectedTab={selectTab}
-                        tabs={{
-                            ...tabs,
-                            notifications: {
-                                ...tabs.notifications,
-                                tab: (
-                                    <Badge
-                                        count={unreadCount}
-                                        style={{
-                                            backgroundColor: CssVar.backdropText,
-                                            color: CssVar.backdropBackground
-                                        }}
-                                    >
-                                        {tabs.notifications.tab}
-                                    </Badge>
-                                )
-                            }
-                        }}
-                        style={{
-                            paddingBottom: 'env(safe-area-inset-bottom)',
-                            borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined,
-                            borderBottom: 'none'
-                        }}
-                        tabStyle={{
-                            color: CssVar.backdropText,
-                            padding: '0.5rem'
-                        }}
-                    />
-                </div>
-            </SidebarLayout>
-        </CfmActionsProvider>
+                    onScanned={openDeepLink}
+                />
+            }
+        >
+            <div
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: CssVar.backdropBackground
+                }}
+            >
+                <TabLayout
+                    selectedTab={selectedTab}
+                    setSelectedTab={selectTab}
+                    tabs={{
+                        ...tabs,
+                        notifications: {
+                            ...tabs.notifications,
+                            tab: (
+                                <Badge
+                                    count={unreadCount}
+                                    style={{
+                                        backgroundColor: CssVar.backdropText,
+                                        color: CssVar.backdropBackground
+                                    }}
+                                >
+                                    {tabs.notifications.tab}
+                                </Badge>
+                            )
+                        }
+                    }}
+                    style={{
+                        paddingBottom: 'env(safe-area-inset-bottom)',
+                        borderTop: theme.variant === 'classic' ? `1px solid ${CssVar.divider}` : undefined,
+                        borderBottom: 'none'
+                    }}
+                    tabStyle={{
+                        color: CssVar.backdropText,
+                        padding: '0.5rem'
+                    }}
+                />
+            </div>
+        </SidebarLayout>
     )
 }

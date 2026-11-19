@@ -4,7 +4,6 @@ import {
     Avatar,
     ButtonBase,
     CCWallpaper,
-    CfmRenderer,
     Text,
     Button,
     Tabs,
@@ -14,6 +13,7 @@ import {
     Tooltip,
     IconButton
 } from '@concrnt/ui'
+import { CfmRenderer } from '../../components/CfmRenderer'
 import { View } from '../../components/View'
 import { useClient } from '../../contexts/Client'
 import { useNavigate } from 'react-router-dom'

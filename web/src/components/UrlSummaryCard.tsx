@@ -2,32 +2,36 @@ import { useEffect, useState } from 'react'
 import { type Summary, useUrlSummary } from '../contexts/UrlSummary'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { CssVar } from '../types/Theme'
-import { ExternalLink } from '@concrnt/ui'
+import { ExternalLink } from './ExternalLink'
 
 interface Props {
     url: string
+    summary?: Partial<Summary>
 }
 
 export const UrlSummaryCard = (props: Props) => {
     const service = useUrlSummary()
     const { getImageURL } = useMediaProxy()
-    const [preview, setPreview] = useState<Summary | undefined>(undefined)
+    const [fetched, setFetched] = useState<Summary | undefined>(undefined)
     const [errored, setErrored] = useState(false)
 
+    const given = props.summary
+
     useEffect(() => {
-        if (!service) return
+        if (given || !service) return
         service
             .getSummary(props.url)
             .then((summary) => {
-                if (summary) setPreview(summary)
+                if (summary) setFetched(summary)
                 else setErrored(true)
             })
             .catch(() => {
                 setErrored(true)
             })
-    }, [props.url, service])
+    }, [props.url, service, given])
 
-    if (!service || errored) return null
+    const preview = given ?? fetched
+    if (errored || (!service && !preview)) return null
 
     let hostname = ''
     try {
@@ -95,6 +99,8 @@ export const UrlSummaryCard = (props: Props) => {
         )
     }
 
+    const image = preview.thumbnail || preview.icon
+
     return (
         <ExternalLink
             href={props.url}
@@ -109,14 +115,14 @@ export const UrlSummaryCard = (props: Props) => {
                 border: `1px solid ${CssVar.divider}`
             }}
         >
-            {(preview.thumbnail || preview.icon) && (
+            {image && (
                 <div
                     style={{
                         width: '80px',
                         height: '80px',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundImage: `url(${getImageURL(preview.thumbnail || preview.icon, { maxWidth: 512 })})`,
+                        backgroundImage: `url(${getImageURL(image, { maxWidth: 512 })})`,
                         flexShrink: 0
                     }}
                 />
@@ -125,7 +131,7 @@ export const UrlSummaryCard = (props: Props) => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '8px',
+                    padding: '6px 8px',
                     height: '80px',
                     overflow: 'hidden',
                     flex: 1,
@@ -140,7 +146,8 @@ export const UrlSummaryCard = (props: Props) => {
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        lineHeight: 1.3
+                        lineHeight: 1.3,
+                        flexShrink: 0
                     }}
                 >
                     {preview.title || hostname}
@@ -150,7 +157,7 @@ export const UrlSummaryCard = (props: Props) => {
                         fontSize: '12px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        flex: 1,
+                        flexShrink: 0,
                         lineHeight: 1.3,
                         opacity: 0.7,
                         display: '-webkit-box',
@@ -166,7 +173,10 @@ export const UrlSummaryCard = (props: Props) => {
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        opacity: 0.5
+                        opacity: 0.5,
+                        lineHeight: 1.3,
+                        marginTop: 'auto',
+                        flexShrink: 0
                     }}
                 >
                     {hostname}

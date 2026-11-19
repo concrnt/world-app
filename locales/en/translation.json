@@ -34,18 +34,12 @@
     "views": {
         "settings": {
             "title": "Settings",
-            "general": "General",
-            "theme": "Theme",
-            "activitypub": "ActivityPub",
-            "bluesky": "Bluesky",
             "id": "ID Management",
-            "emoji": "Emoji",
-            "lists": "Lists",
-            "media": "Media",
-            "inventory": "Inventory",
             "notifications": "Notifications",
-            "migration": "Migration",
-            "v1import": "Import from v1",
+            "lists": "Lists",
+            "display": "Display & Customization",
+            "media": "Media",
+            "integrations": "Integrations",
             "devTools": "Developer Tools",
             "account": "Account",
             "clearCache": "Clear Cache",
@@ -58,10 +52,25 @@
                 "commit": "Commit"
             }
         },
-        "generalSettings": {
-            "title": "General",
+        "displaySettings": {
+            "title": "Display & Customization",
             "language": "Language",
-            "haptics": "Haptic Feedback"
+            "theme": "Theme",
+            "haptics": "Haptic Feedback",
+            "fontSize": "Text Size",
+            "emoji": "Emoji Packs"
+        },
+        "fontSizeSettings": {
+            "title": "Text Size",
+            "small": "Small",
+            "medium": "Default",
+            "large": "Large"
+        },
+        "integrationSettings": {
+            "title": "Integrations",
+            "activitypub": "ActivityPub",
+            "bluesky": "Bluesky",
+            "experimental": "Experimental"
         },
         "languageSettings": {
             "title": "Language"
@@ -146,45 +155,11 @@
                 "exec": "Switch"
             }
         },
-        "v1ImportSettings": {
-            "title": "Import from v1",
-            "description": "For those who lost their v1 key: restore posts and your profile from a v1 backup file into this account. The imported content is re-signed with a key issued just for the import, so it becomes content of this (new) account.",
-            "masterKeyRequired": "Importing requires logging in with your master key. Please log out and log in again with your master key.",
-            "step0": {
-                "title": "Select your backup file",
-                "desc": "Select the backup file (.txt) you exported from the old v1 client.",
-                "selectFile": "Select file",
-                "parseError": "Could not read this file as a v1 backup. Please check that you selected the correct file.",
-                "readError": "Failed to read the file."
-            },
-            "step1": {
-                "title": "Review the conversion",
-                "oldCcid": "Detected v1 address: {{ccid}}",
-                "stats": "{{messages}} posts and {{profiles}} profile updates will be imported.",
-                "excluded": "Excluded: {{deleted}} deleted, {{skipped}} unsupported (favorites, communities, etc.), {{invalid}} unreadable.",
-                "externalReferences": "{{count}} replies/reroutes reference other users' posts. They may not display if those users have not migrated their server to v2.",
-                "next": "Next",
-                "back": "Choose another file"
-            },
-            "step2": {
-                "title": "Import",
-                "desc": "Re-signs the converted data with your current key and imports it into this server. This may take a while — keep this screen open.",
-                "progress": "{{done}}/{{total}} chunks done ({{imported}} commits imported)",
-                "confirmTitle": "Start import",
-                "confirmDesc": "The v1 content will be imported as content of your current account. Undoing this later requires deleting the items one by one.",
-                "exec": "Start import",
-                "working": "Importing…"
-            },
-            "step3": {
-                "title": "Done",
-                "desc": "{{count}} commits imported. Your old posts should now appear on your profile page and timeline.",
-                "failures": "{{count}} commits failed to import."
-            }
-        },
         "mediaSettings": {
             "title": "Media",
             "storageQuota": "Storage Usage",
             "noFiles": "No files on the media server yet.",
+            "play": "Play",
             "copyURL": "Copy URL",
             "copyMarkdown": "Copy Markdown",
             "delete": "Delete",
@@ -210,7 +185,7 @@
             "document": "Document"
         },
         "emojiSettings": {
-            "title": "Emoji",
+            "title": "Emoji Packs",
             "packages": "Emoji Packages",
             "updateAll": "Update All",
             "packageURL": "Emoji Package URL",
@@ -251,10 +226,12 @@
                 "registrationFound": "Registration found.",
                 "registrationNotFound": "Registration not found.",
                 "continue": "Continue",
-                "registerNew": "Register a new account",
+                "registerNew": "Register with a new key",
                 "deleteBrowserAccount": "Delete account data from this browser",
                 "checkFailed": "Could not verify. Please check your connection or the server status and try again."
-            }
+            },
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerWithExistingKey": "Register this CCID on another server"
         },
         "ageBlocked": {
             "title": "You can't use Concrnt yet",
@@ -293,7 +270,8 @@
             "finalizeFailedNetwork": "Registration failed. Check your network connection and try again.",
             "ccidMissing": "Program error: CCID not found",
             "registering": "Registering...",
-            "done": "Done"
+            "done": "Done",
+            "reregisterDescription": "Register CCID {{ccid}} on the server you choose. Posts and follows from the previous server will not be carried over."
         },
         "accountImport": {
             "title": "Import Account",
@@ -311,6 +289,7 @@
             "masterKeyHint": "Enter the 12 words in order. You can also paste all 12 words at once."
         },
         "profile": {
+            "searchPosts": "Search posts",
             "userNotFound": "User not found",
             "blockConfirmTitle": "Block user",
             "blockConfirmDescription": "Are you sure you want to block this user? They will no longer be able to reply to you or react to your posts, but they will still be able to see your public posts.",
@@ -327,7 +306,9 @@
             "linkCopied": "Copied",
             "mainProfile": "Main profile",
             "mediaViewList": "List view",
-            "mediaViewGrid": "Grid view"
+            "mediaViewGrid": "Grid view",
+            "showQrCode": "Show QR code",
+            "closeQrCode": "Close"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -346,18 +327,16 @@
             "developerMode": "Developer Mode",
             "mockHome": "Home screen mock",
             "mockExplorer": "Explorer screen mock",
-            "mockID": "ID screen mock"
+            "mockID": "ID screen mock",
+            "inventory": "Inventory"
         },
         "id": {
             "title": "ID Management",
             "aliasNotSet": "<Not set>",
             "passportDescription": "View your current ID, registered server, and credentials.",
             "alias": "Alias",
-            "loginOnAnotherDevice": "Log in on another device",
             "backupMasterKey": "Back up master key",
-            "copySubkey": "Copy Subkey",
-            "subkeyCopied": "Copied!",
-            "backupUnavailable": "This browser does not hold your master key. Log in again with your master key (12 words) to back it up.",
+            "backupUnavailable": "Backups can be performed only when logged in with the master key.",
             "homeServer": {
                 "title": "Home Server",
                 "description": "View and edit your registration info stored on this server.",
@@ -387,7 +366,6 @@
                 "title": "Subkeys",
                 "count_one": "{{count}} key",
                 "count_other": "{{count}} keys",
-                "description": "Subkeys authorized for this account. Devices you have logged in on sign with these keys.",
                 "loading": "Loading...",
                 "empty": "No subkeys",
                 "loadFailed": "Failed to load subkeys",
@@ -400,14 +378,29 @@
                 "revokeConfirmDescription": "Devices using this subkey will no longer be able to post or log in. Signatures made before revocation remain verifiable.",
                 "revokeConfirmCurrentDescription": "This is the subkey used by this device. Revoking it will log this device out.",
                 "revokeFailed": "Failed to revoke subkey",
-                "masterKeyRequired": "Revoking a subkey requires the master key."
+                "masterKeyRequired": "Revoking a subkey requires the master key.",
+                "add": "Add",
+                "namePlaceholder": "Name (optional)",
+                "secret": "Secret string",
+                "secretNotice": "This string can only be viewed and copied on this screen. Save it somewhere safe before registering.",
+                "register": "Register",
+                "addFailed": "Failed to register subkey",
+                "copy": "Copy subkey",
+                "copied": "Copied!",
+                "menu": "More",
+                "qrHint": "Scan this QR code with the Concrnt app and approve it.",
+                "qrEmojiHint": "Make sure the emoji shown in the app match these.",
+                "qrScanned": "Scanned by the app. Check the emoji in the app and tap OK there.",
+                "qrAccountMismatch": "Scanned by an app logged in as a different account. Please scan with this account.",
+                "registered": "Registered"
             },
             "evacuated": {
                 "title": "Evacuated keys",
                 "description": "Master keys of previous accounts, preserved when you signed in with a different account. Download a backup and store it somewhere safe. Deletion becomes available after downloading.",
                 "download": "Download backup",
                 "delete": "Delete"
-            }
+            },
+            "migration": "Move to another server"
         },
         "activitypub": {
             "title": "ActivityPub Settings",
@@ -452,6 +445,7 @@
             "unavailable": "Failed to communicate with the Bluesky bridge.",
             "enableIntro": "Let's enable Bluesky integration",
             "enableDescription": "Enabling integration lets you connect with the Bluesky (AT Protocol) network. You need a domain you own — it becomes your Bluesky handle.",
+            "newAccountHint": "This creates a brand-new account on Bluesky. An existing Bluesky account cannot be migrated or taken over.",
             "handleLabel": "Your handle (a domain you own)",
             "setup": "Start setup",
             "setupFailed": "Setup failed. The handle may already be taken.",
@@ -462,23 +456,50 @@
             "verifyNote": "DNS changes can take a few minutes to propagate. Once published, press Verify.",
             "verify": "Verify",
             "verifyFailed": "Verification failed. Check that the record is published and try again after a while.",
+            "changeHandle": "Use a different domain",
+            "cancelEdit": "Back",
+            "changeHandleTitle": "Change handle",
+            "changeHandleDescription": "Publish the records below on the new domain, then press Change. Your DID stays the same, so your posts and followers carry over.",
+            "changeHandleNote": "DNS changes can take a few minutes to propagate. Once published, press Change.",
+            "changeHandleSubmit": "Change",
+            "changeHandleDone": "Handle changed. It can take a few minutes to be reflected on Bluesky.",
+            "changeHandleUnverified": "Could not verify the new domain. Check that the record is published and try again after a while.",
+            "changeHandleTaken": "That handle is already taken.",
+            "changeHandleFailed": "Change failed. Please wait a while and try again.",
             "active": "Bluesky integration is enabled.",
             "yourHandle": "Your handle: @{{handle}}",
+            "announceDesc": "If your handle or profile is not showing up on Bluesky (e.g. it appears as handle.invalid), you can re-send your account information.",
+            "announce": "Re-send to Bluesky",
+            "announceDone": "Re-sent. It can take a few minutes to be reflected.",
+            "announceFailed": "Re-send failed. Please wait a while and try again.",
+            "inboxPolicyBroken": "There is a problem with the inbox timeline permissions. Posts from Bluesky cannot be delivered.",
+            "repair": "Repair",
+            "repairing": "Repairing...",
+            "repairFailed": "Repair failed. Please try again later.",
             "enabledToggle": "Enable federation",
             "forwardTimeline": "Forwarding Timelines",
             "forwardTimelineDesc": "Your posts to the selected timelines will be forwarded to Bluesky. If none are set, your home timeline is used.",
             "update": "Update",
-            "following": "Following",
-            "followers": "Followers",
-            "loadMore": "Show more",
-            "inquiry": "Inquiry"
+            "inquiry": "Inquiry",
+            "hintLabel": "Hint",
+            "appPasswordHint": "To open this account in another app, such as the official Bluesky app, issue an app password and log in with it (read-only from Bluesky, though).",
+            "manageAppPasswords": "Manage app passwords"
+        },
+        "bskyPost": {
+            "notImported": "This post has not been fetched to this server yet.",
+            "import": "Fetch as Concrnt message",
+            "importing": "Fetching...",
+            "importFailed": "Failed to fetch"
         },
         "bskyPerson": {
             "follow": "Follow",
             "unfollow": "Unfollow",
             "noDescription": "No description yet",
             "bskyUserNotice": "This user is a Bluesky user.",
-            "openRemote": "Open on bsky.app"
+            "openRemote": "Open on bsky.app",
+            "noPosts": "No posts to show",
+            "loadFailed": "Failed to load posts",
+            "reposted": "Reposted by {{name}}"
         },
         "home": {
             "setUpProfile": "Let's set up your profile!",
@@ -498,7 +519,15 @@
         },
         "query": {
             "title": "Inquiry",
-            "submit": "Inquiry"
+            "submit": "Inquiry",
+            "resolving": "Resolving...",
+            "invalid": "Enter a cckv:// URI, a CCID, or a concrnt.world URL",
+            "notFound": "Not found",
+            "unsupported": "This kind of URI cannot be opened here",
+            "failed": "Failed to resolve: {{error}}"
+        },
+        "search": {
+            "title": "Search"
         },
         "list": {
             "listNotFound": "List not found"
@@ -550,6 +579,8 @@
             "hidePost": "Hide post"
         },
         "mediaGallery": {
+            "play": "Play",
+            "expand": "Expand",
             "clickToReveal": "Click to reveal",
             "hideAgain": "Hide again",
             "flagWarn": "Content Warning",
@@ -590,6 +621,10 @@
             "unavailable": "This post could not be fetched (it may have been deleted or is private)",
             "fetchFailed": "Failed to load this post (server unreachable)"
         },
+        "blueskyRecord": {
+            "openRemote": "Open on bsky.app",
+            "notFound": "This post could not be fetched"
+        },
         "followAck": {
             "userFollowed": "{{name}} followed",
             "loading": "Loading..."
@@ -604,10 +639,25 @@
             "share": "Share",
             "copyLink": "Copy link",
             "linkCopied": "Copied",
-            "copySource": "Copy source"
+            "copySource": "Copy source",
+            "translate": "Translate",
+            "hideTranslation": "Hide translation",
+            "openGoogleTranslate": "Open in Google Translate"
         },
         "collapsibleBody": {
             "showMore": "Show more"
+        },
+        "translatedBody": {
+            "translating": "Translating...",
+            "translatedBy": "Translated from {{language}} by {{engine}}",
+            "failed": "Translation failed",
+            "unsupported": "Unsupported language",
+            "undetermined": "Could not detect the language",
+            "needsTap": "Please try again",
+            "sameLanguage": "Already in your language",
+            "engineChrome": "Chrome",
+            "engineApple": "Apple Translation",
+            "engineMlkit": "ML Kit"
         },
         "messageInspector": {
             "title": "Inspector",
@@ -659,6 +709,7 @@
             "lists": "Lists",
             "query": "Query",
             "settings": "Settings",
+            "scanQrCode": "Scan QR code",
             "post": "Post",
             "documentation": "Documentation",
             "forum": "Forum",
@@ -743,6 +794,7 @@
             "pageIndicator": "Page {{page}}",
             "noFolloweeCommunities": "No communities where people you follow are active",
             "postsHint": "Type a search term to search posts",
+            "removeFilter": "Remove filter",
             "sortFollowee": "Following",
             "sortGlobal": "Global",
             "followeeActiveCommunities": "Communities active among people you follow",
@@ -792,6 +844,39 @@
             "pending": "Pending",
             "loadMore": "Load more",
             "empty": "No users",
+            "loadError": "Failed to load",
+            "removeFollower": "Remove follower",
+            "removeFollowerConfirmTitle": "Remove this follower?",
+            "removeFollowerConfirmDescription": "They will stop receiving your posts. If their server is still online, their follow will be cancelled as well."
+        },
+        "bskyAppPasswords": {
+            "title": "App passwords",
+            "serviceLabel": "Server (hosting provider)",
+            "identifierLabel": "Username",
+            "namePlaceholder": "Name (e.g. iPhone)",
+            "issue": "Issue",
+            "issueFailed": "Failed to issue. The name may already exist, or you may have reached the limit (20).",
+            "issued": "Issued an app password for \"{{name}}\".",
+            "issuedNote": "It cannot be shown again once you close this screen. Enter it in the app now, or copy it somewhere safe.",
+            "passwordLabel": "App password",
+            "issuedHeading": "Issued",
+            "createdAt": "Issued: {{date}}",
+            "lastUsed": "Last used: {{date}}",
+            "neverUsed": "Never used",
+            "empty": "None yet.",
+            "loading": "Loading...",
+            "revoke": "Revoke",
+            "revokeConfirmTitle": "Revoke this app password?",
+            "revokeConfirmDescription": "Any app signed in with \"{{name}}\" will be logged out immediately.",
+            "revokeFailed": "Failed to revoke. Please wait a while and try again."
+        },
+        "bskyFollowList": {
+            "following": "Following",
+            "followers": "Followers",
+            "follow": "Follow",
+            "unfollow": "Unfollow",
+            "loadMore": "Load more",
+            "empty": "No users",
             "loadError": "Failed to load"
         },
         "userPicker": {
@@ -817,16 +902,7 @@
             "deleteTimeline": "Delete Community",
             "confirmDeleteTimeline": "Delete community",
             "confirmDeleteTimelineDescription": "Are you sure you want to delete this community? This action cannot be undone.",
-            "search": "Search",
-            "searchNotAvailable": "Search is not available on {{host}}",
-            "clearSearch": "Clear search",
-            "searching": "Searching...",
-            "searchResultPlaceholder": "Search results will appear here",
-            "searchResultEmpty": "No results found",
-            "searchResultTitle": "Search results for {{query}}",
-            "searchFailed": "Search failed",
-            "prev": "Previous",
-            "next": "Next"
+            "search": "Search"
         },
         "policyEditor": {
             "modeEditor": "Policy Editor",
@@ -985,7 +1061,9 @@
             "manualRawKey": "Subkey or private key",
             "manualRawKeyPlaceholder": "Enter a subkey starting with concrnt-subkey, or a 64-char hex private key",
             "switchToRawKey": "Use a subkey / private key instead",
-            "switchToMasterKey": "Use the 12-word master key instead"
+            "switchToMasterKey": "Use the 12-word master key instead",
+            "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
+            "registerOnAnotherServer": "Register this CCID on another server"
         },
         "register": {
             "title": "Account Registration",
@@ -1003,7 +1081,7 @@
         },
         "qrSetup": {
             "scanWithApp": "Scan the QR code with the Concrnt app",
-            "scanWithAppHint": "You can find the scanner in the app under Settings > ID Management",
+            "scanWithAppHint": "Use the scanner at the bottom of the app's sidebar, or your device's camera app",
             "usePasskeyTitle": "Use a passkey?",
             "usePasskeyDescription": "Passkeys are recommended, but may not be available on some devices or browsers.",
             "no": "No",
@@ -1123,15 +1201,52 @@
         }
     },
     "app": {
+        "scanner": {
+            "title": "Scan QR code",
+            "close": "Close"
+        },
         "qrSetup": {
             "title": "Log in on another device",
             "confirmTitle": "Allow login on this device?",
             "confirmDescription": "Make sure the emoji shown here matches the one displayed on the other device",
+            "linkWarning": "You are about to let another device log in to this account. Cancel unless you opened this QR code or link yourself.",
             "cancel": "Cancel",
             "ok": "OK",
             "loginCompleted": "Login completed!",
             "waitingForDevice": "Waiting for information from the device...",
-            "scanQRCode": "Scan QR code"
+            "signalHost": "Connecting to: {{host}}",
+            "scanQRCode": "Scan QR code",
+            "invalidQRCode": "The scanned content is not a login QR code",
+            "externalAuthTitle": "Log in to an external service",
+            "keyName": "Name: {{name}}"
+        },
+        "externalAuth": {
+            "consentTitle": "Log in as <user/>",
+            "siteLabel": "Site you are logging in to",
+            "emojiPrompt": "Select the emoji shown on the site you are logging in to",
+            "notInList": "None of these",
+            "details": "Information shared with the site",
+            "canTitle": "What this site can do",
+            "canKnowIdentity": "Know your CCID and home server",
+            "canKnowProfile": "Know your current profile",
+            "cannotTitle": "What this site cannot do",
+            "cannotPost": "Post to concrnt on your behalf",
+            "cannotRead": "Read concrnt with your permissions",
+            "approve": "Log in",
+            "deny": "Deny",
+            "submitting": "Sending...",
+            "approved": "Logged in. Check the site.",
+            "approvedFragment": "Approved. Return to the browser to continue.",
+            "denied": "Login denied",
+            "mismatch": "The emoji did not match, so the login was cancelled. Check the site and try again.",
+            "errorTitle": "Cannot log in",
+            "nothingSent": "Nothing was sent to the site.",
+            "postFailedTitle": "Communication failed",
+            "errors": {
+                "invalidUri": "The login request is malformed",
+                "invalidRequest": "The login request is invalid",
+                "signFailed": "Could not sign"
+            }
         },
         "serverSelector": {
             "title": "Select a server",

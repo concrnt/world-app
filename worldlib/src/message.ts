@@ -39,6 +39,9 @@ export class Message<T> implements Document<T> {
     authorProfile: ProfileSchema = {
         username: 'Anonymous'
     }
+    // profileOverride.avatarでアイコンが差し替えられた投稿(discord-bridge等の代理投稿)だけ、差し替え前の
+    // 作者プロフィール(サービスアカウント自身のmain/サブプロフィール)を保持する。アイコン右下のバッジ表示用
+    authorOriginalProfile?: ProfileSchema
 
     toJSON(): Document<T> & { uri: string } {
         return {
@@ -114,11 +117,12 @@ export class Message<T> implements Document<T> {
         }
         if ((res.value as any).profileOverride) {
             const override = (res.value as any).profileOverride
+            if (override.avatar) {
+                message.authorOriginalProfile = { ...message.authorProfile }
+                message.authorProfile.avatar = override.avatar
+            }
             if (override.username) {
                 message.authorProfile.username = override.username
-            }
-            if (override.avatar) {
-                message.authorProfile.avatar = override.avatar
             }
         }
 

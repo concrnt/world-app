@@ -1,0 +1,5 @@
+/* Localized Info.plist values (permission prompts). Keep in sync with the
+   fallback values in ../../project.yml and ja.lproj/InfoPlist.strings. */
+"NSCameraUsageDescription" = "The camera is used to scan the login QR code.";
+"NSFaceIDUsageDescription" = "Face ID is used to protect your master key.";
+"NSPhotoLibraryAddUsageDescription" = "Used to save images to your photo library.";

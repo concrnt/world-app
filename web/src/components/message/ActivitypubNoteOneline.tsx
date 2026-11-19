@@ -1,6 +1,7 @@
 import { Suspense, use, useMemo } from 'react'
 import { ApObject, resolveApObject } from '../../utils/activitypub'
-import { Avatar, CfmRenderer, Skeleton, Text, type EmojiLite } from '@concrnt/ui'
+import { Avatar, Skeleton, Text } from '@concrnt/ui'
+import { CfmRenderer, type EmojiLite } from '../CfmRenderer'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'

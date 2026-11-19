@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { CSSProperties, ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, CssVar } from '@concrnt/ui'
 
@@ -14,14 +14,15 @@ export const CollapsibleBody = (props: Props) => {
     const [expanded, setExpanded] = useState(props.forceExpanded ?? false)
     const { t } = useTranslation('', { keyPrefix: 'components.collapsibleBody' })
 
+    // 単体ページ(forceExpanded)は本文を 50dvh に収めて中をスクロールさせ、下の返信一覧に届くようにする
+    const clip: CSSProperties = props.forceExpanded
+        ? { maxHeight: '50dvh', overflowY: 'auto' }
+        : expanded
+          ? {}
+          : { maxHeight: `${clipHeight}px`, overflow: 'hidden' }
+
     return (
-        <div
-            style={{
-                position: 'relative',
-                maxHeight: expanded ? undefined : `${clipHeight}px`,
-                overflow: expanded ? undefined : 'hidden'
-            }}
-        >
+        <div style={{ position: 'relative', ...clip }}>
             {props.children}
             {/* zIndexは使わず、本文(children)の後ろに置くことで前面に出す(本文内のpositioned要素より後=上) */}
             <div

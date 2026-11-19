@@ -20,10 +20,16 @@ import { usePersistent } from '../hooks/usePersistent'
 import { string2Uint8Array } from '../util'
 import Tilt from 'react-parallax-tilt'
 
+const SIGNAL_HOST = 'signal.concrnt.net'
+
 export const QRSetup = () => {
     const { t } = useTranslation('', { keyPrefix: 'web.qrSetup' })
     const [sessionID, _] = useState<string>(crypto.randomUUID())
-    const signalURL = `wss://signal.concrnt.net/${sessionID}`
+    // 自分が繋ぐ signal チャンネル。QR には CIP-17 と同じ concrnt-auth:// スキームで載せる
+    // (concrnt-auth://signal/<host>/<path> == wss://<host>/<path>)。OS のカメラで読んでも
+    // deep link としてアプリに届く。読み取り側は app/src/lib/signalLogin.ts
+    const signalURL = `wss://${SIGNAL_HOST}/${sessionID}`
+    const qrValue = `concrnt-auth://signal/${SIGNAL_HOST}/${sessionID}`
 
     const [ccid, setCCID] = useState<string>('')
     const [domain, setDomain] = useState<string>('')
@@ -224,7 +230,7 @@ export const QRSetup = () => {
                 }}
             >
                 <QRCode
-                    value={signalURL}
+                    value={qrValue}
                     size={500}
                     ecLevel="L"
                     quietZone={50}

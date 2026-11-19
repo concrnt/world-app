@@ -1,11 +1,22 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react'
 import { usePersistent } from '../hooks/usePersistent'
 import { useClient } from './Client'
 import { semantics } from '@concrnt/worldlib'
 
+export const fontSizes = ['small', 'medium', 'large'] as const
+export type FontSize = (typeof fontSizes)[number]
+
+// 文字サイズはhtmlのfont-sizeで一括反映する(em/rem指定の文字だけが追従する)
+const fontSizePx: Record<FontSize, string> = {
+    small: '14px',
+    medium: '16px',
+    large: '18px'
+}
+
 export interface Preference {
     themeName: string
     themeVariant: 'classic' | 'world'
+    fontSize: FontSize
     developerMode: boolean
     hapticsEnabled: boolean
     // タブバー・サイドバー・OSアイコンの未読バッジ表示
@@ -19,6 +30,7 @@ export interface Preference {
 export const defaultPreference: Preference = {
     themeName: 'blue',
     themeVariant: 'classic',
+    fontSize: 'medium',
     developerMode: false,
     hapticsEnabled: true,
     unreadBadgeEnabled: true,
@@ -88,6 +100,10 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
             document.removeEventListener('visibilitychange', onVisibilityChange)
         }
     }, [client, setPref])
+
+    useLayoutEffect(() => {
+        document.documentElement.style.fontSize = fontSizePx[pref.fontSize] ?? fontSizePx.medium
+    }, [pref.fontSize])
 
     const reset = useCallback(() => {
         setPref({ ...defaultPreference })

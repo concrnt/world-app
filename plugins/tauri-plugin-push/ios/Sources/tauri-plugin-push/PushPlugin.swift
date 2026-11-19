@@ -51,14 +51,9 @@ class PushPlugin: Plugin, UNUserNotificationCenterDelegate {
         PushPlugin.shared = self
         UNUserNotificationCenter.current().delegate = self
         installRemoteNotificationHooks()
-        bufferLaunchIfPresent()
-    }
-
-    private func bufferLaunchIfPresent() {
-        // Cold-start via a notification tap is captured by the app delegate
-        // hook below (didReceive response) before the plugin loads, buffering
-        // into PushKeyStore; nothing else to do here. This function exists so
-        // the intent is documented at the call site that matters (load()).
+        // A cold-start tap is delivered to `didReceive` below once the delegate
+        // is set; it lands in the PushKeyStore buffer and the JS drains it when
+        // MainView mounts (get_launch_notification). Nothing else to do here.
     }
 
     // MARK: - Remote notification registration (swizzled onto the app's AppDelegate)
@@ -124,9 +119,12 @@ class PushPlugin: Plugin, UNUserNotificationCenterDelegate {
         let uri = userInfo["cc-deeplink"] as? String
         let view = (userInfo["cc-view"] as? String) ?? (uri != nil ? "post" : "notifications")
 
-        // Buffer for cold start (get_launch_notification) regardless, and
-        // additionally trigger the live event for a warm start; the app JS
-        // decides which path applies (it checks the buffer once on launch).
+        // Contract with the JS (app/src/lib/push.ts): always write the tap to
+        // the persistent buffer first, then signal it. The buffer is the source
+        // of truth; the event payload is only a wake-up. JS drains the buffer
+        // on MainView mount AND on every `notificationTapped` signal, so a warm
+        // tap is consumed immediately and never left on disk to be replayed by
+        // the next launch, a WebView reload or a MainView remount.
         PushKeyStore.bufferLaunch(uri: uri, view: view)
 
         var payload: JSObject = ["view": view]

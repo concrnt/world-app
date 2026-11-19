@@ -1,19 +1,21 @@
-import { Text, TextField, Button, Divider, IconButton, Switch } from '@concrnt/ui'
+import { Text, TextField, Button, Divider, IconButton, Switch, Hint } from '@concrnt/ui'
 import { CssVar } from '../types/Theme'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
-import { NotFoundError } from '@concrnt/client'
+import { NotFoundError, type Document, type PolicyEntry } from '@concrnt/client'
 import { useNavigate } from 'react-router-dom'
 import { Schemas, semantics } from '@concrnt/worldlib'
 import { MdContentCopy, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
+import { BskyFollowList } from '../components/BskyFollowList'
+import { BskyAppPasswords } from '../components/BskyAppPasswords'
 import { Drawer } from '../components/Drawer'
 import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
-import { BskyProfile, bskySettingsKey, inboxKey } from '../utils/bluesky'
+import { bskySettingsKey, inboxKey } from '../utils/bluesky'
 
 interface BskyEntity {
     did: string
@@ -27,6 +29,8 @@ interface BridgeInfo {
     version: string
     serviceCcid: string
     entity?: BskyEntity
+    // 公式Blueskyアプリのログイン画面に入れる値(ブリッジが組み立てる)
+    login?: { service: string; identifier: string }
 }
 
 export const Bluesky = () => {
@@ -41,8 +45,23 @@ export const Bluesky = () => {
     const handleOk = handle.length > 0 && handle.match(/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z][a-z0-9-]*$/)
 
     const [setupError, setSetupError] = useState<string>()
+    // pending のまま別のドメインに差し替える編集中(ブリッジは同じ DID で handle だけ更新する)
+    const [editingHandle, setEditingHandle] = useState(false)
     const [verifyError, setVerifyError] = useState<string>()
     const [verifying, setVerifying] = useState(false)
+    const [announcing, setAnnouncing] = useState(false)
+    const [announceResult, setAnnounceResult] = useState<'done' | 'failed'>()
+    // active のまま別のドメインへ移す編集中(ブリッジは新ドメインの DNS を検証してから PLC を更新する)
+    const [changingHandle, setChangingHandle] = useState(false)
+    const [changeBusy, setChangeBusy] = useState(false)
+    const [changeError, setChangeError] = useState<string>()
+    const [changeDone, setChangeDone] = useState(false)
+
+    // 配送時のrequesterはブリッジのserviceCcidなので、inboxのallow-writersに現在のIDが
+    // 含まれていないと受信が全て拒否される(AP設定画面と同型の検知+修復)
+    const allowWriters = 'https://policy.concrnt.world/t/allow-writers.json'
+    const [inboxPolicyBroken, setInboxPolicyBroken] = useState(false)
+    const [repairError, setRepairError] = useState(false)
 
     // ユーザー設定はブリッジが直接読むcckvレコードが正本(APブリッジと同型)。
     // enabled + 転送元タイムライン(ホーム+コミュニティ複数選択、未設定はホームにフォールバック)。
@@ -82,27 +101,12 @@ export const Bluesky = () => {
             })
     }
 
-    const [following, setFollowing] = useState<BskyProfile[]>([])
-    const [followers, setFollowers] = useState<BskyProfile[]>([])
-    const [followersCursor, setFollowersCursor] = useState<string>()
-
     const [lookupDraft, setLookupDraft] = useState('')
 
-    const loadFollowers = (cursor?: string) => {
-        client.api
-            .callConcrntApi<{ followers: BskyProfile[]; cursor?: string }>(
-                client.server.domain,
-                'world.concrnt.atproto.followers',
-                cursor ? { cursor } : {}
-            )
-            .then((res) => {
-                setFollowers((prev) => (cursor ? [...prev, ...(res.followers ?? [])] : (res.followers ?? [])))
-                setFollowersCursor(res.cursor)
-            })
-            .catch((err) => {
-                console.log(err)
-            })
-    }
+    // 公式Blueskyアプリ等からのログイン用アプリパスワード。管理UIはドロワー(BskyAppPasswords)
+    const [appPasswordsOpen, setAppPasswordsOpen] = useState(false)
+    const appPasswordSupported = 'world.concrnt.atproto.appPasswords' in (client.server?.endpoints ?? {})
+    const changeHandleSupported = 'world.concrnt.atproto.changeHandle' in (client.server?.endpoints ?? {})
 
     const updateInfo = () => {
         client.api
@@ -139,21 +143,22 @@ export const Bluesky = () => {
                 if (!(err instanceof NotFoundError)) console.log(err)
             })
 
-        client.api
-            .callConcrntApi<{ following: BskyProfile[] }>(client.server.domain, 'world.concrnt.atproto.following', {})
-            .then((res) => {
-                setFollowing(res.following ?? [])
-            })
-            .catch((err) => {
-                console.log(err)
-            })
-
-        loadFollowers()
-
         const inboxUri = inboxKey(client.ccid)
         client.api
-            .getDocument(inboxUri)
-            .then((_doc) => {})
+            .getDocument<any>(inboxUri)
+            .then((doc) => {
+                if (!info?.serviceCcid) return
+                setInboxPolicyBroken(
+                    !(
+                        doc.policy?.entries?.some(
+                            (e: PolicyEntry) =>
+                                e.url === allowWriters &&
+                                Array.isArray(e.params?.entities) &&
+                                e.params.entities.includes(info.serviceCcid)
+                        ) ?? false
+                    )
+                )
+            })
             .catch((err) => {
                 if (err instanceof NotFoundError && info?.serviceCcid) {
                     console.log('Inbox not found. creating...')
@@ -181,11 +186,62 @@ export const Bluesky = () => {
             })
     }, [active])
 
+    const repairInboxPolicy = async (): Promise<void> => {
+        setRepairError(false)
+        try {
+            // マウント時のIDは古いかもしれないので、押下時点で取り直す
+            const fresh = await client.api.callConcrntApi<BridgeInfo>(
+                client.server.domain,
+                'world.concrnt.atproto.info',
+                {}
+            )
+            if (!fresh.serviceCcid) throw new Error('bridge info has no serviceCcid')
+            const inboxUri = inboxKey(client.ccid)
+            // staleキャッシュ由来の誤検知のまま上書きしないよう、書き込み前にno-cacheで確定させる
+            let doc: Document<any> | null = null
+            try {
+                doc = await client.api.getDocument<any>(inboxUri, undefined, { cache: 'no-cache' })
+            } catch (err) {
+                if (!(err instanceof NotFoundError)) throw err
+            }
+            const alreadyOk =
+                doc?.policy?.entries?.some(
+                    (e: PolicyEntry) =>
+                        e.url === allowWriters &&
+                        Array.isArray(e.params?.entities) &&
+                        e.params.entities.includes(fresh.serviceCcid)
+                ) ?? false
+            if (alreadyOk) {
+                setInboxPolicyBroken(false)
+                return
+            }
+            // allow-writers系entryは全て除去して正規形1本に置換(誤IDに書き込み権を残さない)。
+            // restrict-readers等の他entryは温存
+            const entries = (doc?.policy?.entries ?? []).filter((e: PolicyEntry) => e.url !== allowWriters)
+            entries.push({ url: allowWriters, params: { entities: [fresh.serviceCcid] } })
+            await client.api.commit({
+                kind: 'record' as const,
+                key: inboxUri,
+                author: client.ccid,
+                schema: doc?.schema ?? Schemas.userTimeline,
+                value: doc?.value ?? {},
+                createdAt: new Date(),
+                policy: { entries }
+            })
+            setInboxPolicyBroken(false)
+        } catch (err) {
+            console.error('failed to repair inbox policy:', err)
+            setRepairError(true)
+        }
+    }
+
     return (
         <View>
             <Header>{t('title')}</Header>
             <div
                 style={{
+                    flex: 1,
+                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: CssVar.space(2),
@@ -194,10 +250,15 @@ export const Bluesky = () => {
             >
                 {info === undefined && <Text>{t('loading')}</Text>}
                 {info === null && <Text>{t('unavailable')}</Text>}
-                {info && !info.entity && (
+                {info && (!info.entity || (info.entity.status === 'pending' && editingHandle)) && (
                     <>
-                        <Text>{t('enableIntro')}</Text>
-                        <Text>{t('enableDescription')}</Text>
+                        {!info.entity && (
+                            <>
+                                <Text>{t('enableIntro')}</Text>
+                                <Text>{t('enableDescription')}</Text>
+                                <Hint title={t('hintLabel')}>{t('newAccountHint')}</Hint>
+                            </>
+                        )}
                         <Text>{t('handleLabel')}</Text>
                         <TextField
                             value={handleDraft}
@@ -216,12 +277,14 @@ export const Bluesky = () => {
                                         {},
                                         {
                                             method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
                                                 handle
                                             })
                                         }
                                     )
                                     .then((_res) => {
+                                        setEditingHandle(false)
                                         updateInfo()
                                     })
                                     .catch((err) => {
@@ -232,9 +295,20 @@ export const Bluesky = () => {
                         >
                             {t('setup')}
                         </Button>
+                        {info.entity && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setSetupError(undefined)
+                                    setEditingHandle(false)
+                                }}
+                            >
+                                {t('cancelEdit')}
+                            </Button>
+                        )}
                     </>
                 )}
-                {info?.entity && info.entity.status === 'pending' && (
+                {info?.entity && info.entity.status === 'pending' && !editingHandle && (
                     <>
                         <Text variant="h6" style={{ fontWeight: 'bold' }}>
                             {t('pendingTitle')}
@@ -277,6 +351,16 @@ export const Bluesky = () => {
                         >
                             {t('verify')}
                         </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                setHandleDraft(info.entity!.handle)
+                                setSetupError(undefined)
+                                setEditingHandle(true)
+                            }}
+                        >
+                            {t('changeHandle')}
+                        </Button>
                     </>
                 )}
                 {info?.entity && active && (
@@ -284,6 +368,111 @@ export const Bluesky = () => {
                         <Text>{t('active')}</Text>
                         <Text>{t('yourHandle', { handle: info.entity.handle })}</Text>
                         <Text variant="caption">{info.entity.did}</Text>
+                        {inboxPolicyBroken && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                                <Text variant="caption" style={{ color: 'red' }}>
+                                    {t('inboxPolicyBroken')}
+                                </Text>
+                                <Button variant="text" busyChildren={t('repairing')} onClick={repairInboxPolicy}>
+                                    {t('repair')}
+                                </Button>
+                            </div>
+                        )}
+                        {repairError && (
+                            <Text variant="caption" style={{ color: 'red' }}>
+                                {t('repairFailed')}
+                            </Text>
+                        )}
+                        {changeDone && <Text variant="caption">{t('changeHandleDone')}</Text>}
+                        {changeHandleSupported && !changingHandle && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setHandleDraft('')
+                                    setChangeError(undefined)
+                                    setChangeDone(false)
+                                    setChangingHandle(true)
+                                }}
+                            >
+                                {t('changeHandle')}
+                            </Button>
+                        )}
+                        {changingHandle && (
+                            <>
+                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
+                                    {t('changeHandleTitle')}
+                                </Text>
+                                <Text>{t('changeHandleDescription')}</Text>
+                                <Text>{t('handleLabel')}</Text>
+                                <TextField
+                                    value={handleDraft}
+                                    placeholder="alice.example.com"
+                                    onChange={(e) => setHandleDraft(e.target.value)}
+                                />
+                                {handleOk && handle !== info.entity.handle && (
+                                    <>
+                                        <Text>{t('verifyDnsInstruction')}</Text>
+                                        <RecordRow name={`_atproto.${handle}`} value={`did=${info.entity.did}`} />
+                                        <Text>{t('verifyWellKnownInstruction')}</Text>
+                                        <RecordRow
+                                            name={`https://${handle}/.well-known/atproto-did`}
+                                            value={info.entity.did}
+                                        />
+                                        <Text>{t('changeHandleNote')}</Text>
+                                    </>
+                                )}
+                                {changeError && <Text style={{ color: '#ff5b5b' }}>{changeError}</Text>}
+                                <Button
+                                    disabled={!handleOk || handle === info.entity.handle || changeBusy}
+                                    onClick={() => {
+                                        setChangeBusy(true)
+                                        setChangeError(undefined)
+                                        client.api
+                                            .callConcrntApi<BskyEntity>(
+                                                client.server.domain,
+                                                'world.concrnt.atproto.changeHandle',
+                                                {},
+                                                {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ handle })
+                                                }
+                                            )
+                                            .then(() => {
+                                                setChangingHandle(false)
+                                                setChangeDone(true)
+                                                updateInfo()
+                                            })
+                                            .catch((err) => {
+                                                console.log(err)
+                                                const msg = err instanceof Error ? err.message : ''
+                                                setChangeError(
+                                                    msg.includes('handle already taken')
+                                                        ? t('changeHandleTaken')
+                                                        : msg.includes('handle_not_resolvable') ||
+                                                            msg.includes('did_mismatch')
+                                                          ? t('changeHandleUnverified')
+                                                          : t('changeHandleFailed')
+                                                )
+                                            })
+                                            .finally(() => {
+                                                setChangeBusy(false)
+                                            })
+                                    }}
+                                >
+                                    {t('changeHandleSubmit')}
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setChangeError(undefined)
+                                        setChangingHandle(false)
+                                    }}
+                                >
+                                    {t('cancelEdit')}
+                                </Button>
+                            </>
+                        )}
                         <div
                             style={{
                                 display: 'flex',
@@ -314,6 +503,50 @@ export const Bluesky = () => {
                         />
                         <Button onClick={() => commitSettings(bridgeEnabled)}>{t('update')}</Button>
                         <Divider />
+                        <Text>{t('announceDesc')}</Text>
+                        {announceResult === 'done' && <Text variant="caption">{t('announceDone')}</Text>}
+                        {announceResult === 'failed' && <Text style={{ color: '#ff5b5b' }}>{t('announceFailed')}</Text>}
+                        <Button
+                            disabled={announcing}
+                            onClick={() => {
+                                setAnnouncing(true)
+                                setAnnounceResult(undefined)
+                                client.api
+                                    .callConcrntApi<BskyEntity>(
+                                        client.server.domain,
+                                        'world.concrnt.atproto.announce',
+                                        {},
+                                        {
+                                            method: 'POST'
+                                        }
+                                    )
+                                    .then(() => {
+                                        setAnnounceResult('done')
+                                    })
+                                    .catch((err) => {
+                                        console.log(err)
+                                        setAnnounceResult('failed')
+                                    })
+                                    .finally(() => {
+                                        setAnnouncing(false)
+                                    })
+                            }}
+                        >
+                            {t('announce')}
+                        </Button>
+                        {appPasswordSupported && (
+                            <>
+                                <Divider />
+                                <Hint title={t('hintLabel')}>{t('appPasswordHint')}</Hint>
+                                <Button variant="outlined" onClick={() => setAppPasswordsOpen(true)}>
+                                    {t('manageAppPasswords')}
+                                </Button>
+                                <Drawer open={appPasswordsOpen} onClose={() => setAppPasswordsOpen(false)}>
+                                    <BskyAppPasswords login={info.login} />
+                                </Drawer>
+                            </>
+                        )}
+                        <Divider />
                         <IconButton
                             onClick={(e) => {
                                 e.stopPropagation()
@@ -325,89 +558,6 @@ export const Bluesky = () => {
                         <Drawer open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)}>
                             <Subscription target={inboxKey(client.ccid)} />
                         </Drawer>
-                        {following.length > 0 && (
-                            <>
-                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
-                                    {t('following')}
-                                </Text>
-                                {following.map((profile) => (
-                                    <div
-                                        key={profile.did}
-                                        onClick={() => {
-                                            navigate('/bluesky/view/' + encodeURIComponent(profile.did))
-                                        }}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {profile.avatar && (
-                                            <img
-                                                src={profile.avatar}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%'
-                                                }}
-                                            />
-                                        )}
-                                        <Text style={{ fontWeight: 'bold' }}>
-                                            {profile.displayName || profile.handle}
-                                        </Text>
-                                        <Text variant="caption">@{profile.handle}</Text>
-                                    </div>
-                                ))}
-                                <Divider />
-                            </>
-                        )}
-                        {followers.length > 0 && (
-                            <>
-                                <Text variant="h6" style={{ fontWeight: 'bold' }}>
-                                    {t('followers')}
-                                </Text>
-                                {followers.map((profile) => (
-                                    <div
-                                        key={profile.did}
-                                        onClick={() => {
-                                            navigate('/bluesky/view/' + encodeURIComponent(profile.did))
-                                        }}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: CssVar.space(1),
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {profile.avatar && (
-                                            <img
-                                                src={profile.avatar}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%'
-                                                }}
-                                            />
-                                        )}
-                                        <Text style={{ fontWeight: 'bold' }}>
-                                            {profile.displayName || profile.handle}
-                                        </Text>
-                                        <Text variant="caption">@{profile.handle}</Text>
-                                    </div>
-                                ))}
-                                {followersCursor && (
-                                    <Button
-                                        onClick={() => {
-                                            loadFollowers(followersCursor)
-                                        }}
-                                    >
-                                        {t('loadMore')}
-                                    </Button>
-                                )}
-                                <Divider />
-                            </>
-                        )}
                         <TextField
                             value={lookupDraft}
                             placeholder="alice.bsky.social / at://..."
@@ -420,6 +570,8 @@ export const Bluesky = () => {
                         >
                             {t('inquiry')}
                         </Button>
+                        <Divider />
+                        <BskyFollowList />
                     </>
                 )}
             </div>

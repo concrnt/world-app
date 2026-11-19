@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
 import { RerouteAssociationSchema, Schemas } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { BlueskyRecordCard } from './BlueskyRecordCard'
+import { Avatar } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 import { useStack } from '../../layouts/Stack'
 import { PostView } from '../../views/Post'
 import { ProfileView } from '../../views/Profile'
@@ -119,31 +121,41 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     }}
                 />
             )}
-            {targetMessage && targetMessage.schema !== Schemas.apNote && (
-                <MessageLayout
+            {targetMessage && targetMessage.schema === Schemas.atprotoRecord && (
+                <BlueskyRecordCard
+                    atUri={targetMessage.value.atUri}
                     onClick={() => {
                         push(<PostView uri={targetMessage.uri} />)
                     }}
-                    left={
-                        <div
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                push(
-                                    <ProfileView
-                                        ccid={targetMessage.author}
-                                        profileName={targetMessage.authorProfileName ?? undefined}
-                                    />
-                                )
-                            }}
-                        >
-                            <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
-                        </div>
-                    }
-                    headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
-                >
-                    <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
-                </MessageLayout>
+                />
             )}
+            {targetMessage &&
+                targetMessage.schema !== Schemas.apNote &&
+                targetMessage.schema !== Schemas.atprotoRecord && (
+                    <MessageLayout
+                        onClick={() => {
+                            push(<PostView uri={targetMessage.uri} />)
+                        }}
+                        left={
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    push(
+                                        <ProfileView
+                                            ccid={targetMessage.author}
+                                            profileName={targetMessage.authorProfileName ?? undefined}
+                                        />
+                                    )
+                                }}
+                            >
+                                <Avatar ccid={targetMessage.author} src={targetMessage.authorProfile?.avatar} />
+                            </div>
+                        }
+                        headerLeft={<div style={{ fontWeight: 'bold' }}>{targetMessage.authorProfile?.username}</div>}
+                    >
+                        <CfmRenderer messagebody={targetMessage.value.body} emojiDict={{}} />
+                    </MessageLayout>
+                )}
 
             {/* ローディング */}
             {!targetMessage && (

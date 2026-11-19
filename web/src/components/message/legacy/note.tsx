@@ -1,6 +1,7 @@
 import { MessageProps } from '../types'
 
-import { Avatar, CfmRenderer } from '@concrnt/ui'
+import { Avatar } from '@concrnt/ui'
+import { CfmRenderer } from '../../CfmRenderer'
 import { MessageLayout } from '../MessageLayout'
 import { useNavigate } from 'react-router-dom'
 import { CollapsibleBody } from '../CollapsibleBody'
@@ -53,7 +54,11 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
                     </div>
                 </div>
             }
-            headerRight={<div>{new Date(message.createdAt).toLocaleString()}</div>}
+            headerRight={
+                <div style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {new Date(message.createdAt).toLocaleString()}
+                </div>
+            }
         >
             <CollapsibleBody forceExpanded={props.forceExpanded}>
                 <CfmRenderer messagebody={legacyMessage.body} emojiDict={{}} />

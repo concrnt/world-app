@@ -7,7 +7,8 @@ import { MarkdownMessageSchema } from '@concrnt/worldlib'
 import { ProfileView } from '../../views/Profile'
 import { PostView } from '../../views/Post'
 
-import { Avatar, CfmRenderer, Text, IconButton, ListItem, Select } from '@concrnt/ui'
+import { Avatar, Text, IconButton, ListItem, Select } from '@concrnt/ui'
+import { CfmRenderer } from '../CfmRenderer'
 import { Confirm } from '../Confirm'
 
 import { useState } from 'react'

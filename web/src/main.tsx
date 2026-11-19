@@ -33,12 +33,13 @@ import { ContactsView } from './views/Contacts'
 import { SettingsView } from './views/Settings'
 import { NotificationSettingsView } from './views/NotificationSettings'
 import { ThemeSettingsView } from './views/ThemeSettings'
-import { GeneralSettingsView } from './views/GeneralSettings'
+import { DisplaySettingsView } from './views/DisplaySettings'
+import { FontSizeSettingsView } from './views/FontSizeSettings'
+import { IntegrationSettingsView } from './views/IntegrationSettings'
 import { LanguageSettingsView } from './views/LanguageSettings'
 import { MediaSettingsView } from './views/MediaSettings'
 import { InventoryView } from './views/Inventory'
 import { MigrationSettingsView } from './views/MigrationSettings'
-import { V1ImportSettingsView } from './views/V1ImportSettings'
 import { EmojiSettingsView } from './views/EmojiSettings'
 import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
@@ -229,26 +230,10 @@ const AuthedRoutes = () => (
                                                                                     element={<SettingsView />}
                                                                                 />
                                                                                 <Route
-                                                                                    path="settings/theme"
+                                                                                    path="settings/id"
                                                                                     element={
                                                                                         <SettingsBackProvider>
-                                                                                            <ThemeSettingsView />
-                                                                                        </SettingsBackProvider>
-                                                                                    }
-                                                                                />
-                                                                                <Route
-                                                                                    path="settings/general"
-                                                                                    element={
-                                                                                        <SettingsBackProvider>
-                                                                                            <GeneralSettingsView />
-                                                                                        </SettingsBackProvider>
-                                                                                    }
-                                                                                />
-                                                                                <Route
-                                                                                    path="settings/language"
-                                                                                    element={
-                                                                                        <SettingsBackProvider to="/settings/general">
-                                                                                            <LanguageSettingsView />
+                                                                                            <IDView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
@@ -261,42 +246,50 @@ const AuthedRoutes = () => (
                                                                                     }
                                                                                 />
                                                                                 <Route
-                                                                                    path="settings/activitypub"
+                                                                                    path="settings/lists"
                                                                                     element={
                                                                                         <SettingsBackProvider>
-                                                                                            <Activitypub />
+                                                                                            <ListsView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
                                                                                 <Route
-                                                                                    path="settings/bluesky"
+                                                                                    path="settings/display"
                                                                                     element={
                                                                                         <SettingsBackProvider>
-                                                                                            <Bluesky />
+                                                                                            <DisplaySettingsView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
                                                                                 <Route
-                                                                                    path="settings/id"
+                                                                                    path="settings/language"
                                                                                     element={
-                                                                                        <SettingsBackProvider>
-                                                                                            <IDView />
+                                                                                        <SettingsBackProvider to="/settings/display">
+                                                                                            <LanguageSettingsView />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/theme"
+                                                                                    element={
+                                                                                        <SettingsBackProvider to="/settings/display">
+                                                                                            <ThemeSettingsView />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/fontsize"
+                                                                                    element={
+                                                                                        <SettingsBackProvider to="/settings/display">
+                                                                                            <FontSizeSettingsView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
                                                                                 <Route
                                                                                     path="settings/emoji"
                                                                                     element={
-                                                                                        <SettingsBackProvider>
+                                                                                        <SettingsBackProvider to="/settings/display">
                                                                                             <EmojiSettingsView />
-                                                                                        </SettingsBackProvider>
-                                                                                    }
-                                                                                />
-                                                                                <Route
-                                                                                    path="settings/lists"
-                                                                                    element={
-                                                                                        <SettingsBackProvider>
-                                                                                            <ListsView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
@@ -309,26 +302,34 @@ const AuthedRoutes = () => (
                                                                                     }
                                                                                 />
                                                                                 <Route
-                                                                                    path="settings/inventory"
+                                                                                    path="settings/integrations"
                                                                                     element={
                                                                                         <SettingsBackProvider>
-                                                                                            <InventoryView />
+                                                                                            <IntegrationSettingsView />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/activitypub"
+                                                                                    element={
+                                                                                        <SettingsBackProvider to="/settings/integrations">
+                                                                                            <Activitypub />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/bluesky"
+                                                                                    element={
+                                                                                        <SettingsBackProvider to="/settings/integrations">
+                                                                                            <Bluesky />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
                                                                                 <Route
                                                                                     path="settings/migration"
                                                                                     element={
-                                                                                        <SettingsBackProvider>
+                                                                                        <SettingsBackProvider to="/settings/id">
                                                                                             <MigrationSettingsView />
-                                                                                        </SettingsBackProvider>
-                                                                                    }
-                                                                                />
-                                                                                <Route
-                                                                                    path="settings/v1import"
-                                                                                    element={
-                                                                                        <SettingsBackProvider>
-                                                                                            <V1ImportSettingsView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />
@@ -337,6 +338,14 @@ const AuthedRoutes = () => (
                                                                                     element={
                                                                                         <SettingsBackProvider>
                                                                                             <DevView />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/inventory"
+                                                                                    element={
+                                                                                        <SettingsBackProvider to="/settings/dev">
+                                                                                            <InventoryView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />

@@ -1,22 +1,14 @@
-import {
-    Avatar,
-    Button,
-    CCWallpaper,
-    CssVar,
-    useTheme,
-    Text,
-    Divider,
-    GfmRenderer,
-    MfmRenderer,
-    type EmojiLite
-} from '@concrnt/ui'
+import { Avatar, Button, CCWallpaper, CssVar, useTheme, Text, Divider } from '@concrnt/ui'
+import { GfmRenderer } from '../components/GfmRenderer'
+import { MfmRenderer } from '../components/MfmRenderer'
+import { type EmojiLite } from '../components/CfmRenderer'
 import { View } from '../components/View'
 import { useNavigation } from '../contexts/Navigation'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { NotFoundError, Document } from '@concrnt/client'
-import { Schemas, ApFollowSchema } from '@concrnt/worldlib'
+import { Schemas, ApFollowSchema, safeHttpUrl } from '@concrnt/worldlib'
 import { ApObject, apFollowKey, resolveApObject } from '../utils/activitypub'
 import { useMediaProxy } from '../contexts/MediaProxy'
 import { ActivitypubNote } from '../components/message/ActivitypubNote'
@@ -158,6 +150,9 @@ export const ApPerson = ({ person }: Props) => {
             loadPosts(next, false)
         }
     }, [items, next])
+
+    // リモートのActorが申告するプロフィールURL。http(s)以外は開くボタン自体を出さない
+    const remoteUrl = safeHttpUrl(person.url?.toString())
 
     const emojiDict: Record<string, EmojiLite> = {}
     for (const tag of person.getTags()) {
@@ -347,10 +342,10 @@ export const ApPerson = ({ person }: Props) => {
                 </div>
                 <div>
                     <Text>{t('apUserNotice')}</Text>
-                    {person.url && (
+                    {remoteUrl && (
                         <Button
                             onClick={() => {
-                                window.open(person.url!.toString(), '_blank', 'noopener,noreferrer')
+                                window.open(remoteUrl, '_blank', 'noopener,noreferrer')
                             }}
                         >
                             {t('openRemote')}

@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
 
-import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button, ExternalLink } from '@concrnt/ui'
+import { Avatar, Badge, ListItem, Divider, Text, useTheme, List, Button } from '@concrnt/ui'
+import { ExternalLink } from './ExternalLink'
 
 import { MdHome } from 'react-icons/md'
 import { MdExplore } from 'react-icons/md'

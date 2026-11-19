@@ -40,19 +40,29 @@ class SetContextArgs {
 )
 class PushPlugin(private val activity: Activity) : Plugin(activity) {
 
+    // Contract with the JS (app/src/lib/push.ts): a tap is always written to
+    // the persistent buffer first and then signalled with `notificationTapped`.
+    // The buffer is the source of truth; the event payload is only a wake-up.
+    // JS drains the buffer on MainView mount AND on every signal, so a warm tap
+    // is consumed immediately and never left on disk to be replayed later.
+
     override fun load(webView: WebView) {
         NotificationRenderer.ensureChannel(activity)
-        bufferLaunchIfPresent(activity.intent)
+        // `activity.intent` is the task's launch intent and is re-delivered
+        // when the Activity is recreated after process death, so only buffer a
+        // tap we have not seen yet (NotificationRenderer stamps each tap intent
+        // with a unique id). Intents without an id (pre-upgrade notifications)
+        // are buffered as before.
+        val data = PushKeyStore.extractDeepLink(activity.intent) ?: return
+        val tapId = data.getString("tapId", null)
+        if (tapId != null && tapId == PushKeyStore.lastTapId(activity)) return
+        PushKeyStore.bufferLaunch(activity, data.getString("uri"), data.getString("view"), tapId)
     }
 
     override fun onNewIntent(intent: Intent) {
         val data = PushKeyStore.extractDeepLink(intent) ?: return
+        PushKeyStore.bufferLaunch(activity, data.getString("uri"), data.getString("view"), data.getString("tapId", null))
         trigger("notificationTapped", data)
-    }
-
-    private fun bufferLaunchIfPresent(intent: Intent?) {
-        val data = PushKeyStore.extractDeepLink(intent) ?: return
-        PushKeyStore.bufferLaunch(activity, data.getString("uri"), data.getString("view"))
     }
 
     @Command

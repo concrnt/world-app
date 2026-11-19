@@ -7,7 +7,8 @@ import { useClient } from '../contexts/Client'
 import { UserPicker } from '../components/UserPicker'
 import { useStack } from '../layouts/Stack'
 import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './StoreMocks'
-import { MdBadge, MdExplore, MdHome } from 'react-icons/md'
+import { InventoryView } from './Inventory'
+import { MdBadge, MdChevronRight, MdExplore, MdHome, MdInventory2 } from 'react-icons/md'
 import { usePreference } from '../contexts/Preference'
 
 export const DevView = () => {
@@ -38,6 +39,13 @@ export const DevView = () => {
                 <List>
                     <ListItem secondaryAction={<Switch checked={developerMode} onChange={setDeveloperMode} />}>
                         {t('developerMode')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdInventory2 size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<InventoryView />)}
+                    >
+                        {t('inventory')}
                     </ListItem>
                 </List>
 

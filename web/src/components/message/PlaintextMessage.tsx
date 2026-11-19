@@ -1,14 +1,19 @@
 import { MessageProps } from './types'
 import { PlaintextMessageSchema } from '@concrnt/worldlib'
 
-import { Avatar } from '@concrnt/ui'
+import { Avatar, CssVar } from '@concrnt/ui'
 
 import { MessageLayout } from './MessageLayout'
 import { MessageAuthor } from './MessageAuthor'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { MessageFooter } from './Footer'
+import { AutoSummary } from '../AutoSummary'
 import { CollapsibleBody } from './CollapsibleBody'
+import { TranslatableBody } from './TranslatableBody'
+import { RenderedBody } from './RenderedBody'
+import { MessageTranslationProvider } from '../../contexts/MessageTranslation'
+import { RenderedBodyProvider } from '../../contexts/RenderedBody'
 
 export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) => {
     const navigate = useNavigate()
@@ -39,6 +44,19 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
                         ccid={message.author}
                         src={message.authorProfile?.avatar}
                         style={{ width: '48px', height: '48px' }}
+                        badge={
+                            // profileOverrideでアイコンが差し替えられた代理投稿(discord-bridge等)は、
+                            // 差し替え前のアイコン(サービスアカウント自身)を右下に添えて出どころを示す
+                            message.authorOriginalProfile && (
+                                <Avatar
+                                    ccid={message.author}
+                                    src={message.authorOriginalProfile.avatar}
+                                    style={{ width: '18px', height: '18px' }}
+                                />
+                            )
+                        }
+                        badgeColor={CssVar.contentBackground}
+                        badgeSize={22}
                     />
                 </div>
             }
@@ -46,17 +64,27 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             headerRight={<TimeDiff date={message.createdAt} />}
         >
             {/* plaintextはマークダウン・絵文字のレンダリングを行わずそのまま表示する */}
-            <CollapsibleBody forceExpanded={props.forceExpanded}>
-                <div
-                    style={{
-                        whiteSpace: 'pre-wrap',
-                        overflowWrap: 'anywhere'
-                    }}
-                >
-                    {message.value.body}
-                </div>
-            </CollapsibleBody>
-            <MessageFooter message={message} rerouted={props.rerouted} />
+            <RenderedBodyProvider>
+                <MessageTranslationProvider>
+                    <CollapsibleBody forceExpanded={props.forceExpanded}>
+                        <AutoSummary>
+                            <TranslatableBody>
+                                <RenderedBody>
+                                    <div
+                                        style={{
+                                            whiteSpace: 'pre-wrap',
+                                            overflowWrap: 'anywhere'
+                                        }}
+                                    >
+                                        {message.value.body}
+                                    </div>
+                                </RenderedBody>
+                            </TranslatableBody>
+                        </AutoSummary>
+                    </CollapsibleBody>
+                    <MessageFooter message={message} rerouted={props.rerouted} />
+                </MessageTranslationProvider>
+            </RenderedBodyProvider>
         </MessageLayout>
     )
 }

@@ -7,6 +7,7 @@ import { SwipableView } from '../layouts/Stack'
 import { AccountSwitchingBanner } from '../components/AccountSwitchingBanner'
 import { PwaManager } from '../components/PwaManager'
 import { NavigationProvider } from '../contexts/Navigation'
+import { TranslationProvider } from '../contexts/Translation'
 import { CssVar } from '../types/Theme'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
@@ -17,7 +18,8 @@ import { MdArrowBack, MdHome, MdExplore, MdNotifications, MdContacts } from 'rea
 
 export const AppShell = () => {
     const isMobile = useIsMobile()
-    return isMobile ? <MobileShell /> : <DesktopShell />
+    // 投稿メニューの翻訳(Chrome内蔵API)。ゲスト表示は対象外
+    return <TranslationProvider>{isMobile ? <MobileShell /> : <DesktopShell />}</TranslationProvider>
 }
 
 const DesktopShell = () => {

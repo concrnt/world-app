@@ -6,15 +6,6 @@
  */
 
 export interface AtprotoRecordSchema {
-    did: string
     atUri: string
     cid: string
-    profileOverride?: {
-        username?: string
-        avatar?: string
-        description?: string
-        link?: string
-        characterID?: string
-        profileOverride?: string
-    }
 }

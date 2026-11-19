@@ -19,6 +19,7 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_scroll_killer::init())
             .plugin(tauri_plugin_keyboard::init())
+            .plugin(tauri_plugin_translation::init())
     }
 
     builder
@@ -29,6 +30,7 @@ pub fn run() {
         .plugin(tauri_plugin_haptics::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_file_saver::init())
         .plugin(tauri_plugin_share::init())
         .plugin(tauri_plugin_push::init())

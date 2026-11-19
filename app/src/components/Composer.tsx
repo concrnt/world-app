@@ -13,9 +13,9 @@ import {
     Text,
     TextField,
     Avatar,
-    CfmRenderer,
     useAnchor
 } from '@concrnt/ui'
+import { CfmRenderer } from './CfmRenderer'
 import { useClient } from '../contexts/Client'
 import { MessageLayout } from './message/MessageLayout'
 import { isNonNullOrUndefined, Message, Schemas, semantics } from '@concrnt/worldlib'
@@ -1013,16 +1013,20 @@ export const Composer = (props: Props) => {
                             {t('cannotPostOffline')}
                         </Text>
                     )}
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={cannotSubmit}
-                        endIcon={<MdSend />}
-                        style={{
-                            minWidth: '100px'
-                        }}
-                    >
-                        {getSubmitLabel()}
-                    </Button>
+                    {/* 押下でボタンへフォーカスが移るとtextareaがblurしてキーボードが閉じてしまうので防ぐ(clickは発火する)。
+                        投稿完了でコンポーザーが閉じるまでキーボードを出したままにする */}
+                    <span onMouseDown={(e) => e.preventDefault()} style={{ display: 'flex' }}>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={cannotSubmit}
+                            endIcon={<MdSend />}
+                            style={{
+                                minWidth: '100px'
+                            }}
+                        >
+                            {getSubmitLabel()}
+                        </Button>
+                    </span>
                 </div>
             </div>
 

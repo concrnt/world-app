@@ -3,16 +3,13 @@ import { Theme } from '../types/Theme'
 import { usePreference, type Preference } from './Preference'
 import { usePersistent } from '../hooks/usePersistent'
 import { Themes } from '../data/themes'
-import { ThemeProvider as BaseThemeProvider, CfmActionsProvider, migrateTheme } from '@concrnt/ui'
+import { ThemeProvider as BaseThemeProvider, migrateTheme } from '@concrnt/ui'
 import { useClient } from './Client'
 import {
     deleteCustomTheme as deleteCustomThemeDocument,
     loadCustomThemes,
     saveCustomTheme as saveCustomThemeDocument
 } from '../utils/themeList'
-import { CCUserChip } from '../components/CCUserChip'
-import { TimelineChip } from '../components/TimelineChip'
-import { openUrl } from '@tauri-apps/plugin-opener'
 
 interface Props {
     theme?: Theme
@@ -38,13 +35,18 @@ export const CachedThemeProvider = (props: { children: React.ReactNode }) => {
 }
 
 interface ThemeLibraryState {
+    // 現在適用中のテーマ。canvas描画など CSS 変数が使えない場所で具体的な色が要るとき用
+    theme: Theme
     customThemes: Record<string, Theme>
     reloadThemes: () => Promise<void>
     saveTheme: (theme: Theme) => Promise<Theme>
     deleteTheme: (title: string) => Promise<void>
+    // 投稿中の```theme```ブロックからの取込。ThemeProviderの外(既定値)では未定義=取込ボタンを出さない
+    importTheme?: (theme: Theme) => Promise<void>
 }
 
 const ThemeLibraryContext = createContext<ThemeLibraryState>({
+    theme: Themes.blue,
     customThemes: {},
     reloadThemes: async () => {},
     saveTheme: async (theme) => theme,
@@ -128,33 +130,19 @@ export const ThemeProvider = (props: Props) => {
 
     const value = useMemo(
         () => ({
+            theme,
             customThemes,
             reloadThemes,
             saveTheme,
-            deleteTheme
+            deleteTheme,
+            importTheme
         }),
-        [customThemes, reloadThemes, saveTheme, deleteTheme]
+        [theme, customThemes, reloadThemes, saveTheme, deleteTheme, importTheme]
     )
 
     return (
         <ThemeLibraryContext.Provider value={value}>
-            <CfmActionsProvider
-                value={{
-                    importTheme,
-                    renderUserChip: (ccid) => (
-                        <CCUserChip ccid={ccid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    ),
-                    renderTimelineChip: (fqid) => (
-                        <TimelineChip fqid={fqid} style={{ display: 'inline-flex', verticalAlign: 'middle' }} />
-                    ),
-                    openExternal: (url) => {
-                        // 第2引数なし = システム既定ブラウザ(inAppBrowserではない)
-                        openUrl(url)
-                    }
-                }}
-            >
-                <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
-            </CfmActionsProvider>
+            <BaseThemeProvider theme={theme}>{props.children}</BaseThemeProvider>
         </ThemeLibraryContext.Provider>
     )
 }

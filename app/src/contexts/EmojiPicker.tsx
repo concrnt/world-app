@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { CssVar } from '../types/Theme'
 import { usePersistent } from '../hooks/usePersistent'
 import { MdAccessTime, MdSearch, MdClose } from 'react-icons/md'
-import { CCImage, HorizontalLayout, IconButton, CfmActionsProvider, OverlaySurface, useCfmActions } from '@concrnt/ui'
+import { CCImage, HorizontalLayout, IconButton, OverlaySurface } from '@concrnt/ui'
 import { useClient } from './Client'
 import { useKeyboard } from './Keyboard'
 import { useMediaProxy } from './MediaProxy'
@@ -84,12 +84,16 @@ export interface EmojiPickerState {
     packages: EmojiPackage[]
     packageURLs: string[]
     packageEntries: ListEntry[]
+    // URLから絵文字パックを取得(localStorageキャッシュ付き)。投稿中の<emojipack>カード描画にも使う
+    loadEmojiPackage: (url: string, noCache?: boolean) => Promise<EmojiPackage | null>
     addEmojiPackage: (url: string) => Promise<void>
     removeEmojiPackage: (key: string) => Promise<void>
     updateEmojiPackage: (url: string) => Promise<void>
 }
 
-const EmojiPickerContext = createContext<EmojiPickerState | undefined>(undefined)
+// EmojiPickerProviderの外(guest/welcome)でも落ちずに参照できるよう、contextそのものも公開する
+// (useEmojiPickerはプロバイダ外でthrowする)
+export const EmojiPickerContext = createContext<EmojiPickerState | undefined>(undefined)
 
 interface Props {
     children: React.ReactNode
@@ -98,7 +102,6 @@ interface Props {
 export const EmojiPickerProvider = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'contexts.emojiPicker' })
     const { client } = useClient()
-    const parentCfmActions = useCfmActions()
     const onSelectedRef = useRef<((emoji: Emoji) => void) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
@@ -395,6 +398,7 @@ export const EmojiPickerProvider = (props: Props) => {
             packages: emojiPackages,
             packageURLs: emojiPackageURLs,
             packageEntries,
+            loadEmojiPackage,
             addEmojiPackage,
             removeEmojiPackage,
             updateEmojiPackage
@@ -406,6 +410,7 @@ export const EmojiPickerProvider = (props: Props) => {
             emojiPackages,
             emojiPackageURLs,
             packageEntries,
+            loadEmojiPackage,
             addEmojiPackage,
             removeEmojiPackage,
             updateEmojiPackage
@@ -527,16 +532,7 @@ export const EmojiPickerProvider = (props: Props) => {
 
     return (
         <EmojiPickerContext.Provider value={value}>
-            <CfmActionsProvider
-                value={{
-                    ...parentCfmActions,
-                    loadEmojipack: loadEmojiPackage,
-                    addEmojipack: addEmojiPackage,
-                    emojipackURLs: emojiPackageURLs
-                }}
-            >
-                {props.children}
-            </CfmActionsProvider>
+            {props.children}
 
             {/* zIndexは使わない: OverlaySurfaceでoverlay-rootへopen順に積む(MediaViewer等の上から開いても前面)。
                 backdrop→sheetのDOM順でsheetが前面 */}

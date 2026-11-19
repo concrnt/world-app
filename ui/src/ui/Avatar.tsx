@@ -1,11 +1,9 @@
 import BoringAvatar from 'boring-avatars'
-import { Suspense, use, useDeferredValue } from 'react'
 import { CCImage } from '../contexts/CCImage'
-import { Skeleton } from './Skeleton'
 
 interface Props {
     ccid: string
-    src?: string | Promise<string | undefined>
+    src?: string
     style?: React.CSSProperties
     onClick?: () => void
     badge?: React.ReactNode
@@ -14,35 +12,21 @@ interface Props {
 }
 
 export const Avatar = (props: Props) => {
-    const body = (
-        <Suspense
-            fallback={
-                <Skeleton
-                    width="40px"
-                    height="40px"
-                    style={{
-                        display: 'block',
-                        borderRadius: '4px',
-                        ...props.style
-                    }}
-                />
-            }
-        >
-            {useDeferredValue(<Inner {...props} />)}
-        </Suspense>
-    )
+    const body = <Inner {...props} />
 
     if (!props.badge) return body
 
     const badgeSize = props.badgeSize ?? 16
+    // MUIのBadge(overlap=circular)風に、バッジの3割ほどをアバターの右下角から外へはみ出させる
+    const badgeOffset = `${-Math.round(badgeSize * 0.3)}px`
     return (
         <div style={{ position: 'relative', width: 'fit-content' }}>
             {body}
             <div
                 style={{
                     position: 'absolute',
-                    bottom: '-3px',
-                    right: '-3px',
+                    bottom: badgeOffset,
+                    right: badgeOffset,
                     width: `${badgeSize}px`,
                     height: `${badgeSize}px`,
                     borderRadius: '4px',
@@ -61,12 +45,10 @@ export const Avatar = (props: Props) => {
 }
 
 const Inner = (props: Props) => {
-    const src = props.src instanceof Promise ? use(props.src) : props.src
-
-    if (src) {
+    if (props.src) {
         return (
             <CCImage
-                src={src}
+                src={props.src}
                 maxWidth={256}
                 alt="avatar"
                 style={{
