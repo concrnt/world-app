@@ -1,5 +1,6 @@
 name: AndroidBuild
 
+# Release workflow から版を渡されて呼ばれる。手動実行はビルドが通るかの確認用で、版は書き込まない
 on:
   workflow_call:
     inputs:
@@ -9,6 +10,7 @@ on:
       version-code:
         type: string
         required: true
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -17,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: v${{ inputs.version }}
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.sha }}
 
       # ----------------------
       # Node / pnpm
@@ -62,6 +64,12 @@ jobs:
       # ----------------------
       # Android
       # ----------------------
+      # ランナーの既定 JDK が 25 になり、Gradle 8.14.3(Java 24 まで)が起動できなくなったため固定する
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
       - uses: android-actions/setup-android@v4
 
       # Gradle cache
@@ -96,6 +104,7 @@ jobs:
       # ----------------------
       # release ブランチのスナップショットと同じ値を書き込む。jq で書き直すと tauri.conf.json の整形が崩れるので sed で置き換える
       - name: Stamp version
+        if: inputs.version
         env:
           VERSION: ${{ inputs.version }}
           CODE: ${{ inputs.version-code }}
@@ -115,7 +124,7 @@ jobs:
       # ----------------------
       - uses: actions/upload-artifact@v7
         with:
-          name: android-build-${{ inputs.version }}
+          name: android-build-${{ inputs.version || github.sha }}
           path: |
             src-tauri/gen/android/app/build/outputs/**/*.apk
             src-tauri/gen/android/app/build/outputs/**/*.aab
