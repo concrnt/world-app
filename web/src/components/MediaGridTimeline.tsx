@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
-import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { QueryTimelineReader } from '@concrnt/client'
-import { MediaMessageSchema } from '@concrnt/worldlib'
+import { Client, MediaMessageSchema } from '@concrnt/worldlib'
 import { CssVar, Skeleton, Text } from '@concrnt/ui'
 import { RenderError } from './message/RenderError'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -44,14 +43,34 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const MediaGridTimeline = (props: Props) => {
+    // 取得対象が変わったら中身ごと作り直す(呼び出し側がquery参照を作り直しても、内容が同じなら維持)
+    return (
+        <MediaGridTimelineInner
+            key={props.prefix + '|' + JSON.stringify(props.query ?? {}) + '|' + (props.batchSize ?? '')}
+            {...props}
+        />
+    )
+}
+
+const MediaGridTimelineInner = (props: Props) => {
     const { client } = useClient()
     const { t } = useTranslation('', { keyPrefix: 'components.mediaGridTimeline' })
     const mediaViewer = useMediaViewer()
+    // このインスタンスの取得対象は固定(変わったら外側でkeyごと作り直される)
+    const [target] = useState(() => ({
+        prefix: props.prefix,
+        query: props.query ?? {},
+        batchSize: props.batchSize ?? DEFAULT_BATCH_SIZE
+    }))
 
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
     const scrollPositionRef = useRef<number>(0)
-    const [reader, update] = useRefWithUpdate<QueryTimelineReader | undefined>(undefined)
+    // 表示はitemsで行うので、readerの更新(onUpdate)は購読しない
+    const readerRef = useRef<QueryTimelineReader | undefined>(undefined)
+    // readerをどのClientで初期化したか。Activityのhidden→visible復帰やStrictModeでは
+    // refを残したままeffectだけが再実行されるので、同じClientなら何もしない
+    const initializedRef = useRef<Client | undefined>(undefined)
     const [loading, setLoading] = useState(true)
     const [hasMoreData, setHasMoreData] = useState<boolean>(false)
     const [items, setItems] = useState<GridItem[]>([])
@@ -67,11 +86,11 @@ export const MediaGridTimeline = (props: Props) => {
     // init/reload で 0 リセット、readMore で積み上げる
     const iter = useRef(0)
 
-    const collectMedias = async (): Promise<GridItem[]> => {
-        if (!reader.current || !client) return []
+    const collectMedias = useCallback(async (): Promise<GridItem[]> => {
+        if (!readerRef.current) return []
 
-        const newItems = reader.current.body.slice(iter.current, reader.current.body.length)
-        iter.current = reader.current.body.length
+        const newItems = readerRef.current.body.slice(iter.current, readerRef.current.body.length)
+        iter.current = readerRef.current.body.length
 
         const resolved = await Promise.all(
             newItems.map(async (item) => {
@@ -98,88 +117,38 @@ export const MediaGridTimeline = (props: Props) => {
             })
         }
         return result
-    }
+    }, [client])
 
     useEffect(() => {
-        let isCancelled = false
-        if (!client) return
-
-        // 再アタッチパス: effectが再実行された場合でも、対象が同じなら
-        // 既存readerと展開済み表示・iterカーソルをそのまま保持する(スクロール位置維持)
-        const existing = reader.current
-        if (
-            existing &&
-            existing.prefix === props.prefix &&
-            JSON.stringify(existing.query) === JSON.stringify(props.query ?? {}) &&
-            existing.body.length > 0
-        ) {
-            existing.onUpdate = () => {
-                update()
-            }
-            return
-        }
-
-        // 初期化: カーソルと表示をリセットしてから Reader を作る
-        itemsRef.current = []
-        setItems([])
-        iter.current = 0
+        if (initializedRef.current === client) return
+        // Client差し替えでは、取り直しが届くまで表示中のitemsを残す(届いたら丸ごと置き換える)
+        const t = client.newQueryTimelineReader()
+        readerRef.current = t
+        initializedRef.current = client
         loadingRef.current = true
-        setLoading(true)
 
-        client.newQueryTimelineReader().then((t) => {
-            if (isCancelled) return
-            t.onUpdate = () => {
-                update()
-            }
-            reader.current = t
-
-            t.init(props.prefix, props.query, props.batchSize ?? DEFAULT_BATCH_SIZE)
-                .then((hasMore) => {
-                    if (isCancelled) return
-                    hasMoreDataRef.current = hasMore
-                    setHasMoreData(hasMore)
-                    return collectMedias()
-                })
-                .then((newItems) => {
-                    if (isCancelled || !newItems) return
-                    itemsRef.current = newItems
-                    setItems(newItems)
-                })
-                .finally(() => {
-                    if (isCancelled) return
-                    loadingRef.current = false
-                    setLoading(false)
-                })
-        })
-
-        return () => {
-            isCancelled = true
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client, props.prefix, props.query, props.batchSize])
+        t.init(target.prefix, target.query, target.batchSize)
+            .then(async (hasMore) => {
+                if (readerRef.current !== t) return
+                hasMoreDataRef.current = hasMore
+                setHasMoreData(hasMore)
+                iter.current = 0
+                const newItems = await collectMedias()
+                if (readerRef.current !== t) return
+                itemsRef.current = newItems
+                setItems(newItems)
+            })
+            .catch((err) => {
+                console.error('Failed to initialize media timeline:', err)
+            })
+            .finally(() => {
+                if (readerRef.current !== t) return
+                loadingRef.current = false
+                setLoading(false)
+            })
+    }, [client, target, collectMedias])
 
     const scrollRef = useRef<HTMLDivElement>(null)
-
-    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
-    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
-    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
-    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
-    useLayoutEffect(() => {
-        const el = scrollRef.current
-        if (!el) return
-        const saved = scrollPositionRef.current
-        if (saved <= 0) return
-        let raf = 0
-        let attempts = 0
-        const restore = () => {
-            el.scrollTop = saved
-            if (el.scrollTop !== saved && attempts++ < 10) {
-                raf = requestAnimationFrame(restore)
-            }
-        }
-        restore()
-        return () => cancelAnimationFrame(raf)
-    }, [])
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
@@ -192,13 +161,13 @@ export const MediaGridTimeline = (props: Props) => {
     // PullToRefresh のリロード処理
     // reader.reload() で body を更新した後、iter を 0 に戻して再展開する
     const onRefresh = useCallback(async () => {
-        if (!reader.current) return
+        if (!readerRef.current) return
         setIsFetching(true)
         try {
             iter.current = 0
             itemsRef.current = []
             setItems([])
-            const hasMore = await reader.current.reload()
+            const hasMore = await readerRef.current.reload()
             hasMoreDataRef.current = hasMore
             setHasMoreData(hasMore)
             const newItems = await collectMedias()
@@ -209,17 +178,16 @@ export const MediaGridTimeline = (props: Props) => {
         } finally {
             setIsFetching(false)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reader])
+    }, [collectMedias])
 
     // 追い読み(スクロール末尾とビューアの「次へ」で共用)。続きがあり得るなら true を返す
     const loadMore = useCallback((): Promise<boolean> => {
-        if (!reader.current || !hasMoreDataRef.current) return Promise.resolve(false)
+        if (!readerRef.current || !hasMoreDataRef.current) return Promise.resolve(false)
         if (readMorePromiseRef.current) return readMorePromiseRef.current
 
         loadingRef.current = true
         setLoading(true)
-        const promise = reader.current
+        const promise = readerRef.current
             .readMore()
             .then((hasMore) => {
                 hasMoreDataRef.current = hasMore
@@ -243,8 +211,7 @@ export const MediaGridTimeline = (props: Props) => {
             })
         readMorePromiseRef.current = promise
         return promise
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reader])
+    }, [collectMedias])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -276,7 +243,7 @@ export const MediaGridTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, loading, loadMore])
+    }, [hasMoreData, loading, loadMore])
 
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>

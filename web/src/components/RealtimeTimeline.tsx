@@ -7,16 +7,15 @@ import {
     useCallback,
     useEffect,
     useImperativeHandle,
-    useLayoutEffect,
     useMemo,
+    useReducer,
     useRef,
     useState
 } from 'react'
-import { isStaticTimelineURI } from '@concrnt/worldlib'
+import { Client, isStaticTimelineURI } from '@concrnt/worldlib'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { ChunklineItem, TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { TimelineSnapshot } from '../lib/timelineSnapshot'
 import { MessageContainer, MessageSnapshotContext } from './message'
@@ -57,10 +56,52 @@ export const RealtimeTimeline = (props: Props) => {
     const { client } = useClient()
     const homeStatus = useDomainStatus()
 
+    // 自ドメインがオフラインでも、単一タイムラインならそのオーナーのドメインから直接読める。
+    // 解決が済むまでは自ドメインのまま読む(一時的なオフライン遷移のたびに表示中のreaderを作り直さない)。
+    // 静的タイムライン(https manifest)の読み出しは自ドメイン経由のみ(manifestのホストはconcrntサーバーではない)
+    const directOwner =
+        !homeStatus.online && props.timelines.length === 1 && !isStaticTimelineURI(props.timelines[0])
+            ? URL.parse(props.timelines[0])?.host
+            : undefined
+    const [resolved, setResolved] = useState<{ owner: string; fqdn?: string } | undefined>(undefined)
+    useEffect(() => {
+        if (!directOwner) return
+        let isCancelled = false
+        client.api
+            .resolveDomain(directOwner)
+            .catch(() => undefined)
+            .then((fqdn) => {
+                if (!isCancelled) setResolved({ owner: directOwner, fqdn })
+            })
+        return () => {
+            isCancelled = true
+        }
+    }, [client, directOwner])
+    const hostOverride =
+        directOwner && resolved?.owner === directOwner && resolved.fqdn !== client.api.defaultHost
+            ? resolved.fqdn
+            : undefined
+
+    // タイムライン構成が変わったら中身ごと作り直す(呼び出し側が毎レンダー新規配列を渡しても、内容が同じなら維持)
+    return (
+        <RealtimeTimelineInner
+            key={props.timelines.join('|') + (props.noRealtime ? '|norealtime' : '')}
+            {...props}
+            hostOverride={hostOverride}
+        />
+    )
+}
+
+const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
+    const { client } = useClient()
+    const { hostOverride } = props
+    // このインスタンスが読むタイムライン構成は固定(変わったら外側でkeyごと作り直される)
+    const [timelines] = useState(props.timelines)
+
     // 起動時スナップショット。本物の先頭ページに差し替えたらundefinedになる(以後は使わない)。
     // 表示中はpull-to-refresh実行中の見た目にし、スケルトン・末尾表示は出さない
     const [snapshot, setSnapshot] = useState(() =>
-        props.initialTimeline && props.initialTimeline.timelines.join('|') === props.timelines.join('|')
+        props.initialTimeline && props.initialTimeline.timelines.join('|') === timelines.join('|')
             ? props.initialTimeline
             : undefined
     )
@@ -77,7 +118,13 @@ export const RealtimeTimeline = (props: Props) => {
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
     const [loading, setLoading] = useState(snapshot === undefined)
-    const [reader, update] = useRefWithUpdate<TimelineReader | undefined>(undefined)
+
+    // 表示はreaderRef.current.bodyを直接読み、readerの更新はforceUpdateで反映する
+    const readerRef = useRef<TimelineReader | undefined>(undefined)
+    // readerをどの取得元(Client・ホスト)で初期化したか。Activityのhidden→visible復帰やStrictModeでは
+    // refを残したままeffectだけが再実行されるので、取得元が同じなら作り直さず購読だけ戻す
+    const initializedRef = useRef<{ client: Client; hostOverride?: string } | undefined>(undefined)
+    const [, forceUpdate] = useReducer((x: number) => x + 1, 0)
 
     const [isFetching, setIsFetching] = useState(snapshot !== undefined)
 
@@ -111,7 +158,6 @@ export const RealtimeTimeline = (props: Props) => {
     // ネスト先(リプライ/リルート元)が未解決でも解決まで旧表示が保持される
     const swapToLive = useCallback(
         async (t: TimelineReader) => {
-            if (!client) return
             await Promise.allSettled(
                 t.body.map((item) =>
                     item.href
@@ -123,192 +169,95 @@ export const RealtimeTimeline = (props: Props) => {
             startTransition(() => {
                 setSnapshot(undefined)
                 setIsFetching(false)
-                update()
+                forceUpdate()
             })
             scheduleSave(t)
         },
-        [client, update, scheduleSave]
+        [client, scheduleSave]
     )
-
-    // 呼び出し側が毎レンダー新規配列を渡しても、内容が同じならreaderを作り直さないための内容キー
-    const timelinesKey = props.timelines.join('|')
-
-    // 自ドメインがオフラインでも、単一タイムラインならそのホストから直接読める。
-    // reader再生成のトリガーは解決済みのhostOverride値の変化のみにする
-    // (online自体を依存にすると、一時的なオフライン遷移のたびに表示中のリーダーが破棄されてしまう)
-    const [hostOverride, setHostOverride] = useState<string | undefined>(undefined)
-    useEffect(() => {
-        // 静的タイムライン(https manifest)の読み出しは自ドメイン経由のみ(manifestのホストはconcrntサーバーではない)
-        if (!client || homeStatus.online || props.timelines.length !== 1 || isStaticTimelineURI(props.timelines[0])) {
-            setHostOverride(undefined)
-            return
-        }
-        let isCancelled = false
-        const owner = URL.parse(props.timelines[0])?.host
-        if (!owner) {
-            setHostOverride(undefined)
-            return
-        }
-        client.api
-            .resolveDomain(owner)
-            .catch(() => undefined)
-            .then((fqdn) => {
-                if (isCancelled) return
-                setHostOverride(fqdn === client.api.defaultHost ? undefined : fqdn)
-            })
-        return () => {
-            isCancelled = true
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client, homeStatus.online, timelinesKey])
 
     // このタイムラインを購読しているホスト(先頭取得・socketとも同じ)。復帰時の再試行キーにする
     const subscribedStatus = useDomainStatus(hostOverride ?? client.api.defaultHost)
 
     useEffect(() => {
-        // 再アタッチパス: effectが再実行されても、タイムライン構成が同じなら
-        // 既存readerのbodyとDOMを保ったままsocket購読だけ復帰する
-        // (スクロール位置と表示内容を維持するため、スケルトン表示には戻さない)
-        const existing = reader.current
-        if (
-            client &&
-            existing &&
-            existing.timelines.join('|') === timelinesKey &&
-            existing.hostOverride === hostOverride &&
-            (existing.socket !== undefined) === !(props.noRealtime ?? false) &&
-            existing.body.length > 0
-        ) {
-            existing.onUpdate = () => {
-                scheduleSave(existing)
-                startTransition(() => {
-                    update()
-                })
-            }
-            existing.onNewItem = (item) => {
-                if (!existing.haltUpdate) return
-                if (!item.href) return
+        const current = readerRef.current
+        const initialized = initializedRef.current
+        const resumable =
+            initialized?.client === client && initialized.hostOverride === hostOverride ? current : undefined
+        const t = resumable ?? client.newTimelineReader({ withoutSocket: props.noRealtime ?? false, hostOverride })
 
-                client.getMessage(item.href, item.source ? new URL(item.source).hostname : undefined).then((msg) => {
-                    if (!msg) return
-                    const icon = msg.authorProfile?.avatar
-                    if (!icon) return
-                    setNewArrivals((prev) => {
-                        if (prev.find((e) => e.src === icon)) return prev
-                        return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
-                    })
-                })
-            }
-            existing.resume()
-            return () => {
-                existing.dispose()
-            }
-        }
-
-        console.log('Initializing timeline reader for timelines:', props.timelines)
-        let isCancelled = false
-        const seeded = seededItems
-        if (!seeded) setInitialLoaded(false)
-        setNewArrivals([])
-        const request = async () => {
-            if (!client) return
-
-            return client
-                .newTimelineReader({ withoutSocket: props.noRealtime ?? false, hostOverride })
-                .catch(() => client.newTimelineReader({ withoutSocket: true, hostOverride }))
-                .then((t) => {
-                    if (isCancelled) return
-                    t.haltUpdate = false
-                    t.onUpdate = () => {
-                        scheduleSave(t)
-                        startTransition(() => {
-                            update()
-                        })
-                    }
-
-                    t.onNewItem = (item) => {
-                        if (isCancelled) return
-                        if (!t.haltUpdate) return
-                        if (!item.href) return
-
-                        client
-                            .getMessage(item.href, item.source ? new URL(item.source).hostname : undefined)
-                            .then((msg) => {
-                                if (isCancelled) return
-                                if (!msg) return
-                                const icon = msg.authorProfile?.avatar
-                                if (!icon) return
-                                setNewArrivals((prev) => {
-                                    if (prev.find((e) => e.src === icon)) return prev
-                                    return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
-                                })
-                            })
-                    }
-
-                    reader.current = t
-                    if (seeded) {
-                        // 起動時スナップショット: 先頭ページが届くまでbodyに前回の投稿列を置いておく
-                        // (listen失敗時もbodyは消えないので、オフラインならそのまま残る)
-                        t.body = [...seeded]
-                        t.chunkedBody = [[...seeded]]
-                        setIsFetching(true)
-                    }
-                    t.listen(props.timelines)
-                        .then((hasMoreData) => {
-                            setHasMoreData(hasMoreData)
-                            if (!snapshotRef.current) return
-                            if (t.headLoaded) {
-                                swapToLive(t)
-                            } else {
-                                listenFailedRef.current = true
-                                setIsFetching(false)
-                            }
-                        })
-                        .finally(() => {
-                            loadingRef.current = false
-                            setLoading(false)
-                            setInitialLoaded(true)
-                        })
-                    return t
-                })
-        }
-        const mt = request().catch((err) => {
-            console.error('Failed to initialize timeline reader:', err)
-            loadingRef.current = false
-            setLoading(false)
-            setInitialLoaded(true)
-            return undefined
-        })
-        return () => {
-            isCancelled = true
-            mt.then((t) => {
-                t?.dispose()
+        t.onUpdate = () => {
+            scheduleSave(t)
+            startTransition(() => {
+                forceUpdate()
             })
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client, reader, timelinesKey, update, hostOverride, props.noRealtime])
+        t.onNewItem = (item) => {
+            if (!t.haltUpdate) return
+            if (!item.href) return
 
-    const scrollRef = useRef<HTMLDivElement>(null)
+            client.getMessage(item.href, item.source ? new URL(item.source).hostname : undefined).then((msg) => {
+                if (readerRef.current !== t) return
+                if (!msg) return
+                const icon = msg.authorProfile?.avatar
+                if (!icon) return
+                setNewArrivals((prev) => {
+                    if (prev.find((e) => e.src === icon)) return prev
+                    return [{ id: item.href!, author: msg.author, src: icon }, ...prev]
+                })
+            })
+        }
 
-    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
-    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
-    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
-    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
-    useLayoutEffect(() => {
-        const el = scrollRef.current
-        if (!el) return
-        const saved = scrollPositionRef.current
-        if (saved <= 0) return
-        let raf = 0
-        let attempts = 0
-        const restore = () => {
-            el.scrollTop = saved
-            if (el.scrollTop !== saved && attempts++ < 10) {
-                raf = requestAnimationFrame(restore)
+        if (resumable) {
+            t.resume()
+            return () => {
+                t.dispose()
             }
         }
-        restore()
-        return () => cancelAnimationFrame(raf)
-    }, [])
+
+        console.log('Initializing timeline reader for timelines:', timelines)
+        readerRef.current = t
+        initializedRef.current = { client, hostOverride }
+        if (snapshotRef.current) {
+            // 起動時スナップショット: 先頭ページが届くまでbodyに前回の投稿列を置いておく
+            // (listen失敗時もbodyは消えないので、オフラインならそのまま残る)
+            const seeded = snapshotRef.current.items.map((item) => ({ ...item, lastUpdate: new Date() }))
+            t.body = seeded
+            t.chunkedBody = [[...seeded]]
+        } else if (current) {
+            // Client差し替え・取得ホストの切り替え: 先頭ページが届くまで表示中の投稿列を残す
+            t.body = current.body
+            t.chunkedBody = current.chunkedBody
+            t.haltUpdate = current.haltUpdate
+        }
+        loadingRef.current = true
+        t.listen(timelines)
+            .then((hasMoreData) => {
+                if (readerRef.current !== t) return
+                setHasMoreData(hasMoreData)
+                if (!snapshotRef.current) return
+                if (t.headLoaded) {
+                    swapToLive(t)
+                } else {
+                    listenFailedRef.current = true
+                    setIsFetching(false)
+                }
+            })
+            .catch((err) => {
+                console.error('Failed to initialize timeline reader:', err)
+            })
+            .finally(() => {
+                if (readerRef.current !== t) return
+                loadingRef.current = false
+                setLoading(false)
+                setInitialLoaded(true)
+            })
+        return () => {
+            t.dispose()
+        }
+    }, [client, hostOverride, props.noRealtime, timelines, scheduleSave, swapToLive])
+
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
@@ -320,21 +269,21 @@ export const RealtimeTimeline = (props: Props) => {
 
     /** Pull to Refreshのリフレッシュ処理 */
     const onRefresh = useCallback(async () => {
-        if (!reader.current) return
+        if (!readerRef.current) return
         console.log('Pull to refresh: reloading timeline')
         setNewArrivals([])
         setIsFetching(true)
         try {
-            await reader.current.reload()
-            if (snapshotRef.current && reader.current.headLoaded) {
-                await swapToLive(reader.current)
+            await readerRef.current.reload()
+            if (snapshotRef.current && readerRef.current.headLoaded) {
+                await swapToLive(readerRef.current)
                 return
             }
             await new Promise((resolve) => setTimeout(resolve, 500))
         } finally {
             setIsFetching(false)
         }
-    }, [reader, swapToLive])
+    }, [swapToLive])
 
     // スナップショット表示のまま先頭取得に失敗していた場合、購読先ホストの復帰時に無音で本物へ差し替える
     // (投稿は既に見えているので、コールド起動のような再試行導線は出さない)
@@ -351,12 +300,9 @@ export const RealtimeTimeline = (props: Props) => {
     // リアクション等のcommit後に、そのアイテムだけ再取得させる。
     // socketのassociatedイベント任せだとcommit応答より遅れて届いたときに
     // useOptimisticのrevertが先に走り、リアクションが一瞬消える
-    const itemUpdated = useCallback(
-        (href: string) => {
-            reader.current?.updateItem(href)
-        },
-        [reader]
-    )
+    const itemUpdated = useCallback((href: string) => {
+        readerRef.current?.updateItem(href)
+    }, [])
 
     /** 新着バッジクリック時の処理 */
     const handleNewArrivalClick = useCallback(() => {
@@ -377,27 +323,27 @@ export const RealtimeTimeline = (props: Props) => {
             scrollPositionRef.current = el.scrollTop
 
             // haltUpdate制御：スクロールが閾値を超えたら自動更新を停止
-            if (reader.current) {
-                reader.current.haltUpdate = el.scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
+            if (readerRef.current) {
+                readerRef.current.haltUpdate = el.scrollTop > SCROLL_HALT_THRESHOLD || newArrivalsRef.current.length > 0
             }
 
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
-                if (!reader.current) return
+                if (!readerRef.current) return
 
                 console.log('Reading more...')
 
                 loadingRef.current = true
                 setLoading(true)
-                reader.current
+                readerRef.current
                     ?.readMore(8)
                     .then((hasMore) => {
                         setHasMoreData(hasMore)
                     })
                     .catch((e) => {
                         console.error('Failed to read more', e)
-                        console.log(reader.current?.body[reader.current.body.length - 1])
+                        console.log(readerRef.current?.body[readerRef.current.body.length - 1])
                     })
                     .finally(() => {
                         loadingRef.current = false
@@ -423,7 +369,7 @@ export const RealtimeTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, initialLoaded, loading, snapshot])
+    }, [hasMoreData, initialLoaded, loading, snapshot])
 
     const maxDisplayAvatars = 4
     const displayedArrivals = newArrivals.slice(0, maxDisplayAvatars)
@@ -467,7 +413,7 @@ export const RealtimeTimeline = (props: Props) => {
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
                         <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(seededItems ?? reader.current?.body ?? []).map((item, i) => (
+                            {(seededItems ?? readerRef.current?.body ?? []).map((item, i) => (
                                 // 静的タイムラインの同梱コンテンツはhrefを持たないので、時刻+位置で代用する
                                 <Cell
                                     key={item.href ?? `content:${item.timestamp.getTime()}:${i}`}
@@ -594,7 +540,10 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     style={{
                         padding: `0 ${CssVar.space(2)}`,
                         contentVisibility: 'auto',
-                        containIntrinsicSize: 'auto 120px'
+                        containIntrinsicSize: 'auto 120px',
+                        // スキップ中(画面外・Activity復帰直後)の行がflexで縮むと、Chromium系では復帰時に
+                        // 内容高が画面に満たずスクロール位置が0にクランプされる
+                        flexShrink: 0
                     }}
                 >
                     <Suspense key={item.href ?? 'content'} fallback={<MessageSkeleton />}>

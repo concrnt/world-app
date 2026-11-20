@@ -797,7 +797,9 @@ export class Client {
         return this.sockets[targetHost]
     }
 
-    async newTimelineReader(opts?: { withoutSocket: boolean; hostOverride?: string }): Promise<TimelineReader> {
+    // 購読も先頭取得もしない(TimelineReader.listenで始まる)ので同期で作れる。
+    // 呼び出し側がeffect内で作ってcleanupで同期にdisposeできるようにするため
+    newTimelineReader(opts?: { withoutSocket: boolean; hostOverride?: string }): TimelineReader {
         if (opts?.withoutSocket) {
             return new TimelineReader(this.api, undefined, opts?.hostOverride)
         }
@@ -811,7 +813,7 @@ export class Client {
         return new TimelineReader(this.api, this.sockets[targetHost], opts?.hostOverride)
     }
 
-    async newQueryTimelineReader(): Promise<QueryTimelineReader> {
+    newQueryTimelineReader(): QueryTimelineReader {
         return new QueryTimelineReader(this.api)
     }
 
