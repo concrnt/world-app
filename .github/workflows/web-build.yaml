@@ -1,14 +1,18 @@
 name: WebBuild
 
-# main への push は :main を、release への push(= main からのマージ)は
-# CalVer(vYYYY.MM.DD、同日 2 回目以降は vYYYY.MM.DD.N)を採番して :<version> と :latest を作る。
-# git タグと GitHub Release はイメージの push が成功してから作るので、失敗時は再実行すればよい。
+# main への push は開発版の :main を、Release workflow からの呼び出しは :<version> と :latest を作る。
 on:
   push:
-    branches: [ 'main', 'release' ]
+    branches: [ 'main' ]
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
 
+# 呼び出し時の github.ref は呼び出し元(main)になるので、main の push と取り合わないよう version で分ける
 concurrency:
-  group: web-build-${{ github.ref }}
+  group: web-build-${{ inputs.version || github.ref }}
   cancel-in-progress: false
 
 env:
@@ -23,44 +27,10 @@ jobs:
       contents: read
 
     outputs:
-      release: ${{ steps.version.outputs.release }}
-      tag: ${{ steps.version.outputs.tag }}
-      version: ${{ steps.version.outputs.version }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Decide version
-        id: version
-        run: |
-          if [ "$GITHUB_REF_NAME" != "release" ]; then
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            echo "tag=$GITHUB_REF_NAME-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-            echo "version=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # 同じコミットの再実行では採番し直さない
-          tag=$(git tag --points-at "$GITHUB_SHA" --list 'v[0-9]*' | sort -V | tail -n1)
-          if [ -z "$tag" ]; then
-            base="v$(TZ=Asia/Tokyo date +%Y.%m.%d)"
-            tag="$base"
-            n=0
-            while git rev-parse -q --verify "refs/tags/$tag" > /dev/null; do
-              n=$((n + 1))
-              tag="$base.$n"
-            done
-          fi
-
-          echo "release=true" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
-
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v6
@@ -68,9 +38,9 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: latest=false
           tags: |
-            type=raw,value=main,enable=${{ steps.version.outputs.release != 'true' }}
-            type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.release == 'true' }}
-            type=raw,value=latest,enable=${{ steps.version.outputs.release == 'true' }}
+            type=raw,value=main,enable=${{ !inputs.version }}
+            type=raw,value=${{ inputs.version }},enable=${{ !!inputs.version }}
+            type=raw,value=latest,enable=${{ !!inputs.version }}
 
   build:
     needs: prepare
@@ -92,6 +62,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -104,17 +76,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # 設定画面の version は unplugin-info が web/package.json から読むので、リリース版をここで書き込む
+      # 設定画面の version は unplugin-info が web/package.json から読む。release ブランチのスナップショットと同じ値を書き込む
       - name: Stamp version
+        if: inputs.version
         env:
-          VERSION: ${{ needs.prepare.outputs.version }}
+          VERSION: ${{ inputs.version }}
         run: |
           jq --arg v "$VERSION" '.version = $v' web/package.json > web/package.json.tmp
           mv web/package.json.tmp web/package.json
 
       - name: Build
         env:
-          CONCRNT_DEV_BUILD: ${{ needs.prepare.outputs.release == 'true' && '0' || '1' }}
+          CONCRNT_DEV_BUILD: ${{ inputs.version && '0' || '1' }}
         run: pnpm build
 
       - name: Setup Docker buildx
@@ -139,7 +112,7 @@ jobs:
           cache-to: type=gha,mode=max
           # apt/ca-certificates layer must be rebuilt every time (eMudhra 2026-10 lesson)
           no-cache-filters: runtime
-          build-args: VERSION=${{ needs.prepare.outputs.tag }}
+          build-args: VERSION=${{ inputs.version && format('v{0}', inputs.version) || 'main' }}
 
       - name: Export digest
         run: |
@@ -197,27 +170,3 @@ jobs:
           for t in $TAGS; do
             docker buildx imagetools inspect "$t"
           done
-
-  release:
-    needs: [prepare, manifest]
-    if: needs.prepare.outputs.release == 'true'
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Create tag and GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-        run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "$TAG already released"
-            exit 0
-          fi
-          gh release create "$TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "$TAG" \
-            --generate-notes

@@ -1,0 +1,151 @@
+name: Release
+
+# main の先頭をリリースする。版は semver に収まる YYYY.MDD.N(月日は 0 埋めしない 1 つの数: 11/20 → 1120、1/5 → 105。
+# N は同日の連番で 0 始まり)。Android の versionCode は YYYYMMDDNN。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  check:
+    if: github.ref_name == 'main'
+    uses: ./.github/workflows/build-check.yaml
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+  tag:
+    needs: check
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+      version-code: ${{ steps.tag.outputs.version-code }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 途中で失敗して同じコミットから出し直すときは採番し直さない
+          tag=$(git tag --points-at "$GITHUB_SHA" | grep -E '^v[0-9]{4}\.[0-9]{3,4}\.[0-9]+$' | sort -V | tail -n1 || true)
+          if [ -z "$tag" ]; then
+            today=$(TZ=Asia/Tokyo date +%Y%m%d)
+            base="${today:0:4}.$((10#${today:4:2}))${today:6:2}"
+            n=0
+            while git rev-parse -q --verify "refs/tags/v$base.$n" > /dev/null; do
+              n=$((n + 1))
+            done
+            tag="v$base.$n"
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$GITHUB_SHA" > /dev/null
+          fi
+
+          version="${tag#v}"
+          IFS=. read -r year monthday n <<< "$version"
+          if [ "$n" -gt 99 ]; then
+            echo "versionCode can hold at most 100 releases a day" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version-code=$(printf '%s%02d%02d%02d' "$year" $((monthday / 100)) $((monthday % 100)) "$n")" >> "$GITHUB_OUTPUT"
+
+  # Cloudflare Pages は release への push でビルドするので、版を書き込んだスナップショットを release に積む。
+  # GITHUB_TOKEN は workflow ファイルを変える push を拒否されるため、.github/workflows だけは release 側のまま残す
+  # (ビルドは main 側の定義で動くので release 上の workflow は使われない)。
+  # ここだけ失敗した場合は、手元で同じ手順を踏んで release に push する。
+  promote:
+    needs: tag
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout release
+        uses: actions/checkout@v7
+        with:
+          ref: release
+          fetch-depth: 0
+
+      - name: Snapshot onto release
+        env:
+          VERSION: ${{ needs.tag.outputs.version }}
+          CODE: ${{ needs.tag.outputs.version-code }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git read-tree -u --reset "v$VERSION"
+          rm -rf .github/workflows
+          git rm -r -q --cached --ignore-unmatch .github/workflows
+          git checkout HEAD -- .github/workflows
+
+          for f in web/package.json app/package.json; do
+            jq --arg v "$VERSION" '.version = $v' "$f" > "$f.tmp"
+            mv "$f.tmp" "$f"
+          done
+          # jq で書き直すと tauri.conf.json の整形が崩れるので sed で置き換える
+          sed -i -E "s/^(  \"version\": )\"[^\"]*\"/\1\"$VERSION\"/; s/(\"versionCode\": )[0-9]+/\1$CODE/" src-tauri/tauri.conf.json
+          jq -e --arg v "$VERSION" --argjson c "$CODE" '.version == $v and .bundle.android.versionCode == $c' src-tauri/tauri.conf.json
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "release is already at v$VERSION"
+            exit 0
+          fi
+          git commit -m "Release v$VERSION" -m "main $(git rev-parse "v$VERSION^{commit}") のスナップショット(版を書き込み、.github/workflows は release 側のまま)"
+          git push origin HEAD:release
+
+  web:
+    needs: tag
+    uses: ./.github/workflows/web-build.yaml
+    with:
+      version: ${{ needs.tag.outputs.version }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+  android:
+    needs: tag
+    uses: ./.github/workflows/android-build.yaml
+    with:
+      version: ${{ needs.tag.outputs.version }}
+      version-code: ${{ needs.tag.outputs.version-code }}
+    secrets: inherit
+    permissions:
+      contents: read
+
+  github-release:
+    needs: [tag, web, android]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.tag.outputs.version }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$TAG already released"
+            exit 0
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes

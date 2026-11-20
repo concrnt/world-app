@@ -1,8 +1,14 @@
 name: AndroidBuild
 
 on:
-  push:
-    branches: [release]
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      version-code:
+        type: string
+        required: true
 
 jobs:
   build-android:
@@ -10,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: v${{ inputs.version }}
 
       # ----------------------
       # Node / pnpm
@@ -86,6 +94,17 @@ jobs:
       # ----------------------
       # build
       # ----------------------
+      # release ブランチのスナップショットと同じ値を書き込む。jq で書き直すと tauri.conf.json の整形が崩れるので sed で置き換える
+      - name: Stamp version
+        env:
+          VERSION: ${{ inputs.version }}
+          CODE: ${{ inputs.version-code }}
+        run: |
+          jq --arg v "$VERSION" '.version = $v' app/package.json > app/package.json.tmp
+          mv app/package.json.tmp app/package.json
+          sed -i -E "s/^(  \"version\": )\"[^\"]*\"/\1\"$VERSION\"/; s/(\"versionCode\": )[0-9]+/\1$CODE/" src-tauri/tauri.conf.json
+          jq -e --arg v "$VERSION" --argjson c "$CODE" '.version == $v and .bundle.android.versionCode == $c' src-tauri/tauri.conf.json
+
       - run: pnpm build
 
       - name: Build Android
@@ -96,7 +115,7 @@ jobs:
       # ----------------------
       - uses: actions/upload-artifact@v7
         with:
-          name: android-build
+          name: android-build-${{ inputs.version }}
           path: |
             src-tauri/gen/android/app/build/outputs/**/*.apk
             src-tauri/gen/android/app/build/outputs/**/*.aab
