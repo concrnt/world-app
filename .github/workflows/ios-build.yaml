@@ -1,18 +1,24 @@
 name: iOSBuild
 
 # Release workflow から版を渡されて呼ばれる。手動実行はビルドが通るかの確認用で、版は書き込まない。
-# App Store Connect の API キー(APPLE_API_*)があれば Xcode の自動署名で App Store 向けの ipa を作り、無ければ署名せずに作る。
+# 配布証明書とプロファイル(APPLE_DISTRIBUTION_P12・APPLE_PROFILE_*)があれば App Store 向けに署名した ipa を、無ければ未署名の ipa を作る。
 on:
   workflow_call:
     inputs:
       version:
         type: string
         required: true
+    outputs:
+      signed:
+        value: ${{ jobs.build-ios.outputs.signed }}
   workflow_dispatch:
 
 jobs:
   build-ios:
     runs-on: macos-latest
+
+    outputs:
+      signed: ${{ steps.signing.outputs.signed }}
 
     steps:
       - uses: actions/checkout@v7
@@ -44,39 +50,26 @@ jobs:
           cache-on-failure: true
 
       # ----------------------
-      # App Store Connect API key
+      # signing
       # ----------------------
-      - name: Install App Store Connect API key
-        env:
-          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: |
-          if [ -z "$APPLE_API_KEY_P8" ]; then
-            echo "::notice::APPLE_API_* が無いので署名せずにビルドする"
-            exit 0
-          fi
-          key="$HOME/.appstoreconnect/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
-          mkdir -p "$(dirname "$key")"
-          printf '%s\n' "$APPLE_API_KEY_P8" > "$key"
-          {
-            echo "APPLE_API_KEY=$APPLE_API_KEY_ID"
-            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER"
-            echo "APPLE_API_KEY_PATH=$key"
-          } >> "$GITHUB_ENV"
-
-      # 手元に配布証明書が無いと Xcode は cloud signing を使い、それは Admin の API キーでしか通らない。
-      # IOS_CERTIFICATE などの Tauri の変数で渡すと本体だけ手動署名になり NotifyService が署名できないので、
-      # キーチェーンに入れるだけにして署名は自動(プロファイルは API キーで Xcode が作る)のままにする
-      - name: Install distribution certificate
+      # API キーを Tauri に渡すと Xcode の自動署名(cloud signing とプロファイル作成)になり、Admin でないキーでは書き出せない。
+      # IOS_CERTIFICATE などの Tauri の変数は本体しか手動署名にせず NotifyService が署名できないので、
+      # Xcode プロジェクトと ExportOptions を直接書き換えて両方を手動署名にする
+      - name: Install signing assets
+        id: signing
         env:
           P12: ${{ secrets.APPLE_DISTRIBUTION_P12 }}
           P12_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_P12_PASSWORD }}
+          PROFILE_APP: ${{ secrets.APPLE_PROFILE_APP }}
+          PROFILE_NOTIFY: ${{ secrets.APPLE_PROFILE_NOTIFY }}
         run: |
-          if [ -z "$P12" ]; then
-            echo "::notice::APPLE_DISTRIBUTION_P12 が無いので cloud signing に任せる"
+          if [ -z "$P12" ] || [ -z "$PROFILE_APP" ] || [ -z "$PROFILE_NOTIFY" ]; then
+            echo "::notice::配布証明書かプロファイルが無いので署名せずにビルドする"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          team=X28AUB639J
+
           keychain="$RUNNER_TEMP/signing.keychain-db"
           password=$(openssl rand -hex 16)
           security create-keychain -p "$password" "$keychain"
@@ -88,6 +81,54 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
           security find-identity -v -p codesigning "$keychain"
+
+          install_profile() {
+            local file="$RUNNER_TEMP/$2.mobileprovision" app_id uuid
+            printf '%s' "$1" | base64 --decode > "$file"
+            security cms -D -i "$file" > "$RUNNER_TEMP/$2.plist"
+            app_id=$(plutil -extract Entitlements.application-identifier raw "$RUNNER_TEMP/$2.plist")
+            if [ "$app_id" != "$team.$2" ]; then
+              echo "the profile given for $2 is for $app_id" >&2
+              return 1
+            fi
+            uuid=$(plutil -extract UUID raw "$RUNNER_TEMP/$2.plist")
+            for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+              mkdir -p "$dir"
+              cp "$file" "$dir/$uuid.mobileprovision"
+            done
+            echo "$uuid"
+          }
+          APP_UUID=$(install_profile "$PROFILE_APP" world.concrnt.app)
+          NOTIFY_UUID=$(install_profile "$PROFILE_NOTIFY" world.concrnt.app.NotifyService)
+          export APP_UUID NOTIFY_UUID
+
+          python3 - <<'EOF'
+          import os, re
+          path = 'src-tauri/gen/apple/world-app.xcodeproj/project.pbxproj'
+          profiles = {'world.concrnt.app': os.environ['APP_UUID'], 'world.concrnt.app.NotifyService': os.environ['NOTIFY_UUID']}
+          patched = []
+          def patch(m):
+              block = m.group(0)
+              bundle_id = re.search(r'PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);', block)
+              if 'name = release;' not in block or not bundle_id or bundle_id.group(1) not in profiles:
+                  return block
+              patched.append(bundle_id.group(1))
+              settings = (
+                  '\t\t\t\tCODE_SIGN_STYLE = Manual;\n'
+                  '\t\t\t\t"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";\n'
+                  f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = {profiles[bundle_id.group(1)]};\n'
+              )
+              return block.replace('buildSettings = {\n', 'buildSettings = {\n' + settings, 1)
+          text = re.sub(r'\t\t[0-9A-F]{24} /\* release \*/ = \{\n.*?\n\t\t\};\n', patch, open(path).read(), flags=re.S)
+          assert sorted(patched) == sorted(profiles), patched
+          open(path, 'w').write(text)
+          EOF
+
+          plist=src-tauri/gen/apple/ExportOptions.plist
+          plutil -replace signingStyle -string manual "$plist"
+          plutil -replace signingCertificate -string "Apple Distribution" "$plist"
+          plutil -replace provisioningProfiles -json "{\"world.concrnt.app\":\"$APP_UUID\",\"world.concrnt.app.NotifyService\":\"$NOTIFY_UUID\"}" "$plist"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       # ----------------------
       # build
@@ -109,8 +150,10 @@ jobs:
       - run: pnpm build
 
       - name: Build iOS
+        env:
+          SIGNED: ${{ steps.signing.outputs.signed }}
         run: |
-          if [ -n "$APPLE_API_KEY" ]; then
+          if [ "$SIGNED" = true ]; then
             pnpm tauri ios build --ci --export-method app-store-connect
           else
             pnpm tauri ios build --ci --no-sign
