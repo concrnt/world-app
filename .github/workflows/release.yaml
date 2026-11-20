@@ -157,32 +157,32 @@ jobs:
       packages: write
       id-token: write
 
+  # 鍵は置かず、OIDC トークンを play-publisher に交換する(concrnt/gcloud の terraform/release.tf)。
+  # GCP 側は release.yaml@main からの run しか受け付けない
   publish-android:
     needs: [version, tag]
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
-
-    env:
-      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      id-token: write
 
     steps:
-      - name: Skip without Play credentials
-        if: env.PLAY_SERVICE_ACCOUNT_JSON == ''
-        run: echo "::notice::PLAY_SERVICE_ACCOUNT_JSON が無いので Google Play へのアップロードを飛ばす"
-
       - uses: actions/download-artifact@v8
-        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
         with:
           name: android-build-${{ needs.version.outputs.version }}
           path: android
 
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/965716649396/locations/global/workloadIdentityPools/github-release/providers/world-app
+          service_account: play-publisher@concrnt.iam.gserviceaccount.com
+
       - name: Upload to Google Play
-        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ env.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: world.concrnt.app
           releaseFiles: android/bundle/universalRelease/app-universal-release.aab
           track: internal
