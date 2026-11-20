@@ -50,6 +50,8 @@ body {
  * WebKit は上端に接する不透明な position: fixed の要素があるとその色でステータスバー側を塗り、
  * ブラーを出さない。アプリ本体は transform の中にあって fixed を置けないので、body 直下に帯を置く。
  * 上端から数 px 内側をヒットテストして探されるため、高さを持たせ pointer-events も切らない。
+ * 見た目は変えたくないので background-clip: text で塗りを消す。背景色の計算値は不透明のままなので
+ * WebKit の判定には掛かり、文字が無いので実際には何も描かれない。
  */
 #top-edge-guard {
     display: none;
@@ -65,6 +67,8 @@ body {
             right: 0;
             height: calc(env(safe-area-inset-top) + 8px);
             background-color: var(--backdrop-background);
+            -webkit-background-clip: text;
+            background-clip: text;
             z-index: 2147483647;
         }
     }
