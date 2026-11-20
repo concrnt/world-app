@@ -185,7 +185,7 @@ jobs:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: world.concrnt.app
           releaseFiles: android/bundle/universalRelease/app-universal-release.aab
-          track: internal
+          tracks: internal
           status: completed
 
   publish-ios:
