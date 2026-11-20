@@ -2,6 +2,7 @@ name: Release
 
 # main の先頭をリリースする。版は semver に収まる YYYY.MDD.N(月日は 0 埋めしない 1 つの数: 11/20 → 1120、1/5 → 105。
 # N は同日の連番で 0 始まり)。Android の versionCode は YYYYMMDDNN。
+# アプリはタグを打つ前に版を書き込んでビルドまで済ませ、全部通ってからタグを打って公開する。
 on:
   workflow_dispatch:
 
@@ -12,24 +13,16 @@ concurrency:
 permissions: {}
 
 jobs:
-  check:
+  version:
     if: github.ref_name == 'main'
-    uses: ./.github/workflows/build-check.yaml
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-
-  tag:
-    needs: check
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
 
     outputs:
-      version: ${{ steps.tag.outputs.version }}
-      version-code: ${{ steps.tag.outputs.version-code }}
+      version: ${{ steps.version.outputs.version }}
+      version-code: ${{ steps.version.outputs.version-code }}
 
     steps:
       - name: Checkout repository
@@ -37,12 +30,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Tag
-        id: tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Decide version
+        id: version
         run: |
-          # 途中で失敗して同じコミットから出し直すときは採番し直さない
+          # 公開の途中で失敗して同じコミットから出し直すときは採番し直さない
           tag=$(git tag --points-at "$GITHUB_SHA" | grep -E '^v[0-9]{4}\.[0-9]{3,4}\.[0-9]+$' | sort -V | tail -n1 || true)
           if [ -z "$tag" ]; then
             today=$(TZ=Asia/Tokyo date +%Y%m%d)
@@ -52,7 +43,6 @@ jobs:
               n=$((n + 1))
             done
             tag="v$base.$n"
-            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$GITHUB_SHA" > /dev/null
           fi
 
           version="${tag#v}"
@@ -64,12 +54,58 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "version-code=$(printf '%s%02d%02d%02d' "$year" $((monthday / 100)) $((monthday % 100)) "$n")" >> "$GITHUB_OUTPUT"
 
+  check:
+    if: github.ref_name == 'main'
+    uses: ./.github/workflows/build-check.yaml
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+  android:
+    needs: version
+    uses: ./.github/workflows/android-build.yaml
+    with:
+      version: ${{ needs.version.outputs.version }}
+      version-code: ${{ needs.version.outputs.version-code }}
+    secrets: inherit
+    permissions:
+      contents: read
+
+  ios:
+    needs: version
+    uses: ./.github/workflows/ios-build.yaml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: read
+
+  tag:
+    needs: [version, check, android, ios]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.version.outputs.version }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" > /dev/null 2>&1; then
+            echo "$TAG already exists"
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" > /dev/null
+
   # Cloudflare Pages は release への push でビルドするので、版を書き込んだスナップショットを release に積む。
   # GITHUB_TOKEN は workflow ファイルを変える push を拒否されるため、.github/workflows だけは release 側のまま残す
   # (ビルドは main 側の定義で動くので release 上の workflow は使われない)。
   # ここだけ失敗した場合は、手元で同じ手順を踏んで release に push する。
   promote:
-    needs: tag
+    needs: [version, tag]
     runs-on: ubuntu-latest
 
     permissions:
@@ -84,8 +120,8 @@ jobs:
 
       - name: Snapshot onto release
         env:
-          VERSION: ${{ needs.tag.outputs.version }}
-          CODE: ${{ needs.tag.outputs.version-code }}
+          VERSION: ${{ needs.version.outputs.version }}
+          CODE: ${{ needs.version.outputs.version-code }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -112,40 +148,96 @@ jobs:
           git push origin HEAD:release
 
   web:
-    needs: tag
+    needs: [version, tag]
     uses: ./.github/workflows/web-build.yaml
     with:
-      version: ${{ needs.tag.outputs.version }}
+      version: ${{ needs.version.outputs.version }}
     permissions:
       contents: read
       packages: write
       id-token: write
 
-  android:
-    needs: tag
-    uses: ./.github/workflows/android-build.yaml
-    with:
-      version: ${{ needs.tag.outputs.version }}
-      version-code: ${{ needs.tag.outputs.version-code }}
-    secrets: inherit
+  publish-android:
+    needs: [version, tag]
+    runs-on: ubuntu-latest
+
     permissions:
       contents: read
 
+    env:
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+
+    steps:
+      - name: Skip without Play credentials
+        if: env.PLAY_SERVICE_ACCOUNT_JSON == ''
+        run: echo "::notice::PLAY_SERVICE_ACCOUNT_JSON が無いので Google Play へのアップロードを飛ばす"
+
+      - uses: actions/download-artifact@v8
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        with:
+          name: android-build-${{ needs.version.outputs.version }}
+          path: android
+
+      - name: Upload to Google Play
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ env.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: world.concrnt.app
+          releaseFiles: android/bundle/universalRelease/app-universal-release.aab
+          track: internal
+          status: completed
+
+  publish-ios:
+    needs: [version, tag]
+    runs-on: macos-latest
+
+    permissions:
+      contents: read
+
+    env:
+      APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+
+    steps:
+      - name: Skip without App Store Connect credentials
+        if: env.APPLE_API_KEY_P8 == ''
+        run: echo "::notice::APPLE_API_* が無い(ipa も未署名)ので TestFlight へのアップロードを飛ばす"
+
+      - uses: actions/download-artifact@v8
+        if: env.APPLE_API_KEY_P8 != ''
+        with:
+          name: ios-build-${{ needs.version.outputs.version }}
+          path: ios
+
+      - name: Upload to TestFlight
+        if: env.APPLE_API_KEY_P8 != ''
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s\n' "$APPLE_API_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_$APPLE_API_KEY_ID.p8
+          xcrun altool --upload-app --type ios --file ios/*.ipa --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER"
+
   github-release:
-    needs: [tag, web, android]
+    needs: [version, tag, web, publish-android, publish-ios]
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: android-build-${{ needs.version.outputs.version }}
+          path: android
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: v${{ needs.tag.outputs.version }}
+          TAG: v${{ needs.version.outputs.version }}
         run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "$TAG already released"
-            exit 0
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes
           fi
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes
+          cp android/apk/universal/release/app-universal-release.apk "concrnt-world-$TAG.apk"
+          gh release upload "$TAG" "concrnt-world-$TAG.apk" --repo "$GITHUB_REPOSITORY" --clobber

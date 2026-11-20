@@ -78,6 +78,9 @@ jobs:
           mv app/package.json.tmp app/package.json
           sed -i '' -E "s/^(  \"version\": )\"[^\"]*\"/\1\"$VERSION\"/" src-tauri/tauri.conf.json
           jq -e --arg v "$VERSION" '.version == $v' src-tauri/tauri.conf.json
+          # 通知拡張の版は親アプリと揃っている必要があるが、Tauri は本体の Info.plist しか書き換えない
+          plutil -replace CFBundleShortVersionString -string "$VERSION" src-tauri/gen/apple/NotifyService/Info.plist
+          plutil -replace CFBundleVersion -string "$VERSION" src-tauri/gen/apple/NotifyService/Info.plist
 
       - run: pnpm build
 
