@@ -189,28 +189,19 @@ jobs:
           status: completed
 
   publish-ios:
-    needs: [version, ios, tag]
+    needs: [version, tag]
     runs-on: macos-latest
 
     permissions:
       contents: read
 
-    env:
-      SIGNED: ${{ needs.ios.outputs.signed }}
-
     steps:
-      - name: Skip unsigned build
-        if: env.SIGNED != 'true'
-        run: echo "::notice::ipa が未署名(配布証明書かプロファイルが無い)なので TestFlight へのアップロードを飛ばす"
-
       - uses: actions/download-artifact@v8
-        if: env.SIGNED == 'true'
         with:
           name: ios-build-${{ needs.version.outputs.version }}
           path: ios
 
       - name: Upload to TestFlight
-        if: env.SIGNED == 'true'
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
