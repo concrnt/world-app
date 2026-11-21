@@ -50,7 +50,8 @@
                 "buildTime": "Build Time",
                 "branch": "Branch",
                 "commit": "Commit"
-            }
+            },
+            "mutedUsers": "Muted users"
         },
         "displaySettings": {
             "title": "Display & Customization",
@@ -308,7 +309,9 @@
             "mediaViewList": "List view",
             "mediaViewGrid": "Grid view",
             "showQrCode": "Show QR code",
-            "closeQrCode": "Close"
+            "closeQrCode": "Close",
+            "mute": "Mute",
+            "unmute": "Unmute"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -545,6 +548,10 @@
             "creating": "Creating...",
             "createFailed": "Failed to create the list. Please try again.",
             "pinFailed": "The list was created, but pinning failed. You can pin it later from the list."
+        },
+        "mutedUsers": {
+            "title": "Muted users",
+            "empty": "No muted users"
         }
     },
     "components": {
@@ -959,6 +966,10 @@
         "mnemonicInput": {
             "wordLabel": "Word {{index}}",
             "unknownWords": "Some words are not in the word list (word {{positions}}). Please check the spelling."
+        },
+        "mutedMessage": {
+            "title": "Post from a muted user",
+            "show": "Show"
         }
     },
     "contexts": {

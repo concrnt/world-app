@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { usePreference } from '../contexts/Preference'
 import { useDomainStatus } from '../hooks/useDomainStatus'
 import { QueryTimelineReader } from '@concrnt/client'
 import {
@@ -173,6 +174,13 @@ const NotificationTimelineInner = (props: Props) => {
     // init/reload で 0 リセット、readMore で積み上げる
     const iter = useRef(0)
 
+    // 変えても購読(readerのeffect)を作り直さないようrefで読む
+    const [mutedUsers] = usePreference('mutedUsers')
+    const mutedUsersRef = useRef(mutedUsers)
+    useEffect(() => {
+        mutedUsersRef.current = mutedUsers
+    }, [mutedUsers])
+
     const summariseNotifications = useCallback(async (): Promise<WrappedNotification[]> => {
         if (!readerRef.current) return []
 
@@ -195,6 +203,7 @@ const NotificationTimelineInner = (props: Props) => {
 
         for (const { item, msg } of resolved) {
             if (!msg) continue
+            if (mutedUsersRef.current.includes(msg.author)) continue
             if (!item.href) continue // href がないと集約キーや MessageContainer に渡せないのでスキップ
 
             let key: string

@@ -14,10 +14,11 @@ import {
 import { Client, isStaticTimelineURI } from '@concrnt/worldlib'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
+import { usePreference } from '../contexts/Preference'
 import { useDomainStatus } from '../hooks/useDomainStatus'
 import { ChunklineItem, TimelineItemWithUpdate, TimelineReader } from '@concrnt/client'
 import { TimelineSnapshot } from '../lib/timelineSnapshot'
-import { MessageContainer, MessageSnapshotContext } from './message'
+import { MessageContainer, MessageSnapshotContext, MuteFilterContext } from './message'
 import { QueryTimelineContext } from './QueryTimeline'
 import { Avatar, CssVar, Divider } from '@concrnt/ui'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -113,6 +114,12 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
     useEffect(() => {
         onHeadChangeRef.current = props.onHeadChange
     }, [props.onHeadChange])
+    // 変えても購読(readerのeffect)を作り直さないようrefで読む
+    const [mutedUsers] = usePreference('mutedUsers')
+    const mutedUsersRef = useRef(mutedUsers)
+    useEffect(() => {
+        mutedUsersRef.current = mutedUsers
+    }, [mutedUsers])
 
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
@@ -198,6 +205,7 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
             client.getMessage(item.href, item.source ? new URL(item.source).hostname : undefined).then((msg) => {
                 if (readerRef.current !== t) return
                 if (!msg) return
+                if (mutedUsersRef.current.includes(msg.author)) return
                 const icon = msg.authorProfile?.avatar
                 if (!icon) return
                 setNewArrivals((prev) => {
@@ -413,14 +421,16 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
                         ))}
                     <QueryTimelineContext.Provider value={{ update: itemUpdated }}>
                         <MessageSnapshotContext.Provider value={snapshot?.messages}>
-                            {(seededItems ?? readerRef.current?.body ?? []).map((item, i) => (
-                                // 静的タイムラインの同梱コンテンツはhrefを持たないので、時刻+位置で代用する
-                                <Cell
-                                    key={item.href ?? `content:${item.timestamp.getTime()}:${i}`}
-                                    item={item}
-                                    lastUpdate={item.lastUpdate?.getTime() ?? 0}
-                                />
-                            ))}
+                            <MuteFilterContext.Provider value={true}>
+                                {(seededItems ?? readerRef.current?.body ?? []).map((item, i) => (
+                                    // 静的タイムラインの同梱コンテンツはhrefを持たないので、時刻+位置で代用する
+                                    <Cell
+                                        key={item.href ?? `content:${item.timestamp.getTime()}:${i}`}
+                                        item={item}
+                                        lastUpdate={item.lastUpdate?.getTime() ?? 0}
+                                    />
+                                ))}
+                            </MuteFilterContext.Provider>
                         </MessageSnapshotContext.Provider>
                     </QueryTimelineContext.Provider>
                     {loading && <Loading message={'Loading...'} />}
