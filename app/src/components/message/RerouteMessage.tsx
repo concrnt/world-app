@@ -4,8 +4,10 @@ import { MessageProps } from './types'
 import { RerouteMessageSchema } from '@concrnt/worldlib'
 
 import { Avatar, Text, IconButton, ListItem, Select } from '@concrnt/ui'
+import { CDID, parseCCURI } from '@concrnt/client'
+import { Confirm } from '../Confirm'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MdMoreHoriz } from 'react-icons/md'
 import { MdRepeat } from 'react-icons/md'
 import { useHaptics } from '../../contexts/Haptics'
@@ -28,6 +30,28 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
     const qt = useQueryTimelineContext()
 
     const [menuOpen, setMenuOpen] = useState(false)
+    const [unpublishCandidates, setUnpublishCandidates] = useState<Array<{ uri: string; name: string }>>([])
+    const [unpublishTarget, setUnpublishTarget] = useState<{ uri: string; name: string } | null>(null)
+
+    // 他人のリルートでも外せるならメニューボタンを出すので、開く前に候補を求めておく
+    // 外せるのは自分の名前空間のタイムラインか、moderationポリシーでモデレーターに指定されたもの
+    useEffect(() => {
+        Promise.all(
+            (props.message.distributes ?? []).map(async (uri) => {
+                const timeline = await client.getTimeline(uri)
+                const moderators: string[] =
+                    timeline?.policy?.entries?.find((e) => e.url === 'https://policy.concrnt.world/t/moderation.json')
+                        ?.params?.moderators ?? []
+                if (parseCCURI(uri).owner !== client.ccid && !moderators.includes(client.ccid)) return []
+                // ホームタイムラインには名前が無い
+                const name =
+                    timeline?.shortname?.trim() ||
+                    timeline?.name ||
+                    (uri.endsWith('/home-timeline') ? t('homeTimeline') : uri)
+                return [{ uri, name }]
+            })
+        ).then((candidates) => setUnpublishCandidates(candidates.flat()))
+    }, [client, props.message, t])
 
     return (
         <div>
@@ -106,7 +130,7 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     </Text>
                 </span>
                 <div style={{ flex: 1 }} />
-                {props.message.author === client.ccid && (
+                {(props.message.author === client.ccid || unpublishCandidates.length > 0) && (
                     <>
                         <IconButton
                             onClick={(e) => {
@@ -126,17 +150,32 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                             open={menuOpen}
                             onClose={() => setMenuOpen(false)}
                             options={[
-                                <ListItem
-                                    key="delete"
-                                    onClick={() => {
-                                        client.api.delete(props.message.uri).then(() => {
-                                            qt.remove?.(props.message.uri)
-                                            hapticSuccess()
-                                        })
-                                    }}
-                                >
-                                    <Text>{t('deleteReroute')}</Text>
-                                </ListItem>
+                                ...(props.message.author === client.ccid
+                                    ? [
+                                          <ListItem
+                                              key="delete"
+                                              onClick={() => {
+                                                  client.api.delete(props.message.uri).then(() => {
+                                                      qt.remove?.(props.message.uri)
+                                                      hapticSuccess()
+                                                  })
+                                              }}
+                                          >
+                                              <Text>{t('deleteReroute')}</Text>
+                                          </ListItem>
+                                      ]
+                                    : []),
+                                ...unpublishCandidates.map((candidate) => (
+                                    <ListItem
+                                        key={'unpublish:' + candidate.uri}
+                                        onClick={() => {
+                                            setMenuOpen(false)
+                                            setUnpublishTarget(candidate)
+                                        }}
+                                    >
+                                        <Text>{t('unpublishFrom', { name: candidate.name })}</Text>
+                                    </ListItem>
+                                ))
                             ]}
                         />
                     </>
@@ -145,6 +184,22 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                     <TimeDiff date={props.message.createdAt} />
                 </div>
             </OnelineMessageLayout>
+            <Confirm
+                open={unpublishTarget !== null}
+                onClose={() => setUnpublishTarget(null)}
+                title={t('confirmUnpublish')}
+                description={t('confirmUnpublishDescription', { name: unpublishTarget?.name })}
+                confirmText={t('unpublish')}
+                onConfirm={() => {
+                    if (!unpublishTarget) return
+                    // 配信先には core が <timeline>/<href のハッシュCDID> の参照レコードを作っているので、それを消す
+                    const href = props.message.key ?? props.message.uri
+                    client.api.delete(`${unpublishTarget.uri}/${CDID.newFromStringX(href).toString()}`).then(() => {
+                        qt.remove?.(href)
+                        hapticSuccess()
+                    })
+                }}
+            />
             <ErrorBoundary FallbackComponent={RenderError}>
                 {/* rerouteした本人は元投稿が見えているはずなので、そのホームドメインを解決hintに使う */}
                 <MessageContainer

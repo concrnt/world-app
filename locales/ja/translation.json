@@ -648,7 +648,12 @@
             "copySource": "ソースをコピー",
             "translate": "翻訳",
             "hideTranslation": "翻訳を隠す",
-            "openGoogleTranslate": "Google翻訳で開く"
+            "openGoogleTranslate": "Google翻訳で開く",
+            "unpublishFrom": "{{name}}から非掲載にする",
+            "confirmUnpublish": "タイムラインから非掲載",
+            "confirmUnpublishDescription": "この投稿を{{name}}から非掲載にしてもよろしいですか？投稿そのものは削除されません。",
+            "unpublish": "非掲載にする",
+            "homeTimeline": "ホーム"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
@@ -704,7 +709,12 @@
         },
         "rerouteMessage": {
             "userRerouted": "{{name}}さんがリルートしました",
-            "deleteReroute": "リルートを削除"
+            "deleteReroute": "リルートを削除",
+            "unpublishFrom": "{{name}}から非掲載にする",
+            "confirmUnpublish": "タイムラインから非掲載",
+            "confirmUnpublishDescription": "このリルートを{{name}}から非掲載にしてもよろしいですか？リルートそのものは削除されません。",
+            "unpublish": "非掲載にする",
+            "homeTimeline": "ホーム"
         },
         "sidebar": {
             "home": "ホーム",
