@@ -1,7 +1,9 @@
-import { createContext, ReactNode, use, useContext } from 'react'
+import { createContext, ReactNode, use, useContext, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button, CssVar, Text } from '@concrnt/ui'
 
 import { useClient } from '../../contexts/Client'
+import { usePreference } from '../../contexts/Preference'
 import { ApNoteSchema, AtprotoRecordSchema, Message, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
 import { MarkdownMessage } from './MarkdownMessage'
 import { GfmMessage } from './GfmMessage'
@@ -40,9 +42,16 @@ interface Props {
 // ネストしたMessageContainer(リプライ/リルート先)も同じContextを見るので、同梱分は0往復で描ける
 export const MessageSnapshotContext = createContext<Map<string, Message<any>> | undefined>(undefined)
 
+// ミュートしたユーザーの投稿を折りたたむ範囲。タイムラインが提供し、プロフィールや個別投稿ページでは提供しない
+export const MuteFilterContext = createContext(false)
+
 export const MessageContainer = (props: Props): ReactNode | null => {
     const { client } = useClient()
     const { t } = useTranslation('', { keyPrefix: 'components.renderError' })
+    const { t: tm } = useTranslation('', { keyPrefix: 'components.mutedMessage' })
+    const muteFilter = useContext(MuteFilterContext)
+    const [mutedUsers] = usePreference('mutedUsers')
+    const [revealed, setRevealed] = useState(false)
 
     const sourceDomain = props.source ? new URL(props.source).hostname : undefined
     const hint = props.hint ?? sourceDomain
@@ -52,6 +61,32 @@ export const MessageContainer = (props: Props): ReactNode | null => {
         : (snapshot ?? use(client!.getMessage<any>(props.uri!, hint)))
 
     if (!message) return <div>Message not found</div>
+
+    if (muteFilter && !revealed && mutedUsers.includes(message.author)) {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: `${CssVar.space(1)} 0`
+                }}
+            >
+                <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                    {tm('title')}
+                </Text>
+                <Button
+                    variant="text"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setRevealed(true)
+                    }}
+                >
+                    {tm('show')}
+                </Button>
+            </div>
+        )
+    }
 
     if (props.oneline) {
         if (message.schema === Schemas.apNote) {

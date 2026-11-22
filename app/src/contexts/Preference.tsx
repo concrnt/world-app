@@ -23,6 +23,8 @@ export interface Preference {
     unreadBadgeEnabled: boolean
     // プロフィール名 -> リストURIの並び順
     listOrder?: Record<string, string[]>
+    // ミュートしたユーザーのccid
+    mutedUsers: string[]
 }
 
 export const defaultPreference: Preference = {
@@ -32,7 +34,8 @@ export const defaultPreference: Preference = {
     developerMode: false,
     hapticsEnabled: true,
     unreadBadgeEnabled: true,
-    listOrder: {}
+    listOrder: {},
+    mutedUsers: []
 }
 
 interface PreferenceState {

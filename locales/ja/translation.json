@@ -50,7 +50,8 @@
                 "buildTime": "ビルド日時",
                 "branch": "ブランチ",
                 "commit": "コミット"
-            }
+            },
+            "mutedUsers": "ミュート中のユーザー"
         },
         "displaySettings": {
             "title": "表示とカスタマイズ",
@@ -308,7 +309,9 @@
             "mediaViewList": "リスト表示",
             "mediaViewGrid": "グリッド表示",
             "showQrCode": "QRコードを表示",
-            "closeQrCode": "閉じる"
+            "closeQrCode": "閉じる",
+            "mute": "ミュート",
+            "unmute": "ミュート解除"
         },
         "explorer": {
             "createCommunity": "コミュニティを作成",
@@ -544,6 +547,10 @@
             "creating": "作成中...",
             "createFailed": "リストの作成に失敗しました。もう一度お試しください。",
             "pinFailed": "リストは作成されましたが、ピン留めに失敗しました。リスト一覧から後でピン留めできます。"
+        },
+        "mutedUsers": {
+            "title": "ミュート中のユーザー",
+            "empty": "ミュート中のユーザーはいません"
         }
     },
     "components": {
@@ -641,7 +648,12 @@
             "copySource": "ソースをコピー",
             "translate": "翻訳",
             "hideTranslation": "翻訳を隠す",
-            "openGoogleTranslate": "Google翻訳で開く"
+            "openGoogleTranslate": "Google翻訳で開く",
+            "unpublishFrom": "{{name}}から非掲載にする",
+            "confirmUnpublish": "タイムラインから非掲載",
+            "confirmUnpublishDescription": "この投稿を{{name}}から非掲載にしてもよろしいですか？投稿そのものは削除されません。",
+            "unpublish": "非掲載にする",
+            "homeTimeline": "ホーム"
         },
         "collapsibleBody": {
             "showMore": "もっと見る"
@@ -697,7 +709,12 @@
         },
         "rerouteMessage": {
             "userRerouted": "{{name}}さんがリルートしました",
-            "deleteReroute": "リルートを削除"
+            "deleteReroute": "リルートを削除",
+            "unpublishFrom": "{{name}}から非掲載にする",
+            "confirmUnpublish": "タイムラインから非掲載",
+            "confirmUnpublishDescription": "このリルートを{{name}}から非掲載にしてもよろしいですか？リルートそのものは削除されません。",
+            "unpublish": "非掲載にする",
+            "homeTimeline": "ホーム"
         },
         "sidebar": {
             "home": "ホーム",
@@ -958,6 +975,10 @@
         "mnemonicInput": {
             "wordLabel": "{{index}}番目の単語",
             "unknownWords": "単語帳にない単語が入力されています({{positions}}番目)。綴りを確認してください。"
+        },
+        "mutedMessage": {
+            "title": "ミュートしたユーザーの投稿",
+            "show": "表示"
         }
     },
     "contexts": {

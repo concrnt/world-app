@@ -1,4 +1,5 @@
 import { Api } from './api'
+import { CDID } from './cdid'
 import { ChunklineItem } from './chunkline'
 import { RealtimeEvent } from './model'
 import { Socket } from './socket'
@@ -86,7 +87,13 @@ export class TimelineReader {
                 break
             }
             case 'deleted': {
-                this.body = this.body.filter((item) => item.href !== event.uri)
+                // 配信の非掲載では参照レコード <timeline>/<hrefのハッシュCDID> の削除だけが届く(documentsは付かない)
+                const removedSegment = event.uri.slice(event.uri.lastIndexOf('/') + 1)
+                this.body = this.body.filter(
+                    (item) =>
+                        !item.href ||
+                        (item.href !== event.uri && CDID.newFromStringX(item.href).toString() !== removedSegment)
+                )
                 this.onUpdate?.()
                 break
             }

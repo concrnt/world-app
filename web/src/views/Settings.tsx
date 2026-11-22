@@ -12,6 +12,7 @@ import {
     MdDisplaySettings,
     MdHub,
     MdList,
+    MdVolumeOff,
     MdNotifications,
     MdPermMedia,
     MdTerminal
@@ -92,6 +93,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/lists')}
                     >
                         {t('lists')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdVolumeOff size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/muted')}
+                    >
+                        {t('mutedUsers')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdDisplaySettings size={24} />}

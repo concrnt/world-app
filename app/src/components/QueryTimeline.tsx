@@ -7,14 +7,14 @@ import {
     useContext,
     useEffect,
     useImperativeHandle,
-    useLayoutEffect,
+    useReducer,
     useRef,
     useState
 } from 'react'
+import { Client } from '@concrnt/worldlib'
 import { ScrollViewProps } from '../types/ScrollView'
 import { useClient } from '../contexts/Client'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { useRefWithUpdate } from '../hooks/useRefWithUpdate'
 import { ChunklineItem, QueryTimelineReader, ServerOfflineError } from '@concrnt/client'
 import { MessageContainer } from './message'
 import { CssVar, Divider } from '@concrnt/ui'
@@ -50,12 +50,33 @@ const FILL_DELAY_MIN = 100
 const FILL_DELAY_MAX = 1000
 
 export const QueryTimeline = (props: Props) => {
+    // 取得対象が変わったら中身ごと作り直す(呼び出し側がquery参照を作り直しても、内容が同じなら維持)
+    return (
+        <QueryTimelineInner
+            key={props.prefix + '|' + JSON.stringify(props.query ?? {}) + '|' + (props.batchSize ?? '')}
+            {...props}
+        />
+    )
+}
+
+const QueryTimelineInner = (props: Props) => {
     const { client } = useClient()
+    // このインスタンスの取得対象は固定(変わったら外側でkeyごと作り直される)
+    const [target] = useState(() => ({
+        prefix: props.prefix,
+        query: props.query ?? {},
+        batchSize: props.batchSize ?? 16
+    }))
 
     const loadingRef = useRef(true)
     const fillDelayRef = useRef(FILL_DELAY_MIN)
     const scrollPositionRef = useRef<number>(0)
-    const [reader, update] = useRefWithUpdate<QueryTimelineReader | undefined>(undefined)
+    // 表示はreaderRef.current.bodyを直接読み、readerの更新はforceUpdateで反映する
+    const readerRef = useRef<QueryTimelineReader | undefined>(undefined)
+    // readerをどのClientで初期化したか。Activityのhidden→visible復帰やStrictModeでは
+    // refを残したままeffectだけが再実行されるので、同じClientなら何もしない
+    const initializedRef = useRef<Client | undefined>(undefined)
+    const [, forceUpdate] = useReducer((x: number) => x + 1, 0)
     const [loading, setLoading] = useState(true)
     const [hasMoreData, setHasMoreData] = useState<boolean>(false)
     // PullToRefresh のインジケータ表示制御用
@@ -64,76 +85,47 @@ export const QueryTimeline = (props: Props) => {
     const [failedHost, setFailedHost] = useState<string | undefined>(undefined)
     const failedStatus = useDomainStatus(failedHost)
 
-    useEffect(() => {
-        let isCancelled = false
-        if (!client) return
-
-        // 再アタッチパス: Activityのhidden→visible復帰やquery参照の作り直しでeffectが再実行されても、
-        // 対象が同じなら既存readerを保持する(スクロール位置と表示内容を維持)
-        const existing = reader.current
-        if (
-            existing &&
-            existing.prefix === props.prefix &&
-            JSON.stringify(existing.query ?? {}) === JSON.stringify(props.query ?? {}) &&
-            existing.body.length > 0
-        ) {
-            existing.onUpdate = () => {
-                update()
-            }
-            return
-        }
-
-        client.newQueryTimelineReader().then((t) => {
-            if (isCancelled) return
-            t.onUpdate = () => {
-                update()
-            }
-
-            reader.current = t
-            t.init(props.prefix, props.query, props.batchSize ?? 16)
+    const load = useCallback(
+        (t: QueryTimelineReader) => {
+            loadingRef.current = true
+            t.init(target.prefix, target.query, target.batchSize)
                 .then((hasMoreData) => {
+                    if (readerRef.current !== t) return
                     setHasMoreData(hasMoreData)
                     setFailedHost(undefined)
                 })
                 .catch((err) => {
                     console.error('Failed to initialize query timeline:', err)
-                    if (isCancelled) return
+                    if (readerRef.current !== t) return
                     if (err instanceof ServerOfflineError) setFailedHost(err.host)
                 })
                 .finally(() => {
+                    if (readerRef.current !== t) return
                     loadingRef.current = false
                     setLoading(false)
                 })
-            return t
-        })
-        return () => {
-            isCancelled = true
-        }
-        // failedStatus.onlineSinceは失敗ホストの復帰で再初期化するための依存
-    }, [client, reader, props.prefix, update, props.batchSize, props.query, failedStatus.onlineSince])
+        },
+        [target]
+    )
+
+    useEffect(() => {
+        if (initializedRef.current === client) return
+        const t = client.newQueryTimelineReader()
+        // Client差し替え: 取り直しが届くまで表示中の内容を残す
+        t.body = readerRef.current?.body ?? []
+        t.onUpdate = forceUpdate
+        readerRef.current = t
+        initializedRef.current = client
+        load(t)
+    }, [client, load])
+
+    // 初期取得が失敗したホストの復帰で取り直す
+    useEffect(() => {
+        if (!failedHost || !failedStatus.online || !readerRef.current) return
+        load(readerRef.current)
+    }, [failedHost, failedStatus.online, failedStatus.onlineSince, load])
 
     const scrollRef = useRef<HTMLDivElement>(null)
-
-    // Activityがhidden(display:none)の間、ブラウザは内側スクロールコンテナの位置を破棄するため、
-    // visible復帰(=effect再マウント)時にscrollPositionRefから復元する。
-    // 復帰時のlayout effectはdisplayが戻る前に実行されるため(この時点の書き込みは0にクランプされる)、
-    // 書き込みが反映されるまで数フレームrequestAnimationFrameで再試行する
-    useLayoutEffect(() => {
-        const el = scrollRef.current
-        if (!el) return
-        const saved = scrollPositionRef.current
-        if (saved <= 0) return
-        let raf = 0
-        let attempts = 0
-        const restore = () => {
-            el.scrollTop = saved
-            if (el.scrollTop !== saved && attempts++ < 10) {
-                raf = requestAnimationFrame(restore)
-            }
-        }
-        restore()
-        return () => cancelAnimationFrame(raf)
-    }, [])
 
     useImperativeHandle(props.ref, () => ({
         scrollToTop: () => {
@@ -145,34 +137,26 @@ export const QueryTimeline = (props: Props) => {
 
     // PullToRefresh のリロード処理
     const onRefresh = useCallback(async () => {
-        if (!reader.current) return
+        if (!readerRef.current) return
         setIsFetching(true)
         try {
-            const hasMore = await reader.current.reload()
+            const hasMore = await readerRef.current.reload()
             setHasMoreData(hasMore)
             // ユーザーにリフレッシュのフィードバックを見せるための短い待機
             await new Promise((resolve) => setTimeout(resolve, 500))
         } finally {
             setIsFetching(false)
         }
-    }, [reader])
+    }, [])
 
-    const itemUpdated = useCallback(
-        (href: string) => {
-            console.log('Item updated:', href)
-            if (!reader.current) return
-            reader.current.updateItem(href)
-        },
-        [reader]
-    )
+    const itemUpdated = useCallback((href: string) => {
+        console.log('Item updated:', href)
+        readerRef.current?.updateItem(href)
+    }, [])
 
-    const itemRemoved = useCallback(
-        (href: string) => {
-            if (!reader.current) return
-            reader.current.removeItem(href)
-        },
-        [reader]
-    )
+    const itemRemoved = useCallback((href: string) => {
+        readerRef.current?.removeItem(href)
+    }, [])
 
     useEffect(() => {
         const el = scrollRef.current
@@ -185,20 +169,20 @@ export const QueryTimeline = (props: Props) => {
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 500) {
                 if (loadingRef.current) return
                 if (!hasMoreData) return
-                if (!reader.current) return
+                if (!readerRef.current) return
 
                 console.log('Reading more...')
 
                 loadingRef.current = true
                 setLoading(true)
-                reader.current
+                readerRef.current
                     ?.readMore()
                     .then((hasMore) => {
                         setHasMoreData(hasMore)
                     })
                     .catch((e) => {
                         console.error('Failed to read more', e)
-                        console.log(reader.current?.body[reader.current.body.length - 1])
+                        console.log(readerRef.current?.body[readerRef.current.body.length - 1])
                     })
                     .finally(() => {
                         loadingRef.current = false
@@ -223,7 +207,7 @@ export const QueryTimeline = (props: Props) => {
             el.removeEventListener('scroll', handleScroll)
             clearTimeout(fill)
         }
-    }, [scrollRef, reader, hasMoreData, loading])
+    }, [hasMoreData, loading])
 
     return (
         <PullToRefresh positionRef={scrollPositionRef} isFetching={isFetching} onRefresh={onRefresh}>
@@ -241,7 +225,7 @@ export const QueryTimeline = (props: Props) => {
             >
                 {props.header}
                 <QueryTimelineContext.Provider value={{ update: itemUpdated, remove: itemRemoved }}>
-                    {reader.current?.body.map((item) => (
+                    {readerRef.current?.body.map((item) => (
                         <Cell
                             key={item.timestamp.getTime() ?? item.href}
                             item={item}
@@ -284,7 +268,10 @@ const Cell = memo<CellProps>(({ item }: CellProps) => {
                     style={{
                         padding: `0 ${CssVar.space(2)}`,
                         contentVisibility: 'auto',
-                        containIntrinsicSize: 'auto 120px'
+                        containIntrinsicSize: 'auto 120px',
+                        // スキップ中(画面外・Activity復帰直後)の行がflexで縮むと、Chromium系では復帰時に
+                        // 内容高が画面に満たずスクロール位置が0にクランプされる
+                        flexShrink: 0
                     }}
                 >
                     <Suspense key={item.timestamp.getTime() ?? item.href} fallback={<MessageSkeleton />}>

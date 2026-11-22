@@ -1023,9 +1023,7 @@ export class Api {
         if (!domain) {
             try {
                 const target = parseCCURI(uri.replace(/\/?\*$/, ''))
-                if (IsCCID(target.owner) || IsCSID(target.owner)) {
-                    domain = await this.resolveDomain(target.owner, target.hint)
-                }
+                domain = await this.resolveDomain(target.owner, target.hint)
             } catch (e) {
                 console.error('Failed to resolve delete target owner domain:', e)
             }

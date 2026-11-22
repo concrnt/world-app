@@ -1,7 +1,7 @@
 {
   "name": "world-app",
   "private": true,
-  "version": "2026.1120.1",
+  "version": "2026.1122.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

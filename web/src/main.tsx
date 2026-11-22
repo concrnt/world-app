@@ -45,6 +45,7 @@ import { ProfileView } from './views/Profile'
 import { PostView } from './views/Post'
 import { TimelineView } from './views/Timeline'
 import { ListsView } from './views/Lists'
+import { MutedUsersView } from './views/MutedUsers'
 import { ListView } from './views/List'
 import { QueryView } from './views/Query'
 import { DevView } from './views/Dev'
@@ -250,6 +251,14 @@ const AuthedRoutes = () => (
                                                                                     element={
                                                                                         <SettingsBackProvider>
                                                                                             <ListsView />
+                                                                                        </SettingsBackProvider>
+                                                                                    }
+                                                                                />
+                                                                                <Route
+                                                                                    path="settings/muted"
+                                                                                    element={
+                                                                                        <SettingsBackProvider>
+                                                                                            <MutedUsersView />
                                                                                         </SettingsBackProvider>
                                                                                     }
                                                                                 />

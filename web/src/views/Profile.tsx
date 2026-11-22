@@ -31,6 +31,7 @@ import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
 import { MediaGridTimeline } from '../components/MediaGridTimeline'
 import { usePersistent } from '../hooks/usePersistent'
+import { usePreference } from '../contexts/Preference'
 import { Document, NotFoundError, PermissionError } from '@concrnt/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from '../components/message/RenderError'
@@ -225,6 +226,8 @@ const Body = (props: BodyProps) => {
 
     const [blocks] = useSubscribe(client.blocks)
     const isBlocking = blocks.includes(props.ccid)
+    const [mutedUsers, setMutedUsers] = usePreference('mutedUsers')
+    const isMuting = mutedUsers.includes(props.ccid)
 
     const [tab, setTab] = useState<'posts' | 'media' | 'activity'>('posts')
     // Mediaタブの表示形式。端末ごとに記憶する
@@ -320,6 +323,19 @@ const Body = (props: BodyProps) => {
             </ListItem>
         )
         if (!isMe) {
+            options.push(
+                <ListItem
+                    key="mute"
+                    onClick={() => {
+                        setMutedUsers(
+                            isMuting ? mutedUsers.filter((e) => e !== props.ccid) : [...mutedUsers, props.ccid]
+                        )
+                        setMenuOpen(false)
+                    }}
+                >
+                    <Text>{isMuting ? t('unmute') : t('mute')}</Text>
+                </ListItem>
+            )
             if (isBlocking) {
                 options.push(
                     <ListItem
@@ -347,6 +363,9 @@ const Body = (props: BodyProps) => {
         return options
     }, [
         isBlocking,
+        isMuting,
+        mutedUsers,
+        setMutedUsers,
         isMe,
         t,
         isMobile,

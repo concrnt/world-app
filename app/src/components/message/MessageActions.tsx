@@ -1,6 +1,7 @@
 import { Button, ListItem, Select, Text } from '@concrnt/ui'
 import { Confirm } from '../Confirm'
 import { useTranslation } from 'react-i18next'
+import { CDID, parseCCURI } from '@concrnt/client'
 import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
@@ -47,6 +48,8 @@ export const MessageActions = (props: Props) => {
     const postCtx = usePostContext()
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [unpublishCandidates, setUnpublishCandidates] = useState<Array<{ uri: string; name: string }>>([])
+    const [unpublishTarget, setUnpublishTarget] = useState<{ uri: string; name: string } | null>(null)
     const [reportOpen, setReportOpen] = useState(false)
     const [inspectorOpen, setInspectorOpen] = useState(false)
     const emojiPicker = useEmojiPicker()
@@ -245,6 +248,23 @@ export const MessageActions = (props: Props) => {
                 onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(true)
+                    // 外せるのは自分の名前空間のタイムラインか、moderationポリシーでモデレーターに指定されたもの
+                    Promise.all(
+                        (props.message.distributes ?? []).map(async (uri) => {
+                            const timeline = await client.getTimeline(uri)
+                            const moderators: string[] =
+                                timeline?.policy?.entries?.find(
+                                    (e) => e.url === 'https://policy.concrnt.world/t/moderation.json'
+                                )?.params?.moderators ?? []
+                            if (parseCCURI(uri).owner !== client.ccid && !moderators.includes(client.ccid)) return []
+                            // ホームタイムラインには名前が無い
+                            const name =
+                                timeline?.shortname?.trim() ||
+                                timeline?.name ||
+                                (uri.endsWith('/home-timeline') ? t('homeTimeline') : uri)
+                            return [{ uri, name }]
+                        })
+                    ).then((candidates) => setUnpublishCandidates(candidates.flat()))
                 }}
                 style={{ color: CssVar.contentTextDim }}
             >
@@ -319,6 +339,17 @@ export const MessageActions = (props: Props) => {
                               </ListItem>
                           ]
                         : []),
+                    ...unpublishCandidates.map((candidate) => (
+                        <ListItem
+                            key={'unpublish:' + candidate.uri}
+                            onClick={() => {
+                                setMenuOpen(false)
+                                setUnpublishTarget(candidate)
+                            }}
+                        >
+                            <Text>{t('unpublishFrom', { name: candidate.name })}</Text>
+                        </ListItem>
+                    )),
                     <ListItem key="abuse" onClick={() => setReportOpen(true)}>
                         {t('report')}
                     </ListItem>,
@@ -345,6 +376,23 @@ export const MessageActions = (props: Props) => {
                         hapticSuccess()
                     })
                     setMenuOpen(false)
+                }}
+            />
+            <Confirm
+                open={unpublishTarget !== null}
+                onClose={() => setUnpublishTarget(null)}
+                title={t('confirmUnpublish')}
+                description={t('confirmUnpublishDescription', { name: unpublishTarget?.name })}
+                confirmText={t('unpublish')}
+                onConfirm={() => {
+                    if (!unpublishTarget) return
+                    // 配信先には core が <timeline>/<href のハッシュCDID> の参照レコードを作っているので、それを消す
+                    client.api
+                        .delete(`${unpublishTarget.uri}/${CDID.newFromStringX(messageHref).toString()}`)
+                        .then(() => {
+                            qt.remove?.(messageHref)
+                            hapticSuccess()
+                        })
                 }}
             />
             <Drawer open={reportOpen} onClose={() => setReportOpen(false)}>

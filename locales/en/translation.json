@@ -50,7 +50,8 @@
                 "buildTime": "Build Time",
                 "branch": "Branch",
                 "commit": "Commit"
-            }
+            },
+            "mutedUsers": "Muted users"
         },
         "displaySettings": {
             "title": "Display & Customization",
@@ -308,7 +309,9 @@
             "mediaViewList": "List view",
             "mediaViewGrid": "Grid view",
             "showQrCode": "Show QR code",
-            "closeQrCode": "Close"
+            "closeQrCode": "Close",
+            "mute": "Mute",
+            "unmute": "Unmute"
         },
         "explorer": {
             "createCommunity": "Create Community",
@@ -545,6 +548,10 @@
             "creating": "Creating...",
             "createFailed": "Failed to create the list. Please try again.",
             "pinFailed": "The list was created, but pinning failed. You can pin it later from the list."
+        },
+        "mutedUsers": {
+            "title": "Muted users",
+            "empty": "No muted users"
         }
     },
     "components": {
@@ -642,7 +649,12 @@
             "copySource": "Copy source",
             "translate": "Translate",
             "hideTranslation": "Hide translation",
-            "openGoogleTranslate": "Open in Google Translate"
+            "openGoogleTranslate": "Open in Google Translate",
+            "unpublishFrom": "Remove from {{name}}",
+            "confirmUnpublish": "Remove from timeline",
+            "confirmUnpublishDescription": "Remove this post from {{name}}? The post itself will not be deleted.",
+            "unpublish": "Remove",
+            "homeTimeline": "Home"
         },
         "collapsibleBody": {
             "showMore": "Show more"
@@ -698,7 +710,12 @@
         },
         "rerouteMessage": {
             "userRerouted": "{{name}} rerouted",
-            "deleteReroute": "Delete reroute"
+            "deleteReroute": "Delete reroute",
+            "unpublishFrom": "Remove from {{name}}",
+            "confirmUnpublish": "Remove from timeline",
+            "confirmUnpublishDescription": "Remove this reroute from {{name}}? The reroute itself will not be deleted.",
+            "unpublish": "Remove",
+            "homeTimeline": "Home"
         },
         "sidebar": {
             "home": "Home",
@@ -959,6 +976,10 @@
         "mnemonicInput": {
             "wordLabel": "Word {{index}}",
             "unknownWords": "Some words are not in the word list (word {{positions}}). Please check the spelling."
+        },
+        "mutedMessage": {
+            "title": "Post from a muted user",
+            "show": "Show"
         }
     },
     "contexts": {
