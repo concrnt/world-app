@@ -104,7 +104,6 @@ export class QueryTimelineReader {
             this.onUpdate?.()
         } else {
             console.warn(`Item with href ${href} not found in timeline.`)
-            console.log('Current items:', this.body)
         }
     }
 

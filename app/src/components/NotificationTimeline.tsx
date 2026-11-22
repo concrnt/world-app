@@ -398,8 +398,6 @@ const NotificationTimelineInner = (props: Props) => {
                 // スナップショット表示中はreaderに本物の先頭ページが無い(先頭取得に失敗していれば空)ので追い読みしない
                 if (snapshotRef.current) return
 
-                console.log('Reading more...')
-
                 loadingRef.current = true
                 setLoading(true)
                 readerRef.current
@@ -419,7 +417,6 @@ const NotificationTimelineInner = (props: Props) => {
                     .finally(() => {
                         loadingRef.current = false
                         setLoading(false)
-                        console.log('Finished reading more')
                     })
             }
         }

@@ -10,6 +10,7 @@ import { StoreMockExplorerView, StoreMockHomeView, StoreMockIDView } from './Sto
 import { InventoryView } from './Inventory'
 import { MdBadge, MdChevronRight, MdExplore, MdHome, MdInventory2 } from 'react-icons/md'
 import { usePreference } from '../contexts/Preference'
+import { realtimeDiagnostics } from '@concrnt/client'
 
 export const DevView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.dev' })
@@ -74,6 +75,19 @@ export const DevView = () => {
                     }}
                 >
                     Reload
+                </Button>
+
+                <Divider />
+
+                {/* 新着が止まった後でも経路のどこで途切れたか追えるよう、リアルタイム経路の状態と直近の異常を取り出す */}
+                <Button
+                    onClick={() => {
+                        const diagnostics = JSON.stringify(realtimeDiagnostics(), null, 2)
+                        setResult(diagnostics)
+                        navigator.clipboard?.writeText(diagnostics).catch(() => {})
+                    }}
+                >
+                    Copy realtime diagnostics
                 </Button>
 
                 <Divider />

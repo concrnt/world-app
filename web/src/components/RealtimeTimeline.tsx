@@ -131,7 +131,7 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
     // readerをどの取得元(Client・ホスト)で初期化したか。Activityのhidden→visible復帰やStrictModeでは
     // refを残したままeffectだけが再実行されるので、取得元が同じなら作り直さず購読だけ戻す
     const initializedRef = useRef<{ client: Client; hostOverride?: string } | undefined>(undefined)
-    const [, forceUpdate] = useReducer((x: number) => x + 1, 0)
+    const [renderVersion, forceUpdate] = useReducer((x: number) => x + 1, 0)
 
     const [isFetching, setIsFetching] = useState(snapshot !== undefined)
 
@@ -195,6 +195,7 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
 
         t.onUpdate = () => {
             scheduleSave(t)
+            t.stats.renderRequestedAt = new Date().toISOString()
             startTransition(() => {
                 forceUpdate()
             })
@@ -223,7 +224,6 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
             }
         }
 
-        console.log('Initializing timeline reader for timelines:', timelines)
         readerRef.current = t
         initializedRef.current = { client, hostOverride }
         if (snapshotRef.current) {
@@ -265,6 +265,11 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
         }
     }, [client, hostOverride, props.noRealtime, timelines, scheduleSave, swapToLive])
 
+    // 描画の依頼(onUpdate)に対してcommitが進んでいるかをrealtimeDiagnosticsに残す
+    useEffect(() => {
+        if (readerRef.current) readerRef.current.stats.renderCommittedAt = new Date().toISOString()
+    }, [renderVersion])
+
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useImperativeHandle(props.ref, () => ({
@@ -278,7 +283,6 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
     /** Pull to Refreshのリフレッシュ処理 */
     const onRefresh = useCallback(async () => {
         if (!readerRef.current) return
-        console.log('Pull to refresh: reloading timeline')
         setNewArrivals([])
         setIsFetching(true)
         try {
@@ -340,8 +344,6 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
                 if (!hasMoreData) return
                 if (!readerRef.current) return
 
-                console.log('Reading more...')
-
                 loadingRef.current = true
                 setLoading(true)
                 readerRef.current
@@ -351,12 +353,10 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
                     })
                     .catch((e) => {
                         console.error('Failed to read more', e)
-                        console.log(readerRef.current?.body[readerRef.current.body.length - 1])
                     })
                     .finally(() => {
                         loadingRef.current = false
                         setLoading(false)
-                        console.log('Finished reading more')
                     })
             }
         }

@@ -3,6 +3,7 @@ import { CDID } from './cdid'
 import { ChunklineItem } from './chunkline'
 import { RealtimeEvent } from './model'
 import { Socket } from './socket'
+import { liveReaders, readerState, recordRealtime } from './realtimeDiagnostics'
 
 export interface TimelineItemWithUpdate extends ChunklineItem {
     lastUpdate: Date
@@ -21,6 +22,17 @@ export class TimelineReader {
     // 先頭ページをサーバーから取得できたか(listen/reload成功でtrue)。
     // 呼び出し側がbodyをスナップショットでseedしている場合に、本物へ差し替えてよいかの判定に使う
     headLoaded: boolean = false
+    // realtimeDiagnosticsで後から読む。届いたcreatedイベントの行き先(バッファ/重複/haltUpdateで破棄/挿入)の件数と、
+    // 呼び出し側が記録する描画の依頼・commit時刻(依頼だけ進んでcommitが止まっていれば描画側で詰まっている)
+    stats: {
+        lastEventAt?: string
+        buffered: number
+        duplicate: number
+        halted: number
+        inserted: number
+        renderRequestedAt?: string
+        renderCommittedAt?: string
+    } = { buffered: 0, duplicate: 0, halted: 0, inserted: 0 }
 
     hostOverride?: string
 
@@ -29,7 +41,7 @@ export class TimelineReader {
     private readonly boundCatchUp: () => void
 
     // 先頭取得中に届いたsocketイベントの一時置き場(取得完了後に再生する)。nullなら通常配送
-    private pendingEvents: RealtimeEvent[] | null = null
+    pendingEvents: RealtimeEvent[] | null = null
     // 先頭取得の時点でsocketが未接続だった=接続完了までの新着を取りこぼしている可能性がある
     private needsCatchUp = false
 
@@ -42,7 +54,9 @@ export class TimelineReader {
     }
 
     processEvent(event: RealtimeEvent) {
+        this.stats.lastEventAt = new Date().toISOString()
         if (this.pendingEvents) {
+            this.stats.buffered++
             this.pendingEvents.push(event)
             return
         }
@@ -57,14 +71,22 @@ export class TimelineReader {
                     href = document.value.href
                 }
 
-                if (this.body.find((item) => item.href === href)) return
+                if (this.body.find((item) => item.href === href)) {
+                    this.stats.duplicate++
+                    return
+                }
                 const item: ChunklineItem = {
                     href: href,
                     source: event.source,
                     timestamp: new Date()
                 }
                 this.onNewItem?.(item)
-                if (this.haltUpdate) return
+                if (this.haltUpdate) {
+                    this.stats.halted++
+                    recordRealtime('reader dropped while halted', href)
+                    return
+                }
+                this.stats.inserted++
                 const itemWithUpdate: TimelineItemWithUpdate = {
                     ...item,
                     lastUpdate: new Date()
@@ -77,11 +99,7 @@ export class TimelineReader {
             case 'associated':
             case 'unassociated': {
                 const target = this.body.find((item) => item.href === event.uri)
-                if (!target) {
-                    console.log('Associated event for unknown item:', event.uri)
-                    return
-                }
-                console.log('Item associated updated:', event.uri)
+                if (!target) return
                 target.lastUpdate = new Date()
                 this.onUpdate?.()
                 break
@@ -98,14 +116,15 @@ export class TimelineReader {
                 break
             }
             default: {
-                console.log(`Unhandled event type: ${event.type}`)
+                recordRealtime('reader unhandled event', event.type)
             }
         }
     }
 
     async listen(timelines: string[]): Promise<boolean> {
-        console.log('Listen!!!!!!!!!!!!!!!!!!!!!!!!')
         this.timelines = timelines
+        liveReaders.add(this)
+        recordRealtime('reader listen', timelines)
 
         let hasMore = true
 
@@ -168,6 +187,7 @@ export class TimelineReader {
         const newdata = items
             .filter((item) => !this.body.find((i) => i.href === item.href))
             .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        recordRealtime('reader catch up', { timelines: this.timelines, added: newdata.length })
         if (newdata.length === 0) return
 
         // 古い順にonNewItemへ渡し、created eventと同じ経路で扱う(haltUpdate中はバッジのみ)
@@ -182,7 +202,6 @@ export class TimelineReader {
     }
 
     async readMore(limit: number = 4): Promise<boolean> {
-        console.log('Read more!!!!!!!!!!!!!!!!!!!!!!!!')
         if (this.body.length === 0) return false
         const last = this.body[this.body.length - 1]
         const items = await this.api.getTimelineRanged(
@@ -194,7 +213,6 @@ export class TimelineReader {
             (item) => !this.body.find((i) => i.timestamp.getTime() === item.timestamp.getTime())
         )
         const newdataWithUpdate = newdata.map((item) => Object.assign(item, { lastUpdate: new Date() }))
-        console.log(`Read more: ${newdata.length} new items`)
         this.body = this.body.concat(newdataWithUpdate)
         this.chunkedBody.push(newdataWithUpdate)
         this.onUpdate?.()
@@ -202,7 +220,6 @@ export class TimelineReader {
     }
 
     async reload(): Promise<boolean> {
-        console.log('Reload!!!!!!!!!!!!!!!!!!!!!!!!')
         let hasMore = true
         this.haltUpdate = true
         const items = await this.api.getTimelineRecent(this.timelines, this.hostOverride)
@@ -230,6 +247,8 @@ export class TimelineReader {
     // dispose()で解除したsocket購読を再開する。bodyは保持されたままなので、
     // onUpdate/onNewItemを再設定してから呼べば既存インスタンスをそのまま使い続けられる
     resume() {
+        liveReaders.add(this)
+        recordRealtime('reader resume', this.timelines)
         this.socket?.listen(this.timelines, this.boundProcessEvent)
         this.socket?.addOpenListener(this.boundCatchUp)
         // 非表示中(購読解除中)の新着は取りこぼしているので、接続済みなら今すぐ取り直す
@@ -239,6 +258,8 @@ export class TimelineReader {
     }
 
     dispose() {
+        liveReaders.delete(this)
+        recordRealtime('reader dispose', readerState(this))
         this.socket?.unlisten(this.timelines, this.boundProcessEvent)
         this.socket?.removeOpenListener(this.boundCatchUp)
         this.onUpdate = undefined
