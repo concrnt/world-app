@@ -7,7 +7,6 @@ import { Button, Divider, useTheme } from '@concrnt/ui'
 import { useClient } from './Client'
 import { CssVar } from '../types/Theme'
 import { useKeyboard } from './Keyboard'
-import { useGuestNotice } from './GuestNotice'
 
 export type ComposerMode = 'normal' | 'reply' | 'reroute'
 
@@ -27,7 +26,6 @@ const ComposerContext = createContext<ComposerContextState>({
 
 export const ComposerProvider = (props: Props) => {
     const { client } = useClient()
-    const openGuestNotice = useGuestNotice()
 
     const [showComposer, setShowComposer] = useState(false)
     const [destinations, setDestinations] = useState<string[]>([])
@@ -39,10 +37,6 @@ export const ComposerProvider = (props: Props) => {
 
     const open = useCallback(
         (destinations: string[], mode?: ComposerMode, targetMessage?: Message<any>, profile?: string) => {
-            if (client.ccid === '') {
-                openGuestNotice()
-                return
-            }
             setDestinations(destinations)
             setDefaultDestinations(destinations)
             setMode(mode ?? 'normal')
@@ -50,7 +44,7 @@ export const ComposerProvider = (props: Props) => {
             setProfile(profile)
             setShowComposer(true)
         },
-        [client, openGuestNotice]
+        [client]
     )
 
     const close = useCallback(() => {
