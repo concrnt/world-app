@@ -563,20 +563,20 @@
         },
         "invitationSettings": {
             "title": "招待",
-            "description": "招待コードを受け取った人は、選んだリストを Home のタブにした状態でアプリを始められます。招待コードは何回でも使えます。",
+            "description": "招待コードを受け取った人は、選んだリストを Home にした状態でアプリを始められます。招待コードは何回でも使えます。",
             "comment": "招待コメント",
-            "lists": "初期リスト",
-            "listsDescription": "ピン留め中のリストから選びます。各リストのデフォルト投稿先も引き継がれます。",
             "create": "招待コードを作成",
-            "creating": "作成中..."
+            "creating": "作成中...",
+            "list": "Home にするリスト",
+            "listDescription": "ピン留め中のリストから 1 つ選びます。そのリストのデフォルト投稿先も引き継がれます。"
         },
         "invitation": {
             "title": "{{username}}さんから招待が届きました",
-            "lists": "Home に入るリスト",
             "acceptAsGuest": "ゲストとして見てみる",
             "addToHome": "Home にタブとして追加",
             "back": "戻る",
-            "loadFailed": "招待を読み込めませんでした"
+            "loadFailed": "招待を読み込めませんでした",
+            "list": "Home になるリスト"
         }
     },
     "components": {

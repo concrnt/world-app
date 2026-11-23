@@ -145,24 +145,21 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('No session found')
                     clientRef.current?.dispose()
                     clientRef.current = null
-                    // 招待を受け入れたが未登録: 招待のリスト構成をホームにしたゲストとして起動する
+                    // 招待を受け入れたが未登録: 招待のリストをホームにしたゲストとして起動する
                     const invitation = loadStoredInvitation()
                     if (!invitation) {
                         setClient(null)
                         return
                     }
                     const guest = await Client.createAsGuest(invitation.domain)
-                    guest.pinnedLists.push(
-                        invitation.value.lists.map(
-                            (entry) =>
-                                new PinnedListItemClass(guest, {
-                                    uri: entry.uri,
-                                    defaultPostHome: false,
-                                    defaultPostTimelines: entry.defaultPostTimelines,
-                                    excludeSelf: true
-                                })
-                        )
-                    )
+                    guest.pinnedLists.push([
+                        new PinnedListItemClass(guest, {
+                            uri: invitation.value.list,
+                            defaultPostHome: true,
+                            defaultPostTimelines: invitation.value.defaultPostTimelines,
+                            excludeSelf: true
+                        })
+                    ])
                     clientRef.current = guest
                     setClient(guest)
                     return

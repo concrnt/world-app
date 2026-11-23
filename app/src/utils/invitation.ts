@@ -15,35 +15,31 @@ export const loadStoredInvitation = (): StoredInvitation | null => {
 
 // 招待者のリストを直接ピンせず自分の名前空間へ複製するのは、受け手が自由に編集できるようにするため
 export const applyInvitation = async (client: Client, invitation: InvitationSchema, hint: string): Promise<void> => {
-    const base = Date.now()
-    const pins: PinnedListsSchema = []
-    for (const [i, entry] of invitation.lists.entries()) {
-        // 招待を作った後で招待者がリストを消していることがある。残りのリストだけで始められるようにする
-        const source = await List.load(client, entry.uri, hint).catch((err) => {
-            if (err instanceof NotFoundError) return null
-            throw err
-        })
-        if (!source) continue
-        const entries = await source.entries.value()
+    const source = await List.load(client, invitation.list, hint).catch((err) => {
+        if (err instanceof NotFoundError) return null
+        throw err
+    })
+    // 招待を作った後で招待者がリストを消していることがある。その場合は通常の新規登録と同じ既定のホームで始める
+    if (!source) return
+    const entries = await source.entries.value()
 
-        const uri = semantics.list(client.ccid, client.currentProfile, (base + i).toString())
-        const document: Document<ListSchema> = {
-            kind: 'record',
-            key: uri,
-            author: client.ccid,
-            schema: Schemas.list,
-            value: { name: source.title, iconURL: source.iconURL },
-            createdAt: new Date()
-        }
-        await client.api.commit(document)
-        const list = new List(client, uri, source.title, source.iconURL)
-        for (const item of entries) {
-            await list.addItem(client, item.value.href, item.value.schema)
-        }
-        pins.push({ uri, defaultPostHome: false, defaultPostTimelines: entry.defaultPostTimelines })
+    const uri = semantics.list(client.ccid, client.currentProfile, Date.now().toString())
+    const document: Document<ListSchema> = {
+        kind: 'record',
+        key: uri,
+        author: client.ccid,
+        schema: Schemas.list,
+        value: { name: source.title, iconURL: source.iconURL },
+        createdAt: new Date()
+    }
+    await client.api.commit(document)
+    const list = new List(client, uri, source.title, source.iconURL)
+    for (const item of entries) {
+        await list.addItem(client, item.value.href, item.value.schema)
     }
 
-    // 登録直後はピン留めドキュメントがまだ無い。ここで作ることで既定の"home"リストの自動作成も走らない
+    // 登録直後はピン留めドキュメントがまだ無い。ここで作ることで既定の"home"リストの自動作成は走らず、
+    // 招待のリストがそのままホームになる
     const current = await client.api
         .getDocument<PinnedListsSchema>(semantics.lists(client.ccid, client.currentProfile), undefined, {
             cache: 'no-cache'
@@ -58,7 +54,10 @@ export const applyInvitation = async (client: Client, invitation: InvitationSche
         key: semantics.lists(client.ccid, client.currentProfile),
         author: client.ccid,
         schema: Schemas.pinnedLists,
-        value: [...current, ...pins],
+        value: [
+            ...current,
+            { uri, defaultPostHome: current.length === 0, defaultPostTimelines: invitation.defaultPostTimelines }
+        ],
         createdAt: new Date()
     }
     await client.api.commit(pinnedLists)

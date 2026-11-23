@@ -7,8 +7,6 @@
 
 export interface InvitationSchema {
     comment?: string
-    lists: {
-        uri: string
-        defaultPostTimelines: string[]
-    }[]
+    list: string
+    defaultPostTimelines: string[]
 }

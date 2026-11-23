@@ -1,7 +1,7 @@
 import { Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCode } from 'react-qrcode-logo'
-import { Button, Checkbox, CopyButton, Text, TextField, View } from '@concrnt/ui'
+import { Button, CopyButton, Text, TextField, View } from '@concrnt/ui'
 import { Document } from '@concrnt/client'
 import { InvitationSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
@@ -28,7 +28,7 @@ const InvitationForm = () => {
     const { client } = useClient()
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const [comment, setComment] = useState('')
-    const [selected, setSelected] = useState<string[]>([])
+    const [selected, setSelected] = useState<string>()
     const [invitationURI, setInvitationURI] = useState<string>()
 
     return (
@@ -46,25 +46,21 @@ const InvitationForm = () => {
             <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
             <Text variant="h3">{t('comment')}</Text>
             <TextField value={comment} onChange={(e) => setComment(e.target.value)} placeholder="welcome!" />
-            <Text variant="h3">{t('lists')}</Text>
+            <Text variant="h3">{t('list')}</Text>
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {t('listsDescription')}
+                {t('listDescription')}
             </Text>
             {pinnedLists.map((pin) => (
                 <label key={pin.uri} style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
-                    <Checkbox
-                        checked={selected.includes(pin.uri)}
-                        onChange={(checked) =>
-                            setSelected(checked ? [...selected, pin.uri] : selected.filter((uri) => uri !== pin.uri))
-                        }
-                    />
+                    <input type="radio" checked={selected === pin.uri} onChange={() => setSelected(pin.uri)} />
                     <ListName pin={pin} />
                 </label>
             ))}
             <Button
-                disabled={selected.length === 0}
+                disabled={!selected}
                 busyChildren={t('creating')}
                 onClick={async () => {
+                    const pin = pinnedLists.find((pin) => pin.uri === selected)!
                     const id = Date.now().toString()
                     const document: Document<InvitationSchema> = {
                         kind: 'record',
@@ -73,9 +69,8 @@ const InvitationForm = () => {
                         schema: Schemas.invitation,
                         value: {
                             comment: comment || undefined,
-                            lists: pinnedLists
-                                .filter((pin) => selected.includes(pin.uri))
-                                .map((pin) => ({ uri: pin.uri, defaultPostTimelines: pin.defaultPostTimelines }))
+                            list: pin.uri,
+                            defaultPostTimelines: pin.defaultPostTimelines
                         },
                         createdAt: new Date()
                     }

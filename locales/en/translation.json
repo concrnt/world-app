@@ -564,20 +564,20 @@
         },
         "invitationSettings": {
             "title": "Invitations",
-            "description": "People who receive the invitation code start the app with the selected lists as Home tabs. The code can be used any number of times.",
+            "description": "People who receive the invitation code start the app with the selected list as their Home. The code can be used any number of times.",
             "comment": "Invitation message",
-            "lists": "Initial lists",
-            "listsDescription": "Choose from your pinned lists. Their default post destinations are included as well.",
             "create": "Create invitation code",
-            "creating": "Creating..."
+            "creating": "Creating...",
+            "list": "List for Home",
+            "listDescription": "Choose one of your pinned lists. Its default post destinations are included as well."
         },
         "invitation": {
             "title": "{{username}} invited you",
-            "lists": "Lists for your Home",
             "acceptAsGuest": "Look around as a guest",
             "addToHome": "Add to Home as tabs",
             "back": "Back",
-            "loadFailed": "Could not load the invitation"
+            "loadFailed": "Could not load the invitation",
+            "list": "Your Home list"
         }
     },
     "components": {

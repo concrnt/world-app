@@ -17,7 +17,7 @@ interface Props {
 interface Loaded {
     invitation: StoredInvitation
     inviter: User
-    lists: (List | null)[]
+    list: List | null
 }
 
 export const InvitationView = (props: Props) => {
@@ -33,9 +33,9 @@ export const InvitationView = (props: Props) => {
         const load = async () => {
             const document = await props.client.api.getDocument<InvitationSchema>(props.uri, props.hint)
             const inviter = await User.load(props.client, document.author, props.hint)
-            const lists = await Promise.all(document.value.lists.map((entry) => props.client.getList(entry.uri)))
+            const list = await props.client.getList(document.value.list)
             if (cancelled) return
-            setLoaded({ invitation: { domain: inviter.domain, value: document.value }, inviter, lists })
+            setLoaded({ invitation: { domain: inviter.domain, value: document.value }, inviter, list })
         }
         load().catch((err) => {
             console.error('Failed to load invitation', err)
@@ -71,15 +71,8 @@ export const InvitationView = (props: Props) => {
                 description={loaded.invitation.value.comment}
             />
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('lists')}</Text>
-                {loaded.lists.map(
-                    (list) =>
-                        list && (
-                            <Text key={list.uri} style={{ color: CssVar.uiText }}>
-                                {list.title}
-                            </Text>
-                        )
-                )}
+                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('list')}</Text>
+                <Text style={{ color: CssVar.uiText }}>{loaded.list?.title}</Text>
             </div>
             <AuthActions fixedBottom>
                 {acceptError && (
