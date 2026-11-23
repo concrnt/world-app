@@ -183,7 +183,7 @@ export const InvitationPage = () => {
                                 <Avatar
                                     ccid={loaded.inviter.ccid}
                                     src={loaded.inviter.profile.avatar}
-                                    style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}
+                                    style={{ width: '64px', height: '64px', flexShrink: 0 }}
                                 />
                                 <Text style={{ fontSize: '1.5rem', wordBreak: 'break-word' }}>
                                     &lt;&nbsp;{loaded.comment}
