@@ -17,7 +17,6 @@ interface Props {
 interface Loaded {
     invitation: StoredInvitation
     inviter: User
-    timelineNames: string[]
 }
 
 export const InvitationView = (props: Props) => {
@@ -33,13 +32,8 @@ export const InvitationView = (props: Props) => {
         const load = async () => {
             const document = await props.client.api.getDocument<InvitationSchema>(props.uri, props.hint)
             const inviter = await User.load(props.client, document.author, props.hint)
-            const timelines = await Promise.all(document.value.timelines.map((uri) => props.client.getTimeline(uri)))
             if (cancelled) return
-            setLoaded({
-                invitation: { domain: inviter.domain, value: document.value },
-                inviter,
-                timelineNames: timelines.map((timeline, i) => timeline?.name ?? document.value.timelines[i])
-            })
+            setLoaded({ invitation: { domain: inviter.domain, value: document.value }, inviter })
         }
         load().catch((err) => {
             console.error('Failed to load invitation', err)
@@ -76,14 +70,6 @@ export const InvitationView = (props: Props) => {
                 <Text style={{ color: CssVar.uiText, fontSize: '1.5rem', wordBreak: 'break-word' }}>
                     &lt;&nbsp;{loaded.invitation.value.comment}
                 </Text>
-            </div>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('timelines')}</Text>
-                {loaded.timelineNames.map((name, i) => (
-                    <Text key={i} style={{ color: CssVar.uiText }}>
-                        # {name}
-                    </Text>
-                ))}
             </div>
             <AuthActions fixedBottom>
                 {acceptError && (
