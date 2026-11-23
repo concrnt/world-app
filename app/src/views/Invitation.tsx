@@ -25,7 +25,6 @@ export const InvitationView = (props: Props) => {
     const [loaded, setLoaded] = useState<Loaded | null>()
     const [accepting, setAccepting] = useState(false)
     const [acceptError, setAcceptError] = useState<string | null>(null)
-    const isGuest = props.client.ccid === ''
 
     useEffect(() => {
         let cancelled = false
@@ -86,7 +85,7 @@ export const InvitationView = (props: Props) => {
                         setAcceptError(null)
                         setAccepting(true)
                         try {
-                            if (isGuest) {
+                            if (props.client.isGuest) {
                                 // セッションが無い状態で起動し直すと、ClientProviderが保存した招待でゲストとして立ち上げる
                                 localStorage.setItem('invitation', JSON.stringify(loaded.invitation))
                                 window.location.reload()
@@ -106,7 +105,7 @@ export const InvitationView = (props: Props) => {
                         }
                     }}
                 >
-                    {isGuest ? t('acceptAsGuest') : t('addToHome')}
+                    {props.client.isGuest ? t('acceptAsGuest') : t('addToHome')}
                 </AuthButton>
                 <AuthTextButton onClick={props.onBack}>{t('back')}</AuthTextButton>
             </AuthActions>

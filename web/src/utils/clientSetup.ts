@@ -24,7 +24,7 @@ const ensureTimeline = async (client: Client, key: string, policy?: Policy): Pro
 // ホーム・通知・アクティビティタイムラインが存在しなければ作成する
 export const setupDefaultTimelines = async (client: Client): Promise<void> => {
     const ccid = client.ccid
-    if (ccid === '') return
+    if (client.isGuest) return
     const profile = client.currentProfile
 
     await Promise.all([

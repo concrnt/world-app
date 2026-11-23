@@ -192,7 +192,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                 // setClient前に済ませてkvsキャッシュを温めておくことで、差し替え直後の
                 // remountがキャッシュから即座に構築される
                 const runProfileSetup = async (client: Client, subkeyIsInvalid: boolean): Promise<void> => {
-                    if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
+                    if (!client.isGuest && client.isOnline && !subkeyIsInvalid) {
                         setProgress(t('loadingProfiles'))
                         await client.updateProfiles()
 
@@ -203,7 +203,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                         setProgress(t('loadingLists'))
                         await client.pinnedLists.value()
-                    } else if (client.ccid !== '') {
+                    } else if (!client.isGuest) {
                         // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
                         // setupDefaultTimelinesはcommitを行うため実行しない
                         setProgress(t('loadingFromCache'))

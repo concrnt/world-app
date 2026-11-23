@@ -149,7 +149,7 @@ export const EmojiPickerProvider = (props: Props) => {
 
     useEffect(() => {
         // ゲストは自分の絵文字パック一覧を持たない
-        if (client.ccid === '') return
+        if (client.isGuest) return
         let unmounted = false
 
         ensureEmojiPackageList(client)

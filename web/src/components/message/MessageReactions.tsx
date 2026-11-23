@@ -71,7 +71,7 @@ export const MessageReactions = (props: Props) => {
 
     const handleReactionClick = async (imageUrl: string) => {
         if (!client) return
-        if (client.ccid === '') return // ゲストはリアクション不可(表示のみ)
+        if (client.isGuest) return // ゲストはリアクション不可(表示のみ)
         hapticLight()
 
         if (ownReactions[imageUrl]) {

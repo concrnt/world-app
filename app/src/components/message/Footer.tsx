@@ -76,7 +76,7 @@ export const MessageFooter = (props: Props) => {
                     }}
                 >
                     {/* ゲストは閲覧のみ(web版のゲストと同じ) */}
-                    {client.ccid !== '' && (
+                    {!client.isGuest && (
                         <MessageActions
                             message={props.message}
                             rerouted={props.rerouted}

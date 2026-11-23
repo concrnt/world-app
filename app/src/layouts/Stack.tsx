@@ -42,20 +42,19 @@ interface Props {
 export const StackLayout = (props: Props) => {
     const [stack, setStack] = useState<ReactNode[]>([])
     const { client } = useClient()
-    const isGuest = client.ccid === ''
 
     const set = useCallback(
         (child: ReactNode) => {
-            setStack([isGuest ? <GuestNoticeView /> : child])
+            setStack([client.isGuest ? <GuestNoticeView /> : child])
         },
-        [isGuest]
+        [client.isGuest]
     )
 
     const push = useCallback(
         (child: ReactNode, opts?: { allowGuest?: boolean }) => {
-            setStack((prev) => [...prev, isGuest && !opts?.allowGuest ? <GuestNoticeView /> : child])
+            setStack((prev) => [...prev, client.isGuest && !opts?.allowGuest ? <GuestNoticeView /> : child])
         },
-        [isGuest]
+        [client.isGuest]
     )
 
     const pop = useCallback(() => {

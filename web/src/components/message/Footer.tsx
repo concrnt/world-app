@@ -76,7 +76,7 @@ export const MessageFooter = (props: Props) => {
                     }}
                 >
                     {/* ゲスト(未ログイン)はEmojiPickerProvider等が無いため、アクション群自体を描画しない */}
-                    {client.ccid !== '' && (
+                    {!client.isGuest && (
                         <MessageActions
                             message={props.message}
                             rerouted={props.rerouted}

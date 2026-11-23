@@ -53,7 +53,6 @@ export const MainView = () => {
     }, [client, unreadCount])
 
     // ゲストのホーム以外のタブは案内のビューにする。TabLayoutは裏のタブも先読みでマウントするので本来の中身は置かない
-    const isGuest = client.ccid === ''
     const tabs = useMemo(() => {
         return {
             home: {
@@ -73,7 +72,7 @@ export const MainView = () => {
                 tab: <MdHome size={24} />
             },
             explorer: {
-                body: isGuest ? (
+                body: client.isGuest ? (
                     <GuestNoticeView />
                 ) : (
                     <StackLayout
@@ -87,7 +86,7 @@ export const MainView = () => {
                 tab: <MdExplore size={24} />
             },
             notifications: {
-                body: isGuest ? (
+                body: client.isGuest ? (
                     <GuestNoticeView />
                 ) : (
                     <StackLayout
@@ -101,7 +100,7 @@ export const MainView = () => {
                 tab: <MdNotifications size={24} />
             },
             contacts: {
-                body: isGuest ? (
+                body: client.isGuest ? (
                     <GuestNoticeView />
                 ) : (
                     <StackLayout
@@ -115,7 +114,7 @@ export const MainView = () => {
                 tab: <MdContacts size={24} />
             }
         }
-    }, [isGuest])
+    }, [client.isGuest])
 
     const [selectedTab, setSelectedTab] = useState<string>('home')
 

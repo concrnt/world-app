@@ -20,7 +20,7 @@ export const ComposeFAB = () => {
             onClick={() => {
                 hapticLight()
                 // ゲストは投稿できないので、投稿画面の代わりに案内のビューを出す
-                if (client.ccid === '') {
+                if (client.isGuest) {
                     stack.push(<GuestNoticeView />)
                     return
                 }
