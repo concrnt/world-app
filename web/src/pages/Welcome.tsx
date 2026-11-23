@@ -199,7 +199,7 @@ export const WelcomePage = () => {
                         paddingBottom: CssVar.space(2)
                     }}
                 >
-                    {!isMobile && <PostsBackground />}
+                    {!isMobile && <PostsBackground avoidCenter />}
 
                     <div /* hero */
                         style={{

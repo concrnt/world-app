@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, Schemas, semantics, User } from '@concrnt/worldlib'
-import { BackgroundPost, PostsBackground, scatterPosition } from '../components/welcome/PostsBackground'
+import { BackgroundPost, PostsBackground } from '../components/welcome/PostsBackground'
 import { ExternalLink } from '../components/ExternalLink'
 import { LoadingFull } from '../components/LoadingFull'
 import { resolveEntrypoint } from '../utils/entrypoint'
@@ -41,13 +41,11 @@ export const InvitationPage = () => {
             setLoaded({ comment: document.value.comment, inviter })
             return { guest, timelines: document.value.timelines }
         }
-        // 招待状を出した後で、招待のタイムラインの最近の投稿を背景に少しずつ混ぜる。
+        // 招待状を出した後で、招待のタイムラインの最近の投稿を背景のデモの投稿に混ぜる。
         // どんな場所に招待されたかの雰囲気を伝える飾りなので、失敗しても招待状はそのまま見せる
         const addRecentPosts = async ({ guest, timelines }: { guest: Client; timelines: string[] }) => {
             const items = await guest.api.getTimelineRecent(timelines)
             for (const item of items.slice(0, 16)) {
-                await new Promise((resolve) => setTimeout(resolve, 1500))
-                if (cancelled) return
                 // 消された投稿や本文の無い投稿(リルート等)は飛ばす
                 const document = await guest.api.getDocument<{ body?: string }>(item.href!).catch(() => null)
                 if (!document?.value.body) continue
@@ -63,8 +61,7 @@ export const InvitationPage = () => {
                     body: document.value.body,
                     timelines: timelines
                         .filter((timeline) => timeline?.schema === Schemas.communityTimeline)
-                        .map((timeline) => timeline!.shortname?.trim() || timeline!.name),
-                    position: scatterPosition(Math.random())
+                        .map((timeline) => timeline!.shortname?.trim() || timeline!.name)
                 }
                 setRecentPosts((prev) => [...prev, post])
             }
@@ -127,7 +124,7 @@ export const InvitationPage = () => {
                 backgroundColor: CssVar.contentBackground
             }}
         >
-            <PostsBackground scatter posts={recentPosts} />
+            <PostsBackground posts={recentPosts} />
             {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
                 zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}
             <div
