@@ -16,16 +16,18 @@ export interface BackgroundPost {
 }
 
 // 中央から外に向かうランダムな位置。turn(0〜1 で一周)を渡す。
-// 位置は投稿の左上なので、投稿の幅のぶん左へずらして中心が散らばるようにする。
-// 画面端に近い投稿が残りの幅に縮んで折り返さないよう、本来の幅のまま置いて画面外へはみ出させる
+// 位置は投稿の左上なので、投稿の幅のぶん左へずらして中心が散らばるようにする
 export const scatterPosition = (turn: number): CSSProperties => {
     const angle = turn * 2 * Math.PI
     const radius = 15 + Math.random() * 35
-    return { top: `${50 + Math.sin(angle) * radius}%`, left: `${35 + Math.cos(angle) * radius}%`, width: 'max-content' }
+    return { top: `${50 + Math.sin(angle) * radius}%`, left: `${35 + Math.cos(angle) * radius}%` }
 }
 
+// 本文の長さで幅がばらつかないよう、また画面端で縮んで細かく折り返さないよう幅を固定する
 const postStyle: CSSProperties = {
     position: 'absolute',
+    width: 320,
+    boxSizing: 'border-box',
     backgroundColor: CssVar.contentBackground,
     borderRadius: '4px',
     border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,
@@ -108,8 +110,7 @@ export const PostsBackground = (props: { scatter?: boolean; posts?: BackgroundPo
                     style={{
                         ...postStyle,
                         ...post.position,
-                        // 実際の投稿は長いことがあるので、背景として収まる大きさで切る
-                        maxWidth: 360,
+                        // 実際の投稿は長いことがあるので、背景として収まる高さで切る
                         maxHeight: 160,
                         overflow: 'hidden',
                         animation: `${styles['welcome-parallax-100']} linear, ${styles.appear} 1s ease-out`,
