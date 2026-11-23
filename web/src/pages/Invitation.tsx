@@ -91,7 +91,9 @@ export const InvitationPage = () => {
         <AuthScreen>
             <AuthHeader title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })} />
             {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+            <div
+                style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2), margin: `${CssVar.space(4)} 0` }}
+            >
                 <Avatar
                     ccid={loaded.inviter.ccid}
                     src={loaded.inviter.profile.avatar}
