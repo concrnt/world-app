@@ -23,6 +23,8 @@ export const semantics = {
     post: (owner: string, profile: string, postId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/posts/${postId}`,
 
+    invitation: (owner: string, invitationId: string) => `cckv://${owner}/concrnt.world/invitations/${invitationId}`,
+
     communities: (domain: string) => `cckv://${domain}/concrnt.world/communities`,
     community: (domain: string, communityId: string) => `cckv://${domain}/concrnt.world/communities/${communityId}`,
 

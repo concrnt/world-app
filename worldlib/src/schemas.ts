@@ -34,6 +34,8 @@ export const Schemas = {
 
     pinnedLists: 'https://schema.concrnt.world/utils/pinnedLists.json',
 
+    invitation: 'https://schema.concrnt.world/invitation.json',
+
     empty: 'https://schema.concrnt.world/empty.json',
 
     followAck: 'https://schema.concrnt.world/ack/follow.json'

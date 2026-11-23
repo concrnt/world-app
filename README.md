@@ -52,6 +52,7 @@ $ pnpm tauri ios build
 ```
 # システム
 cckv://<owner>/concrnt.world/settings
+cckv://<owner>/concrnt.world/invitations/<id>
 
 # メイン
 cckv://<owner>/concrnt.world/profiles/main
