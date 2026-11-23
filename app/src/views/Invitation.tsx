@@ -33,7 +33,10 @@ export const InvitationView = (props: Props) => {
             const document = await props.client.api.getDocument<InvitationSchema>(props.uri, props.hint)
             const inviter = await User.load(props.client, document.author, props.hint)
             if (cancelled) return
-            setLoaded({ invitation: { domain: inviter.domain, value: document.value }, inviter })
+            setLoaded({
+                invitation: { domain: inviter.domain, inviter: document.author, value: document.value },
+                inviter
+            })
         }
         load().catch((err) => {
             console.error('Failed to load invitation', err)
@@ -90,7 +93,7 @@ export const InvitationView = (props: Props) => {
                             } else {
                                 await applyInvitation(
                                     props.client,
-                                    loaded.invitation.value,
+                                    loaded.invitation,
                                     t('tabName', { username: loaded.inviter.profile.username ?? 'anonymous' })
                                 )
                                 props.onBack()

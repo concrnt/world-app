@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client, List, migrateLegacyProfilePolicies, PinnedListItemClass } from '@concrnt/worldlib'
+import { Client, List, migrateLegacyProfilePolicies, PinnedListItemClass, semantics } from '@concrnt/worldlib'
 import { Api, ErrorCodeRegistrationNotFound, InMemoryKVS, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
@@ -160,7 +160,10 @@ export const ClientProvider = (props: Props): ReactNode => {
                         excludeSelf: true
                     })
                     const list = new List(guest, pin.uri, 'home')
-                    list.items.push(invitation.value.timelines)
+                    // 登録後のホームと同じく招待者のホームも並べる
+                    list.items.push([
+                        ...new Set([...invitation.value.timelines, semantics.homeTimeline(invitation.inviter, 'main')])
+                    ])
                     pin.list.push(list)
                     guest.pinnedLists.push([pin])
                     clientRef.current = guest

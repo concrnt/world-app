@@ -289,7 +289,7 @@ export const AccountSetup = (props: Props) => {
                                     // ゲストとして見ていた招待のホームをそのまま引き継ぐ
                                     const invitation = loadStoredInvitation()
                                     if (invitation) {
-                                        await applyInvitation(client, invitation.value, 'home')
+                                        await applyInvitation(client, invitation, 'home')
                                         localStorage.removeItem('invitation')
                                     }
                                     client.dispose()
