@@ -15,6 +15,7 @@ import { ApView } from './ApView'
 import { BskyView } from './BskyView'
 import { QueryView } from './Query'
 import { useClient } from '../contexts/Client'
+import { useGuestNotice } from '../contexts/GuestNotice'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
@@ -37,6 +38,7 @@ import { setAppBadge } from '../lib/push'
 export const MainView = () => {
     const [opened, setOpen] = useState(false)
     const { client } = useClient()
+    const openGuestNotice = useGuestNotice()
 
     const stackRefs = useRef<Record<string, StackLayoutRef | null>>({})
     const scrollRefs = useRef<Record<string, ScrollViewHandle | null>>({})
@@ -112,6 +114,10 @@ export const MainView = () => {
 
     const selectTab = useCallback(
         (tab: string) => {
+            if (client.ccid === '' && tab !== 'home') {
+                openGuestNotice()
+                return
+            }
             if (tab === selectedTab) {
                 if (!stackRefs.current[tab]?.clear()) {
                     const handle = scrollRefs.current[tab]
@@ -121,7 +127,7 @@ export const MainView = () => {
             }
             setSelectedTab(tab)
         },
-        [selectedTab]
+        [client, openGuestNotice, selectedTab]
     )
 
     // ディープリンク等のeffect内から押し先のタブを参照するため、refで最新値を追う
@@ -225,7 +231,8 @@ export const MainView = () => {
                                     uri={target.uri}
                                     hint={target.hint}
                                     onBack={() => stack?.pop()}
-                                />
+                                />,
+                                { allowGuest: true }
                             )
                             break
                     }

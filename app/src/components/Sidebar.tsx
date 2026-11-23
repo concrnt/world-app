@@ -12,6 +12,7 @@ import { ProfileView } from '../views/Profile'
 import { QueryView } from '../views/Query'
 import { ListsView } from '../views/Lists'
 import { useScanner } from '../contexts/Scanner'
+import { GuestNoticeContent, useGuestNotice } from '../contexts/GuestNotice'
 
 import { MdPerson } from 'react-icons/md'
 import { MdSettings } from 'react-icons/md'
@@ -37,6 +38,11 @@ export const Sidebar = (props: Props) => {
     const { client } = useClient()
     const homeStatus = useDomainStatus()
     const { scan } = useScanner()
+    const openGuestNotice = useGuestNotice()
+
+    if (client.ccid === '') {
+        return <GuestNoticeContent onRegister={() => openGuestNotice('register')} />
+    }
 
     return (
         <>

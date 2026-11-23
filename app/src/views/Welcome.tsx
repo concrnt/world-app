@@ -12,11 +12,12 @@ import {
     Entity,
     InMemoryAuthProvider,
     NotFoundError,
+    parseCCURI,
     ServerOfflineError,
     SignedDocument
 } from '@concrnt/client'
 import { Passport } from '@concrnt/ui'
-import { ProfileSchema, semantics } from '@concrnt/worldlib'
+import { Client, ProfileSchema, semantics } from '@concrnt/worldlib'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { getResourceCache } from '../lib/cache'
 import { AccountSummary, listAccounts, performAccountSwitch } from '../lib/accounts'
@@ -25,6 +26,9 @@ import { useResetPreference } from '../contexts/Preference'
 import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 import { ResetSessionButton } from '../components/ResetSessionButton'
+import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
+import { resolveQueryTarget } from '../lib/query'
+import { InvitationView } from './Invitation'
 
 /*
 - 完全に初期状態 <initial>
@@ -57,7 +61,7 @@ interface User {
 export const WelcomeView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.welcome' })
     const [state, setState] = useState<
-        'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error' | 'reregister'
+        'initial' | 'welcome' | 'signup' | 'signin' | 'missing' | 'ready' | 'error' | 'reregister' | 'invitationCode'
     >('initial')
     // 'reregister'(既存CCIDで別サーバーに登録し直す)から「戻る」で復帰する画面
     const [reregisterReturn, setReregisterReturn] = useState<'ready' | 'missing' | 'error'>('ready')
@@ -70,6 +74,9 @@ export const WelcomeView = () => {
     const [continuing, setContinuing] = useState(false)
     const [continueError, setContinueError] = useState<string | null>(null)
     const reset = useResetPreference()
+    const [invitation, setInvitation] = useState<{ client: Client; uri: string; hint?: string } | null>(null)
+    const [invitationCode, setInvitationCode] = useState('')
+    const [invitationCodeError, setInvitationCodeError] = useState(false)
     // null = 未解決。端末に残っている自分の登録サーバー(AccountRecord.domain)を最優先で使い、
     // 無ければエントリポイント(ariake)、それでも見つからなければRecoveryViewの手入力にフォールバックする。
     // エントリポイントはhint無しでは他ドメインのユーザーを解決できないため、これが無いと
@@ -163,6 +170,58 @@ export const WelcomeView = () => {
 
     const reload = () => {
         setUpdater((prev) => prev + 1)
+    }
+
+    // 招待URIのhint(招待者のサーバー)へゲストとしてつないで解決する。招待でなければfalse
+    const openInvitation = async (uri: string): Promise<boolean> => {
+        const client = await Client.createAsGuest(parseCCURI(uri).hint ?? resolveEntrypoint())
+        const target = await resolveQueryTarget(client, uri)
+        if (target.kind !== 'invitation') {
+            client.dispose()
+            return false
+        }
+        setInvitation({ client, uri: target.uri, hint: target.hint })
+        return true
+    }
+
+    // ログイン前に開かれた招待はここで受け取る。招待以外のリンクはログイン後へは持ち越さない
+    // (getLaunchDeepLinkは一度しか渡さないため)
+    useEffect(() => {
+        const handle = (url: string) => {
+            if (url.startsWith('cckv://')) openInvitation(url).catch(console.error)
+        }
+        getLaunchDeepLink()
+            .then((url) => {
+                if (url) handle(url)
+            })
+            .catch(() => {})
+
+        let unlisten: (() => void) | undefined
+        let cancelled = false
+        onDeepLink(handle)
+            .then((f) => {
+                if (cancelled) f()
+                else unlisten = f
+            })
+            .catch(() => {})
+        return () => {
+            cancelled = true
+            unlisten?.()
+        }
+    }, [])
+
+    if (invitation) {
+        return (
+            <InvitationView
+                client={invitation.client}
+                uri={invitation.uri}
+                hint={invitation.hint}
+                onBack={() => {
+                    invitation.client.dispose()
+                    setInvitation(null)
+                }}
+            />
+        )
     }
 
     const startReregister = (from: 'ready' | 'missing' | 'error') => {
@@ -286,6 +345,41 @@ export const WelcomeView = () => {
                     <AuthActions fixedBottom>
                         <AuthButton onClick={() => setState('signup')}>{t('getStarted')}</AuthButton>
                         <AuthTextButton onClick={() => setState('signin')}>{t('login')}</AuthTextButton>
+                        <AuthTextButton onClick={() => setState('invitationCode')}>
+                            {t('invitationCode.open')}
+                        </AuthTextButton>
+                    </AuthActions>
+                </AuthScreen>
+            )
+        case 'invitationCode':
+            return (
+                <AuthScreen align="top">
+                    <AuthHeader title={t('invitationCode.title')} description={t('invitationCode.description')} />
+                    <div style={authStyles.section}>
+                        <TextField
+                            value={invitationCode}
+                            onChange={(e) => {
+                                setInvitationCode(e.target.value)
+                                setInvitationCodeError(false)
+                            }}
+                            placeholder="cckv://..."
+                        />
+                        <Text style={authStyles.status}>{invitationCodeError ? t('invitationCode.invalid') : ''}</Text>
+                    </div>
+                    <AuthActions fixedBottom>
+                        <AuthButton
+                            disabled={invitationCode.trim() === ''}
+                            onClick={async () => {
+                                const ok = await openInvitation(invitationCode.trim()).catch((err) => {
+                                    console.error('Failed to open invitation', err)
+                                    return false
+                                })
+                                setInvitationCodeError(!ok)
+                            }}
+                        >
+                            {t('invitationCode.submit')}
+                        </AuthButton>
+                        <AuthTextButton onClick={() => setState('welcome')}>{t('invitationCode.back')}</AuthTextButton>
                     </AuthActions>
                 </AuthScreen>
             )

@@ -233,7 +233,15 @@
                 "checkFailed": "Could not verify. Please check your connection or the server status and try again."
             },
             "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
-            "registerWithExistingKey": "Register this CCID on another server"
+            "registerWithExistingKey": "Register this CCID on another server",
+            "invitationCode": {
+                "open": "I have an invitation code",
+                "title": "Invitation code",
+                "description": "Enter the invitation code (cckv://...) you received.",
+                "submit": "Open invitation",
+                "invalid": "Could not load the invitation code",
+                "back": "Back"
+            }
         },
         "ageBlocked": {
             "title": "You can't use Concrnt yet",
@@ -1036,6 +1044,12 @@
             "cancel": "Cancel",
             "processing": "Processing...",
             "apply": "Apply"
+        },
+        "guestNotice": {
+            "title": "You are browsing as a guest",
+            "description": "Finish signing up to post, react and use the other screens. The lists you are viewing stay on your Home after you sign up.",
+            "register": "Sign up",
+            "exit": "Stop browsing as a guest"
         }
     },
     "utils": {

@@ -233,7 +233,15 @@
                 "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
             },
             "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
-            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する"
+            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する",
+            "invitationCode": {
+                "open": "招待コードをお持ちの方",
+                "title": "招待コード",
+                "description": "受け取った招待コード(cckv://...)を入力してください。",
+                "submit": "招待状を開く",
+                "invalid": "招待コードを読み込めませんでした",
+                "back": "戻る"
+            }
         },
         "ageBlocked": {
             "title": "まだConcrntを利用できません",
@@ -1035,6 +1043,12 @@
             "cancel": "キャンセル",
             "processing": "処理中...",
             "apply": "決定"
+        },
+        "guestNotice": {
+            "title": "現在ゲストユーザーです",
+            "description": "登録を完了させると投稿やリアクション、ほかの画面を使えるようになります。いま見ているリストは登録後もそのまま Home に残ります。",
+            "register": "登録へ進む",
+            "exit": "ゲストをやめる"
         }
     },
     "utils": {

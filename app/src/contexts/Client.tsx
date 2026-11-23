@@ -2,12 +2,13 @@ import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
+import { Client, migrateLegacyProfilePolicies, PinnedListItemClass } from '@concrnt/worldlib'
 import { Api, ErrorCodeRegistrationNotFound, InMemoryKVS, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
+import { loadStoredInvitation } from '../utils/invitation'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
 import { isPushEnabled, unregisterPush } from '../lib/push'
 
@@ -144,7 +145,26 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('No session found')
                     clientRef.current?.dispose()
                     clientRef.current = null
-                    setClient(null)
+                    // 招待を受け入れたが未登録: 招待のリスト構成をホームにしたゲストとして起動する
+                    const invitation = loadStoredInvitation()
+                    if (!invitation) {
+                        setClient(null)
+                        return
+                    }
+                    const guest = await Client.createAsGuest(invitation.domain)
+                    guest.pinnedLists.push(
+                        invitation.value.lists.map(
+                            (entry) =>
+                                new PinnedListItemClass(guest, {
+                                    uri: entry.uri,
+                                    defaultPostHome: false,
+                                    defaultPostTimelines: entry.defaultPostTimelines,
+                                    excludeSelf: true
+                                })
+                        )
+                    )
+                    clientRef.current = guest
+                    setClient(guest)
                     return
                 }
                 const { ccid, ckid, domain } = session
@@ -300,6 +320,8 @@ export const ClientProvider = (props: Props): ReactNode => {
     )
 
     useEffect(() => {
+        // 起動時にTauri側のセッションを読みに行く。同期的に走るsetStateは前回のエラー表示のリセットだけ
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         reload()
     }, [reload])
 
