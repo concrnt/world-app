@@ -31,7 +31,7 @@ const CONCRNT_WORLD_HOST = 'concrnt.world'
 // https://concrnt.world/... の共有URLを開く対象へ。concrnt.world のURLでなければ null。
 // パスは web/src/main.tsx のルート定義と1対1:
 //   profile/:ccid/:profile?(+?hint=) / post/:uri / timeline/:uri / lists/:uri /
-//   activitypub/(person|note|view)/:uri / bluesky/(person|post|view)/:uri / invitation/:ccid/:id(+?hint=)
+//   activitypub/(person|note|view)/:uri / bluesky/(person|post|view)/:uri
 // concrnt.world だが知らないパス(設定画面など)は unsupported、%エンコードが壊れている等は invalid
 export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
     let url: URL
@@ -63,15 +63,6 @@ export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
             hint: url.searchParams.get('hint') ?? undefined
         }
     }
-    if ((m = path.match(/^\/invitation\/([^/]+)\/([^/]+)$/))) {
-        const ccid = decode(m[1])
-        if (!IsCCID(ccid)) throw new QueryResolveError('invalid')
-        return {
-            kind: 'invitation',
-            uri: semantics.invitation(ccid, decode(m[2])),
-            hint: url.searchParams.get('hint') ?? undefined
-        }
-    }
     if ((m = path.match(/^\/post\/([^/]+)$/))) return { kind: 'post', uri: decode(m[1]) }
     if ((m = path.match(/^\/timeline\/([^/]+)$/))) return { kind: 'timeline', uri: decode(m[1]) }
     if ((m = path.match(/^\/lists\/([^/]+)$/))) return { kind: 'list', uri: decode(m[1]) }
@@ -80,11 +71,37 @@ export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
     throw new QueryResolveError('unsupported', `unsupported concrnt.world path: ${path}`)
 }
 
+// 招待リンク(<origin>/invitation/:ccid/:id?hint=)を開く対象へ。招待リンクでなければ null。
+// web は concrnt.world 以外(別ホストでの配信やローカル開発の http://localhost:5173 など)でも配信されうるので origin は問わない
+export const parseInvitationURL = (input: string): Extract<QueryTarget, { kind: 'invitation' }> | null => {
+    let url: URL
+    try {
+        url = new URL(input)
+    } catch {
+        return null
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    const m = url.pathname.replace(/\/+$/, '').match(/^\/invitation\/([^/]+)\/([^/]+)$/)
+    if (!m) return null
+    let ccid: string
+    let id: string
+    try {
+        ccid = decodeURIComponent(m[1])
+        id = decodeURIComponent(m[2])
+    } catch {
+        throw new QueryResolveError('invalid')
+    }
+    if (!IsCCID(ccid)) throw new QueryResolveError('invalid')
+    return { kind: 'invitation', uri: semantics.invitation(ccid, id), hint: url.searchParams.get('hint') ?? undefined }
+}
+
 export const resolveQueryTarget = async (client: Client, input: string): Promise<QueryTarget> => {
     const raw = input.trim()
     if (raw === '') throw new QueryResolveError('invalid')
 
-    // https:// は既定で静的タイムライン扱いなので、concrnt.world の共有URLはその前に拾う
+    // https:// は既定で静的タイムライン扱いなので、招待リンクと concrnt.world の共有URLはその前に拾う
+    const invitation = parseInvitationURL(raw)
+    if (invitation) return invitation
     const world = parseConcrntWorldURL(raw)
     if (world) return world
 

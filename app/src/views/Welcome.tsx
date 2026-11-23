@@ -27,7 +27,7 @@ import { LoadingFull } from '../components/LoadingFull'
 import { AuthActions, AuthBrand, AuthButton, AuthHeader, AuthScreen, AuthTextButton, authStyles } from './authLayout'
 import { ResetSessionButton } from '../components/ResetSessionButton'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
-import { parseConcrntWorldURL, resolveQueryTarget } from '../lib/query'
+import { parseInvitationURL, resolveQueryTarget } from '../lib/query'
 import { InvitationView } from './Invitation'
 
 /*
@@ -172,11 +172,10 @@ export const WelcomeView = () => {
         setUpdater((prev) => prev + 1)
     }
 
-    // 招待リンク(https://concrnt.world/invitation/...)か招待URI(cckv://)のhint(招待者のサーバー)へ
+    // 招待リンク(<origin>/invitation/...)か招待URI(cckv://)のhint(招待者のサーバー)へ
     // ゲストとしてつないで解決する。招待でなければfalse
     const openInvitation = async (input: string): Promise<boolean> => {
-        const link = parseConcrntWorldURL(input)
-        const hint = link ? (link.kind === 'invitation' ? link.hint : undefined) : parseCCURI(input).hint
+        const hint = (parseInvitationURL(input) ?? parseCCURI(input)).hint
         const client = await Client.createAsGuest(hint ?? resolveEntrypoint())
         const target = await resolveQueryTarget(client, input)
         if (target.kind !== 'invitation') {

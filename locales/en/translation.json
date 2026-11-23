@@ -237,7 +237,7 @@
             "invitationCode": {
                 "open": "I have an invitation link",
                 "title": "Invitation link",
-                "description": "Enter the invitation link you received.",
+                "description": "You can also open it by loading the invitation link again or scanning its QR code.",
                 "submit": "Open invitation",
                 "invalid": "Could not load the invitation link",
                 "back": "Back"
