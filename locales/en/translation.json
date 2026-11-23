@@ -1251,6 +1251,13 @@
                     "crnt5": "The yakitori I had at the restaurant was crispy on the outside and juicy on the inside. Next time, I'm bringing friends!"
                 }
             }
+        },
+        "invitation": {
+            "title": "{{username}} invited you",
+            "list": "Your Home list",
+            "openApp": "Open in the app",
+            "getApp": "If you do not have the app yet, install it and then tap \"Open in the app\" again.",
+            "loadFailed": "Could not load the invitation"
         }
     },
     "app": {
