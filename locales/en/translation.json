@@ -1265,7 +1265,7 @@
             "loadFailed": "Could not load the invitation",
             "qrTitle": "Open on your phone",
             "qrDescription": "Scan this QR code with your phone camera to open the invitation on your phone.",
-            "qrGetApp": "If the app is not on your phone yet, install it first.",
+            "qrGetApp": "No app yet? Install it first!",
             "close": "Close"
         }
     },
