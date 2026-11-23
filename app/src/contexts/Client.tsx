@@ -2,12 +2,13 @@ import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client, migrateLegacyProfilePolicies } from '@concrnt/worldlib'
+import { Client, List, migrateLegacyProfilePolicies, PinnedListItemClass, semantics } from '@concrnt/worldlib'
 import { Api, ErrorCodeRegistrationNotFound, InMemoryKVS, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
 import { Button } from '@concrnt/ui'
 import { setupDefaultTimelines } from '../utils/clientSetup'
+import { loadStoredInvitation } from '../utils/invitation'
 import { SubkeyInvalidDrawer } from '../components/SubkeyInvalidDrawer'
 import { isPushEnabled, unregisterPush } from '../lib/push'
 
@@ -144,7 +145,29 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('No session found')
                     clientRef.current?.dispose()
                     clientRef.current = null
-                    setClient(null)
+                    // 招待を受け入れたが未登録: 招待のタイムラインを並べたホームを持つゲストとして起動する
+                    const invitation = loadStoredInvitation()
+                    if (!invitation) {
+                        setClient(null)
+                        return
+                    }
+                    const guest = await Client.createAsGuest(invitation.domain)
+                    // ゲストは書き込めないので、ホームのリストはドキュメントを作らずメモリ上に組み立てる
+                    const pin = new PinnedListItemClass(guest, {
+                        uri: 'invitation',
+                        defaultPostHome: true,
+                        defaultPostTimelines: invitation.value.defaultPostTimelines,
+                        excludeSelf: true
+                    })
+                    const list = new List(guest, pin.uri, 'home')
+                    // 登録後のホームと同じく招待者のホームも並べる
+                    list.items.push([
+                        ...new Set([...invitation.value.timelines, semantics.homeTimeline(invitation.inviter, 'main')])
+                    ])
+                    pin.list.push(list)
+                    guest.pinnedLists.push([pin])
+                    clientRef.current = guest
+                    setClient(guest)
                     return
                 }
                 const { ccid, ckid, domain } = session
@@ -169,7 +192,7 @@ export const ClientProvider = (props: Props): ReactNode => {
                 // setClient前に済ませてkvsキャッシュを温めておくことで、差し替え直後の
                 // remountがキャッシュから即座に構築される
                 const runProfileSetup = async (client: Client, subkeyIsInvalid: boolean): Promise<void> => {
-                    if (client.ccid !== '' && client.isOnline && !subkeyIsInvalid) {
+                    if (!client.isGuest && client.isOnline && !subkeyIsInvalid) {
                         setProgress(t('loadingProfiles'))
                         await client.updateProfiles()
 
@@ -180,7 +203,7 @@ export const ClientProvider = (props: Props): ReactNode => {
 
                         setProgress(t('loadingLists'))
                         await client.pinnedLists.value()
-                    } else if (client.ccid !== '') {
+                    } else if (!client.isGuest) {
                         // 読み取り専用起動、またはsubkeyが無効な場合: キャッシュ/ベストエフォートで読み込む
                         // setupDefaultTimelinesはcommitを行うため実行しない
                         setProgress(t('loadingFromCache'))
@@ -300,6 +323,8 @@ export const ClientProvider = (props: Props): ReactNode => {
     )
 
     useEffect(() => {
+        // 起動時にTauri側のセッションを読みに行く。同期的に走るsetStateは前回のエラー表示のリセットだけ
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         reload()
     }, [reload])
 

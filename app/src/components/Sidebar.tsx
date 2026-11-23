@@ -88,9 +88,10 @@ export const Sidebar = (props: Props) => {
                                     flex: 1
                                 }}
                             >
-                                <ProfileName document={client?.profileDocument} />
+                                {/* ゲストはプロフィールもアカウントも無いので、名前は固定で出し切り替えは置かない */}
+                                {client.isGuest ? t('guest') : <ProfileName document={client?.profileDocument} />}
                             </Text>
-                            <SwitchAccountButton />
+                            {!client.isGuest && <SwitchAccountButton />}
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>

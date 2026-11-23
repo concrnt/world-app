@@ -32,7 +32,11 @@ import { KeyboardProvider } from './contexts/Keyboard'
 import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
 import { AgeGateProvider } from './contexts/AgeGate'
+import { GuestNoticeProvider } from './contexts/GuestNotice'
 import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
+import { isTauri } from '@tauri-apps/api/core'
+
+if (import.meta.env.DEV && !isTauri()) await import('./devMock')
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
@@ -75,34 +79,39 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                             <ImageCropperProvider>
                                                 <OverlayStackProvider>
                                                     <OverlayStackBackBridge />
-                                                    <EmojiPickerProvider>
-                                                        <ComposerDraftProvider>
-                                                            <TimelineSearchProvider>
-                                                                <ComposerProvider>
-                                                                    <ScannerProvider>
-                                                                        {/* AudioPlayerはOverlayProvider(FABのslot)の外側: ミニプレイヤーをFABより後ろに描いて前面にする(zIndex不使用) */}
-                                                                        <AudioPlayerProvider>
-                                                                            <OverlayProvider>
-                                                                                <MediaViewerProvider
-                                                                                    renderPost={(uri) => (
-                                                                                        <PostView uri={uri} embedded />
-                                                                                    )}
-                                                                                >
-                                                                                    <TickerProvider>
-                                                                                        <UrlSummaryProvider>
-                                                                                            <TranslationProvider>
-                                                                                                <App />
-                                                                                            </TranslationProvider>
-                                                                                        </UrlSummaryProvider>
-                                                                                    </TickerProvider>
-                                                                                </MediaViewerProvider>
-                                                                            </OverlayProvider>
-                                                                        </AudioPlayerProvider>
-                                                                    </ScannerProvider>
-                                                                </ComposerProvider>
-                                                            </TimelineSearchProvider>
-                                                        </ComposerDraftProvider>
-                                                    </EmojiPickerProvider>
+                                                    <GuestNoticeProvider>
+                                                        <EmojiPickerProvider>
+                                                            <ComposerDraftProvider>
+                                                                <TimelineSearchProvider>
+                                                                    <ComposerProvider>
+                                                                        <ScannerProvider>
+                                                                            {/* AudioPlayerはOverlayProvider(FABのslot)の外側: ミニプレイヤーをFABより後ろに描いて前面にする(zIndex不使用) */}
+                                                                            <AudioPlayerProvider>
+                                                                                <OverlayProvider>
+                                                                                    <MediaViewerProvider
+                                                                                        renderPost={(uri) => (
+                                                                                            <PostView
+                                                                                                uri={uri}
+                                                                                                embedded
+                                                                                            />
+                                                                                        )}
+                                                                                    >
+                                                                                        <TickerProvider>
+                                                                                            <UrlSummaryProvider>
+                                                                                                <TranslationProvider>
+                                                                                                    <App />
+                                                                                                </TranslationProvider>
+                                                                                            </UrlSummaryProvider>
+                                                                                        </TickerProvider>
+                                                                                    </MediaViewerProvider>
+                                                                                </OverlayProvider>
+                                                                            </AudioPlayerProvider>
+                                                                        </ScannerProvider>
+                                                                    </ComposerProvider>
+                                                                </TimelineSearchProvider>
+                                                            </ComposerDraftProvider>
+                                                        </EmojiPickerProvider>
+                                                    </GuestNoticeProvider>
                                                 </OverlayStackProvider>
                                             </ImageCropperProvider>
                                         </MediaProxyProvider>

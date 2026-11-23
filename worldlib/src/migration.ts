@@ -167,7 +167,7 @@ const writePublicPolicy = 'https://policy.concrnt.world/t/write-public.json'
 // 完了マーカーなしで毎ロード時に呼んで安全(冪等)。対象は現在開いているプロフィールのみ。
 export const migrateLegacyProfilePolicies = async (client: Client): Promise<void> => {
     const ccid = client.ccid
-    if (ccid === '') return
+    if (client.isGuest) return
     const profile = client.currentProfile
 
     const timelineUris = [

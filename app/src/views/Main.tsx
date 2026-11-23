@@ -15,11 +15,13 @@ import { ApView } from './ApView'
 import { BskyView } from './BskyView'
 import { QueryView } from './Query'
 import { useClient } from '../contexts/Client'
+import { GuestNoticeView } from '../contexts/GuestNotice'
 import { useBackHandler } from '../contexts/BackHandler'
 import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTapped, registerPush } from '../lib/push'
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
 import { AUTH_URI_SCHEME } from '../lib/externalAuth'
 import { ExternalAuthView } from './ExternalAuth'
+import { InvitationView } from './Invitation'
 import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
@@ -50,6 +52,7 @@ export const MainView = () => {
         setAppBadge(unreadCount)
     }, [client, unreadCount])
 
+    // ゲストのホーム以外のタブは案内のビューにする。TabLayoutは裏のタブも先読みでマウントするので本来の中身は置かない
     const tabs = useMemo(() => {
         return {
             home: {
@@ -69,7 +72,9 @@ export const MainView = () => {
                 tab: <MdHome size={24} />
             },
             explorer: {
-                body: (
+                body: client.isGuest ? (
+                    <GuestNoticeView />
+                ) : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['explorer'] = el
@@ -81,7 +86,9 @@ export const MainView = () => {
                 tab: <MdExplore size={24} />
             },
             notifications: {
-                body: (
+                body: client.isGuest ? (
+                    <GuestNoticeView />
+                ) : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['notifications'] = el
@@ -93,7 +100,9 @@ export const MainView = () => {
                 tab: <MdNotifications size={24} />
             },
             contacts: {
-                body: (
+                body: client.isGuest ? (
+                    <GuestNoticeView />
+                ) : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['contacts'] = el
@@ -105,7 +114,7 @@ export const MainView = () => {
                 tab: <MdContacts size={24} />
             }
         }
-    }, [])
+    }, [client.isGuest])
 
     const [selectedTab, setSelectedTab] = useState<string>('home')
 
@@ -216,6 +225,17 @@ export const MainView = () => {
                             break
                         case 'bskyView':
                             stack?.push(<BskyView uri={target.uri} />)
+                            break
+                        case 'invitation':
+                            stack?.push(
+                                <InvitationView
+                                    client={client}
+                                    uri={target.uri}
+                                    hint={target.hint}
+                                    onBack={() => stack?.pop()}
+                                />,
+                                { allowGuest: true }
+                            )
                             break
                     }
                 })

@@ -13,10 +13,12 @@ import { NotificationSettingsView } from './NotificationSettings'
 import { MediaSettingsView } from './MediaSettings'
 import { ListsView } from './Lists'
 import { MutedUsersView } from './MutedUsers'
+import { InvitationSettingsView } from './InvitationSettings'
 import {
     MdBadge,
     MdChevronRight,
     MdDisplaySettings,
+    MdGroupAdd,
     MdHub,
     MdList,
     MdVolumeOff,
@@ -108,6 +110,13 @@ export const SettingsView = () => {
                         onClick={() => stack.push(<MutedUsersView />)}
                     >
                         {t('mutedUsers')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdGroupAdd size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => stack.push(<InvitationSettingsView />)}
+                    >
+                        {t('invitation')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdDisplaySettings size={24} />}

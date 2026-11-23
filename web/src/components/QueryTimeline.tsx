@@ -150,7 +150,6 @@ const QueryTimelineInner = (props: Props) => {
     }, [])
 
     const itemUpdated = useCallback((href: string) => {
-        console.log('Item updated:', href)
         readerRef.current?.updateItem(href)
     }, [])
 
@@ -171,8 +170,6 @@ const QueryTimelineInner = (props: Props) => {
                 if (!hasMoreData) return
                 if (!readerRef.current) return
 
-                console.log('Reading more...')
-
                 loadingRef.current = true
                 setLoading(true)
                 readerRef.current
@@ -182,12 +179,10 @@ const QueryTimelineInner = (props: Props) => {
                     })
                     .catch((e) => {
                         console.error('Failed to read more', e)
-                        console.log(readerRef.current?.body[readerRef.current.body.length - 1])
                     })
                     .finally(() => {
                         loadingRef.current = false
                         setLoading(false)
-                        console.log('Finished reading more')
                     })
             }
         }

@@ -51,7 +51,8 @@
                 "branch": "ブランチ",
                 "commit": "コミット"
             },
-            "mutedUsers": "ミュート中のユーザー"
+            "mutedUsers": "ミュート中のユーザー",
+            "invitation": "招待"
         },
         "displaySettings": {
             "title": "表示とカスタマイズ",
@@ -232,7 +233,15 @@
                 "checkFailed": "確認できませんでした。通信環境やサーバーの状態を確認して、もう一度お試しください。"
             },
             "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
-            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する"
+            "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する",
+            "invitationCode": {
+                "open": "招待リンクをお持ちの方",
+                "title": "招待リンク",
+                "description": "招待リンクを再度読み込んだり、QRコードをスキャンすることで開くこともできます",
+                "submit": "招待状を開く",
+                "invalid": "招待リンクを読み込めませんでした",
+                "back": "戻る"
+            }
         },
         "ageBlocked": {
             "title": "まだConcrntを利用できません",
@@ -551,6 +560,30 @@
         "mutedUsers": {
             "title": "ミュート中のユーザー",
             "empty": "ミュート中のユーザーはいません"
+        },
+        "invitationSettings": {
+            "title": "招待",
+            "description": "招待リンクを開いた人は、選んだタイムラインが並ぶ Home でアプリを始められます。招待リンクは何回でも使えます。",
+            "comment": "招待コメント",
+            "create": "招待リンクを作成",
+            "creating": "作成中...",
+            "created": "作成済みの招待",
+            "empty": "まだ招待はありません",
+            "confirmDelete": "招待を削除しますか?",
+            "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
+            "delete": "削除",
+            "timelines": "リストに追加するタイムライン",
+            "timelinesDescription": "招待された人の Home に並ぶタイムラインです。",
+            "defaultPostTimelines": "デフォルト投稿先",
+            "defaultPostTimelinesDescription": "招待された人が Home から投稿したときの投稿先です。"
+        },
+        "invitation": {
+            "title": "{{username}}さんからconcrntへの招待が届きました！",
+            "acceptAsGuest": "ゲストとして見てみる",
+            "addToHome": "Home にタブとして追加",
+            "back": "戻る",
+            "loadFailed": "招待を読み込めませんでした",
+            "tabName": "{{username}}さんの招待"
         }
     },
     "components": {
@@ -729,7 +762,8 @@
             "post": "投稿",
             "documentation": "ドキュメント",
             "forum": "フォーラム",
-            "notFound": "見つかりません"
+            "notFound": "見つかりません",
+            "guest": "ゲスト"
         },
         "themeEditor": {
             "title": "テーマエディタ",
@@ -1017,6 +1051,12 @@
             "cancel": "キャンセル",
             "processing": "処理中...",
             "apply": "決定"
+        },
+        "guestNotice": {
+            "title": "現在ゲストユーザーです",
+            "description": "登録を完了させるとすべての機能が使えるようになります",
+            "register": "登録",
+            "exit": "ゲストをやめる"
         }
     },
     "utils": {
@@ -1218,6 +1258,15 @@
                     "crnt5": "お店で食べた焼き鳥、外はサクサク、中はジューシー。次は友達を連れて行く！"
                 }
             }
+        },
+        "invitation": {
+            "title": "{{username}}さんからconcrntへの招待が届きました！",
+            "openApp": "アプリで開く",
+            "loadFailed": "招待を読み込めませんでした",
+            "qrTitle": "スマートフォンで開く",
+            "qrDescription": "スマートフォンのカメラでこの QR コードを読み取ると、招待をスマートフォンで開けます。",
+            "qrGetApp": "まだアプリが無い方は先にインストール！",
+            "close": "閉じる"
         }
     },
     "app": {

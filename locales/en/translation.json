@@ -51,7 +51,8 @@
                 "branch": "Branch",
                 "commit": "Commit"
             },
-            "mutedUsers": "Muted users"
+            "mutedUsers": "Muted users",
+            "invitation": "Invitations"
         },
         "displaySettings": {
             "title": "Display & Customization",
@@ -232,7 +233,15 @@
                 "checkFailed": "Could not verify. Please check your connection or the server status and try again."
             },
             "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
-            "registerWithExistingKey": "Register this CCID on another server"
+            "registerWithExistingKey": "Register this CCID on another server",
+            "invitationCode": {
+                "open": "I have an invitation link",
+                "title": "Invitation link",
+                "description": "You can also open it by loading the invitation link again or scanning its QR code.",
+                "submit": "Open invitation",
+                "invalid": "Could not load the invitation link",
+                "back": "Back"
+            }
         },
         "ageBlocked": {
             "title": "You can't use Concrnt yet",
@@ -552,6 +561,30 @@
         "mutedUsers": {
             "title": "Muted users",
             "empty": "No muted users"
+        },
+        "invitationSettings": {
+            "title": "Invitations",
+            "description": "People who open the invitation link start the app with a Home made of the selected timelines. The link can be used any number of times.",
+            "comment": "Invitation message",
+            "create": "Create invitation link",
+            "creating": "Creating...",
+            "created": "Your invitations",
+            "empty": "No invitations yet",
+            "confirmDelete": "Delete this invitation?",
+            "confirmDeleteDescription": "The invitation link will no longer open.",
+            "delete": "Delete",
+            "timelines": "Timelines to add to the list",
+            "timelinesDescription": "These timelines appear on the invited person's Home.",
+            "defaultPostTimelines": "Default post destinations",
+            "defaultPostTimelinesDescription": "Where the invited person's posts from Home go."
+        },
+        "invitation": {
+            "title": "{{username}} invited you to concrnt!",
+            "acceptAsGuest": "Look around as a guest",
+            "addToHome": "Add to Home as a tab",
+            "back": "Back",
+            "loadFailed": "Could not load the invitation",
+            "tabName": "Invitation from {{username}}"
         }
     },
     "components": {
@@ -730,7 +763,8 @@
             "post": "Post",
             "documentation": "Documentation",
             "forum": "Forum",
-            "notFound": "Not found"
+            "notFound": "Not found",
+            "guest": "Guest"
         },
         "themeEditor": {
             "title": "Theme Editor",
@@ -1018,6 +1052,12 @@
             "cancel": "Cancel",
             "processing": "Processing...",
             "apply": "Apply"
+        },
+        "guestNotice": {
+            "title": "You are browsing as a guest",
+            "description": "Finish signing up to use all features.",
+            "register": "Sign up",
+            "exit": "Stop browsing as a guest"
         }
     },
     "utils": {
@@ -1219,6 +1259,15 @@
                     "crnt5": "The yakitori I had at the restaurant was crispy on the outside and juicy on the inside. Next time, I'm bringing friends!"
                 }
             }
+        },
+        "invitation": {
+            "title": "{{username}} invited you to concrnt!",
+            "openApp": "Open in the app",
+            "loadFailed": "Could not load the invitation",
+            "qrTitle": "Open on your phone",
+            "qrDescription": "Scan this QR code with your phone camera to open the invitation on your phone.",
+            "qrGetApp": "No app yet? Install it first!",
+            "close": "Close"
         }
     },
     "app": {

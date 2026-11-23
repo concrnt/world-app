@@ -64,7 +64,7 @@ export const PreferenceProvider = (props: PreferenceProviderProps): ReactNode =>
     // 別端末での設定変更を取り込む同期チャンネル。localStorageが真のソースで即時表示は
     // 既に効いているため、cckvはno-cacheで読み、起動時とアプリ復帰時に取り込む
     useEffect(() => {
-        if (!client || !client.api || client.ccid === '') return
+        if (!client || !client.api || client.isGuest) return
 
         let lastLoaded = 0
         const load = () => {

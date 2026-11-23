@@ -7,6 +7,7 @@ import './index.css'
 import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
+import { realtimeDiagnostics } from '@concrnt/client'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { LoadingFull } from './components/LoadingFull'
@@ -58,6 +59,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Signup } from './pages/Signup'
 import { WelcomePage } from './pages/Welcome'
+import { InvitationPage } from './pages/Invitation'
 import { GuestShell } from './views/guest/GuestBase'
 import { GuestProfileView } from './views/guest/GuestProfile'
 import { GuestPostView } from './views/guest/GuestPost'
@@ -477,6 +479,9 @@ const AuthedRoutes = () => (
     </ClientProvider>
 )
 
+// Dev画面へ遷移するとタイムラインのreaderがdisposeされるので、新着が止まった画面のままDevToolsのconsoleから呼べるようにする
+Object.assign(window, { realtimeDiagnostics })
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ErrorBoundary FallbackComponent={EmergencyKit}>
         <KeyboardProvider>
@@ -508,6 +513,16 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             }
                         />
                         <Route path="/welcome" element={<WelcomePage />} />
+                        <Route
+                            path="/invitation/:ccid/:id"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <OverlayStackProvider>
+                                        <InvitationPage />
+                                    </OverlayStackProvider>
+                                </BaseThemeProvider>
+                            }
+                        />
                         <Route
                             path="/crash"
                             element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}

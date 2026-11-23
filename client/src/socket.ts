@@ -1,6 +1,7 @@
 import { Api } from './api'
 import { RealtimeEvent } from './model'
 import { renderUriTemplate } from './util'
+import { liveSockets, recordRealtime } from './realtimeDiagnostics'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const WS = typeof window === 'undefined' ? require('ws') : window.WebSocket
@@ -21,10 +22,22 @@ export class Socket {
     private heartbeatInterval?: ReturnType<typeof setInterval>
     // ハートビート(購読リストの再送)に対する応答待ち。次のハートビートまでに何も届かなければ
     // 相手が消えた接続(half-open: readyStateはOPENのまま)とみなして張り直す
-    private awaitingAck = false
+    awaitingAck = false
     // 接続先が subscribed 応答を返すサーバーか。未対応サーバー(旧バージョン)では応答が無いのが
     // 正常なので、一度応答を見るまでは無応答を切断の根拠にしない
-    private ackSupported = false
+    ackSupported = false
+    // realtimeDiagnosticsで後から読む。ackPrefixesはサーバーが実際に購読しているリスト、
+    // unmatchedはどの購読にも振り分けられなかったイベントの数
+    stats: {
+        lastOpenAt?: string
+        lastClose?: { at: string; code: number }
+        lastMessageAt?: string
+        lastAckAt?: string
+        ackPrefixes?: string[]
+        received: number
+        unmatched: number
+        lastUnmatchedSource?: string
+    } = { received: 0, unmatched: 0 }
     private reconnectTimeout?: ReturnType<typeof setTimeout>
     private connectPromise: Promise<void> | null = null
     private disposed = false
@@ -32,6 +45,7 @@ export class Socket {
     constructor(api: Api, hostOverride?: string) {
         this.api = api
         this.hostOverride = hostOverride
+        liveSockets.add(this)
 
         // 初回接続に失敗しても監視は動かし続ける(checkConnectionが再接続を担う)
         this.checkConnectionInterval = setInterval(() => {
@@ -74,18 +88,22 @@ export class Socket {
         this.ws.onmessage = async (rawevent: any) => {
             // 何か届いた=接続は生きている(イベントでも応答でもよい)
             this.awaitingAck = false
+            this.stats.lastMessageAt = new Date().toISOString()
             const event: RealtimeEvent = JSON.parse(rawevent.data)
 
             if (event.type === 'subscribed') {
                 // listenの応答。サーバーが実際に購読しているリストが返る
                 this.ackSupported = true
                 const prefixes: string[] = (event as any).prefixes ?? []
+                this.stats.lastAckAt = this.stats.lastMessageAt
+                this.stats.ackPrefixes = prefixes
                 const missing = Array.from(this.subscriptions.keys()).filter((p) => !prefixes.includes(p))
                 if (missing.length > 0) {
-                    console.info('socket subscribed without:', missing)
+                    recordRealtime('socket subscribed without', missing)
                 }
                 return
             }
+            this.stats.received++
 
             switch (event.type) {
                 case 'created': {
@@ -110,16 +128,18 @@ export class Socket {
             this.distribute(event.source, event)
         }
 
-        this.ws.onerror = (event: any) => {
-            console.info('socket error', event)
+        this.ws.onerror = () => {
+            recordRealtime('socket error')
         }
 
         this.ws.onclose = (event: any) => {
-            console.info('socket close', event)
+            this.stats.lastClose = { at: new Date().toISOString(), code: event.code }
+            recordRealtime('socket close', { code: event.code, reason: event.reason })
         }
 
-        this.ws.onopen = (event: any) => {
-            console.info('socket open', event)
+        this.ws.onopen = () => {
+            this.stats.lastOpenAt = new Date().toISOString()
+            recordRealtime('socket open', { host: this.hostOverride ?? this.api.defaultHost })
             this.ws.send(JSON.stringify({ type: 'listen', prefixes: Array.from(this.subscriptions.keys()) }))
             for (const listener of Array.from(this.openListeners)) {
                 listener()
@@ -145,7 +165,7 @@ export class Socket {
     heartbeat() {
         if (this.ws?.readyState !== WS.OPEN) return
         if (this.ackSupported && this.awaitingAck) {
-            console.info('socket heartbeat unanswered. reconnecting')
+            recordRealtime('socket heartbeat unanswered')
             this.discard()
             this.reconnectNow()
             return
@@ -169,7 +189,7 @@ export class Socket {
         try {
             ws.close()
         } catch (e) {
-            console.info('socket close failed', e)
+            recordRealtime('socket close failed', String(e))
         }
     }
 
@@ -195,13 +215,13 @@ export class Socket {
     reconnect() {
         if (this.disposed) return
         if (this.ws?.readyState === WS.OPEN) {
-            console.info('reconnect confirmed')
+            recordRealtime('socket reconnect confirmed')
             this.reconnecting = false
             this.failcount = 0
         } else {
-            console.info('reconnecting. attempt: ', this.failcount)
+            recordRealtime('socket reconnect attempt', this.failcount)
             this.connect().catch((err) => {
-                console.info('reconnect attempt failed:', err)
+                recordRealtime('socket reconnect failed', String(err))
             })
             this.failcount++
             this.reconnectTimeout = setTimeout(
@@ -214,12 +234,19 @@ export class Socket {
     }
 
     distribute(uri: string, event: RealtimeEvent) {
+        let matched = false
         for (const [prefix, callbacks] of this.subscriptions.entries()) {
             if (uri.startsWith(prefix)) {
+                matched = true
                 callbacks.forEach((callback) => {
                     callback(event)
                 })
             }
+        }
+        if (!matched) {
+            this.stats.unmatched++
+            this.stats.lastUnmatchedSource = uri
+            recordRealtime('socket event unmatched', { type: event.type, source: uri })
         }
     }
 
@@ -262,6 +289,7 @@ export class Socket {
 
     dispose() {
         this.disposed = true
+        liveSockets.delete(this)
         if (this.checkConnectionInterval) clearInterval(this.checkConnectionInterval)
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval)
         if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout)
