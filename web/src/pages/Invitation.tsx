@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Avatar, CssVar, Text } from '@concrnt/ui'
+import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
+import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, semantics, User } from '@concrnt/worldlib'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen } from '../views/authLayout'
 import { ExternalLink } from '../components/ExternalLink'
@@ -25,6 +26,7 @@ export const InvitationPage = () => {
     const hint = searchParams.get('hint') ?? undefined
     // undefined: ロード中 / null: 取得失敗
     const [loaded, setLoaded] = useState<Loaded | null>()
+    const [qrOpen, setQrOpen] = useState(false)
 
     useEffect(() => {
         let client: Client | undefined
@@ -54,6 +56,35 @@ export const InvitationPage = () => {
     }, [ccid, id, hint])
 
     if (loaded === undefined) return <LoadingFull />
+
+    const storeBadges = (
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: CssVar.space(2),
+                flexWrap: 'wrap'
+            }}
+        >
+            {[
+                {
+                    label: 'Download on the App Store',
+                    badge: appStoreBadge,
+                    url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
+                },
+                {
+                    label: 'Get it on Google Play',
+                    badge: googlePlayBadge,
+                    url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
+                }
+            ].map((store) => (
+                <ExternalLink key={store.label} href={store.url} style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src={store.badge} alt={store.label} style={{ height: 48, width: 'auto' }} />
+                </ExternalLink>
+            ))}
+        </div>
+    )
 
     if (loaded === null) {
         return (
@@ -88,43 +119,50 @@ export const InvitationPage = () => {
             <AuthActions>
                 <AuthButton
                     onClick={() => {
+                        // この端末にアプリがあればそのまま開く。PC で見ている人はモーダルの QR でスマホに渡す
                         window.location.href = `cckv://${ccid}${hint ? '@' + hint : ''}/concrnt.world/invitations/${id}`
+                        setQrOpen(true)
                     }}
                 >
                     {t('openApp')}
                 </AuthButton>
                 <Text style={{ color: CssVar.uiText, opacity: 0.78, textAlign: 'center' }}>{t('getApp')}</Text>
+                {storeBadges}
+            </AuthActions>
+            <Modal
+                open={qrOpen}
+                onClose={() => setQrOpen(false)}
+                // 既定の top: 30% だと大きい QR で下にはみ出すので、中央に置いて収まらなければスクロールさせる
+                style={{ width: 'min(480px, 92vw)', top: 'auto', maxHeight: '92dvh', overflowY: 'auto' }}
+            >
                 <div
                     style={{
                         display: 'flex',
-                        justifyContent: 'center',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        gap: CssVar.space(2),
-                        flexWrap: 'wrap'
+                        gap: CssVar.space(3),
+                        padding: CssVar.space(4)
                     }}
                 >
-                    {[
-                        {
-                            label: 'Download on the App Store',
-                            badge: appStoreBadge,
-                            url: 'https://apps.apple.com/jp/app/concrnt-world/id6757524249'
-                        },
-                        {
-                            label: 'Get it on Google Play',
-                            badge: googlePlayBadge,
-                            url: 'https://play.google.com/store/apps/details?id=world.concrnt.app'
-                        }
-                    ].map((store) => (
-                        <ExternalLink
-                            key={store.label}
-                            href={store.url}
-                            style={{ display: 'flex', alignItems: 'center' }}
-                        >
-                            <img src={store.badge} alt={store.label} style={{ height: 48, width: 'auto' }} />
-                        </ExternalLink>
-                    ))}
+                    <Text variant="h2">{t('qrTitle')}</Text>
+                    <Text style={{ textAlign: 'center' }}>{t('qrDescription')}</Text>
+                    {/* カメラで読めばアプリの有無に関わらずこの招待ページが開くよう、cckv:// ではなく招待リンクを入れる */}
+                    <QRCode
+                        value={`https://concrnt.world/invitation/${ccid}/${id}${hint ? '?hint=' + hint : ''}`}
+                        size={500}
+                        ecLevel="L"
+                        quietZone={30}
+                        fgColor="#000000"
+                        bgColor="#ffffff"
+                        style={{ width: '100%', maxWidth: 'min(360px, 45dvh)', height: 'auto', display: 'block' }}
+                    />
+                    <Text style={{ textAlign: 'center' }}>{t('qrGetApp')}</Text>
+                    {storeBadges}
+                    <Button variant="text" onClick={() => setQrOpen(false)}>
+                        {t('close')}
+                    </Button>
                 </div>
-            </AuthActions>
+            </Modal>
         </AuthScreen>
     )
 }

@@ -1265,7 +1265,11 @@
             "openApp": "Open in the app",
             "getApp": "If you do not have the app yet, install it and then tap \"Open in the app\" again.",
             "loadFailed": "Could not load the invitation",
-            "timelines": "Timelines in the list"
+            "timelines": "Timelines in the list",
+            "qrTitle": "Open on your phone",
+            "qrDescription": "Scan this QR code with your phone camera to open the invitation on your phone.",
+            "qrGetApp": "If the app is not on your phone yet, install it first.",
+            "close": "Close"
         }
     },
     "app": {

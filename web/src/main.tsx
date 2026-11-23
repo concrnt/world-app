@@ -517,7 +517,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             path="/invitation/:ccid/:id"
                             element={
                                 <BaseThemeProvider theme={Themes.blue}>
-                                    <InvitationPage />
+                                    <OverlayStackProvider>
+                                        <InvitationPage />
+                                    </OverlayStackProvider>
                                 </BaseThemeProvider>
                             }
                         />
