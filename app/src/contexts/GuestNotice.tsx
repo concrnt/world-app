@@ -1,15 +1,15 @@
 import { createContext, ReactNode, useContext, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from '@concrnt/ui'
+import { Button, Text, View } from '@concrnt/ui'
 import { Drawer } from '../ui/Drawer'
 import { Header } from '../ui/Header'
 import { AccountSetup } from '../views/AccountSetup'
-import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton } from '../views/authLayout'
+import { CssVar } from '../types/Theme'
 import { loadStoredInvitation } from '../utils/invitation'
 
 const GuestRegisterContext = createContext<() => void>(() => {})
 
-// ゲスト(招待を受け入れたが未登録)の登録画面。案内ビューの「登録へ進む」から開く
+// ゲスト(招待を受け入れたが未登録)の登録画面。案内ビューの「登録」から開く
 export const GuestNoticeProvider = (props: { children: ReactNode }) => {
     const [open, setOpen] = useState(false)
 
@@ -39,22 +39,34 @@ export const GuestNoticeView = () => {
     return (
         <View>
             <Header />
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-                <AuthScreen embedded>
-                    <AuthHeader title={t('title')} description={t('description')} />
-                    <AuthActions>
-                        <AuthButton onClick={openRegister}>{t('register')}</AuthButton>
-                        {/* 既存アカウントでログインしたい人の出口。招待を捨ててWelcomeから始め直す */}
-                        <AuthTextButton
-                            onClick={() => {
-                                localStorage.removeItem('invitation')
-                                window.location.reload()
-                            }}
-                        >
-                            {t('exit')}
-                        </AuthTextButton>
-                    </AuthActions>
-                </AuthScreen>
+            <div
+                style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: CssVar.space(3),
+                    padding: CssVar.space(4),
+                    textAlign: 'center'
+                }}
+            >
+                <Text variant="h2">{t('title')}</Text>
+                <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
+                <Button onClick={openRegister} style={{ width: '100%', maxWidth: 440 }}>
+                    {t('register')}
+                </Button>
+                {/* 既存アカウントでログインしたい人の出口。招待を捨ててWelcomeから始め直す */}
+                <Button
+                    variant="text"
+                    onClick={() => {
+                        localStorage.removeItem('invitation')
+                        window.location.reload()
+                    }}
+                >
+                    {t('exit')}
+                </Button>
             </div>
         </View>
     )

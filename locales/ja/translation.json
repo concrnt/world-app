@@ -1055,7 +1055,7 @@
         "guestNotice": {
             "title": "現在ゲストユーザーです",
             "description": "登録を完了させるとすべての機能が使えるようになります",
-            "register": "登録へ進む",
+            "register": "登録",
             "exit": "ゲストをやめる"
         }
     },
