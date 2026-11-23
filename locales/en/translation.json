@@ -562,6 +562,14 @@
             "listsDescription": "Choose from your pinned lists. Their default post destinations are included as well.",
             "create": "Create invitation code",
             "creating": "Creating..."
+        },
+        "invitation": {
+            "title": "{{username}} invited you",
+            "lists": "Lists for your Home",
+            "acceptAsGuest": "Look around as a guest",
+            "addToHome": "Add to Home as tabs",
+            "back": "Back",
+            "loadFailed": "Could not load the invitation"
         }
     },
     "components": {

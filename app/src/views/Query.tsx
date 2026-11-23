@@ -5,6 +5,7 @@ import { PostView } from '../views/Post'
 import { ListView } from '../views/List'
 import { ApView } from '../views/ApView'
 import { BskyView } from '../views/BskyView'
+import { InvitationView } from '../views/Invitation'
 import { Header } from '../ui/Header'
 import { useStack } from '../layouts/Stack'
 import { useEffect, useState } from 'react'
@@ -22,7 +23,7 @@ interface Props {
 
 export const QueryView = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'views.query' })
-    const { push } = useStack()
+    const { push, pop } = useStack()
     const { client } = useClient()
 
     const [query, setQuery] = useState(props.initialQuery ?? '')
@@ -54,6 +55,9 @@ export const QueryView = (props: Props) => {
                 case 'bskyView':
                     push?.(<BskyView uri={target.uri} />)
                     break
+                case 'invitation':
+                    push?.(<InvitationView client={client} uri={target.uri} hint={target.hint} onBack={pop} />)
+                    break
             }
         } catch (e) {
             setError(e instanceof QueryResolveError ? t(e.reason) : t('failed', { error: String(e) }))
@@ -63,6 +67,8 @@ export const QueryView = (props: Props) => {
     }
 
     useEffect(() => {
+        // 照会中表示のsetStateが走るだけで、マウント時に一度きりなので連鎖レンダーにはならない
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (props.autoSubmit && props.initialQuery) submit(props.initialQuery)
         // マウント時に一度だけ
         // eslint-disable-next-line react-hooks/exhaustive-deps

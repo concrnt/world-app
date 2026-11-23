@@ -14,6 +14,7 @@ export type QueryTarget =
     | { kind: 'apView'; uri: string }
     // Blueskyのperson/post(app: BskyView、web: /bluesky/view/:uri)
     | { kind: 'bskyView'; uri: string }
+    | { kind: 'invitation'; uri: string; hint?: string }
 
 export type QueryResolveReason = 'invalid' | 'notFound' | 'unsupported'
 
@@ -143,6 +144,8 @@ export const resolveQueryTarget = async (client: Client, input: string): Promise
             return { kind: 'post', uri }
         case Schemas.list:
             return { kind: 'list', uri }
+        case Schemas.invitation:
+            return { kind: 'invitation', uri, hint: parsed.hint }
         default:
             throw new QueryResolveError('unsupported', `unsupported schema: ${document.schema}`)
     }

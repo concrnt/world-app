@@ -561,6 +561,14 @@
             "listsDescription": "ピン留め中のリストから選びます。各リストのデフォルト投稿先も引き継がれます。",
             "create": "招待コードを作成",
             "creating": "作成中..."
+        },
+        "invitation": {
+            "title": "{{username}}さんから招待が届きました",
+            "lists": "Home に入るリスト",
+            "acceptAsGuest": "ゲストとして見てみる",
+            "addToHome": "Home にタブとして追加",
+            "back": "戻る",
+            "loadFailed": "招待を読み込めませんでした"
         }
     },
     "components": {

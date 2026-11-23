@@ -20,6 +20,7 @@ import { getLaunchNotification, getPushSchemas, isPushEnabled, onNotificationTap
 import { getLaunchDeepLink, onDeepLink } from '../lib/deeplink'
 import { AUTH_URI_SCHEME } from '../lib/externalAuth'
 import { ExternalAuthView } from './ExternalAuth'
+import { InvitationView } from './Invitation'
 import { resolveQueryTarget } from '../lib/query'
 
 import { MdHome } from 'react-icons/md'
@@ -216,6 +217,16 @@ export const MainView = () => {
                             break
                         case 'bskyView':
                             stack?.push(<BskyView uri={target.uri} />)
+                            break
+                        case 'invitation':
+                            stack?.push(
+                                <InvitationView
+                                    client={client}
+                                    uri={target.uri}
+                                    hint={target.hint}
+                                    onBack={() => stack?.pop()}
+                                />
+                            )
                             break
                     }
                 })
