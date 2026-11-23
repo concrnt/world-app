@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CssVar } from '../../types/Theme'
 import { DummyMessage } from './DummyMessage'
 import styles from './PostsBackground.module.css'
 
-// /welcome と招待ページの背景に浮かぶダミー投稿。スクロールに合わせてそれぞれの速さで流れる
-export const PostsBackground = () => {
+// /welcome と招待ページの背景に浮かぶダミー投稿。スクロールに合わせてそれぞれの速さで流れる。
+// scatter: 中央に置いたカードの周りへ、中央から外に向かってランダムに散らす(既定は /welcome の縦中央を避けた配置)
+export const PostsBackground = (props: { scatter?: boolean }) => {
     const { t } = useTranslation('', { keyPrefix: 'web.welcome' })
 
     const decorations = [
@@ -34,6 +36,21 @@ export const PostsBackground = () => {
         }
     ]
 
+    // 偏らないよう角度は等分してから揺らし、距離は中央からランダムに取る。開くたびに変わるようマウント時に一度だけ決める。
+    // 位置は投稿の左上なので、投稿の幅のぶん左へずらして中心が散らばるようにする
+    const [scattered] = useState(() =>
+        decorations.map((_, i) => {
+            const angle = ((i + Math.random()) / decorations.length) * 2 * Math.PI
+            const radius = 15 + Math.random() * 35
+            // 画面端に近い投稿が残りの幅に縮んで折り返さないよう、本来の幅のまま置いて画面外へはみ出させる
+            return {
+                top: `${50 + Math.sin(angle) * radius}%`,
+                left: `${35 + Math.cos(angle) * radius}%`,
+                width: 'max-content'
+            }
+        })
+    )
+
     return (
         <div /* parallax decorations */
             style={{
@@ -48,7 +65,7 @@ export const PostsBackground = () => {
                     key={i}
                     style={{
                         position: 'absolute',
-                        ...decoration.style,
+                        ...(props.scatter ? scattered[i] : decoration.style),
                         backgroundColor: CssVar.contentBackground,
                         borderRadius: '4px',
                         border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,

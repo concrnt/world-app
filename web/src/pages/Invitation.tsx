@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, semantics, User } from '@concrnt/worldlib'
-import { AuthActions, AuthButton, AuthHeader } from '../views/authLayout'
 import { PostsBackground } from '../components/welcome/PostsBackground'
 import { ExternalLink } from '../components/ExternalLink'
 import { LoadingFull } from '../components/LoadingFull'
@@ -51,6 +50,8 @@ export const InvitationPage = () => {
 
     if (loaded === undefined) return <LoadingFull />
 
+    const titleStyle = { fontSize: '2rem', lineHeight: 1.2, textAlign: 'center' } as const
+
     const storeBadges = (
         <div
             style={{
@@ -90,7 +91,7 @@ export const InvitationPage = () => {
                 backgroundColor: CssVar.contentBackground
             }}
         >
-            <PostsBackground />
+            <PostsBackground scatter />
             {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
                 zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}
             <div
@@ -116,19 +117,23 @@ export const InvitationPage = () => {
                         padding: `${CssVar.space(8)} ${CssVar.space(5)}`,
                         boxSizing: 'border-box',
                         borderRadius: CssVar.round(2),
-                        color: CssVar.uiText,
-                        backgroundColor: CssVar.uiBackground,
+                        color: CssVar.contentText,
+                        // 背景の投稿が透けて見えるよう半透明にし、文字が読めるようぼかす
+                        backgroundColor: `rgb(from ${CssVar.contentBackground} r g b / 0.7)`,
+                        backdropFilter: 'blur(8px)',
                         boxShadow:
                             '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
                     }}
                 >
                     {loaded === null ? (
-                        <AuthHeader title={t('loadFailed')} />
+                        <Text variant="h1" style={titleStyle}>
+                            {t('loadFailed')}
+                        </Text>
                     ) : (
                         <>
-                            <AuthHeader
-                                title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
-                            />
+                            <Text variant="h1" style={titleStyle}>
+                                {t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
+                            </Text>
                             {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
                             <div
                                 style={{
@@ -143,12 +148,20 @@ export const InvitationPage = () => {
                                     src={loaded.inviter.profile.avatar}
                                     style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}
                                 />
-                                <Text style={{ color: CssVar.uiText, fontSize: '1.5rem', wordBreak: 'break-word' }}>
+                                <Text style={{ fontSize: '1.5rem', wordBreak: 'break-word' }}>
                                     &lt;&nbsp;{loaded.comment}
                                 </Text>
                             </div>
-                            <AuthActions>
-                                <AuthButton
+                            <div
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: CssVar.space(3)
+                                }}
+                            >
+                                <Button
+                                    style={{ width: '100%', minHeight: 48, fontSize: '1rem', fontWeight: 700 }}
                                     onClick={() => {
                                         // この端末にアプリがあればそのまま開く。PC で見ている人はモーダルの QR でスマホに渡す
                                         window.location.href = `cckv://${ccid}${hint ? '@' + hint : ''}/concrnt.world/invitations/${id}`
@@ -156,9 +169,9 @@ export const InvitationPage = () => {
                                     }}
                                 >
                                     {t('openApp')}
-                                </AuthButton>
+                                </Button>
                                 {storeBadges}
-                            </AuthActions>
+                            </div>
                         </>
                     )}
                 </div>
