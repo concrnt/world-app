@@ -579,7 +579,7 @@
             "defaultPostTimelinesDescription": "Where the invited person's posts from Home go."
         },
         "invitation": {
-            "title": "{{username}} invited you",
+            "title": "{{username}} invited you to concrnt!",
             "acceptAsGuest": "Look around as a guest",
             "addToHome": "Add to Home as a tab",
             "back": "Back",
@@ -1260,7 +1260,7 @@
             }
         },
         "invitation": {
-            "title": "{{username}} invited you",
+            "title": "{{username}} invited you to concrnt!",
             "openApp": "Open in the app",
             "loadFailed": "Could not load the invitation",
             "qrTitle": "Open on your phone",

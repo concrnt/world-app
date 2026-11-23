@@ -578,7 +578,7 @@
             "defaultPostTimelinesDescription": "招待された人が Home から投稿したときの投稿先です。"
         },
         "invitation": {
-            "title": "{{username}}さんから招待が届きました",
+            "title": "{{username}}さんからconcrntへの招待が届きました！",
             "acceptAsGuest": "ゲストとして見てみる",
             "addToHome": "Home にタブとして追加",
             "back": "戻る",
@@ -1259,7 +1259,7 @@
             }
         },
         "invitation": {
-            "title": "{{username}}さんから招待が届きました",
+            "title": "{{username}}さんからconcrntへの招待が届きました！",
             "openApp": "アプリで開く",
             "loadFailed": "招待を読み込めませんでした",
             "qrTitle": "スマートフォンで開く",
