@@ -564,26 +564,29 @@
         },
         "invitationSettings": {
             "title": "Invitations",
-            "description": "People who open the invitation link start the app with the selected list as their Home. The link can be used any number of times.",
+            "description": "People who open the invitation link start the app with a Home made of the selected timelines. The link can be used any number of times.",
             "comment": "Invitation message",
             "create": "Create invitation link",
             "creating": "Creating...",
-            "list": "List for Home",
-            "listDescription": "Choose one of your pinned lists. Its default post destinations are included as well.",
             "created": "Your invitations",
             "empty": "No invitations yet",
             "noComment": "(No message)",
             "confirmDelete": "Delete this invitation?",
             "confirmDeleteDescription": "The invitation link will no longer open.",
-            "delete": "Delete"
+            "delete": "Delete",
+            "timelines": "Timelines to add to the list",
+            "timelinesDescription": "These timelines appear on the invited person's Home.",
+            "defaultPostTimelines": "Default post destinations",
+            "defaultPostTimelinesDescription": "Where the invited person's posts from Home go."
         },
         "invitation": {
             "title": "{{username}} invited you",
             "acceptAsGuest": "Look around as a guest",
-            "addToHome": "Add to Home as tabs",
+            "addToHome": "Add to Home as a tab",
             "back": "Back",
             "loadFailed": "Could not load the invitation",
-            "list": "Your Home list"
+            "timelines": "Timelines in the list",
+            "tabName": "Invitation from {{username}}"
         }
     },
     "components": {
@@ -1260,10 +1263,10 @@
         },
         "invitation": {
             "title": "{{username}} invited you",
-            "list": "Your Home list",
             "openApp": "Open in the app",
             "getApp": "If you do not have the app yet, install it and then tap \"Open in the app\" again.",
-            "loadFailed": "Could not load the invitation"
+            "loadFailed": "Could not load the invitation",
+            "timelines": "Timelines in the list"
         }
     },
     "app": {

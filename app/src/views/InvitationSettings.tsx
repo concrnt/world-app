@@ -1,12 +1,11 @@
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MdDelete } from 'react-icons/md'
 import { Button, CopyButton, IconButton, Text, TextField, View } from '@concrnt/ui'
 import { Document, SignedDocument } from '@concrnt/client'
 import { InvitationSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
-import { useSubscribe } from '../hooks/useSubscribe'
-import { ListName } from '../components/ListName'
+import { TimelinePicker } from '../components/TimelinePicker'
 import { Confirm } from '../components/Confirm'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
@@ -17,9 +16,7 @@ export const InvitationSettingsView = () => {
     return (
         <View>
             <Header>{t('title')}</Header>
-            <Suspense fallback={<Text>Loading...</Text>}>
-                <InvitationForm />
-            </Suspense>
+            <InvitationForm />
         </View>
     )
 }
@@ -27,9 +24,9 @@ export const InvitationSettingsView = () => {
 const InvitationForm = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.invitationSettings' })
     const { client } = useClient()
-    const [pinnedLists] = useSubscribe(client.pinnedLists)
     const [comment, setComment] = useState('')
-    const [selected, setSelected] = useState<string>()
+    const [timelines, setTimelines] = useState<string[]>([])
+    const [defaultPostTimelines, setDefaultPostTimelines] = useState<string[]>([])
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
     const [deleting, setDeleting] = useState<string>()
 
@@ -60,21 +57,20 @@ const InvitationForm = () => {
             <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
             <Text variant="h3">{t('comment')}</Text>
             <TextField value={comment} onChange={(e) => setComment(e.target.value)} placeholder="welcome!" />
-            <Text variant="h3">{t('list')}</Text>
+            <Text variant="h3">{t('timelines')}</Text>
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {t('listDescription')}
+                {t('timelinesDescription')}
             </Text>
-            {pinnedLists.map((pin) => (
-                <label key={pin.uri} style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
-                    <input type="radio" checked={selected === pin.uri} onChange={() => setSelected(pin.uri)} />
-                    <ListName pin={pin} />
-                </label>
-            ))}
+            <TimelinePicker selected={timelines} setSelected={setTimelines} />
+            <Text variant="h3">{t('defaultPostTimelines')}</Text>
+            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                {t('defaultPostTimelinesDescription')}
+            </Text>
+            <TimelinePicker selected={defaultPostTimelines} setSelected={setDefaultPostTimelines} />
             <Button
-                disabled={!selected}
+                disabled={timelines.length === 0}
                 busyChildren={t('creating')}
                 onClick={async () => {
-                    const pin = pinnedLists.find((pin) => pin.uri === selected)!
                     const document: Document<InvitationSchema> = {
                         kind: 'record',
                         key: semantics.invitation(client.ccid, Date.now().toString()),
@@ -82,14 +78,15 @@ const InvitationForm = () => {
                         schema: Schemas.invitation,
                         value: {
                             comment: comment || undefined,
-                            list: pin.uri,
-                            defaultPostTimelines: pin.defaultPostTimelines
+                            timelines,
+                            defaultPostTimelines
                         },
                         createdAt: new Date()
                     }
                     await client.api.commit(document)
                     setComment('')
-                    setSelected(undefined)
+                    setTimelines([])
+                    setDefaultPostTimelines([])
                     await load()
                 }}
             >
@@ -106,7 +103,6 @@ const InvitationForm = () => {
                 const id = sd.cckv.split('/').pop()
                 // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
                 const link = `https://concrnt.world/invitation/${client.ccid}/${id}?hint=${client.entity.domain}`
-                const pin = pinnedLists.find((pin) => pin.uri === document.value.list)
                 return (
                     <div
                         key={sd.cckv}
@@ -130,8 +126,6 @@ const InvitationForm = () => {
                                 <MdDelete size={20} />
                             </IconButton>
                         </div>
-                        {/* ピンを外したリストの招待も残るので、名前はピン留め中のときだけ出す */}
-                        {pin && <ListName pin={pin} />}
                         <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
                             <Text variant="caption" style={{ flex: 1, minWidth: 0, wordBreak: 'break-all' }}>
                                 {link}

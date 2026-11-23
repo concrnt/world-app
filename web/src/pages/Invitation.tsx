@@ -13,7 +13,7 @@ import googlePlayBadge from '../assets/googleplay-badge.png'
 interface Loaded {
     comment?: string
     inviter: User
-    listTitle?: string
+    timelineNames: string[]
 }
 
 // 招待リンク(https://concrnt.world/invitation/:ccid/:id?hint=)の受け皿。
@@ -30,13 +30,18 @@ export const InvitationPage = () => {
         let client: Client | undefined
         let cancelled = false
         const load = async () => {
-            // 招待のリストはヒント無しで引くので、招待者のサーバーにつなぐ
-            client = await Client.createAsGuest(hint ?? resolveEntrypoint())
-            const document = await client.api.getDocument<InvitationSchema>(semantics.invitation(ccid!, id!), hint)
-            const inviter = await User.load(client, document.author, hint)
-            const list = await client.getList(document.value.list)
+            // 招待のタイムラインはヒント無しで引くので、招待者のサーバーにつなぐ
+            const guest = await Client.createAsGuest(hint ?? resolveEntrypoint())
+            client = guest
+            const document = await guest.api.getDocument<InvitationSchema>(semantics.invitation(ccid!, id!), hint)
+            const inviter = await User.load(guest, document.author, hint)
+            const timelines = await Promise.all(document.value.timelines.map((uri) => guest.getTimeline(uri)))
             if (cancelled) return
-            setLoaded({ comment: document.value.comment, inviter, listTitle: list?.title })
+            setLoaded({
+                comment: document.value.comment,
+                inviter,
+                timelineNames: timelines.map((timeline, i) => timeline?.name ?? document.value.timelines[i])
+            })
         }
         load().catch((err) => {
             console.error('Failed to load invitation', err)
@@ -70,8 +75,12 @@ export const InvitationPage = () => {
                 description={loaded.comment}
             />
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('list')}</Text>
-                <Text style={{ color: CssVar.uiText }}>{loaded.listTitle}</Text>
+                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('timelines')}</Text>
+                {loaded.timelineNames.map((name, i) => (
+                    <Text key={i} style={{ color: CssVar.uiText }}>
+                        # {name}
+                    </Text>
+                ))}
             </div>
             <AuthActions>
                 <AuthButton

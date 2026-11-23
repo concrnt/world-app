@@ -286,10 +286,10 @@ export const AccountSetup = (props: Props) => {
                                         getResourceCache(ccid)
                                     )
                                     await setupDefaultTimelines(client)
-                                    // ゲストとして見ていた招待のリスト構成をそのまま引き継ぐ
+                                    // ゲストとして見ていた招待のホームをそのまま引き継ぐ
                                     const invitation = loadStoredInvitation()
                                     if (invitation) {
-                                        await applyInvitation(client, invitation.value, invitation.domain)
+                                        await applyInvitation(client, invitation.value, 'home')
                                         localStorage.removeItem('invitation')
                                     }
                                     client.dispose()

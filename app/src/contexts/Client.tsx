@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Client, migrateLegacyProfilePolicies, PinnedListItemClass } from '@concrnt/worldlib'
+import { Client, List, migrateLegacyProfilePolicies, PinnedListItemClass } from '@concrnt/worldlib'
 import { Api, ErrorCodeRegistrationNotFound, InMemoryKVS, NotFoundError, ServerOfflineError } from '@concrnt/client'
 import { TauriAuthProvider } from '../lib/authProvider'
 import { deleteResourceCache, getResourceCache } from '../lib/cache'
@@ -145,21 +145,24 @@ export const ClientProvider = (props: Props): ReactNode => {
                     console.log('No session found')
                     clientRef.current?.dispose()
                     clientRef.current = null
-                    // 招待を受け入れたが未登録: 招待のリストをホームにしたゲストとして起動する
+                    // 招待を受け入れたが未登録: 招待のタイムラインを並べたホームを持つゲストとして起動する
                     const invitation = loadStoredInvitation()
                     if (!invitation) {
                         setClient(null)
                         return
                     }
                     const guest = await Client.createAsGuest(invitation.domain)
-                    guest.pinnedLists.push([
-                        new PinnedListItemClass(guest, {
-                            uri: invitation.value.list,
-                            defaultPostHome: true,
-                            defaultPostTimelines: invitation.value.defaultPostTimelines,
-                            excludeSelf: true
-                        })
-                    ])
+                    // ゲストは書き込めないので、ホームのリストはドキュメントを作らずメモリ上に組み立てる
+                    const pin = new PinnedListItemClass(guest, {
+                        uri: 'invitation',
+                        defaultPostHome: true,
+                        defaultPostTimelines: invitation.value.defaultPostTimelines,
+                        excludeSelf: true
+                    })
+                    const list = new List(guest, pin.uri, 'home')
+                    list.items.push(invitation.value.timelines)
+                    pin.list.push(list)
+                    guest.pinnedLists.push([pin])
                     clientRef.current = guest
                     setClient(guest)
                     return

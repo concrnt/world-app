@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, CssVar, Text } from '@concrnt/ui'
-import { Client, InvitationSchema, List, User } from '@concrnt/worldlib'
+import { Client, InvitationSchema, User } from '@concrnt/worldlib'
 import { LoadingFull } from '../components/LoadingFull'
 import { applyInvitation, StoredInvitation } from '../utils/invitation'
 import { AuthActions, AuthButton, AuthHeader, AuthScreen, AuthTextButton } from './authLayout'
@@ -17,7 +17,7 @@ interface Props {
 interface Loaded {
     invitation: StoredInvitation
     inviter: User
-    list: List | null
+    timelineNames: string[]
 }
 
 export const InvitationView = (props: Props) => {
@@ -33,9 +33,13 @@ export const InvitationView = (props: Props) => {
         const load = async () => {
             const document = await props.client.api.getDocument<InvitationSchema>(props.uri, props.hint)
             const inviter = await User.load(props.client, document.author, props.hint)
-            const list = await props.client.getList(document.value.list)
+            const timelines = await Promise.all(document.value.timelines.map((uri) => props.client.getTimeline(uri)))
             if (cancelled) return
-            setLoaded({ invitation: { domain: inviter.domain, value: document.value }, inviter, list })
+            setLoaded({
+                invitation: { domain: inviter.domain, value: document.value },
+                inviter,
+                timelineNames: timelines.map((timeline, i) => timeline?.name ?? document.value.timelines[i])
+            })
         }
         load().catch((err) => {
             console.error('Failed to load invitation', err)
@@ -71,8 +75,12 @@ export const InvitationView = (props: Props) => {
                 description={loaded.invitation.value.comment}
             />
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
-                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('list')}</Text>
-                <Text style={{ color: CssVar.uiText }}>{loaded.list?.title}</Text>
+                <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('timelines')}</Text>
+                {loaded.timelineNames.map((name, i) => (
+                    <Text key={i} style={{ color: CssVar.uiText }}>
+                        # {name}
+                    </Text>
+                ))}
             </div>
             <AuthActions fixedBottom>
                 {acceptError && (
@@ -89,7 +97,11 @@ export const InvitationView = (props: Props) => {
                                 localStorage.setItem('invitation', JSON.stringify(loaded.invitation))
                                 window.location.reload()
                             } else {
-                                await applyInvitation(props.client, loaded.invitation.value, loaded.invitation.domain)
+                                await applyInvitation(
+                                    props.client,
+                                    loaded.invitation.value,
+                                    t('tabName', { username: loaded.inviter.profile.username ?? 'anonymous' })
+                                )
                                 props.onBack()
                             }
                         } catch (err) {

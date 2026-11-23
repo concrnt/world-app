@@ -563,18 +563,20 @@
         },
         "invitationSettings": {
             "title": "招待",
-            "description": "招待リンクを開いた人は、選んだリストを Home にした状態でアプリを始められます。招待リンクは何回でも使えます。",
+            "description": "招待リンクを開いた人は、選んだタイムラインが並ぶ Home でアプリを始められます。招待リンクは何回でも使えます。",
             "comment": "招待コメント",
             "create": "招待リンクを作成",
             "creating": "作成中...",
-            "list": "Home にするリスト",
-            "listDescription": "ピン留め中のリストから 1 つ選びます。そのリストのデフォルト投稿先も引き継がれます。",
             "created": "作成済みの招待",
             "empty": "まだ招待はありません",
             "noComment": "(コメントなし)",
             "confirmDelete": "招待を削除しますか?",
             "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
-            "delete": "削除"
+            "delete": "削除",
+            "timelines": "リストに追加するタイムライン",
+            "timelinesDescription": "招待された人の Home に並ぶタイムラインです。",
+            "defaultPostTimelines": "デフォルト投稿先",
+            "defaultPostTimelinesDescription": "招待された人が Home から投稿したときの投稿先です。"
         },
         "invitation": {
             "title": "{{username}}さんから招待が届きました",
@@ -582,7 +584,8 @@
             "addToHome": "Home にタブとして追加",
             "back": "戻る",
             "loadFailed": "招待を読み込めませんでした",
-            "list": "Home になるリスト"
+            "timelines": "リストに入るタイムライン",
+            "tabName": "{{username}}さんの招待"
         }
     },
     "components": {
@@ -1259,10 +1262,10 @@
         },
         "invitation": {
             "title": "{{username}}さんから招待が届きました",
-            "list": "Home になるリスト",
             "openApp": "アプリで開く",
             "getApp": "アプリをお持ちでない方は、インストールしてからもう一度「アプリで開く」を押してください。",
-            "loadFailed": "招待を読み込めませんでした"
+            "loadFailed": "招待を読み込めませんでした",
+            "timelines": "リストに入るタイムライン"
         }
     },
     "app": {
