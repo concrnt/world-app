@@ -763,7 +763,8 @@
             "post": "Post",
             "documentation": "Documentation",
             "forum": "Forum",
-            "notFound": "Not found"
+            "notFound": "Not found",
+            "guest": "Guest"
         },
         "themeEditor": {
             "title": "Theme Editor",
@@ -1054,7 +1055,7 @@
         },
         "guestNotice": {
             "title": "You are browsing as a guest",
-            "description": "Finish signing up to post, react and use the other screens. The lists you are viewing stay on your Home after you sign up.",
+            "description": "Finish signing up to use all features.",
             "register": "Sign up",
             "exit": "Stop browsing as a guest"
         }

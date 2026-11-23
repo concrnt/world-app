@@ -37,6 +37,8 @@ export const Sidebar = (props: Props) => {
     const { client } = useClient()
     const homeStatus = useDomainStatus()
     const { scan } = useScanner()
+    // 招待を受け入れたが未登録のゲスト。プロフィールもアカウントも無いので名前は固定で出し、切り替えは置かない
+    const isGuest = client.ccid === ''
 
     return (
         <>
@@ -88,9 +90,9 @@ export const Sidebar = (props: Props) => {
                                     flex: 1
                                 }}
                             >
-                                <ProfileName document={client?.profileDocument} />
+                                {isGuest ? t('guest') : <ProfileName document={client?.profileDocument} />}
                             </Text>
-                            <SwitchAccountButton />
+                            {!isGuest && <SwitchAccountButton />}
                         </div>
                         <Text variant="caption">{client?.server.domain || 'Unknown Server'}</Text>
                     </div>
