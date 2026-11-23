@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Avatar, Text } from '@concrnt/ui'
 import { CfmRenderer } from '../CfmRenderer'
-import { MdMoreHoriz, MdOutlineAddReaction, MdRepeat, MdReply, MdStarOutline } from 'react-icons/md'
+import { MdMoreHoriz, MdOutlineAddReaction, MdOutlineTag, MdRepeat, MdReply, MdStarOutline } from 'react-icons/md'
 import { MessageLayout } from '../message/MessageLayout'
 import { humanReadableTimeDiff } from '../../utils/humanReadableTimeDiff'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -13,6 +13,8 @@ interface Props {
     avatarURL?: string
     timestamp?: ReactNode
     hideActions?: boolean
+    // 投稿先タイムラインの表示名。実際の投稿と同じくアクションの右に並べる
+    timelines?: string[]
     style?: CSSProperties
 }
 
@@ -54,22 +56,34 @@ export const DummyMessage = (props: Props) => {
             >
                 <CfmRenderer messagebody={props.body} emojiDict={{}} />
                 {!props.hideActions && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            maxWidth: '400px',
-                            opacity: 0.4,
-                            pointerEvents: 'none'
-                        }}
-                    >
-                        <MdReply size={18} />
-                        <MdRepeat size={18} />
-                        <MdStarOutline size={18} />
-                        <MdOutlineAddReaction size={18} />
-                        <MdMoreHoriz size={18} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                maxWidth: '400px',
+                                opacity: 0.4,
+                                pointerEvents: 'none'
+                            }}
+                        >
+                            <MdReply size={18} />
+                            <MdRepeat size={18} />
+                            <MdStarOutline size={18} />
+                            <MdOutlineAddReaction size={18} />
+                            <MdMoreHoriz size={18} />
+                        </div>
+                        {props.timelines?.map((name) => (
+                            <span
+                                key={name}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '1px', flexShrink: 0 }}
+                            >
+                                <MdOutlineTag size={16} />
+                                <Text style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>{name}</Text>
+                            </span>
+                        ))}
                     </div>
                 )}
             </MessageLayout>

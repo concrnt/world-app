@@ -12,6 +12,8 @@ export interface BackgroundPost {
     username: string
     avatarURL?: string
     body: string
+    // 投稿先タイムラインの表示名
+    timelines: string[]
     position: CSSProperties
 }
 
@@ -96,6 +98,8 @@ export const PostsBackground = (props: { scatter?: boolean; posts?: BackgroundPo
                         username={decoration.username}
                         avatarURL={decoration.icon}
                         body={decoration.content}
+                        // ダミーの投稿は架空の #welcome に投稿されたことにする
+                        timelines={['welcome']}
                         timestamp={<></>}
                         style={{
                             opacity: 0.8,
@@ -122,6 +126,7 @@ export const PostsBackground = (props: { scatter?: boolean; posts?: BackgroundPo
                         username={post.username}
                         avatarURL={post.avatarURL}
                         body={post.body}
+                        timelines={post.timelines}
                         timestamp={<></>}
                         style={{
                             opacity: 0.8,

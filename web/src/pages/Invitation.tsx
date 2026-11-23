@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
-import { Client, InvitationSchema, semantics, User } from '@concrnt/worldlib'
+import { Client, InvitationSchema, Schemas, semantics, User } from '@concrnt/worldlib'
 import { BackgroundPost, PostsBackground, scatterPosition } from '../components/welcome/PostsBackground'
 import { ExternalLink } from '../components/ExternalLink'
 import { LoadingFull } from '../components/LoadingFull'
@@ -52,6 +52,8 @@ export const InvitationPage = () => {
                 const document = await guest.api.getDocument<{ body?: string }>(item.href!).catch(() => null)
                 if (!document?.value.body) continue
                 const author = await User.load(guest, document.author).catch(() => null)
+                // 実際の投稿と同じく、名前を出す投稿先はコミュニティだけ
+                const timelines = await Promise.all((document.distributes ?? []).map((uri) => guest.getTimeline(uri)))
                 if (cancelled) return
                 const post: BackgroundPost = {
                     key: item.href!,
@@ -59,6 +61,9 @@ export const InvitationPage = () => {
                     username: author?.profile.username ?? 'anonymous',
                     avatarURL: author?.profile.avatar,
                     body: document.value.body,
+                    timelines: timelines
+                        .filter((timeline) => timeline?.schema === Schemas.communityTimeline)
+                        .map((timeline) => timeline!.shortname?.trim() || timeline!.name),
                     position: scatterPosition(Math.random())
                 }
                 setRecentPosts((prev) => [...prev, post])
