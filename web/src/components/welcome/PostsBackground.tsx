@@ -19,6 +19,8 @@ export interface BackgroundPost {
 interface Shown {
     post: BackgroundPost
     style: CSSProperties
+    // 置いたマス目の番号
+    cell: number
     // 消え始めた(消える animation が始まった)。画面に残っている数には数えない
     leaving: boolean
 }
@@ -30,6 +32,11 @@ const TICK_MS = 120
 // MIN_SHOWN 以上のときに 1 tick で足す確率。平均でおよそ 1.2 秒に 1 件になる
 const SPAWN_CHANCE = 0.1
 const PARALLAXES = [100, 500, 1000]
+// 一様なランダムだと固まったり大きく空いたりするので、マス目に区切って空いているマスに置き、マスの中で揺らす。
+// ページ全体は横 4 × 縦 4、左右の帯は左右それぞれ縦 6 段
+const GRID_COLS = 4
+const GRID_ROWS = 4
+const BAND_ROWS = 6
 
 // 本文の長さで幅がばらつかないよう、また画面端で縮んで細かく折り返さないよう幅を固定する
 const postStyle: CSSProperties = {
@@ -93,15 +100,23 @@ export const PostsBackground = (props: { avoidCenter?: boolean; posts?: Backgrou
                 const candidates = poolRef.current.filter((post) => !prev.some((s) => s.post.key === post.key))
                 if (candidates.length === 0) return prev
                 const post = candidates[Math.floor(Math.random() * candidates.length)]
+                // 投稿が一番少ないマス(同数ならその中からランダム)。消えかけの投稿もまだ見えているので数に入れる
+                const counts = Array.from(
+                    { length: props.avoidCenter ? BAND_ROWS * 2 : GRID_COLS * GRID_ROWS },
+                    () => 0
+                )
+                for (const s of prev) counts[s.cell]++
+                const fewest = counts.flatMap((count, i) => (count === Math.min(...counts) ? [i] : []))
+                const cell = fewest[Math.floor(Math.random() * fewest.length)]
                 // 位置は投稿の左上なので、投稿の大きさのぶんずらして中心が散らばるようにする
                 const position: CSSProperties = props.avoidCenter
                     ? {
-                          top: `${5 + Math.random() * 85}%`,
-                          [Math.random() < 0.5 ? 'left' : 'right']: `${-20 + Math.random() * 20}%`
+                          top: `${5 + ((Math.floor(cell / 2) + Math.random()) / BAND_ROWS) * 85}%`,
+                          [cell % 2 === 0 ? 'left' : 'right']: `${-20 + Math.random() * 20}%`
                       }
                     : {
-                          top: `calc(${Math.random() * 100}% - 60px)`,
-                          left: `calc(${Math.random() * 100}% - 160px)`
+                          top: `calc(${((Math.floor(cell / GRID_COLS) + Math.random()) / GRID_ROWS) * 100}% - 60px)`,
+                          left: `calc(${(((cell % GRID_COLS) + Math.random()) / GRID_COLS) * 100}% - 160px)`
                       }
                 const parallax = PARALLAXES[Math.floor(Math.random() * PARALLAXES.length)]
                 const life = 8 + Math.random() * 12
@@ -115,6 +130,7 @@ export const PostsBackground = (props: { avoidCenter?: boolean; posts?: Backgrou
                             animation: `${styles[`welcome-parallax-${parallax}`]} linear, ${styles.appear} 1s ease-out, ${styles.disappear} 1s ease-in ${life}s forwards`,
                             animationTimeline: 'scroll(), auto, auto'
                         },
+                        cell,
                         leaving: false
                     }
                 ]
