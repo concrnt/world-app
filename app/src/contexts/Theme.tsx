@@ -75,6 +75,8 @@ export const ThemeProvider = (props: Props) => {
     }, [client])
 
     useEffect(() => {
+        // ゲストは自分のカスタムテーマを持たない
+        if (client.ccid === '') return
         let unmounted = false
 
         loadCustomThemes(client)

@@ -53,6 +53,8 @@ export const MainView = () => {
         setAppBadge(unreadCount)
     }, [client, unreadCount])
 
+    // ゲストはホーム以外のタブを開けない。TabLayoutは裏のタブも先読みでマウントするので中身自体を置かない
+    const isGuest = client.ccid === ''
     const tabs = useMemo(() => {
         return {
             home: {
@@ -72,7 +74,7 @@ export const MainView = () => {
                 tab: <MdHome size={24} />
             },
             explorer: {
-                body: (
+                body: isGuest ? null : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['explorer'] = el
@@ -84,7 +86,7 @@ export const MainView = () => {
                 tab: <MdExplore size={24} />
             },
             notifications: {
-                body: (
+                body: isGuest ? null : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['notifications'] = el
@@ -96,7 +98,7 @@ export const MainView = () => {
                 tab: <MdNotifications size={24} />
             },
             contacts: {
-                body: (
+                body: isGuest ? null : (
                     <StackLayout
                         ref={(el) => {
                             stackRefs.current['contacts'] = el
@@ -108,13 +110,13 @@ export const MainView = () => {
                 tab: <MdContacts size={24} />
             }
         }
-    }, [])
+    }, [isGuest])
 
     const [selectedTab, setSelectedTab] = useState<string>('home')
 
     const selectTab = useCallback(
         (tab: string) => {
-            if (client.ccid === '' && tab !== 'home') {
+            if (isGuest && tab !== 'home') {
                 openGuestNotice()
                 return
             }
@@ -127,7 +129,7 @@ export const MainView = () => {
             }
             setSelectedTab(tab)
         },
-        [client, openGuestNotice, selectedTab]
+        [isGuest, openGuestNotice, selectedTab]
     )
 
     // ディープリンク等のeffect内から押し先のタブを参照するため、refで最新値を追う
