@@ -464,6 +464,8 @@ export const WelcomePage = () => {
 
                     <div /* getting started */
                         style={{
+                            // 背景の投稿の入れ物(fixed)より手前に出してボタンを押せるようにする。hero と同じく zIndex は使わない
+                            position: 'relative',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -484,6 +486,7 @@ export const WelcomePage = () => {
 
                     <div /* footer */
                         style={{
+                            position: 'relative',
                             display: 'flex',
                             justifyContent: 'flex-end',
                             alignItems: 'center',
