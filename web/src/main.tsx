@@ -59,6 +59,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Signup } from './pages/Signup'
 import { WelcomePage } from './pages/Welcome'
+import { InvitationPage } from './pages/Invitation'
 import { GuestShell } from './views/guest/GuestBase'
 import { GuestProfileView } from './views/guest/GuestProfile'
 import { GuestPostView } from './views/guest/GuestPost'
@@ -512,6 +513,16 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                             }
                         />
                         <Route path="/welcome" element={<WelcomePage />} />
+                        <Route
+                            path="/invitation/:ccid/:id"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <OverlayStackProvider>
+                                        <InvitationPage />
+                                    </OverlayStackProvider>
+                                </BaseThemeProvider>
+                            }
+                        />
                         <Route
                             path="/crash"
                             element={<EmergencyKit error={new Error('Test crash')} resetErrorBoundary={() => {}} />}

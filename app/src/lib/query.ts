@@ -14,6 +14,7 @@ export type QueryTarget =
     | { kind: 'apView'; uri: string }
     // Blueskyのperson/post(app: BskyView、web: /bluesky/view/:uri)
     | { kind: 'bskyView'; uri: string }
+    | { kind: 'invitation'; uri: string; hint?: string }
 
 export type QueryResolveReason = 'invalid' | 'notFound' | 'unsupported'
 
@@ -70,11 +71,37 @@ export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
     throw new QueryResolveError('unsupported', `unsupported concrnt.world path: ${path}`)
 }
 
+// 招待リンク(<origin>/invitation/:ccid/:id?hint=)を開く対象へ。招待リンクでなければ null。
+// web は concrnt.world 以外(別ホストでの配信やローカル開発の http://localhost:5173 など)でも配信されうるので origin は問わない
+export const parseInvitationURL = (input: string): Extract<QueryTarget, { kind: 'invitation' }> | null => {
+    let url: URL
+    try {
+        url = new URL(input)
+    } catch {
+        return null
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    const m = url.pathname.replace(/\/+$/, '').match(/^\/invitation\/([^/]+)\/([^/]+)$/)
+    if (!m) return null
+    let ccid: string
+    let id: string
+    try {
+        ccid = decodeURIComponent(m[1])
+        id = decodeURIComponent(m[2])
+    } catch {
+        throw new QueryResolveError('invalid')
+    }
+    if (!IsCCID(ccid)) throw new QueryResolveError('invalid')
+    return { kind: 'invitation', uri: semantics.invitation(ccid, id), hint: url.searchParams.get('hint') ?? undefined }
+}
+
 export const resolveQueryTarget = async (client: Client, input: string): Promise<QueryTarget> => {
     const raw = input.trim()
     if (raw === '') throw new QueryResolveError('invalid')
 
-    // https:// は既定で静的タイムライン扱いなので、concrnt.world の共有URLはその前に拾う
+    // https:// は既定で静的タイムライン扱いなので、招待リンクと concrnt.world の共有URLはその前に拾う
+    const invitation = parseInvitationURL(raw)
+    if (invitation) return invitation
     const world = parseConcrntWorldURL(raw)
     if (world) return world
 
@@ -143,6 +170,8 @@ export const resolveQueryTarget = async (client: Client, input: string): Promise
             return { kind: 'post', uri }
         case Schemas.list:
             return { kind: 'list', uri }
+        case Schemas.invitation:
+            return { kind: 'invitation', uri, hint: parsed.hint }
         default:
             throw new QueryResolveError('unsupported', `unsupported schema: ${document.schema}`)
     }

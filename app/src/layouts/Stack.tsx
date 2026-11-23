@@ -11,13 +11,16 @@ import {
     useState
 } from 'react'
 import { NavigationProvider } from '../contexts/Navigation'
+import { useClient } from '../contexts/Client'
+import { GuestNoticeView } from '../contexts/GuestNotice'
 import { isSwipeCancelled, useSwipeGuard } from '@concrnt/ui'
 
 import { MdArrowBack } from 'react-icons/md'
 
 interface StackLayoutContextState {
     set: (child: ReactNode) => void
-    push: (child: ReactNode) => void
+    // allowGuest: ゲストでも開ける画面(招待状)。それ以外はゲストには代わりに案内のビューを出す
+    push: (child: ReactNode, opts?: { allowGuest?: boolean }) => void
     pop: () => boolean
     clear: () => boolean
 }
@@ -38,14 +41,21 @@ interface Props {
 
 export const StackLayout = (props: Props) => {
     const [stack, setStack] = useState<ReactNode[]>([])
+    const { client } = useClient()
 
-    const set = useCallback((child: ReactNode) => {
-        setStack([child])
-    }, [])
+    const set = useCallback(
+        (child: ReactNode) => {
+            setStack([client.isGuest ? <GuestNoticeView /> : child])
+        },
+        [client.isGuest]
+    )
 
-    const push = useCallback((child: ReactNode) => {
-        setStack((prev) => [...prev, child])
-    }, [])
+    const push = useCallback(
+        (child: ReactNode, opts?: { allowGuest?: boolean }) => {
+            setStack((prev) => [...prev, client.isGuest && !opts?.allowGuest ? <GuestNoticeView /> : child])
+        },
+        [client.isGuest]
+    )
 
     const pop = useCallback(() => {
         const hasPopped = stack.length > 0

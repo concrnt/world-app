@@ -8,6 +8,7 @@ import { Api, InMemoryKVS, Document, InMemoryAuthProvider } from '@concrnt/clien
 import { useReloadClient } from '../contexts/Client'
 import { getResourceCache } from '../lib/cache'
 import { setupDefaultTimelines } from '../utils/clientSetup'
+import { applyInvitation, loadStoredInvitation } from '../utils/invitation'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { Client, semantics } from '@concrnt/worldlib'
 import Tilt from 'react-parallax-tilt'
@@ -285,6 +286,12 @@ export const AccountSetup = (props: Props) => {
                                         getResourceCache(ccid)
                                     )
                                     await setupDefaultTimelines(client)
+                                    // ゲストとして見ていた招待のホームをそのまま引き継ぐ
+                                    const invitation = loadStoredInvitation()
+                                    if (invitation) {
+                                        await applyInvitation(client, invitation, 'home')
+                                        localStorage.removeItem('invitation')
+                                    }
                                     client.dispose()
 
                                     reset()

@@ -177,7 +177,7 @@ export const SearchExplorer = (props: SearchExplorerProps) => {
     const [tab, setTab] = useState<SearchTab>(initial.filters.some((f) => f.kind === 'in') ? 'posts' : 'communities')
     const { client } = useClient()
     // ゲスト(ccid空)にはフォロー先が無いので、フォロー中の人が活発な一覧は出さない
-    const viewer = client.ccid !== '' ? client.ccid : undefined
+    const viewer = client.isGuest ? undefined : client.ccid
     // 検索結果はフォロー中の人が活発な順を既定にする(ゲストはグローバルな活動順)
     const [communitySort, setCommunitySort] = useState<CommunitySort>(viewer ? 'followee' : 'activityScore')
     const [landingSort, setLandingSort] = usePersistent<LandingSort>('explorer-landing-community-sort', 'createdAt')

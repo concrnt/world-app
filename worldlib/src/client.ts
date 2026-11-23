@@ -180,7 +180,7 @@ export class Client {
     // 旧サーバー(エンドポイント未広告)やオフラインでは0のまま
     notificationCounter = new CachedPromise<number>(
         async () => {
-            if (this.ccid === '') return 0
+            if (this.isGuest) return 0
             const count = await this.api.getNotificationCounter(this.ccid, PUSH_VENDOR_ID).catch(() => undefined)
             return count ?? 0
         },
@@ -373,6 +373,11 @@ export class Client {
     // ホストの状態。一度も落ちていなければ共有定数ONLINE_STATUSを返す
     getDomainStatus(host: string): DomainStatus {
         return this.domains.get(host) ?? ONLINE_STATUS
+    }
+
+    // 鍵を持たないゲスト(createAsGuestで作ったクライアント)
+    get isGuest(): boolean {
+        return this.ccid === ''
     }
 
     // 自ドメインのオンライン状態(getDomainStatus(api.defaultHost).onlineの短縮)
@@ -690,7 +695,7 @@ export class Client {
             })
             .catch(() => {}) // オフライン等の失敗時は既存値を維持
 
-        if (this.ccid === '') {
+        if (this.isGuest) {
             await refreshServer
             return
         }
@@ -715,7 +720,7 @@ export class Client {
     // 通知画面を開いた=全部見たとみなして未読を0にする(既読位置は追跡しない)
     async resetNotificationCounter(): Promise<void> {
         this.notificationCounter.push(0)
-        if (this.ccid === '') return
+        if (this.isGuest) return
         await this.api.resetNotificationCounter(this.ccid, PUSH_VENDOR_ID).catch(() => {})
     }
 

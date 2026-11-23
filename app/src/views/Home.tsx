@@ -87,7 +87,8 @@ export const HomeView = (props: ScrollViewProps) => {
     const profileSetupOpened = useRef(false)
     const [profileSetupOpen, setProfileSetupOpen] = useState(false)
     useEffect(() => {
-        if (!client) return
+        // ゲストはプロフィールを持たない(作れない)
+        if (!client || client.isGuest) return
         // オフライン時はプロフィールがキャッシュから読めなかっただけの可能性があり、
         // そもそもcommitもできないので表示しない。復帰直後も同様なので、取り直し(refreshFreshResources)の
         // 完了を待ってから判定する
