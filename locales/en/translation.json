@@ -51,7 +51,8 @@
                 "branch": "Branch",
                 "commit": "Commit"
             },
-            "mutedUsers": "Muted users"
+            "mutedUsers": "Muted users",
+            "invitation": "Invitations"
         },
         "displaySettings": {
             "title": "Display & Customization",
@@ -552,6 +553,15 @@
         "mutedUsers": {
             "title": "Muted users",
             "empty": "No muted users"
+        },
+        "invitationSettings": {
+            "title": "Invitations",
+            "description": "People who receive the invitation code start the app with the selected lists as Home tabs. The code can be used any number of times.",
+            "comment": "Invitation message",
+            "lists": "Initial lists",
+            "listsDescription": "Choose from your pinned lists. Their default post destinations are included as well.",
+            "create": "Create invitation code",
+            "creating": "Creating..."
         }
     },
     "components": {
