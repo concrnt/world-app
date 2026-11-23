@@ -19,10 +19,16 @@ export interface BackgroundPost {
 interface Shown {
     post: BackgroundPost
     style: CSSProperties
+    // 消え始めた(消える animation が始まった)。画面に残っている数には数えない
+    leaving: boolean
 }
 
-// 同時に出しておく投稿の数
+// 画面に出しておく投稿の数。MIN_SHOWN を下回ったら次の tick ですぐ足すので、開いた直後も 1 秒以内に揃う
+const MIN_SHOWN = 7
 const MAX_SHOWN = 10
+const TICK_MS = 120
+// MIN_SHOWN 以上のときに 1 tick で足す確率。平均でおよそ 1.2 秒に 1 件になる
+const SPAWN_CHANCE = 0.1
 const PARALLAXES = [100, 500, 1000]
 
 // 本文の長さで幅がばらつかないよう、また画面端で縮んで細かく折り返さないよう幅を固定する
@@ -80,11 +86,12 @@ export const PostsBackground = (props: { avoidCenter?: boolean; posts?: Backgrou
     })
 
     useEffect(() => {
-        let timer: number
-        const spawn = () => {
+        const timer = window.setInterval(() => {
             setShown((prev) => {
+                const active = prev.filter((s) => !s.leaving).length
+                if (active >= MAX_SHOWN || (active >= MIN_SHOWN && Math.random() >= SPAWN_CHANCE)) return prev
                 const candidates = poolRef.current.filter((post) => !prev.some((s) => s.post.key === post.key))
-                if (prev.length >= MAX_SHOWN || candidates.length === 0) return prev
+                if (candidates.length === 0) return prev
                 const post = candidates[Math.floor(Math.random() * candidates.length)]
                 // 位置は投稿の左上なので、投稿の大きさのぶんずらして中心が散らばるようにする
                 const position: CSSProperties = props.avoidCenter
@@ -107,14 +114,13 @@ export const PostsBackground = (props: { avoidCenter?: boolean; posts?: Backgrou
                             // 消える animation の終わりで取り除く(onAnimationEnd)
                             animation: `${styles[`welcome-parallax-${parallax}`]} linear, ${styles.appear} 1s ease-out, ${styles.disappear} 1s ease-in ${life}s forwards`,
                             animationTimeline: 'scroll(), auto, auto'
-                        }
+                        },
+                        leaving: false
                     }
                 ]
             })
-            timer = window.setTimeout(spawn, 500 + Math.random() * 1500)
-        }
-        timer = window.setTimeout(spawn, 500 + Math.random() * 1500)
-        return () => window.clearTimeout(timer)
+        }, TICK_MS)
+        return () => window.clearInterval(timer)
     }, [props.avoidCenter])
 
     return (
@@ -130,6 +136,10 @@ export const PostsBackground = (props: { avoidCenter?: boolean; posts?: Backgrou
                 <div
                     key={post.key}
                     style={{ ...postStyle, ...style }}
+                    onAnimationStart={(e) => {
+                        if (e.animationName !== styles.disappear) return
+                        setShown((prev) => prev.map((s) => (s.post.key === post.key ? { ...s, leaving: true } : s)))
+                    }}
                     onAnimationEnd={(e) => {
                         if (e.animationName !== styles.disappear) return
                         setShown((prev) => prev.filter((s) => s.post.key !== post.key))
