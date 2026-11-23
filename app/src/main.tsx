@@ -33,6 +33,9 @@ import { BackHandlerProvider } from './contexts/BackHandler'
 import { OverlayStackBackBridge } from './components/OverlayStackBackBridge'
 import { AgeGateProvider } from './contexts/AgeGate'
 import { CssVar, OverlayStackProvider, Text } from '@concrnt/ui'
+import { isTauri } from '@tauri-apps/api/core'
+
+if (import.meta.env.DEV && !isTauri()) await import('./devMock')
 
 const ClientLoadingScreen = () => {
     const progress = useClientSetupProgress()
