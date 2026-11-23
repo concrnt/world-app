@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, semantics, User } from '@concrnt/worldlib'
-import { AuthActions, AuthButton, AuthHeader, AuthScreen } from '../views/authLayout'
+import { AuthActions, AuthButton, AuthHeader } from '../views/authLayout'
+import { PostsBackground } from '../components/welcome/PostsBackground'
 import { ExternalLink } from '../components/ExternalLink'
 import { LoadingFull } from '../components/LoadingFull'
 import { resolveEntrypoint } from '../utils/entrypoint'
@@ -79,42 +80,89 @@ export const InvitationPage = () => {
         </div>
     )
 
-    if (loaded === null) {
-        return (
-            <AuthScreen>
-                <AuthHeader title={t('loadFailed')} />
-            </AuthScreen>
-        )
-    }
-
     return (
-        <AuthScreen>
-            <AuthHeader title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })} />
-            {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
+        <div
+            style={{
+                minHeight: '100dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                backgroundColor: CssVar.contentBackground
+            }}
+        >
+            <PostsBackground />
+            {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
+                zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}
             <div
-                style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2), margin: `${CssVar.space(4)} 0` }}
+                style={{
+                    flex: 1,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: CssVar.space(4),
+                    boxSizing: 'border-box',
+                    position: 'relative'
+                }}
             >
-                <Avatar
-                    ccid={loaded.inviter.ccid}
-                    src={loaded.inviter.profile.avatar}
-                    style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}
-                />
-                <Text style={{ color: CssVar.uiText, fontSize: '1.5rem', wordBreak: 'break-word' }}>
-                    &lt;&nbsp;{loaded.comment}
-                </Text>
-            </div>
-            <AuthActions>
-                <AuthButton
-                    onClick={() => {
-                        // この端末にアプリがあればそのまま開く。PC で見ている人はモーダルの QR でスマホに渡す
-                        window.location.href = `cckv://${ccid}${hint ? '@' + hint : ''}/concrnt.world/invitations/${id}`
-                        setQrOpen(true)
+                <div
+                    style={{
+                        width: '100%',
+                        maxWidth: 440,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: CssVar.space(5),
+                        padding: `${CssVar.space(8)} ${CssVar.space(5)}`,
+                        boxSizing: 'border-box',
+                        borderRadius: CssVar.round(2),
+                        color: CssVar.uiText,
+                        backgroundColor: CssVar.uiBackground,
+                        boxShadow:
+                            '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)'
                     }}
                 >
-                    {t('openApp')}
-                </AuthButton>
-                {storeBadges}
-            </AuthActions>
+                    {loaded === null ? (
+                        <AuthHeader title={t('loadFailed')} />
+                    ) : (
+                        <>
+                            <AuthHeader
+                                title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
+                            />
+                            {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: CssVar.space(2),
+                                    margin: `${CssVar.space(4)} 0`
+                                }}
+                            >
+                                <Avatar
+                                    ccid={loaded.inviter.ccid}
+                                    src={loaded.inviter.profile.avatar}
+                                    style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}
+                                />
+                                <Text style={{ color: CssVar.uiText, fontSize: '1.5rem', wordBreak: 'break-word' }}>
+                                    &lt;&nbsp;{loaded.comment}
+                                </Text>
+                            </div>
+                            <AuthActions>
+                                <AuthButton
+                                    onClick={() => {
+                                        // この端末にアプリがあればそのまま開く。PC で見ている人はモーダルの QR でスマホに渡す
+                                        window.location.href = `cckv://${ccid}${hint ? '@' + hint : ''}/concrnt.world/invitations/${id}`
+                                        setQrOpen(true)
+                                    }}
+                                >
+                                    {t('openApp')}
+                                </AuthButton>
+                                {storeBadges}
+                            </AuthActions>
+                        </>
+                    )}
+                </div>
+            </div>
             <Modal
                 open={qrOpen}
                 onClose={() => setQrOpen(false)}
@@ -149,6 +197,6 @@ export const InvitationPage = () => {
                     </Button>
                 </div>
             </Modal>
-        </AuthScreen>
+        </div>
     )
 }
