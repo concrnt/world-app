@@ -65,15 +65,18 @@ export const InvitationView = (props: Props) => {
 
     return (
         <AuthScreen align="top">
-            <Avatar
-                ccid={loaded.inviter.ccid}
-                src={loaded.inviter.profile.avatar}
-                style={{ width: '96px', height: '96px', borderRadius: '50%' }}
-            />
-            <AuthHeader
-                title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
-                description={loaded.invitation.value.comment}
-            />
+            <AuthHeader title={t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })} />
+            {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(2) }}>
+                <Avatar
+                    ccid={loaded.inviter.ccid}
+                    src={loaded.inviter.profile.avatar}
+                    style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}
+                />
+                <Text style={{ color: CssVar.uiText, fontSize: '1.5rem', wordBreak: 'break-word' }}>
+                    &lt;&nbsp;{loaded.invitation.value.comment}
+                </Text>
+            </div>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: CssVar.space(1) }}>
                 <Text style={{ color: CssVar.uiText, opacity: 0.78 }}>{t('timelines')}</Text>
                 {loaded.timelineNames.map((name, i) => (
