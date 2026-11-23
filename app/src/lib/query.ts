@@ -31,7 +31,7 @@ const CONCRNT_WORLD_HOST = 'concrnt.world'
 // https://concrnt.world/... の共有URLを開く対象へ。concrnt.world のURLでなければ null。
 // パスは web/src/main.tsx のルート定義と1対1:
 //   profile/:ccid/:profile?(+?hint=) / post/:uri / timeline/:uri / lists/:uri /
-//   activitypub/(person|note|view)/:uri / bluesky/(person|post|view)/:uri
+//   activitypub/(person|note|view)/:uri / bluesky/(person|post|view)/:uri / invitation/:ccid/:id(+?hint=)
 // concrnt.world だが知らないパス(設定画面など)は unsupported、%エンコードが壊れている等は invalid
 export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
     let url: URL
@@ -60,6 +60,15 @@ export const parseConcrntWorldURL = (input: string): QueryTarget | null => {
             kind: 'profile',
             ccid,
             profileName: profileName && profileName !== 'main' ? profileName : undefined,
+            hint: url.searchParams.get('hint') ?? undefined
+        }
+    }
+    if ((m = path.match(/^\/invitation\/([^/]+)\/([^/]+)$/))) {
+        const ccid = decode(m[1])
+        if (!IsCCID(ccid)) throw new QueryResolveError('invalid')
+        return {
+            kind: 'invitation',
+            uri: semantics.invitation(ccid, decode(m[2])),
             hint: url.searchParams.get('hint') ?? undefined
         }
     }

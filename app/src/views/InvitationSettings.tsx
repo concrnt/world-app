@@ -1,12 +1,13 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { QRCode } from 'react-qrcode-logo'
-import { Button, CopyButton, Text, TextField, View } from '@concrnt/ui'
-import { Document } from '@concrnt/client'
+import { MdDelete } from 'react-icons/md'
+import { Button, CopyButton, IconButton, Text, TextField, View } from '@concrnt/ui'
+import { Document, SignedDocument } from '@concrnt/client'
 import { InvitationSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ListName } from '../components/ListName'
+import { Confirm } from '../components/Confirm'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 
@@ -29,7 +30,20 @@ const InvitationForm = () => {
     const [pinnedLists] = useSubscribe(client.pinnedLists)
     const [comment, setComment] = useState('')
     const [selected, setSelected] = useState<string>()
-    const [invitationURI, setInvitationURI] = useState<string>()
+    const [invitations, setInvitations] = useState<SignedDocument[]>([])
+    const [deleting, setDeleting] = useState<string>()
+
+    const load = useCallback(
+        () =>
+            client.api
+                .queryAll({ prefix: `cckv://${client.ccid}/concrnt.world/invitations/`, schema: Schemas.invitation })
+                .then(setInvitations),
+        [client]
+    )
+
+    useEffect(() => {
+        load().catch((err) => console.error('Failed to load invitations', err))
+    }, [load])
 
     return (
         <div
@@ -61,10 +75,9 @@ const InvitationForm = () => {
                 busyChildren={t('creating')}
                 onClick={async () => {
                     const pin = pinnedLists.find((pin) => pin.uri === selected)!
-                    const id = Date.now().toString()
                     const document: Document<InvitationSchema> = {
                         kind: 'record',
-                        key: semantics.invitation(client.ccid, id),
+                        key: semantics.invitation(client.ccid, Date.now().toString()),
                         author: client.ccid,
                         schema: Schemas.invitation,
                         value: {
@@ -75,30 +88,72 @@ const InvitationForm = () => {
                         createdAt: new Date()
                     }
                     await client.api.commit(document)
-                    // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
-                    setInvitationURI(`cckv://${client.ccid}@${client.entity.domain}/concrnt.world/invitations/${id}`)
+                    setComment('')
+                    setSelected(undefined)
+                    await load()
                 }}
             >
                 {t('create')}
             </Button>
-            {invitationURI && (
-                <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
-                        <Text style={{ flex: 1, minWidth: 0, wordBreak: 'break-all' }}>{invitationURI}</Text>
-                        <CopyButton text={invitationURI} style={{ flexShrink: 0 }} />
-                    </div>
-                    {/* QR は canvas 描画で CSS 変数が使えないので、どのテーマでも読める白黒にする */}
-                    <QRCode
-                        value={invitationURI}
-                        size={500}
-                        ecLevel="L"
-                        quietZone={30}
-                        fgColor="#000000"
-                        bgColor="#ffffff"
-                        style={{ width: '100%', height: 'auto', display: 'block' }}
-                    />
-                </>
+            <Text variant="h3">{t('created')}</Text>
+            {invitations.length === 0 && (
+                <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                    {t('empty')}
+                </Text>
             )}
+            {invitations.map((sd) => {
+                const document: Document<InvitationSchema> = JSON.parse(sd.document)
+                const id = sd.cckv.split('/').pop()
+                // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
+                const link = `https://concrnt.world/invitation/${client.ccid}/${id}?hint=${client.entity.domain}`
+                const pin = pinnedLists.find((pin) => pin.uri === document.value.list)
+                return (
+                    <div
+                        key={sd.cckv}
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(1),
+                            padding: CssVar.space(2),
+                            borderRadius: CssVar.round(1),
+                            border: `1px solid ${CssVar.divider}`
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <Text>{document.value.comment ?? t('noComment')}</Text>
+                                <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                                    {new Date(document.createdAt).toLocaleString()}
+                                </Text>
+                            </div>
+                            <IconButton onClick={() => setDeleting(sd.cckv)}>
+                                <MdDelete size={20} />
+                            </IconButton>
+                        </div>
+                        {/* ピンを外したリストの招待も残るので、名前はピン留め中のときだけ出す */}
+                        {pin && <ListName pin={pin} />}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                            <Text variant="caption" style={{ flex: 1, minWidth: 0, wordBreak: 'break-all' }}>
+                                {link}
+                            </Text>
+                            <CopyButton text={link} style={{ flexShrink: 0 }} />
+                        </div>
+                    </div>
+                )
+            })}
+            <Confirm
+                open={deleting !== undefined}
+                onClose={() => setDeleting(undefined)}
+                title={t('confirmDelete')}
+                description={t('confirmDeleteDescription')}
+                confirmText={t('delete')}
+                onConfirm={() => {
+                    client.api
+                        .delete(deleting!)
+                        .then(load)
+                        .catch((err) => console.error('Failed to delete invitation', err))
+                }}
+            />
         </div>
     )
 }

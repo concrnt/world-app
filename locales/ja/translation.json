@@ -235,11 +235,11 @@
             "serverUnreachable": "登録サーバー {{domain}} に接続できません。サーバーが閉鎖されている場合は、このCCIDのまま別のサーバーに新規登録できます。",
             "registerWithExistingKey": "このCCIDで別のサーバーに新規登録する",
             "invitationCode": {
-                "open": "招待コードをお持ちの方",
-                "title": "招待コード",
-                "description": "受け取った招待コード(cckv://...)を入力してください。",
+                "open": "招待リンクをお持ちの方",
+                "title": "招待リンク",
+                "description": "受け取った招待リンクを入力してください。",
                 "submit": "招待状を開く",
-                "invalid": "招待コードを読み込めませんでした",
+                "invalid": "招待リンクを読み込めませんでした",
                 "back": "戻る"
             }
         },
@@ -563,12 +563,18 @@
         },
         "invitationSettings": {
             "title": "招待",
-            "description": "招待コードを受け取った人は、選んだリストを Home にした状態でアプリを始められます。招待コードは何回でも使えます。",
+            "description": "招待リンクを開いた人は、選んだリストを Home にした状態でアプリを始められます。招待リンクは何回でも使えます。",
             "comment": "招待コメント",
-            "create": "招待コードを作成",
+            "create": "招待リンクを作成",
             "creating": "作成中...",
             "list": "Home にするリスト",
-            "listDescription": "ピン留め中のリストから 1 つ選びます。そのリストのデフォルト投稿先も引き継がれます。"
+            "listDescription": "ピン留め中のリストから 1 つ選びます。そのリストのデフォルト投稿先も引き継がれます。",
+            "created": "作成済みの招待",
+            "empty": "まだ招待はありません",
+            "noComment": "(コメントなし)",
+            "confirmDelete": "招待を削除しますか?",
+            "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
+            "delete": "削除"
         },
         "invitation": {
             "title": "{{username}}さんから招待が届きました",

@@ -235,11 +235,11 @@
             "serverUnreachable": "Could not reach your registered server {{domain}}. If that server has shut down, you can register this CCID on another server.",
             "registerWithExistingKey": "Register this CCID on another server",
             "invitationCode": {
-                "open": "I have an invitation code",
-                "title": "Invitation code",
-                "description": "Enter the invitation code (cckv://...) you received.",
+                "open": "I have an invitation link",
+                "title": "Invitation link",
+                "description": "Enter the invitation link you received.",
                 "submit": "Open invitation",
-                "invalid": "Could not load the invitation code",
+                "invalid": "Could not load the invitation link",
                 "back": "Back"
             }
         },
@@ -564,12 +564,18 @@
         },
         "invitationSettings": {
             "title": "Invitations",
-            "description": "People who receive the invitation code start the app with the selected list as their Home. The code can be used any number of times.",
+            "description": "People who open the invitation link start the app with the selected list as their Home. The link can be used any number of times.",
             "comment": "Invitation message",
-            "create": "Create invitation code",
+            "create": "Create invitation link",
             "creating": "Creating...",
             "list": "List for Home",
-            "listDescription": "Choose one of your pinned lists. Its default post destinations are included as well."
+            "listDescription": "Choose one of your pinned lists. Its default post destinations are included as well.",
+            "created": "Your invitations",
+            "empty": "No invitations yet",
+            "noComment": "(No message)",
+            "confirmDelete": "Delete this invitation?",
+            "confirmDeleteDescription": "The invitation link will no longer open.",
+            "delete": "Delete"
         },
         "invitation": {
             "title": "{{username}} invited you",
