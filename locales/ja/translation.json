@@ -569,7 +569,6 @@
             "creating": "作成中...",
             "created": "作成済みの招待",
             "empty": "まだ招待はありません",
-            "noComment": "(コメントなし)",
             "confirmDelete": "招待を削除しますか?",
             "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
             "delete": "削除",

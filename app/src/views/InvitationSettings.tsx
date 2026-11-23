@@ -24,7 +24,7 @@ export const InvitationSettingsView = () => {
 const InvitationForm = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.invitationSettings' })
     const { client } = useClient()
-    const [comment, setComment] = useState('')
+    const [comment, setComment] = useState('Welcome!')
     const [timelines, setTimelines] = useState<string[]>([])
     const [defaultPostTimelines, setDefaultPostTimelines] = useState<string[]>([])
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
@@ -56,7 +56,7 @@ const InvitationForm = () => {
         >
             <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
             <Text variant="h3">{t('comment')}</Text>
-            <TextField value={comment} onChange={(e) => setComment(e.target.value)} placeholder="welcome!" />
+            <TextField value={comment} onChange={(e) => setComment(e.target.value)} />
             <Text variant="h3">{t('timelines')}</Text>
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
                 {t('timelinesDescription')}
@@ -68,7 +68,7 @@ const InvitationForm = () => {
             </Text>
             <TimelinePicker selected={defaultPostTimelines} setSelected={setDefaultPostTimelines} />
             <Button
-                disabled={timelines.length === 0}
+                disabled={comment === '' || timelines.length === 0}
                 busyChildren={t('creating')}
                 onClick={async () => {
                     const document: Document<InvitationSchema> = {
@@ -77,14 +77,14 @@ const InvitationForm = () => {
                         author: client.ccid,
                         schema: Schemas.invitation,
                         value: {
-                            comment: comment || undefined,
+                            comment,
                             timelines,
                             defaultPostTimelines
                         },
                         createdAt: new Date()
                     }
                     await client.api.commit(document)
-                    setComment('')
+                    setComment('Welcome!')
                     setTimelines([])
                     setDefaultPostTimelines([])
                     await load()
@@ -117,7 +117,7 @@ const InvitationForm = () => {
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <Text>{document.value.comment ?? t('noComment')}</Text>
+                                <Text>{document.value.comment}</Text>
                                 <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
                                     {new Date(document.createdAt).toLocaleString()}
                                 </Text>

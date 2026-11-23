@@ -570,7 +570,6 @@
             "creating": "Creating...",
             "created": "Your invitations",
             "empty": "No invitations yet",
-            "noComment": "(No message)",
             "confirmDelete": "Delete this invitation?",
             "confirmDeleteDescription": "The invitation link will no longer open.",
             "delete": "Delete",

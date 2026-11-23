@@ -11,7 +11,7 @@ import appStoreBadge from '../assets/appstore-badge.svg'
 import googlePlayBadge from '../assets/googleplay-badge.png'
 
 interface Loaded {
-    comment?: string
+    comment: string
     inviter: User
     timelineNames: string[]
 }
