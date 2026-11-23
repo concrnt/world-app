@@ -20,6 +20,7 @@ interface Loaded {
 // 招待の受け取りはアプリだけなので、ここでは招待状を見せて cckv:// でアプリへ渡す
 export const InvitationPage = () => {
     const { t } = useTranslation('', { keyPrefix: 'web.invitation' })
+    const { t: tWelcome } = useTranslation('', { keyPrefix: 'web.welcome' })
     const { ccid, id } = useParams()
     const [searchParams] = useSearchParams()
     const hint = searchParams.get('hint') ?? undefined
@@ -161,9 +162,15 @@ export const InvitationPage = () => {
                         </Text>
                     ) : (
                         <>
-                            <Text variant="h1" style={titleStyle}>
-                                {t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
-                            </Text>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
+                                <Text variant="h1" style={titleStyle}>
+                                    {t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
+                                </Text>
+                                {/* 招待された人は Concrnt を知らないことが多いので、meta タグと同じ紹介文を添える */}
+                                <Text variant="caption" style={{ textAlign: 'center', color: CssVar.contentTextDim }}>
+                                    {tWelcome('metaDescription')}
+                                </Text>
+                            </div>
                             {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
                             <div
                                 style={{

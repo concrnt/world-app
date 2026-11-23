@@ -31,7 +31,7 @@ const postStyle: CSSProperties = {
     backgroundColor: CssVar.contentBackground,
     borderRadius: '4px',
     border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,
-    padding: '0 4px'
+    padding: CssVar.space(2)
 }
 
 // /welcome と招待ページの背景に浮かぶダミー投稿。スクロールに合わせてそれぞれの速さで流れる。
