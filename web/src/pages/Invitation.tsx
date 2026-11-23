@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, semantics, User } from '@concrnt/worldlib'
-import { PostsBackground } from '../components/welcome/PostsBackground'
+import { BackgroundPost, PostsBackground, scatterPosition } from '../components/welcome/PostsBackground'
 import { ExternalLink } from '../components/ExternalLink'
 import { LoadingFull } from '../components/LoadingFull'
 import { resolveEntrypoint } from '../utils/entrypoint'
@@ -26,6 +26,7 @@ export const InvitationPage = () => {
     // undefined: ロード中 / null: 取得失敗
     const [loaded, setLoaded] = useState<Loaded | null>()
     const [qrOpen, setQrOpen] = useState(false)
+    const [recentPosts, setRecentPosts] = useState<BackgroundPost[]>([])
 
     useEffect(() => {
         let client: Client | undefined
@@ -37,11 +38,40 @@ export const InvitationPage = () => {
             const inviter = await User.load(guest, document.author, hint)
             if (cancelled) return
             setLoaded({ comment: document.value.comment, inviter })
+            return { guest, timelines: document.value.timelines }
         }
-        load().catch((err) => {
-            console.error('Failed to load invitation', err)
-            if (!cancelled) setLoaded(null)
-        })
+        // 招待状を出した後で、招待のタイムラインの最近の投稿を背景に少しずつ混ぜる。
+        // どんな場所に招待されたかの雰囲気を伝える飾りなので、失敗しても招待状はそのまま見せる
+        const addRecentPosts = async ({ guest, timelines }: { guest: Client; timelines: string[] }) => {
+            const items = await guest.api.getTimelineRecent(timelines)
+            for (const item of items.slice(0, 16)) {
+                await new Promise((resolve) => setTimeout(resolve, 1500))
+                if (cancelled) return
+                // 消された投稿や本文の無い投稿(リルート等)は飛ばす
+                const document = await guest.api.getDocument<{ body?: string }>(item.href!).catch(() => null)
+                if (!document?.value.body) continue
+                const author = await User.load(guest, document.author).catch(() => null)
+                if (cancelled) return
+                const post: BackgroundPost = {
+                    key: item.href!,
+                    ccid: document.author,
+                    username: author?.profile.username ?? 'anonymous',
+                    avatarURL: author?.profile.avatar,
+                    body: document.value.body,
+                    position: scatterPosition(Math.random())
+                }
+                setRecentPosts((prev) => [...prev, post])
+            }
+        }
+        load()
+            .then(
+                (result) => result && addRecentPosts(result),
+                (err) => {
+                    console.error('Failed to load invitation', err)
+                    if (!cancelled) setLoaded(null)
+                }
+            )
+            .catch((err) => console.error('Failed to load recent posts', err))
         return () => {
             cancelled = true
             client?.dispose()
@@ -91,7 +121,7 @@ export const InvitationPage = () => {
                 backgroundColor: CssVar.contentBackground
             }}
         >
-            <PostsBackground scatter />
+            <PostsBackground scatter posts={recentPosts} />
             {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
                 zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}
             <div

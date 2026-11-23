@@ -1,12 +1,41 @@
-import { useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CssVar } from '../../types/Theme'
 import { DummyMessage } from './DummyMessage'
 import styles from './PostsBackground.module.css'
 
+// 背景に後から足す投稿(招待ページでは招待のタイムラインの最近の投稿)
+export interface BackgroundPost {
+    key: string
+    // アバター画像が無いときのアイコンの元にする
+    ccid: string
+    username: string
+    avatarURL?: string
+    body: string
+    position: CSSProperties
+}
+
+// 中央から外に向かうランダムな位置。turn(0〜1 で一周)を渡す。
+// 位置は投稿の左上なので、投稿の幅のぶん左へずらして中心が散らばるようにする。
+// 画面端に近い投稿が残りの幅に縮んで折り返さないよう、本来の幅のまま置いて画面外へはみ出させる
+export const scatterPosition = (turn: number): CSSProperties => {
+    const angle = turn * 2 * Math.PI
+    const radius = 15 + Math.random() * 35
+    return { top: `${50 + Math.sin(angle) * radius}%`, left: `${35 + Math.cos(angle) * radius}%`, width: 'max-content' }
+}
+
+const postStyle: CSSProperties = {
+    position: 'absolute',
+    backgroundColor: CssVar.contentBackground,
+    borderRadius: '4px',
+    border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,
+    padding: '0 4px'
+}
+
 // /welcome と招待ページの背景に浮かぶダミー投稿。スクロールに合わせてそれぞれの速さで流れる。
 // scatter: 中央に置いたカードの周りへ、中央から外に向かってランダムに散らす(既定は /welcome の縦中央を避けた配置)
-export const PostsBackground = (props: { scatter?: boolean }) => {
+// posts: 後から足す投稿。ふわっと現れる
+export const PostsBackground = (props: { scatter?: boolean; posts?: BackgroundPost[] }) => {
     const { t } = useTranslation('', { keyPrefix: 'web.welcome' })
 
     const decorations = [
@@ -36,19 +65,9 @@ export const PostsBackground = (props: { scatter?: boolean }) => {
         }
     ]
 
-    // 偏らないよう角度は等分してから揺らし、距離は中央からランダムに取る。開くたびに変わるようマウント時に一度だけ決める。
-    // 位置は投稿の左上なので、投稿の幅のぶん左へずらして中心が散らばるようにする
+    // 偏らないよう角度は等分してから揺らす。開くたびに変わるようマウント時に一度だけ決める
     const [scattered] = useState(() =>
-        decorations.map((_, i) => {
-            const angle = ((i + Math.random()) / decorations.length) * 2 * Math.PI
-            const radius = 15 + Math.random() * 35
-            // 画面端に近い投稿が残りの幅に縮んで折り返さないよう、本来の幅のまま置いて画面外へはみ出させる
-            return {
-                top: `${50 + Math.sin(angle) * radius}%`,
-                left: `${35 + Math.cos(angle) * radius}%`,
-                width: 'max-content'
-            }
-        })
+        decorations.map((_, i) => scatterPosition((i + Math.random()) / decorations.length))
     )
 
     return (
@@ -64,12 +83,8 @@ export const PostsBackground = (props: { scatter?: boolean }) => {
                 <div
                     key={i}
                     style={{
-                        position: 'absolute',
+                        ...postStyle,
                         ...(props.scatter ? scattered[i] : decoration.style),
-                        backgroundColor: CssVar.contentBackground,
-                        borderRadius: '4px',
-                        border: `1px solid rgb(from ${CssVar.contentText} r g b / 0.1)`,
-                        padding: '0 4px',
                         animation: `${styles[`welcome-parallax-${decoration.parallax}`]} linear`,
                         animationTimeline: 'scroll()'
                     }}
@@ -79,6 +94,33 @@ export const PostsBackground = (props: { scatter?: boolean }) => {
                         username={decoration.username}
                         avatarURL={decoration.icon}
                         body={decoration.content}
+                        timestamp={<></>}
+                        style={{
+                            opacity: 0.8,
+                            color: 'gray'
+                        }}
+                    />
+                </div>
+            ))}
+            {props.posts?.map((post) => (
+                <div
+                    key={post.key}
+                    style={{
+                        ...postStyle,
+                        ...post.position,
+                        // 実際の投稿は長いことがあるので、背景として収まる大きさで切る
+                        maxWidth: 360,
+                        maxHeight: 160,
+                        overflow: 'hidden',
+                        animation: `${styles['welcome-parallax-100']} linear, ${styles.appear} 1s ease-out`,
+                        animationTimeline: 'scroll(), auto'
+                    }}
+                >
+                    <DummyMessage
+                        dummyId={post.ccid}
+                        username={post.username}
+                        avatarURL={post.avatarURL}
+                        body={post.body}
                         timestamp={<></>}
                         style={{
                             opacity: 0.8,
