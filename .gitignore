@@ -26,7 +26,7 @@ dist-ssr
 references
 
 # wrangler pages dev cache
-web/.wrangler/
+.wrangler/
 
 .claude
 .codex
