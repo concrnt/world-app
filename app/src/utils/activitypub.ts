@@ -14,6 +14,12 @@ export const apFollowKey = (ccid: string, actorURI: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/follows/${CDID.newFromStringX(actorURI).toString()}`
 }
 
+// フォローレコード(apFollowKey)の親。ブリッジのサービスアカウントにallow-editorsで子の編集権を渡し、
+// フォロー先の引っ越し(Move)時にブリッジがフォローを付け替えられるようにする
+export const apFollowsKey = (ccid: string): string => {
+    return `cckv://${ccid}/activitypub.concrnt.world/follows`
+}
+
 // APブリッジのユーザー設定レコードキー(listenTimelines等)。ブリッジが直接読む。
 export const apSettingsKey = (ccid: string): string => {
     return `cckv://${ccid}/activitypub.concrnt.world/settings`

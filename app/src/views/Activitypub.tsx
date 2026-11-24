@@ -1,4 +1,4 @@
-import { View, Text, TextField, Button, Divider, IconButton } from '@concrnt/ui'
+import { View, Text, TextField, Button, Divider, IconButton, Confirm } from '@concrnt/ui'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
 import { useEffect, useMemo, useState } from 'react'
@@ -8,19 +8,25 @@ import { useStack } from '../layouts/Stack'
 import { ApView } from './ApView'
 import { NotFoundError, type Document, type PolicyEntry } from '@concrnt/client'
 import { Schemas, semantics } from '@concrnt/worldlib'
-import { MdPlaylistAdd } from 'react-icons/md'
+import { MdDelete, MdPlaylistAdd } from 'react-icons/md'
 import { Subscription } from '../components/Subscription'
 import { ApFollowList } from '../components/ApFollowList'
 import { Drawer } from '../ui/Drawer'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { CompositeSearchProvider, KnownCommunitySearchProvider, StaticSearchProvider } from '../lib/timelineSearch'
 import { useSubscribe } from '../hooks/useSubscribe'
-import { apInboxKey, apSettingsKey } from '../utils/activitypub'
+import { apFollowsKey, apInboxKey, apSettingsKey, resolveApObject } from '../utils/activitypub'
 
 interface ApSettings {
     id: string
     ccid: string
     enabled: boolean
+    movedTo: string | null
+}
+
+interface ApSettingsValue {
+    listenTimelines: string[]
+    aliases?: string[]
 }
 
 interface ApServerInfo {
@@ -37,6 +43,17 @@ export const Activitypub = () => {
     const idOk = idDraft.length > 0 && idDraft.match(/^[a-zA-Z0-9_]+$/)
 
     const [lookupDraft, setLookupDraft] = useState('')
+
+    // ブリッジ設定レコードの保存済みの値。転送元タイムラインと引っ越し元(aliases)を同じレコードに持つので、
+    // 片方を保存するときはもう片方を保存済みの値のまま書く
+    const [apSettings, setApSettings] = useState<ApSettingsValue>({ listenTimelines: [] })
+    const aliases = apSettings.aliases ?? []
+    const [aliasDraft, setAliasDraft] = useState('')
+    const [aliasError, setAliasError] = useState(false)
+    const [moveDraft, setMoveDraft] = useState('')
+    const [moveConfirmOpen, setMoveConfirmOpen] = useState(false)
+    const [moveError, setMoveError] = useState(false)
+    const moveSupported = 'net.concrnt.activitypub.move' in (client.server?.endpoints ?? {})
 
     const stack = useStack()
 
@@ -59,6 +76,7 @@ export const Activitypub = () => {
         [client, inboxUri]
     )
     const allowWriters = 'https://policy.concrnt.world/t/allow-writers.json'
+    const allowEditors = 'https://policy.concrnt.world/t/allow-editors.json'
 
     // ActivityPubタイムラインはリスト未登録だとknownCommunitiesに出ない上、
     // どのリストにも無いと受信した投稿を見る手段が無いので警告を出す
@@ -92,8 +110,9 @@ export const Activitypub = () => {
             })
 
         client.api
-            .getDocument<{ listenTimelines: string[] }>(apSettingsKey(client.ccid))
+            .getDocument<ApSettingsValue>(apSettingsKey(client.ccid))
             .then((doc) => {
+                setApSettings(doc.value)
                 const timelines = doc.value?.listenTimelines ?? []
                 const homeProfile = timelines.map((uri) => uri.match(homeTimelineRegex)?.[1]).find((m) => m)
                 setListenHome(timelines.length === 0 || homeProfile !== undefined)
@@ -107,6 +126,21 @@ export const Activitypub = () => {
         client.api
             .callConcrntApi<ApServerInfo>(client.server.domain, 'net.concrnt.activitypub.info', {})
             .then((res) => {
+                // フォロー先の引っ越し(Move)を受けたとき、ブリッジがフォローレコードを代理で付け替えられるよう
+                // follows直下の作成・更新・削除権をサービスアカウントに渡す
+                client.api.getDocument(apFollowsKey(client.ccid)).catch((err) => {
+                    if (!(err instanceof NotFoundError)) return
+                    client.api.commit({
+                        kind: 'record' as const,
+                        key: apFollowsKey(client.ccid),
+                        author: client.ccid,
+                        schema: Schemas.empty,
+                        value: {},
+                        createdAt: new Date(),
+                        policy: { entries: [{ url: allowEditors, params: { entities: [res.serviceAccountId] } }] }
+                    })
+                })
+
                 const inboxValue = {
                     name: 'ActivityPub',
                     shortname: 'activitypub',
@@ -237,23 +271,58 @@ export const Activitypub = () => {
         }
     }
 
+    const saveApSettings = async (value: ApSettingsValue): Promise<void> => {
+        await client.api.commit({
+            kind: 'record' as const,
+            key: apSettingsKey(client.ccid),
+            author: client.ccid,
+            schema: Schemas.apSettings,
+            value,
+            createdAt: new Date()
+        })
+        setApSettings(value)
+    }
+
     const updateListenTimelines = () => {
         const listenTimelines = [
             ...(listenHome ? [semantics.homeTimeline(client.ccid, listenProfile)] : []),
             ...listenCommunities
         ]
-        client.api
-            .commit({
-                kind: 'record' as const,
-                key: apSettingsKey(client.ccid),
-                author: client.ccid,
-                schema: Schemas.apSettings,
-                value: { listenTimelines },
-                createdAt: new Date()
-            })
-            .catch((err) => {
-                console.log(err)
-            })
+        saveApSettings({ ...apSettings, listenTimelines }).catch((err) => {
+            console.log(err)
+        })
+    }
+
+    const addAlias = async (): Promise<void> => {
+        setAliasError(false)
+        // Person.alsoKnownAsには正規のアクターidを載せる(ハンドルやプロフィールURLのままだと移行元が照合できない)
+        const actor = await resolveApObject(client, aliasDraft.trim()).catch(() => null)
+        if (!actor?.id) {
+            setAliasError(true)
+            return
+        }
+        await saveApSettings({ ...apSettings, aliases: [...new Set([...aliases, actor.id])] })
+        setAliasDraft('')
+    }
+
+    const move = async (): Promise<void> => {
+        setMoveError(false)
+        try {
+            const res = await client.api.callConcrntApi<{ movedTo: string }>(
+                client.server.domain,
+                'net.concrnt.activitypub.move',
+                {},
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: moveDraft.trim() })
+                }
+            )
+            setSettings((prev) => prev && { ...prev, movedTo: res.movedTo })
+        } catch (err) {
+            console.log(err)
+            setMoveError(true)
+        }
     }
 
     return (
@@ -369,6 +438,81 @@ export const Activitypub = () => {
                         </Button>
                         <Divider />
                         <ApFollowList />
+                        {moveSupported && (
+                            <>
+                                <Divider />
+                                <Text>{t('moveOrigins')}</Text>
+                                <Text variant="caption">{t('moveOriginsDesc')}</Text>
+                                {aliases.map((alias) => (
+                                    <div
+                                        key={alias}
+                                        style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}
+                                    >
+                                        <Text style={{ flex: 1, wordBreak: 'break-all' }}>{alias}</Text>
+                                        <IconButton
+                                            onClick={() => {
+                                                saveApSettings({
+                                                    ...apSettings,
+                                                    aliases: aliases.filter((a) => a !== alias)
+                                                }).catch((err) => {
+                                                    console.log(err)
+                                                })
+                                            }}
+                                        >
+                                            <MdDelete size={20} />
+                                        </IconButton>
+                                    </div>
+                                ))}
+                                <TextField
+                                    value={aliasDraft}
+                                    placeholder="@user@example.com"
+                                    onChange={(e) => setAliasDraft(e.target.value)}
+                                />
+                                {aliasError && (
+                                    <Text variant="caption" style={{ color: 'red' }}>
+                                        {t('aliasNotFound')}
+                                    </Text>
+                                )}
+                                <Button disabled={aliasDraft.trim() === ''} onClick={addAlias}>
+                                    {t('addMoveOrigin')}
+                                </Button>
+                                <Divider />
+                                <Text>{t('moveTo')}</Text>
+                                {settings.movedTo ? (
+                                    <Text>{t('movedTo', { target: settings.movedTo })}</Text>
+                                ) : (
+                                    <>
+                                        <Text variant="caption">
+                                            {t('moveToDesc', { handle: `@${settings.id}@${client.server.domain}` })}
+                                        </Text>
+                                        <TextField
+                                            value={moveDraft}
+                                            placeholder="@user@example.com"
+                                            onChange={(e) => setMoveDraft(e.target.value)}
+                                        />
+                                        {moveError && (
+                                            <Text variant="caption" style={{ color: 'red' }}>
+                                                {t('moveFailed', { handle: `@${settings.id}@${client.server.domain}` })}
+                                            </Text>
+                                        )}
+                                        <Button
+                                            disabled={moveDraft.trim() === ''}
+                                            onClick={() => setMoveConfirmOpen(true)}
+                                        >
+                                            {t('move')}
+                                        </Button>
+                                        <Confirm
+                                            open={moveConfirmOpen}
+                                            onClose={() => setMoveConfirmOpen(false)}
+                                            title={t('moveConfirmTitle')}
+                                            description={t('moveConfirmDescription', { target: moveDraft.trim() })}
+                                            confirmText={t('move')}
+                                            onConfirm={move}
+                                        />
+                                    </>
+                                )}
+                            </>
+                        )}
                     </>
                 )}
             </div>
