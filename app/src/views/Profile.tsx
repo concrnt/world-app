@@ -15,7 +15,8 @@ import {
     useTheme,
     ListItem,
     Tooltip,
-    OverlaySurface
+    OverlaySurface,
+    Skeleton
 } from '@concrnt/ui'
 import { CfmRenderer } from '../components/CfmRenderer'
 import { Confirm } from '../components/Confirm'
@@ -49,6 +50,7 @@ import { PrivateContentDoor } from '../components/PrivateContentDoor'
 import { MdLock, MdDns, MdGridView, MdViewAgenda } from 'react-icons/md'
 import { useMediaViewer } from '../contexts/MediaViewer'
 import { useMediaProxy } from '../contexts/MediaProxy'
+import { TimelineSkeleton } from '../components/TimelineSkeleton'
 
 interface Props {
     ccid: string
@@ -93,6 +95,8 @@ const FollowCount = (props: { user: User; field: 'acknowledging' | 'acknowledged
 
 export const ProfileView = (props: Props) => {
     const { client } = useClient()
+    const theme = useTheme()
+    const navigation = useNavigation()
 
     const [reload, setReload] = useState(0)
 
@@ -153,7 +157,63 @@ export const ProfileView = (props: Props) => {
     return (
         <View>
             <ErrorBoundary FallbackComponent={RenderError} onReset={() => setReload((prev) => prev + 1)}>
-                <Suspense>
+                <Suspense
+                    fallback={
+                        // Bodyのヘッダーと同じ寸法で組み、読み込み完了時のレイアウトシフトを抑える。戻るボタンは読み込み中も押せるよう実物を置く
+                        <>
+                            <div style={{ position: 'relative' }}>
+                                <CCWallpaper
+                                    style={{
+                                        paddingTop:
+                                            theme.variant === 'classic' ? 'env(safe-area-inset-top)' : undefined,
+                                        height: '150px'
+                                    }}
+                                >
+                                    <div style={{ padding: CssVar.space(1) }}>
+                                        <div
+                                            style={{
+                                                color:
+                                                    theme.variant === 'classic' ? CssVar.backdropText : CssVar.uiText,
+                                                height: '40px',
+                                                width: '40px'
+                                            }}
+                                        >
+                                            {navigation.backNode}
+                                        </div>
+                                    </div>
+                                </CCWallpaper>
+                                {/* Skeletonは半透明なので、壁紙に重なる上半分が透けないよう下地を敷く */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        transform: 'translateY(-50%)',
+                                        left: CssVar.space(2),
+                                        borderRadius: '4px',
+                                        backgroundColor: CssVar.contentBackground
+                                    }}
+                                >
+                                    <Skeleton width="100px" height="100px" style={{ borderRadius: '4px' }} />
+                                </div>
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: CssVar.space(2),
+                                    padding: `0 ${CssVar.space(2)}`
+                                }}
+                            >
+                                <div style={{ height: '50px' }} />
+                                <Skeleton width="10rem" height="1.2rem" style={{ borderRadius: CssVar.round(1) }} />
+                                <Skeleton width="18rem" height="12px" style={{ borderRadius: CssVar.round(1) }} />
+                                <Skeleton width="8rem" height="12px" style={{ borderRadius: CssVar.round(1) }} />
+                                <Skeleton width="80%" height="14px" style={{ borderRadius: CssVar.round(1) }} />
+                                <Skeleton width="10rem" height="14px" style={{ borderRadius: CssVar.round(1) }} />
+                            </div>
+                            <TimelineSkeleton />
+                        </>
+                    }
+                >
                     <Inner
                         ccid={props.ccid}
                         userPromise={userPromise}

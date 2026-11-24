@@ -432,7 +432,18 @@
             "repairing": "Repairing...",
             "repairFailed": "Repair failed. Please try again later.",
             "update": "Update",
-            "inquiry": "Inquiry"
+            "inquiry": "Inquiry",
+            "moveOrigins": "Move from",
+            "moveOriginsDesc": "To move to this account from an account on another server, add that account here first, then start the move on the old server.",
+            "addMoveOrigin": "Add account to move from",
+            "aliasNotFound": "Account not found.",
+            "moveTo": "Move to",
+            "moveToDesc": "To move this account to another server, first add {{handle}} as an alias on the new account, then enter the new account here. Your followers will move to the new account.",
+            "move": "Move",
+            "moveFailed": "Move failed. Make sure {{handle}} is added as an alias on the new account.",
+            "moveConfirmTitle": "Move this account?",
+            "moveConfirmDescription": "This account will move to {{target}}. Your followers will move to the new account. This cannot be undone.",
+            "movedTo": "This account has moved to {{target}}."
         },
         "apNote": {
             "notImported": "This post has not been fetched to this server yet.",
