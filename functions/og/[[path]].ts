@@ -4,6 +4,7 @@
 //   /og/post/<encoded cckv uri>
 //   /og/timeline/<encoded cckv uri>
 //   /og/lists/<encoded cckv uri>
+//   /og/invitation/<ccid>/<id>[?hint=<domain>]
 // 取得できないものは元パスへ302で戻す(キャッシュしない)。
 //
 // Discord は activity+json の alternate link を見つけると Note と attributedTo の Person を読んで
@@ -69,7 +70,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const isDiscord = /discordbot/i.test(context.request.headers.get('user-agent') ?? '')
     // alternate link は Discord にだけ出すので HTML の内容が UA で変わる。Cache API はフラグメントを無視するのでクエリで分ける
     const cacheKey = url.origin + url.pathname + (isDiscord ? '?ua=discord' : '')
-    const originalPath = url.origin + url.pathname.replace(/^\/og/, '')
+    const originalPath = url.origin + url.pathname.replace(/^\/og/, '') + url.search
     const redirect = (): Response => Response.redirect(originalPath, 302)
 
     const cache = caches.default
@@ -303,6 +304,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         description = list.value?.description ?? ''
         const icon = imageURL(entity.domain, list.value?.iconURL)
         if (icon) images = [icon]
+    } else if (kind === 'invitation' && rest.length === 2 && IS_CCID.test(rest[0])) {
+        const [ccid, id] = rest
+        const entity = await resolveEntity(ccid, url.searchParams.get('hint') ?? undefined)
+        if (!entity) return redirect()
+        const invitation = await resolve(entity.domain, `cckv://${ccid}/concrnt.world/invitations/${id}`)
+        if (!invitation) return redirect()
+        const profile = await resolve(entity.domain, `cckv://${ccid}/concrnt.world/profiles/main`)
+        title = `${profile?.value?.username ?? ''}さんからconcrntへの招待が届きました！`
+        description = invitation.value?.comment ?? ''
+        const avatar = imageURL(entity.domain, profile?.value?.avatar)
+        if (avatar) images = [avatar]
     } else {
         return redirect()
     }
