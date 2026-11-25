@@ -49,8 +49,8 @@ export const InvitationPage = () => {
         // 招待状を出した後で、招待のタイムラインの最近の投稿を背景のデモの投稿に混ぜる。
         // どんな場所に招待されたかの雰囲気を伝える飾りなので、失敗しても招待状はそのまま見せる
         const addRecentPosts = async ({ guest, timelines }: { guest: Client; timelines: string[] }) => {
-            const items = await guest.api.getTimelineRecent(timelines)
-            for (const item of items.slice(0, 16)) {
+            const items = await guest.api.getTimelineRanged(timelines, { limit: 30 })
+            for (const item of items) {
                 // 消された投稿や本文の無い投稿(リルート等)は飛ばす
                 const document = await guest.api.getDocument<{ body?: string }>(item.href!).catch(() => null)
                 if (!document?.value.body) continue
