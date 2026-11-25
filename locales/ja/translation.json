@@ -584,6 +584,7 @@
             "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
             "copyLink": "リンクをコピー",
             "delete": "削除",
+            "selectCommunity": "コミュニティを選択",
             "timelines": "リストに追加するタイムライン",
             "timelinesDescription": "招待された人の Home に並ぶタイムラインです。",
             "defaultPostTimelines": "デフォルト投稿先",

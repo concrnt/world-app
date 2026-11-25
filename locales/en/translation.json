@@ -585,6 +585,7 @@
             "confirmDeleteDescription": "The invitation link will no longer open.",
             "copyLink": "Copy link",
             "delete": "Delete",
+            "selectCommunity": "Select community",
             "timelines": "Timelines to add to the list",
             "timelinesDescription": "These timelines appear on the invited person's Home.",
             "defaultPostTimelines": "Default post destinations",

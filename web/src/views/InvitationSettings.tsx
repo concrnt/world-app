@@ -63,12 +63,16 @@ const InvitationForm = () => {
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
                 {t('timelinesDescription')}
             </Text>
-            <TimelinePicker selected={timelines} setSelected={setTimelines} />
+            <TimelinePicker selected={timelines} setSelected={setTimelines} addLabel={t('selectCommunity')} />
             <Text variant="h3">{t('defaultPostTimelines')}</Text>
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
                 {t('defaultPostTimelinesDescription')}
             </Text>
-            <TimelinePicker selected={defaultPostTimelines} setSelected={setDefaultPostTimelines} />
+            <TimelinePicker
+                selected={defaultPostTimelines}
+                setSelected={setDefaultPostTimelines}
+                addLabel={t('selectCommunity')}
+            />
             <Button
                 disabled={comment === '' || timelines.length === 0}
                 busyChildren={t('creating')}

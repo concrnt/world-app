@@ -27,6 +27,7 @@ interface Props {
     setPostHome?: (postHome: boolean) => void
     selectedProfile?: string
     setSelectedProfile?: (profile: string) => void
+    addLabel?: string
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -209,7 +210,7 @@ export const TimelinePicker = (props: Props) => {
                     }}
                     tailElement={<IoMdAdd size={16} />}
                 >
-                    {t('addDestination')}
+                    {props.addLabel ?? t('addDestination')}
                 </Chip>
             )}
             {/* モーダル(Composer等)のoverflowにクリップされないよう、候補一覧はtop layerに出す。
