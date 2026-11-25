@@ -574,7 +574,7 @@
         },
         "invitationSettings": {
             "title": "招待",
-            "description": "招待リンクを開いた人は、選んだタイムラインが並ぶ Home でアプリを始められます。招待リンクは何回でも使えます。",
+            "description": "招待リンクを開いた人は、選んだコミュニティが並ぶ Home でアプリを始められます。招待リンクは何回でも使えます。",
             "comment": "招待コメント",
             "create": "招待リンクを作成",
             "creating": "作成中...",
@@ -585,10 +585,11 @@
             "copyLink": "リンクをコピー",
             "delete": "削除",
             "selectCommunity": "コミュニティを選択",
-            "timelines": "リストに追加するタイムライン",
-            "timelinesDescription": "招待された人の Home に並ぶタイムラインです。",
-            "defaultPostTimelines": "デフォルト投稿先",
-            "defaultPostTimelinesDescription": "招待された人が Home から投稿したときの投稿先です。"
+            "communities": "招待先のコミュニティ",
+            "communitiesDescription": "招待された人の Home に並び、Home から投稿したときの投稿先になります。",
+            "addMoreCommunities": "コミュニティをさらに追加する",
+            "additionalCommunities": "追加のコミュニティ",
+            "additionalCommunitiesDescription": "招待された人の Home に並びますが、投稿先にはなりません。"
         },
         "invitation": {
             "title": "{{username}}さんからconcrntへの招待が届きました！",

@@ -27,6 +27,7 @@ interface Props {
     selectedProfile?: string
     setSelectedProfile?: (profile: string) => void
     addLabel?: string
+    single?: boolean
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -149,7 +150,7 @@ export const TimelinePicker = (props: Props) => {
                     </Chip>
                 )
             })}
-            {focused ? (
+            {props.single && props.selected.length > 0 ? null : focused ? (
                 <input
                     ref={inputRef}
                     autoFocus
@@ -246,6 +247,8 @@ export const TimelinePicker = (props: Props) => {
                             // 手動で選んだ候補だけを履歴に残す(プロバイダー側が履歴を持たなければ何もしない)
                             provider.remember?.(opt)
                             props.setSelected([...props.selected, opt.uri])
+                            // 選ぶと入力欄ごと消えるので、blurを発火させずにfocused状態が残らないよう先に外す
+                            if (props.single) inputRef.current?.blur()
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

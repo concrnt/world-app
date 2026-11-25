@@ -25,8 +25,9 @@ const InvitationForm = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.invitationSettings' })
     const { client } = useClient()
     const [comment, setComment] = useState('Welcome!')
-    const [timelines, setTimelines] = useState<string[]>([])
-    const [defaultPostTimelines, setDefaultPostTimelines] = useState<string[]>([])
+    const [communities, setCommunities] = useState<string[]>([])
+    const [additionalCommunities, setAdditionalCommunities] = useState<string[]>([])
+    const [additionalOpen, setAdditionalOpen] = useState(false)
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
     const [menu, setMenu] = useState<string>()
     const [deleting, setDeleting] = useState<string>()
@@ -58,22 +59,39 @@ const InvitationForm = () => {
             <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
             <Text variant="h3">{t('comment')}</Text>
             <TextField value={comment} onChange={(e) => setComment(e.target.value)} />
-            <Text variant="h3">{t('timelines')}</Text>
+            <Text variant="h3">{t('communities')}</Text>
             <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {t('timelinesDescription')}
-            </Text>
-            <TimelinePicker selected={timelines} setSelected={setTimelines} addLabel={t('selectCommunity')} />
-            <Text variant="h3">{t('defaultPostTimelines')}</Text>
-            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {t('defaultPostTimelinesDescription')}
+                {t('communitiesDescription')}
             </Text>
             <TimelinePicker
-                selected={defaultPostTimelines}
-                setSelected={setDefaultPostTimelines}
+                selected={communities}
+                setSelected={setCommunities}
                 addLabel={t('selectCommunity')}
+                single
             />
+            {additionalOpen ? (
+                <>
+                    <Text variant="h3">{t('additionalCommunities')}</Text>
+                    <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                        {t('additionalCommunitiesDescription')}
+                    </Text>
+                    <TimelinePicker
+                        selected={additionalCommunities}
+                        setSelected={setAdditionalCommunities}
+                        addLabel={t('selectCommunity')}
+                    />
+                </>
+            ) : (
+                <Button
+                    variant="text"
+                    onClick={() => setAdditionalOpen(true)}
+                    style={{ alignSelf: 'flex-start', padding: 0, fontSize: '0.875em' }}
+                >
+                    {t('addMoreCommunities')}
+                </Button>
+            )}
             <Button
-                disabled={comment === '' || timelines.length === 0}
+                disabled={comment === '' || communities.length === 0}
                 busyChildren={t('creating')}
                 onClick={async () => {
                     const document: Document<InvitationSchema> = {
@@ -83,15 +101,16 @@ const InvitationForm = () => {
                         schema: Schemas.invitation,
                         value: {
                             comment,
-                            timelines,
-                            defaultPostTimelines
+                            timelines: [...new Set([...communities, ...additionalCommunities])],
+                            defaultPostTimelines: communities
                         },
                         createdAt: new Date()
                     }
                     await client.api.commit(document)
                     setComment('Welcome!')
-                    setTimelines([])
-                    setDefaultPostTimelines([])
+                    setCommunities([])
+                    setAdditionalCommunities([])
+                    setAdditionalOpen(false)
                     await load()
                 }}
             >

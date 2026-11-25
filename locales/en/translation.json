@@ -575,7 +575,7 @@
         },
         "invitationSettings": {
             "title": "Invitations",
-            "description": "People who open the invitation link start the app with a Home made of the selected timelines. The link can be used any number of times.",
+            "description": "People who open the invitation link start the app with a Home made of the selected communities. The link can be used any number of times.",
             "comment": "Invitation message",
             "create": "Create invitation link",
             "creating": "Creating...",
@@ -586,10 +586,11 @@
             "copyLink": "Copy link",
             "delete": "Delete",
             "selectCommunity": "Select community",
-            "timelines": "Timelines to add to the list",
-            "timelinesDescription": "These timelines appear on the invited person's Home.",
-            "defaultPostTimelines": "Default post destinations",
-            "defaultPostTimelinesDescription": "Where the invited person's posts from Home go."
+            "communities": "Community to invite to",
+            "communitiesDescription": "Appears on the invited person's Home and is where their posts from Home go.",
+            "addMoreCommunities": "Add more communities",
+            "additionalCommunities": "Additional communities",
+            "additionalCommunitiesDescription": "Appear on the invited person's Home, but are not where their posts go."
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",
