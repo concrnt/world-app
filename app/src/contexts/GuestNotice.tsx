@@ -4,8 +4,8 @@ import { Button, Text, View } from '@concrnt/ui'
 import { Drawer } from '../ui/Drawer'
 import { Header } from '../ui/Header'
 import { AccountSetup } from '../views/AccountSetup'
+import { resolveEntrypoint } from '../views/Welcome'
 import { CssVar } from '../types/Theme'
-import { loadStoredInvitation } from '../utils/invitation'
 
 const GuestRegisterContext = createContext<() => void>(() => {})
 
@@ -20,7 +20,7 @@ export const GuestNoticeProvider = (props: { children: ReactNode }) => {
                 {open && (
                     // 登録完了時に保存済みの招待はAccountSetupが適用する。起動し直して登録済みアカウントで立ち上げる
                     <AccountSetup
-                        entrypoint={loadStoredInvitation()!.domain}
+                        entrypoint={resolveEntrypoint()}
                         embedded
                         onBack={() => setOpen(false)}
                         onComplete={() => window.location.reload()}
