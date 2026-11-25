@@ -596,7 +596,7 @@
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",
-            "acceptAsGuest": "Look around as a guest",
+            "acceptAsGuest": "Start with this invitation",
             "addToHome": "Add to Home as a tab",
             "back": "Back",
             "loadFailed": "Could not load the invitation",

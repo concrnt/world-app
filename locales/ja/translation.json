@@ -595,7 +595,7 @@
         },
         "invitation": {
             "title": "{{username}}さんからconcrntへの招待が届きました！",
-            "acceptAsGuest": "ゲストとして見てみる",
+            "acceptAsGuest": "招待からはじめる",
             "addToHome": "Home にタブとして追加",
             "back": "戻る",
             "loadFailed": "招待を読み込めませんでした",
