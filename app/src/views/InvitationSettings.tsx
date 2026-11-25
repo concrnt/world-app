@@ -8,6 +8,7 @@ import { useClient } from '../contexts/Client'
 import { TimelinePicker } from '../components/TimelinePicker'
 import { TimelineTag } from '../components/TimelineTag'
 import { Drawer } from '../ui/Drawer'
+import { shareText } from '../lib/share'
 import { Confirm } from '../components/Confirm'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
@@ -30,6 +31,8 @@ const InvitationForm = () => {
     const [communities, setCommunities] = useState<string[]>([])
     const [additionalCommunities, setAdditionalCommunities] = useState<string[]>([])
     const [additionalOpen, setAdditionalOpen] = useState(false)
+    const [created, setCreated] = useState<Document<InvitationSchema>>()
+    const [copied, setCopied] = useState(false)
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
     const [listOpen, setListOpen] = useState(false)
     const [menu, setMenu] = useState<string>()
@@ -46,6 +49,11 @@ const InvitationForm = () => {
     useEffect(() => {
         load().catch((err) => console.error('Failed to load invitations', err))
     }, [load])
+
+    // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
+    const link = created
+        ? `https://concrnt.world/invitation/${client.ccid}/${created.key!.split('/').pop()}?hint=${client.entity.domain}`
+        : ''
 
     return (
         <div
@@ -65,59 +73,102 @@ const InvitationForm = () => {
                     {t('createdLinks')}
                 </Button>
             </div>
-            <Text variant="h3">{t('comment')}</Text>
-            <TextField value={comment} onChange={(e) => setComment(e.target.value)} />
-            <Text variant="h3">{t('communities')}</Text>
-            <TimelinePicker
-                selected={communities}
-                setSelected={setCommunities}
-                addLabel={t('selectCommunity')}
-                single
-            />
-            {additionalOpen ? (
+            {created ? (
                 <>
-                    <Text variant="h3">{t('additionalCommunities')}</Text>
-                    <TimelinePicker
-                        selected={additionalCommunities}
-                        setSelected={setAdditionalCommunities}
-                        addLabel={t('selectCommunity')}
-                    />
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: CssVar.space(1),
+                            padding: CssVar.space(2),
+                            borderRadius: CssVar.round(1),
+                            border: `1px solid ${CssVar.divider}`
+                        }}
+                    >
+                        <Text>{created.value.comment}</Text>
+                        {[
+                            ...created.value.defaultPostTimelines,
+                            ...created.value.timelines.filter((tl) => !created.value.defaultPostTimelines.includes(tl))
+                        ].map((tl) => (
+                            <TimelineTag key={tl} uri={tl} />
+                        ))}
+                    </div>
+                    <Button
+                        onClick={() => {
+                            navigator.clipboard.writeText(link)
+                            setCopied(true)
+                            setTimeout(() => setCopied(false), 2000)
+                        }}
+                    >
+                        {copied ? t('copied') : t('copyLink')}
+                    </Button>
+                    <Button onClick={() => shareText(link).catch(() => {})}>{t('share')}</Button>
+                    <Button
+                        variant="text"
+                        onClick={() => setCreated(undefined)}
+                        style={{ alignSelf: 'center', padding: 0, fontSize: '0.875em' }}
+                    >
+                        {t('createAnother')}
+                    </Button>
                 </>
             ) : (
-                <Button
-                    variant="text"
-                    onClick={() => setAdditionalOpen(true)}
-                    style={{ alignSelf: 'flex-start', padding: 0, fontSize: '0.875em' }}
-                >
-                    {t('addMoreCommunities')}
-                </Button>
+                <>
+                    <Text variant="h3">{t('comment')}</Text>
+                    <TextField value={comment} onChange={(e) => setComment(e.target.value)} />
+                    <Text variant="h3">{t('communities')}</Text>
+                    <TimelinePicker
+                        selected={communities}
+                        setSelected={setCommunities}
+                        addLabel={t('selectCommunity')}
+                        single
+                    />
+                    {additionalOpen ? (
+                        <>
+                            <Text variant="h3">{t('additionalCommunities')}</Text>
+                            <TimelinePicker
+                                selected={additionalCommunities}
+                                setSelected={setAdditionalCommunities}
+                                addLabel={t('selectCommunity')}
+                            />
+                        </>
+                    ) : (
+                        <Button
+                            variant="text"
+                            onClick={() => setAdditionalOpen(true)}
+                            style={{ alignSelf: 'flex-start', padding: 0, fontSize: '0.875em' }}
+                        >
+                            {t('addMoreCommunities')}
+                        </Button>
+                    )}
+                    <Button
+                        disabled={comment === '' || communities.length === 0}
+                        busyChildren={t('creating')}
+                        onClick={async () => {
+                            const document: Document<InvitationSchema> = {
+                                kind: 'record',
+                                key: semantics.invitation(client.ccid, Date.now().toString()),
+                                author: client.ccid,
+                                schema: Schemas.invitation,
+                                value: {
+                                    comment,
+                                    timelines: [...new Set([...communities, ...additionalCommunities])],
+                                    defaultPostTimelines: communities
+                                },
+                                createdAt: new Date()
+                            }
+                            await client.api.commit(document)
+                            setCreated(document)
+                            setComment('Welcome!')
+                            setCommunities([])
+                            setAdditionalCommunities([])
+                            setAdditionalOpen(false)
+                            await load()
+                        }}
+                    >
+                        {t('create')}
+                    </Button>
+                </>
             )}
-            <Button
-                disabled={comment === '' || communities.length === 0}
-                busyChildren={t('creating')}
-                onClick={async () => {
-                    const document: Document<InvitationSchema> = {
-                        kind: 'record',
-                        key: semantics.invitation(client.ccid, Date.now().toString()),
-                        author: client.ccid,
-                        schema: Schemas.invitation,
-                        value: {
-                            comment,
-                            timelines: [...new Set([...communities, ...additionalCommunities])],
-                            defaultPostTimelines: communities
-                        },
-                        createdAt: new Date()
-                    }
-                    await client.api.commit(document)
-                    setComment('Welcome!')
-                    setCommunities([])
-                    setAdditionalCommunities([])
-                    setAdditionalOpen(false)
-                    await load()
-                }}
-            >
-                {t('create')}
-            </Button>
             <Drawer open={listOpen} onClose={() => setListOpen(false)}>
                 <div
                     style={{
