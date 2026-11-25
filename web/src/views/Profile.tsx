@@ -669,6 +669,7 @@ const Body = (props: BodyProps) => {
 
     return (
         <>
+            <title>{`${profile.value.username ?? props.ccid} - Concrnt`}</title>
             {tab === 'media' && mediaView === 'grid' ? (
                 <MediaGridTimeline prefix={target.prefix} query={target.query} header={header} />
             ) : (

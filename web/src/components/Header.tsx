@@ -36,6 +36,7 @@ export const Header = (props: Props) => {
                 borderBottom: `1px solid ${CssVar.divider}`
             }}
         >
+            {typeof props.children === 'string' && <title>{`${props.children} - Concrnt`}</title>}
             <div
                 style={{
                     height: '40px',

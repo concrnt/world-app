@@ -86,7 +86,17 @@ export const InvitationPage = () => {
         }
     }, [ccid, id, hint])
 
-    if (loaded === undefined) return <LoadingFull />
+    // 読み込みが GA4Provider の待ち時間より長引いても固定のタイトルで送られるよう、招待状の読み込みを待たずに出す。
+    // 招待ごとに URL が違うので、招待者名などを入れずに固定にして GA で 1 つのページとして集計させる
+    const pageTitle = <title>Invitation - Concrnt</title>
+
+    if (loaded === undefined)
+        return (
+            <>
+                {pageTitle}
+                <LoadingFull />
+            </>
+        )
 
     // 日本語は文字の間で自由に折り返して語の途中で改行されるので、翻訳文の <wbr/> でだけ改行させる。
     // 長い名前で収まらないときだけ overflowWrap で任意の位置に折り返す
@@ -137,6 +147,7 @@ export const InvitationPage = () => {
                 backgroundColor: CssVar.contentBackground
             }}
         >
+            {pageTitle}
             <PostsBackground posts={recentPosts} />
             {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
                 zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}
