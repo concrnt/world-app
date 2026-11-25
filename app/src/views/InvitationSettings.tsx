@@ -6,6 +6,8 @@ import { Document, SignedDocument } from '@concrnt/client'
 import { InvitationSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { TimelinePicker } from '../components/TimelinePicker'
+import { TimelineTag } from '../components/TimelineTag'
+import { Drawer } from '../ui/Drawer'
 import { Confirm } from '../components/Confirm'
 import { Header } from '../ui/Header'
 import { CssVar } from '../types/Theme'
@@ -29,6 +31,7 @@ const InvitationForm = () => {
     const [additionalCommunities, setAdditionalCommunities] = useState<string[]>([])
     const [additionalOpen, setAdditionalOpen] = useState(false)
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
+    const [listOpen, setListOpen] = useState(false)
     const [menu, setMenu] = useState<string>()
     const [deleting, setDeleting] = useState<string>()
 
@@ -56,13 +59,15 @@ const InvitationForm = () => {
                 padding: CssVar.space(4)
             }}
         >
-            <Text style={{ color: CssVar.contentTextDim }}>{t('description')}</Text>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text variant="h2">{t('createTitle')}</Text>
+                <Button variant="text" onClick={() => setListOpen(true)} style={{ padding: 0, fontSize: '0.875em' }}>
+                    {t('createdLinks')}
+                </Button>
+            </div>
             <Text variant="h3">{t('comment')}</Text>
             <TextField value={comment} onChange={(e) => setComment(e.target.value)} />
             <Text variant="h3">{t('communities')}</Text>
-            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                {t('communitiesDescription')}
-            </Text>
             <TimelinePicker
                 selected={communities}
                 setSelected={setCommunities}
@@ -72,9 +77,6 @@ const InvitationForm = () => {
             {additionalOpen ? (
                 <>
                     <Text variant="h3">{t('additionalCommunities')}</Text>
-                    <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                        {t('additionalCommunitiesDescription')}
-                    </Text>
                     <TimelinePicker
                         selected={additionalCommunities}
                         setSelected={setAdditionalCommunities}
@@ -116,38 +118,54 @@ const InvitationForm = () => {
             >
                 {t('create')}
             </Button>
-            <Text variant="h3">{t('created')}</Text>
-            {invitations.length === 0 && (
-                <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                    {t('empty')}
-                </Text>
-            )}
-            {invitations.map((sd) => {
-                const document: Document<InvitationSchema> = JSON.parse(sd.document)
-                return (
-                    <div
-                        key={sd.cckv}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: CssVar.space(1),
-                            padding: CssVar.space(2),
-                            borderRadius: CssVar.round(1),
-                            border: `1px solid ${CssVar.divider}`
-                        }}
-                    >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <Text>{document.value.comment}</Text>
-                            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                                {new Date(document.createdAt).toLocaleString()}
-                            </Text>
-                        </div>
-                        <IconButton onClick={() => setMenu(sd.cckv)}>
-                            <MdMoreHoriz size={20} />
-                        </IconButton>
-                    </div>
-                )
-            })}
+            <Drawer open={listOpen} onClose={() => setListOpen(false)}>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(2),
+                        padding: CssVar.space(2)
+                    }}
+                >
+                    <Text variant="h3">{t('created')}</Text>
+                    {invitations.length === 0 && (
+                        <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                            {t('empty')}
+                        </Text>
+                    )}
+                    {invitations.map((sd) => {
+                        const document: Document<InvitationSchema> = JSON.parse(sd.document)
+                        return (
+                            <div
+                                key={sd.cckv}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: CssVar.space(1),
+                                    padding: CssVar.space(2),
+                                    borderRadius: CssVar.round(1),
+                                    border: `1px solid ${CssVar.divider}`
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
+                                    <Text style={{ flex: 1, minWidth: 0 }}>{document.value.comment}</Text>
+                                    <IconButton onClick={() => setMenu(sd.cckv)}>
+                                        <MdMoreHoriz size={20} />
+                                    </IconButton>
+                                </div>
+                                {[
+                                    ...document.value.defaultPostTimelines,
+                                    ...document.value.timelines.filter(
+                                        (tl) => !document.value.defaultPostTimelines.includes(tl)
+                                    )
+                                ].map((tl) => (
+                                    <TimelineTag key={tl} uri={tl} />
+                                ))}
+                            </div>
+                        )
+                    })}
+                </div>
+            </Drawer>
             <Select
                 open={menu !== undefined}
                 onClose={() => setMenu(undefined)}
