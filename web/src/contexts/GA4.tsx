@@ -18,14 +18,15 @@ export const GA4Provider = ({ tag, children }: GA4ProviderProps): ReactNode => {
     const location = useLocation()
 
     useEffect(() => {
-        // document.titleは遷移先ビューのマウント後に更新されるため、少し待ってから読む
+        // タイムライン名やユーザー名のタイトルはデータの取得後に決まるので、それを待ってから読む。
+        // 待っている間に離れたページは見たうちに入れないので、遷移で取り消されて送られなくてよい
         const timer = setTimeout(() => {
             if (typeof window.gtag !== 'function') return
             window.gtag('config', tag, {
                 page_path: location.pathname + location.hash,
                 page_title: document.title
             })
-        }, 100)
+        }, 3000)
         return () => clearTimeout(timer)
     }, [tag, location.pathname, location.hash])
 

@@ -49,8 +49,8 @@ export const InvitationPage = () => {
         // 招待状を出した後で、招待のタイムラインの最近の投稿を背景のデモの投稿に混ぜる。
         // どんな場所に招待されたかの雰囲気を伝える飾りなので、失敗しても招待状はそのまま見せる
         const addRecentPosts = async ({ guest, timelines }: { guest: Client; timelines: string[] }) => {
-            const items = await guest.api.getTimelineRecent(timelines)
-            for (const item of items.slice(0, 16)) {
+            const items = await guest.api.getTimelineRanged(timelines, { limit: 30 })
+            for (const item of items) {
                 // 消された投稿や本文の無い投稿(リルート等)は飛ばす
                 const document = await guest.api.getDocument<{ body?: string }>(item.href!).catch(() => null)
                 if (!document?.value.body) continue
@@ -86,7 +86,17 @@ export const InvitationPage = () => {
         }
     }, [ccid, id, hint])
 
-    if (loaded === undefined) return <LoadingFull />
+    // 読み込みが GA4Provider の待ち時間より長引いても固定のタイトルで送られるよう、招待状の読み込みを待たずに出す。
+    // 招待ごとに URL が違うので、招待者名などを入れずに固定にして GA で 1 つのページとして集計させる
+    const pageTitle = <title>Invitation - Concrnt</title>
+
+    if (loaded === undefined)
+        return (
+            <>
+                {pageTitle}
+                <LoadingFull />
+            </>
+        )
 
     // 日本語は文字の間で自由に折り返して語の途中で改行されるので、翻訳文の <wbr/> でだけ改行させる。
     // 長い名前で収まらないときだけ overflowWrap で任意の位置に折り返す
@@ -137,6 +147,7 @@ export const InvitationPage = () => {
                 backgroundColor: CssVar.contentBackground
             }}
         >
+            {pageTitle}
             <PostsBackground posts={recentPosts} />
             {/* 小さい画面ではカードが画面より高くなるので、中央寄せの枠ごと伸びてページがスクロールするようにする。
                 zIndex は使わず、position を付けて先にある fixed の背景より DOM 順で前面に出す */}

@@ -501,9 +501,8 @@ const RealtimeTimelineInner = (props: Props & { hostOverride?: string }) => {
                                         ccid={item.author}
                                         src={item.src}
                                         style={{
-                                            width: '22px',
-                                            height: '22px',
-                                            borderRadius: '50%'
+                                            width: '100%',
+                                            height: '100%'
                                         }}
                                     />
                                 </div>

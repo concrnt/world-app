@@ -68,6 +68,7 @@ export const TimelineView = (props: Props) => {
     return (
         <PostContextProvider destinations={isStatic ? [] : [props.uri]}>
             <View>
+                {timeline && <title>{`#${timeline.name} - Concrnt`}</title>}
                 <Header
                     onTitleTap={() => scrollRef.current?.scrollToTop()}
                     right={

@@ -4,13 +4,15 @@ import { Button, Text, View } from '@concrnt/ui'
 import { Drawer } from '../ui/Drawer'
 import { Header } from '../ui/Header'
 import { AccountSetup } from '../views/AccountSetup'
+import { resolveEntrypoint } from '../views/Welcome'
+import { useClient } from './Client'
 import { CssVar } from '../types/Theme'
-import { loadStoredInvitation } from '../utils/invitation'
 
 const GuestRegisterContext = createContext<() => void>(() => {})
 
 // ゲスト(招待を受け入れたが未登録)の登録画面。案内ビューの「登録」から開く
 export const GuestNoticeProvider = (props: { children: ReactNode }) => {
+    const { client } = useClient()
     const [open, setOpen] = useState(false)
 
     return (
@@ -20,7 +22,10 @@ export const GuestNoticeProvider = (props: { children: ReactNode }) => {
                 {open && (
                     // 登録完了時に保存済みの招待はAccountSetupが適用する。起動し直して登録済みアカウントで立ち上げる
                     <AccountSetup
-                        entrypoint={loadStoredInvitation()!.domain}
+                        // ゲストは招待のhintのサーバーにつないでいる。誰でも登録できるサーバーならそのまま登録先の初期値にする
+                        entrypoint={
+                            client.server.meta?.registration === 'open' ? client.server.domain : resolveEntrypoint()
+                        }
                         embedded
                         onBack={() => setOpen(false)}
                         onComplete={() => window.location.reload()}
