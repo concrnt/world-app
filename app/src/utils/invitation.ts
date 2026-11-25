@@ -2,7 +2,7 @@ import { Document, NotFoundError } from '@concrnt/client'
 import { Client, InvitationSchema, List, ListSchema, PinnedListsSchema, Schemas, semantics } from '@concrnt/worldlib'
 
 // 受け入れた招待(ゲスト閲覧中、登録完了時に適用するまで保持する)。
-// domainは招待URIのhint(招待者のサーバー)で、ゲストクライアントの接続先に使う
+// domainは招待URIのhint(招待者のサーバー)で、ゲストクライアントの接続先に使う(登録がopenなら登録先の初期値にもなる)
 export interface StoredInvitation {
     domain: string
     inviter: string
