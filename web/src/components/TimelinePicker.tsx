@@ -85,46 +85,48 @@ export const TimelinePicker = (props: Props) => {
                 } as React.CSSProperties
             }
         >
-            <Chip
-                onClick={() => {
-                    if (!props.setSelectedProfile) return
-                    hapticSelection()
-                    if (!client) return
-                    setProfileSelectOpen(true)
-                }}
-                headElement={
-                    <Avatar
-                        ccid={client?.ccid ?? ''}
-                        src={profileAvatar}
-                        style={{
-                            width: 20,
-                            height: 20
-                        }}
-                    />
-                }
-                tailElement={
-                    <IoMdCloseCircle
-                        size={16}
-                        style={{
-                            transform: props.postHome === false ? 'rotate(45deg)' : 'none',
-                            transition: 'transform 0.2s'
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            props.setPostHome?.(!props.postHome)
-                        }}
-                    />
-                }
-                style={
-                    {
-                        textDecoration: props.postHome === false ? 'line-through' : 'none',
-                        opacity: props.postHome === false ? 0.5 : 1,
-                        anchorName: profileAnchor
-                    } as React.CSSProperties
-                }
-            >
-                {profileUsername}
-            </Chip>
+            {/* 投稿元を持たない用途(招待のタイムライン選択など)では自分のチップを出さない */}
+            {props.setSelectedProfile && (
+                <Chip
+                    onClick={() => {
+                        hapticSelection()
+                        if (!client) return
+                        setProfileSelectOpen(true)
+                    }}
+                    headElement={
+                        <Avatar
+                            ccid={client?.ccid ?? ''}
+                            src={profileAvatar}
+                            style={{
+                                width: 20,
+                                height: 20
+                            }}
+                        />
+                    }
+                    tailElement={
+                        <IoMdCloseCircle
+                            size={16}
+                            style={{
+                                transform: props.postHome === false ? 'rotate(45deg)' : 'none',
+                                transition: 'transform 0.2s'
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                props.setPostHome?.(!props.postHome)
+                            }}
+                        />
+                    }
+                    style={
+                        {
+                            textDecoration: props.postHome === false ? 'line-through' : 'none',
+                            opacity: props.postHome === false ? 0.5 : 1,
+                            anchorName: profileAnchor
+                        } as React.CSSProperties
+                    }
+                >
+                    {profileUsername}
+                </Chip>
+            )}
             {props.selected.map((sel) => {
                 const seen = seenRef.current.get(sel)
                 return (
