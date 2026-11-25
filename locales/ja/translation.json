@@ -574,7 +574,8 @@
         },
         "invitationSettings": {
             "title": "招待",
-            "description": "招待リンクを開いた人は、選んだタイムラインが並ぶ Home でアプリを始められます。招待リンクは何回でも使えます。",
+            "createTitle": "招待リンクを作成",
+            "createdLinks": "作成したリンク",
             "comment": "招待コメント",
             "create": "招待リンクを作成",
             "creating": "作成中...",
@@ -582,15 +583,19 @@
             "empty": "まだ招待はありません",
             "confirmDelete": "招待を削除しますか?",
             "confirmDeleteDescription": "削除した招待リンクは開けなくなります。",
+            "copyLink": "リンクをコピー",
+            "copied": "コピーしました",
+            "share": "シェア",
+            "createAnother": "別の招待を作成",
             "delete": "削除",
-            "timelines": "リストに追加するタイムライン",
-            "timelinesDescription": "招待された人の Home に並ぶタイムラインです。",
-            "defaultPostTimelines": "デフォルト投稿先",
-            "defaultPostTimelinesDescription": "招待された人が Home から投稿したときの投稿先です。"
+            "selectCommunity": "コミュニティを選択",
+            "communities": "招待先のコミュニティ",
+            "addMoreCommunities": "コミュニティをさらに追加する",
+            "additionalCommunities": "追加のコミュニティ"
         },
         "invitation": {
             "title": "{{username}}さんからconcrntへの招待が届きました！",
-            "acceptAsGuest": "ゲストとして見てみる",
+            "acceptAsGuest": "招待からはじめる",
             "addToHome": "Home にタブとして追加",
             "back": "戻る",
             "loadFailed": "招待を読み込めませんでした",
@@ -1271,7 +1276,9 @@
             }
         },
         "invitation": {
-            "title": "{{username}}さんからconcrntへの招待が届きました！",
+            "title": "{{username}}さんから<wbr/>concrntへの<wbr/>招待が届きました！",
+            "titleWithCommunity": "{{username}}さんから<wbr/>{{community}}への<wbr/>招待が届きました！",
+            "descriptionWithCommunity": "{{community}}は、あなたの世界をちょっとだけより豊かにする新しい時代のSNS、Concrntにて育まれています",
             "openApp": "アプリで開く",
             "loadFailed": "招待を読み込めませんでした",
             "qrTitle": "スマートフォンで開く",

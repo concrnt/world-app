@@ -575,7 +575,8 @@
         },
         "invitationSettings": {
             "title": "Invitations",
-            "description": "People who open the invitation link start the app with a Home made of the selected timelines. The link can be used any number of times.",
+            "createTitle": "Create invitation link",
+            "createdLinks": "Your links",
             "comment": "Invitation message",
             "create": "Create invitation link",
             "creating": "Creating...",
@@ -583,15 +584,19 @@
             "empty": "No invitations yet",
             "confirmDelete": "Delete this invitation?",
             "confirmDeleteDescription": "The invitation link will no longer open.",
+            "copyLink": "Copy link",
+            "copied": "Copied",
+            "share": "Share",
+            "createAnother": "Create another invitation",
             "delete": "Delete",
-            "timelines": "Timelines to add to the list",
-            "timelinesDescription": "These timelines appear on the invited person's Home.",
-            "defaultPostTimelines": "Default post destinations",
-            "defaultPostTimelinesDescription": "Where the invited person's posts from Home go."
+            "selectCommunity": "Select community",
+            "communities": "Community to invite to",
+            "addMoreCommunities": "Add more communities",
+            "additionalCommunities": "Additional communities"
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",
-            "acceptAsGuest": "Look around as a guest",
+            "acceptAsGuest": "Start with this invitation",
             "addToHome": "Add to Home as a tab",
             "back": "Back",
             "loadFailed": "Could not load the invitation",
@@ -1273,6 +1278,8 @@
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",
+            "titleWithCommunity": "{{username}} invited you to {{community}}!",
+            "descriptionWithCommunity": "{{community}} lives on Concrnt, a new era SNS that enriches your world just a little bit.",
             "openApp": "Open in the app",
             "loadFailed": "Could not load the invitation",
             "qrTitle": "Open on your phone",

@@ -27,6 +27,8 @@ interface Props {
     setPostHome?: (postHome: boolean) => void
     selectedProfile?: string
     setSelectedProfile?: (profile: string) => void
+    addLabel?: string
+    single?: boolean
 }
 
 export const TimelinePicker = (props: Props) => {
@@ -85,46 +87,48 @@ export const TimelinePicker = (props: Props) => {
                 } as React.CSSProperties
             }
         >
-            <Chip
-                onClick={() => {
-                    if (!props.setSelectedProfile) return
-                    hapticSelection()
-                    if (!client) return
-                    setProfileSelectOpen(true)
-                }}
-                headElement={
-                    <Avatar
-                        ccid={client?.ccid ?? ''}
-                        src={profileAvatar}
-                        style={{
-                            width: 20,
-                            height: 20
-                        }}
-                    />
-                }
-                tailElement={
-                    <IoMdCloseCircle
-                        size={16}
-                        style={{
-                            transform: props.postHome === false ? 'rotate(45deg)' : 'none',
-                            transition: 'transform 0.2s'
-                        }}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            props.setPostHome?.(!props.postHome)
-                        }}
-                    />
-                }
-                style={
-                    {
-                        textDecoration: props.postHome === false ? 'line-through' : 'none',
-                        opacity: props.postHome === false ? 0.5 : 1,
-                        anchorName: profileAnchor
-                    } as React.CSSProperties
-                }
-            >
-                {profileUsername}
-            </Chip>
+            {/* 投稿元を持たない用途(招待のタイムライン選択など)では自分のチップを出さない */}
+            {props.setSelectedProfile && (
+                <Chip
+                    onClick={() => {
+                        hapticSelection()
+                        if (!client) return
+                        setProfileSelectOpen(true)
+                    }}
+                    headElement={
+                        <Avatar
+                            ccid={client?.ccid ?? ''}
+                            src={profileAvatar}
+                            style={{
+                                width: 20,
+                                height: 20
+                            }}
+                        />
+                    }
+                    tailElement={
+                        <IoMdCloseCircle
+                            size={16}
+                            style={{
+                                transform: props.postHome === false ? 'rotate(45deg)' : 'none',
+                                transition: 'transform 0.2s'
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                props.setPostHome?.(!props.postHome)
+                            }}
+                        />
+                    }
+                    style={
+                        {
+                            textDecoration: props.postHome === false ? 'line-through' : 'none',
+                            opacity: props.postHome === false ? 0.5 : 1,
+                            anchorName: profileAnchor
+                        } as React.CSSProperties
+                    }
+                >
+                    {profileUsername}
+                </Chip>
+            )}
             {props.selected.map((sel) => {
                 const seen = seenRef.current.get(sel)
                 return (
@@ -151,7 +155,7 @@ export const TimelinePicker = (props: Props) => {
                     </Chip>
                 )
             })}
-            {focused ? (
+            {props.single && props.selected.length > 0 ? null : focused ? (
                 <input
                     ref={inputRef}
                     autoFocus
@@ -207,7 +211,7 @@ export const TimelinePicker = (props: Props) => {
                     }}
                     tailElement={<IoMdAdd size={16} />}
                 >
-                    {t('addDestination')}
+                    {props.addLabel ?? t('addDestination')}
                 </Chip>
             )}
             {/* モーダル(Composer等)のoverflowにクリップされないよう、候補一覧はtop layerに出す。
@@ -248,6 +252,8 @@ export const TimelinePicker = (props: Props) => {
                             // 手動で選んだ候補だけを履歴に残す(プロバイダー側が履歴を持たなければ何もしない)
                             provider.remember?.(opt)
                             props.setSelected([...props.selected, opt.uri])
+                            // 選ぶと入力欄ごと消えるので、blurを発火させずにfocused状態が残らないよう先に外す
+                            if (props.single) inputRef.current?.blur()
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

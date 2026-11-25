@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Avatar, Button, CssVar, Modal, Text } from '@concrnt/ui'
 import { QRCode } from 'react-qrcode-logo'
 import { Client, InvitationSchema, Schemas, semantics, User } from '@concrnt/worldlib'
@@ -14,6 +14,7 @@ import googlePlayBadge from '../assets/googleplay-badge.png'
 interface Loaded {
     comment: string
     inviter: User
+    community?: string
 }
 
 // 招待リンク(https://concrnt.world/invitation/:ccid/:id?hint=)の受け皿。
@@ -37,8 +38,12 @@ export const InvitationPage = () => {
             client = guest
             const document = await guest.api.getDocument<InvitationSchema>(semantics.invitation(ccid!, id!), hint)
             const inviter = await User.load(guest, document.author, hint)
+            const community =
+                document.value.defaultPostTimelines.length === 1
+                    ? await guest.getTimeline(document.value.defaultPostTimelines[0], hint)
+                    : null
             if (cancelled) return
-            setLoaded({ comment: document.value.comment, inviter })
+            setLoaded({ comment: document.value.comment, inviter, community: community?.name })
             return { guest, timelines: document.value.timelines }
         }
         // 招待状を出した後で、招待のタイムラインの最近の投稿を背景のデモの投稿に混ぜる。
@@ -83,7 +88,15 @@ export const InvitationPage = () => {
 
     if (loaded === undefined) return <LoadingFull />
 
-    const titleStyle = { fontSize: '2rem', lineHeight: 1.2, textAlign: 'center' } as const
+    // 日本語は文字の間で自由に折り返して語の途中で改行されるので、翻訳文の <wbr/> でだけ改行させる。
+    // 長い名前で収まらないときだけ overflowWrap で任意の位置に折り返す
+    const titleStyle = {
+        fontSize: '2rem',
+        lineHeight: 1.2,
+        textAlign: 'center',
+        wordBreak: 'keep-all',
+        overflowWrap: 'anywhere'
+    } as const
 
     const storeBadges = (
         <div
@@ -166,11 +179,21 @@ export const InvitationPage = () => {
                         <>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: CssVar.space(2) }}>
                                 <Text variant="h1" style={titleStyle}>
-                                    {t('title', { username: loaded.inviter.profile.username ?? 'anonymous' })}
+                                    <Trans
+                                        t={t}
+                                        i18nKey={loaded.community ? 'titleWithCommunity' : 'title'}
+                                        values={{
+                                            username: loaded.inviter.profile.username ?? 'anonymous',
+                                            community: loaded.community
+                                        }}
+                                        components={{ wbr: <wbr /> }}
+                                    />
                                 </Text>
-                                {/* 招待された人は Concrnt を知らないことが多いので、meta タグと同じ紹介文を添える */}
+                                {/* 招待された人は Concrnt を知らないことが多いので、meta タグと同じ紹介文(招待先が分かればその名前入り)を添える */}
                                 <Text variant="caption" style={{ textAlign: 'center', color: CssVar.contentTextDim }}>
-                                    {tWelcome('metaDescription')}
+                                    {loaded.community
+                                        ? t('descriptionWithCommunity', { community: loaded.community })
+                                        : tWelcome('metaDescription')}
                                 </Text>
                             </div>
                             {/* v1 と同じく、招待者のアバターに「<」で吹き出しを付けてメッセージを添える */}
