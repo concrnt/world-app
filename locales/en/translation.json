@@ -1275,6 +1275,8 @@
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",
+            "titleWithCommunity": "{{username}} invited you to {{community}}!",
+            "descriptionWithCommunity": "{{community}} lives on Concrnt, a new era SNS that enriches your world just a little bit.",
             "openApp": "Open in the app",
             "loadFailed": "Could not load the invitation",
             "qrTitle": "Open on your phone",

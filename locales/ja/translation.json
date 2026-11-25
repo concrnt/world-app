@@ -1273,7 +1273,9 @@
             }
         },
         "invitation": {
-            "title": "{{username}}さんからconcrntへの招待が届きました！",
+            "title": "{{username}}さんから<wbr/>concrntへの<wbr/>招待が届きました！",
+            "titleWithCommunity": "{{username}}さんから<wbr/>{{community}}への<wbr/>招待が届きました！",
+            "descriptionWithCommunity": "{{community}}は、あなたの世界をちょっとだけより豊かにする新しい時代のSNS、Concrntにて育まれています",
             "openApp": "アプリで開く",
             "loadFailed": "招待を読み込めませんでした",
             "qrTitle": "スマートフォンで開く",
