@@ -10,6 +10,7 @@ import {
     MdBadge,
     MdChevronRight,
     MdDisplaySettings,
+    MdGroupAdd,
     MdHub,
     MdList,
     MdVolumeOff,
@@ -100,6 +101,13 @@ export const SettingsView = () => {
                         onClick={() => navigate('/settings/muted')}
                     >
                         {t('mutedUsers')}
+                    </ListItem>
+                    <ListItem
+                        startIcon={<MdGroupAdd size={24} />}
+                        endIcon={<MdChevronRight size={24} />}
+                        onClick={() => navigate('/settings/invitation')}
+                    >
+                        {t('invitation')}
                     </ListItem>
                     <ListItem
                         startIcon={<MdDisplaySettings size={24} />}
