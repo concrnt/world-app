@@ -429,7 +429,8 @@ export const CfmRenderer = (props: CfmRendererProps): ReactNode => {
                           minWidth: 0
                       }
                     : {
-                          whiteSpace: 'pre-wrap'
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
                       }
             }
         >
