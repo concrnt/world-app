@@ -583,6 +583,7 @@
             "empty": "No invitations yet",
             "confirmDelete": "Delete this invitation?",
             "confirmDeleteDescription": "The invitation link will no longer open.",
+            "copyLink": "Copy link",
             "delete": "Delete",
             "timelines": "Timelines to add to the list",
             "timelinesDescription": "These timelines appear on the invited person's Home.",

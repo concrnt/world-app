@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MdDelete } from 'react-icons/md'
-import { Button, CopyButton, IconButton, Text, TextField, View } from '@concrnt/ui'
+import { MdMoreHoriz } from 'react-icons/md'
+import { Button, IconButton, ListItem, Select, Text, TextField, View } from '@concrnt/ui'
 import { Document, SignedDocument } from '@concrnt/client'
 import { InvitationSchema, Schemas, semantics } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
@@ -28,6 +28,7 @@ const InvitationForm = () => {
     const [timelines, setTimelines] = useState<string[]>([])
     const [defaultPostTimelines, setDefaultPostTimelines] = useState<string[]>([])
     const [invitations, setInvitations] = useState<SignedDocument[]>([])
+    const [menu, setMenu] = useState<string>()
     const [deleting, setDeleting] = useState<string>()
 
     const load = useCallback(
@@ -100,41 +101,57 @@ const InvitationForm = () => {
             )}
             {invitations.map((sd) => {
                 const document: Document<InvitationSchema> = JSON.parse(sd.document)
-                const id = sd.cckv.split('/').pop()
-                // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
-                const link = `https://concrnt.world/invitation/${client.ccid}/${id}?hint=${client.entity.domain}`
                 return (
                     <div
                         key={sd.cckv}
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
+                            alignItems: 'center',
                             gap: CssVar.space(1),
                             padding: CssVar.space(2),
                             borderRadius: CssVar.round(1),
                             border: `1px solid ${CssVar.divider}`
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <Text>{document.value.comment}</Text>
-                                <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
-                                    {new Date(document.createdAt).toLocaleString()}
-                                </Text>
-                            </div>
-                            <IconButton onClick={() => setDeleting(sd.cckv)}>
-                                <MdDelete size={20} />
-                            </IconButton>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}>
-                            <Text variant="caption" style={{ flex: 1, minWidth: 0, wordBreak: 'break-all' }}>
-                                {link}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <Text>{document.value.comment}</Text>
+                            <Text variant="caption" style={{ color: CssVar.contentTextDim }}>
+                                {new Date(document.createdAt).toLocaleString()}
                             </Text>
-                            <CopyButton text={link} style={{ flexShrink: 0 }} />
                         </div>
+                        <IconButton onClick={() => setMenu(sd.cckv)}>
+                            <MdMoreHoriz size={20} />
+                        </IconButton>
                     </div>
                 )
             })}
+            <Select
+                open={menu !== undefined}
+                onClose={() => setMenu(undefined)}
+                options={[
+                    <ListItem
+                        key="copyLink"
+                        onClick={() => {
+                            // 受け手は未登録で、エントリポイントから招待者を解決できるとは限らないのでヒントを付ける
+                            navigator.clipboard.writeText(
+                                `https://concrnt.world/invitation/${client.ccid}/${menu!.split('/').pop()}?hint=${client.entity.domain}`
+                            )
+                            setMenu(undefined)
+                        }}
+                    >
+                        <Text>{t('copyLink')}</Text>
+                    </ListItem>,
+                    <ListItem
+                        key="delete"
+                        onClick={() => {
+                            setDeleting(menu)
+                            setMenu(undefined)
+                        }}
+                    >
+                        <Text>{t('delete')}</Text>
+                    </ListItem>
+                ]}
+            />
             <Confirm
                 open={deleting !== undefined}
                 onClose={() => setDeleting(undefined)}
