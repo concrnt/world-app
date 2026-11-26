@@ -63,7 +63,11 @@ export const GuestShell = () => {
                     >
                         {t('retry')}
                     </Button>
-                    <Button variant="outlined" onClick={() => navigate('/login')}>
+                    <Button
+                        variant="outlined"
+                        style={{ color: CssVar.uiText, borderColor: CssVar.uiText }}
+                        onClick={() => navigate('/login')}
+                    >
                         {t('login')}
                     </Button>
                 </div>
@@ -141,7 +145,11 @@ export const GuestShell = () => {
                                                     gap: CssVar.space(1)
                                                 }}
                                             >
-                                                <Button variant="text" onClick={() => navigate('/login')}>
+                                                <Button
+                                                    variant="text"
+                                                    style={{ color: CssVar.backdropText }}
+                                                    onClick={() => navigate('/login')}
+                                                >
                                                     {t('login')}
                                                 </Button>
                                                 <Button onClick={() => navigate('/signup')}>{t('getStarted')}</Button>
