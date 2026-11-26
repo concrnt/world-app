@@ -5,7 +5,7 @@ import { MdAlternateEmail } from 'react-icons/md'
 import { IoIosCloseCircle } from 'react-icons/io'
 
 import { Avatar, Chip } from '@concrnt/ui'
-import { User } from '@concrnt/worldlib'
+import { User, profilePath } from '@concrnt/worldlib'
 
 import { useClient } from '../contexts/Client'
 
@@ -62,7 +62,7 @@ const CCUserChipBody = (props: BodyProps) => {
                     ? undefined
                     : (e) => {
                           e.stopPropagation()
-                          navigate('/profile/' + props.ccid)
+                          navigate(profilePath(props.ccid))
                       }
             }
             tailElement={

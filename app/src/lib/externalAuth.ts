@@ -5,7 +5,7 @@
 //   2. (同意画面で承認されたら) master key で ID Token に署名する       buildIdToken
 //   3. 応答を返す: 送り先 URL に POST する (§8.1)                      postResponse
 //              または 送り先 URL#… をブラウザで開く (§8.2)             openFragmentResponse
-import type { Client } from '@concrnt/worldlib'
+import { profilePath, type Client } from '@concrnt/worldlib'
 import { openUrl } from '@tauri-apps/plugin-opener'
 
 export const AUTH_URI_SCHEME = 'concrnt-auth://'
@@ -124,9 +124,7 @@ export const buildIdToken = async (client: Client, uri: AuthorizationRequestUri)
     if (uri.scope.includes('profile')) {
         if (client.profile.username) claims.name = client.profile.username
         if (client.profile.avatar) claims.picture = client.profile.avatar
-        claims.profile =
-            `https://concrnt.world/profile/${client.ccid}` +
-            (client.currentProfile !== 'main' ? `/${client.currentProfile}` : '')
+        claims.profile = 'https://concrnt.world' + profilePath(client.ccid, client.currentProfile)
         if (client.entity.alias) claims.preferred_username = client.entity.alias
         const updatedAt = client.profileDocument?.createdAt
         if (updatedAt) claims.updated_at = Math.floor(new Date(updatedAt).getTime() / 1000)

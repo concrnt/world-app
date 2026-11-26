@@ -1,5 +1,5 @@
 import { MessageProps } from './types'
-import { ReplyMessageSchema } from '@concrnt/worldlib'
+import { ReplyMessageSchema, postPath, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, CssVar } from '@concrnt/ui'
 import { CfmRenderer } from '../CfmRenderer'
@@ -42,18 +42,18 @@ export const ReplyMessage = (props: MessageProps<ReplyMessageSchema>) => {
                 message={props.message}
                 detail={props.detail}
                 onClick={() => {
-                    navigate('/post/' + encodeURIComponent(props.message.uri))
+                    navigate(postPath(props.message.uri, props.message.authorUser?.alias))
                 }}
                 left={
                     <div
                         onClick={(e) => {
                             e.stopPropagation()
                             navigate(
-                                '/profile/' +
-                                    props.message.author +
-                                    (props.message.authorProfileName && props.message.authorProfileName !== 'main'
-                                        ? '/' + props.message.authorProfileName
-                                        : '')
+                                profilePath(
+                                    props.message.author,
+                                    props.message.authorProfileName,
+                                    props.message.authorUser?.alias
+                                )
                             )
                         }}
                     >

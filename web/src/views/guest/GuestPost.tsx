@@ -11,7 +11,9 @@ import {
     ReplyAssociationSchema,
     RerouteAssociationSchema,
     Schemas,
-    User
+    User,
+    postPath,
+    profilePath
 } from '@concrnt/worldlib'
 import { CssVar } from '../../types/Theme'
 import { useNavigate } from 'react-router-dom'
@@ -42,7 +44,9 @@ export const GuestPostView = (props: Props) => {
     const [replies, setReplies] = useState<Association<ReplyAssociationSchema>[]>([])
     const [reroutes, setReroutes] = useState<Association<RerouteAssociationSchema>[]>([])
     const [favorites, setFavorites] = useState<Association<LikeAssociationSchema>[]>([])
-    const [loading, setLoading] = useState(false)
+    // 表示中のタブの取得が済むまでloading。取得開始時にeffectから同期でsetStateしないよう、取得済みのタブから導く
+    const [loadedTab, setLoadedTab] = useState<PostTab | null>(null)
+    const loading = loadedTab !== tab
 
     // --- Reactions（絵文字ごと集約表示） ---
     const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({})
@@ -53,7 +57,6 @@ export const GuestPostView = (props: Props) => {
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
             if (!client) return
-            setLoading(true)
             try {
                 if (targetTab === 'reactions') {
                     // リアクションは種別ごとのカウントを取得
@@ -87,7 +90,7 @@ export const GuestPostView = (props: Props) => {
             } catch (e) {
                 console.error('Failed to fetch associations:', e)
             } finally {
-                setLoading(false)
+                setLoadedTab(targetTab)
             }
         },
         [client, props.uri]
@@ -118,6 +121,8 @@ export const GuestPostView = (props: Props) => {
     )
 
     useEffect(() => {
+        // fetchAssociationsのsetStateはすべてawaitの後で、effect内で同期には走らない(ルールは非同期関数の中も同期扱いする)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchAssociations(tab)
     }, [tab, fetchAssociations])
 
@@ -226,7 +231,7 @@ export const GuestPostView = (props: Props) => {
                                         key={reroute.ccfs}
                                         ccid={reroute.author}
                                         date={reroute.createdAt}
-                                        onClick={() => navigate('/profile/' + reroute.author)}
+                                        onClick={() => navigate(profilePath(reroute.author))}
                                     >
                                         {t('rerouted')}
                                     </AssociationUserItem>
@@ -246,7 +251,7 @@ export const GuestPostView = (props: Props) => {
                                         key={fav.ccfs}
                                         ccid={fav.author}
                                         date={fav.createdAt}
-                                        onClick={() => navigate('/profile/' + fav.author)}
+                                        onClick={() => navigate(profilePath(fav.author))}
                                     >
                                         {t('favorited')}
                                     </AssociationUserItem>
@@ -327,7 +332,7 @@ export const GuestPostView = (props: Props) => {
                                                     key={member.ccfs}
                                                     ccid={member.author}
                                                     date={member.createdAt}
-                                                    onClick={() => navigate('/profile/' + member.author)}
+                                                    onClick={() => navigate(profilePath(member.author))}
                                                 />
                                             ))}
                                     </>
@@ -359,13 +364,9 @@ const PostHead = (props: { uri: string }) => {
 
     // どのドメインで配信されても同じ投稿なので、canonicalと構造化データのURLはconcrnt.worldに統一する
     const origin = 'https://concrnt.world'
-    const url = origin + '/post/' + encodeURIComponent(props.uri)
+    const url = origin + postPath(props.uri)
     const username: string = message.authorProfile?.username || 'Anonymous'
-    const authorURL =
-        origin +
-        '/profile/' +
-        message.author +
-        (message.authorProfileName && message.authorProfileName !== 'main' ? '/' + message.authorProfileName : '')
+    const authorURL = origin + profilePath(message.author, message.authorProfileName)
 
     // ccfs://はクローラーが取得できないのでresolveエンドポイント(303でファイルへ)に変換する
     const resolveURL = (src?: string): string | undefined => {

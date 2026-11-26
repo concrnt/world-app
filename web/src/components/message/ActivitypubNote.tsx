@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
 import { NotFoundError } from '@concrnt/client'
-import { ApNoteSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
+import { ApNoteSchema, Message, RerouteMessageSchema, postPath } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { CollapsibleBody } from './CollapsibleBody'
 import { TranslatableBody } from './TranslatableBody'
@@ -171,7 +171,7 @@ const Note = (props: {
                 onClick={() => {
                     // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
                     if (props.message) {
-                        navigate('/post/' + encodeURIComponent(props.message.uri))
+                        navigate(postPath(props.message.uri))
                     } else {
                         navigate('/activitypub/view/' + encodeURIComponent(note.id))
                     }

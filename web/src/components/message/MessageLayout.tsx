@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Message } from '@concrnt/worldlib'
+import { Message, postPath, profilePath } from '@concrnt/worldlib'
 import { Timestamp } from './Timestamp'
 
 interface Props {
@@ -22,11 +22,7 @@ export const MessageLayout = (props: Props) => {
     const message = props.message
     // どのドメインで配信されても同じ投稿なので、canonicalと構造化データのURLはconcrnt.worldに統一する
     const origin = 'https://concrnt.world'
-    const authorPath = message
-        ? '/profile/' +
-          message.author +
-          (message.authorProfileName && message.authorProfileName !== 'main' ? '/' + message.authorProfileName : '')
-        : ''
+    const authorPath = message ? profilePath(message.author, message.authorProfileName) : ''
     return (
         <div
             itemScope={message ? true : undefined}
@@ -48,7 +44,7 @@ export const MessageLayout = (props: Props) => {
                 <>
                     {/* itemProp付きの<meta>はReact 19でもheadにhoistされず、このitemScope内に留まる */}
                     <meta itemProp="identifier" content={message.uri} />
-                    <meta itemProp="url" content={origin + '/post/' + encodeURIComponent(message.uri)} />
+                    <meta itemProp="url" content={origin + postPath(message.uri)} />
                     <meta itemProp="datePublished" content={new Date(message.createdAt).toISOString()} />
                     {typeof message.value?.body === 'string' && message.value.body !== '' && (
                         <meta itemProp="text" content={message.value.body} />

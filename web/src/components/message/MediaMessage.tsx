@@ -1,5 +1,5 @@
 import { MessageProps } from './types'
-import { MediaMessageSchema } from '@concrnt/worldlib'
+import { MediaMessageSchema, postPath, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, CssVar } from '@concrnt/ui'
 import { CfmRenderer } from '../CfmRenderer'
@@ -30,19 +30,13 @@ export const MediaMessage = (props: MessageProps<MediaMessageSchema>) => {
             message={message}
             detail={props.detail}
             onClick={() => {
-                navigate('/post/' + encodeURIComponent(message.uri))
+                navigate(postPath(message.uri, message.authorUser?.alias))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                message.author +
-                                (message.authorProfileName && message.authorProfileName !== 'main'
-                                    ? '/' + message.authorProfileName
-                                    : '')
-                        )
+                        navigate(profilePath(message.author, message.authorProfileName, message.authorUser?.alias))
                     }}
                 >
                     <Avatar

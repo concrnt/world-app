@@ -1,7 +1,7 @@
 import { Suspense, use, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Tab, Tabs, Text } from '@concrnt/ui'
-import { isNonNullOrUndefined, User } from '@concrnt/worldlib'
+import { isNonNullOrUndefined, User, profilePath } from '@concrnt/worldlib'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from './AcknowledgeButton'
@@ -92,7 +92,7 @@ export const AcknowledgeList = (props: Props) => {
 const UserList = (props: { usersPromise: Promise<User[] | null>; onNavigate?: () => void }) => {
     const navigate = useNavigate()
     const openProfile = (ccid: string) => {
-        navigate('/profile/' + ccid)
+        navigate(profilePath(ccid))
         props.onNavigate?.()
     }
 

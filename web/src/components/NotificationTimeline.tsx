@@ -25,7 +25,9 @@ import {
     LikeAssociationSchema,
     FollowAckSchema,
     AtprotoFollowNotifySchema,
-    ReadAccessRequestAssociationSchema
+    ReadAccessRequestAssociationSchema,
+    postPath,
+    profilePath
 } from '@concrnt/worldlib'
 import { MessageContainer, MessageSnapshotContext } from './message'
 import { NotificationSnapshot } from '../lib/timelineSnapshot'
@@ -526,7 +528,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
             }}
             onClick={() => {
                 if (target) {
-                    navigate('/post/' + encodeURIComponent(target.uri))
+                    navigate(postPath(target.uri))
                 }
             }}
         >
@@ -574,11 +576,7 @@ const SummarisedLike = (props: { items: Message<LikeAssociationSchema>[] }) => {
                                     )
                                 } else if (item.authorUser) {
                                     navigate(
-                                        '/profile/' +
-                                            item.authorUser.ccid +
-                                            (item.authorProfileName && item.authorProfileName !== 'main'
-                                                ? '/' + item.authorProfileName
-                                                : '')
+                                        profilePath(item.authorUser.ccid, item.authorProfileName, item.authorUser.alias)
                                     )
                                 }
                             }}
@@ -649,7 +647,7 @@ const FollowNotification = (props: { item: Message<FollowAckSchema> }) => {
             }}
             onClick={() => {
                 if (author) {
-                    navigate('/profile/' + author.ccid)
+                    navigate(profilePath(author.ccid, undefined, author.alias))
                 }
             }}
         >
@@ -825,7 +823,7 @@ const ReadAccessRequestNotification = (props: { item: Message<ReadAccessRequestA
             }}
             onClick={() => {
                 if (author) {
-                    navigate('/profile/' + author.ccid)
+                    navigate(profilePath(author.ccid, undefined, author.alias))
                 }
             }}
         >
@@ -949,7 +947,7 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
             }}
             onClick={() => {
                 if (target) {
-                    navigate('/post/' + encodeURIComponent(target.uri))
+                    navigate(postPath(target.uri))
                 }
             }}
         >
@@ -1015,11 +1013,11 @@ const SummarisedReaction = (props: { items: Message<ReactionAssociationSchema>[]
                                             )
                                         } else if (item.authorUser) {
                                             navigate(
-                                                '/profile/' +
-                                                    item.authorUser.ccid +
-                                                    (item.authorProfileName && item.authorProfileName !== 'main'
-                                                        ? '/' + item.authorProfileName
-                                                        : '')
+                                                profilePath(
+                                                    item.authorUser.ccid,
+                                                    item.authorProfileName,
+                                                    item.authorUser.alias
+                                                )
                                             )
                                         }
                                     }}

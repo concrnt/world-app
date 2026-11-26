@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import ReactDOM from 'react-dom/client'
 
 import '@fontsource/source-code-pro/400.css'
@@ -7,8 +7,18 @@ import './index.css'
 import './i18n'
 import { EmergencyKit } from './components/EmergencyKit'
 import { ErrorBoundary } from 'react-error-boundary'
-import { realtimeDiagnostics } from '@concrnt/client'
-import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { IsCCID, realtimeDiagnostics } from '@concrnt/client'
+import { postPath, profilePath, semantics } from '@concrnt/worldlib'
+import {
+    BrowserRouter,
+    Navigate,
+    Route,
+    Routes,
+    useLocation,
+    useNavigate,
+    useParams,
+    useSearchParams
+} from 'react-router-dom'
 
 import { LoadingFull } from './components/LoadingFull'
 import { ClientProvider, useClient, useClientSetupProgress } from './contexts/Client'
@@ -91,18 +101,66 @@ const ClientLoadingScreen = () => {
     )
 }
 
-const ProfileRoute = () => {
-    const { ccid = '', profile } = useParams()
-    // explorer等から未知の外部ユーザーを開くとき、所在ドメインを?hint=で運んで解決に使う
+// /:id[/profile/:profile][/post/:postId]。idは<ccid>か@<alias>。
+// ビューはccidの文字列比較で本人・ブロック判定をするので、aliasはここでentityを引いてccidに寄せてから渡す
+const IdRoute = ({ guest }: { guest?: boolean }) => {
+    const { id = '', profile, postId } = useParams()
     const [searchParams] = useSearchParams()
-    const hint = searchParams.get('hint') ?? undefined
-    // keyでプロフィール切替時にビューごと再マウントする(タブやドロワー等のstateを持ち越さない)
-    return <ProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} hint={hint} />
+    const { client } = useClient()
+    const [resolved, setResolved] = useState<{ alias: string; ccid?: string; hint?: string }>()
+
+    useEffect(() => {
+        if (!id.startsWith('@')) return
+        let stale = false
+        client.api
+            .getEntity(id)
+            .then((entity) => {
+                if (!stale) setResolved({ alias: id, ccid: entity.author, hint: entity.value.domain })
+            })
+            .catch(() => {
+                if (!stale) setResolved({ alias: id })
+            })
+        return () => {
+            stale = true
+        }
+    }, [client, id])
+
+    let ccid: string | undefined = id
+    // explorer等から未知の外部ユーザーを開くとき、所在ドメインを?hint=で運んで解決に使う
+    let hint = searchParams.get('hint') ?? undefined
+    if (id.startsWith('@')) {
+        if (resolved?.alias !== id) return null
+        ccid = resolved.ccid
+        hint = resolved.hint
+    }
+    if (!ccid || !IsCCID(ccid)) return <Navigate to={guest ? '/welcome' : '/'} replace />
+
+    // keyで対象切替時にビューごと再マウントする(タブやドロワー等のstateを持ち越さない)
+    if (postId) {
+        const uri = semantics.post(ccid, profile ?? 'main', postId)
+        return guest ? <GuestPostView key={uri} uri={uri} /> : <PostView key={uri} uri={uri} />
+    }
+    const key = `${ccid}/${profile ?? ''}`
+    return guest ? (
+        <GuestProfileView key={key} ccid={ccid} profileName={profile} hint={hint} />
+    ) : (
+        <ProfileView key={key} ccid={ccid} profileName={profile} hint={hint} />
+    )
+}
+
+// 旧URL /profile/:ccid/:profile? は現行のパスへ置き換える
+const OldProfileRoute = () => {
+    const { ccid = '', profile } = useParams()
+    const { search } = useLocation()
+    return <Navigate to={profilePath(ccid, profile) + search} replace />
 }
 
 const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'bskyView' }) => {
     const { uri = '' } = useParams()
     const decoded = decodeURIComponent(uri)
+
+    // 旧URL /post/<encoded uri> は、短縮形で表せる投稿なら現行のパスへ置き換える
+    if (kind === 'post' && !postPath(decoded).startsWith('/post/')) return <Navigate to={postPath(decoded)} replace />
 
     // keyでuri切替時にビューごと再マウントする。同一ルート内のuri差し替えでマウント済みSuspense配下が
     // サスペンドするとナビゲーションのtransitionがコミットできず画面が旧uriのまま固まるのを防ぐ
@@ -120,16 +178,11 @@ const UriRoute = ({ kind }: { kind: 'post' | 'timeline' | 'list' | 'apView' | 'b
     }
 }
 
-const GuestProfileRoute = () => {
-    const { ccid = '', profile } = useParams()
-    const [searchParams] = useSearchParams()
-    const hint = searchParams.get('hint') ?? undefined
-    return <GuestProfileView key={`${ccid}/${profile ?? ''}`} ccid={ccid} profileName={profile} hint={hint} />
-}
-
 const GuestUriRoute = ({ kind }: { kind: 'post' | 'timeline' }) => {
     const { uri = '' } = useParams()
     const decoded = decodeURIComponent(uri)
+
+    if (kind === 'post' && !postPath(decoded).startsWith('/post/')) return <Navigate to={postPath(decoded)} replace />
 
     switch (kind) {
         case 'post':
@@ -371,7 +424,23 @@ const AuthedRoutes = () => (
                                                                                 />
                                                                                 <Route
                                                                                     path="profile/:ccid/:profile?"
-                                                                                    element={<ProfileRoute />}
+                                                                                    element={<OldProfileRoute />}
+                                                                                />
+                                                                                <Route
+                                                                                    path=":id"
+                                                                                    element={<IdRoute />}
+                                                                                />
+                                                                                <Route
+                                                                                    path=":id/profile/:profile"
+                                                                                    element={<IdRoute />}
+                                                                                />
+                                                                                <Route
+                                                                                    path=":id/post/:postId"
+                                                                                    element={<IdRoute />}
+                                                                                />
+                                                                                <Route
+                                                                                    path=":id/profile/:profile/post/:postId"
+                                                                                    element={<IdRoute />}
                                                                                 />
                                                                                 <Route
                                                                                     path="post/:uri"
@@ -538,7 +607,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                         />
                         {!hasSession && (
                             <Route element={<GuestShell />}>
-                                <Route path="/profile/:ccid/:profile?" element={<GuestProfileRoute />} />
+                                <Route path="/profile/:ccid/:profile?" element={<OldProfileRoute />} />
+                                <Route path="/:id" element={<IdRoute guest />} />
+                                <Route path="/:id/profile/:profile" element={<IdRoute guest />} />
+                                <Route path="/:id/post/:postId" element={<IdRoute guest />} />
+                                <Route path="/:id/profile/:profile/post/:postId" element={<IdRoute guest />} />
                                 <Route path="/post/:uri" element={<GuestUriRoute kind="post" />} />
                                 <Route path="/timeline/:uri" element={<GuestUriRoute kind="timeline" />} />
                             </Route>

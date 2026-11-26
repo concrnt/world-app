@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { safeHttpUrl } from '@concrnt/worldlib'
+import { parseWebPath, safeHttpUrl, semantics } from '@concrnt/worldlib'
+import { useClient } from '../contexts/Client'
 import { useStack } from '../layouts/Stack'
 import { PostView } from '../views/Post'
 import { TimelineView } from '../views/Timeline'
@@ -21,6 +22,7 @@ interface Props {
 // hrefは投稿本文やリモートの文書など外部入力なので、http(s)以外はリンクにせず文字列だけ出す
 export const ExternalLink = (props: Props) => {
     const { push } = useStack()
+    const { client } = useClient()
     const href = safeHttpUrl(props.href)
     if (!href) return <span style={props.style}>{props.children}</span>
     return (
@@ -40,6 +42,26 @@ export const ExternalLink = (props: Props) => {
                 }
                 if (parsed && parsed.hostname === 'concrnt.world') {
                     const path = parsed.pathname
+                    const web = parseWebPath(path)
+                    if (web) {
+                        const open = (ccid: string, hint?: string) =>
+                            push(
+                                web.postId ? (
+                                    <PostView uri={semantics.post(ccid, web.profileName ?? 'main', web.postId)} />
+                                ) : (
+                                    <ProfileView ccid={ccid} profileName={web.profileName} hint={hint} />
+                                )
+                            )
+                        if (web.id.startsWith('@')) {
+                            client.api
+                                .getEntity(web.id)
+                                .then((entity) => open(entity.author, entity.value.domain))
+                                .catch(() => openUrl(href))
+                        } else {
+                            open(web.id, parsed.searchParams.get('hint') ?? undefined)
+                        }
+                        return
+                    }
                     let match: RegExpMatchArray | null
                     if ((match = path.match(/^\/post\/([^/]+)$/))) {
                         push(<PostView uri={decodeURIComponent(match[1])} />)

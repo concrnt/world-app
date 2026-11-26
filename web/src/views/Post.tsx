@@ -12,7 +12,8 @@ import {
     ReactionAssociationSchema,
     ReplyAssociationSchema,
     RerouteAssociationSchema,
-    Schemas
+    Schemas,
+    profilePath
 } from '@concrnt/worldlib'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
 import { CssVar } from '../types/Theme'
@@ -52,7 +53,9 @@ export const PostView = (props: Props) => {
     const [replies, setReplies] = useState<Association<ReplyAssociationSchema>[]>([])
     const [reroutes, setReroutes] = useState<Association<RerouteAssociationSchema>[]>([])
     const [favorites, setFavorites] = useState<Association<LikeAssociationSchema>[]>([])
-    const [loading, setLoading] = useState(false)
+    // 表示中のタブの取得が済むまでloading。取得開始時にeffectから同期でsetStateしないよう、取得済みのタブから導く
+    const [loadedTab, setLoadedTab] = useState<PostTab | null>(null)
+    const loading = loadedTab !== tab
 
     // --- Reactions（絵文字ごと集約表示） ---
     const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({})
@@ -108,7 +111,6 @@ export const PostView = (props: Props) => {
     const fetchAssociations = useCallback(
         async (targetTab: PostTab) => {
             if (!client) return
-            setLoading(true)
             try {
                 if (targetTab === 'reactions') {
                     // リアクションは種別ごとのカウントを取得
@@ -142,7 +144,7 @@ export const PostView = (props: Props) => {
             } catch (e) {
                 console.error('Failed to fetch associations:', e)
             } finally {
-                setLoading(false)
+                setLoadedTab(targetTab)
             }
         },
         [client, props.uri]
@@ -173,6 +175,8 @@ export const PostView = (props: Props) => {
     )
 
     useEffect(() => {
+        // fetchAssociationsのsetStateはすべてawaitの後で、effect内で同期には走らない(ルールは非同期関数の中も同期扱いする)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchAssociations(tab)
     }, [tab, fetchAssociations])
 
@@ -315,15 +319,7 @@ export const PostView = (props: Props) => {
                                     <AssociationUserItem
                                         key={reroute.ccfs}
                                         association={reroute}
-                                        onClick={() =>
-                                            navigate(
-                                                '/profile/' +
-                                                    reroute.author +
-                                                    (reroute.authorProfileName && reroute.authorProfileName !== 'main'
-                                                        ? '/' + reroute.authorProfileName
-                                                        : '')
-                                            )
-                                        }
+                                        onClick={() => navigate(profilePath(reroute.author, reroute.authorProfileName))}
                                     >
                                         {t('rerouted')}
                                     </AssociationUserItem>
@@ -342,15 +338,7 @@ export const PostView = (props: Props) => {
                                     <AssociationUserItem
                                         key={fav.ccfs}
                                         association={fav}
-                                        onClick={() =>
-                                            navigate(
-                                                '/profile/' +
-                                                    fav.author +
-                                                    (fav.authorProfileName && fav.authorProfileName !== 'main'
-                                                        ? '/' + fav.authorProfileName
-                                                        : '')
-                                            )
-                                        }
+                                        onClick={() => navigate(profilePath(fav.author, fav.authorProfileName))}
                                     >
                                         {t('favorited')}
                                     </AssociationUserItem>
@@ -463,14 +451,7 @@ export const PostView = (props: Props) => {
                                                     key={member.ccfs}
                                                     association={member}
                                                     onClick={() =>
-                                                        navigate(
-                                                            '/profile/' +
-                                                                member.author +
-                                                                (member.authorProfileName &&
-                                                                member.authorProfileName !== 'main'
-                                                                    ? '/' + member.authorProfileName
-                                                                    : '')
-                                                        )
+                                                        navigate(profilePath(member.author, member.authorProfileName))
                                                     }
                                                 />
                                             ))}

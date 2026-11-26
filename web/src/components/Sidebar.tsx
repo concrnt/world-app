@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import { useComposer } from '../contexts/Composer'
 import { useNotificationCounter } from '../hooks/useNotificationCounter'
 import { currentPostContext } from '../contexts/PostContext'
+import { profilePath } from '@concrnt/worldlib'
 
 export const Sidebar = () => {
     const { t } = useTranslation('', { keyPrefix: 'components.sidebar' })
@@ -61,7 +62,7 @@ export const Sidebar = () => {
                         gap: CssVar.space(1),
                         padding: `${CssVar.space(1)} ${CssVar.space(2)}`
                     }}
-                    onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
+                    onClick={() => go(profilePath(client?.ccid || '', client?.currentProfile, client?.entity.alias))}
                 >
                     <div
                         style={{

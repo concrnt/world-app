@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { LikeAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { LikeAssociationSchema, Schemas, postPath, profilePath } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { BlueskyRecordCard } from './BlueskyRecordCard'
 import { Avatar } from '@concrnt/ui'
@@ -30,7 +30,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
             }}
             onClick={() => {
                 if (targetMessage) {
-                    navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                    navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                 }
             }}
         >
@@ -64,13 +64,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (likeAuthor) {
-                            navigate(
-                                '/profile/' +
-                                    likeAuthor.ccid +
-                                    (message.authorProfileName && message.authorProfileName !== 'main'
-                                        ? '/' + message.authorProfileName
-                                        : '')
-                            )
+                            navigate(profilePath(likeAuthor.ccid, message.authorProfileName, likeAuthor.alias))
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -85,7 +79,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                     noteURL={targetMessage.value.noteURL}
                     actorURL={targetMessage.value.actorURL}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -93,7 +87,7 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                 <BlueskyRecordCard
                     atUri={targetMessage.value.atUri}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -106,12 +100,11 @@ export const LikeAssociation = (props: MessageProps<LikeAssociationSchema>) => {
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     navigate(
-                                        '/profile/' +
-                                            targetMessage.author +
-                                            (targetMessage.authorProfileName &&
-                                            targetMessage.authorProfileName !== 'main'
-                                                ? '/' + targetMessage.authorProfileName
-                                                : '')
+                                        profilePath(
+                                            targetMessage.author,
+                                            targetMessage.authorProfileName,
+                                            targetMessage.authorUser?.alias
+                                        )
                                     )
                                 }}
                             >

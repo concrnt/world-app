@@ -1,7 +1,9 @@
 // クローラー向けOGP HTML生成 (Cloudflare Pages Functions)
 // Cloudflare側のルールでbot UAを /og/<元パス> にrewriteする前提。対象は
-//   /og/profile/<ccid>[/<profile>]
-//   /og/post/<encoded cckv uri>
+//   /og/<ccid|@alias>[/profile/<profile>]
+//   /og/<ccid|@alias>[/profile/<profile>]/post/<postId>
+//   /og/profile/<ccid>[/<profile>]   (旧URL)
+//   /og/post/<encoded cckv uri>      (旧URL、および短縮形で表せない投稿)
 //   /og/timeline/<encoded cckv uri>
 //   /og/lists/<encoded cckv uri>
 //   /og/invitation/<ccid>/<id>[?hint=<domain>]
@@ -112,7 +114,34 @@ export const onRequest: PagesFunction<Env> = async (context) => {
                 return s
             }
         })
-    const [kind, ...rest] = segments
+    let [kind, ...rest] = segments
+
+    // canonical等に出すURL。aliasは付け替えられるので常にccid形
+    const profileURL = (ccid: string, profileName: string): string =>
+        `${url.origin}/${ccid}${profileName === 'main' ? '' : `/profile/${encodeURIComponent(profileName)}`}`
+    const postURL = (post: Post): string => {
+        const m = post.uri.match(/^cckv:\/\/[^/]+\/concrnt\.world\/profiles\/[^/]+\/posts\/([^/]+)$/)
+        return m
+            ? `${profileURL(post.ccid, post.profileName)}/post/${encodeURIComponent(m[1])}`
+            : `${url.origin}/post/${encodeURIComponent(post.uri)}`
+    }
+
+    // 現行のパス /<ccid|@alias>[/profile/<profile>][/post/<postId>] を、旧URLと同じ kind/rest に寄せる
+    if (kind !== undefined && (kind.startsWith('@') || IS_CCID.test(kind))) {
+        const ccid = kind.startsWith('@') ? (await resolve(entrypoint, `cckv://${kind}`))?.author : kind
+        const [profileName, postId] =
+            rest[0] === 'profile' && rest.length >= 2 ? [rest[1], rest.slice(2)] : ['main', rest]
+        if (typeof ccid !== 'string' || !IS_CCID.test(ccid)) return redirect()
+        if (postId.length === 0) {
+            kind = 'profile'
+            rest = [ccid, profileName]
+        } else if (postId.length === 2 && postId[0] === 'post') {
+            kind = 'post'
+            rest = [`cckv://${ccid}/concrnt.world/profiles/${profileName}/posts/${postId[1]}`]
+        } else {
+            return redirect()
+        }
+    }
 
     // cckv://<owner>[@hint]/<key...> を分解する。timelineはownerがFQDN
     const parseUri = (raw: string | undefined): { owner: string; hint?: string; key: string } | undefined => {
@@ -213,7 +242,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
                 '@context': AS_CONTEXT,
                 type: 'Note',
                 id: `${url.origin}/og/ap/post/${encoded}`,
-                url: `${url.origin}/post/${encoded}`,
+                url: postURL(post),
                 attributedTo: author,
                 published: post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
                 to: [AS_PUBLIC],
@@ -231,7 +260,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
             '@context': AS_CONTEXT,
             type: 'Person',
             id: author,
-            url: `${url.origin}/profile/${post.ccid}${post.profileName === 'main' ? '' : `/${post.profileName}`}`,
+            url: profileURL(post.ccid, post.profileName),
             name: post.username,
             preferredUsername: post.alias ?? post.ccid,
             icon: post.avatar ? { type: 'Image', url: post.avatar } : undefined
@@ -244,6 +273,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     let card = 'summary'
     let type = 'website'
     const extra: string[] = []
+    let canonical = originalPath
 
     if (kind === 'profile' && rest.length >= 1 && rest.length <= 2 && IS_CCID.test(rest[0])) {
         const [ccid, profileName = 'main'] = rest
@@ -251,6 +281,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         if (!entity) return redirect()
         const profile = await resolve(entity.domain, `cckv://${ccid}/concrnt.world/profiles/${profileName}`)
         if (!profile) return redirect()
+        canonical = profileURL(ccid, profileName)
         title = `${profile.value?.username ?? ''} on Concrnt`
         description = profile.value?.description ?? ''
         const avatar = imageURL(entity.domain, profile.value?.avatar)
@@ -259,6 +290,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         const post = await loadPost(rest[0])
         if (!post) return redirect()
 
+        canonical = postURL(post)
         title = `${post.username} on Concrnt`
         description = post.body
         if (post.hidden > 0) description += ` (with ${post.hidden} hidden images)`
@@ -324,7 +356,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const safeTitle = escapeAttr(title)
     const safeDescription = escapeAttr(description)
-    const safePath = escapeAttr(originalPath)
+    const safePath = escapeAttr(canonical)
 
     const html = `<!DOCTYPE html>
 <html>

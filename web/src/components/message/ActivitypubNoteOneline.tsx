@@ -5,7 +5,7 @@ import { CfmRenderer, type EmojiLite } from '../CfmRenderer'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
-import { ApNoteSchema, Message } from '@concrnt/worldlib'
+import { ApNoteSchema, Message, postPath } from '@concrnt/worldlib'
 import { useTranslation } from 'react-i18next'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { Timestamp } from './Timestamp'
@@ -106,7 +106,7 @@ const Note = (props: {
                         // concrnt側のメッセージがあればネイティブ同等の詳細ビューへ。無ければnote IDでApViewへ
                         // (ApView側でブリッジ保存済みなら自動でPostViewに切り替わる)
                         if (props.message) {
-                            navigate('/post/' + encodeURIComponent(props.message.uri))
+                            navigate(postPath(props.message.uri))
                         } else {
                             navigate('/activitypub/view/' + encodeURIComponent(props.noteURL))
                         }

@@ -7,6 +7,7 @@ import { Avatar, Divider, List, ListItem, OverlaySurface, Text, TextField } from
 
 import { CssVar } from '../types/Theme'
 import { type CommunityHit, type UserHit, fetchSearch } from '../components/SearchExplorer'
+import { profilePath } from '@concrnt/worldlib'
 
 // v1(concrnt-world)のCommandPaletteのweb移植。Ctrl/Cmd+Kでクイックスイッチャーを開き、
 // crawlerのコミュニティ/ユーザー検索結果を矢印キー+Enterで選んで遷移する
@@ -78,8 +79,7 @@ export const CommandPaletteProvider = (props: Props) => {
             const user = users[index - communities.length]
             if (!user) return
             navigate(
-                '/profile/' +
-                    encodeURIComponent(user.ccid) +
+                profilePath(user.ccid) +
                     // 自ドメインが未知のユーザーでも解決できるよう、所在サーバーをhintとして運ぶ
                     (user.sourceServer ? '?hint=' + encodeURIComponent(user.sourceServer) : '')
             )

@@ -5,6 +5,7 @@ import { CfmRenderer } from '../../CfmRenderer'
 import { MessageLayout } from '../MessageLayout'
 import { useNavigate } from 'react-router-dom'
 import { CollapsibleBody } from '../CollapsibleBody'
+import { postPath, profilePath } from '@concrnt/worldlib'
 
 export const LegacyNoteMessage = (props: MessageProps<any>) => {
     const navigate = useNavigate()
@@ -18,19 +19,13 @@ export const LegacyNoteMessage = (props: MessageProps<any>) => {
             onClick={() => {
                 // 静的タイムラインの同梱コンテンツはuriを持たない(開く先がない)
                 if (!message.uri) return
-                navigate('/post/' + encodeURIComponent(message.uri))
+                navigate(postPath(message.uri, message.authorUser?.alias))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                message.author +
-                                (message.authorProfileName && message.authorProfileName !== 'main'
-                                    ? '/' + message.authorProfileName
-                                    : '')
-                        )
+                        navigate(profilePath(message.author, message.authorProfileName, message.authorUser?.alias))
                     }}
                 >
                     <Avatar ccid={message.author} style={{ width: '48px', height: '48px' }} />

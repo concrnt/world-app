@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { safeHttpUrl } from '@concrnt/worldlib'
+import { parseWebPath, safeHttpUrl } from '@concrnt/worldlib'
 
 interface Props {
     href: string
@@ -32,6 +32,7 @@ export const ExternalLink = (props: Props) => {
                 if (parsed.hostname !== 'concrnt.world') return
                 const path = parsed.pathname
                 const isInternal =
+                    parseWebPath(path) !== undefined ||
                     /^\/(post|timeline)\/[^/]+$/.test(path) ||
                     /^\/profile\/[^/]+(\/[^/]+)?$/.test(path) ||
                     /^\/activitypub\/(person|note|view)\/[^/]+$/.test(path) ||

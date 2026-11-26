@@ -1,5 +1,5 @@
 import { MessageProps } from './types'
-import { PlaintextMessageSchema } from '@concrnt/worldlib'
+import { PlaintextMessageSchema, postPath, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, CssVar } from '@concrnt/ui'
 
@@ -25,19 +25,13 @@ export const PlaintextMessage = (props: MessageProps<PlaintextMessageSchema>) =>
             message={message}
             detail={props.detail}
             onClick={() => {
-                navigate('/post/' + encodeURIComponent(message.uri))
+                navigate(postPath(message.uri, message.authorUser?.alias))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                message.author +
-                                (message.authorProfileName && message.authorProfileName !== 'main'
-                                    ? '/' + message.authorProfileName
-                                    : '')
-                        )
+                        navigate(profilePath(message.author, message.authorProfileName, message.authorUser?.alias))
                     }}
                 >
                     <Avatar
