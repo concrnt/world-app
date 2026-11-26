@@ -22,7 +22,7 @@ import { QueryTimeline } from '../../components/QueryTimeline'
 import { MediaGridTimeline } from '../../components/MediaGridTimeline'
 import { usePersistent } from '../../hooks/usePersistent'
 import { Document, PermissionError, renderUriTemplate } from '@concrnt/client'
-import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
+import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
 import { ProfileName } from '../../components/ProfileName'
@@ -127,11 +127,7 @@ const Body = (props: BodyProps) => {
 
     // --- クローラー向け: title/description/canonical と ProfilePage JSON-LD ---
     // どのドメインで配信されても同じプロフィールなので、canonicalと構造化データのURLはconcrnt.worldに統一する
-    const profileURL =
-        'https://concrnt.world' +
-        '/profile/' +
-        props.ccid +
-        (props.profileName !== 'main' ? '/' + props.profileName : '')
+    const profileURL = 'https://concrnt.world' + profilePath(props.ccid, props.profileName)
     // ccfs://はクローラーが取得できないのでresolveエンドポイント(303でファイルへ)に変換する
     const resolveURL = (src?: string): string | undefined => {
         if (!src) return undefined
@@ -254,7 +250,7 @@ const Body = (props: BodyProps) => {
                                         backgroundColor: CssVar.contentBackground,
                                         display: 'block'
                                     }}
-                                    onClick={() => navigate('/profile/' + props.ccid)}
+                                    onClick={() => navigate(profilePath(props.ccid, undefined, props.user.alias))}
                                 >
                                     <Avatar
                                         ccid={props.ccid}
@@ -461,7 +457,7 @@ const RestrictedBody = (props: RestrictedBodyProps) => {
                                         backgroundColor: CssVar.contentBackground,
                                         display: 'block'
                                     }}
-                                    onClick={() => navigate('/profile/' + props.ccid)}
+                                    onClick={() => navigate(profilePath(props.ccid, undefined, props.user.alias))}
                                 >
                                     <Avatar
                                         ccid={props.ccid}

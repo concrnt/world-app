@@ -281,10 +281,14 @@ self.addEventListener('push', (event) => {
             console.error('[Service Worker] failed to build push notification content', error)
         }
 
-        const url =
-            content.view === 'post' && content.targetUri
-                ? `/post/${encodeURIComponent(content.targetUri)}`
-                : '/notifications'
+        // worldlibのpostPathと同じ規則。worldlibはNode専用のws依存を引くのでSWのバンドルに載せられない
+        const post = content.view === 'post' ? content.targetUri : undefined
+        const m = post?.match(/^cckv:\/\/(con1[^/.]{38})\/concrnt\.world\/profiles\/([^/]+)\/posts\/([^/]+)$/)
+        const url = m
+            ? `/${m[1]}${m[2] === 'main' ? '' : `/profile/${encodeURIComponent(m[2])}`}/post/${encodeURIComponent(m[3])}`
+            : post
+              ? `/post/${encodeURIComponent(post)}`
+              : '/notifications'
 
         await self.registration.showNotification(content.title, {
             body: content.body,

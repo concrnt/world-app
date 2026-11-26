@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { FollowAckSchema, User } from '@concrnt/worldlib'
+import { FollowAckSchema, User, profilePath } from '@concrnt/worldlib'
 import { Avatar } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
 import { MdPersonAdd } from 'react-icons/md'
@@ -34,7 +34,7 @@ export const FollowAck = (props: MessageProps<FollowAckSchema>) => {
             }}
             onClick={() => {
                 if (followee) {
-                    navigate('/profile/' + followee.ccid)
+                    navigate(profilePath(followee.ccid, undefined, followee.alias))
                 }
             }}
         >
@@ -59,7 +59,7 @@ export const FollowAck = (props: MessageProps<FollowAckSchema>) => {
                     onClick={(e) => {
                         e.stopPropagation()
                         if (followAuthor) {
-                            navigate('/profile/' + followAuthor.ccid)
+                            navigate(profilePath(followAuthor.ccid, undefined, followAuthor.alias))
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -72,7 +72,7 @@ export const FollowAck = (props: MessageProps<FollowAckSchema>) => {
             {followee && (
                 <MessageLayout
                     onClick={() => {
-                        navigate('/profile/' + followee.ccid)
+                        navigate(profilePath(followee.ccid, undefined, followee.alias))
                     }}
                     left={
                         <Avatar

@@ -7,6 +7,7 @@ import { View } from '../components/View'
 import { Header } from '../components/Header'
 import { useClient } from '../contexts/Client'
 import { QueryResolveError, resolveQueryTarget } from '../lib/query'
+import { postPath, profilePath } from '@concrnt/worldlib'
 
 export const QueryView = () => {
     const { t } = useTranslation('', { keyPrefix: 'views.query' })
@@ -25,12 +26,12 @@ export const QueryView = () => {
             const target = await resolveQueryTarget(client, input)
             switch (target.kind) {
                 case 'profile': {
-                    const path = '/profile/' + target.ccid + (target.profileName ? '/' + target.profileName : '')
+                    const path = profilePath(target.ccid, target.profileName)
                     navigate(target.hint ? `${path}?hint=${encodeURIComponent(target.hint)}` : path)
                     break
                 }
                 case 'post':
-                    navigate('/post/' + encodeURIComponent(target.uri))
+                    navigate(postPath(target.uri))
                     break
                 case 'timeline':
                     navigate('/timeline/' + encodeURIComponent(target.uri))

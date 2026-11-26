@@ -16,6 +16,7 @@ import { SwitchAccountButton } from './SwitchAccountButton'
 import { ConnectionStatus } from './ConnectionStatus'
 import { ProfileName } from './ProfileName'
 import { useNavigate } from 'react-router-dom'
+import { profilePath } from '@concrnt/worldlib'
 
 interface Props {
     onClose?: () => void
@@ -66,7 +67,9 @@ export const DrawerMenu = (props: Props) => {
                             padding: `${CssVar.space(1)} ${CssVar.space(2)}`,
                             gap: CssVar.space(1)
                         }}
-                        onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
+                        onClick={() =>
+                            go(profilePath(client?.ccid || '', client?.currentProfile, client?.entity.alias))
+                        }
                     >
                         <div
                             style={{
@@ -99,7 +102,9 @@ export const DrawerMenu = (props: Props) => {
                     >
                         <ListItem
                             icon={<MdPerson size={24} />}
-                            onClick={() => go(`/profile/${client?.ccid || ''}/${client?.currentProfile ?? 'main'}`)}
+                            onClick={() =>
+                                go(profilePath(client?.ccid || '', client?.currentProfile, client?.entity.alias))
+                            }
                         >
                             {t('profile')}
                         </ListItem>

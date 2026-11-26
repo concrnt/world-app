@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { RerouteAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { RerouteAssociationSchema, Schemas, postPath, profilePath } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { BlueskyRecordCard } from './BlueskyRecordCard'
 import { Avatar } from '@concrnt/ui'
@@ -33,7 +33,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
             }}
             onClick={() => {
                 if (rerouteMessageURI) {
-                    navigate('/post/' + encodeURIComponent(rerouteMessageURI))
+                    navigate(postPath(rerouteMessageURI))
                 }
             }}
         >
@@ -61,13 +61,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (rerouteAuthor) {
-                            navigate(
-                                '/profile/' +
-                                    rerouteAuthor.ccid +
-                                    (message.authorProfileName && message.authorProfileName !== 'main'
-                                        ? '/' + message.authorProfileName
-                                        : '')
-                            )
+                            navigate(profilePath(rerouteAuthor.ccid, message.authorProfileName, rerouteAuthor.alias))
                         }
                     }}
                     style={{ display: 'flex', cursor: 'pointer' }}
@@ -92,13 +86,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (rerouteAuthor) {
-                            navigate(
-                                '/profile/' +
-                                    rerouteAuthor.ccid +
-                                    (message.authorProfileName && message.authorProfileName !== 'main'
-                                        ? '/' + message.authorProfileName
-                                        : '')
-                            )
+                            navigate(profilePath(rerouteAuthor.ccid, message.authorProfileName, rerouteAuthor.alias))
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -113,7 +101,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                     noteURL={targetMessage.value.noteURL}
                     actorURL={targetMessage.value.actorURL}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -121,7 +109,7 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 <BlueskyRecordCard
                     atUri={targetMessage.value.atUri}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -130,19 +118,18 @@ export const RerouteAssociation = (props: MessageProps<RerouteAssociationSchema>
                 targetMessage.schema !== Schemas.atprotoRecord && (
                     <MessageLayout
                         onClick={() => {
-                            navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                            navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                         }}
                         left={
                             <div
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     navigate(
-                                        '/profile/' +
-                                            targetMessage.author +
-                                            (targetMessage.authorProfileName &&
-                                            targetMessage.authorProfileName !== 'main'
-                                                ? '/' + targetMessage.authorProfileName
-                                                : '')
+                                        profilePath(
+                                            targetMessage.author,
+                                            targetMessage.authorProfileName,
+                                            targetMessage.authorUser?.alias
+                                        )
                                     )
                                 }}
                             >

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { MentionAssociationSchema } from '@concrnt/worldlib'
+import { MentionAssociationSchema, postPath } from '@concrnt/worldlib'
 import { Avatar } from '@concrnt/ui'
 import { useNavigate } from 'react-router-dom'
 import { MdAlternateEmail } from 'react-icons/md'
@@ -24,7 +24,7 @@ export const MentionAssociation = (props: MessageProps<MentionAssociationSchema>
             }}
             onClick={() => {
                 if (mentionSourceURI) {
-                    navigate('/post/' + encodeURIComponent(mentionSourceURI))
+                    navigate(postPath(mentionSourceURI))
                 }
             }}
         >

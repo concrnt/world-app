@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
-import { RerouteMessageSchema } from '@concrnt/worldlib'
+import { RerouteMessageSchema, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, Confirm, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
 import { CDID, parseCCURI } from '@concrnt/client'
@@ -80,12 +80,11 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                                     )
                                 } else {
                                     navigate(
-                                        '/profile/' +
-                                            props.message.author +
-                                            (props.message.authorProfileName &&
-                                            props.message.authorProfileName !== 'main'
-                                                ? '/' + props.message.authorProfileName
-                                                : '')
+                                        profilePath(
+                                            props.message.author,
+                                            props.message.authorProfileName,
+                                            props.message.authorUser?.alias
+                                        )
                                     )
                                 }
                             }}
@@ -114,11 +113,11 @@ export const RerouteMessage = (props: MessageProps<RerouteMessageSchema>) => {
                             )
                         } else {
                             navigate(
-                                '/profile/' +
-                                    props.message.author +
-                                    (props.message.authorProfileName && props.message.authorProfileName !== 'main'
-                                        ? '/' + props.message.authorProfileName
-                                        : '')
+                                profilePath(
+                                    props.message.author,
+                                    props.message.authorProfileName,
+                                    props.message.authorUser?.alias
+                                )
                             )
                         }
                     }}

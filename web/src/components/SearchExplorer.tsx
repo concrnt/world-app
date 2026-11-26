@@ -33,6 +33,7 @@ import { useClient } from '../contexts/Client'
 import { MessageContainer } from './message'
 import { RenderError } from './message/RenderError'
 import { MessageSkeleton } from './message/MessageSkeleton'
+import { profilePath } from '@concrnt/worldlib'
 
 // Crawler API base URL
 // https://github.com/concrnt/crawler
@@ -852,9 +853,7 @@ const UserResultCard = ({ user }: { user: UserHit }) => {
             }}
             onClick={() =>
                 navigate(
-                    '/profile/' +
-                        encodeURIComponent(ccid) +
-                        (profileName && profileName !== 'main' ? '/' + encodeURIComponent(profileName) : '') +
+                    profilePath(ccid, profileName) +
                         // 自ドメインが未知のユーザーでも解決できるよう、所在サーバーをhintとして運ぶ
                         (user.sourceServer ? '?hint=' + encodeURIComponent(user.sourceServer) : '')
                 )

@@ -1,5 +1,5 @@
 import { MessageProps } from './types'
-import { GfmMessageSchema } from '@concrnt/worldlib'
+import { GfmMessageSchema, postPath, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, CssVar } from '@concrnt/ui'
 import { GfmRenderer } from '../GfmRenderer'
@@ -26,19 +26,13 @@ export const GfmMessage = (props: MessageProps<GfmMessageSchema>) => {
             message={message}
             detail={props.detail}
             onClick={() => {
-                navigate('/post/' + encodeURIComponent(message.uri))
+                navigate(postPath(message.uri, message.authorUser?.alias))
             }}
             left={
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                message.author +
-                                (message.authorProfileName && message.authorProfileName !== 'main'
-                                    ? '/' + message.authorProfileName
-                                    : '')
-                        )
+                        navigate(profilePath(message.author, message.authorProfileName, message.authorUser?.alias))
                     }}
                 >
                     <Avatar

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { MessageProps } from './types'
-import { ReactionAssociationSchema, Schemas } from '@concrnt/worldlib'
+import { ReactionAssociationSchema, Schemas, postPath, profilePath } from '@concrnt/worldlib'
 import { ActivitypubNoteCard } from './ActivitypubNoteCard'
 import { BlueskyRecordCard } from './BlueskyRecordCard'
 import { CCImage, Avatar } from '@concrnt/ui'
@@ -28,7 +28,7 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
             }}
             onClick={() => {
                 if (targetMessage) {
-                    navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                    navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                 }
             }}
         >
@@ -73,13 +73,7 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                                     : '/activitypub/view/' + encodeURIComponent(link)
                             )
                         } else if (reactionAuthor) {
-                            navigate(
-                                '/profile/' +
-                                    reactionAuthor.ccid +
-                                    (message.authorProfileName && message.authorProfileName !== 'main'
-                                        ? '/' + message.authorProfileName
-                                        : '')
-                            )
+                            navigate(profilePath(reactionAuthor.ccid, message.authorProfileName, reactionAuthor.alias))
                         }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -93,7 +87,7 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                     noteURL={targetMessage.value.noteURL}
                     actorURL={targetMessage.value.actorURL}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -101,7 +95,7 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                 <BlueskyRecordCard
                     atUri={targetMessage.value.atUri}
                     onClick={() => {
-                        navigate('/post/' + encodeURIComponent(targetMessage.uri))
+                        navigate(postPath(targetMessage.uri, targetMessage.authorUser?.alias))
                     }}
                 />
             )}
@@ -114,12 +108,11 @@ export const ReactionAssociation = (props: MessageProps<ReactionAssociationSchem
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     navigate(
-                                        '/profile/' +
-                                            targetMessage.author +
-                                            (targetMessage.authorProfileName &&
-                                            targetMessage.authorProfileName !== 'main'
-                                                ? '/' + targetMessage.authorProfileName
-                                                : '')
+                                        profilePath(
+                                            targetMessage.author,
+                                            targetMessage.authorProfileName,
+                                            targetMessage.authorUser?.alias
+                                        )
                                     )
                                 }}
                             >

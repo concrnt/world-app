@@ -1,4 +1,4 @@
-import { Message, RerouteMessageSchema, Schemas } from '@concrnt/worldlib'
+import { Message, RerouteMessageSchema, Schemas, profilePath } from '@concrnt/worldlib'
 import { TimelineTag } from '../TimelineTag'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
@@ -75,7 +75,7 @@ export const PostedTimelines = (props: Props) => {
                                 style={{ display: 'inline-flex', alignItems: 'center' }}
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    navigate('/profile/' + uri.split('/')[2])
+                                    navigate(profilePath(uri.split('/')[2]))
                                 }}
                             >
                                 <CCUserAvatar ccid={uri.split('/')[2]} style={{ width: '16px', height: '16px' }} />
@@ -86,7 +86,7 @@ export const PostedTimelines = (props: Props) => {
                                 size={16}
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    navigate('/profile/' + uri.split('/')[2])
+                                    navigate(profilePath(uri.split('/')[2]))
                                 }}
                             />
                         )
@@ -135,7 +135,7 @@ export const PostedTimelines = (props: Props) => {
                                         style={{ display: 'inline-flex', alignItems: 'center' }}
                                         onClick={(e) => {
                                             e.stopPropagation()
-                                            navigate('/profile/' + uri.split('/')[2])
+                                            navigate(profilePath(uri.split('/')[2]))
                                         }}
                                     >
                                         <CCUserAvatar

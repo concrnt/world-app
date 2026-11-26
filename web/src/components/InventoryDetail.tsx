@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button, Codeblock, Text } from '@concrnt/ui'
 import { NotFoundError, parseCCURI, type Document, type SignedDocument } from '@concrnt/client'
-import { Schemas, semantics } from '@concrnt/worldlib'
+import { Schemas, semantics, postPath, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { useClient } from '../contexts/Client'
 
@@ -76,7 +76,7 @@ export const InventoryDetail = (props: Props) => {
             break
         case Schemas.profile: {
             const profileName = semantics.profileNameFromURI(parsed.owner, props.uri)
-            const path = '/profile/' + parsed.owner + (profileName && profileName !== 'main' ? '/' + profileName : '')
+            const path = profilePath(parsed.owner, profileName)
             actions.push(
                 <Button key="profile" variant="outlined" onClick={() => navigate(path)}>
                     {t('openProfile')}
@@ -92,11 +92,7 @@ export const InventoryDetail = (props: Props) => {
         case Schemas.gfmMessage:
         case Schemas.mfmMessage:
             actions.push(
-                <Button
-                    key="post"
-                    variant="outlined"
-                    onClick={() => navigate('/post/' + encodeURIComponent(props.uri))}
-                >
+                <Button key="post" variant="outlined" onClick={() => navigate(postPath(props.uri))}>
                     {t('openPost')}
                 </Button>
             )

@@ -4,7 +4,7 @@ import { Avatar, Skeleton, Text } from '@concrnt/ui'
 import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
-import { AtprotoRecordSchema, Message } from '@concrnt/worldlib'
+import { AtprotoRecordSchema, Message, postPath } from '@concrnt/worldlib'
 import { useTranslation } from 'react-i18next'
 import { OnelineMessageLayout } from './OnelineLayout'
 import { Timestamp } from './Timestamp'
@@ -97,7 +97,7 @@ const Post = (props: {
                     onClick={() => {
                         // concrnt側のメッセージがあればネイティブ同等の詳細ビューへ。無ければat-uriでBskyViewへ
                         if (props.message) {
-                            navigate('/post/' + encodeURIComponent(props.message.uri))
+                            navigate(postPath(props.message.uri))
                         } else {
                             navigate('/bluesky/view/' + encodeURIComponent(props.atUri))
                         }

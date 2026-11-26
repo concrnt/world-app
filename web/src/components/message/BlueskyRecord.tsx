@@ -14,7 +14,7 @@ import { TimeDiff } from '../TimeDiff'
 import { useNavigate } from 'react-router-dom'
 import { useClient } from '../../contexts/Client'
 import { MessageSkeleton } from './MessageSkeleton'
-import { AtprotoRecordSchema, Message, RerouteMessageSchema } from '@concrnt/worldlib'
+import { AtprotoRecordSchema, Message, RerouteMessageSchema, postPath } from '@concrnt/worldlib'
 import { MessageFooter } from './Footer'
 import { RiBlueskyLine } from 'react-icons/ri'
 import { MdOpenInNew } from 'react-icons/md'
@@ -128,7 +128,7 @@ const Post = (props: {
                 onClick={() => {
                     // concrnt側のメッセージがあればネイティブ同等の詳細ビュー(リプライ/リアクション一覧付き)へ
                     if (props.message) {
-                        navigate('/post/' + encodeURIComponent(props.message.uri))
+                        navigate(postPath(props.message.uri))
                     } else {
                         navigate('/bluesky/view/' + encodeURIComponent(post.uri))
                     }

@@ -31,7 +31,15 @@ import { TimelinePicker } from './TimelinePicker'
 import { TimelineTag } from './TimelineTag'
 import { useClient } from '../contexts/Client'
 import { useEmojiPicker } from '../contexts/EmojiPicker'
-import { List, type ListEntry, ListSchema, type ProfileSchema, Schemas, semantics } from '@concrnt/worldlib'
+import {
+    List,
+    type ListEntry,
+    ListSchema,
+    type ProfileSchema,
+    Schemas,
+    semantics,
+    profilePath
+} from '@concrnt/worldlib'
 import { Document } from '@concrnt/client'
 import { CssVar } from '../types/Theme'
 import { useSubscribe } from '../hooks/useSubscribe'
@@ -348,7 +356,7 @@ const ResolvedTimelineList = (props: {
                             style={{ cursor: 'pointer' }}
                             onClick={() => {
                                 props.onComplete?.()
-                                navigate('/profile/' + entry.value.href.split('/')[2])
+                                navigate(profilePath(entry.value.href.split('/')[2]))
                             }}
                         />
                     )}

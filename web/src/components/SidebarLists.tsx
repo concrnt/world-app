@@ -11,7 +11,8 @@ import {
     PinnedListItemClass,
     type ProfileSchema,
     Schemas,
-    semantics
+    semantics,
+    profilePath
 } from '@concrnt/worldlib'
 
 import { useClient } from '../contexts/Client'
@@ -293,7 +294,7 @@ const SubItemRowInner = (props: {
                 opacity: label === null ? 0.6 : 1
             }}
             onClick={() =>
-                navigate(props.isUser ? '/profile/' + props.ccid : '/timeline/' + encodeURIComponent(props.href))
+                navigate(props.isUser ? profilePath(props.ccid) : '/timeline/' + encodeURIComponent(props.href))
             }
         >
             <Text

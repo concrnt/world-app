@@ -1,5 +1,5 @@
 import { IsCCID, NotFoundError, parseCCURI, type Document } from '@concrnt/client'
-import { Client, Schemas, isStaticTimelineURI, semantics } from '@concrnt/worldlib'
+import { Client, Schemas, isStaticTimelineURI, parseWebPath, semantics } from '@concrnt/worldlib'
 
 // 照会(Query)の入力を「何として開くか」に解決する。
 // https://concrnt.world/ の共有URL(v2のルート)はパスから直接対象を決める(ネットワーク不要)。
@@ -29,7 +29,7 @@ export class QueryResolveError extends Error {
 const CONCRNT_WORLD_HOST = 'concrnt.world'
 
 // https://concrnt.world/... の共有URLを開く対象へ。concrnt.world のURLでなければ null。
-// パスは web/src/main.tsx のルート定義と1対1:
+// ここで扱うのは旧形式の profile/post と、web/src/main.tsx のルート定義と1対1のパス:
 //   profile/:ccid/:profile?(+?hint=) / post/:uri / timeline/:uri / lists/:uri /
 //   activitypub/(person|note|view)/:uri / bluesky/(person|post|view)/:uri
 // concrnt.world だが知らないパス(設定画面など)は unsupported、%エンコードが壊れている等は invalid
@@ -102,6 +102,30 @@ export const resolveQueryTarget = async (client: Client, input: string): Promise
     // https:// は既定で静的タイムライン扱いなので、招待リンクと concrnt.world の共有URLはその前に拾う
     const invitation = parseInvitationURL(raw)
     if (invitation) return invitation
+    // 現行の共有URL: https://concrnt.world/<ccid|@alias>[/profile/<name>][/post/<postId>]
+    const url = URL.parse(raw)
+    const web =
+        url?.protocol === 'https:' && url.hostname === CONCRNT_WORLD_HOST
+            ? parseWebPath(url.pathname.replace(/\/+$/, ''))
+            : undefined
+    if (url && web) {
+        let ccid = web.id
+        let hint = url.searchParams.get('hint') ?? undefined
+        if (web.id.startsWith('@')) {
+            let entity
+            try {
+                entity = await client.api.getEntity(web.id)
+            } catch (e) {
+                if (e instanceof NotFoundError) throw new QueryResolveError('notFound')
+                throw e
+            }
+            ccid = entity.author
+            hint = entity.value.domain
+        }
+        if (web.postId) return { kind: 'post', uri: semantics.post(ccid, web.profileName ?? 'main', web.postId) }
+        return { kind: 'profile', ccid, profileName: web.profileName !== 'main' ? web.profileName : undefined, hint }
+    }
+
     const world = parseConcrntWorldURL(raw)
     if (world) return world
 

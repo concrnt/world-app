@@ -37,7 +37,7 @@ import { Document, NotFoundError, PermissionError } from '@concrnt/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from '../components/message/RenderError'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { ProfileSchema, Schemas, semantics, User } from '@concrnt/worldlib'
+import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
@@ -322,10 +322,7 @@ const Body = (props: BodyProps) => {
 
     // シェア/QR用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)。
     // QRには解決用の ?hint=<ドメイン> を付ける(読み取り側がユーザーの所在ドメインを知らなくても開けるように)
-    const shareURL =
-        'https://concrnt.world/profile/' +
-        props.ccid +
-        (props.profileName !== 'main' ? '/' + encodeURIComponent(props.profileName) : '')
+    const shareURL = 'https://concrnt.world' + profilePath(props.ccid, props.profileName, props.user.alias)
     const qrURL = shareURL + '?hint=' + encodeURIComponent(props.user.domain)
 
     const selectOptions = useMemo(() => {

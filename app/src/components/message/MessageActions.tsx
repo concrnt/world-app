@@ -2,7 +2,14 @@ import { Button, ListItem, Select, Text } from '@concrnt/ui'
 import { Confirm } from '../Confirm'
 import { useTranslation } from 'react-i18next'
 import { CDID, parseCCURI } from '@concrnt/client'
-import { Association, LikeAssociationSchema, Schemas, type Message, type RerouteMessageSchema } from '@concrnt/worldlib'
+import {
+    Association,
+    LikeAssociationSchema,
+    Schemas,
+    postPath,
+    type Message,
+    type RerouteMessageSchema
+} from '@concrnt/worldlib'
 import { useClient } from '../../contexts/Client'
 import { useComposer } from '../../contexts/Composer'
 import { usePostContext } from '../../contexts/PostContext'
@@ -60,7 +67,7 @@ export const MessageActions = (props: Props) => {
     const messageTranslation = useMessageTranslation()
 
     // シェア用URLはデプロイ先ホストに関わらずconcrnt.world固定(OGP対応がconcrnt.worldのみのため)
-    const shareURL = 'https://concrnt.world/post/' + encodeURIComponent(props.message.uri)
+    const shareURL = 'https://concrnt.world' + postPath(props.message.uri, props.message.authorUser?.alias)
 
     const replyCount = props.message.associationCounts?.[Schemas.replyAssociation] ?? 0
     const rerouteCount = props.message.associationCounts?.[Schemas.rerouteAssociation] ?? 0

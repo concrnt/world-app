@@ -35,7 +35,7 @@ export const PwaManager = () => {
         if (!('serviceWorker' in navigator)) return
         const onMessage = (event: MessageEvent) => {
             if (event.data?.type === 'navigate' && typeof event.data.url === 'string') {
-                // アプリ内パスだけ受ける (sw.ts が送るのは /post/... と /notifications)。'//host' は外部に飛ぶので弾く
+                // アプリ内パスだけ受ける (sw.ts が送るのは投稿のパスと /notifications)。'//host' は外部に飛ぶので弾く
                 const url: string = event.data.url
                 if (!url.startsWith('/') || url.startsWith('//')) return
                 navigate(url)

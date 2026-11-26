@@ -8,7 +8,7 @@ interface Props {
     username: string
     avatar?: string
     alias?: string
-    // QRに埋める文字列(https://concrnt.world/profile/<ccid>[/<name>]?hint=<domain>)
+    // QRに埋める文字列(https://concrnt.world/<ccid|@alias>[/profile/<name>]?hint=<domain>)
     url: string
 }
 

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useClient } from '../../contexts/Client'
 import { MessageProps } from './types'
-import { MarkdownMessageSchema } from '@concrnt/worldlib'
+import { MarkdownMessageSchema, postPath, profilePath } from '@concrnt/worldlib'
 
 import { Avatar, Confirm, Text, IconButton, ListItem, useAnchor } from '@concrnt/ui'
 import { CfmRenderer } from '../CfmRenderer'
@@ -33,13 +33,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
                 <div
                     onClick={(e) => {
                         e.stopPropagation()
-                        navigate(
-                            '/profile/' +
-                                message.author +
-                                (message.authorProfileName && message.authorProfileName !== 'main'
-                                    ? '/' + message.authorProfileName
-                                    : '')
-                        )
+                        navigate(profilePath(message.author, message.authorProfileName, message.authorUser?.alias))
                     }}
                 >
                     <Avatar
@@ -101,7 +95,7 @@ export const OnelineMessage = (props: MessageProps<MarkdownMessageSchema>) => {
             )}
             <Timestamp
                 onClick={() => {
-                    navigate('/post/' + encodeURIComponent(message.uri))
+                    navigate(postPath(message.uri, message.authorUser?.alias))
                 }}
             >
                 <TimeDiff date={props.message.createdAt} />
