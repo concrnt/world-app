@@ -1,12 +1,14 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Reorder, useDragControls } from 'motion/react'
+import { MdAdd, MdClose, MdDragHandle } from 'react-icons/md'
 import { Document } from '@concrnt/client'
-import { Avatar, Button, CCWallpaper, Switch, Text, TextArea, TextField } from '@concrnt/ui'
+import { Avatar, Button, IconButton, CCWallpaper, Switch, Text, TextArea, TextField } from '@concrnt/ui'
 import { useClient } from '../contexts/Client'
 import { CssVar } from '../types/Theme'
 import { uploadImage } from '../utils/uploadImage'
 import { useImageCropper } from '../contexts/ImageCropper'
-import { ProfileSchema } from '@concrnt/worldlib'
+import { ProfileLinksSchema, ProfileSchema, safeHttpUrl, Schemas } from '@concrnt/worldlib'
 import { UserPicker } from './UserPicker'
 import { useMediaProxy } from '../contexts/MediaProxy'
 
@@ -40,37 +42,41 @@ export const ProfileEditor = (props: Props) => {
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const bannerInputRef = useRef<HTMLInputElement>(null)
 
+    // id は並べ替え(Reorder)が行を追跡するためだけのもので、保存しない
+    const [links, setLinks] = useState<{ id: string; url: string }[]>([])
+    const [linksExisted, setLinksExisted] = useState<boolean>(false)
+
     const [saving, setSaving] = useState<boolean>(false)
 
     useEffect(() => {
         if (props.noLoading) return
-        client.api
-            .getDocument<ProfileSchema>(props.targetURI)
-            .then((doc) => {
-                if (doc) {
-                    setUsername(doc.value.username ?? '')
-                    setDescription(doc.value.description ?? '')
-                    setAvatar(doc.value.avatar ?? '')
-                    setBanner(doc.value.banner ?? '')
+        const loadLinks = client.api.getDocument<ProfileLinksSchema>(props.targetURI + '/links').then((doc) => {
+            setLinks(doc.value.links.map((link) => ({ id: crypto.randomUUID(), url: link.url })))
+            setLinksExisted(true)
+        })
+        const loadProfile = client.api.getDocument<ProfileSchema>(props.targetURI).then((doc) => {
+            if (doc) {
+                setUsername(doc.value.username ?? '')
+                setDescription(doc.value.description ?? '')
+                setAvatar(doc.value.avatar ?? '')
+                setBanner(doc.value.banner ?? '')
 
-                    if (doc.policy?.entries?.length == 1) {
-                        const policy = doc.policy.entries[0]
-                        if (policy.url === 'https://policy.concrnt.world/t/restrict-readers.json') {
-                            setRestricted(true)
-                            setMembers(policy.params.entities ?? [])
-                        } else {
-                            setRestricted(false)
-                            setMembers([])
-                        }
+                if (doc.policy?.entries?.length == 1) {
+                    const policy = doc.policy.entries[0]
+                    if (policy.url === 'https://policy.concrnt.world/t/restrict-readers.json') {
+                        setRestricted(true)
+                        setMembers(policy.params.entities ?? [])
                     } else {
                         setRestricted(false)
                         setMembers([])
                     }
+                } else {
+                    setRestricted(false)
+                    setMembers([])
                 }
-            })
-            .finally(() => {
-                setLoading(false)
-            })
+            }
+        })
+        Promise.allSettled([loadProfile, loadLinks]).then(() => setLoading(false))
     }, [client, props.targetURI])
 
     if (loading) {
@@ -96,7 +102,7 @@ export const ProfileEditor = (props: Props) => {
             >
                 <Text variant="h3">{props.title ?? 'Profile'}</Text>
                 <Button
-                    disabled={saving}
+                    disabled={saving || links.some((link) => !safeHttpUrl(link.url))}
                     onClick={async () => {
                         if (!client) return
                         setSaving(true)
@@ -140,11 +146,23 @@ export const ProfileEditor = (props: Props) => {
                             document.value.banner = bannerUrl
                         }
 
-                        client.api.commit(document).then(() => {
-                            console.log('Profile updated')
-                            client.updateProfiles(true)
-                            props.onComplete?.()
-                        })
+                        await client.api.commit(document)
+                        if (links.length > 0) {
+                            await client.api.commit<ProfileLinksSchema>({
+                                kind: 'record',
+                                key: props.targetURI + '/links',
+                                schema: Schemas.profileLinks,
+                                value: { links: links.map((link) => ({ url: link.url })) },
+                                author: client.ccid,
+                                createdAt: new Date(),
+                                policy: document.policy
+                            })
+                        } else if (linksExisted) {
+                            await client.api.delete(props.targetURI + '/links')
+                        }
+                        console.log('Profile updated')
+                        client.updateProfiles(true)
+                        props.onComplete?.()
                     }}
                 >
                     {saving ? t('saving') : t('save')}
@@ -192,6 +210,37 @@ export const ProfileEditor = (props: Props) => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />
+
+                <Text>{t('links')}</Text>
+                <Reorder.Group
+                    axis="y"
+                    values={links}
+                    onReorder={setLinks}
+                    style={{
+                        listStyle: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: CssVar.space(2),
+                        margin: 0,
+                        padding: 0
+                    }}
+                >
+                    {links.map((link) => (
+                        <LinkRow
+                            key={link.id}
+                            link={link}
+                            onChange={(next) => setLinks(links.map((l) => (l.id === link.id ? next : l)))}
+                            onRemove={() => setLinks(links.filter((l) => l.id !== link.id))}
+                        />
+                    ))}
+                </Reorder.Group>
+                <Button
+                    variant="outlined"
+                    startIcon={<MdAdd />}
+                    onClick={() => setLinks([...links, { id: crypto.randomUUID(), url: '' }])}
+                >
+                    {t('addLink')}
+                </Button>
 
                 <div
                     style={{
@@ -270,5 +319,42 @@ export const ProfileEditor = (props: Props) => {
                 }}
             />
         </div>
+    )
+}
+
+interface LinkRowProps {
+    link: { id: string; url: string }
+    onChange: (link: LinkRowProps['link']) => void
+    onRemove: () => void
+}
+
+// useDragControls を行ごとに持つ必要があるので、行だけコンポーネントに分けている
+const LinkRow = ({ link, onChange, onRemove }: LinkRowProps) => {
+    const controls = useDragControls()
+
+    return (
+        <Reorder.Item
+            value={link}
+            dragListener={false}
+            dragControls={controls}
+            style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: CssVar.space(1) }}
+        >
+            <div
+                onPointerDown={(e) => controls.start(e)}
+                style={{ display: 'flex', cursor: 'grab', touchAction: 'none', padding: CssVar.space(1) }}
+            >
+                <MdDragHandle size={20} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <TextField
+                    placeholder="https://"
+                    value={link.url}
+                    onChange={(e) => onChange({ ...link, url: e.target.value })}
+                />
+            </div>
+            <IconButton onClick={onRemove}>
+                <MdClose />
+            </IconButton>
+        </Reorder.Item>
     )
 }

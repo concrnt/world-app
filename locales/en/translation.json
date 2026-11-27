@@ -876,7 +876,9 @@
             "save": "Save",
             "makeAccountPrivate": "Make account private",
             "selectViewers": "Select who can view",
-            "selectViewersNote": "To select a user, you need to follow them first."
+            "selectViewersNote": "To select a user, you need to follow them first.",
+            "links": "Links",
+            "addLink": "Add link"
         },
         "aliasSetup": {
             "title": "Set Alias",
@@ -1275,6 +1277,10 @@
                     "crnt5": "The yakitori I had at the restaurant was crispy on the outside and juicy on the inside. Next time, I'm bringing friends!"
                 }
             }
+        },
+        "links": {
+            "notFound": "Links not found",
+            "viewProfile": "View profile on Concrnt"
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",

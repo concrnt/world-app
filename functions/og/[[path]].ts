@@ -127,6 +127,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     // 現行のパス /<ccid|@alias>[/profile/<profile>][/post/<postId>] を、旧URLと同じ kind/rest に寄せる
+    let links = false
     if (kind !== undefined && (kind.startsWith('@') || IS_CCID.test(kind))) {
         const ccid = kind.startsWith('@') ? (await resolve(entrypoint, `cckv://${kind}`))?.author : kind
         const [profileName, postId] =
@@ -135,6 +136,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         if (postId.length === 0) {
             kind = 'profile'
             rest = [ccid, profileName]
+        } else if (postId.length === 1 && postId[0] === 'links') {
+            kind = 'profile'
+            rest = [ccid, profileName]
+            links = true
         } else if (postId.length === 2 && postId[0] === 'post') {
             kind = 'post'
             rest = [`cckv://${ccid}/concrnt.world/profiles/${profileName}/posts/${postId[1]}`]
@@ -281,8 +286,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         if (!entity) return redirect()
         const profile = await resolve(entity.domain, `cckv://${ccid}/concrnt.world/profiles/${profileName}`)
         if (!profile) return redirect()
-        canonical = profileURL(ccid, profileName)
-        title = `${profile.value?.username ?? ''} on Concrnt`
+        canonical = profileURL(ccid, profileName) + (links ? '/links' : '')
+        title = `${profile.value?.username ?? ''}${links ? "'s links" : ''} on Concrnt`
         description = profile.value?.description ?? ''
         const avatar = imageURL(entity.domain, profile.value?.avatar)
         if (avatar) images = [avatar]

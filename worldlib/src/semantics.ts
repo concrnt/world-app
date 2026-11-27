@@ -11,6 +11,7 @@ export const semantics = {
         typeof uri === 'string' && uri.startsWith(`cckv://${owner}/concrnt.world/profiles/`)
             ? uri.split('/')[5] || undefined
             : undefined,
+    links: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/links`,
     lists: (owner: string, profile: string) => `cckv://${owner}/concrnt.world/profiles/${profile}/lists`,
     list: (owner: string, profile: string, listId: string) =>
         `cckv://${owner}/concrnt.world/profiles/${profile}/lists/${listId}`,

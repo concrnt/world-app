@@ -875,7 +875,9 @@
             "save": "保存",
             "makeAccountPrivate": "アカウントを非公開にする",
             "selectViewers": "閲覧可能ユーザーを選択",
-            "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。"
+            "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。",
+            "links": "リンク集",
+            "addLink": "リンクを追加"
         },
         "aliasSetup": {
             "title": "エイリアスを設定",
@@ -1274,6 +1276,10 @@
                     "crnt5": "お店で食べた焼き鳥、外はサクサク、中はジューシー。次は友達を連れて行く！"
                 }
             }
+        },
+        "links": {
+            "notFound": "リンク集が見つかりませんでした",
+            "viewProfile": "Concrntでプロフィールを見る"
         },
         "invitation": {
             "title": "{{username}}さんから<wbr/>concrntへの<wbr/>招待が届きました！",

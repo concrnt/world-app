@@ -27,6 +27,7 @@ import Tilt from 'react-parallax-tilt'
 import { ProfileQRCard } from '../components/ProfileQRCard'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
+import { ProfileLinks } from '../components/ProfileLinks'
 import { Drawer } from '../ui/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
@@ -37,7 +38,7 @@ import { Document, NotFoundError, PermissionError } from '@concrnt/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from '../components/message/RenderError'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
+import { ProfileLinksSchema, ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
@@ -130,6 +131,16 @@ export const ProfileView = (props: Props) => {
             })
     }, [client, profileKey, props.hint, reload])
 
+    const [links, setLinks] = useState<ProfileLinksSchema['links']>([])
+    useEffect(() => {
+        client.api
+            .getDocument<ProfileLinksSchema>(semantics.links(props.ccid, props.profileName ?? 'main'), props.hint, {
+                cache: 'no-cache'
+            })
+            .then((doc) => setLinks(doc.value.links))
+            .catch(() => setLinks([]))
+    }, [client, props.ccid, props.profileName, props.hint, reload])
+
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'), props.hint)
@@ -219,6 +230,7 @@ export const ProfileView = (props: Props) => {
                         userPromise={userPromise}
                         profilePromise={profilePromise}
                         freshProfile={freshProfile}
+                        links={links}
                         profileName={props.profileName ?? 'main'}
                         reload={() => {
                             setReload((prev) => prev + 1)
@@ -235,6 +247,7 @@ interface InnerProps {
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema> | 'restricted'>
     freshProfile: Document<ProfileSchema> | null
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -254,7 +267,14 @@ const Inner = (props: InnerProps) => {
     }
 
     return (
-        <Body ccid={props.ccid} user={user} profile={profile} profileName={props.profileName} reload={props.reload} />
+        <Body
+            ccid={props.ccid}
+            user={user}
+            profile={profile}
+            links={props.links}
+            profileName={props.profileName}
+            reload={props.reload}
+        />
     )
 }
 
@@ -262,6 +282,7 @@ interface BodyProps {
     ccid: string
     user: User
     profile: Document<ProfileSchema>
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -589,6 +610,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
+                <ProfileLinks links={props.links} />
                 <div
                     style={{
                         display: 'flex',

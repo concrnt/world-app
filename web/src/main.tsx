@@ -71,6 +71,7 @@ import { Register } from './pages/Register'
 import { Signup } from './pages/Signup'
 import { WelcomePage } from './pages/Welcome'
 import { InvitationPage } from './pages/Invitation'
+import { LinksPage } from './pages/Links'
 import { GuestShell } from './views/guest/GuestBase'
 import { GuestProfileView } from './views/guest/GuestProfile'
 import { GuestPostView } from './views/guest/GuestPost'
@@ -598,6 +599,22 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                                     <OverlayStackProvider>
                                         <InvitationPage />
                                     </OverlayStackProvider>
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route
+                            path="/:id/links"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <LinksPage />
+                                </BaseThemeProvider>
+                            }
+                        />
+                        <Route
+                            path="/:id/profile/:profile/links"
+                            element={
+                                <BaseThemeProvider theme={Themes.blue}>
+                                    <LinksPage />
                                 </BaseThemeProvider>
                             }
                         />
