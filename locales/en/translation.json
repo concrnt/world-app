@@ -1283,8 +1283,7 @@
             }
         },
         "links": {
-            "notFound": "Links not found",
-            "viewProfile": "View profile on Concrnt"
+            "notFound": "Links not found"
         },
         "invitation": {
             "title": "{{username}} invited you to concrnt!",

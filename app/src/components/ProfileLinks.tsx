@@ -15,7 +15,7 @@ export const ProfileLinks = (props: Props) => {
     const { t } = useTranslation('', { keyPrefix: 'components.profileLinks' })
     // 他人の文書は外部入力で、形が違う要素を描画するとページごと落ちるので、http(s) の URL だけ出す
     const links = props.links.filter((link) => safeHttpUrl(link?.url))
-    if (links.length === 0) return null
+    if (links.length === 0 && !props.pageURL) return null
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: CssVar.space(1) }}>
             {links.map(({ url }, i) => (

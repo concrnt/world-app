@@ -1282,8 +1282,7 @@
             }
         },
         "links": {
-            "notFound": "リンク集が見つかりませんでした",
-            "viewProfile": "Concrntでプロフィールを見る"
+            "notFound": "リンク集が見つかりませんでした"
         },
         "invitation": {
             "title": "{{username}}さんから<wbr/>concrntへの<wbr/>招待が届きました！",

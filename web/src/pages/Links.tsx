@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { IsCCID } from '@concrnt/client'
-import { Avatar, ConcrntLogo, CssVar, Text } from '@concrnt/ui'
+import { Avatar, CssVar, Text } from '@concrnt/ui'
 import { Client, ProfileLinksSchema, ProfileSchema, profilePath, safeHttpUrl, semantics, User } from '@concrnt/worldlib'
 import { GuestClientProvider } from '../contexts/Client'
 import { UrlSummaryProvider } from '../contexts/UrlSummary'
@@ -47,17 +47,20 @@ export const LinksPage = () => {
                 semantics.profile(ccid, profileName),
                 user.domain
             )
-            const links = await guest.api.getDocument<ProfileLinksSchema>(
-                semantics.links(ccid, profileName),
-                user.domain
-            )
+            // リンク集の文書が無いプロフィールも、Concrnt へのリンクだけのリンク集として出す
+            const links = await guest.api
+                .getDocument<ProfileLinksSchema>(semantics.links(ccid, profileName), user.domain)
+                .then(
+                    (doc) => doc.value.links,
+                    () => []
+                )
             if (cancelled) return
             // 他人の文書は外部入力で、形が違う要素を描画するとページごと落ちるので、http(s) の URL だけ出す
             setLoaded({
                 client: guest,
                 user,
                 profile: profile.value,
-                links: links.value.links.filter((link) => safeHttpUrl(link?.url))
+                links: links.filter((link) => safeHttpUrl(link?.url))
             })
         }
         load().catch((err) => {
@@ -95,6 +98,26 @@ export const LinksPage = () => {
     const username = loaded.profile.username ?? 'Anonymous'
     const path = profilePath(loaded.user.ccid, profileName, loaded.user.alias)
 
+    const buttonStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: CssVar.space(2),
+        padding: CssVar.space(3),
+        borderRadius: CssVar.round(2),
+        backgroundColor: CssVar.contentBackground,
+        color: CssVar.contentText,
+        textDecoration: 'none',
+        fontWeight: 700,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+    } as const
+    // 右側にアイコンと同じ幅の余白を取り、表示名をボタンの中央に置く
+    const labelStyle = {
+        flex: 1,
+        textAlign: 'center',
+        overflowWrap: 'anywhere',
+        paddingRight: `calc(24px + ${CssVar.space(2)})`
+    } as const
+
     return (
         <div style={pageStyle}>
             <title>{`${username} - Concrnt`}</title>
@@ -127,61 +150,23 @@ export const LinksPage = () => {
                             maxWidth: '480px'
                         }}
                     >
+                        <Link to={path + '?hint=' + encodeURIComponent(loaded.user.domain)} style={buttonStyle}>
+                            <img
+                                src="/192.png"
+                                alt=""
+                                style={{ width: '24px', height: '24px', borderRadius: '4px', flexShrink: 0 }}
+                            />
+                            <span style={labelStyle}>{loaded.user.alias ?? 'Concrnt'}</span>
+                        </Link>
                         {loaded.links.map(({ url }, i) => (
-                            <ExternalLink
-                                key={i}
-                                href={url}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: CssVar.space(2),
-                                    padding: CssVar.space(3),
-                                    borderRadius: CssVar.round(2),
-                                    backgroundColor: CssVar.contentBackground,
-                                    color: CssVar.contentText,
-                                    textDecoration: 'none',
-                                    fontWeight: 700,
-                                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                                }}
-                            >
+                            <ExternalLink key={i} href={url} style={buttonStyle}>
                                 <LinkIcon url={url} size={24} />
-                                {/* 右側にアイコンと同じ幅の余白を取り、タイトルをボタンの中央に置く */}
-                                <span
-                                    style={{
-                                        flex: 1,
-                                        textAlign: 'center',
-                                        overflowWrap: 'anywhere',
-                                        paddingRight: `calc(24px + ${CssVar.space(2)})`
-                                    }}
-                                >
-                                    {linkLabel(url)}
-                                </span>
+                                <span style={labelStyle}>{linkLabel(url)}</span>
                             </ExternalLink>
                         ))}
                     </div>
                 </UrlSummaryProvider>
             </GuestClientProvider>
-
-            <Link
-                to={path}
-                style={{
-                    marginTop: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: CssVar.space(1),
-                    color: CssVar.backdropText,
-                    textDecoration: 'none',
-                    opacity: 0.8
-                }}
-            >
-                <ConcrntLogo
-                    size="20px"
-                    upperColor={CssVar.backdropText}
-                    lowerColor={CssVar.backdropText}
-                    frameColor={CssVar.backdropText}
-                />
-                {t('viewProfile')}
-            </Link>
         </div>
     )
 }

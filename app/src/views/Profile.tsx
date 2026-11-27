@@ -379,19 +379,17 @@ const Body = (props: BodyProps) => {
             </ListItem>
         )
         if (!isMe) {
-            if (props.links.length > 0) {
-                options.push(
-                    <ListItem
-                        key="links"
-                        onClick={() => {
-                            openUrl(linksPageURL)
-                            setMenuOpen(false)
-                        }}
-                    >
-                        <Text>{t('links')}</Text>
-                    </ListItem>
-                )
-            }
+            options.push(
+                <ListItem
+                    key="links"
+                    onClick={() => {
+                        openUrl(linksPageURL)
+                        setMenuOpen(false)
+                    }}
+                >
+                    <Text>{t('links')}</Text>
+                </ListItem>
+            )
             options.push(
                 <ListItem
                     key="mute"
@@ -440,7 +438,6 @@ const Body = (props: BodyProps) => {
         shareURL,
         profile.value.username,
         props.ccid,
-        props.links,
         linksPageURL
     ])
 
