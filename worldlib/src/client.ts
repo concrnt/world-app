@@ -772,7 +772,11 @@ export class Client {
 
     async grantReadAccess(target: string, ccid: string): Promise<void> {
         const doc = await this.api.getDocument<any>(target)
-        const entry = doc.policy?.entries?.find((e) => e.url === 'https://policy.concrnt.world/t/restrict-readers.json')
+        const entry = doc.policy?.entries?.find(
+            (e) =>
+                e.url === 'https://policy.concrnt.world/t/restrict-readers.json' ||
+                e.url === 'https://policy.concrnt.world/t/restrict-read-write.json'
+        )
         if (!entry) return // 制限が既に解除されている
         const entities: string[] = entry.params?.entities ?? []
         if (!entities.includes(ccid)) {
