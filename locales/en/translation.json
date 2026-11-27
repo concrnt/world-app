@@ -318,6 +318,7 @@
             "mediaViewList": "List view",
             "mediaViewGrid": "Grid view",
             "showQrCode": "Show QR code",
+            "links": "Links",
             "closeQrCode": "Close",
             "mute": "Mute",
             "unmute": "Unmute"
@@ -869,6 +870,9 @@
             "globalActiveUsers": "Globally active users",
             "sortFolloweeActive": "Active (following)",
             "sortGlobalActive": "Active (global)"
+        },
+        "profileLinks": {
+            "page": "Links"
         },
         "profileEditor": {
             "loadingProfile": "Loading the latest profile...",

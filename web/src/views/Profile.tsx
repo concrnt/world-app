@@ -268,6 +268,12 @@ const Body = (props: BodyProps) => {
     const shareURL = 'https://concrnt.world' + profilePath(props.ccid, props.profileName, props.user.alias)
     const qrURL = shareURL + '?hint=' + encodeURIComponent(props.user.domain)
 
+    const linksPageURL =
+        window.location.origin +
+        profilePath(props.ccid, props.profileName, props.user.alias) +
+        '/links?hint=' +
+        encodeURIComponent(props.user.domain)
+
     const target = useMemo(() => {
         switch (tab ?? '') {
             case 'posts':
@@ -341,6 +347,19 @@ const Body = (props: BodyProps) => {
             </ListItem>
         )
         if (!isMe) {
+            if (props.links.length > 0) {
+                options.push(
+                    <ListItem
+                        key="links"
+                        onClick={() => {
+                            window.open(linksPageURL, '_blank', 'noopener')
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('links')}</Text>
+                    </ListItem>
+                )
+            }
             options.push(
                 <ListItem
                     key="mute"
@@ -391,7 +410,9 @@ const Body = (props: BodyProps) => {
         shareURL,
         profile.value.username,
         profile.value.description,
-        props.ccid
+        props.ccid,
+        props.links,
+        linksPageURL
     ])
 
     // グリッド/リスト両方のタイムラインで同じヘッダーを使うため持ち上げる
@@ -592,7 +613,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
-                <ProfileLinks links={props.links} />
+                <ProfileLinks links={props.links} pageURL={isMe ? linksPageURL : undefined} />
                 <div
                     style={{
                         display: 'flex',

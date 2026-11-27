@@ -44,6 +44,7 @@ import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
 import { useStack } from '../layouts/Stack'
 import { shareText } from '../lib/share'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { SearchView } from './Search'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
@@ -319,6 +320,12 @@ const Body = (props: BodyProps) => {
     const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false)
     const [profileEditorOpen, setProfileEditorOpen] = useState(false)
 
+    const linksPageURL =
+        'https://concrnt.world' +
+        profilePath(props.ccid, props.profileName, props.user.alias) +
+        '/links?hint=' +
+        encodeURIComponent(props.user.domain)
+
     const target = useMemo(() => {
         switch (tab ?? '') {
             case 'posts':
@@ -372,6 +379,19 @@ const Body = (props: BodyProps) => {
             </ListItem>
         )
         if (!isMe) {
+            if (props.links.length > 0) {
+                options.push(
+                    <ListItem
+                        key="links"
+                        onClick={() => {
+                            openUrl(linksPageURL)
+                            setMenuOpen(false)
+                        }}
+                    >
+                        <Text>{t('links')}</Text>
+                    </ListItem>
+                )
+            }
             options.push(
                 <ListItem
                     key="mute"
@@ -410,7 +430,19 @@ const Body = (props: BodyProps) => {
             }
         }
         return options
-    }, [isBlocking, isMuting, mutedUsers, setMutedUsers, isMe, t, shareURL, profile.value.username, props.ccid])
+    }, [
+        isBlocking,
+        isMuting,
+        mutedUsers,
+        setMutedUsers,
+        isMe,
+        t,
+        shareURL,
+        profile.value.username,
+        props.ccid,
+        props.links,
+        linksPageURL
+    ])
 
     // グリッド/リスト両方のタイムラインで同じヘッダーを使うため持ち上げる
     const header = (
@@ -610,7 +642,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
-                <ProfileLinks links={props.links} />
+                <ProfileLinks links={props.links} pageURL={isMe ? linksPageURL : undefined} />
                 <div
                     style={{
                         display: 'flex',

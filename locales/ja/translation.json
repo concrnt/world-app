@@ -318,6 +318,7 @@
             "mediaViewList": "リスト表示",
             "mediaViewGrid": "グリッド表示",
             "showQrCode": "QRコードを表示",
+            "links": "リンク集",
             "closeQrCode": "閉じる",
             "mute": "ミュート",
             "unmute": "ミュート解除"
@@ -868,6 +869,9 @@
             "globalActiveUsers": "グローバルで活発なユーザー",
             "sortFolloweeActive": "アクティブ(フォロー中)",
             "sortGlobalActive": "アクティブ(グローバル)"
+        },
+        "profileLinks": {
+            "page": "リンク集"
         },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",
