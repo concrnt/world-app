@@ -26,6 +26,7 @@ import Tilt from 'react-parallax-tilt'
 import { ProfileQRCard } from '../components/ProfileQRCard'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
+import { ProfileLinks } from '../components/ProfileLinks'
 import { Drawer } from '../components/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
@@ -36,7 +37,7 @@ import { Document, NotFoundError, PermissionError } from '@concrnt/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from '../components/message/RenderError'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
+import { ProfileLinksSchema, ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeList } from '../components/AcknowledgeList'
@@ -126,6 +127,16 @@ export const ProfileView = (props: Props) => {
             })
     }, [client, profileKey, props.hint, reload])
 
+    const [links, setLinks] = useState<ProfileLinksSchema['links']>([])
+    useEffect(() => {
+        client.api
+            .getDocument<ProfileLinksSchema>(semantics.links(props.ccid, props.profileName ?? 'main'), props.hint, {
+                cache: 'no-cache'
+            })
+            .then((doc) => setLinks(doc.value.links))
+            .catch(() => setLinks([]))
+    }, [client, props.ccid, props.profileName, props.hint, reload])
+
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
             .getDocument<ProfileSchema>(semantics.profile(props.ccid, props.profileName ?? 'main'), props.hint)
@@ -159,6 +170,7 @@ export const ProfileView = (props: Props) => {
                         userPromise={userPromise}
                         profilePromise={profilePromise}
                         freshProfile={freshProfile}
+                        links={links}
                         profileName={props.profileName ?? 'main'}
                         reload={() => {
                             setReload((prev) => prev + 1)
@@ -175,6 +187,7 @@ interface InnerProps {
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema> | 'restricted'>
     freshProfile: Document<ProfileSchema> | null
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -194,7 +207,14 @@ const Inner = (props: InnerProps) => {
     }
 
     return (
-        <Body ccid={props.ccid} user={user} profile={profile} profileName={props.profileName} reload={props.reload} />
+        <Body
+            ccid={props.ccid}
+            user={user}
+            profile={profile}
+            links={props.links}
+            profileName={props.profileName}
+            reload={props.reload}
+        />
     )
 }
 
@@ -202,6 +222,7 @@ interface BodyProps {
     ccid: string
     user: User
     profile: Document<ProfileSchema>
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -246,6 +267,12 @@ const Body = (props: BodyProps) => {
     // QRには解決用の ?hint=<ドメイン> を付ける(読み取り側がユーザーの所在ドメインを知らなくても開けるように)
     const shareURL = 'https://concrnt.world' + profilePath(props.ccid, props.profileName, props.user.alias)
     const qrURL = shareURL + '?hint=' + encodeURIComponent(props.user.domain)
+
+    const linksPageURL =
+        window.location.origin +
+        profilePath(props.ccid, props.profileName, props.user.alias) +
+        '/links?hint=' +
+        encodeURIComponent(props.user.domain)
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -322,6 +349,17 @@ const Body = (props: BodyProps) => {
         if (!isMe) {
             options.push(
                 <ListItem
+                    key="links"
+                    onClick={() => {
+                        window.open(linksPageURL, '_blank', 'noopener')
+                        setMenuOpen(false)
+                    }}
+                >
+                    <Text>{t('links')}</Text>
+                </ListItem>
+            )
+            options.push(
+                <ListItem
                     key="mute"
                     onClick={() => {
                         setMutedUsers(
@@ -370,7 +408,8 @@ const Body = (props: BodyProps) => {
         shareURL,
         profile.value.username,
         profile.value.description,
-        props.ccid
+        props.ccid,
+        linksPageURL
     ])
 
     // グリッド/リスト両方のタイムラインで同じヘッダーを使うため持ち上げる
@@ -571,6 +610,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
+                <ProfileLinks links={props.links} pageURL={isMe ? linksPageURL : undefined} />
                 <div
                     style={{
                         display: 'flex',

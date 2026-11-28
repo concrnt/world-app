@@ -21,6 +21,7 @@ export * from './reactionAssociation'
 export * from './readAccessRequestAssociation'
 
 export * from './profile'
+export * from './profileLinks'
 
 export * from './communityTimeline'
 

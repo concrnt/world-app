@@ -41,11 +41,13 @@ export class Timeline {
         this.banner = document.value.banner
     }
 
-    // restrict-readers policyが設定されている場合は閲覧を許可されたccidのリストを、
+    // restrict-readersかrestrict-read-write policyが設定されている場合は閲覧を許可されたccidのリストを、
     // 設定されていない場合はnullを返す
     restrictReaders(): string[] | null {
         const entry = this.policy?.entries?.find(
-            (e) => e.url === 'https://policy.concrnt.world/t/restrict-readers.json'
+            (e) =>
+                e.url === 'https://policy.concrnt.world/t/restrict-readers.json' ||
+                e.url === 'https://policy.concrnt.world/t/restrict-read-write.json'
         )
         if (!entry) return null
         return entry.params?.entities ?? []

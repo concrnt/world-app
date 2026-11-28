@@ -1,4 +1,4 @@
-import { Suspense, use, useMemo, useState } from 'react'
+import { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Avatar,
@@ -22,7 +22,8 @@ import { QueryTimeline } from '../../components/QueryTimeline'
 import { MediaGridTimeline } from '../../components/MediaGridTimeline'
 import { usePersistent } from '../../hooks/usePersistent'
 import { Document, PermissionError, renderUriTemplate } from '@concrnt/client'
-import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
+import { ProfileLinksSchema, ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
+import { ProfileLinks } from '../../components/ProfileLinks'
 import { CssVar } from '../../types/Theme'
 import { useSubscribe } from '../../hooks/useSubscribe'
 import { ProfileName } from '../../components/ProfileName'
@@ -124,6 +125,14 @@ const Body = (props: BodyProps) => {
     const { t } = useTranslation('', { keyPrefix: 'web.guestProfile' })
     const [stats] = useSubscribe(props.user.stats)
     const profile = props.profile
+
+    const [links, setLinks] = useState<ProfileLinksSchema['links']>([])
+    useEffect(() => {
+        client.api
+            .getDocument<ProfileLinksSchema>(semantics.links(props.ccid, props.profileName), props.user.domain)
+            .then((doc) => setLinks(doc.value.links))
+            .catch(() => setLinks([]))
+    }, [client, props.ccid, props.profileName, props.user.domain])
 
     // --- クローラー向け: title/description/canonical と ProfilePage JSON-LD ---
     // どのドメインで配信されても同じプロフィールなので、canonicalと構造化データのURLはconcrnt.worldに統一する
@@ -309,6 +318,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
+                <ProfileLinks links={links} />
                 <div
                     style={{
                         display: 'flex',

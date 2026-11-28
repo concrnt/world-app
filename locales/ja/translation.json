@@ -318,6 +318,7 @@
             "mediaViewList": "リスト表示",
             "mediaViewGrid": "グリッド表示",
             "showQrCode": "QRコードを表示",
+            "links": "リンク集",
             "closeQrCode": "閉じる",
             "mute": "ミュート",
             "unmute": "ミュート解除"
@@ -869,13 +870,18 @@
             "sortFolloweeActive": "アクティブ(フォロー中)",
             "sortGlobalActive": "アクティブ(グローバル)"
         },
+        "profileLinks": {
+            "page": "リンク集"
+        },
         "profileEditor": {
             "loadingProfile": "最新のプロフィールを読み込んでいます...",
             "saving": "保存中...",
             "save": "保存",
             "makeAccountPrivate": "アカウントを非公開にする",
             "selectViewers": "閲覧可能ユーザーを選択",
-            "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。"
+            "selectViewersNote": "ユーザーを選択するには、まずそのユーザーをフォローする必要があります。",
+            "links": "リンク集",
+            "addLink": "リンクを追加"
         },
         "aliasSetup": {
             "title": "エイリアスを設定",
@@ -1274,6 +1280,9 @@
                     "crnt5": "お店で食べた焼き鳥、外はサクサク、中はジューシー。次は友達を連れて行く！"
                 }
             }
+        },
+        "links": {
+            "notFound": "リンク集が見つかりませんでした"
         },
         "invitation": {
             "title": "{{username}}さんから<wbr/>concrntへの<wbr/>招待が届きました！",

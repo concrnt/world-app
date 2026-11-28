@@ -27,6 +27,7 @@ import Tilt from 'react-parallax-tilt'
 import { ProfileQRCard } from '../components/ProfileQRCard'
 import { MdEdit } from 'react-icons/md'
 import { ProfileEditor } from '../components/ProfileEditor'
+import { ProfileLinks } from '../components/ProfileLinks'
 import { Drawer } from '../ui/Drawer'
 import { useNavigation } from '../contexts/Navigation'
 import { QueryTimeline } from '../components/QueryTimeline'
@@ -37,12 +38,13 @@ import { Document, NotFoundError, PermissionError } from '@concrnt/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { RenderError } from '../components/message/RenderError'
 import { useDomainStatus } from '../hooks/useDomainStatus'
-import { ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
+import { ProfileLinksSchema, ProfileSchema, Schemas, semantics, User, profilePath } from '@concrnt/worldlib'
 import { CssVar } from '../types/Theme'
 import { AcknowledgeButton } from '../components/AcknowledgeButton'
 import { AcknowledgeListView } from './AcknowledgeList'
 import { useStack } from '../layouts/Stack'
 import { shareText } from '../lib/share'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { SearchView } from './Search'
 import { useSubscribe } from '../hooks/useSubscribe'
 import { ProfileName } from '../components/ProfileName'
@@ -129,6 +131,16 @@ export const ProfileView = (props: Props) => {
                 // 権限エラー/404等はキャッシュ由来の表示(restricted/Anonymous)を維持する
             })
     }, [client, profileKey, props.hint, reload])
+
+    const [links, setLinks] = useState<ProfileLinksSchema['links']>([])
+    useEffect(() => {
+        client.api
+            .getDocument<ProfileLinksSchema>(semantics.links(props.ccid, props.profileName ?? 'main'), props.hint, {
+                cache: 'no-cache'
+            })
+            .then((doc) => setLinks(doc.value.links))
+            .catch(() => setLinks([]))
+    }, [client, props.ccid, props.profileName, props.hint, reload])
 
     const profilePromise = useMemo<Promise<Document<ProfileSchema> | 'restricted'>>(() => {
         return client.api
@@ -219,6 +231,7 @@ export const ProfileView = (props: Props) => {
                         userPromise={userPromise}
                         profilePromise={profilePromise}
                         freshProfile={freshProfile}
+                        links={links}
                         profileName={props.profileName ?? 'main'}
                         reload={() => {
                             setReload((prev) => prev + 1)
@@ -235,6 +248,7 @@ interface InnerProps {
     userPromise: Promise<User | null>
     profilePromise: Promise<Document<ProfileSchema> | 'restricted'>
     freshProfile: Document<ProfileSchema> | null
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -254,7 +268,14 @@ const Inner = (props: InnerProps) => {
     }
 
     return (
-        <Body ccid={props.ccid} user={user} profile={profile} profileName={props.profileName} reload={props.reload} />
+        <Body
+            ccid={props.ccid}
+            user={user}
+            profile={profile}
+            links={props.links}
+            profileName={props.profileName}
+            reload={props.reload}
+        />
     )
 }
 
@@ -262,6 +283,7 @@ interface BodyProps {
     ccid: string
     user: User
     profile: Document<ProfileSchema>
+    links: ProfileLinksSchema['links']
     profileName: string
     reload: () => void
 }
@@ -297,6 +319,12 @@ const Body = (props: BodyProps) => {
     const [blockConfirmOpen, setBlockConfirmOpen] = useState(false)
     const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false)
     const [profileEditorOpen, setProfileEditorOpen] = useState(false)
+
+    const linksPageURL =
+        'https://concrnt.world' +
+        profilePath(props.ccid, props.profileName, props.user.alias) +
+        '/links?hint=' +
+        encodeURIComponent(props.user.domain)
 
     const target = useMemo(() => {
         switch (tab ?? '') {
@@ -353,6 +381,17 @@ const Body = (props: BodyProps) => {
         if (!isMe) {
             options.push(
                 <ListItem
+                    key="links"
+                    onClick={() => {
+                        openUrl(linksPageURL)
+                        setMenuOpen(false)
+                    }}
+                >
+                    <Text>{t('links')}</Text>
+                </ListItem>
+            )
+            options.push(
+                <ListItem
                     key="mute"
                     onClick={() => {
                         setMutedUsers(
@@ -389,7 +428,18 @@ const Body = (props: BodyProps) => {
             }
         }
         return options
-    }, [isBlocking, isMuting, mutedUsers, setMutedUsers, isMe, t, shareURL, profile.value.username, props.ccid])
+    }, [
+        isBlocking,
+        isMuting,
+        mutedUsers,
+        setMutedUsers,
+        isMe,
+        t,
+        shareURL,
+        profile.value.username,
+        props.ccid,
+        linksPageURL
+    ])
 
     // グリッド/リスト両方のタイムラインで同じヘッダーを使うため持ち上げる
     const header = (
@@ -589,6 +639,7 @@ const Body = (props: BodyProps) => {
                         <Text>{t('noDescription')}</Text>
                     )}
                 </div>
+                <ProfileLinks links={props.links} pageURL={isMe ? linksPageURL : undefined} />
                 <div
                     style={{
                         display: 'flex',
